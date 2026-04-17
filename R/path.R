@@ -285,11 +285,15 @@ wsl_unc_path_to_linux <- function(path) {
 }
 
 cmdstan_version_from_path <- function(path) {
-  dir_name <- basename(repair_path(path))
-  if (!grepl("^cmdstan-[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?$", dir_name)) {
+  path <- repair_path(path)
+  match <- regmatches(
+    path,
+    regexpr("cmdstan-[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?$", path)
+  )
+  if (!length(match) || is.na(match) || !nzchar(match)) {
     return(NULL)
   }
-  sub("^cmdstan-", "", dir_name)
+  sub("^cmdstan-", "", match)
 }
 
 read_lines_direct <- function(path) {

@@ -227,6 +227,7 @@ test_that("WSL UNC path helpers work", {
   expect_false(is_wsl_unc_path("C:/Users/runneradmin/.cmdstan/cmdstan-2.38.0"))
   expect_equal(wsl_unc_distro_name(wsl_path), "Ubuntu-22.04")
   expect_equal(cmdstan_version_from_path(wsl_path), "2.38.0")
+  expect_equal(cmdstan_version_from_path(paste0(wsl_path, "/")), "2.38.0")
   expect_null(cmdstan_version_from_path("//wsl$/Ubuntu-22.04/root/not-cmdstan"))
   expect_equal(
     wsl_unc_path_to_linux(file.path(wsl_path, "makefile")),
