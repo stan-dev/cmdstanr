@@ -143,6 +143,7 @@ test_that("toolchain checks on Unix work", {
 })
 
 test_that("clean and rebuild works", {
+  set_cmdstan_path(cmdstan_default_path())
   expect_output(
     rebuild_cmdstan(cores = CORES),
     paste0("CmdStan v", cmdstan_version(), " built"),
