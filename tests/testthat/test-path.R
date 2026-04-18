@@ -184,6 +184,16 @@ test_that("CmdStan version helpers handle invalid inputs", {
   expect_false(is_supported_cmdstan_version("not-a-version"))
 })
 
+test_that("CmdStan version can be recovered from WSL UNC install path", {
+  wsl_path <- "//wsl$/Ubuntu-22.04/root/.cmdstan/cmdstan-2.38.0"
+
+  expect_true(is_wsl_unc_path(wsl_path))
+  expect_equal(cmdstan_version_from_path(wsl_path), "2.38.0")
+  expect_equal(cmdstan_version_from_path(paste0(wsl_path, "/")), "2.38.0")
+  expect_equal(suppressWarnings(read_cmdstan_version(wsl_path)), "2.38.0")
+  expect_null(cmdstan_version_from_path("//wsl$/Ubuntu-22.04/root/.cmdstan/not-cmdstan"))
+})
+
 test_that("cmdstan_ext() works", {
   if (os_is_windows() && !os_is_wsl()) {
     expect_identical(cmdstan_ext(), ".exe")

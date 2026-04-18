@@ -219,6 +219,25 @@ cmdstan_default_path <- function(dir = NULL) {
   latest_cmdstan
 }
 
+is_wsl_unc_path <- function(path) {
+  is.character(path) &&
+    length(path) == 1 &&
+    !is.na(path) &&
+    startsWith(repair_path(path), "//wsl$/")
+}
+
+cmdstan_version_from_path <- function(path) {
+  path <- repair_path(path)
+  match <- regmatches(
+    path,
+    regexpr("cmdstan-[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?$", path)
+  )
+  if (!length(match) || is.na(match) || !nzchar(match)) {
+    return(NULL)
+  }
+  sub("^cmdstan-", "", match)
+}
+
 
 #' Find the version of CmdStan from makefile
 #' @noRd
@@ -226,7 +245,23 @@ cmdstan_default_path <- function(dir = NULL) {
 #' @return Version number as a string.
 read_cmdstan_version <- function(path) {
   makefile_path <- file.path(path, "makefile")
-  if (!file.exists(makefile_path)) {
+  if (is_wsl_unc_path(path)) {
+    makefile <- tryCatch(
+      suppressWarnings(readLines(makefile_path, warn = FALSE)),
+      error = function(e) NULL
+    )
+  } else if (file.exists(makefile_path)) {
+    makefile <- readLines(makefile_path)
+  } else {
+    makefile <- NULL
+  }
+  if (is.null(makefile)) {
+    if (is_wsl_unc_path(path)) {
+      version_from_path <- cmdstan_version_from_path(path)
+      if (!is.null(version_from_path)) {
+        return(version_from_path)
+      }
+    }
     warning(
       "Can't find CmdStan makefile to detect version number. ",
       "Path may not point to valid installation.",
@@ -234,7 +269,6 @@ read_cmdstan_version <- function(path) {
     )
     return(NULL)
   }
-  makefile <- readLines(makefile_path)
   version_line <- grep("^CMDSTAN_VERSION :=", makefile, value = TRUE)
   if (length(version_line) == 0) {
     stop("CmdStan makefile is missing a version number.", call. = FALSE)
