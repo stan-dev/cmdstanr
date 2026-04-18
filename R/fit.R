@@ -99,6 +99,35 @@ CmdStanFit <- R6::R6Class(
   )
 )
 
+#' Materialize model object
+#'
+#' @name fit-method-materialize
+#' @aliases materialize
+#' @description This method collect all posterior draws and diagnostics of a fitted
+#'   model object into R, since the contents of the CmdStan output CSV files are only
+#'   read into R lazily (i.e., as needed).
+#'
+#'
+#' @seealso [`save_object`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic")
+#' object.size(fit)
+#'
+#' fit$materialize()
+#' object.size(fit)
+#' }
+#'
+materialize <- function(file, format = c("rds", "qs2"), ...) {
+  self$draws()
+  try(self$sampler_diagnostics(), silent = TRUE)
+  try(self$init(), silent = TRUE)
+  try(self$profiles(), silent = TRUE)
+  invisible(self)
+}
+CmdStanFit$set("public", name = "materialize", value = materialize)
+
 #' Save fitted model object to a file
 #'
 #' @name fit-method-save_object
@@ -123,7 +152,7 @@ CmdStanFit <- R6::R6Class(
 #' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
 #'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`], [`materialize`]
 #'
 #' @examples
 #' \dontrun{
@@ -138,10 +167,7 @@ CmdStanFit <- R6::R6Class(
 #' }
 #'
 save_object <- function(file, format = c("rds", "qs2"), ...) {
-  self$draws()
-  try(self$sampler_diagnostics(), silent = TRUE)
-  try(self$init(), silent = TRUE)
-  try(self$profiles(), silent = TRUE)
+  self$materialize()
   format <- match.arg(format)
   if (format == "rds") {
     saveRDS(self, file = file, ...)
