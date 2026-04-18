@@ -37,6 +37,7 @@ namespace bernoulli_external_model_namespace
 
 test_that("cmdstan_model works with user_header with mock", {
   tmpfile <- withr::local_tempfile(lines = hpp, fileext = ".hpp")
+  Sys.setFileTime(file_that_exists, file.mtime(tmpfile) - 2)
 
   with_mocked_cli(
     compile_ret = list(status = 0),
@@ -65,6 +66,7 @@ test_that("cmdstan_model works with user_header with mock", {
 
   # Check recompilation upon changing header
   file.create(file_that_exists)
+  Sys.setFileTime(file_that_exists, file.mtime(tmpfile) + 2)
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
@@ -73,7 +75,7 @@ test_that("cmdstan_model works with user_header with mock", {
     })
   )
 
-  Sys.setFileTime(tmpfile, Sys.time() + 1) # touch file to trigger recompile
+  Sys.setFileTime(tmpfile, file.mtime(file_that_exists) + 2) # touch file to trigger recompile
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
@@ -83,7 +85,7 @@ test_that("cmdstan_model works with user_header with mock", {
   )
 
   # mock does not automatically update file mtime
-  Sys.setFileTime(mod$exe_file(), Sys.time() + 1) # touch file to trigger recompile
+  Sys.setFileTime(mod$exe_file(), file.mtime(tmpfile) + 2) # touch exe to avoid recompiling
 
   # Alternative spec of user header
   with_mocked_cli(
