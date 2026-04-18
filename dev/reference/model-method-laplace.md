@@ -327,9 +327,9 @@ mod$print()
 
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit_mode <- mod$optimize(data = stan_data, jacobian = TRUE)
-#> Initial log joint probability = -10.0725 
+#> Initial log joint probability = -15.2016 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        5      -6.74802   0.000657075    7.9876e-06           1           1        8    
+#>        5      -6.74802    0.00202372   6.06123e-05           1           1        8    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -350,17 +350,17 @@ fit_laplace <- mod$laplace(data = stan_data, mode = fit_mode)
 #> Finished in  0.1 seconds.
 fit_laplace$summary()
 #> # A tibble: 3 × 7
-#>   variable      mean median    sd   mad     q5      q95
-#>   <chr>        <dbl>  <dbl> <dbl> <dbl>  <dbl>    <dbl>
-#> 1 lp__        -7.21  -6.96  0.665 0.287 -8.62  -6.75   
-#> 2 lp_approx__ -0.458 -0.215 0.650 0.289 -1.89  -0.00246
-#> 3 theta        0.270  0.255 0.120 0.121  0.112  0.500  
+#>   variable      mean median    sd   mad      q5      q95
+#>   <chr>        <dbl>  <dbl> <dbl> <dbl>   <dbl>    <dbl>
+#> 1 lp__        -7.29  -6.98  0.832 0.320 -8.81   -6.75   
+#> 2 lp_approx__ -0.537 -0.230 0.783 0.315 -2.15   -0.00195
+#> 3 theta        0.274  0.250 0.130 0.122  0.0990  0.515  
 
 # if mode isn't specified optimize is run internally first
 fit_laplace <- mod$laplace(data = stan_data)
-#> Initial log joint probability = -6.90126 
+#> Initial log joint probability = -9.85576 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        4      -6.74802    0.00118204   1.28655e-05           1           1        7    
+#>        5      -6.74802   0.000587133   6.70141e-06           1           1        8    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -382,9 +382,9 @@ fit_laplace$summary()
 #> # A tibble: 3 × 7
 #>   variable      mean median    sd   mad      q5      q95
 #>   <chr>        <dbl>  <dbl> <dbl> <dbl>   <dbl>    <dbl>
-#> 1 lp__        -7.25  -6.97  0.725 0.293 -8.68   -6.75   
-#> 2 lp_approx__ -0.509 -0.221 0.748 0.295 -1.99   -0.00240
-#> 3 theta        0.267  0.248 0.124 0.119  0.0957  0.500  
+#> 1 lp__        -7.24  -6.96  0.702 0.298 -8.71   -6.75   
+#> 2 lp_approx__ -0.498 -0.221 0.705 0.304 -2.04   -0.00309
+#> 3 theta        0.266  0.246 0.122 0.122  0.0970  0.491  
 
 # plot approximate posterior
 bayesplot::mcmc_hist(fit_laplace$draws("theta"))

@@ -47,7 +47,8 @@ save_object(file, format = c("rds", "qs2"), ...)
 [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
 [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
 [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-[`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md)
+[`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md),
+[`materialize`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-materialize.md)
 
 ## Examples
 
@@ -62,18 +63,18 @@ rm(fit)
 fit <- readRDS(temp_rds_file)
 fit$summary()
 #> # A tibble: 105 × 10
-#>    variable      mean  median     sd    mad       q5     q95  rhat ess_bulk
-#>    <chr>        <dbl>   <dbl>  <dbl>  <dbl>    <dbl>   <dbl> <dbl>    <dbl>
-#>  1 lp__       -66.0   -65.7   1.47   1.24   -68.8    -64.3   1.00     2169.
-#>  2 alpha        0.376   0.375 0.215  0.214    0.0281   0.733 1.00     3933.
-#>  3 beta[1]     -0.661  -0.656 0.247  0.248   -1.08    -0.273 1.000    3672.
-#>  4 beta[2]     -0.271  -0.272 0.228  0.226   -0.642    0.102 1.00     4140.
-#>  5 beta[3]      0.670   0.662 0.278  0.274    0.226    1.13  1.00     3939.
-#>  6 log_lik[1]  -0.516  -0.511 0.0976 0.0981  -0.684   -0.366 1.00     3881.
-#>  7 log_lik[2]  -0.408  -0.387 0.154  0.147   -0.687   -0.199 1.00     4312.
-#>  8 log_lik[3]  -0.499  -0.461 0.219  0.194   -0.908   -0.207 1.00     3953.
-#>  9 log_lik[4]  -0.454  -0.433 0.156  0.153   -0.729   -0.238 1.00     4018.
-#> 10 log_lik[5]  -1.17   -1.15  0.283  0.279   -1.67    -0.742 1.00     4170.
+#>    variable      mean  median     sd    mad       q5      q95  rhat ess_bulk
+#>    <chr>        <dbl>   <dbl>  <dbl>  <dbl>    <dbl>    <dbl> <dbl>    <dbl>
+#>  1 lp__       -66.0   -65.6   1.43   1.27   -68.7    -64.3     1.00    1613.
+#>  2 alpha        0.379   0.376 0.215  0.220    0.0235   0.736   1.00    4393.
+#>  3 beta[1]     -0.666  -0.666 0.250  0.247   -1.08    -0.257   1.00    3990.
+#>  4 beta[2]     -0.271  -0.271 0.224  0.221   -0.642    0.0996  1.00    3587.
+#>  5 beta[3]      0.680   0.672 0.271  0.264    0.239    1.14    1.00    3944.
+#>  6 log_lik[1]  -0.515  -0.509 0.0963 0.0940  -0.684   -0.367   1.00    4319.
+#>  7 log_lik[2]  -0.403  -0.382 0.149  0.142   -0.682   -0.193   1.00    4375.
+#>  8 log_lik[3]  -0.495  -0.463 0.212  0.205   -0.875   -0.207   1.00    4074.
+#>  9 log_lik[4]  -0.450  -0.430 0.150  0.144   -0.723   -0.231   1.00    3561.
+#> 10 log_lik[5]  -1.18   -1.17  0.282  0.275   -1.68    -0.759   1.00    4692.
 #> # ℹ 95 more rows
 #> # ℹ 1 more variable: ess_tail <dbl>
 # }

@@ -220,6 +220,9 @@ Run CmdStan from R.
   [`lp_approx()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md)
   : Extract log probability (target)
 
+- [`materialize()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-materialize.md)
+  : Materialize model object
+
 - [`metadata()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-metadata.md)
   : Extract metadata from CmdStan CSV files
 

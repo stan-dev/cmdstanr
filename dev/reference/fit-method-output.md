@@ -65,19 +65,19 @@ fit_mcmc$output(1)
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 1702622625
+#>   seed = 327235529
 #> output
-#>   file = /tmp/RtmpiwyiwU/logistic-202604100106-1-2daf99.csv
+#>   file = /tmp/RtmpsDi8zF/logistic-202604182133-1-135126.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpiwyiwU/logistic-profile-202604100106-1-07c640.csv
+#>   profile_file = /tmp/RtmpsDi8zF/logistic-profile-202604182133-1-8f437a.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
 #> 
-#> Gradient evaluation took 8e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+#> Gradient evaluation took 7e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -105,8 +105,8 @@ fit_mcmc$output(1)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
 #>  Elapsed Time: 0.019 seconds (Warm-up)
-#>                0.052 seconds (Sampling)
-#>                0.071 seconds (Total)
+#>                0.055 seconds (Sampling)
+#>                0.074 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
 #> List of 4
@@ -137,19 +137,19 @@ fit_mle$output()
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 327235529
+#>   seed = 1293992464
 #> output
-#>   file = /tmp/RtmpiwyiwU/logistic-202604100106-1-135187.csv
+#>   file = /tmp/RtmpsDi8zF/logistic-202604182133-1-516037.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpiwyiwU/logistic-profile-202604100106-1-8f43db.csv
+#>   profile_file = /tmp/RtmpsDi8zF/logistic-profile-202604182133-1-538c73.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
-#> Initial log joint probability = -95.3514
+#> Initial log joint probability = -141.336
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes 
-#>        7      -63.9218    0.00058897   0.000320349           1           1       10   
+#>        7      -63.9218   0.000273869   0.000164313      0.9881      0.9881       10   
 #> Optimization terminated normally: 
 #>   Convergence detected: relative gradient magnitude is below tolerance
 
@@ -175,13 +175,13 @@ fit_vb$output()
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 1293992464
+#>   seed = 411984747
 #> output
-#>   file = /tmp/RtmpiwyiwU/logistic-202604100106-1-516098.csv
+#>   file = /tmp/RtmpsDi8zF/logistic-202604182133-1-1a6962.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpiwyiwU/logistic-profile-202604100106-1-538cd4.csv
+#>   profile_file = /tmp/RtmpsDi8zF/logistic-profile-202604182133-1-69825e.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -193,8 +193,8 @@ fit_vb$output()
 #> 
 #> 
 #> 
-#> Gradient evaluation took 8e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+#> Gradient evaluation took 7e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -208,9 +208,9 @@ fit_vb$output()
 #> 
 #> Begin stochastic gradient ascent.
 #>   iter             ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
-#>    100          -66.285             1.000            1.000
-#>    200          -66.253             0.500            1.000
-#>    300          -66.246             0.334            0.000   MEDIAN ELBO CONVERGED
+#>    100          -66.463             1.000            1.000
+#>    200          -66.203             0.502            1.000
+#>    300          -66.562             0.336            0.005   MEDIAN ELBO CONVERGED
 #> 
 #> Drawing a sample of size 1000 from the approximate posterior... 
 #> COMPLETED.
