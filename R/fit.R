@@ -103,7 +103,7 @@ CmdStanFit <- R6::R6Class(
 #'
 #' @name fit-method-materialize
 #' @aliases materialize
-#' @description This method collect all posterior draws and diagnostics of a fitted
+#' @description This method collects all posterior draws and diagnostics of a fitted
 #'   model object into R, since the contents of the CmdStan output CSV files are only
 #'   read into R lazily (i.e., as needed).
 #'
@@ -119,7 +119,7 @@ CmdStanFit <- R6::R6Class(
 #' object.size(fit)
 #' }
 #'
-materialize <- function(file, format = c("rds", "qs2"), ...) {
+materialize <- function() {
   self$draws()
   try(self$sampler_diagnostics(), silent = TRUE)
   try(self$init(), silent = TRUE)
