@@ -203,6 +203,18 @@ test_that("cmdstan_default_path() returns NULL for empty custom install director
   expect_null(cmdstan_default_path(dir = installs))
 })
 
+test_that("cmdstan_default_path() ignores unversioned cmdstan directory", {
+  installs <- withr::local_tempdir(pattern = "cmdstan-legacy-installs")
+  dir.create(file.path(installs, "cmdstan"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(installs, "cmdstan-2.36.0"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_equal(
+    cmdstan_default_path(dir = installs),
+    file.path(installs, "cmdstan-2.36.0")
+  )
+  expect_true(dir.exists(file.path(installs, "cmdstan")))
+})
+
 test_that("CmdStan version helpers handle invalid inputs", {
   expect_identical(cmdstan_min_version(), "2.35.0")
   expect_false(is_supported_cmdstan_version(NULL))

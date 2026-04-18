@@ -253,14 +253,6 @@ cmdstan_default_path <- function(dir = NULL) {
 
 latest_cmdstan_installed <- function(installs_path) {
   cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-  # if installed in cmdstan folder with no version move to cmdstan-version folder
-  if ("cmdstan" %in% cmdstan_installs) {
-    ver <- read_cmdstan_version(file.path(installs_path, "cmdstan"))
-    old_path <- file.path(installs_path, "cmdstan")
-    new_path <- file.path(installs_path, paste0("cmdstan-", ver))
-    file.rename(old_path, new_path)
-    cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-  }
   latest_cmdstan <- ""
   if (length(cmdstan_installs) > 0) {
     cmdstan_installs <- grep("^cmdstan-", cmdstan_installs, value = TRUE)
