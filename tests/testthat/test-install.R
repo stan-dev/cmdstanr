@@ -117,7 +117,7 @@ test_that("install_cmdstan() works with version and release_url", {
     fixed = TRUE
   )
   expect_true(dir.exists(file.path(dir, "cmdstan-2.36.0")))
-  set_cmdstan_path(cmdstan_default_path())
+  set_cmdstan_path()
 })
 
 test_that("toolchain checks on Unix work", {
@@ -143,6 +143,7 @@ test_that("toolchain checks on Unix work", {
 })
 
 test_that("clean and rebuild works", {
+  set_cmdstan_path()
   expect_output(
     rebuild_cmdstan(cores = CORES),
     paste0("CmdStan v", cmdstan_version(), " built"),

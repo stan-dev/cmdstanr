@@ -45,6 +45,17 @@ test_that("Setting path from env var is detected", {
   expect_false(is.null(.cmdstanr$VERSION))
 })
 
+test_that("set_cmdstan_path() uses CMDSTAN env var when path is omitted", {
+  unset_cmdstan_path()
+  withr::local_envvar(c(CMDSTAN = PATH))
+  expect_message(
+    set_cmdstan_path(),
+    paste("CmdStan path set to:", PATH),
+    fixed = TRUE
+  )
+  expect_equal(cmdstan_path(), PATH)
+})
+
 test_that("Unsupported CmdStan path from env var is rejected", {
   unset_cmdstan_path()
   .cmdstanr$WSL <- TRUE
@@ -182,6 +193,16 @@ test_that("CmdStan version helpers handle invalid inputs", {
   expect_identical(cmdstan_min_version(), "2.35.0")
   expect_false(is_supported_cmdstan_version(NULL))
   expect_false(is_supported_cmdstan_version("not-a-version"))
+})
+
+test_that("CmdStan version can be recovered from WSL UNC install path", {
+  wsl_path <- "//wsl$/Ubuntu-22.04/root/.cmdstan/cmdstan-2.38.0"
+
+  expect_true(is_wsl_unc_path(wsl_path))
+  expect_equal(cmdstan_version_from_path(wsl_path), "2.38.0")
+  expect_equal(cmdstan_version_from_path(paste0(wsl_path, "/")), "2.38.0")
+  expect_equal(suppressWarnings(read_cmdstan_version(wsl_path)), "2.38.0")
+  expect_null(cmdstan_version_from_path("//wsl$/Ubuntu-22.04/root/.cmdstan/not-cmdstan"))
 })
 
 test_that("cmdstan_ext() works", {
