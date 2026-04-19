@@ -37,7 +37,6 @@ namespace bernoulli_external_model_namespace
 
 test_that("cmdstan_model works with user_header with mock", {
   tmpfile <- withr::local_tempfile(lines = hpp, fileext = ".hpp")
-  Sys.setFileTime(file_that_exists, file.mtime(tmpfile) - 2)
 
   with_mocked_cli(
     compile_ret = list(status = 0),
@@ -53,7 +52,7 @@ test_that("cmdstan_model works with user_header with mock", {
 
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_mock_compile({
       mod_2 <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -66,31 +65,30 @@ test_that("cmdstan_model works with user_header with mock", {
 
   # Check recompilation upon changing header
   file.create(file_that_exists)
-  Sys.setFileTime(file_that_exists, file.mtime(tmpfile) + 2)
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_no_mock_compile({
       mod$compile(quiet = TRUE, user_header = tmpfile)
     })
   )
 
-  Sys.setFileTime(tmpfile, file.mtime(file_that_exists) + 2) # touch file to trigger recompile
+  Sys.setFileTime(tmpfile, Sys.time() + 1) # touch file to trigger recompile
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_mock_compile({
       mod$compile(quiet = TRUE, user_header = tmpfile)
     })
   )
 
   # mock does not automatically update file mtime
-  Sys.setFileTime(mod$exe_file(), file.mtime(tmpfile) + 2) # touch exe to avoid recompiling
+  Sys.setFileTime(mod$exe_file(), Sys.time() + 1) # touch file to trigger recompile
 
   # Alternative spec of user header
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_no_mock_compile({
       mod$compile(
         quiet = TRUE,
@@ -103,7 +101,7 @@ test_that("cmdstan_model works with user_header with mock", {
   # Error/warning messages
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_error(
       cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -116,7 +114,7 @@ test_that("cmdstan_model works with user_header with mock", {
 
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_warning(
       cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -128,7 +126,7 @@ test_that("cmdstan_model works with user_header with mock", {
   )
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_warning(
       cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -146,7 +144,7 @@ test_that("wsl path conversion is done as expected", {
  # Case 1: arg
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = {
       mod <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -164,7 +162,7 @@ test_that("wsl path conversion is done as expected", {
   # Case 2: cpp opt USER_HEADER
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = {
       mod <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -184,7 +182,7 @@ test_that("wsl path conversion is done as expected", {
   # Case # 3: only user_header opt
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = {
       mod <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -213,7 +211,7 @@ test_that("user_header precedence order is correct", {
   # Case # 1: all 3 specified
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_warning({
       mod <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -242,7 +240,7 @@ test_that("user_header precedence order is correct", {
   # Case # 2: Both opts, but no arg
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_warning({
       mod <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -270,7 +268,7 @@ test_that("user_header precedence order is correct", {
   # Case # 3: Both opts, other order
   with_mocked_cli(
     compile_ret = list(status = 1),
-    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
+    info_ret = list(),
     code = expect_warning({
       mod <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
