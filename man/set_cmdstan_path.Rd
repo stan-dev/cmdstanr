@@ -14,7 +14,8 @@ cmdstan_version(error_on_NA = TRUE)
 }
 \arguments{
 \item{path}{(string) The full file path to the CmdStan installation. If
-\code{NULL} (the default) then the path is set to the default path used by
+\code{NULL} (the default) then the path is set using the \code{"CMDSTAN"}
+environment variable when available, otherwise the default path used by
 \code{\link[=install_cmdstan]{install_cmdstan()}} if it exists.}
 
 \item{error_on_NA}{(logical) Should an error be thrown if CmdStan is not
