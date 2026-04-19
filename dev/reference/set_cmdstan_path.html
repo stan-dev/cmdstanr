@@ -93,7 +93,8 @@ for how to avoid manually setting the path in each <span style="R">R</span> sess
 
 <dl><dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
 <dd><p>(string) The full file path to the CmdStan installation. If
-<code>NULL</code> (the default) then the path is set to the default path used by
+<code>NULL</code> (the default) then the path is set using the <code>"CMDSTAN"</code>
+environment variable when available, otherwise the default path used by
 <code><a href="install_cmdstan.html">install_cmdstan()</a></code> if it exists.</p></dd>
 
 

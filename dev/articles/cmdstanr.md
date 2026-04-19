@@ -214,7 +214,7 @@ fit <- mod$sample(
 
     All 4 chains finished successfully.
     Mean chain execution time: 0.0 seconds.
-    Total execution time: 0.3 seconds.
+    Total execution time: 0.2 seconds.
 
 There are many more arguments that can be passed to the `$sample()`
 method. For details follow this link to its separate documentation page:

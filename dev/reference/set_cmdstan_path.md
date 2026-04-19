@@ -22,7 +22,8 @@ cmdstan_version(error_on_NA = TRUE)
 - path:
 
   (string) The full file path to the CmdStan installation. If `NULL`
-  (the default) then the path is set to the default path used by
+  (the default) then the path is set using the `"CMDSTAN"` environment
+  variable when available, otherwise the default path used by
   [`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
   if it exists.
 
