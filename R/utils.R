@@ -803,17 +803,12 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   withr::with_path(repair_path(file.path(cmdstan_path(),"stan/lib/stan_math/lib/tbb")),
     withr::with_makevars(
       c(
-        CXX_STD = "CXX17",
+        USE_CXX14 = 1,
         PKG_CPPFLAGS = cppflags,
         PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, collapse = " "),
         PKG_LIBS = libs
       ),
-      Rcpp::sourceCpp(
-        code = code,
-        env = env,
-        verbose = verbose,
-        ...
-      )
+      Rcpp::sourceCpp(code = code, env = env, verbose = verbose, ...)
     )
   )
   invisible(NULL)
