@@ -9,7 +9,8 @@
 #' @export
 #'
 #' @param path (string) The full file path to the CmdStan installation. If
-#'   `NULL` (the default) then the path is set to the default path used by
+#'   `NULL` (the default) then the path is set using the `"CMDSTAN"`
+#'   environment variable when available, otherwise the default path used by
 #'   [install_cmdstan()] if it exists.
 #' @return A string. Either the file path to the CmdStan installation or the
 #'   CmdStan version number.
@@ -39,7 +40,8 @@
 #'
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
-    path <- cmdstan_default_path()
+    env_path <- Sys.getenv("CMDSTAN")
+    path <- if (nzchar(env_path)) env_path else cmdstan_default_path()
   }
   if (dir.exists(path)) {
     path <- absolute_path(path)

@@ -45,6 +45,17 @@ test_that("Setting path from env var is detected", {
   expect_false(is.null(.cmdstanr$VERSION))
 })
 
+test_that("set_cmdstan_path() uses CMDSTAN env var when path is omitted", {
+  unset_cmdstan_path()
+  withr::local_envvar(c(CMDSTAN = PATH))
+  expect_message(
+    set_cmdstan_path(),
+    paste("CmdStan path set to:", PATH),
+    fixed = TRUE
+  )
+  expect_equal(cmdstan_path(), PATH)
+})
+
 test_that("Unsupported CmdStan path from env var is rejected", {
   unset_cmdstan_path()
   .cmdstanr$WSL <- TRUE
