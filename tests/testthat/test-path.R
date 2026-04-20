@@ -56,7 +56,7 @@ test_that("set_cmdstan_path() uses CMDSTAN env var when path is omitted", {
   expect_equal(cmdstan_path(), PATH)
 })
 
-test_that("set_cmdstan_path() clears cached state when no path is detected", {
+test_that("set_cmdstan_path() keeps cached state when no path is detected", {
   .cmdstanr$PATH <- PATH
   .cmdstanr$VERSION <- VERSION
   .cmdstanr$WSL <- TRUE
@@ -65,9 +65,9 @@ test_that("set_cmdstan_path() clears cached state when no path is detected", {
     cmdstan_default_path = function(dir = NULL) NULL
   )
   expect_silent(set_cmdstan_path())
-  expect_null(.cmdstanr$PATH)
-  expect_null(.cmdstanr$VERSION)
-  expect_false(isTRUE(.cmdstanr$WSL))
+  expect_equal(.cmdstanr$PATH, PATH)
+  expect_equal(.cmdstanr$VERSION, VERSION)
+  expect_identical(.cmdstanr$WSL, TRUE)
 })
 
 test_that("Unsupported CmdStan path from env var is rejected", {

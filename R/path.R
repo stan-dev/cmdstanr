@@ -50,7 +50,6 @@ set_cmdstan_path <- function(path = NULL) {
     } else {
       path <- cmdstan_default_path()
       if (is.null(path)) {
-        unset_cmdstan_path()
         return(invisible(NULL))
       }
     }

@@ -204,6 +204,28 @@ test_that("cmdstan_make_local() preserves empty make/local behavior", {
   expect_identical(cmdstan_make_local(dir = dir), "")
 })
 
+test_that("cmdstan_make_local() reads back written make flags", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_null(cmdstan_make_local(dir = dir))
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXX" = "clang++", STAN_THREADS = TRUE)
+    ),
+    c("CXX=clang++", "STAN_THREADS=true")
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("PRECOMPILED_HEADERS" = FALSE)),
+    c("CXX=clang++", "STAN_THREADS=true", "PRECOMPILED_HEADERS=false")
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("CXX" = "g++"), append = FALSE),
+    "CXX=g++"
+  )
+})
+
 test_that("matching_variables() works", {
   ret <- matching_variables(c("beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
   expect_equal(
