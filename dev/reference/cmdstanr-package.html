@@ -95,22 +95,22 @@ algorithms, and writing results to output files.</p>
 <h3 id="advantages-of-rstan">Advantages of RStan<a class="anchor" aria-label="anchor" href="#advantages-of-rstan"></a></h3>
 
 <ul><li><p>Allows other developers to distribute R packages with <em>pre-compiled</em>
-Stan programs (like <strong>rstanarm</strong>) on CRAN. (Note: As of 2023, this
-can mostly be achieved with CmdStanR as well. See <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr">Developing using CmdStanR</a>.)</p></li>
-<li><p>Avoids use of R6 classes, which may result in more familiar syntax
-for many R users.</p></li>
+Stan programs (like <strong>rstanarm</strong>) on CRAN. (Note: As of 2023, this can
+mostly be achieved with CmdStanR as well. See <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr">Developing using CmdStanR</a>.)</p></li>
+<li><p>Avoids use of R6 classes, which may result in more familiar syntax for
+many R users.</p></li>
 <li><p>CRAN binaries available for Mac and Windows.</p></li>
 </ul></div>
 
 <div class="section">
 <h3 id="advantages-of-cmdstanr">Advantages of CmdStanR<a class="anchor" aria-label="anchor" href="#advantages-of-cmdstanr"></a></h3>
 
-<ul><li><p>Compatible with latest versions of Stan. Keeping up with Stan
-releases is complicated for RStan, often requiring non-trivial
-changes to the <strong>rstan</strong> package and new CRAN releases of both
-<strong>rstan</strong> and <strong>StanHeaders</strong>. With CmdStanR the latest improvements
-in Stan will be available from R immediately after updating CmdStan
-using <code><a href="install_cmdstan.html">cmdstanr::install_cmdstan()</a></code>.</p></li>
+<ul><li><p>Compatible with latest versions of Stan. Keeping up with Stan releases
+is complicated for RStan, often requiring non-trivial changes to the
+<strong>rstan</strong> package and new CRAN releases of both <strong>rstan</strong> and
+<strong>StanHeaders</strong>. With CmdStanR the latest improvements in Stan will be
+available from R immediately after updating CmdStan using
+<code><a href="install_cmdstan.html">cmdstanr::install_cmdstan()</a></code>.</p></li>
 <li><p>Running Stan via external processes results in fewer unexpected
 crashes, especially in RStudio.</p></li>
 <li><p>Less memory overhead.</p></li>
@@ -157,6 +157,7 @@ documentation and tutorials.</p>
 <li><p>Martin Modrák [contributor]</p></li>
 <li><p>Ven Popov [contributor]</p></li>
 <li><p>Visruth Srimath Kandali [contributor]</p></li>
+<li><p>Aki Vehtari [contributor]</p></li>
 </ul></div>
 
     <div class="section level2">
@@ -404,8 +405,8 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   This procedure has not been thoroughly tested and may be unstable </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   or buggy. The interface is subject to change. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 2e-06 seconds </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 3e-06 seconds </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Adjust your expectations accordingly! </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Begin eta adaptation. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration:   1 / 250 [  0%]  (Adaptation) </span>

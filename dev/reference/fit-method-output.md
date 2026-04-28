@@ -67,17 +67,17 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 327235529
 #> output
-#>   file = /tmp/RtmppGtxdb/logistic-202604271658-1-135190.csv
+#>   file = /tmp/RtmpscIW9A/logistic-202604281240-1-13505a.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmppGtxdb/logistic-profile-202604271658-1-8f43e4.csv
+#>   profile_file = /tmp/RtmpscIW9A/logistic-profile-202604281240-1-8f42ae.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
 #> 
-#> Gradient evaluation took 7e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+#> Gradient evaluation took 8e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -105,8 +105,8 @@ fit_mcmc$output(1)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
 #>  Elapsed Time: 0.019 seconds (Warm-up)
-#>                0.055 seconds (Sampling)
-#>                0.074 seconds (Total)
+#>                0.053 seconds (Sampling)
+#>                0.072 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
 #> List of 4
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 1293992464
 #> output
-#>   file = /tmp/RtmppGtxdb/logistic-202604271658-1-5160a1.csv
+#>   file = /tmp/RtmpscIW9A/logistic-202604281240-1-515f6b.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmppGtxdb/logistic-profile-202604271658-1-538cdd.csv
+#>   profile_file = /tmp/RtmpscIW9A/logistic-profile-202604281240-1-538ba7.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 411984747
 #> output
-#>   file = /tmp/RtmppGtxdb/logistic-202604271658-1-1a69cc.csv
+#>   file = /tmp/RtmpscIW9A/logistic-202604281240-1-1a6896.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmppGtxdb/logistic-profile-202604271658-1-6982c8.csv
+#>   profile_file = /tmp/RtmpscIW9A/logistic-profile-202604281240-1-698192.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -193,8 +193,8 @@ fit_vb$output()
 #> 
 #> 
 #> 
-#> Gradient evaluation took 7e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+#> Gradient evaluation took 8e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
