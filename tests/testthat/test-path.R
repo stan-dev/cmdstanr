@@ -176,6 +176,21 @@ test_that("Setting path rejects unsupported CmdStan versions", {
   expect_false(isTRUE(.cmdstanr$WSL))
 })
 
+test_that("Explicit legacy cmdstan directory can still be set", {
+  unset_cmdstan_path()
+  legacy_install <- file.path(withr::local_tempdir(pattern = "cmdstan-legacy"), "cmdstan")
+  dir.create(legacy_install, recursive = TRUE, showWarnings = FALSE)
+  writeLines("CMDSTAN_VERSION := 2.38.0", con = file.path(legacy_install, "makefile"))
+
+  expect_message(
+    set_cmdstan_path(legacy_install),
+    paste("CmdStan path set to:", absolute_path(legacy_install)),
+    fixed = TRUE
+  )
+  expect_equal(cmdstan_path(), absolute_path(legacy_install))
+  expect_equal(cmdstan_version(), "2.38.0")
+})
+
 test_that("unset_cmdstan_path() also resets WSL state", {
   .cmdstanr$PATH <- PATH
   .cmdstanr$VERSION <- VERSION
@@ -213,6 +228,16 @@ test_that("cmdstan_default_path() ignores unversioned cmdstan directory", {
     file.path(installs, "cmdstan-2.36.0")
   )
   expect_true(dir.exists(file.path(installs, "cmdstan")))
+})
+
+test_that("cmdstan_default_path() returns NULL for legacy-only cmdstan directory", {
+  installs <- withr::local_tempdir(pattern = "cmdstan-legacy-only")
+  legacy_install <- file.path(installs, "cmdstan")
+  dir.create(legacy_install, recursive = TRUE, showWarnings = FALSE)
+  writeLines("CMDSTAN_VERSION := 2.38.0", con = file.path(legacy_install, "makefile"))
+
+  expect_null(cmdstan_default_path(dir = installs))
+  expect_true(dir.exists(legacy_install))
 })
 
 test_that("CmdStan version helpers handle invalid inputs", {

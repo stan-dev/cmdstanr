@@ -255,6 +255,9 @@ latest_cmdstan_installed <- function(installs_path) {
   latest_cmdstan <- ""
   if (length(cmdstan_installs) > 0) {
     cmdstan_installs <- grep("^cmdstan-", cmdstan_installs, value = TRUE)
+    if (length(cmdstan_installs) == 0) {
+      return(latest_cmdstan)
+    }
     latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
     if (is_release_candidate(latest_cmdstan)) {
       non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
