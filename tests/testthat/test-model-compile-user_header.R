@@ -40,7 +40,7 @@ test_that("cmdstan_model works with user_header with mock", {
 
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(),
+    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
     code = expect_mock_compile(
       mod <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
