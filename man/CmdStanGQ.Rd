@@ -101,7 +101,7 @@ The Stan and CmdStan documentation:
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
-Other fitted model objects: 
+Other fitted model objects:
 \code{\link{CmdStanDiagnose}},
 \code{\link{CmdStanLaplace}},
 \code{\link{CmdStanMCMC}},

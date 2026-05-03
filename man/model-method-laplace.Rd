@@ -236,7 +236,7 @@ https://mc-stan.org/docs/cmdstan-guide/
 }
 }
 \seealso{
-Other CmdStanModel methods: 
+Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-compile}},

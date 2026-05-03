@@ -213,6 +213,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Jonah Gabry \email{jgabry@gmail.com}
   \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
   \item Andrew Johnson \email{andrew.johnson@arjohnsonau.com} (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
   \item Steve Bronder
