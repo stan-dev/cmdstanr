@@ -341,7 +341,7 @@ The Stan Math Library's documentation
 (\href{https://mc-stan.org/math/}{mc-stan.org/math}) for more
 details on MPI support in Stan.
 
-Other CmdStanModel methods: 
+Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-compile}},

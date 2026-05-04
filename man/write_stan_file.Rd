@@ -20,7 +20,7 @@ Stan program.}
 
 \item{dir}{(string) An optional path to the directory where the file will be
 written. If omitted, a global option \code{cmdstanr_write_stan_file_dir} is
-used. If the global options is not set, \link[base:tempfile]{temporary directory}
+used. If the global options is not set, \link[base:tempdir]{temporary directory}
 is used.}
 
 \item{basename}{(string) If \code{dir} is specified, optionally the basename to

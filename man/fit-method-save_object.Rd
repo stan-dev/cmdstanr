@@ -14,11 +14,11 @@ save_object(file, format = c("rds", "qs2"), ...)
 \code{"rds"}. The \code{"qs2"} format uses \code{qs2::qs_save()} and requires the \strong{qs2}
 package.}
 
-\item{...}{Other arguments to pass to \code{\link[base:readRDS]{base::saveRDS()}} (for \code{format = "rds"})
+\item{...}{Other arguments to pass to \code{\link[base:saveRDS]{base::saveRDS()}} (for \code{format = "rds"})
 or \code{qs2::qs_save()} (for \code{format = "qs2"}).}
 }
 \description{
-This method is a wrapper around \code{\link[base:readRDS]{base::saveRDS()}} that ensures
+This method is a wrapper around \code{\link[base:saveRDS]{base::saveRDS()}} that ensures
 that all posterior draws and diagnostics are saved when saving a fitted
 model object. Because the contents of the CmdStan output CSV files are only
 read into R lazily (i.e., as needed), the \verb{$save_object()} method is the
