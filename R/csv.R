@@ -188,6 +188,9 @@ read_cmdstan_csv <- function(files,
     }
   }
   metadata <- csv_metadata[[1]]
+  if (metadata$method == "sample") {
+    metadata$num_chains <- length(csv_metadata)
+  }
   uniq_seed <- unique(metadata$seed)
   if (length(uniq_seed) == 1) {
     metadata$seed <- uniq_seed

@@ -423,7 +423,8 @@ test_that("diagnostic_summary() works", {
   expect_equal(fit$diagnostic_summary(NULL), list())
 })
 
-test_that("metadata()$time has chains rowss", {
+test_that("metadata()$time has chains rows", {
+  expect_equal(fit_mcmc$metadata()$num_chains, fit_mcmc$num_chains())
   expect_equal(nrow(fit_mcmc$metadata()$time), fit_mcmc$num_chains())
   expect_equal(nrow(fit_mcmc_0$metadata()$time), fit_mcmc_0$num_chains())
   expect_equal(nrow(fit_mcmc_1$metadata()$time), fit_mcmc_1$num_chains())
