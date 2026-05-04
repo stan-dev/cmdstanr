@@ -92,6 +92,7 @@ The loo package website with
 ## Examples
 
 ``` r
+
 # \dontrun{
 # the "logistic" example model has "log_lik" in generated quantities
 fit <- cmdstanr_example("logistic")

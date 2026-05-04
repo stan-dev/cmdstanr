@@ -34,6 +34,7 @@ If you are new to CmdStanR we recommend starting with these vignettes:
 You can install the latest release of the **cmdstanr** R package with
 
 ``` r
+
 # we recommend running this in a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
@@ -46,6 +47,7 @@ To instead install the latest development version of the package from
 GitHub use
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("stan-dev/cmdstanr")
 ```

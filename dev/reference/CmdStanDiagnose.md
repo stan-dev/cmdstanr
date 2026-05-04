@@ -10,15 +10,15 @@ object.
 
 `CmdStanDiagnose` objects have the following associated methods:
 
-|                                                                                                      |                                                                |
-|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
-| **Method**                                                                                           | **Description**                                                |
-| [`$gradients()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-gradients.md)                 | Return gradients from diagnostic mode.                         |
-| [`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md)                               | Return the total log probability density (`target`).           |
-| [`$init()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init.md)                           | Return user-specified initial values.                          |
-| [`$metadata()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-metadata.md)                   | Return a list of metadata gathered from the CmdStan CSV files. |
-| [`$save_output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save output CSV files to a specified location.                 |
-| [`$save_data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)    | Save JSON data file to a specified location.                   |
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| [`$gradients()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-gradients.md) | Return gradients from diagnostic mode. |
+| [`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md) | Return the total log probability density (`target`). |
+| [`$init()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init.md) | Return user-specified initial values. |
+| [`$metadata()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-metadata.md) | Return a list of metadata gathered from the CmdStan CSV files. |
+| [`$save_output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save output CSV files to a specified location. |
+| [`$save_data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save JSON data file to a specified location. |
 
 ## See also
 

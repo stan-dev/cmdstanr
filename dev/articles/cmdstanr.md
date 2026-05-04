@@ -13,6 +13,7 @@ CmdStan, the command line interface to Stan. First we install the R
 package by running the following command in R.
 
 ``` r
+
 # we recommend running this is a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
@@ -21,6 +22,7 @@ We can now load the package like any other R package. We’ll also load
 the **bayesplot** and **posterior** packages to use later in examples.
 
 ``` r
+
 library(cmdstanr)
 library(posterior)
 library(bayesplot)
@@ -42,6 +44,7 @@ To double check that your toolchain is set up properly you can call the
 function:
 
 ``` r
+
 check_cmdstan_toolchain()
 ```
 
@@ -53,6 +56,7 @@ by calling the
 function:
 
 ``` r
+
 install_cmdstan(cores = 2)
 ```
 
@@ -85,6 +89,7 @@ path) you can use the
 function:
 
 ``` r
+
 set_cmdstan_path(PATH_TO_CMDSTAN)
 ```
 
@@ -95,12 +100,14 @@ and
 [`cmdstan_version()`](https://mc-stan.org/cmdstanr/dev/reference/set_cmdstan_path.md):
 
 ``` r
+
 cmdstan_path()
 ```
 
     [1] "/home/runner/.cmdstan/cmdstan-2.38.0"
 
 ``` r
+
 cmdstan_version()
 ```
 
@@ -118,6 +125,7 @@ executable. Here we’ll use the example Stan program that comes with the
 CmdStan installation:
 
 ``` r
+
 file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
 mod <- cmdstan_model(file)
 ```
@@ -134,6 +142,7 @@ user experience and share many implementation details.
 The Stan program can be printed using the `$print()` method:
 
 ``` r
+
 mod$print()
 ```
 
@@ -153,6 +162,7 @@ The path to the compiled executable is returned by the `$exe_file()`
 method:
 
 ``` r
+
 mod$exe_file()
 ```
 
@@ -169,6 +179,7 @@ a named list of R objects (like for RStan) or a path to a data file
 compatible with CmdStan (JSON or R dump).
 
 ``` r
+
 # names correspond to the data block in the Stan program
 data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 
@@ -243,6 +254,7 @@ to specify which summaries to compute, whether to use multiple cores,
 etc.
 
 ``` r
+
 fit$summary()
 fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
@@ -290,6 +302,7 @@ demonstrate only the `draws_array` and `draws_df` formats, but the
 **posterior** package supports other useful formats as well.
 
 ``` r
+
 # default is a 3-D draws_array object from the posterior package
 # iterations x chains x variables
 draws_arr <- fit$draws() # or format="array"
@@ -303,6 +316,7 @@ str(draws_arr)
       ..$ variable : chr [1:2] "lp__" "theta"
 
 ``` r
+
 # draws x variables data frame
 draws_df <- fit$draws(format = "df")
 str(draws_df)
@@ -316,6 +330,7 @@ str(draws_df)
      $ .draw     : int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...
 
 ``` r
+
 print(draws_df)
 ```
 
@@ -338,6 +353,7 @@ To convert an existing draws object to a different format use the
 `posterior::as_draws_*()` functions.
 
 ``` r
+
 # this should be identical to draws_df created via draws(format = "df")
 draws_df_2 <- as_draws_df(draws_arr)
 identical(draws_df, draws_df_2)
@@ -363,6 +379,7 @@ returned by the `$draws()` method directly to plotting functions in our
 [**bayesplot**](https://mc-stan.org/bayesplot/) package.
 
 ``` r
+
 mcmc_hist(fit$draws("theta"))
 ```
 
@@ -379,6 +396,7 @@ method extracts the values of the sampler parameters (`treedepth__`,
 The default is as a 3-D array (iteration x chain x variable).
 
 ``` r
+
 # this is a draws_array object from the posterior package
 str(fit$sampler_diagnostics())
 ```
@@ -390,6 +408,7 @@ str(fit$sampler_diagnostics())
       ..$ variable : chr [1:6] "treedepth__" "divergent__" "energy__" "accept_stat__" ...
 
 ``` r
+
 # this is a draws_df object from the posterior package
 str(fit$sampler_diagnostics(format = "df"))
 ```
@@ -411,6 +430,7 @@ The `$diagnostic_summary()` method will display any sampler diagnostic
 warnings and return a summary of diagnostics for each chain.
 
 ``` r
+
 fit$diagnostic_summary()
 ```
 
@@ -432,6 +452,7 @@ warning messages we’ll use one of the CmdStanR example models that
 suffers from divergences.
 
 ``` r
+
 fit_with_warning <- cmdstanr_example("schools")
 ```
 
@@ -445,6 +466,7 @@ After fitting there is a warning about divergences. We can also
 regenerate this warning message later using `fit$diagnostic_summary()`.
 
 ``` r
+
 diagnostics <- fit_with_warning$diagnostic_summary()
 ```
 
@@ -455,6 +477,7 @@ diagnostics <- fit_with_warning$diagnostic_summary()
     See https://mc-stan.org/misc/warnings for details.
 
 ``` r
+
 print(diagnostics)
 ```
 
@@ -468,6 +491,7 @@ print(diagnostics)
     [1] 0.33 0.37 0.33 0.26
 
 ``` r
+
 # number of divergences reported in warning is the sum of the per chain values
 sum(diagnostics$num_divergent)
 ```
@@ -494,6 +518,7 @@ We can find the (penalized) maximum likelihood estimate (MLE) using
 [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
 ``` r
+
 fit_mle <- mod$optimize(data = data_list, seed = 123)
 ```
 
@@ -505,6 +530,7 @@ fit_mle <- mod$optimize(data = data_list, seed = 123)
     Finished in  0.1 seconds.
 
 ``` r
+
 fit_mle$print() # includes lp__ (log prob calculated by Stan program)
 ```
 
@@ -513,6 +539,7 @@ fit_mle$print() # includes lp__ (log prob calculated by Stan program)
         theta     0.20
 
 ``` r
+
 fit_mle$mle("theta")
 ```
 
@@ -523,6 +550,7 @@ Here’s a plot comparing the penalized MLE to the posterior distribution
 of `theta`.
 
 ``` r
+
 mcmc_hist(fit$draws("theta")) +
   vline_at(fit_mle$mle("theta"), size = 1.5)
 ```
@@ -546,6 +574,7 @@ Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation
 section of the CmdStan User’s Guide for more details.
 
 ``` r
+
 fit_map <- mod$optimize(
   data = data_list,
   jacobian = TRUE,
@@ -579,6 +608,7 @@ If `mode` is omitted then optimization will be run internally before
 taking draws from the normal approximation.
 
 ``` r
+
 fit_laplace <- mod$laplace(
     mode = fit_map,
     draws = 4000,
@@ -598,6 +628,7 @@ fit_laplace <- mod$laplace(
     Finished in  0.1 seconds.
 
 ``` r
+
 fit_laplace$print("theta")
 ```
 
@@ -605,6 +636,7 @@ fit_laplace$print("theta")
         theta 0.27   0.25 0.12 0.12 0.10 0.51
 
 ``` r
+
 mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025)
 ```
 
@@ -619,6 +651,7 @@ method. For details on the ADVI algorithm see the [CmdStan User’s
 Guide](https://mc-stan.org/docs/cmdstan-guide/variational-inference-algorithm-advi.html).
 
 ``` r
+
 fit_vb <- mod$variational(
   data = data_list,
   seed = 123,
@@ -651,6 +684,7 @@ fit_vb <- mod$variational(
     Finished in  0.1 seconds.
 
 ``` r
+
 fit_vb$print("theta")
 ```
 
@@ -658,6 +692,7 @@ fit_vb$print("theta")
         theta 0.26   0.24 0.11 0.11 0.11 0.46
 
 ``` r
+
 mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
 ```
 
@@ -674,6 +709,7 @@ Pathfinder is run using the
 method.
 
 ``` r
+
 fit_pf <- mod$pathfinder(
   data = data_list,
   seed = 123,
@@ -700,6 +736,7 @@ fit_pf <- mod$pathfinder(
     Finished in  0.1 seconds.
 
 ``` r
+
 fit_pf$print("theta")
 ```
 
@@ -712,6 +749,7 @@ distributions are quite similar, but this will not always be the case
 for more challenging problems.
 
 ``` r
+
 mcmc_hist(fit_pf$draws("theta"), binwidth = 0.025) +
   ggplot2::labs(subtitle = "Approximate posterior from pathfinder") +
   ggplot2::xlim(0, 1)
@@ -720,6 +758,7 @@ mcmc_hist(fit_pf$draws("theta"), binwidth = 0.025) +
 ![](cmdstanr_files/figure-html/plot-compare-pf-1.png)
 
 ``` r
+
 mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025) +
   ggplot2::labs(subtitle = "Approximate posterior from variational") +
   ggplot2::xlim(0, 1)
@@ -728,6 +767,7 @@ mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025) +
 ![](cmdstanr_files/figure-html/plot-compare-vb-1.png)
 
 ``` r
+
 mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025) +
   ggplot2::labs(subtitle = "Approximate posterior from Laplace") +
   ggplot2::xlim(0, 1)
@@ -736,6 +776,7 @@ mcmc_hist(fit_laplace$draws("theta"), binwidth = 0.025) +
 ![](cmdstanr_files/figure-html/plot-compare-laplace-1.png)
 
 ``` r
+
 mcmc_hist(fit$draws("theta"), binwidth = 0.025) +
   ggplot2::labs(subtitle = "Posterior from MCMC") +
   ggplot2::xlim(0, 1)
@@ -765,6 +806,7 @@ be read back into R using
 [`readRDS()`](https://rdrr.io/r/base/readRDS.html).
 
 ``` r
+
 fit$save_object(file = "fit.RDS")
 
 fit2 <- readRDS("fit.RDS")
@@ -777,6 +819,7 @@ format. The saved object can then be read back into R using
 [`qs2::qs_read()`](https://rdrr.io/pkg/qs2/man/qs_read.html).
 
 ``` r
+
 fit$save_object(file = "fit.qs2", format = "qs2")
 
 fit2 <- qs2::qs_read("fit.qs2")

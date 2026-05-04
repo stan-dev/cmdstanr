@@ -15,6 +15,7 @@ computation. For ideas on how to address performance of your model from
 a statistical perspective, see Gelman et al. (2020).
 
 ``` r
+
 library(cmdstanr)
 check_cmdstan_toolchain(quiet = TRUE)
 ```
@@ -60,6 +61,7 @@ and use
 to write it to a temporary file.
 
 ``` r
+
 profiling_bernoulli_logit <- write_stan_file('
 data {
   int<lower=1> k;
@@ -87,6 +89,7 @@ We can then run the model as usual and Stan will collect the profiling
 information for any sections with `profile` statements.
 
 ``` r
+
 # Compile the model
 model <- cmdstan_model(profiling_bernoulli_logit)
 
@@ -113,13 +116,14 @@ aggregated). Details on the column names are available in the [CmdStan
 documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
 
 ``` r
+
 fit$profiles()
 ```
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140170543228736 0.664711490  0.515413740  0.149297740       52356
-    2     priors 140170543228736 0.004172202  0.003177519  0.000994683       34904
+    1 likelihood 139945264977728 0.666705630   0.51838288  0.148322750       52356
+    2     priors 139945264977728 0.003736953   0.00273856  0.000998393       34904
       no_chain_stack autodiff_calls no_autodiff_calls
     1       34921452          17452                 1
     2          34904          17452                 1
@@ -140,6 +144,7 @@ statements so that the profiling information for the new model is
 collected automatically just like for the previous one.
 
 ``` r
+
 profiling_bernoulli_logit_glm <- write_stan_file('
 data {
   int<lower=1> k;
@@ -164,21 +169,23 @@ model {
 ```
 
 ``` r
+
 model_glm <- cmdstan_model(profiling_bernoulli_logit_glm)
 fit_glm <- model_glm$sample(data = stan_data, chains = 1)
 ```
 
 ``` r
+
 fit_glm$profiles()
 ```
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140385622419264 0.433039500  0.431917360  0.001122145       51321
-    2     priors 140385622419264 0.003646708  0.002620193  0.001026515       34214
+    1     priors 140681893771072 0.003727053  0.002644076  0.001082977       34214
+    2 likelihood 140681893771072 0.431713430  0.430571290  0.001142144       51321
       no_chain_stack autodiff_calls no_autodiff_calls
-    1          17107          17107                 1
-    2          34214          17107                 1
+    1          34214          17107                 1
+    2          17107          17107                 1
 
 We can see from the `total_time` column that the likelihood computation
 is faster than in the previous model.
@@ -201,12 +208,13 @@ across runs with different seeds). To compute these, use the
 `autodiff_calls` column.
 
 ``` r
+
 profile_chain_1 <- fit$profiles()[[1]]
 per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.808798e-05 2.390673e-07
+    [1] 3.820225e-05 2.141275e-07
 
 ### Accessing and saving the profile files
 
@@ -216,15 +224,17 @@ The paths of the profiling CSV files can be retrieved using
 `$profile_files()`.
 
 ``` r
+
 fit$profile_files()
 ```
 
-    [1] "/tmp/RtmpJA1U5g/model_580e4657b49f155a37081bdfaae83f92-profile-202604281246-1-80683a.csv"
+    [1] "/tmp/RtmpFMs4vQ/model_580e4657b49f155a37081bdfaae83f92-profile-202605040923-1-806971.csv"
 
 These can be saved to a more permanent location with the
 `$save_profile_files()` method.
 
 ``` r
+
 # see ?save_profile_files for info on optional arguments
 fit$save_profile_files(dir = "path/to/directory")
 ```

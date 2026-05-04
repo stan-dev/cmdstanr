@@ -33,6 +33,7 @@ the below script and set `path_to_opencl_lib` to the path to the
 be similar to the one listed here.
 
 ``` r
+
 path_to_opencl_lib <- "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64"
 cpp_options = list(
   paste0("LDFLAGS+= -L\"",path_to_opencl_lib,"\" -lOpenCL")
@@ -74,6 +75,7 @@ Consider a simple logistic regression with parameters `alpha` and
 Some fake data will be useful to run this model:
 
 ``` r
+
 library(cmdstanr)
 
 # Generate some fake data
@@ -94,6 +96,7 @@ To build the model with OpenCL support, add
 `cpp_options = list(stan_opencl = TRUE)` at the compilation step.
 
 ``` r
+
 # Compile the model with STAN_OPENCL=TRUE
 mod_cl <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan",
                         cpp_options = list(stan_opencl = TRUE))
@@ -122,6 +125,7 @@ as a vector of length 2, where the first element is the platform ID and
 the second argument is the device ID.
 
 ``` r
+
 fit_cl <- mod_cl$sample(data = mdata, chains = 4, parallel_chains = 4,
                         opencl_ids = c(0, 0), refresh = 0)
 ```
@@ -129,6 +133,7 @@ fit_cl <- mod_cl$sample(data = mdata, chains = 4, parallel_chains = 4,
 We’ll also run a version without OpenCL and compare the run times.
 
 ``` r
+
 # no OpenCL version
 mod <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan", force_recompile = TRUE)
 fit_cpu <- mod$sample(data = mdata, chains = 4, parallel_chains = 4, refresh = 0)
@@ -137,6 +142,7 @@ fit_cpu <- mod$sample(data = mdata, chains = 4, parallel_chains = 4, refresh = 0
 The speedup of the OpenCL model is:
 
 ``` r
+
 fit_cpu$time()$total / fit_cl$time()$total
 ```
 

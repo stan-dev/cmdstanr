@@ -22,6 +22,7 @@ A character vector with one element per line of code.
 ## Examples
 
 ``` r
+
 # \dontrun{
 fit <- cmdstanr_example()
 fit$code() # character vector

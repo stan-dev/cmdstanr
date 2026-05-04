@@ -6,6 +6,7 @@ We can easily customize the summary statistics reported by `$summary()`
 and `$print()`.
 
 ``` r
+
 fit <- cmdstanr::cmdstanr_example("schools", method = "sample")
 ```
 
@@ -13,6 +14,7 @@ fit <- cmdstanr::cmdstanr_example("schools", method = "sample")
     See https://mc-stan.org/misc/warnings for details.
 
 ``` r
+
 fit$summary()
 ```
 
@@ -44,6 +46,7 @@ fit$summary()
 By default all variables are summaries with the follow functions:
 
 ``` r
+
 posterior::default_summary_measures()
 ```
 
@@ -52,6 +55,7 @@ posterior::default_summary_measures()
 To change the variables summarized, we use the variables argument
 
 ``` r
+
 fit$summary(variables = c("mu", "tau"))
 ```
 
@@ -65,6 +69,7 @@ fit$summary(variables = c("mu", "tau"))
 We can additionally change which functions are used
 
 ``` r
+
 fit$summary(variables = c("mu", "tau"), mean, sd)
 ```
 
@@ -77,6 +82,7 @@ to set explicitly set the variables argument, either to `NULL` or the
 full vector of variable names.
 
 ``` r
+
 fit$summary(variables = NULL, "mean", "median")
 ```
 
@@ -100,6 +106,7 @@ If these arguments are named, those names will be used in the tibble
 output. If the summary results are named they will take precedence.
 
 ``` r
+
 my_sd <- function(x) c(My_SD = sd(x))
 fit$summary(
   c("mu", "tau"), 
@@ -118,6 +125,7 @@ fit$summary(
 Arguments to all summary functions can also be specified with `.args`.
 
 ``` r
+
 fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, .05, .95, .975)))
 ```
 
@@ -129,6 +137,7 @@ The summary functions are applied to the array of sample values, with
 dimension `iter_sampling`x`chains`.
 
 ``` r
+
 fit$summary(variables = NULL, dim, colMeans)
 ```
 
@@ -153,6 +162,7 @@ function, which can also be accessed via
 [`posterior::variance()`](https://pkg.mitchelloharawild.com/distributional/reference/variance.html).
 
 ``` r
+
 fit$summary(c("mu", "tau"), posterior::variance, ~var(as.vector(.x)))
 ```
 
@@ -164,6 +174,7 @@ Summary functions need not be numeric, but these won’t work with
 `$print()`.
 
 ``` r
+
 strict_pos <- function(x) if (all(x > 0)) "yes" else "no"
 fit$summary(variables = NULL, "Strictly Positive" = strict_pos)
 ```
@@ -182,6 +193,7 @@ fit$summary(variables = NULL, "Strictly Positive" = strict_pos)
     11 theta[8]                no
 
 ``` r
+
 # fit$print(variables = NULL, "Strictly Positive" = strict_pos)
 ```
 
@@ -199,6 +211,7 @@ demonstrate only the `draws_array` and `draws_df` formats, but the
 **posterior** package supports other useful formats as well.
 
 ``` r
+
 # default is a 3-D draws_array object from the posterior package
 # iterations x chains x variables
 draws_arr <- fit$draws() # or format="array"
@@ -212,6 +225,7 @@ str(draws_arr)
       ..$ variable : chr [1:11] "lp__" "mu" "tau" "theta[1]" ...
 
 ``` r
+
 # draws x variables data frame
 draws_df <- fit$draws(format = "df")
 str(draws_df)
@@ -234,6 +248,7 @@ str(draws_df)
      $ .draw     : int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...
 
 ``` r
+
 print(draws_df)
 ```
 
@@ -278,6 +293,7 @@ use
 For example:
 
 ``` r
+
 draws <- posterior::as_draws_rvars(fit$draws())
 x_rvar <- draws$x
 x_array <- posterior::draws_of(draws$x)

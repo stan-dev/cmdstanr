@@ -35,6 +35,7 @@ If CmdStanR is being used a replacement engine needs to be registered
 along the following lines:
 
 ``` r
+
 library(cmdstanr)
 register_knitr_engine(override = TRUE)
 ```
@@ -69,6 +70,7 @@ model {
 ```
 
 ``` r
+
 ex1$print()
 #> // This stan chunk results in a CmdStanModel object called "ex1"
 #> parameters {
@@ -81,6 +83,7 @@ ex1$print()
 ```
 
 ``` r
+
 fit <- ex1$sample(
   refresh = 0,
   seed = 42L
@@ -112,6 +115,7 @@ exists. When registering CmdStanR’s knitr engine, set `override = FALSE`
 to register the engine as a `cmdstan` engine:
 
 ``` r
+
 register_knitr_engine(override = FALSE)
 ```
 

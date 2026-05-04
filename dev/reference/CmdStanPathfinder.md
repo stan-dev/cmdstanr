@@ -13,42 +13,42 @@ of which have their own (linked) documentation pages.
 
 ### Extract contents of fitted model object
 
-|                                                                                    |                                                                                                                      |
-|------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| **Method**                                                                         | **Description**                                                                                                      |
-| [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)       | Return approximate posterior draws as a [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html). |
-| [`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md)             | Return the total log probability density (`target`) computed in the model block of the Stan program.                 |
-| [`$lp_approx()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md)      | Return the log density of the approximation to the posterior.                                                        |
-| [`$init()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init.md)         | Return user-specified initial values.                                                                                |
-| [`$metadata()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-metadata.md) | Return a list of metadata gathered from the CmdStan CSV files.                                                       |
-| [`$code()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-code.md)         | Return Stan code as a character vector.                                                                              |
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md) | Return approximate posterior draws as a [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html). |
+| [`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md) | Return the total log probability density (`target`) computed in the model block of the Stan program. |
+| [`$lp_approx()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md) | Return the log density of the approximation to the posterior. |
+| [`$init()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init.md) | Return user-specified initial values. |
+| [`$metadata()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-metadata.md) | Return a list of metadata gathered from the CmdStan CSV files. |
+| [`$code()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-code.md) | Return Stan code as a character vector. |
 
 ### Summarize inferences
 
-|                                                                                                  |                                                                                                   |
-|--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
-| **Method**                                                                                       | **Description**                                                                                   |
-| [`$summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-summary.md)                 | Run [`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html). |
-| [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-cmdstan_summary.md) | Run and print CmdStan's `bin/stansummary`.                                                        |
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| [`$summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-summary.md) | Run [`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html). |
+| [`$cmdstan_summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-cmdstan_summary.md) | Run and print CmdStan's `bin/stansummary`. |
 
 ### Save fitted model object and temporary files
 
-|                                                                                                               |                                                    |
-|---------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
-| **Method**                                                                                                    | **Description**                                    |
-| [`$save_object()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_object.md)                      | Save fitted model object to a file.                |
-| [`$save_output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)          | Save output CSV files to a specified location.     |
-| [`$save_data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)             | Save JSON data file to a specified location.       |
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| [`$save_object()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_object.md) | Save fitted model object to a file. |
+| [`$save_output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save output CSV files to a specified location. |
+| [`$save_data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save JSON data file to a specified location. |
 | [`$save_latent_dynamics_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save diagnostic CSV files to a specified location. |
 
 ### Report run times, console output, return codes
 
-|                                                                                            |                                                          |
-|--------------------------------------------------------------------------------------------|----------------------------------------------------------|
-| **Method**                                                                                 | **Description**                                          |
-| [`$time()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-time.md)                 | Report the total run time.                               |
-| [`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md)             | Pretty print the output that was printed to the console. |
-| [`$return_codes()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-return_codes.md) | Return the return codes from the CmdStan runs.           |
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| [`$time()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-time.md) | Report the total run time. |
+| [`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md) | Pretty print the output that was printed to the console. |
+| [`$return_codes()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-return_codes.md) | Return the return codes from the CmdStan runs. |
 
 ## See also
 

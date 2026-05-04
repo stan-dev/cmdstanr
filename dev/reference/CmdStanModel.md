@@ -14,45 +14,45 @@ which have their own (linked) documentation pages:
 
 ### Stan code
 
-|                                                                                              |                                              |
-|----------------------------------------------------------------------------------------------|----------------------------------------------|
-| **Method**                                                                                   | **Description**                              |
-| `$stan_file()`                                                                               | Return the file path to the Stan program.    |
-| `$code()`                                                                                    | Return Stan program as a character vector.   |
-| `$print()`                                                                                   | Print readable version of Stan program.      |
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| `$stan_file()` | Return the file path to the Stan program. |
+| `$code()` | Return Stan program as a character vector. |
+| `$print()` | Print readable version of Stan program. |
 | [`$check_syntax()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md) | Check Stan syntax without having to compile. |
-| [`$format()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md)             | Format and canonicalize the Stan model code. |
+| [`$format()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md) | Format and canonicalize the Stan model code. |
 
 ### Compilation
 
-|                                                                                                      |                                                                            |
-|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| **Method**                                                                                           | **Description**                                                            |
-| [`$compile()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)                   | Compile Stan program.                                                      |
-| [`$exe_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)                  | Return the file path to the compiled executable.                           |
-| [`$hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)                  | Return the file path to the `.hpp` file containing the generated C++ code. |
-| [`$save_hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)             | Save the `.hpp` file containing the generated C++ code.                    |
-| [`$expose_functions()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md) | Expose Stan functions for use in R.                                        |
-| [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md) | Get CmdStan default argument values for a method.                          |
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| [`$compile()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md) | Compile Stan program. |
+| [`$exe_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md) | Return the file path to the compiled executable. |
+| [`$hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md) | Return the file path to the `.hpp` file containing the generated C++ code. |
+| [`$save_hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md) | Save the `.hpp` file containing the generated C++ code. |
+| [`$expose_functions()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md) | Expose Stan functions for use in R. |
+| [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md) | Get CmdStan default argument values for a method. |
 
 ### Diagnostics
 
-|                                                                                      |                                                                                                                                                        |
-|--------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Method**                                                                           | **Description**                                                                                                                                        |
+|  |  |
+|----|----|
+| **Method** | **Description** |
 | [`$diagnose()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md) | Run CmdStan's `"diagnose"` method to test gradients, return [`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanDiagnose.md) object. |
 
 ### Model fitting
 
-|                                                                                                            |                                                                                                                                                                                                                         |
-|------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Method**                                                                                                 | **Description**                                                                                                                                                                                                         |
-| [`$sample()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md)                           | Run CmdStan's `"sample"` method, return [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md) object.                                                                                              |
-| [`$sample_mpi()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample_mpi.md)                   | Run CmdStan's `"sample"` method with [MPI](https://mc-stan.org/math/md_doxygen_2parallelism__support_2mpi__parallelism.html), return [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md) object. |
-| [`$optimize()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md)                       | Run CmdStan's `"optimize"` method, return [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md) object.                                                                                              |
-| [`$variational()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md)                 | Run CmdStan's `"variational"` method, return [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md) object.                                                                                             |
-| [`$pathfinder()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md)                   | Run CmdStan's `"pathfinder"` method, return [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md) object.                                                                              |
-| [`$generate_quantities()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md) | Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md) object.                                                                                     |
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| [`$sample()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md) | Run CmdStan's `"sample"` method, return [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md) object. |
+| [`$sample_mpi()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample_mpi.md) | Run CmdStan's `"sample"` method with [MPI](https://mc-stan.org/math/md_doxygen_2parallelism__support_2mpi__parallelism.html), return [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md) object. |
+| [`$optimize()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md) | Run CmdStan's `"optimize"` method, return [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md) object. |
+| [`$variational()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md) | Run CmdStan's `"variational"` method, return [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md) object. |
+| [`$pathfinder()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md) | Run CmdStan's `"pathfinder"` method, return [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md) object. |
+| [`$generate_quantities()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md) | Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md) object. |
 
 ## See also
 

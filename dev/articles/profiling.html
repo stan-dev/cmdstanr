@@ -211,8 +211,8 @@ documentation</a>.</p>
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1 likelihood 140170543228736 0.664711490  0.515413740  0.149297740       52356
-2     priors 140170543228736 0.004172202  0.003177519  0.000994683       34904
+1 likelihood 139945264977728 0.666705630   0.51838288  0.148322750       52356
+2     priors 139945264977728 0.003736953   0.00273856  0.000998393       34904
   no_chain_stack autodiff_calls no_autodiff_calls
 1       34921452          17452                 1
 2          34904          17452                 1</code></pre>
@@ -258,11 +258,11 @@ like for the previous one.</p>
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1 likelihood 140385622419264 0.433039500  0.431917360  0.001122145       51321
-2     priors 140385622419264 0.003646708  0.002620193  0.001026515       34214
+1     priors 140681893771072 0.003727053  0.002644076  0.001082977       34214
+2 likelihood 140681893771072 0.431713430  0.430571290  0.001142144       51321
   no_chain_stack autodiff_calls no_autodiff_calls
-1          17107          17107                 1
-2          34214          17107                 1</code></pre>
+1          34214          17107                 1
+2          17107          17107                 1</code></pre>
 <p>We can see from the <code>total_time</code> column that the
 likelihood computation is faster than in the previous model.</p>
 </div>
@@ -285,7 +285,7 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span><span class="op">/</span><span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 3.808798e-05 2.390673e-07</code></pre>
+<pre><code>[1] 3.820225e-05 2.141275e-07</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
@@ -296,7 +296,7 @@ The paths of the profiling CSV files can be retrieved using
 <code>$profile_files()</code>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/RtmpJA1U5g/model_580e4657b49f155a37081bdfaae83f92-profile-202604281246-1-80683a.csv"</code></pre>
+<pre><code>[1] "/tmp/RtmpFMs4vQ/model_580e4657b49f155a37081bdfaae83f92-profile-202605040923-1-806971.csv"</code></pre>
 <p>These can be saved to a more permanent location with the
 <code>$save_profile_files()</code> method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
