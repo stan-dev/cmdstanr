@@ -64,7 +64,7 @@ fit$cmdstan_summary()
 #> 4 chains: each with iter=1000; warmup=1000; thin=1; 1000 iterations saved.
 #> 
 #> Warmup took (0.019, 0.019, 0.019, 0.019) seconds, 0.076 seconds total
-#> Sampling took (0.055, 0.054, 0.052, 0.054) seconds, 0.21 seconds total
+#> Sampling took (0.055, 0.053, 0.053, 0.054) seconds, 0.21 seconds total
 #> 
 #>                     Mean     MCSE  StdDev    MAD     5%       50%       95%  ESS_bulk  ESS_tail  ESS_bulk/s  R_hat
 #> 
