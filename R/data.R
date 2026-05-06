@@ -92,7 +92,11 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
     } else if (is.data.frame(var)) {
       var <- data.matrix(var)
     } else if (is.list(var)) {
-      var <- list_to_array(var, var_name)
+      if (is_tuple_list(var)) {
+        var <- prepare_tuple_for_json(var)
+      } else {
+        var <- list_to_array(var, var_name)
+      }
     }
     data[[var_name]] <- var
   }
@@ -109,6 +113,38 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
   )
 }
 
+
+# Detect whether a list represents a Stan tuple value.
+# Tuple lists are named lists with string-integer keys ("1", "2", ...)
+# corresponding to the tuple element positions.
+is_tuple_list <- function(x) {
+  nms <- names(x)
+  if (is.null(nms) || length(nms) == 0) {
+    return(FALSE)
+  }
+  expected <- as.character(seq_along(x))
+  identical(nms, expected)
+}
+
+# Recursively prepare a tuple value for JSON serialization.
+# Processes sub-elements: nested tuple lists are recursed into,
+# array-style lists (unnamed, homogeneous) are converted via list_to_array,
+# and numeric/logical values are left as-is.
+prepare_tuple_for_json <- function(x) {
+  for (i in seq_along(x)) {
+    val <- x[[i]]
+    if (is.list(val)) {
+      if (is_tuple_list(val)) {
+        x[[i]] <- prepare_tuple_for_json(val)
+      } else {
+        x[[i]] <- list_to_array(val)
+      }
+    } else if (is.logical(val)) {
+      mode(x[[i]]) <- "integer"
+    }
+  }
+  x
+}
 
 list_to_array <- function(x, name = NULL) {
   list_length <- length(x)
