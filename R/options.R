@@ -28,6 +28,9 @@
 #' CSV files when fitting models. The default is a temporary directory. Files in
 #' a temporary directory are removed as part of \R garbage collection, while
 #' files in an explicitly defined directory are not automatically deleted.
+#' Note that using caching with R Markdown or Quarto does not store files from a
+#' temporary directory, so we recommend setting `cmdstanr_output_dir` to avoid
+#' failures when re-rendering.
 #'
 #' * `cmdstanr_verbose`: Should more information be printed
 #' when compiling or running models, including showing how CmdStan was called
