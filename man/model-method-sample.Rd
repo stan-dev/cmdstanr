@@ -38,7 +38,9 @@ sample(
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = getOption("cmdstanr_save_metric", FALSE),
-  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  show_progress_bar = FALSE,
+  suppress_iteration_messages = NULL
 )
 }
 \arguments{
@@ -295,6 +297,16 @@ entire \R session by \code{options(cmdstanr_save_metric = TRUE)}.}
 tree and extra information (equivalent to the output CSV file header). The
 default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
 \code{options(cmdstanr_save_config = TRUE)}.}
+
+\item{show_progress_bar}{(logical). When \code{TRUE}, registers a progress bar to
+display sampling progress via the \code{progressr} framework. The user is
+responsible for registering a handler to display the progress bar. A
+default handler, using the \code{cli} package, can be registered via
+\code{\link[=register_default_progress_handler]{register_default_progress_handler()}}. The default is \code{FALSE}.}
+
+\item{suppress_iteration_messages}{(logical) When \code{TRUE}, suppresses CmdStan
+output lines reporting iterations, intended for use with the
+\code{show_progress_bar} argument. Defaults to the value of \code{show_progress_bar}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
