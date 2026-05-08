@@ -989,7 +989,7 @@ validate_pathfinder_args <- function(self) {
   checkmate::assert_integerish(self$save_single_paths, null.ok = TRUE,
                                lower = 0, upper = 1, len = 1)
   if (!is.null(self$save_single_paths)) {
-    self$save_single_paths <- 0
+    self$save_single_paths <- as.integer(self$save_single_paths)
   }
   if (!is.null(self$psis_resample) && is.logical(self$psis_resample)) {
     self$psis_resample <- as.integer(self$psis_resample)
