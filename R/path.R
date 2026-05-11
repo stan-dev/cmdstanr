@@ -134,10 +134,10 @@ cmdstan_min_version <- function() {
   "2.35.0"
 }
 
-cmdstan_version_base <- function(version) {
-  # During path discovery we need to compare install dir names before
-  # cmdstan_version() can read the makefile to get the version number,
-  # so we need to be able to parse the version number from the dir name
+# Normalize versions for comparison. This is intentionally looser than
+# cmdstan_version_from_path(): it accepts version strings, paths, and install
+# dir names, and strips release-candidate suffixes.
+cmdstan_version_for_comparison <- function(version) {
   version <- as.character(version)
   version <- sub("[/\\\\]+$", "", version)
   version <- basename(version)
@@ -145,8 +145,9 @@ cmdstan_version_base <- function(version) {
   sub("-rc[0-9]+$", "", version)
 }
 
+# Scalar comparison of versions numbers. Returns -1, 0, or 1.
+# Empty strings are used when no native or WSL install was found during path discovery.
 cmdstan_version_compare <- function(version, other) {
-  # Empty strings are used when no native or WSL install was found
   if (length(version) != 1 || is.na(version) || !nzchar(version)) {
     return(-1L)
   }
@@ -154,8 +155,8 @@ cmdstan_version_compare <- function(version, other) {
     return(1L)
   }
   utils::compareVersion(
-    cmdstan_version_base(version),
-    cmdstan_version_base(other)
+    cmdstan_version_for_comparison(version),
+    cmdstan_version_for_comparison(other)
   )
 }
 
@@ -272,6 +273,7 @@ cmdstan_default_path <- function(dir = NULL) {
   NULL
 }
 
+# Return the newest CmdStan install directory name under an install root
 latest_cmdstan_installed <- function(installs_path) {
   cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
   latest_cmdstan <- ""
@@ -284,9 +286,10 @@ latest_cmdstan_installed <- function(installs_path) {
     if (length(cmdstan_installs) == 0) {
       return(latest_cmdstan)
     }
-    # list.dirs() returns dir names so sort by parsed version first instead of dir name
+    # list.dirs() returns dir names, so sort by parsed versions instead of
+    # lexicographic names
     latest_cmdstan <- cmdstan_installs[order(
-      numeric_version(cmdstan_version_base(cmdstan_installs)),
+      numeric_version(cmdstan_version_for_comparison(cmdstan_installs)),
       cmdstan_installs,
       decreasing = TRUE
     )[1]]
@@ -300,6 +303,7 @@ latest_cmdstan_installed <- function(installs_path) {
   latest_cmdstan
 }
 
+# Detect WSL UNC paths, which may need path-based version fallback below
 is_wsl_unc_path <- function(path) {
   is.character(path) &&
     length(path) == 1 &&
@@ -307,6 +311,9 @@ is_wsl_unc_path <- function(path) {
     startsWith(repair_path(path), "//wsl$/")
 }
 
+# Strict extractor for CmdStan install paths. Unlike
+# cmdstan_version_for_comparison(), it returns NULL for non-CmdStan paths and
+# preserves release-candidate suffixes.
 cmdstan_version_from_path <- function(path) {
   path <- repair_path(path)
   match <- regmatches(
