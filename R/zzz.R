@@ -25,7 +25,7 @@ startup_messages <- function() {
     current_version <- try(cmdstan_version(), silent = TRUE)
     if (!inherits(latest_version, "try-error")
         && !inherits(current_version, "try-error")
-        && latest_version > current_version) {
+        && cmdstan_version_compare(latest_version, current_version) > 0) {
       packageStartupMessage(
         "\nA newer version of CmdStan is available. See ?install_cmdstan() to install it.",
         "\nTo disable this check set option or environment variable cmdstanr_no_ver_check=TRUE."

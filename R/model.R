@@ -1138,7 +1138,8 @@ sample <- function(data = NULL,
                    save_metric = getOption("cmdstanr_save_metric", FALSE),
                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
-  if (self$cmdstan_version() < "2.36.0" && !fixed_param) {
+  if (cmdstan_version_compare(self$cmdstan_version(), "2.36.0") < 0 &&
+      !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
@@ -2570,4 +2571,3 @@ map_cmdstan_to_cmdstanr <- function(method) {
          character(0)
   )
 }
-

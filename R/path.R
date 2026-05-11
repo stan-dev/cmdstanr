@@ -134,12 +134,34 @@ cmdstan_min_version <- function() {
   "2.35.0"
 }
 
-is_supported_cmdstan_version <- function(version) {
-  if (is.null(version)) {
-    return(FALSE)
+cmdstan_version_base <- function(version) {
+  # During path discovery we need to compare install dir names before
+  # cmdstan_version() can read the makefile to get the version number,
+  # so we need to be able to parse the version number from the dir name
+  version <- as.character(version)
+  version <- sub("[/\\\\]+$", "", version)
+  version <- basename(version)
+  version <- sub("^cmdstan-", "", version)
+  sub("-rc[0-9]+$", "", version)
+}
+
+cmdstan_version_compare <- function(version, other) {
+  # Empty strings are used when no native or WSL install was found
+  if (length(version) != 1 || is.na(version) || !nzchar(version)) {
+    return(-1L)
   }
+  if (length(other) != 1 || is.na(other) || !nzchar(other)) {
+    return(1L)
+  }
+  utils::compareVersion(
+    cmdstan_version_base(version),
+    cmdstan_version_base(other)
+  )
+}
+
+is_supported_cmdstan_version <- function(version) {
   cmp <- tryCatch(
-    suppressWarnings(utils::compareVersion(as.character(version), cmdstan_min_version())),
+    suppressWarnings(cmdstan_version_compare(version, cmdstan_min_version())),
     error = function(e) NA_integer_
   )
   isTRUE(cmp >= 0)
@@ -241,7 +263,7 @@ cmdstan_default_path <- function(dir = NULL) {
     if (!nzchar(latest_cmdstan) && !nzchar(latest_wsl_cmdstan)) {
       return(NULL)
     }
-    if (latest_wsl_cmdstan >= latest_cmdstan) {
+    if (cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
       return(file.path(wsl_installs_path, latest_wsl_cmdstan))
     } else {
       return(file.path(installs_path, latest_cmdstan))
@@ -254,11 +276,20 @@ latest_cmdstan_installed <- function(installs_path) {
   cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
   latest_cmdstan <- ""
   if (length(cmdstan_installs) > 0) {
-    cmdstan_installs <- grep("^cmdstan-", cmdstan_installs, value = TRUE)
+    cmdstan_installs <- grep(
+      "^cmdstan-[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?$",
+      cmdstan_installs,
+      value = TRUE
+    )
     if (length(cmdstan_installs) == 0) {
       return(latest_cmdstan)
     }
-    latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
+    # list.dirs() returns dir names so sort by parsed version first instead of dir name
+    latest_cmdstan <- cmdstan_installs[order(
+      numeric_version(cmdstan_version_base(cmdstan_installs)),
+      cmdstan_installs,
+      decreasing = TRUE
+    )[1]]
     if (is_release_candidate(latest_cmdstan)) {
       non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
       if (dir.exists(file.path(installs_path, non_rc_path))) {

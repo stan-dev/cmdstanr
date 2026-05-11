@@ -212,6 +212,18 @@ test_that("cmdstan_default_path() respects custom install directories", {
   )
 })
 
+test_that("cmdstan_default_path() orders install directories by CmdStan version", {
+  installs <- withr::local_tempdir(pattern = "cmdstan-version-installs")
+  dir.create(file.path(installs, "cmdstan-2.9.0"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(installs, "cmdstan-2.35.0"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_equal(latest_cmdstan_installed(installs), "cmdstan-2.35.0")
+  expect_equal(
+    cmdstan_default_path(dir = installs),
+    file.path(installs, "cmdstan-2.35.0")
+  )
+})
+
 test_that("cmdstan_default_path() returns NULL for empty custom install directories", {
   installs <- withr::local_tempdir(pattern = "cmdstan-empty-installs")
 
@@ -244,6 +256,13 @@ test_that("CmdStan version helpers handle invalid inputs", {
   expect_identical(cmdstan_min_version(), "2.35.0")
   expect_false(is_supported_cmdstan_version(NULL))
   expect_false(is_supported_cmdstan_version("not-a-version"))
+})
+
+test_that("CmdStan version helpers use numeric ordering", {
+  expect_equal(cmdstan_version_compare("cmdstan-2.35.0", "cmdstan-2.9.0"), 1)
+  expect_equal(cmdstan_version_compare("cmdstan-2.9.0", "cmdstan-2.35.0"), -1)
+  expect_equal(cmdstan_version_compare("2.36.0-rc1", "2.36.0"), 0)
+  expect_equal(cmdstan_version_compare("2.100.0", "2.36.0"), 1)
 })
 
 test_that("CmdStan version can be recovered from WSL UNC install path", {

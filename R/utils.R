@@ -58,8 +58,13 @@ os_is_linux <- function() {
   isTRUE(Sys.info()[["sysname"]] == "Linux")
 }
 
+current_r_version <- function() {
+  getRversion()
+}
+
 is_ucrt_toolchain <- function() {
-  os_is_windows() && R.version$major == "4" && R.version$minor >= "2.0"
+  r_version <- current_r_version()
+  os_is_windows() && r_version >= "4.2.0" && r_version < "5.0.0"
 }
 
 # Check if running R in Rosetta 2 translation environment, which is an
