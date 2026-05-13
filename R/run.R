@@ -1135,6 +1135,8 @@ CmdStanGQProcs <- R6::R6Class(
         if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
           # if the process just finished make sure we process all
           # input and mark the process finished
+          self$process_output(id)
+          self$process_error_output(id)
           if (self$get_proc(id)$get_exit_status() == 0) {
             self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
           } else {
@@ -1156,6 +1158,8 @@ CmdStanGQProcs <- R6::R6Class(
         if (nzchar(line)) {
           if (self$proc_state(id) == 1 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 1.5)
+          } else if (grepl("Elapsed Time:", line, fixed = TRUE)) {
+            private$proc_total_time_[[id]] <- as.double(trimws(sub("Elapsed Time:", "", sub("seconds (Generated Quantities)", "", line, fixed = TRUE), fixed = TRUE)))
           } else if (self$proc_state(id) >= 2 && private$show_stdout_messages_) {
             cat("Chain", id, line, "\n")
           }
