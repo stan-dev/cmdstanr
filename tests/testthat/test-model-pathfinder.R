@@ -133,6 +133,31 @@ test_that("pathfinder() method runs when all arguments specified", {
   expect_s3_class(fit, "CmdStanPathfinder")
 })
 
+test_that("pathfinder() saves single path outputs", {
+  output_dir <- withr::local_tempdir()
+
+  expect_pathfinder_output(
+    fit <- mod$pathfinder(
+      data = data_list,
+      output_dir = output_dir,
+      output_basename = "pathfinder",
+      seed = 123,
+      refresh = 0,
+      num_paths = 2,
+      single_path_draws = 10,
+      draws = 10,
+      save_single_paths = TRUE
+    )
+  )
+
+  expect_equal(basename(fit$output_files()), "pathfinder-1.csv")
+  single_path_files <- file.path(
+    output_dir,
+    paste0("pathfinder-1_path_", 1:2, ".csv")
+  )
+  expect_equal(file.exists(single_path_files), rep(TRUE, 2))
+})
+
 test_that("pathfinder() method runs when the stan file is removed", {
   stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
   file.copy(stan_program, stan_file_tmp)
