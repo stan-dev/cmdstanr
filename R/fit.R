@@ -768,7 +768,8 @@ CmdStanFit$set("public", name = "lp", value = lp)
 # will be used by a subset of fit objects below
 #' @rdname fit-method-lp
 lp_approx <- function() {
-  as.numeric(self$draws()[, "lp_approx__"])
+  x <- self$draws(variables = "lp_approx__", format = "draws_matrix")
+  as.numeric(x[, "lp_approx__"])
 }
 
 
@@ -1973,8 +1974,8 @@ CmdStanMLE <- R6::R6Class(
 #' }
 #'
 mle <- function(variables = NULL) {
-  x <- self$draws(variables)
-  x <- x[, colnames(x) != "lp__"]
+  x <- self$draws(variables = variables, format = "draws_matrix")
+  x <- x[, colnames(x) != "lp__", drop = FALSE]
   stats::setNames(as.numeric(x), posterior::variables(x))
 }
 CmdStanMLE$set("public", name = "mle", value = mle)
