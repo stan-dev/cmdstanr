@@ -26,9 +26,9 @@ fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 str(fit_mcmc$metadata())
 #> List of 42
 #>  $ stan_version_major  : num 2
-#>  $ stan_version_minor  : num 38
+#>  $ stan_version_minor  : num 39
 #>  $ stan_version_patch  : num 0
-#>  $ start_datetime      : chr "2026-05-05 06:40:57 UTC"
+#>  $ start_datetime      : chr "2026-06-03 13:49:19 UTC"
 #>  $ method              : chr "sample"
 #>  $ save_warmup         : int 0
 #>  $ thin                : num 1
@@ -49,9 +49,9 @@ str(fit_mcmc$metadata())
 #>  $ seed                : num 1.54e+09
 #>  $ refresh             : num 100
 #>  $ sig_figs            : num 8
-#>  $ profile_file        : chr "/tmp/Rtmpvtzv0M/logistic-profile-202605050640-1-02b4de.csv"
+#>  $ profile_file        : chr "/tmp/RtmpwXqRQF/logistic-profile-202606031349-1-02b623.csv"
 #>  $ save_cmdstan_config : int 0
-#>  $ stanc_version       : chr "stanc3 v2.38.0"
+#>  $ stanc_version       : chr "stanc3 v2.39.0"
 #>  $ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
 #>  $ variables           : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
 #>  $ step_size_adaptation: num [1:4] 0.811 0.773 0.714 0.835
@@ -65,9 +65,9 @@ str(fit_mcmc$metadata())
 #>  $ threads_per_chain   : num 1
 #>  $ time                :'data.frame':    4 obs. of  4 variables:
 #>   ..$ chain_id: num [1:4] 1 2 3 4
-#>   ..$ warmup  : num [1:4] 0.019 0.02 0.019 0.018
-#>   ..$ sampling: num [1:4] 0.055 0.056 0.058 0.055
-#>   ..$ total   : num [1:4] 0.074 0.076 0.077 0.073
+#>   ..$ warmup  : num [1:4] 0.015 0.015 0.015 0.015
+#>   ..$ sampling: num [1:4] 0.042 0.042 0.044 0.042
+#>   ..$ total   : num [1:4] 0.057 0.057 0.059 0.057
 #>  $ stan_variable_sizes :List of 4
 #>   ..$ lp__   : num 1
 #>   ..$ alpha  : num 1
@@ -80,9 +80,9 @@ fit_mle <- cmdstanr_example("logistic", method = "optimize")
 str(fit_mle$metadata())
 #> List of 32
 #>  $ stan_version_major : num 2
-#>  $ stan_version_minor : num 38
+#>  $ stan_version_minor : num 39
 #>  $ stan_version_patch : num 0
-#>  $ start_datetime     : chr "2026-05-05 06:40:58 UTC"
+#>  $ start_datetime     : chr "2026-06-03 13:49:20 UTC"
 #>  $ method             : chr "optimize"
 #>  $ algorithm          : chr "lbfgs"
 #>  $ init_alpha         : num 0.001
@@ -100,10 +100,10 @@ str(fit_mle$metadata())
 #>  $ seed               : num 7.45e+08
 #>  $ refresh            : num 100
 #>  $ sig_figs           : num 8
-#>  $ profile_file       : chr "/tmp/Rtmpvtzv0M/logistic-profile-202605050640-1-678fb6.csv"
+#>  $ profile_file       : chr "/tmp/RtmpwXqRQF/logistic-profile-202606031349-1-6790fb.csv"
 #>  $ save_cmdstan_config: int 0
-#>  $ stanc_version      : chr "stanc3 v2.38.0"
-#>  $ sampler_diagnostics: chr(0) 
+#>  $ stanc_version      : chr "stanc3 v2.39.0"
+#>  $ sampler_diagnostics: chr "converged__"
 #>  $ variables          : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
 #>  $ model_name         : chr "logistic_model"
 #>  $ threads            : num 1
@@ -120,9 +120,9 @@ fit_vb <- cmdstanr_example("logistic", method = "variational")
 str(fit_vb$metadata())
 #> List of 30
 #>  $ stan_version_major : num 2
-#>  $ stan_version_minor : num 38
+#>  $ stan_version_minor : num 39
 #>  $ stan_version_patch : num 0
-#>  $ start_datetime     : chr "2026-05-05 06:40:58 UTC"
+#>  $ start_datetime     : chr "2026-06-03 13:49:20 UTC"
 #>  $ method             : chr "variational"
 #>  $ algorithm          : chr "meanfield"
 #>  $ iter               : num 50
@@ -137,9 +137,9 @@ str(fit_vb$metadata())
 #>  $ seed               : num 7.09e+08
 #>  $ refresh            : num 100
 #>  $ sig_figs           : num 8
-#>  $ profile_file       : chr "/tmp/Rtmpvtzv0M/logistic-profile-202605050640-1-249f62.csv"
+#>  $ profile_file       : chr "/tmp/RtmpwXqRQF/logistic-profile-202606031349-1-24a0a7.csv"
 #>  $ save_cmdstan_config: int 0
-#>  $ stanc_version      : chr "stanc3 v2.38.0"
+#>  $ stanc_version      : chr "stanc3 v2.39.0"
 #>  $ sampler_diagnostics: chr(0) 
 #>  $ variables          : chr [1:106] "lp__" "lp_approx__" "alpha" "beta[1]" ...
 #>  $ model_name         : chr "logistic_model"

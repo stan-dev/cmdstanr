@@ -67,11 +67,11 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 327235529
 #> output
-#>   file = /tmp/Rtmpvtzv0M/logistic-202605050641-1-135074.csv
+#>   file = /tmp/RtmpwXqRQF/logistic-202606031349-1-1351b9.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpvtzv0M/logistic-profile-202605050641-1-8f42c8.csv
+#>   profile_file = /tmp/RtmpwXqRQF/logistic-profile-202606031349-1-8f440d.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -104,9 +104,9 @@ fit_mcmc$output(1)
 #> Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 0.019 seconds (Warm-up)
-#>                0.055 seconds (Sampling)
-#>                0.074 seconds (Total)
+#>  Elapsed Time: 0.015 seconds (Warm-up)
+#>                0.042 seconds (Sampling)
+#>                0.057 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
 #> List of 4
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 1293992464
 #> output
-#>   file = /tmp/Rtmpvtzv0M/logistic-202605050641-1-515f85.csv
+#>   file = /tmp/RtmpwXqRQF/logistic-202606031349-1-5160ca.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpvtzv0M/logistic-profile-202605050641-1-538bc1.csv
+#>   profile_file = /tmp/RtmpwXqRQF/logistic-profile-202606031349-1-538d06.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 411984747
 #> output
-#>   file = /tmp/Rtmpvtzv0M/logistic-202605050641-1-1a68b0.csv
+#>   file = /tmp/RtmpwXqRQF/logistic-202606031349-1-1a69f5.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpvtzv0M/logistic-profile-202605050641-1-6981ac.csv
+#>   profile_file = /tmp/RtmpwXqRQF/logistic-profile-202606031349-1-6982f1.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 

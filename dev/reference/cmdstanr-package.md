@@ -140,7 +140,7 @@ color_scheme_set("brightblue")
 # Otherwise use the `path` argument to specify the location of your
 # CmdStan installation.)
 set_cmdstan_path(path = NULL)
-#> CmdStan path set to: /home/runner/.cmdstan/cmdstan-2.38.0
+#> CmdStan path set to: /home/runner/.cmdstan/cmdstan-2.39.0
 
 # Create a CmdStanModel object from a Stan program,
 # here using the example model that comes with CmdStan
@@ -493,7 +493,7 @@ fit_mcmc_w_init_fun <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2 <- mod$sample(
   data = stan_data,
