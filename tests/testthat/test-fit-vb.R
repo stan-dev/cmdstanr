@@ -71,6 +71,19 @@ test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
   expect_equal(length(lg), length(lp))
 })
 
+test_that("lp_approx() ignores non-matrix default draws formats", {
+  expected <- fit_vb$draws(
+    variables = "lp_approx__",
+    format = "draws_matrix"
+  )
+  expected <- as.numeric(expected[, "lp_approx__"])
+
+  for (format in c("draws_array", "draws_df")) {
+    withr::local_options(list(cmdstanr_draws_format = format))
+    expect_equal(fit_vb$lp_approx(), expected)
+  }
+})
+
 test_that("vb works with scientific notation args", {
   x <- fit_vb_sci_not$summary()
   expect_s3_class(x, "draws_summary")

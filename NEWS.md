@@ -1,5 +1,7 @@
 # cmdstanr (development version)
 
+* `pathfinder()` now respects `save_single_paths = TRUE` instead of always
+passing `0` to CmdStan.
 * Informative error when exposing functions using names that are reserved 
 keywords (@VisruthSK, #1154)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
