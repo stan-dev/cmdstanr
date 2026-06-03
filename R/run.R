@@ -67,11 +67,11 @@ CmdStanRun <- R6::R6Class(
       self$args$new_files(type = "profile")
     },
     new_config_files = function() {
-      # because CmdStan 2.34 uses the output_file name as the base for the config file
+      # the output_file name is used as the base for the config file
       paste0(tools::file_path_sans_ext(private$output_files_), "_config.json")
     },
     new_metric_files = function() {
-      # because CmdStan 2.34 uses the output_file name as the base for the metric file
+      # the output_file name is used as the base for the metric file
       paste0(tools::file_path_sans_ext(private$output_files_), "_metric.json")
     },
     config_files = function(include_failed = FALSE) {
