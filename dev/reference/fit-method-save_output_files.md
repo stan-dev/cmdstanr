@@ -123,10 +123,10 @@ even with multiple MCMC chains the data file is the same.
 # \dontrun{
 fit <- cmdstanr_example()
 fit$output_files()
-#> [1] "/tmp/RtmpwXqRQF/logistic-202606031349-1-8a7e71.csv"
-#> [2] "/tmp/RtmpwXqRQF/logistic-202606031349-2-8a7e71.csv"
-#> [3] "/tmp/RtmpwXqRQF/logistic-202606031349-3-8a7e71.csv"
-#> [4] "/tmp/RtmpwXqRQF/logistic-202606031349-4-8a7e71.csv"
+#> [1] "/tmp/Rtmpk8idme/logistic-202606031810-1-8a7dd3.csv"
+#> [2] "/tmp/Rtmpk8idme/logistic-202606031810-2-8a7dd3.csv"
+#> [3] "/tmp/Rtmpk8idme/logistic-202606031810-3-8a7dd3.csv"
+#> [4] "/tmp/Rtmpk8idme/logistic-202606031810-4-8a7dd3.csv"
 fit$data_file()
 #> [1] "/home/runner/work/_temp/Library/cmdstanr/logistic.data.json"
 
@@ -134,21 +134,21 @@ fit$data_file()
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "banana")
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpwXqRQF/banana-202606031349-1-142b00.csv
-#> - /tmp/RtmpwXqRQF/banana-202606031349-2-142b00.csv
-#> - /tmp/RtmpwXqRQF/banana-202606031349-3-142b00.csv
-#> - /tmp/RtmpwXqRQF/banana-202606031349-4-142b00.csv
+#> - /tmp/Rtmpk8idme/banana-202606031810-1-142a62.csv
+#> - /tmp/Rtmpk8idme/banana-202606031810-2-142a62.csv
+#> - /tmp/Rtmpk8idme/banana-202606031810-3-142a62.csv
+#> - /tmp/Rtmpk8idme/banana-202606031810-4-142a62.csv
 fit$save_output_files(dir = my_dir, basename = "tomato", timestamp = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpwXqRQF/tomato-1-0e7686.csv
-#> - /tmp/RtmpwXqRQF/tomato-2-0e7686.csv
-#> - /tmp/RtmpwXqRQF/tomato-3-0e7686.csv
-#> - /tmp/RtmpwXqRQF/tomato-4-0e7686.csv
+#> - /tmp/Rtmpk8idme/tomato-1-0e75e8.csv
+#> - /tmp/Rtmpk8idme/tomato-2-0e75e8.csv
+#> - /tmp/Rtmpk8idme/tomato-3-0e75e8.csv
+#> - /tmp/Rtmpk8idme/tomato-4-0e75e8.csv
 fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpwXqRQF/lettuce-1.csv
-#> - /tmp/RtmpwXqRQF/lettuce-2.csv
-#> - /tmp/RtmpwXqRQF/lettuce-3.csv
-#> - /tmp/RtmpwXqRQF/lettuce-4.csv
+#> - /tmp/Rtmpk8idme/lettuce-1.csv
+#> - /tmp/Rtmpk8idme/lettuce-2.csv
+#> - /tmp/Rtmpk8idme/lettuce-3.csv
+#> - /tmp/Rtmpk8idme/lettuce-4.csv
 # }
 ```
