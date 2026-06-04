@@ -304,6 +304,20 @@ test_that("deprecated CMDSTANR_USE_MSYS_TOOLCHAIN is ignored with warning", {
   })
 })
 
+test_that("Rtools helpers compare R versions numerically", {
+  local({
+    local_mocked_bindings(current_r_version = function() numeric_version("4.10.0"))
+    expect_equal(rtools4x_version(), "45")
+  })
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.10.0")
+    )
+    expect_equal(is_ucrt_toolchain(), TRUE)
+  })
+})
+
 test_that("rtools4x_toolchain_path prefers static-posix when available", {
   skip_if(arch_is_aarch64())
   env_var <- paste0(

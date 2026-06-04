@@ -804,14 +804,15 @@ rtools4x_toolchain_path <- function() {
 
 rtools4x_version <- function() {
   rtools_ver <- NULL
+  r_version <- current_r_version()
 
-  if (R.version$minor < "2.0") {
+  if (r_version < "4.2.0") {
     rtools_ver <- "40"
-  } else if (R.version$minor < "3.0") {
+  } else if (r_version < "4.3.0") {
     rtools_ver <- "42"
-  } else if (R.version$minor < "4.0") {
+  } else if (r_version < "4.4.0") {
     rtools_ver <- "43"
-  } else if (R.version$minor < "5.0") {
+  } else if (r_version < "4.5.0") {
     rtools_ver <- "44"
   } else {
     rtools_ver <- "45"
