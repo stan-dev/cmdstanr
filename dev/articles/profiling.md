@@ -122,8 +122,8 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140591812654912 0.665196590  0.523052260  0.142144330       52356
-    2     priors 140591812654912 0.004326387  0.003387785  0.000938602       34904
+    1 likelihood 139694113961792 0.654085840  0.516795540  0.137290300       52356
+    2     priors 139694113961792 0.004096887  0.003028069  0.001068818       34904
       no_chain_stack autodiff_calls no_autodiff_calls
     1       34921452          17452                 1
     2          34904          17452                 1
@@ -181,8 +181,8 @@ fit_glm$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140262849017664 0.428863130  0.427868500  0.000994629       51321
-    2     priors 140262849017664 0.003581532  0.002694437  0.000887095       34214
+    1 likelihood 139838174140224 0.430699880  0.429727320  0.000972562       51321
+    2     priors 139838174140224 0.003659367  0.002740146  0.000919221       34214
       no_chain_stack autodiff_calls no_autodiff_calls
     1          17107          17107                 1
     2          34214          17107                 1
@@ -214,7 +214,7 @@ per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.811578e-05 2.479021e-07
+    [1] 3.747913e-05 2.347517e-07
 
 ### Accessing and saving the profile files
 
@@ -228,7 +228,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/RtmpftuZDr/model_580e4657b49f155a37081bdfaae83f92-profile-202606031816-1-806946.csv"
+    [1] "/tmp/RtmpF24YDc/model_580e4657b49f155a37081bdfaae83f92-profile-202606041106-1-806924.csv"
 
 These can be saved to a more permanent location with the
 `$save_profile_files()` method.

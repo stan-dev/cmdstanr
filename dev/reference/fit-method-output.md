@@ -67,11 +67,11 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 327235529
 #> output
-#>   file = /tmp/Rtmpk8idme/logistic-202606031810-1-13511b.csv
+#>   file = /tmp/RtmpUu97yN/logistic-202606041059-1-13513d.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpk8idme/logistic-profile-202606031810-1-8f436f.csv
+#>   profile_file = /tmp/RtmpUu97yN/logistic-profile-202606041059-1-8f4391.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 1293992464
 #> output
-#>   file = /tmp/Rtmpk8idme/logistic-202606031810-1-51602c.csv
+#>   file = /tmp/RtmpUu97yN/logistic-202606041059-1-51604e.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpk8idme/logistic-profile-202606031810-1-538c68.csv
+#>   profile_file = /tmp/RtmpUu97yN/logistic-profile-202606041059-1-538c8a.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 411984747
 #> output
-#>   file = /tmp/Rtmpk8idme/logistic-202606031810-1-1a6957.csv
+#>   file = /tmp/RtmpUu97yN/logistic-202606041059-1-1a6979.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/Rtmpk8idme/logistic-profile-202606031810-1-698253.csv
+#>   profile_file = /tmp/RtmpUu97yN/logistic-profile-202606041059-1-698275.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -193,8 +193,8 @@ fit_vb$output()
 #> 
 #> 
 #> 
-#> Gradient evaluation took 7e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+#> Gradient evaluation took 8e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
