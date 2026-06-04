@@ -146,6 +146,18 @@ test_that("threading works with pathfinder()", {
   )
   expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 2)
   expect_equal(f$metadata()$threads, 2)
+
+  pathfinder_args$num_threads <- 2
+  expect_error(
+    do.call(mod$pathfinder, pathfinder_args),
+    "Cannot specify both 'threads' and deprecated 'num_threads'"
+  )
+  pathfinder_args$threads <- NULL
+  pathfinder_args$show_messages <- FALSE
+  expect_warning(
+    do.call(mod$pathfinder, pathfinder_args),
+    "'num_threads' is deprecated. Please use 'threads' instead"
+  )
 })
 
 test_that("threading works with generate_quantities()", {
