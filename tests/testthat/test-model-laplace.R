@@ -62,6 +62,28 @@ test_that("laplace() runs when all arguments specified validly", {
   expect_s3_class(fit2, "CmdStanLaplace")
 })
 
+test_that("laplace() avoids output_basename conflict with internal optimize()", {
+  output_dir <- withr::local_tempdir("laplace-output-basename")
+
+  utils::capture.output(
+    fit <- mod$laplace(
+      data = data_list,
+      seed = 123,
+      refresh = 0,
+      output_dir = output_dir,
+      output_basename = "custom-laplace",
+      draws = 10
+    )
+  )
+
+  expect_equal(basename(fit$output_files()), "custom-laplace-1.csv")
+  expect_equal(basename(fit$mode()$output_files()), "custom-laplace-mode-1.csv")
+  expect_setequal(
+    list.files(output_dir, pattern = "\\.csv$"),
+    c("custom-laplace-1.csv", "custom-laplace-mode-1.csv")
+  )
+})
+
 test_that("laplace() all valid 'mode' inputs give same results", {
   utils::capture.output({
     mode <- mod$optimize(data = data_list, jacobian = TRUE, seed = 100, refresh = 0)
