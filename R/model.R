@@ -1623,6 +1623,10 @@ laplace <- function(data = NULL,
     }
   } else { # mode = NULL, run optimize()
     checkmate::assert_list(opt_args, any.missing = FALSE, names = "unique", null.ok = TRUE)
+    mode_output_basename <- output_basename
+    if (!is.null(mode_output_basename)) {
+      mode_output_basename <- paste0(mode_output_basename, "-mode")
+    }
     args <- list(
       data = data,
       seed = seed,
@@ -1630,7 +1634,7 @@ laplace <- function(data = NULL,
       init = init,
       save_latent_dynamics = FALSE,
       output_dir = output_dir,
-      output_basename = output_basename,
+      output_basename = mode_output_basename,
       sig_figs = sig_figs,
       threads = threads,
       opencl_ids = opencl_ids,
