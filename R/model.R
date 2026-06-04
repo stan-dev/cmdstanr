@@ -1833,7 +1833,7 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   installed version of CmdStan
 #'
 #' @template model-common-args
-#' @param num_threads (positive integer) If the model was
+#' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., for multi-path pathfinder
 #'   as well as `reduce_sum`).
@@ -1893,8 +1893,8 @@ pathfinder <- function(data = NULL,
                        output_dir = getOption("cmdstanr_output_dir"),
                        output_basename = NULL,
                        sig_figs = NULL,
+                       threads = NULL,
                        opencl_ids = NULL,
-                       num_threads = NULL,
                        init_alpha = NULL,
                        tol_obj = NULL,
                        tol_rel_obj = NULL,
@@ -1917,7 +1917,7 @@ pathfinder <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(num_threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1959,7 +1959,6 @@ pathfinder <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    num_threads = num_threads,
     save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)

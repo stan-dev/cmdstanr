@@ -815,7 +815,7 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$step_size <- csv_file_info$stepsize
   csv_file_info$iter_warmup <- csv_file_info$num_warmup
   csv_file_info$iter_sampling <- csv_file_info$num_samples
-  if (csv_file_info$method %in% c("variational", "optimize", "laplace")) {
+  if (csv_file_info$method %in% c("variational", "optimize", "laplace", "pathfinder")) {
     csv_file_info$threads <- csv_file_info$num_threads
   } else {
     csv_file_info$threads_per_chain <- csv_file_info$num_threads

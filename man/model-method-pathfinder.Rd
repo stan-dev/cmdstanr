@@ -14,8 +14,8 @@ pathfinder(
   output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
+  threads = NULL,
   opencl_ids = NULL,
-  num_threads = NULL,
   init_alpha = NULL,
   tol_obj = NULL,
   tol_rel_obj = NULL,
@@ -150,15 +150,15 @@ values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
 Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
 
+\item{threads}{(positive integer) If the model was
+\link[=model-method-compile]{compiled} with threading support, the number of
+threads to use in parallelized sections (e.g., for multi-path pathfinder
+as well as \code{reduce_sum}).}
+
 \item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
 the OpenCL device to use for fitting. The model must be compiled with
 \code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
 effect.}
-
-\item{num_threads}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections (e.g., for multi-path pathfinder
-as well as \code{reduce_sum}).}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 

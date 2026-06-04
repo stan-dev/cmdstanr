@@ -40,6 +40,7 @@ bad_arg_values <- list(
   refresh = -1,
   init = "maybe :P",
   seed = -80,
+  threads = "NOT_THREADS",
   init_alpha = "cat.jpeg",
   init_alpha = -3,
   tol_obj = -1,
