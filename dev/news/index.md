@@ -19,6 +19,12 @@
   while reading `STANCFLAGS` from `make`.
   ([\#1163](https://github.com/stan-dev/cmdstanr/issues/1163))
 
+- [`laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)
+  no longer overwrites the internally generated optimizer CSV when
+  `mode = NULL` and `output_basename` is supplied. The internally
+  generated optimizer CSV now uses the filename
+  `<output_basename>-mode-1.csv`.
+
 - CmdStanModel objects created using `compile_model_methods = TRUE` that
   are then saved and reloaded no longer error in model fitting methods.
   Model methods are recompiled lazily if needed.
