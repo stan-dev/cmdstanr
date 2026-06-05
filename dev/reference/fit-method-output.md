@@ -67,11 +67,11 @@ fit_mcmc$output(1)
 #> random
 #>   seed = 327235529
 #> output
-#>   file = /tmp/RtmpyQHxA3/logistic-202606041838-1-13511a.csv
+#>   file = /tmp/RtmpXAkxdu/logistic-202606050755-1-13511a.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpyQHxA3/logistic-profile-202606041838-1-8f436e.csv
+#>   profile_file = /tmp/RtmpXAkxdu/logistic-profile-202606050755-1-8f436e.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -104,9 +104,9 @@ fit_mcmc$output(1)
 #> Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 0.019 seconds (Warm-up)
-#>                0.055 seconds (Sampling)
-#>                0.074 seconds (Total)
+#>  Elapsed Time: 0.017 seconds (Warm-up)
+#>                0.05 seconds (Sampling)
+#>                0.067 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
 #> List of 4
@@ -139,11 +139,11 @@ fit_mle$output()
 #> random
 #>   seed = 1293992464
 #> output
-#>   file = /tmp/RtmpyQHxA3/logistic-202606041838-1-51602b.csv
+#>   file = /tmp/RtmpXAkxdu/logistic-202606050755-1-51602b.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpyQHxA3/logistic-profile-202606041838-1-538c67.csv
+#>   profile_file = /tmp/RtmpXAkxdu/logistic-profile-202606050755-1-538c67.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -177,11 +177,11 @@ fit_vb$output()
 #> random
 #>   seed = 411984747
 #> output
-#>   file = /tmp/RtmpyQHxA3/logistic-202606041838-1-1a6956.csv
+#>   file = /tmp/RtmpXAkxdu/logistic-202606050755-1-1a6956.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpyQHxA3/logistic-profile-202606041838-1-698252.csv
+#>   profile_file = /tmp/RtmpXAkxdu/logistic-profile-202606050755-1-698252.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -193,8 +193,8 @@ fit_vb$output()
 #> 
 #> 
 #> 
-#> Gradient evaluation took 8e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+#> Gradient evaluation took 7e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 

@@ -29,6 +29,7 @@ pathfinder(
   output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
+  threads = NULL,
   opencl_ids = NULL,
   num_threads = NULL,
   init_alpha = NULL,
@@ -208,6 +209,13 @@ pathfinder(
   Increasing this value will result in larger output CSV files and thus
   an increased usage of disk space.
 
+- threads:
+
+  (positive integer) If the model was
+  [compiled](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
+  with threading support, the number of threads to use in parallelized
+  sections (e.g., for multi-path pathfinder as well as `reduce_sum`).
+
 - opencl_ids:
 
   (integer vector of length 2) The platform and device IDs of the OpenCL
@@ -217,10 +225,7 @@ pathfinder(
 
 - num_threads:
 
-  (positive integer) If the model was
-  [compiled](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
-  with threading support, the number of threads to use in parallelized
-  sections (e.g., for multi-path pathfinder as well as `reduce_sum`).
+  Deprecated. Please use `threads` instead.
 
 - init_alpha:
 

@@ -6,6 +6,10 @@
   now respects `save_single_paths = TRUE` instead of always passing `0`
   to CmdStan.
 
+- [`pathfinder()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md)
+  now uses `threads` argument (`num_threads` is deprecated), to be
+  consistent with other methods.
+
 - Informative error when exposing functions using names that are
   reserved keywords ([@VisruthSK](https://github.com/VisruthSK),
   [\#1154](https://github.com/stan-dev/cmdstanr/issues/1154))
