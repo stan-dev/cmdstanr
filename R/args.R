@@ -1238,21 +1238,22 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
                                   warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                   ...) {
   args <- formals(init)
-  if (is.null(args)) {
-    fn_test <- init()
-    init_list <- lapply(seq_len(num_procs), function(i) init())
-  } else {
+  has_chain_id <- !is.null(args)
+  if (has_chain_id) {
     if (!identical(names(args), "chain_id")) {
       stop("If 'init' is a function it must have zero arguments ",
            "or only argument 'chain_id'.", call. = FALSE)
     }
-    fn_test <- init(1)
-    init_list <- lapply(seq_len(num_procs), function(i) init(i))
   }
-  if (!is.list(fn_test) || is.data.frame(fn_test)) {
-    stop("If 'init' is a function it must return a single list.")
+
+  init_list <- vector("list", num_procs)
+  for (i in seq_len(num_procs)) {
+    init_list[[i]] <- if (has_chain_id) init(i) else init()
+    if (!is.list(init_list[[i]]) || is.data.frame(init_list[[i]])) {
+      stop("If 'init' is a function it must return a single list.", call. = FALSE)
+    }
   }
-  process_init(init_list, num_procs, model_variables)
+  process_init(init_list, num_procs, model_variables, warn_partial)
 }
 
 #' Validate a fit is a valid init

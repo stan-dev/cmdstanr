@@ -26,44 +26,40 @@
 #'   variables declared in the parameters block of the Stan program. One of the
 #'   following:
 #'  * A real number `x>0`. This initializes _all_ parameters randomly between
-#'   `[-x,x]` on the _unconstrained_ parameter space.;
-#'  * The number `0`. This initializes _all_ parameters to `0`;
+#'  `[-x,x]` on the _unconstrained_ parameter space.
+#'  * The number `0`. This initializes _all_ parameters to `0`.
 #'  * A character vector of paths (one per chain) to JSON or Rdump files
-#'   containing initial values for all or some parameters. See
-#'   [write_stan_json()] to write \R objects to JSON files compatible with
-#'   CmdStan.
+#'  containing initial values for all or some parameters. See
+#'  [write_stan_json()] to write \R objects to JSON files compatible with
+#'  CmdStan.
 #'  * A list of lists containing initial values for all or some parameters. For
-#'   MCMC the list should contain a sublist for each chain. For other model
-#'   fitting methods there should be just one sublist. The sublists should have
-#'   named elements corresponding to the parameters for which you are specifying
-#'   initial values. See **Examples**.
+#'  MCMC the list should contain a sublist for each chain. For other model
+#'  fitting methods there should be just one sublist. The sublists should have
+#'  named elements corresponding to the parameters for which you are specifying
+#'  initial values. See **Examples**.
 #'  * A function that returns a single list with names corresponding to the
-#'   parameters for which you are specifying initial values. The function can
-#'   take no arguments or a single argument `chain_id`. For MCMC, if the
-#'   function has argument `chain_id` it will be supplied with the chain id
-#'   (from 1 to number of chains) when called to generate the initial values.
-#'   See
+#'  parameters for which you are specifying initial values. The function can
+#'  take no arguments or a single argument `chain_id`. For MCMC, if the function
+#'  has argument `chain_id` it will be supplied with the chain id (from 1 to
+#'  number of chains) when called to generate the initial values. See
 #'  **Examples**.
 #'  * A [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanPathfinder`],
-#'  or [`CmdStanLaplace`] fit object.
-#'  If the fit object's parameters are only a subset of the model
-#'  parameters then the other parameters will be drawn by Stan's default
-#'  initialization. The fit object must have at least some parameters that are the
-#'  same name and dimensions as the current Stan model. For the `sample` and
-#'  `pathfinder` method, if the fit object has fewer draws than the requested
-#'  number of chains/paths then the inits will be drawn using sampling with
-#'  replacement. Otherwise sampling without replacement will be used.
-#'  When a [`CmdStanPathfinder`] fit object is used as the init, if
-#'. `psis_resample` was set to `FALSE` and `calculate_lp` was
-#'  set to `TRUE` (default), then resampling without replacement with Pareto
-#'  smoothed weights will be used. If `psis_resample` was set to `TRUE` or
-#'  `calculate_lp` was set to `FALSE` then sampling without replacement with
-#'  uniform weights will be used to select the draws.
-#'  PSIS resampling is used to select the draws for  [`CmdStanVB`],
-#'  and [`CmdStanLaplace`] fit objects.
-#'
-#'  * A type inheriting from `posterior::draws`. If the draws object has less
-#'  samples than the number of requested chains/paths then the inits will be
+#'  or [`CmdStanLaplace`] fit object. If the fit object's parameters are only a
+#'  subset of the model parameters then the other parameters will be drawn by
+#'  Stan's default initialization. The fit object must have at least some
+#'  parameters that are the same name and dimensions as the current Stan model.
+#'  For the `sample` and `pathfinder` method, if the fit object has fewer draws
+#'  than the requested number of chains/paths then the inits will be drawn using
+#'  sampling with replacement. Otherwise sampling without replacement will be
+#'  used. When a [`CmdStanPathfinder`] fit object is used as the init, if
+#'  `psis_resample` was set to `FALSE` and `calculate_lp` was set to `TRUE`
+#'  (default), then resampling without replacement with Pareto smoothed weights
+#'  will be used. If `psis_resample` was set to `TRUE` or `calculate_lp` was set
+#'  to `FALSE` then sampling without replacement with uniform weights will be
+#'  used to select the draws. PSIS resampling is used to select the draws for
+#'  [`CmdStanVB`], and [`CmdStanLaplace`] fit objects.
+#'  * A type inheriting from `posterior::draws`. If the draws object has fewer
+#'  draws than the number of requested chains/paths then the inits will be
 #'  drawn using sampling with replacement. Otherwise sampling without
 #'  replacement will be used. If the draws object's parameters are only a subset
 #'  of the model parameters then the other parameters will be drawn by Stan's
