@@ -32,11 +32,11 @@ fit <- cmdstanr_example("logistic", init = init_fun, chains = 2)
 str(fit$init())
 #> List of 2
 #>  $ :List of 2
-#>   ..$ alpha: num -0.382
-#>   ..$ beta : num [1:3] 0.424 1.063 1.049
+#>   ..$ alpha: num -0.789
+#>   ..$ beta : num [1:3] 0.588 -0.711 1.585
 #>  $ :List of 2
-#>   ..$ alpha: num -0.0381
-#>   ..$ beta : num [1:3] 0.486 1.673 -0.354
+#>   ..$ alpha: num 0.676
+#>   ..$ beta : num [1:3] -0.233 0.637 -1.371
 
 # partial inits (only specifying for a subset of parameters)
 init_list <- list(

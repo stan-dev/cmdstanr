@@ -168,7 +168,7 @@ format. See <code><a href="fit-method-mle.html">$mle()</a></code> to extract the
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1000    4  105</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  'draws_array' num [1:1000, 1:4, 1:105] -64.1 -68.9 -65.6 -65 -65.1 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  'draws_array' num [1:1000, 1:4, 1:105] -65.5 -64.7 -66.7 -68 -68 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  - attr(*, "dimnames")=List of 3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ chain    : chr [1:4] "1" "2" "3" "4"</span>
@@ -179,13 +179,13 @@ format. See <code><a href="fit-method-mle.html">$mle()</a></code> to extract the
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_matrix.html" class="external-link">as_draws_matrix</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_matrix: 6 iterations, 1 chains, and 105 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     variable</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> draw lp__ alpha beta[1] beta[2] beta[3] log_lik[1] log_lik[2] log_lik[3]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    1  -64  0.43   -0.62   -0.28    0.81      -0.51      -0.35      -0.44</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2  -69  0.51   -0.80    0.41    0.42      -0.37      -0.38      -0.12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    3  -66  0.72   -0.57   -0.39    0.57      -0.40      -0.62      -0.47</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    4  -65  0.20   -0.61   -0.13    0.89      -0.59      -0.24      -0.40</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    5  -65  0.17   -0.69   -0.47    0.50      -0.60      -0.43      -0.77</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    6  -65  0.22   -0.74   -0.10    0.82      -0.55      -0.25      -0.36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw lp__  alpha beta[1] beta[2] beta[3] log_lik[1] log_lik[2] log_lik[3]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1  -66  0.245   -0.47  -0.410    1.03      -0.63      -0.26      -0.63</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2  -65  0.415   -0.87  -0.337    0.51      -0.46      -0.45      -0.47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3  -67  0.193   -0.54   0.185    0.67      -0.55      -0.28      -0.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    4  -68  0.595   -0.80  -0.869    0.81      -0.48      -0.49      -0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    5  -68  0.044   -0.58   0.034    1.07      -0.66      -0.16      -0.32</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    6  -71 -0.115   -0.36   0.183    0.85      -0.74      -0.19      -0.35</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 97 more variables</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># or can specify 'format' argument to avoid manual conversion</span></span></span>
@@ -194,13 +194,13 @@ format. See <code><a href="fit-method-mle.html">$mle()</a></code> to extract the
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_matrix: 6 iterations, 1 chains, and 105 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     variable</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> draw lp__ alpha beta[1] beta[2] beta[3] log_lik[1] log_lik[2] log_lik[3]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    1  -64  0.43   -0.62   -0.28    0.81      -0.51      -0.35      -0.44</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2  -69  0.51   -0.80    0.41    0.42      -0.37      -0.38      -0.12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    3  -66  0.72   -0.57   -0.39    0.57      -0.40      -0.62      -0.47</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    4  -65  0.20   -0.61   -0.13    0.89      -0.59      -0.24      -0.40</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    5  -65  0.17   -0.69   -0.47    0.50      -0.60      -0.43      -0.77</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    6  -65  0.22   -0.74   -0.10    0.82      -0.55      -0.25      -0.36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> draw lp__  alpha beta[1] beta[2] beta[3] log_lik[1] log_lik[2] log_lik[3]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1  -66  0.245   -0.47  -0.410    1.03      -0.63      -0.26      -0.63</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2  -65  0.415   -0.87  -0.337    0.51      -0.46      -0.45      -0.47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3  -67  0.193   -0.54   0.185    0.67      -0.55      -0.28      -0.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    4  -68  0.595   -0.80  -0.869    0.81      -0.48      -0.49      -0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    5  -68  0.044   -0.58   0.034    1.07      -0.66      -0.16      -0.32</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    6  -71 -0.115   -0.36   0.183    0.85      -0.74      -0.19      -0.35</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 97 more variables</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># can select specific parameters</span></span></span>
@@ -209,12 +209,12 @@ format. See <code><a href="fit-method-mle.html">$mle()</a></code> to extract the
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = alpha</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration    1    2    3    4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.43 0.59 0.53 0.38</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.51 0.58 0.57 0.19</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.72 0.71 0.47 0.34</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.20 0.65 0.39 0.31</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.17 0.80 0.39 0.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1    2      3    4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.245 0.45  0.538 0.47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.415 0.59 -0.148 0.76</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.193 0.12 -0.039 0.64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.595 0.41  0.047 0.45</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.044 0.17  0.734 0.50</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 995 more iterations</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"beta"</span><span class="op">)</span>  <span class="co"># selects entire vector beta</span></span></span>
@@ -223,31 +223,31 @@ format. See <code><a href="fit-method-mle.html">$mle()</a></code> to extract the
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1     2     3     4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.62 -0.88 -0.93 -0.41</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.80 -0.73 -0.93 -0.62</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.57 -0.56 -0.31 -0.61</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.61 -1.06 -0.81 -0.79</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.69 -0.85 -0.96 -0.54</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.47 -0.69 -0.69 -0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.87 -0.79 -0.50 -0.40</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.54 -0.54 -0.60 -0.36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.80 -0.49 -0.31 -0.58</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.58 -0.77 -1.10 -0.79</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = beta[2]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1      2     3     4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.28 -0.147 -0.76 -0.70</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.41 -0.232 -0.31 -0.33</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.39 -0.215 -0.20 -0.18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.13  0.127 -0.30 -0.41</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.47 -0.055 -0.49 -0.32</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1      2     3       4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.410 -0.372 -0.28  0.1518</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.337 -0.091 -0.30  0.0353</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3  0.185 -0.363 -0.45  0.0042</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.869 -0.099 -0.25 -0.4075</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.034 -0.465 -0.43 -0.1765</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = beta[3]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> iteration    1    2    3    4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.81 0.92 0.48 0.31</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.42 0.52 0.99 0.35</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.57 0.50 0.55 0.47</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.89 0.72 0.68 0.99</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.50 0.31 0.69 0.70</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 1.03 0.62 0.78 0.67</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.51 0.29 0.35 0.81</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.67 1.01 0.64 0.41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.81 0.47 0.95 0.79</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 1.07 0.47 0.34 0.71</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 995 more iterations</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alpha"</span>, <span class="st">"beta[2]"</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -255,22 +255,22 @@ format. See <code><a href="fit-method-mle.html">$mle()</a></code> to extract the
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = alpha</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration    1    2    3    4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.43 0.59 0.53 0.38</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.51 0.58 0.57 0.19</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.72 0.71 0.47 0.34</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.20 0.65 0.39 0.31</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.17 0.80 0.39 0.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1    2      3    4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 0.245 0.45  0.538 0.47</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 0.415 0.59 -0.148 0.76</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3 0.193 0.12 -0.039 0.64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 0.595 0.41  0.047 0.45</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5 0.044 0.17  0.734 0.50</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , variable = beta[2]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          chain</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> iteration     1      2     3     4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.28 -0.147 -0.76 -0.70</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         2  0.41 -0.232 -0.31 -0.33</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         3 -0.39 -0.215 -0.20 -0.18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.13  0.127 -0.30 -0.41</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         5 -0.47 -0.055 -0.49 -0.32</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> iteration      1      2     3       4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         1 -0.410 -0.372 -0.28  0.1518</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         2 -0.337 -0.091 -0.30  0.0353</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         3  0.185 -0.363 -0.45  0.0042</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         4 -0.869 -0.099 -0.25 -0.4075</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         5  0.034 -0.465 -0.43 -0.1765</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... with 995 more iterations</span>
 <span class="r-in"><span></span></span>
@@ -288,21 +288,21 @@ format. See <code><a href="fit-method-mle.html">$mle()</a></code> to extract the
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_matrix: 6 iterations, 1 chains, and 3 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     variable</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> draw beta[1] beta[2] beta[3]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    1   -0.71  -0.116    0.32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    2   -0.82  -0.483    0.84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    3   -0.33  -0.098    0.82</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    4   -0.67  -0.184    0.45</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    5   -0.25  -0.120    1.08</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    6   -0.99   0.099    0.75</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1   -0.69   0.043    0.41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2   -0.95  -0.515    1.25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3   -0.83  -0.268    0.85</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    4   -1.02  -0.516    0.51</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    5   -0.32  -0.397    0.74</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    6   -0.61  -0.331    0.90</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"beta"</span>, format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # A draws_df: 6 iterations, 1 chains, and 3 variables</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   beta[1] beta[2] beta[3]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   -0.71  -0.116    0.32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   -0.82  -0.483    0.84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   -0.33  -0.098    0.82</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   -0.67  -0.184    0.45</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   -0.25  -0.120    1.08</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   -0.99   0.099    0.75</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   -0.69   0.043    0.41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   -0.95  -0.515    1.25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   -0.83  -0.268    0.85</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   -1.02  -0.516    0.51</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   -0.32  -0.397    0.74</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   -0.61  -0.331    0.90</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # ... hidden reserved variables {'.chain', '.iteration', '.draw'}</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

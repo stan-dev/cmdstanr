@@ -27,7 +27,9 @@ CmdStan runs (number of chains for MCMC and one otherwise).
 # \dontrun{
 # example with return codes all zero
 fit_mcmc <- cmdstanr_example("schools", method = "sample")
-#> Warning: 137 of 4000 (3.0%) transitions ended with a divergence.
+#> Warning: 145 of 4000 (4.0%) transitions ended with a divergence.
+#> See https://mc-stan.org/misc/warnings for details.
+#> Warning: 1 of 4 chains had an E-BFMI less than 0.3.
 #> See https://mc-stan.org/misc/warnings for details.
 fit_mcmc$return_codes() # should be all zero
 #> [1] 0 0 0 0

@@ -132,9 +132,9 @@ sample_mpi(
   following:
 
   - A real number `x>0`. This initializes *all* parameters randomly
-    between `[-x,x]` on the *unconstrained* parameter space.;
+    between `[-x,x]` on the *unconstrained* parameter space.
 
-  - The number `0`. This initializes *all* parameters to `0`;
+  - The number `0`. This initializes *all* parameters to `0`.
 
   - A character vector of paths (one per chain) to JSON or Rdump files
     containing initial values for all or some parameters. See
@@ -171,7 +171,7 @@ sample_mpi(
     inits will be drawn using sampling with replacement. Otherwise
     sampling without replacement will be used. When a
     [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
-    fit object is used as the init, if . `psis_resample` was set to
+    fit object is used as the init, if `psis_resample` was set to
     `FALSE` and `calculate_lp` was set to `TRUE` (default), then
     resampling without replacement with Pareto smoothed weights will be
     used. If `psis_resample` was set to `TRUE` or `calculate_lp` was set
@@ -185,7 +185,7 @@ sample_mpi(
 
   - A type inheriting from
     [`posterior::draws`](https://mc-stan.org/posterior/reference/draws.html).
-    If the draws object has less samples than the number of requested
+    If the draws object has fewer draws than the number of requested
     chains/paths then the inits will be drawn using sampling with
     replacement. Otherwise sampling without replacement will be used. If
     the draws object's parameters are only a subset of the model

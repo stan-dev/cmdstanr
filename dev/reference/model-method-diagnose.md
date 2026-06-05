@@ -63,9 +63,9 @@ diagnose(
   following:
 
   - A real number `x>0`. This initializes *all* parameters randomly
-    between `[-x,x]` on the *unconstrained* parameter space.;
+    between `[-x,x]` on the *unconstrained* parameter space.
 
-  - The number `0`. This initializes *all* parameters to `0`;
+  - The number `0`. This initializes *all* parameters to `0`.
 
   - A character vector of paths (one per chain) to JSON or Rdump files
     containing initial values for all or some parameters. See
@@ -102,7 +102,7 @@ diagnose(
     inits will be drawn using sampling with replacement. Otherwise
     sampling without replacement will be used. When a
     [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
-    fit object is used as the init, if . `psis_resample` was set to
+    fit object is used as the init, if `psis_resample` was set to
     `FALSE` and `calculate_lp` was set to `TRUE` (default), then
     resampling without replacement with Pareto smoothed weights will be
     used. If `psis_resample` was set to `TRUE` or `calculate_lp` was set
@@ -116,7 +116,7 @@ diagnose(
 
   - A type inheriting from
     [`posterior::draws`](https://mc-stan.org/posterior/reference/draws.html).
-    If the draws object has less samples than the number of requested
+    If the draws object has fewer draws than the number of requested
     chains/paths then the inits will be drawn using sampling with
     replacement. Otherwise sampling without replacement will be used. If
     the draws object's parameters are only a subset of the model
@@ -205,10 +205,10 @@ test <- cmdstanr_example("logistic", method = "diagnose")
 
 # retrieve the gradients
 test$gradients()
-#>   param_idx    value     model finite_diff        error
-#> 1         0  1.14396  -6.97967    -6.97967  2.26896e-08
-#> 2         1  1.59547 -32.02320   -32.02320  3.61434e-09
-#> 3         2  0.32943  -8.64446    -8.64446 -2.34269e-08
-#> 4         3 -1.87592  29.19780    29.19780 -8.63969e-09
+#>   param_idx     value    model finite_diff        error
+#> 1         0 -0.600900  19.8734     19.8734 -2.39168e-08
+#> 2         1  0.489817 -19.1212    -19.1212  3.71502e-09
+#> 3         2 -0.823247  10.2858     10.2858  3.22936e-08
+#> 4         3 -1.493100  32.6105     32.6105 -5.45285e-09
 # }
 ```

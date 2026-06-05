@@ -85,9 +85,9 @@ laplace(
   following:
 
   - A real number `x>0`. This initializes *all* parameters randomly
-    between `[-x,x]` on the *unconstrained* parameter space.;
+    between `[-x,x]` on the *unconstrained* parameter space.
 
-  - The number `0`. This initializes *all* parameters to `0`;
+  - The number `0`. This initializes *all* parameters to `0`.
 
   - A character vector of paths (one per chain) to JSON or Rdump files
     containing initial values for all or some parameters. See
@@ -124,7 +124,7 @@ laplace(
     inits will be drawn using sampling with replacement. Otherwise
     sampling without replacement will be used. When a
     [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
-    fit object is used as the init, if . `psis_resample` was set to
+    fit object is used as the init, if `psis_resample` was set to
     `FALSE` and `calculate_lp` was set to `TRUE` (default), then
     resampling without replacement with Pareto smoothed weights will be
     used. If `psis_resample` was set to `TRUE` or `calculate_lp` was set
@@ -138,7 +138,7 @@ laplace(
 
   - A type inheriting from
     [`posterior::draws`](https://mc-stan.org/posterior/reference/draws.html).
-    If the draws object has less samples than the number of requested
+    If the draws object has fewer draws than the number of requested
     chains/paths then the inits will be drawn using sampling with
     replacement. Otherwise sampling without replacement will be used. If
     the draws object's parameters are only a subset of the model
@@ -327,9 +327,9 @@ mod$print()
 
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit_mode <- mod$optimize(data = stan_data, jacobian = TRUE)
-#> Initial log joint probability = -15.2016 
+#> Initial log joint probability = -7.12639 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        5      -6.74802    0.00202372   6.06123e-05           1           1        8    
+#>        4      -6.74802    0.00348588   7.79186e-05           1           1        7    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -350,17 +350,17 @@ fit_laplace <- mod$laplace(data = stan_data, mode = fit_mode)
 #> Finished in  0.1 seconds.
 fit_laplace$summary()
 #> # A tibble: 3 × 7
-#>   variable      mean median    sd   mad      q5      q95
-#>   <chr>        <dbl>  <dbl> <dbl> <dbl>   <dbl>    <dbl>
-#> 1 lp__        -7.29  -6.98  0.832 0.320 -8.81   -6.75   
-#> 2 lp_approx__ -0.537 -0.230 0.783 0.315 -2.15   -0.00195
-#> 3 theta        0.274  0.250 0.130 0.122  0.0990  0.515  
+#>   variable      mean median    sd   mad     q5      q95
+#>   <chr>        <dbl>  <dbl> <dbl> <dbl>  <dbl>    <dbl>
+#> 1 lp__        -7.22  -6.96  0.679 0.287 -8.46  -6.75   
+#> 2 lp_approx__ -0.477 -0.219 0.666 0.300 -1.79  -0.00196
+#> 3 theta        0.267  0.247 0.121 0.113  0.101  0.500  
 
 # if mode isn't specified optimize is run internally first
 fit_laplace <- mod$laplace(data = stan_data)
-#> Initial log joint probability = -9.85576 
+#> Initial log joint probability = -6.74804 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        5      -6.74802   0.000587133   6.70141e-06           1           1        8    
+#>        2      -6.74802     0.0031365   7.14072e-06           1           1        5    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -382,9 +382,9 @@ fit_laplace$summary()
 #> # A tibble: 3 × 7
 #>   variable      mean median    sd   mad      q5      q95
 #>   <chr>        <dbl>  <dbl> <dbl> <dbl>   <dbl>    <dbl>
-#> 1 lp__        -7.24  -6.96  0.702 0.298 -8.71   -6.75   
-#> 2 lp_approx__ -0.498 -0.221 0.705 0.304 -2.04   -0.00309
-#> 3 theta        0.266  0.246 0.122 0.122  0.0970  0.491  
+#> 1 lp__        -7.25  -6.97  0.721 0.297 -8.70   -6.75   
+#> 2 lp_approx__ -0.515 -0.223 0.724 0.300 -2.00   -0.00218
+#> 3 theta        0.265  0.240 0.125 0.120  0.0978  0.500  
 
 # plot approximate posterior
 bayesplot::mcmc_hist(fit_laplace$draws("theta"))

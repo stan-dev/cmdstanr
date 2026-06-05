@@ -65,13 +65,13 @@ fit_mcmc$output(1)
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 327235529
+#>   seed = 1099664120
 #> output
-#>   file = /tmp/RtmpXAkxdu/logistic-202606050755-1-13511a.csv
+#>   file = /tmp/RtmpqnDjuF/logistic-202606051544-1-24a020.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpXAkxdu/logistic-profile-202606050755-1-8f436e.csv
+#>   profile_file = /tmp/RtmpqnDjuF/logistic-profile-202606051544-1-4dc397.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -104,9 +104,9 @@ fit_mcmc$output(1)
 #> Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 0.017 seconds (Warm-up)
-#>                0.05 seconds (Sampling)
-#>                0.067 seconds (Total)
+#>  Elapsed Time: 0.02 seconds (Warm-up)
+#>                0.055 seconds (Sampling)
+#>                0.075 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
 #> List of 4
@@ -137,19 +137,19 @@ fit_mle$output()
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 1293992464
+#>   seed = 1792129562
 #> output
-#>   file = /tmp/RtmpXAkxdu/logistic-202606050755-1-51602b.csv
+#>   file = /tmp/RtmpqnDjuF/logistic-202606051544-1-616a87.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpXAkxdu/logistic-profile-202606050755-1-538c67.csv
+#>   profile_file = /tmp/RtmpqnDjuF/logistic-profile-202606051544-1-3c99b3.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
-#> Initial log joint probability = -141.336
+#> Initial log joint probability = -124.053
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes 
-#>        7      -63.9218   0.000273869   0.000164313      0.9881      0.9881       10   
+#>        7      -63.9218   0.000438087    0.00107529           1           1       10   
 #> Optimization terminated normally: 
 #>   Convergence detected: relative gradient magnitude is below tolerance
 
@@ -175,13 +175,13 @@ fit_vb$output()
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 411984747
+#>   seed = 1973439605
 #> output
-#>   file = /tmp/RtmpXAkxdu/logistic-202606050755-1-1a6956.csv
+#>   file = /tmp/RtmpqnDjuF/logistic-202606051544-1-07c5eb.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpXAkxdu/logistic-profile-202606050755-1-698252.csv
+#>   profile_file = /tmp/RtmpqnDjuF/logistic-profile-202606051544-1-580842.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -208,9 +208,9 @@ fit_vb$output()
 #> 
 #> Begin stochastic gradient ascent.
 #>   iter             ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
-#>    100          -66.463             1.000            1.000
-#>    200          -66.203             0.502            1.000
-#>    300          -66.562             0.336            0.005   MEDIAN ELBO CONVERGED
+#>    100          -66.790             1.000            1.000
+#>    200          -66.398             0.503            1.000
+#>    300          -66.186             0.336            0.006   MEDIAN ELBO CONVERGED
 #> 
 #> Drawing a sample of size 1000 from the approximate posterior... 
 #> COMPLETED.
