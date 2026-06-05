@@ -1837,10 +1837,11 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   installed version of CmdStan
 #'
 #' @template model-common-args
-#' @param num_threads (positive integer) If the model was
+#' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., for multi-path pathfinder
 #'   as well as `reduce_sum`).
+#' @param num_threads Deprecated. Please use `threads` instead.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1897,6 +1898,7 @@ pathfinder <- function(data = NULL,
                        output_dir = getOption("cmdstanr_output_dir"),
                        output_basename = NULL,
                        sig_figs = NULL,
+                       threads = NULL,
                        opencl_ids = NULL,
                        num_threads = NULL,
                        init_alpha = NULL,
@@ -1917,11 +1919,18 @@ pathfinder <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+  if (!is.null(num_threads)) {
+    if (!is.null(threads)) {
+      stop("Cannot specify both 'threads' and deprecated 'num_threads'.", call. = FALSE)
+    }
+    warning("'num_threads' is deprecated. Please use 'threads' instead.", call. = FALSE)
+    threads <- num_threads
+  }
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(num_threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1963,7 +1972,6 @@ pathfinder <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    num_threads = num_threads,
     save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)

@@ -43,7 +43,6 @@ CmdStanArgs <- R6::R6Class(
                           sig_figs = NULL,
                           opencl_ids = NULL,
                           model_variables = NULL,
-                          num_threads = NULL,
                           save_cmdstan_config = NULL) {
 
       self$model_name <- model_name
@@ -81,7 +80,6 @@ CmdStanArgs <- R6::R6Class(
       init <- process_init(init, num_inits, model_variables)
       self$init <- init
       self$opencl_ids <- opencl_ids
-      self$num_threads <- NULL
       self$method_args$validate(num_procs = length(self$proc_ids))
       if (is.logical(self$save_cmdstan_config)) {
         self$save_cmdstan_config <- as.integer(self$save_cmdstan_config)
@@ -184,9 +182,6 @@ CmdStanArgs <- R6::R6Class(
       }
       if (!is.null(self$opencl_ids)) {
         args$opencl <- c("opencl", paste0("platform=", self$opencl_ids[1]), paste0("device=", self$opencl_ids[2]))
-      }
-      if (!is.null(self$num_threads)) {
-        num_threads <- c(args$output, paste0("num_threads=", self$num_threads))
       }
       args <- do.call(c, append(args, list(use.names = FALSE)))
       self$method_args$compose(idx, args)
