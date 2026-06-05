@@ -27,10 +27,10 @@
 #'   and memory for models with many parameters.
 #'
 #' @return
-#' `as_cmdstan_fit()` returns a [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace] or
-#' [CmdStanVB] object. Some methods typically defined for those objects will not
-#' work (e.g. `save_data_file()`) but the important methods like `$summary()`,
-#' `$draws()`, `$sampler_diagnostics()` and others will work fine.
+#' `as_cmdstan_fit()` returns a fitted model object ([CmdStanMCMC], [CmdStanVB],
+#' etc.). Some methods typically defined for those objects will not work (e.g.
+#' `save_data_file()`) but the important methods like `$summary()`, `$draws()`,
+#' `$sampler_diagnostics()` and others will work fine.
 #'
 #' `read_cmdstan_csv()` returns a named list with the following components:
 #'
@@ -67,8 +67,8 @@
 #'
 #' * `point_estimates`: Point estimates for the model parameters.
 #'
-#' For [laplace][model-method-laplace] and
-#' [variational inference][model-method-variational] the returned list also
+#' For [laplace][model-method-laplace], [pathfinder][model-method-pathfinder]
+#' and [variational inference][model-method-variational] the returned list also
 #' includes the following components:
 #'
 #' * `draws`: A [`draws_matrix`][posterior::draws_matrix] (or different format
