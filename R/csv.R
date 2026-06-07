@@ -926,11 +926,36 @@ check_csv_metadata_matches <- function(csv_metadata) {
 }
 
 # convert names like beta.1.1 to beta[1,1]
+# also handles complex suffixes (.real/.imag) and tuple separators (:)
 repair_variable_names <- function(names) {
+  # 1. Detect and strip .real/.imag suffix before dot conversion
+  complex_suffix <- ifelse(
+    grepl("\\.real$", names), ",real",
+    ifelse(grepl("\\.imag$", names), ",imag", "")
+  )
+  names <- sub("\\.(real|imag)$", "", names)
+
+  # 2. Standard dot-to-bracket conversion (remaining dots are numeric indices)
   names <- sub("\\.", "[", names)
   names <- gsub("\\.", ",", names)
-  names[grep("\\[", names)] <-
-    paste0(names[grep("\\[", names)], "]")
+  has_bracket <- grepl("\\[", names)
+  names[has_bracket] <- paste0(names[has_bracket], "]")
+
+  # 3. Re-attach complex suffix
+  has_complex <- nzchar(complex_suffix)
+  has_both <- has_complex & has_bracket
+  has_complex_only <- has_complex & !has_bracket
+  # Had numeric indices: insert complex suffix before closing ]
+  names[has_both] <- paste0(
+    sub("\\]$", "", names[has_both]),
+    complex_suffix[has_both], "]"
+  )
+  # No numeric indices: wrap in brackets
+  names[has_complex_only] <- paste0(
+    names[has_complex_only], "[",
+    sub("^,", "", complex_suffix[has_complex_only]), "]"
+  )
+
   names
 }
 
@@ -997,8 +1022,25 @@ variable_dims <- function(variable_names = NULL) {
     var_indices <- var_names[grep(pattern, var_names)]
     var_indices <- gsub(pattern, "", var_indices)
     if (length(var_indices)) {
-      var_indices <- strsplit(var_indices[length(var_indices)], ",")[[1]]
-      dims[[var]] <- as.numeric(var_indices)
+      # Split the last index entry by comma to determine number of dimensions
+      last_indices <- strsplit(var_indices[length(var_indices)], ",")[[1]]
+      ndims <- length(last_indices)
+      dim_sizes <- integer(ndims)
+      for (d in seq_len(ndims)) {
+        num_idx <- suppressWarnings(as.integer(last_indices[d]))
+        if (!is.na(num_idx)) {
+          # Numeric index: the maximum value is the dimension size
+          dim_sizes[d] <- num_idx
+        } else {
+          # Non-numeric index (e.g., "real"/"imag" for complex, or
+          # tuple indices like "1:2"): count unique values across all
+          # entries for this dimension position
+          all_indices <- strsplit(var_indices, ",")
+          unique_vals <- unique(vapply(all_indices, `[`, character(1), d))
+          dim_sizes[d] <- length(unique_vals)
+        }
+      }
+      dims[[var]] <- dim_sizes
     } else {
       dims[[var]] <- 1
     }

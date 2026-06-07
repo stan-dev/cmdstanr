@@ -525,8 +525,12 @@ unconstrain_variables <- function(variables) {
   model_variables <- self$runset$args$model_variables
 
   # If zero-length parameters are present, they will be listed in model_variables
-  # but not in metadata()$variables
-  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+  # but not in metadata()$variables. For tuple parameters, model_variables uses
+  # the Stan-level name (e.g., "b_tuple") while model_par_names uses leaf names
+  # with ":" separators (e.g., "b_tuple:1:1"), so we use prefix matching.
+  nonzero_length_params <- stan_param_has_leaf(
+    names(model_variables$parameters), model_par_names
+  )
   model_par_names <- names(model_variables$parameters[nonzero_length_params])
 
   model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
@@ -615,14 +619,23 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
   model_variables <- self$runset$args$model_variables
 
   # If zero-length parameters are present, they will be listed in model_variables
-  # but not in metadata()$variables
-  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+  # but not in metadata()$variables. For tuple parameters, model_variables uses
+  # the Stan-level name (e.g., "b_tuple") while model_par_names uses leaf names
+  # with ":" separators (e.g., "b_tuple:1:1"), so we use prefix matching.
+  nonzero_length_params <- stan_param_has_leaf(
+    names(model_variables$parameters), model_par_names
+  )
 
   # Remove zero-length parameters from model_variables, otherwise process_init
   # warns about missing inputs
   pars <- names(model_variables$parameters[nonzero_length_params])
 
-  draws <- posterior::subset_draws(draws, variable = pars)
+  # For subset_draws, we need to use the leaf-level names from stan_variables
+  # (e.g., "b_tuple:1:1") rather than Stan-level names (e.g., "b_tuple"),
+  # because posterior doesn't recognize Stan-level tuple names.
+  pars_for_draws <- expand_stan_params_to_leaves(pars, model_par_names)
+
+  draws <- posterior::subset_draws(draws, variable = pars_for_draws)
   unconstrained <- private$model_methods_env_$unconstrain_draws(private$model_methods_env_$model_ptr_, draws)
   uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
   names(unconstrained) <- repair_variable_names(uncon_names)
