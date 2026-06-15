@@ -616,27 +616,47 @@ compile <- function(quiet = TRUE,
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
+  # Two forms of the stanc options are needed. The quoted form is embedded in
+  # the STANCFLAGS string passed to make(), where it is processed by a shell and
+  # the quotes guard against spaces. The unquoted form is for get_standalone_hpp(),
+  # which calls stanc directly (no shell) via an argument vector, so quotes would
+  # otherwise become literal characters in option values - e.g. --name='foo_model'
+  # would produce the namespace 'foo_model'_namespace and hide external C++
+  # functions from the standalone / model-methods code. (#1197)
   stanc_built_options <- c()
+  stanc_built_options_unquoted <- c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
     if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
+      opt <- paste0("--", option_name)
+      stanc_built_options <- c(stanc_built_options, opt)
+      stanc_built_options_unquoted <- c(stanc_built_options_unquoted, opt)
     } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
+      opt <- paste0("--", stanc_options[[i]])
+      stanc_built_options <- c(stanc_built_options, opt)
+      stanc_built_options_unquoted <- c(stanc_built_options_unquoted, opt)
     } else {
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
+      stanc_built_options_unquoted <- c(stanc_built_options_unquoted, paste0("--", option_name, "=", stanc_options[[i]]))
     }
   }
   stancflags_combined <- stanc_built_options
+  stancflags_combined_unquoted <- stanc_built_options_unquoted
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
   if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
+    stancflags_combined_unquoted <- c(stancflags_combined_unquoted, stancflags_local)
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
-  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
+  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined_unquoted)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined))
+  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined_unquoted))
+  # Make the external C++ header available when the standalone functions and
+  # model methods are compiled via Rcpp::sourceCpp() (see rcpp_source_stan()),
+  # mirroring the -include $(USER_HEADER) that CmdStan's makefile adds. (#1197)
+  private$model_methods_env_$user_header_ <- user_header
+  self$functions$user_header_ <- user_header
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 

@@ -800,6 +800,13 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   cppflags <- get_cmdstan_flags("CPPFLAGS")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
+  # When the model uses an external C++ header, force-include it (as CmdStan's
+  # makefile does with -include $(USER_HEADER)) so that functions declared in the
+  # Stan program and defined in the header are available here too. (#1197)
+  user_header_include <- ""
+  if (!is.null(env$user_header_)) {
+    user_header_include <- paste0(" -include \"", env$user_header_, "\"")
+  }
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
   libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
   if (.Platform$OS.type == "windows") {
@@ -810,7 +817,7 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
       c(
         USE_CXX14 = 1,
         PKG_CPPFLAGS = cppflags,
-        PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, collapse = " "),
+        PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, user_header_include, collapse = " "),
         PKG_LIBS = libs
       ),
       Rcpp::sourceCpp(code = code, env = env, verbose = verbose, ...)
