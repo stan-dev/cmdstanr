@@ -339,3 +339,56 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
   expect_equal(fit$variable_skeleton(),
                 target_skeleton)
 })
+
+test_that("Model methods compile and run with an external C++ user_header (#1197)", {
+  # External C++ functions are defined in the model's namespace; previously the
+  # standalone / model-methods code was generated in a mangled, quoted namespace
+  # ('foo_model'_namespace) and the user header was not -include-d in the Rcpp
+  # compilation, so model methods could not be built for models using a custom
+  # header. See https://github.com/stan-dev/cmdstanr/issues/1116
+  ext_hpp <- "
+#include <stan/math.hpp>
+#include <boost/math/tools/promotion.hpp>
+#include <ostream>
+
+namespace bernoulli_external_model_namespace
+{
+    template <typename T0__,
+          stan::require_all_t<stan::is_stan_scalar<T0__>>* = nullptr>
+    inline typename boost::math::tools::promote_args<T0__>::type make_odds(
+      const T0__ & theta,
+      std::ostream *pstream__
+    )
+    {
+        return theta / (1 - theta);
+    }
+}"
+  header <- withr::local_tempfile(lines = ext_hpp, fileext = ".hpp")
+
+  # external C++ and CmdStan's precompiled headers do not mix on some platforms
+  make_local_orig <- cmdstan_make_local()
+  cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS" = "false"))
+  withr::defer(cmdstan_make_local(cpp_options = make_local_orig, append = FALSE))
+
+  mod <- cmdstan_model(
+    testing_stan_file("bernoulli_external"),
+    user_header = header,
+    compile_model_methods = TRUE,
+    force_recompile = TRUE
+  )
+  data_list <- testing_data("bernoulli")
+  utils::capture.output(
+    fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
+  )
+
+  expect_no_error(fit$init_model_methods())
+
+  lp <- fit$log_prob(unconstrained_variables = c(0.1))
+  expect_true(is.finite(lp))
+  expect_no_error(fit$grad_log_prob(unconstrained_variables = c(0.1)))
+
+  # generated quantities exercise the external make_odds(theta) = theta / (1 - theta)
+  theta <- stats::plogis(0.1)
+  cpars <- fit$constrain_variables(c(0.1))
+  expect_equal(cpars$odds, theta / (1 - theta))
+})

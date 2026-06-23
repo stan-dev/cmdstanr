@@ -1,5 +1,11 @@
 # cmdstanr (development version)
 
+* `compile_model_methods = TRUE` and `compile_standalone = TRUE` now work for
+models that use an external C++ `user_header`. The standalone / model-methods
+code is generated in the same namespace as the rest of the model (rather than a
+mangled `'foo_model'_namespace`), and the user header is force-included when
+those translation units are compiled, mirroring CmdStan's
+`-include $(USER_HEADER)`. (#1197)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
