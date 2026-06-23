@@ -122,11 +122,11 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140042788403008 0.636084880  0.513200970  0.122883910       52356
-    2     priors 140042788403008 0.003454011  0.002602452  0.000851559       34904
+    1     priors 140654610069312 0.003812284  0.002817374   0.00099491       34904
+    2 likelihood 140654610069312 0.664979620  0.516309470   0.14867015       52356
       no_chain_stack autodiff_calls no_autodiff_calls
-    1       34921452          17452                 1
-    2          34904          17452                 1
+    1          34904          17452                 1
+    2       34921452          17452                 1
 
 The `total_time` column is the total time spent inside a given profile
 statement. It is clear that the vast majority of time is spent in the
@@ -181,8 +181,8 @@ fit_glm$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1     priors 140069200578368 0.003456633  0.002634751  0.000821882       34214
-    2 likelihood 140069200578368 0.421401720  0.420535320  0.000866398       51321
+    1     priors 140385359054656 0.003636655  0.002644345  0.000992310       34214
+    2 likelihood 140385359054656 0.435531590  0.434450070  0.001081516       51321
       no_chain_stack autodiff_calls no_autodiff_calls
     1          34214          17107                 1
     2          17107          17107                 1
@@ -214,7 +214,7 @@ per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.644768e-05 1.979149e-07
+    [1] 2.184440e-07 3.810335e-05
 
 ### Accessing and saving the profile files
 
@@ -228,7 +228,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/Rtmp5Mb7JG/model_580e4657b49f155a37081bdfaae83f92-profile-202606070552-1-80690c.csv"
+    [1] "/tmp/RtmpNeBHvJ/model_580e4657b49f155a37081bdfaae83f92-profile-202606230348-1-806b4b.csv"
 
 These can be saved to a more permanent location with the
 `$save_profile_files()` method.
