@@ -639,13 +639,18 @@ compile <- function(quiet = TRUE,
   private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined))
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
+  if (!is.null(user_header)) {
+    external_code <- readLines(user_header)
+    self$functions$external_code_ <- external_code
+    private$model_methods_env_$external_code_ <- external_code
+  }
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
   if (!dry_run) {
 
     if (compile_standalone) {
-      expose_stan_functions(self$functions, !quiet)
+      expose_stan_functions(self$functions, global = FALSE, verbose = !quiet)
     }
 
     withr::with_envvar(

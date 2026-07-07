@@ -854,7 +854,7 @@ expose_model_methods <- function(env, verbose = FALSE) {
   if (rlang::is_interactive()) {
     message("Compiling additional model methods...")
   }
-  code <- c(env$hpp_code_,
+  code <- c(env$external_code_, env$hpp_code_,
             readLines(system.file("include", "model_methods.cpp",
                                   package = "cmdstanr", mustWork = TRUE)))
 
@@ -1010,7 +1010,14 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
           call. = FALSE)
   }
 
+  for (nm in env$fun_names) {
+    if (any(grepl(paste0("\\b", nm, "\\("), env$external_code_))) {
+      stan_funs <- gsub(paste0("return (.*)::", nm), paste0("return ::", nm), stan_funs)
+    }
+  }
+
   mod_stan_funs <- paste(c(
+    env$external_code_,
     env$hpp_code[1:(funs[1] - 1)],
     "#include <rcpp_tuple_interop.hpp>",
     "#include <rcpp_eigen_interop.hpp>",
