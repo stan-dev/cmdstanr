@@ -8,6 +8,7 @@ name: Unit tests
   push:
     branches:
       - master
+      - winarmci
   pull_request:
     branches:
       - master
@@ -33,17 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest, r: 'devel', opencl: true}
-          - {os: macOS-latest, r: 'release', opencl: true}
-          - {os: macos-26, r: 'release', opencl: false}
-          - {os: macos-15-intel, r: 'release', opencl: false}
-          - {os: windows-latest, r: 'devel' }
-          - {os: windows-latest, r: 'release'}
-          - {os: windows-2022, r: '4.1'}
-          - {os: windows-latest, r: 'oldrel'}
-          - {os: ubuntu-latest, r: 'devel', opencl: true}
-          - {os: ubuntu-latest, r: 'release', opencl: true}
-          - {os: ubuntu-latest, r: 'oldrel', opencl: true}
+          - {os: windows-11-arm, r: 'release'}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
