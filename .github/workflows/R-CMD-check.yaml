@@ -64,12 +64,9 @@ jobs:
       - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r-dependencies@v2
-        env:
-          TBB_INC: ${{ matrix.config.os == 'windows-11-arm' && 'C:/rtools45-aarch64/aarch64-w64-mingw32.static.posix/include' || '' }}
-          TBB_LIB: ${{ matrix.config.os == 'windows-11-arm' && 'C:/rtools45-aarch64/aarch64-w64-mingw32.static.posix/lib' || '' }}
         with:
           cache: "always"
-          extra-packages: any::rcmdcheck, local::.
+          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.os == 'windows-11-arm' && 'RcppCore/RcppParallel' || '' }}
 
       - name: Debug Windows toolchain resolution
         if: ${{ runner.os == 'Windows' }}
