@@ -623,6 +623,8 @@ compile <- function(quiet = TRUE,
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
     } else if (is.null(option_name) || !nzchar(option_name)) {
       stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
+    } else if (option_name == "name") { # Quoting model name mangles generated namespace
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
     } else {
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }

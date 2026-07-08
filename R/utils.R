@@ -1009,10 +1009,15 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
           paste(dups, collapse=", "),
           call. = FALSE)
   }
+  has_namespace <- any(grepl("namespace\\s+([[:alnum:]_]+)\\s*\\{", env$external_code_, perl = TRUE));
 
-  for (nm in env$fun_names) {
-    if (any(grepl(paste0("\\b", nm, "\\("), env$external_code_))) {
-      stan_funs <- gsub(paste0("return (.*)::", nm), paste0("return ::", nm), stan_funs)
+  # If the external functions were not declared in the model namespace, remove the namespace
+  # prefix from the generated code
+  if (!has_namespace) {
+    for (nm in env$fun_names) {
+      if (any(grepl(paste0("\\b", nm, "\\("), env$external_code_))) {
+        stan_funs <- gsub(paste0("return (.*)::", nm, "\\("), paste0("return ::", nm, "("), stan_funs)
+      }
     }
   }
 
@@ -1058,7 +1063,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
 
   env$compiled <- TRUE
   invisible(NULL)
-}
+  }
 
 expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE) {
   if (os_is_wsl()) {
