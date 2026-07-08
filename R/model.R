@@ -250,7 +250,7 @@ CmdStanModel <- R6::R6Class(
         checkmate::assert_flag(compile)
         private$stan_file_ <- absolute_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
-        private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
+        private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_cpp_options_ <- args$cpp_options %||% list()
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
         if (!is.null(args$user_header) || !is.null(args$cpp_options[["USER_HEADER"]]) ||
@@ -268,7 +268,7 @@ CmdStanModel <- R6::R6Class(
         private$exe_file_ <- repair_path(absolute_path(exe_file))
         if (is.null(stan_file)) {
           assert_file_exists(private$exe_file_, access = "r", extension = ext)
-          private$model_name_ <- sub(" ", "_", strip_ext(basename(private$exe_file_)))
+          private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
       }
       if (!is.null(stan_file) && compile) {
@@ -623,7 +623,9 @@ compile <- function(quiet = TRUE,
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
     } else if (is.null(option_name) || !nzchar(option_name)) {
       stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
-    } else {
+    } else if (option_name == "name") { # Quoting model name mangles generated namespace
+      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
+    }  else {
       stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
     }
   }
@@ -645,7 +647,7 @@ compile <- function(quiet = TRUE,
   if (!dry_run) {
 
     if (compile_standalone) {
-      expose_stan_functions(self$functions, !quiet)
+      expose_stan_functions(self$functions, verbose = !quiet)
     }
 
     withr::with_envvar(
