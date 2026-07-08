@@ -8,7 +8,7 @@ name: Unit tests
   push:
     branches:
       - master
-      - winarmci
+      - winarm-ci
   pull_request:
     branches:
       - master
