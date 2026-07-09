@@ -72,6 +72,7 @@ jobs:
         if: ${{ runner.os == 'Windows' }}
         run: |
           sessionInfo()
+          Sys.getenv()
           rtools_home <- cmdstanr:::rtools4x_home_path()
           candidates <- cmdstanr:::rtools4x_toolchain_candidates()
           selected <- cmdstanr:::rtools4x_toolchain_path()
