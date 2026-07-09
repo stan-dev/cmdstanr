@@ -234,10 +234,10 @@ test_that("Download failures return error message", {
 test_that("Install from release file works", {
   dir <- tempdir(check = TRUE)
 
-  destfile <- file.path(dir, "cmdstan-2.36.0.tar.gz")
+  destfile <- file.path(dir, "cmdstan-2.38.0.tar.gz")
 
   download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.38.0/cmdstan-2.38.0.tar.gz",
     destfile)
 
   expect_message(
