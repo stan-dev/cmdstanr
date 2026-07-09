@@ -48,7 +48,7 @@ jobs:
         run: |
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
           if [[ "${{ matrix.config.os }}" == "windows-11-arm" ]]; then
-            echo "RTOOLS45_HOME=C:/rtools45-aarch64" >> $GITHUB_ENV
+            echo "RTOOLS45_AARCH64_HOME=C:/rtools45-aarch64" >> $GITHUB_ENV
           fi
         shell: bash
 
