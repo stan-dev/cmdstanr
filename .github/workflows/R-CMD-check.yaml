@@ -69,7 +69,7 @@ jobs:
           extra-packages: any::rcmdcheck, local::., ${{ matrix.config.os == 'windows-11-arm' && 'RcppCore/RcppParallel' || '' }}
 
       - name: Debug Windows toolchain resolution
-        if: ${{ runner.os == 'Windows' }}
+        if: ${{ runner.os == 'Windows' && matrix.config.os != 'windows-11-arm' }}
         run: |
           rtools_home <- cmdstanr:::rtools4x_home_path()
           candidates <- cmdstanr:::rtools4x_toolchain_candidates()
