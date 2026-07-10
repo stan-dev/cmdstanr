@@ -91,7 +91,7 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
                       wsl = os_is_wsl()),
       "Compiling C++ code",
       fixed = TRUE
@@ -103,7 +103,7 @@ test_that("install_cmdstan() works with version and release_url", {
     expect_message(
       expect_output(
         install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                        version = "2.36.0",
+                        version = "2.37.0",
                         # the URL is intentionally invalid to test that the version has higher priority
                         release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
                         wsl = os_is_wsl()),
@@ -116,7 +116,7 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.36.0")))
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
   set_cmdstan_path()
 })
 
@@ -161,15 +161,15 @@ test_that("github_download_url constructs correct url", {
 test_that("extract_cmdstan_version_from_archive_name parses realistic inputs", {
   expect_equal(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz"
+      "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz"
     ),
-    "2.36.0"
+    "2.37.0"
   )
   expect_equal(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0-linux-arm64.tar.gz"
+      "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0-linux-arm64.tar.gz"
     ),
-    "2.36.0"
+    "2.37.0"
   )
   expect_equal(
     extract_cmdstan_version_from_archive_name(
@@ -185,7 +185,7 @@ test_that("extract_cmdstan_version_from_archive_name parses realistic inputs", {
   )
   expect_null(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/tag/v2.36.0"
+      "https://github.com/stan-dev/cmdstan/releases/tag/v2.37.0"
     )
   )
 })
