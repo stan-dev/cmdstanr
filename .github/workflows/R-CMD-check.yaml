@@ -44,6 +44,7 @@ jobs:
           - {os: ubuntu-latest, r: 'devel', opencl: true}
           - {os: ubuntu-latest, r: 'release', opencl: true}
           - {os: ubuntu-latest, r: 'oldrel', opencl: true}
+          - {os: windows-11-arm, r: 'release'}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -56,6 +57,10 @@ jobs:
       - name: cmdstan env vars
         run: |
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
+          # GHA Windows ARM containers configured with RTOOLS45_HOME instead of RTOOLS45_AARCH64_HOME
+          if [[ "${{ matrix.config.os }}" == "windows-11-arm" ]]; then
+            echo "RTOOLS45_AARCH64_HOME=C:/rtools45-aarch64" >> $GITHUB_ENV
+          fi
         shell: bash
 
       - uses: actions/checkout@v7
@@ -75,7 +80,7 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache: "always"
-          extra-packages: any::rcmdcheck, local::.
+          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.os == 'windows-11-arm' && 'RcppCore/RcppParallel' || '' }}
 
       - name: Debug Windows toolchain resolution
         if: ${{ runner.os == 'Windows' }}
