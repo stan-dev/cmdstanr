@@ -432,17 +432,28 @@ test_that("metadata()$time has chains rows", {
   expect_equal(nrow(fit_mcmc_3$metadata()$time), fit_mcmc_3$num_chains())
 })
 
-test_that("save_metric_files works and has clear error message when no files", {
+test_that("save_metric_files has clear error message when no files", {
   expect_snapshot(error = TRUE, fit_mcmc$save_metric_files())
+})
 
-  fit_save_metric <- testing_fit("logistic", save_metric = TRUE)
-  paths <- fit_save_metric$save_metric_files(dir = withr::local_tempdir())
-  checkmate::expect_file_exists(paths, extension = "json")
-  expect_true(all(file.size(paths) > 0))
+test_that("saved metric and config files survive fit cleanup", {
+  dir <- withr::local_tempdir()
+  fit <- testing_fit(
+    "logistic",
+    save_metric = TRUE,
+    save_cmdstan_config = TRUE
+  )
+  metric_paths <- fit$save_metric_files(dir = dir)
+  config_paths <- fit$save_config_files(dir = dir)
+  checkmate::expect_file_exists(metric_paths, extension = "json")
+  checkmate::expect_file_exists(config_paths, extension = "json")
+  expect_gt(min(file.size(metric_paths)), 0)
+  expect_gt(min(file.size(config_paths)), 0)
 
-  rm(fit_save_metric)
+  rm(fit)
   gc()
-  checkmate::expect_file_exists(paths, extension = "json")
+  checkmate::expect_file_exists(metric_paths, extension = "json")
+  checkmate::expect_file_exists(config_paths, extension = "json")
 })
 
 test_that("sampler_diagnostics() throws informative error when fixed_param=TRUE", {

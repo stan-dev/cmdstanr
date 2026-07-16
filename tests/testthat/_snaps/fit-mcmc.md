@@ -125,7 +125,7 @@
       mu
       theta_raw[3]
 
-# save_metric_files works and has clear error message when no files
+# save_metric_files has clear error message when no files
 
     Code
       fit_mcmc$save_metric_files()
