@@ -251,6 +251,7 @@ CmdStanRun <- R6::R6Class(
         " files and set internal paths to new locations:\n",
         paste("-", new_paths, collapse = "\n")
       )
+      private$config_files_saved_ <- TRUE
       invisible(new_paths)
     },
     save_metric_files = function(dir = ".",
