@@ -37,7 +37,7 @@ method.
 Currently parameter-specific diagnostics like R-hat and effective sample
 size are \emph{not} handled by this method. Those diagnostics are provided via
 the \code{\link[=fit-method-summary]{$summary()}} method (using
-\code{\link[posterior:draws_summary]{posterior::summarize_draws()}}).
+\code{\link[posterior:summarize_draws]{posterior::summarize_draws()}}).
 }
 \examples{
 \dontrun{

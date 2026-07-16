@@ -49,7 +49,6 @@ fit$summary(variables = c("mu", "tau"), mean, sd)
 
 To summarize all variables with non-default functions, it is necessary to set explicitly set the variables argument, either to `NULL` or the full vector of variable names.
 ```{r}
-fit$metadata()$model_params
 fit$summary(variables = NULL, "mean", "median")
 ```
 

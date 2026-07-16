@@ -1,5 +1,3 @@
-context("data-utils")
-
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 fit_vb <- testing_fit("bernoulli", method = "variational", seed = 123)
@@ -42,6 +40,19 @@ test_that("process_data works for inputs of length one", {
   ")
   mod <- cmdstan_model(stan_file, compile = FALSE)
   expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = list(5)))
+})
+
+test_that("process_data errors on NULL data variables", {
+  stan_file <- write_stan_file("
+  data {
+    int N;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_error(
+    process_data(list(N = NULL), model_variables = mod$variables()),
+    "Variable 'N' is NULL"
+  )
 })
 
 test_that("process_fitted_params() works with basic input types", {

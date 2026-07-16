@@ -1,5 +1,3 @@
-context("knitr engine")
-
 test_that("eng_cmdstan throws correct errors", {
   skip_if_not_installed("knitr")
   expect_error(eng_cmdstan(list(output.var = 1)), "must be a character string")
@@ -24,7 +22,7 @@ test_that("eng_cmdstan works", {
   ))
   expect_interactive_message(eng_cmdstan(opts), "Compiling Stan program")
   opts$eval <- FALSE
-  expect_silent(eng_cmdstan(opts))
+  expect_noninteractive_silent(eng_cmdstan(opts))
 })
 
 test_that("register_knitr_engine works with and without override", {

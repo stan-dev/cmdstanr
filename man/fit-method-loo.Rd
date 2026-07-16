@@ -5,23 +5,26 @@
 \alias{loo}
 \title{Leave-one-out cross-validation (LOO-CV)}
 \usage{
-loo(variables = "log_lik", r_eff = TRUE, moment_match = FALSE, ...)
+loo(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...)
 }
 \arguments{
-\item{variables}{(character vector) The name(s) of the variable(s) in the
-Stan program containing the pointwise log-likelihood. The default is to
-look for \code{"log_lik"}. This argument is passed to the
-\code{\link[=fit-method-draws]{$draws()}} method.}
+\item{variables}{(string) The name of the variable in the Stan program
+containing the pointwise log-likelihood. The default is to look for
+\code{"log_lik"}. This argument is passed to the \code{\link[=fit-method-draws]{$draws()}}
+method.}
 
-\item{r_eff}{(multiple options) How to handle the \code{r_eff} argument for \code{loo()}:
+\item{r_eff}{(multiple options) How to handle the \code{r_eff} argument for
+\code{loo()}. \code{r_eff} measures the amount of autocorrelation in MCMC draws, and
+is used to compute more accurate ESS and MCSE estimates for pointwise and
+total ELPDs.
 \itemize{
-\item \code{TRUE} (the default) will automatically call \code{\link[loo:relative_eff]{loo::relative_eff.array()}}
-to compute the \code{r_eff} argument to pass to \code{\link[loo:loo]{loo::loo.array()}}.
-\item \code{FALSE} or \code{NULL} will avoid computing \code{r_eff} (which can sometimes be slow),
-but the reported ESS and MCSE estimates can be over-optimistic if the
-posterior draws are not (near) independent.
+\item \code{TRUE} will call \code{\link[loo:relative_eff.array]{loo::relative_eff.array()}} to compute the \code{r_eff}
+argument to pass to \code{\link[loo:loo.array]{loo::loo.array()}}.
+\item \code{FALSE} (the default) or \code{NULL} will avoid computing \code{r_eff},
+which can be very slow. The reported ESS and MCSE estimates may be
+over-optimistic if the posterior draws are far from independent.
 \item If \code{r_eff} is anything else, that object will be passed as the \code{r_eff}
-argument to \code{\link[loo:loo]{loo::loo.array()}}.
+argument to \code{\link[loo:loo.array]{loo::loo.array()}}.
 }}
 
 \item{moment_match}{(logical) Whether to use a
@@ -34,17 +37,17 @@ supply the functions for the \code{log_lik_i}, \code{unconstrain_pars},
 \code{\link[loo:loo_moment_match]{loo::loo_moment_match()}}.}
 
 \item{...}{Other arguments (e.g., \code{cores}, \code{save_psis}, etc.) passed to
-\code{\link[loo:loo]{loo::loo.array()}} or \code{\link[loo:loo_moment_match]{loo::loo_moment_match.default()}}
+\code{\link[loo:loo.array]{loo::loo.array()}} or \code{\link[loo:loo_moment_match.default]{loo::loo_moment_match.default()}}
 (if \code{moment_match} = \code{TRUE} is set).}
 }
 \value{
-The object returned by \code{\link[loo:loo]{loo::loo.array()}} or
-\code{\link[loo:loo_moment_match]{loo::loo_moment_match.default()}}.
+The object returned by \code{\link[loo:loo.array]{loo::loo.array()}} or
+\code{\link[loo:loo_moment_match.default]{loo::loo_moment_match.default()}}.
 }
 \description{
 The \verb{$loo()} method computes approximate LOO-CV using the
 \pkg{loo} package. In order to use this method you must compute and save
-the pointwise log-likelihood in your Stan program. See \code{\link[loo:loo]{loo::loo.array()}}
+the pointwise log-likelihood in your Stan program. See \code{\link[loo:loo.array]{loo::loo.array()}}
 and the \pkg{loo} package \href{https://mc-stan.org/loo/articles/}{vignettes}
 for details.
 }
@@ -57,6 +60,21 @@ loo_result <- fit$loo(cores = 2)
 print(loo_result)
 }
 
+}
+\references{
+\itemize{
+\item Vehtari, A., Gelman, A., and Gabry, J. (2017). Practical Bayesian model
+evaluation using leave-one-out cross-validation and WAIC.
+\emph{Statistics and Computing}, 27(5), 1413-1432.
+doi:10.1007/s11222-016-9696-4.
+\item Vehtari, A., Simpson, D., Gelman, A., Yao, Y., and Gabry, J. (2024).
+Pareto smoothed importance sampling.
+\emph{Journal of Machine Learning Research}, 25(72), 1-58.
+\item Paananen, T., Piironen, J., Buerkner, P.-C., and Vehtari, A. (2021).
+Implicitly adaptive importance sampling.
+\emph{Statistics and Computing}, 31, 16. doi:10.1007/s11222-020-09982-2
+(for \code{moment_match = TRUE}).
+}
 }
 \seealso{
 The \pkg{loo} package website with

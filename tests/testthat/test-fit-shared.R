@@ -1,5 +1,3 @@
-context("fitted-shared-methods")
-
 set_cmdstan_path()
 fits <- list()
 fits[["sample"]] <- testing_fit("logistic", method = "sample",
@@ -176,6 +174,37 @@ test_that("save_object() method works", {
   rm(fit); gc()
   fit <- readRDS(temp_rds_file)
   expect_identical(fit$summary(), s)
+})
+
+test_that("reloaded fits rebuild model methods lazily after save_object()", {
+  skip_if(os_is_wsl())
+  mod <- cmdstan_model(
+    testing_stan_file("bernoulli_log_lik"),
+    force_recompile = TRUE,
+    compile_model_methods = TRUE
+  )
+  utils::capture.output(
+    fit <- mod$optimize(data = testing_data("bernoulli"))
+  )
+
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  fit$save_object(temp_rds_file)
+  fit2 <- readRDS(temp_rds_file)
+
+  expect_no_error(
+    lp <- fit2$log_prob(unconstrained_variables = c(0.1))
+  )
+  expect_equal(lp, -8.6327599208828509347)
+})
+
+test_that("save_object() method works with qs2 format", {
+  skip_if_not_installed("qs2")
+  fit <- fits[["sample"]]
+  temp_qs_file <- tempfile(fileext = ".qs2")
+  fit$save_object(temp_qs_file, format = "qs2")
+  fit2 <- qs2::qs_read(temp_qs_file)
+  expect_identical(fit2$summary(), fit$summary())
+  expect_identical(fit2$return_codes(), fit$return_codes())
 })
 
 test_that("save_object() method works with profiles", {
@@ -437,7 +466,7 @@ test_that("draws are returned for model with spaces", {
   )
   expect_equal(dim(fit_sample$draws()), c(1000, 1, 3))
   utils::capture.output(
-    fit <- mod$variational(seed = 123, output_samples = 1000)
+    fit <- mod$variational(seed = 123, draws = 1000)
   )
   expect_equal(dim(fit$draws()), c(1000, 4))
   utils::capture.output(
@@ -454,23 +483,27 @@ test_that("draws are returned for model with spaces", {
 test_that("sampling with inits works with include_paths", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
   exe <- cmdstan_ext(strip_ext(stan_program_w_include))
-  if(file.exists(exe)) {
+  if (file.exists(exe)) {
     file.remove(exe)
   }
 
-    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = FALSE,
-                                   include_paths = test_path("resources", "stan"))
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include,
+                                 include_paths = test_path("resources", "stan"))
 
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
-
-  fit <- mod_w_include$sample(
-    data = data_list,
-    seed = 123,
-    chains = 4,
-    parallel_chains = 4,
-    refresh = 500,
-    init = list(list(theta = 0.25), list(theta = 0.25), list(theta = 0.25), list(theta = 0.25))
-  )
+  expect_no_error(utils::capture.output(
+    fit <- mod_w_include$sample(
+      data = data_list,
+      seed = 123,
+      chains = 4,
+      parallel_chains = 4,
+      refresh = 500,
+      init = list(list(theta = 0.25),
+                  list(theta = 0.25),
+                  list(theta = 0.25),
+                  list(theta = 0.25))
+    )
+  ))
 })
 
 test_that("CmdStanModel created with exe_file works", {
@@ -548,8 +581,12 @@ test_that("code() warns if model not created with Stan file", {
   stan_program <- testing_stan_file("bernoulli")
   mod <- testing_model("bernoulli")
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
-  fit_exe <- mod_exe$sample(data = list(N = 10, y = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1)),
-                            refresh = 0)
+  utils::capture.output(
+    fit_exe <- mod_exe$sample(
+      data = list(N = 10, y = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1)),
+      refresh = 0
+    )
+  )
   expect_warning(
     expect_null(fit_exe$code()),
     "'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file",

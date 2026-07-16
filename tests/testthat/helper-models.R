@@ -24,6 +24,7 @@ testing_fit <-
                       "optimize",
                       "laplace",
                       "variational",
+                      "pathfinder",
                       "generate_quantities"),
            seed = 123,
            ...) {

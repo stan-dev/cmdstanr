@@ -1,5 +1,3 @@
-context("model-diagnose")
-
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")
@@ -34,11 +32,11 @@ ok_arg_sci_nota_values <- list(
 test_that("diagnose() method runs when all arguments specified validly", {
   # specifying all arguments validly
   fit1 <- do.call(mod$diagnose, ok_arg_values)
-  expect_is(fit1, "CmdStanDiagnose")
+  expect_s3_class(fit1, "CmdStanDiagnose")
 
   # leaving all at default (except 'data' and 'seed')
   fit2 <- mod$diagnose(data = data_list, seed = 123)
-  expect_is(fit2, "CmdStanDiagnose")
+  expect_s3_class(fit2, "CmdStanDiagnose")
 })
 
 test_that("diagnose() method runs when arguments are specified in scientific notation", {
@@ -46,7 +44,7 @@ test_that("diagnose() method runs when arguments are specified in scientific not
 
   # specifying all arguments validly
   fit1 <- do.call(mod$diagnose, ok_arg_sci_nota_values)
-  expect_is(fit1, "CmdStanDiagnose")
+  expect_s3_class(fit1, "CmdStanDiagnose")
 })
 
 test_that("diagnose() method errors for any invalid argument before calling cmdstan", {

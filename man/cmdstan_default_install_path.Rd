@@ -2,14 +2,11 @@
 % Please edit documentation in R/path.R
 \name{cmdstan_default_install_path}
 \alias{cmdstan_default_install_path}
-\title{cmdstan_default_install_path}
+\title{Path to where  \code{\link[=install_cmdstan]{install_cmdstan()}} with default settings installs CmdStan.}
 \usage{
-cmdstan_default_install_path(old = FALSE, wsl = FALSE)
+cmdstan_default_install_path(wsl = FALSE)
 }
 \arguments{
-\item{old}{Should the old default path (.cmdstanr) be used instead of the new
-one (.cmdstan)? Defaults to \code{FALSE} and may be removed in a future release.}
-
 \item{wsl}{Return the directory for WSL installations?}
 }
 \value{

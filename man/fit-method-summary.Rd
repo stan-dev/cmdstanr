@@ -74,6 +74,17 @@ fit$print(c("alpha", "beta"), var2 = ~var(as.vector(.x)))
 }
 
 }
+\references{
+\itemize{
+\item Vehtari, A., Gelman, A., Simpson, D., Carpenter, B., and Buerkner, P.-C.
+(2021). Rank-normalization, folding, and localization: An improved R-hat
+for assessing convergence of MCMC (with discussion).
+\emph{Bayesian Analysis}, 16(2), 667-718. doi:10.1214/20-BA1221.
+\item Vehtari, A. (2021). Comparison of MCMC effective sample size estimators.
+https://avehtari.github.io/rhat_ess/ess_comparison.html
+(for ESS diagnostics such as \code{ess_bulk} and \code{ess_tail}).
+}
+}
 \seealso{
 \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }

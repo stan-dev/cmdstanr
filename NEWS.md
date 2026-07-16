@@ -1,6 +1,79 @@
-# cmdstanr 0.8.1.9000
+# cmdstanr (development version)
 
-Items for next release go here
+* `pathfinder()` now respects `save_single_paths = TRUE` instead of always
+passing `0` to CmdStan.
+* `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
+to be consistent with other methods.
+* Informative error when exposing functions using names that are reserved 
+keywords (@VisruthSK, #1154)
+* `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
+set to `TRUE` for an entire R session via new global options. (#1159)
+* `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing 
+output while reading `STANCFLAGS` from `make`. (#1163)
+* `laplace()` no longer overwrites the internally generated optimizer CSV when
+`mode = NULL` and `output_basename` is supplied. The internally generated
+optimizer CSV now uses the filename `<output_basename>-mode-1.csv`.
+
+* CmdStanModel objects created using `compile_model_methods = TRUE` that are
+then saved and reloaded no longer error in model fitting methods. Model methods
+are recompiled lazily if needed. (#1158)
+  
+* CmdStan versions older than 2.35.0 are no longer supported. (#1144)
+* Minimum R version increased to 4.0.0. (#1144)
+* Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
+* `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a warning). (#1144)
+
+* Removed deprecated items (replacements in parentheses). (#1061)
+  - `read_sample_csv()` (`read_cmdstan_csv()`)
+  - `write_stan_tempfile()` (`write_stan_file()`)
+  - `jacobian_adjustment` argument to `fit$log_prob()` and similar methods (`jacobian` argument)
+  - `output_samples` argument to `model$variational()` (`draws` argument)
+  - `hessian` argument to `fit$init_model_methods()` (`hessian` method always compiled now)
+  - several arguments to `model$compile()`:
+    - `threads` (`cpp_options = list(stan_threads = TRUE)`)
+    - `compile_hessian_method` (always compiled)
+  - several arguments to `model$sample()`:
+    - `cores` and `num_cores` (`parallel_chains`)
+    - `num_chains` (`chains`)
+    - `num_warmup` (`iter_warmup`)
+    - `num_samples` (`iter_sampling`)
+    - `validate_csv` (`diagnostics`)
+    - `save_extra_diagnostics` (`save_latent_dynamics`)
+    - `max_depth` (`max_treedepth`)
+    - `stepsize` (`step_size`)
+  
+
+# cmdstanr 0.9.0
+
+## General Improvements/Changes
+
+ * Added compatibility for RTools45 (#1066)
+ * cmdstanr will now use RTools with no additional toolchain updates needed on Windows (CmdStan 2.35+ only; #1065, #1054)
+ * Improve error messages when calling `sampler_diagnostics()` with `fixed_param=TRUE`
+ * Improve numerical stability in calculation of effective sample size during `loo` method (#1057)
+ * Improve numerical stablity with very small log-ratios in calculation of effective sample size during `loo` method (#1015)
+ * Add warning if input data/inits have been coerced to ints (#994)
+
+## Bugfixes
+
+ * Don't require fixed_param for models with zero parameters (only GQs) for CmdStan >= 2.36 (#1046)
+ * Improve detection/handling of `make` (#1036)
+ * Fix saving of model objects to network drive (#1038, thanks to @bschneidr)
+ * Update usage of `untar` to fix installation errors (#1034)
+ * Respect compilation flags in `make/local` when exposing functions or model methods (#1003)
+ * Fix passing of include paths to CmdStan (#1000)
+ * Fix passing of factor data to CmdStan (#999)
+ * Fix extraction and passing of array data/parameters as model inits (#993)
+
+## Documentation Updates
+
+ * Clarifications to usage of `optimize` and `loo` methods (#1060)
+ * Add documentation for faster model saving with large models (#1042)
+ * Remove mentions of `rstan::read_stan_csv` due to incompatibility with newer CmdStan outputs (#1018)
+ * Document global option `cmdstanr_print_line_numbers` for printing line numbers (#1017)
+ * Change usage of 'chapter' to 'section' in documentation (#1014)
+ * Remove examples of updating removed array syntax as functionality no longer supported in CmdStan (#1008)
+ * Change usages of 'sampling statement' -> 'distribution statement' (#987)
 
 # cmdstanr 0.8.1
 

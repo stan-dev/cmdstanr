@@ -16,8 +16,8 @@ The \verb{$profiles()} method returns a list of data frames with
 profiling data if any profiling data was written to the profile CSV files.
 See \code{\link[=save_profile_files]{save_profile_files()}} to control where the files are saved.
 
-Support for profiling Stan programs is available with CmdStan >= 2.26 and
-requires adding profiling statements to the Stan program.
+Profiling requires adding profiling statements to the Stan program. See
+\strong{Examples} for a demonstration.
 }
 \examples{
 

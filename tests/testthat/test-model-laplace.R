@@ -1,5 +1,3 @@
-context("model-laplace")
-
 set_cmdstan_path()
 mod <- testing_model("logistic")
 data_list <- testing_data("logistic")
@@ -36,7 +34,9 @@ test_that("laplace() method errors for any invalid argument before calling cmdst
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
-    expect_error(do.call(mod$laplace, args), regexp = nm, info = nm)
+    utils::capture.output(
+      expect_error(do.call(mod$laplace, args), regexp = nm, info = nm)
+    )
   }
   args <- ok_arg_values
   args$opt_args <- list(iter = "NOT_A_NUMBER")
@@ -46,7 +46,7 @@ test_that("laplace() method errors for any invalid argument before calling cmdst
 test_that("laplace() runs when all arguments specified validly", {
   # specifying all arguments validly
   expect_laplace_output(fit1 <- do.call(mod$laplace, ok_arg_values))
-  expect_is(fit1, "CmdStanLaplace")
+  expect_s3_class(fit1, "CmdStanLaplace")
 
   # check that correct arguments were indeed passed to CmdStan
   expect_equal(fit1$metadata()$refresh, ok_arg_values$refresh)
@@ -59,21 +59,45 @@ test_that("laplace() runs when all arguments specified validly", {
 
   # leaving all at default (except 'data')
   expect_laplace_output(fit2 <- mod$laplace(data = data_list, seed = 123))
-  expect_is(fit2, "CmdStanLaplace")
+  expect_s3_class(fit2, "CmdStanLaplace")
+})
+
+test_that("laplace() avoids output_basename conflict with internal optimize()", {
+  output_dir <- withr::local_tempdir("laplace-output-basename")
+
+  utils::capture.output(
+    fit <- mod$laplace(
+      data = data_list,
+      seed = 123,
+      refresh = 0,
+      output_dir = output_dir,
+      output_basename = "custom-laplace",
+      draws = 10
+    )
+  )
+
+  expect_equal(basename(fit$output_files()), "custom-laplace-1.csv")
+  expect_equal(basename(fit$mode()$output_files()), "custom-laplace-mode-1.csv")
+  expect_setequal(
+    list.files(output_dir, pattern = "\\.csv$"),
+    c("custom-laplace-1.csv", "custom-laplace-mode-1.csv")
+  )
 })
 
 test_that("laplace() all valid 'mode' inputs give same results", {
-  mode <- mod$optimize(data = data_list, jacobian = TRUE, seed = 100, refresh = 0)
-  fit1 <- mod$laplace(data = data_list, mode = mode, seed = 100, refresh = 0)
-  fit2 <- mod$laplace(data = data_list, mode = mode$output_files(), seed = 100, refresh = 0)
-  fit3 <- mod$laplace(data = data_list, mode = NULL, seed = 100, refresh = 0)
+  utils::capture.output({
+    mode <- mod$optimize(data = data_list, jacobian = TRUE, seed = 100, refresh = 0)
+    fit1 <- mod$laplace(data = data_list, mode = mode, seed = 100, refresh = 0)
+    fit2 <- mod$laplace(data = data_list, mode = mode$output_files(), seed = 100, refresh = 0)
+    fit3 <- mod$laplace(data = data_list, mode = NULL, seed = 100, refresh = 0)
+  })
 
-  expect_is(fit1, "CmdStanLaplace")
-  expect_is(fit2, "CmdStanLaplace")
-  expect_is(fit3, "CmdStanLaplace")
-  expect_is(fit1$mode(), "CmdStanMLE")
-  expect_is(fit2$mode(), "CmdStanMLE")
-  expect_is(fit3$mode(), "CmdStanMLE")
+  expect_s3_class(fit1, "CmdStanLaplace")
+  expect_s3_class(fit2, "CmdStanLaplace")
+  expect_s3_class(fit3, "CmdStanLaplace")
+  expect_s3_class(fit1$mode(), "CmdStanMLE")
+  expect_s3_class(fit2$mode(), "CmdStanMLE")
+  expect_s3_class(fit3$mode(), "CmdStanMLE")
   expect_equal(fit1$mode()$mle(), fit2$mode()$mle())
   expect_equal(fit1$mode()$mle(), fit3$mode()$mle())
   expect_equal(fit1$lp(), fit2$lp())
@@ -85,17 +109,22 @@ test_that("laplace() all valid 'mode' inputs give same results", {
 })
 
 test_that("laplace() allows choosing number of draws", {
-  fit <- mod$laplace(data = data_list, draws = 10, refresh = 0)
+  utils::capture.output({
+    fit <- mod$laplace(data = data_list, draws = 10, refresh = 0)
+    fit2 <- mod$laplace(data = data_list, draws = 100, refresh = 0)
+  })
+
   expect_equal(fit$metadata()$draws, 10)
   expect_equal(posterior::ndraws(fit$draws()), 10)
 
-  fit2 <- mod$laplace(data = data_list, draws = 100, refresh = 0)
   expect_equal(fit2$metadata()$draws, 100)
   expect_equal(posterior::ndraws(fit2$draws()), 100)
 })
 
 test_that("laplace() errors if jacobian arg doesn't match what optimize used", {
-  fit <- mod$optimize(data = data_list, jacobian = FALSE, refresh = 0)
+  utils::capture.output(
+    fit <- mod$optimize(data = data_list, jacobian = FALSE, refresh = 0)
+  )
   expect_error(
     mod$laplace(data = data_list, mode = fit, jacobian = TRUE),
     "'jacobian' argument to optimize and laplace must match"
@@ -107,7 +136,9 @@ test_that("laplace() errors if jacobian arg doesn't match what optimize used", {
 })
 
 test_that("laplace() errors with bad combinations of arguments", {
-  fit <- mod$optimize(data = data_list, jacobian = TRUE, refresh = 0)
+  utils::capture.output(
+    fit <- mod$optimize(data = data_list, jacobian = TRUE, refresh = 0)
+  )
   expect_error(
     mod$laplace(data = data_list, mode = mod, opt_args = list(iter = 10)),
     "Cannot specify both 'opt_args' and 'mode' arguments."
@@ -120,14 +151,15 @@ test_that("laplace() errors with bad combinations of arguments", {
 
 test_that("laplace() errors if optimize() fails", {
   mod_schools <- testing_model("schools")
-  expect_error(
-    expect_warning(
-      expect_message(
-        mod_schools$laplace(data = testing_data("schools"), refresh = 0),
-        "Line search failed to achieve a sufficient decrease"
+  utils::capture.output(
+    expect_error(
+      expect_warning(
+        expect_message(
+          mod_schools$laplace(data = testing_data("schools"), refresh = 0),
+          "Line search failed to achieve a sufficient decrease"
+        ),
+        "Fitting finished unexpectedly"
       ),
-      "Fitting finished unexpectedly"
-    ),
-    "Optimization failed"
-  )
+      "Optimization failed"
+    ))
 })

@@ -11,6 +11,16 @@ name: Unit tests
   pull_request:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      tarball_url:
+        description: 'CmdStan tarball URL to test with.'
+        required: false
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   R-CMD-check:
@@ -23,53 +33,105 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest, r: 'devel', rtools: ''}
-          - {os: macOS-latest, r: 'release', rtools: ''}
-          - {os: windows-latest, r: 'devel', rtools: '44'}
-          - {os: windows-latest, r: 'release', rtools: '44'}
-          - {os: windows-latest, r: 'oldrel', rtools: '43'}
-          - {os: ubuntu-latest, r: 'devel', rtools: ''}
-          - {os: ubuntu-latest, r: 'release', rtools: ''}
-          - {os: ubuntu-latest, r: 'oldrel', rtools: ''}
+          - {os: macOS-latest, r: 'devel', opencl: true}
+          - {os: macOS-latest, r: 'release', opencl: true}
+          - {os: macos-26, r: 'release', opencl: false}
+          - {os: macos-15-intel, r: 'release', opencl: false}
+          - {os: windows-latest, r: 'devel' }
+          - {os: windows-latest, r: 'release'}
+          - {os: windows-2022, r: '4.1'}
+          - {os: windows-latest, r: 'oldrel'}
+          - {os: ubuntu-latest, r: 'devel', opencl: true}
+          - {os: ubuntu-latest, r: 'release', opencl: true}
+          - {os: ubuntu-latest, r: 'oldrel', opencl: true}
+          - {os: windows-11-arm, r: 'release'}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
+      CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
+      CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
+      PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
 
     steps:
       - name: cmdstan env vars
         run: |
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
+          # GHA Windows ARM containers configured with RTOOLS45_HOME instead of RTOOLS45_AARCH64_HOME
+          if [[ "${{ matrix.config.os }}" == "windows-11-arm" ]]; then
+            echo "RTOOLS45_AARCH64_HOME=C:/rtools45-aarch64" >> $GITHUB_ENV
+          fi
         shell: bash
 
-      - name: Use stock RTools for Windows R-Devel
-        if: ${{ matrix.config.os == 'windows-latest' && matrix.config.r == 'devel' }}
-        run: |
-          echo "CMDSTANR_USE_RTOOLS=TRUE" >> $GITHUB_ENV
-        shell: bash
+      - uses: actions/checkout@v7
 
-      - uses: n1hility/cancel-previous-runs@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-        if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
-
-      - uses: actions/checkout@v4
-
-      - uses: r-lib/actions/setup-r@v2.10.0
+      - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
-          rtools-version: ${{ matrix.config.rtools }}
 
-      - uses: r-lib/actions/setup-pandoc@v2.10.0
-
-      - uses: r-lib/actions/setup-r-dependencies@v2.10.0
+      - name: Install R Package Build Dependencies on MacOS
+        if: ${{ runner.os == 'macOS' }}
+        uses: r-hub/actions/setup-r-sysreqs@v1
         with:
-          extra-packages: any::rcmdcheck, local::.
+          type: 'minimal'
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: "always"
+          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.os == 'windows-11-arm' && 'RcppCore/RcppParallel' || '' }}
+
+      - name: Debug Windows toolchain resolution
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          rtools_home <- cmdstanr:::rtools4x_home_path()
+          candidates <- cmdstanr:::rtools4x_toolchain_candidates()
+          selected <- cmdstanr:::rtools4x_toolchain_path()
+          cat("R version: ", as.character(getRversion()), "\n", sep = "")
+          cat("Rtools home: ", rtools_home, "\n", sep = "")
+          cat("Toolchain candidates:\n")
+          if (length(candidates) == 0) {
+            cat("  - <none>\n")
+          } else {
+            cat(paste0("  - ", candidates), sep = "\n")
+            cat("\n")
+          }
+          cat("Selected toolchain: ", selected, "\n", sep = "")
+          selected_ok <- cmdstanr:::is_rtools4x_toolchain_usable(selected)
+          if (!selected_ok) {
+            stop("Resolved Windows toolchain path is not usable.")
+          }
+        shell: Rscript {0}
+
+      - name: Install POCL on Ubuntu Runners
+        if: ${{ matrix.config.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y ocl-icd-opencl-dev pocl-opencl-icd
+        shell: bash
+
+      - name: Install POCL on MacOS Runners
+        if: ${{ matrix.config.os == 'macOS-latest' }}
+        run: |
+          brew install pocl
+          # Set LDLIBS_OPENCL environment variable so that CPU OpenCL is found
+          # instead of Apple's GPU OpenCL - which does not support double precision
+          echo "LDLIBS_OPENCL=-L'/opt/homebrew/opt/opencl-icd-loader/lib' -lOpenCL" >> $GITHUB_ENV
+        shell: bash
 
       - name: Install cmdstan
         run: |
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-          cmdstanr::install_cmdstan(cores = 2)
+          cmdstanr::check_cmdstan_toolchain()
+          tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+          if (nzchar(tarball_url)) {
+            cmdstanr::install_cmdstan(
+              cores = 2,
+              overwrite = TRUE,
+              release_url = tarball_url
+            )
+          } else {
+            cmdstanr::install_cmdstan(cores = 2)
+          }
         shell: Rscript {0}
 
       - name: Session info
@@ -79,7 +141,7 @@ jobs:
           sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
-      - uses: r-lib/actions/check-r-package@v2.10.0
+      - uses: r-lib/actions/check-r-package@v2
         env:
           _R_CHECK_CRAN_INCOMING_: false
 
@@ -90,7 +152,7 @@ jobs:
 
       - name: Upload check results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ runner.os }}-r${{ matrix.config.r }}-results
           path: check

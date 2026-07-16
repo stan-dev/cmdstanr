@@ -28,7 +28,7 @@ optimize(
   history_size = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
-  save_cmdstan_config = NULL
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
 )
 }
 \arguments{
@@ -63,8 +63,8 @@ variables declared in the parameters block of the Stan program. One of the
 following:
 \itemize{
 \item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} on the \emph{unconstrained} parameter space.;
-\item The number \code{0}. This initializes \emph{all} parameters to \code{0};
+\verb{[-x,x]} on the \emph{unconstrained} parameter space.
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
 \item A character vector of paths (one per chain) to JSON or Rdump files
 containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
@@ -76,30 +76,27 @@ named elements corresponding to the parameters for which you are specifying
 initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
-take no arguments or a single argument \code{chain_id}. For MCMC, if the
-function has argument \code{chain_id} it will be supplied with the chain id
-(from 1 to number of chains) when called to generate the initial values.
-See
+take no arguments or a single argument \code{chain_id}. For MCMC, if the function
+has argument \code{chain_id} it will be supplied with the chain id (from 1 to
+number of chains) when called to generate the initial values. See
 \strong{Examples}.
 \item A \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanPathfinder}},
-or \code{\link{CmdStanLaplace}} fit object.
-If the fit object's parameters are only a subset of the model
-parameters then the other parameters will be drawn by Stan's default
-initialization. The fit object must have at least some parameters that are the
-same name and dimensions as the current Stan model. For the \code{sample} and
-\code{pathfinder} method, if the fit object has fewer draws than the requested
-number of chains/paths then the inits will be drawn using sampling with
-replacement. Otherwise sampling without replacement will be used.
-When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
-. \code{psis_resample} was set to \code{FALSE} and \code{calculate_lp} was
-set to \code{TRUE} (default), then resampling without replacement with Pareto
-smoothed weights will be used. If \code{psis_resample} was set to \code{TRUE} or
-\code{calculate_lp} was set to \code{FALSE} then sampling without replacement with
-uniform weights will be used to select the draws.
-PSIS resampling is used to select the draws for  \code{\link{CmdStanVB}},
-and \code{\link{CmdStanLaplace}} fit objects.
-\item A type inheriting from \code{posterior::draws}. If the draws object has less
-samples than the number of requested chains/paths then the inits will be
+or \code{\link{CmdStanLaplace}} fit object. If the fit object's parameters are only a
+subset of the model parameters then the other parameters will be drawn by
+Stan's default initialization. The fit object must have at least some
+parameters that are the same name and dimensions as the current Stan model.
+For the \code{sample} and \code{pathfinder} method, if the fit object has fewer draws
+than the requested number of chains/paths then the inits will be drawn using
+sampling with replacement. Otherwise sampling without replacement will be
+used. When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
+\code{psis_resample} was set to \code{FALSE} and \code{calculate_lp} was set to \code{TRUE}
+(default), then resampling without replacement with Pareto smoothed weights
+will be used. If \code{psis_resample} was set to \code{TRUE} or \code{calculate_lp} was set
+to \code{FALSE} then sampling without replacement with uniform weights will be
+used to select the draws. PSIS resampling is used to select the draws for
+\code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
+\item A type inheriting from \code{posterior::draws}. If the draws object has fewer
+draws than the number of requested chains/paths then the inits will be
 drawn using sampling with replacement. Otherwise sampling without
 replacement will be used. If the draws object's parameters are only a subset
 of the model parameters then the other parameters will be drawn by Stan's
@@ -162,13 +159,12 @@ the CmdStan User's Guide. The default values can also be obtained by
 running \code{cmdstanr_example(method="optimize")$metadata()}.}
 
 \item{jacobian}{(logical) Whether or not to use the Jacobian adjustment for
-constrained variables. For historical reasons, the default is \code{FALSE}, meaning optimization
-yields the (regularized) maximum likelihood estimate. Setting it to \code{TRUE}
-yields the maximum a posteriori estimate. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html}{Maximum Likelihood Estimation}
-section of the CmdStan User's Guide for more details.
-For use later with \code{\link[=model-method-laplace]{$laplace()}} the \code{jacobian}
-argument should typically be set to \code{TRUE}.}
+constrained variables. For historical reasons, the default is \code{FALSE},
+meaning optimization finds a mode of the target in the original constrained
+parameter space. Setting it to \code{TRUE} finds a mode in the unconstrained
+space. See the CmdStan User's Guide for more details. For use later with
+\code{\link[=model-method-laplace]{$laplace()}} the \code{jacobian} argument should
+typically be set to \code{TRUE}.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 
@@ -200,18 +196,29 @@ numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
 
-\item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
-with argument \code{"output save_config=1"} to save a json file which contains
-the argument tree and extra information (equivalent to the output CSV file
-header). This option is only available in CmdStan 2.34.0 and later.}
+\item{save_cmdstan_config}{(logical) When \code{TRUE}, call CmdStan with argument
+\code{"output save_config=1"} to save a JSON file which contains the argument
+tree and extra information (equivalent to the output CSV file header). The
+default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
+\code{options(cmdstanr_save_config = TRUE)}.}
 }
 \value{
 A \code{\link{CmdStanMLE}} object.
 }
 \description{
 The \verb{$optimize()} method of a \code{\link{CmdStanModel}} object runs
-Stan's optimizer to obtain a (penalized) maximum likelihood estimate or a
-maximum a posteriori estimate (if \code{jacobian=TRUE}). See the
+Stan's optimizer to find a posterior mode. If the Jacobian adjustment is
+not included (the default), the optimization returns parameter values that
+correspond to a mode of the target in the constrained space (if such mode
+exists). Thus this option is useful for any optimization where we want to
+find the mode in the original constrained parameter space. If the Jacobian
+adjustment is included, the optimization returns parameter values that
+correspond to a mode in the unconstrained space. This is useful, for
+example, if we want to make a distributional approximation of the posterior
+at the mode (see, \link[=model-method-laplace]{Laplace sampling}, for which the
+Jacobian adjustment needs to be included for correct results). If the model
+has only unconstrained parameters, there is no effect from including the
+Jacobian. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/index.html}{CmdStan User's Guide}
 for more details.
 
@@ -340,19 +347,20 @@ fit_optim_w_init_list$init()
 }
 
 }
-\seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
+\references{
 \itemize{
-\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
-\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
+\item Stan Development Team. Stan Reference Manual (Algorithms section, optimization):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
 }
-
-Other CmdStanModel methods: 
+}
+\seealso{
+Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
+\code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},

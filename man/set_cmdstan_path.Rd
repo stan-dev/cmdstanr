@@ -14,7 +14,8 @@ cmdstan_version(error_on_NA = TRUE)
 }
 \arguments{
 \item{path}{(string) The full file path to the CmdStan installation. If
-\code{NULL} (the default) then the path is set to the default path used by
+\code{NULL} (the default) then the path is set using the \code{"CMDSTAN"}
+environment variable when available, otherwise the default path used by
 \code{\link[=install_cmdstan]{install_cmdstan()}} if it exists.}
 
 \item{error_on_NA}{(logical) Should an error be thrown if CmdStan is not
@@ -48,7 +49,7 @@ folder that contains CmdStan installations. In that case, the CmdStan
 installation with the largest version number will be set as the path to
 CmdStan for the \R session.
 \item If no environment variable is found when loaded but any directory in the
-form \code{".cmdstan/cmdstan-[version]"} (e.g., \code{".cmdstan/cmdstan-2.23.0"}),
+form \code{".cmdstan/cmdstan-[version]"} (e.g., \code{".cmdstan/cmdstan-2.35.0"}),
 exists in the user's home directory (\code{Sys.getenv("HOME")}, \emph{not} the current
 working directory) then the path to the cmdstan with the largest version
 number will be set as the path to CmdStan for the \R session. This is the

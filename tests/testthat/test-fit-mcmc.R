@@ -1,5 +1,3 @@
-context("fitted-mcmc")
-
 set_cmdstan_path()
 fit_mcmc <- testing_fit("logistic", method = "sample",
                         seed = 123, chains = 2)
@@ -19,6 +17,12 @@ fit_mcmc_3 <- testing_fit("logistic", method = "sample",
                           iter_sampling = 0,
                           save_warmup = 1,
                           refresh = 0, metric = "dense_e")
+fit_mcmc_fixed_param <- testing_fit("logistic", method = "sample",
+                                    seed = 1234, chains = 1,
+                                    iter_warmup = 100,
+                                    iter_sampling = 0,
+                                    save_warmup = 1,
+                                    refresh = 0, fixed_param = TRUE)
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
 test_that("draws() stops for unkown variables", {
@@ -119,37 +123,60 @@ test_that("summary() method works after mcmc", {
 })
 
 test_that("print() method works after mcmc", {
-  expect_output(expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"), "variable")
-  expect_output(fit_mcmc$print(max_rows = 1), "# showing 1 of 5 rows")
-  expect_output(fit_mcmc$print(NULL, c("ess_sd")), "ess_sd")
+  expect_snapshot(
+    expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_mcmc$print(max_rows = 1),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_mcmc$print(NULL, c("ess_sd")),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
 
   # test on model with more parameters
   fit <- cmdstanr_example("schools_ncp")
-  expect_output(fit$print(), "showing 10 of 19 rows")
-  expect_output(fit$print(max_rows = 2), "showing 2 of 19 rows")
-  expect_output(fit$print(max_rows = 19), "theta[8]", fixed=TRUE) # last parameter
-  expect_output(fit$print("theta", max_rows = 2), "showing 2 of 8 rows")
+  expect_snapshot(
+    fit$print(),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print(max_rows = 2),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print(max_rows = 19),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print("theta", max_rows = 2),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print("theta"),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+
   expect_error(
     fit$print(variable = "unknown", max_rows = 20),
     "Can't find the following variable(s): unknown",
     fixed = TRUE
-  ) # unknown parameter
-
-  out <- capture.output(fit$print("theta"))
-  expect_length(out, 9) # columns names + 8 thetas
-  expect_match(out[1], "variable")
-  expect_match(out[2], "theta[1]", fixed = TRUE)
-  expect_match(out[9], "theta[8]", fixed = TRUE)
-  expect_false(any(grepl("mu|tau|theta_raw", out)))
-
-  # make sure the row order is correct
-  out <- capture.output(fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")))
-  expect_length(out, 5)
-  expect_match(out[1], " variable", out[1])
-  expect_match(out[2], " theta[1]", fixed = TRUE)
-  expect_match(out[3], " tau")
-  expect_match(out[4], " mu")
-  expect_match(out[5], " theta_raw[3]", fixed = TRUE)
+  )
 })
 
 test_that("output() method works after mcmc", {
@@ -270,6 +297,11 @@ test_that("loo method works if log_lik is available", {
   fit_bernoulli <- testing_fit("bernoulli_log_lik")
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(cores = 1, save_psis = TRUE)), "loo")
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = FALSE)), "loo")
+
+  expect_error(
+    fit_bernoulli$loo(variables = c("log_lik", "beta")),
+    "Only a single variable name is allowed"
+  )
 })
 
 test_that("loo method works with moment-matching", {
@@ -279,7 +311,9 @@ test_that("loo method works with moment-matching", {
   # Moment-matching needs model-methods, so make sure hpp is available
   mod <- cmdstan_model(testing_stan_file("loo_moment_match"), force_recompile = TRUE)
   data_list <- testing_data("loo_moment_match")
-  fit <- mod$sample(data = data_list, chains = 1, seed = 1000)
+  utils::capture.output(
+    fit <- mod$sample(data = data_list, chains = 1, seed = 1000)
+  )
 
   # Regular loo should warn that some pareto-k are "too high"
   expect_warning(
@@ -318,23 +352,20 @@ test_that("loo works for all draws storage formats", {
   skip_if_not_installed("loo")
   fit <- testing_fit("bernoulli_log_lik")
 
-  options(cmdstanr_draws_format = "draws_array")
+  withr::local_options(list(cmdstanr_draws_format = "draws_array"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_df")
+  withr::local_options(list(cmdstanr_draws_format = "draws_df"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_matrix")
+  withr::local_options(list(cmdstanr_draws_format = "draws_matrix"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_list")
+  withr::local_options(list(cmdstanr_draws_format = "draws_list"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_rvars")
+  withr::local_options(list(cmdstanr_draws_format = "draws_rvars"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
-
-  # reset option
-  options(cmdstanr_draws_format = NULL)
 })
 
 test_that("draws() works for different formats", {
@@ -392,7 +423,8 @@ test_that("diagnostic_summary() works", {
   expect_equal(fit$diagnostic_summary(NULL), list())
 })
 
-test_that("metadata()$time has chains rowss", {
+test_that("metadata()$time has chains rows", {
+  expect_equal(fit_mcmc$metadata()$num_chains, fit_mcmc$num_chains())
   expect_equal(nrow(fit_mcmc$metadata()$time), fit_mcmc$num_chains())
   expect_equal(nrow(fit_mcmc_0$metadata()$time), fit_mcmc_0$num_chains())
   expect_equal(nrow(fit_mcmc_1$metadata()$time), fit_mcmc_1$num_chains())
@@ -401,12 +433,21 @@ test_that("metadata()$time has chains rowss", {
 })
 
 test_that("save_metric_files works and has clear error message when no files", {
-  expect_error(
-    fit_mcmc$save_metric_files(),
-    "No metric files found"
-  )
+  expect_snapshot(error = TRUE, fit_mcmc$save_metric_files())
+
   fit_save_metric <- testing_fit("logistic", save_metric = TRUE)
-  paths <- fit_save_metric$save_metric_files()
+  paths <- fit_save_metric$save_metric_files(dir = withr::local_tempdir())
   checkmate::expect_file_exists(paths, extension = "json")
   expect_true(all(file.size(paths) > 0))
+
+  rm(fit_save_metric)
+  gc()
+  checkmate::expect_file_exists(paths, extension = "json")
+})
+
+test_that("sampler_diagnostics() throws informative error when fixed_param=TRUE", {
+  expect_error(
+    fit_mcmc_fixed_param$sampler_diagnostics(),
+    "There are no sampler diagnostics when fixed_param = TRUE"
+  )
 })

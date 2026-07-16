@@ -37,17 +37,8 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_metric = NULL,
-  save_cmdstan_config = NULL,
-  cores = NULL,
-  num_cores = NULL,
-  num_chains = NULL,
-  num_warmup = NULL,
-  num_samples = NULL,
-  validate_csv = NULL,
-  save_extra_diagnostics = NULL,
-  max_depth = NULL,
-  stepsize = NULL
+  save_metric = getOption("cmdstanr_save_metric", FALSE),
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
 )
 }
 \arguments{
@@ -82,8 +73,8 @@ variables declared in the parameters block of the Stan program. One of the
 following:
 \itemize{
 \item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} on the \emph{unconstrained} parameter space.;
-\item The number \code{0}. This initializes \emph{all} parameters to \code{0};
+\verb{[-x,x]} on the \emph{unconstrained} parameter space.
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
 \item A character vector of paths (one per chain) to JSON or Rdump files
 containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
@@ -95,30 +86,27 @@ named elements corresponding to the parameters for which you are specifying
 initial values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
-take no arguments or a single argument \code{chain_id}. For MCMC, if the
-function has argument \code{chain_id} it will be supplied with the chain id
-(from 1 to number of chains) when called to generate the initial values.
-See
+take no arguments or a single argument \code{chain_id}. For MCMC, if the function
+has argument \code{chain_id} it will be supplied with the chain id (from 1 to
+number of chains) when called to generate the initial values. See
 \strong{Examples}.
 \item A \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanPathfinder}},
-or \code{\link{CmdStanLaplace}} fit object.
-If the fit object's parameters are only a subset of the model
-parameters then the other parameters will be drawn by Stan's default
-initialization. The fit object must have at least some parameters that are the
-same name and dimensions as the current Stan model. For the \code{sample} and
-\code{pathfinder} method, if the fit object has fewer draws than the requested
-number of chains/paths then the inits will be drawn using sampling with
-replacement. Otherwise sampling without replacement will be used.
-When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
-. \code{psis_resample} was set to \code{FALSE} and \code{calculate_lp} was
-set to \code{TRUE} (default), then resampling without replacement with Pareto
-smoothed weights will be used. If \code{psis_resample} was set to \code{TRUE} or
-\code{calculate_lp} was set to \code{FALSE} then sampling without replacement with
-uniform weights will be used to select the draws.
-PSIS resampling is used to select the draws for  \code{\link{CmdStanVB}},
-and \code{\link{CmdStanLaplace}} fit objects.
-\item A type inheriting from \code{posterior::draws}. If the draws object has less
-samples than the number of requested chains/paths then the inits will be
+or \code{\link{CmdStanLaplace}} fit object. If the fit object's parameters are only a
+subset of the model parameters then the other parameters will be drawn by
+Stan's default initialization. The fit object must have at least some
+parameters that are the same name and dimensions as the current Stan model.
+For the \code{sample} and \code{pathfinder} method, if the fit object has fewer draws
+than the requested number of chains/paths then the inits will be drawn using
+sampling with replacement. Otherwise sampling without replacement will be
+used. When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
+\code{psis_resample} was set to \code{FALSE} and \code{calculate_lp} was set to \code{TRUE}
+(default), then resampling without replacement with Pareto smoothed weights
+will be used. If \code{psis_resample} was set to \code{TRUE} or \code{calculate_lp} was set
+to \code{FALSE} then sampling without replacement with uniform weights will be
+used to select the draws. PSIS resampling is used to select the draws for
+\code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
+\item A type inheriting from \code{posterior::draws}. If the draws object has fewer
+draws than the number of requested chains/paths then the inits will be
 drawn using sampling with replacement. Otherwise sampling without
 replacement will be used. If the draws object's parameters are only a subset
 of the model parameters then the other parameters will be drawn by Stan's
@@ -293,17 +281,17 @@ Diagnostics like R-hat and effective sample size are \emph{not} currently
 available via the \code{diagnostics} argument but can be checked after fitting
 using the \code{\link[=fit-method-summary]{$summary()}} method.}
 
-\item{save_metric}{(logical) When \code{TRUE}, call CmdStan with argument
-\code{"adaptation save_metric=1"} to save the adapted metric in separate JSON
-file with elements "stepsize", "metric_type" and "inv_metric". The default
-is \code{FALSE}. This option is only available in CmdStan 2.34.0 and later.}
+\item{save_metric}{(logical) When \code{TRUE}, call CmdStan with
+argument \code{"adaptation save_metric=1"} to save the adapted metric in
+separate JSON file with elements \code{"stepsize"}, \code{"metric_type"} and
+\code{"inv_metric"}. The default is \code{FALSE} but can be set to \code{TRUE} for an
+entire \R session by \code{options(cmdstanr_save_metric = TRUE)}.}
 
-\item{save_cmdstan_config}{(logical) When \code{TRUE} (the default), call CmdStan
-with argument \code{"output save_config=1"} to save a json file which contains
-the argument tree and extra information (equivalent to the output CSV file
-header). This option is only available in CmdStan 2.34.0 and later.}
-
-\item{cores, num_cores, num_chains, num_warmup, num_samples, save_extra_diagnostics, max_depth, stepsize, validate_csv}{Deprecated and will be removed in a future release.}
+\item{save_cmdstan_config}{(logical) When \code{TRUE}, call CmdStan with argument
+\code{"output save_config=1"} to save a JSON file which contains the argument
+tree and extra information (equivalent to the output CSV file header). The
+default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
+\code{options(cmdstanr_save_config = TRUE)}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
@@ -439,19 +427,25 @@ fit_optim_w_init_list$init()
 }
 
 }
-\seealso{
-The CmdStanR website
-(\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
-documentation and tutorials.
-
-The Stan and CmdStan documentation:
+\references{
 \itemize{
-\item Stan documentation: \href{https://mc-stan.org/users/documentation/}{mc-stan.org/users/documentation}
-\item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
+\item Hoffman, M. D., and Gelman, A. (2014). The No-U-Turn sampler:
+adaptively setting path lengths in Hamiltonian Monte Carlo.
+\emph{Journal of Machine Learning Research}, 15(47), 1593-1623.
+\item Betancourt, M. (2017). A conceptual introduction to Hamiltonian Monte Carlo.
+arXiv:1701.02434. Appendix A describes Stan's dynamic HMC/NUTS implementation.
+\item Stan Development Team. Stan Reference Manual (Algorithms section):
+https://mc-stan.org/docs/reference-manual/
+\item Stan Development Team. Stan documentation:
+https://mc-stan.org/users/documentation/
+\item Stan Development Team. CmdStan User's Guide:
+https://mc-stan.org/docs/cmdstan-guide/
 }
-
-Other CmdStanModel methods: 
+}
+\seealso{
+Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
+\code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},

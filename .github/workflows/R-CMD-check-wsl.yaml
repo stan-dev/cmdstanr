@@ -12,56 +12,56 @@ name: Unit tests - WSL Backend
     branches:
       - master
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   WSL-R-CMD-check:
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
     runs-on: windows-latest
 
-    name: windows-latest-WSLv1
+    name: windows-latest-WSL2
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
+      CMDSTANR_OPENCL_TESTS: true
 
     steps:
-      - name: cmdstan env vars
-        run: |
-          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
-        shell: bash
+      - uses: actions/checkout@v7
 
-      - uses: n1hility/cancel-previous-runs@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-        if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-pandoc@v2
 
-      - uses: actions/checkout@v4
-
-      - uses: r-lib/actions/setup-r@v2.10.0
-      - uses: r-lib/actions/setup-pandoc@v2.10.0
-
-      - uses: r-lib/actions/setup-r-dependencies@v2.10.0
+      - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck, local::.
 
-      - uses: Vampire/setup-wsl@v3
+      - uses: Vampire/setup-wsl@v7
         with:
             distribution: Ubuntu-22.04
-            use-cache: 'false'
+            wsl-version: 2
+            use-cache: 'true'
             set-as-default: 'true'
+
       - name: Install WSL Dependencies
         run: |
-          # Bugfix for current gzip (for unpacking apt packages) under WSLv1:
-          # https://github.com/microsoft/WSL/issues/8219#issuecomment-1110508016
-          echo -en '\x10' | sudo dd of=/usr/bin/gzip count=1 bs=1 conv=notrunc seek=$((0x189))
           sudo apt-get update
-          sudo apt-get install -y build-essential libopenmpi-dev
+          sudo apt-get install -y build-essential libopenmpi-dev ocl-icd-opencl-dev pocl-opencl-icd
+          sudo chmod 755 /root
         shell: wsl-bash {0}
 
       - name: Install cmdstan
         run: |
-          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          cmdstanr::check_cmdstan_toolchain()
           cmdstanr::install_cmdstan(cores = 2, wsl = TRUE, overwrite = TRUE)
+          cat(
+            paste0("CMDSTAN=", cmdstanr::cmdstan_path(), "\n"),
+            file = Sys.getenv("GITHUB_ENV"),
+            append = TRUE
+          )
         shell: Rscript {0}
 
       - name: Session info
@@ -71,7 +71,7 @@ jobs:
           sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
-      - uses: r-lib/actions/check-r-package@v2.10.0
+      - uses: r-lib/actions/check-r-package@v2
         env:
           _R_CHECK_CRAN_INCOMING_: false
 
@@ -82,7 +82,7 @@ jobs:
 
       - name: Upload check results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wsl-backend-results
           path: check

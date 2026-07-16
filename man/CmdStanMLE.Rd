@@ -6,6 +6,13 @@
 \description{
 A \code{CmdStanMLE} object is the fitted model object returned by the
 \code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object.
+The name "MLE" (used for historical reasons) is a bit misleading since this
+object will contain parameter estimates corresponding to either a mode in
+the constrained parameter space \emph{or} the unconstrained parameter space,
+depending on the value of the \code{jacobian} argument when the model is fit
+(and whether the model has constrained parameters). See
+\code{\link[=model-method-optimize]{$optimize()}} and the CmdStan User's Guide for
+more details.
 }
 \section{Methods}{
  \code{CmdStanMLE} objects have the following associated methods,
@@ -74,7 +81,7 @@ The Stan and CmdStan documentation:
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
-Other fitted model objects: 
+Other fitted model objects:
 \code{\link{CmdStanDiagnose}},
 \code{\link{CmdStanGQ}},
 \code{\link{CmdStanLaplace}},

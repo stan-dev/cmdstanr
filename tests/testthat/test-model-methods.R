@@ -1,10 +1,11 @@
-context("model-methods")
 skip_if(os_is_wsl())
 
 set_cmdstan_path()
 mod <- cmdstan_model(testing_stan_file("bernoulli_log_lik"), force_recompile = TRUE)
 data_list <- testing_data("bernoulli")
-fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
+utils::capture.output(
+  fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
+)
 
 test_that("Model methods automatically initialise when needed", {
   expect_no_error(fit$log_prob(unconstrained_variables=c(0.1)))
@@ -59,7 +60,9 @@ test_that("Model methods environments are independent", {
   data_list_2 <- data_list
   data_list_2$N <- 20
   data_list_2$y <- c(data_list$y, data_list$y)
-  fit_2 <- mod$sample(data = data_list_2, chains = 1)
+  utils::capture.output(
+    fit_2 <- mod$sample(data = data_list_2, chains = 1)
+  )
   fit_2$init_model_methods()
 
   expect_equal(fit$log_prob(unconstrained_variables=c(0.1)), -8.6327599208828509347)
@@ -90,8 +93,10 @@ test_that("methods error for incorrect inputs", {
 
   logistic_mod <- cmdstan_model(testing_stan_file("logistic"), force_recompile = TRUE)
   logistic_data_list <- testing_data("logistic")
-  logistic_fit <- logistic_mod$sample(data = logistic_data_list, chains = 1)
-  logistic_fit$init_model_methods(verbose = TRUE)
+  utils::capture.output(
+    logistic_fit <- logistic_mod$sample(data = logistic_data_list, chains = 1)
+  )
+  logistic_fit$init_model_methods()
 
   expect_error(
     logistic_fit$unconstrain_variables(list(alpha = 0.5)),
@@ -104,7 +109,9 @@ test_that("Methods error with already-compiled model", {
   precompile_mod <- testing_model("bernoulli")
   mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
-  fit <- mod$sample(data = data_list, chains = 1)
+  utils::capture.output(
+    fit <- mod$sample(data = data_list, chains = 1)
+  )
   expect_error(
     fit$init_model_methods(),
     "Model methods cannot be used with a pre-compiled Stan executable, the model must be compiled again",
@@ -116,7 +123,9 @@ test_that("Methods can be compiled with model", {
   mod <- cmdstan_model(testing_stan_file("bernoulli"),
                        force_recompile = TRUE,
                        compile_model_methods = TRUE)
-  fit <- mod$sample(data = data_list, chains = 1)
+  utils::capture.output(
+    fit <- mod$sample(data = data_list, chains = 1)
+  )
 
   lp <- fit$log_prob(unconstrained_variables=c(0.6))
   expect_equal(lp, -10.649855405830624733)
@@ -139,6 +148,44 @@ test_that("Methods can be compiled with model", {
   expect_equal(unconstrained_variables, c(0.6))
 })
 
+test_that("Reloaded models recompile model methods lazily after saveRDS/readRDS", {
+  # Also tests that fitted model objects are returned without error after
+  # saveRDS/readRDS when model methods are compiled: https://github.com/stan-dev/cmdstanr/issues/1157
+  mod <- cmdstan_model(
+    testing_stan_file("bernoulli_log_lik"),
+    force_recompile = TRUE,
+    compile_model_methods = TRUE
+  )
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  saveRDS(mod, temp_rds_file)
+  mod2 <- readRDS(temp_rds_file)
+
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod2$optimize(data = data_list)
+    )
+  )
+  expect_equal(fit$log_prob(unconstrained_variables = c(0.1)),
+               -8.6327599208828509347)
+})
+
+test_that("stale model-method bindings are detected and dropped", {
+  mod <- cmdstan_model(
+    testing_stan_file("bernoulli_log_lik"),
+    force_recompile = TRUE,
+    compile_model_methods = TRUE
+  )
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  saveRDS(mod, temp_rds_file)
+  mod2 <- readRDS(temp_rds_file)
+  model_methods_env <- mod2$.__enclos_env__$private$model_methods_env_
+
+  expect_true(source_cpp_native_symbol_is_null(model_methods_env$model_ptr))
+  expect_true(drop_stale_model_methods(model_methods_env))
+  expect_equal(ls(model_methods_env, all.names = TRUE), "hpp_code_")
+  expect_false(drop_stale_model_methods(model_methods_env))
+})
+
 test_that("unconstrain_variables correctly handles zero-length containers", {
   model_code <- "
   data {
@@ -156,7 +203,9 @@ test_that("unconstrain_variables correctly handles zero-length containers", {
   mod <- cmdstan_model(write_stan_file(model_code),
                        force_recompile = TRUE,
                        compile_model_methods = TRUE)
-  fit <- mod$sample(data = list(N = 0), chains = 1)
+  utils::capture.output(
+    fit <- mod$sample(data = list(N = 0), chains = 1)
+  )
   unconstrained <- fit$unconstrain_variables(variables = list(x = 5))
   expect_equal(unconstrained, 5)
 })
@@ -179,21 +228,23 @@ test_that("unconstrain_draws returns correct values", {
   mod <- cmdstan_model(write_stan_file(model_code),
                        compile_model_methods = TRUE,
                        force_recompile = TRUE)
-  fit <- mod$sample(data = list(N = 0), chains = 2, save_warmup = TRUE)
-  fit_no_warmup <- mod$sample(data = list(N = 0), chains = 2)
+  utils::capture.output({
+    fit <- mod$sample(data = list(N = 0), chains = 2, save_warmup = TRUE)
+    fit_no_warmup <- mod$sample(data = list(N = 0), chains = 2)
+  })
 
   x_draws <- fit$draws(format = "draws_df")$x
   x_draws_warmup <- fit$draws(format = "draws_df", inc_warmup = TRUE)$x
-  
+
   # Unconstrain all internal draws
   unconstrained_internal_draws <- fit$unconstrain_draws()
   unconstrained_internal_draws_warmup <- fit$unconstrain_draws(inc_warmup = TRUE)
   expect_equal(as.numeric(x_draws), as.numeric(unconstrained_internal_draws))
   expect_equal(as.numeric(x_draws_warmup), as.numeric(unconstrained_internal_draws_warmup))
-  
+
   expect_error({unconstrained_internal_draws <- fit_no_warmup$unconstrain_draws(inc_warmup = TRUE)},
                "Warmup draws were requested from a fit object without them! Please rerun the model with save_warmup = TRUE.")
-  
+
   # Unconstrain external CmdStan CSV files
   unconstrained_csv <- fit$unconstrain_draws(files = fit$output_files())
   unconstrained_csv_warmup <- fit$unconstrain_draws(files = fit$output_files(),
@@ -204,7 +255,7 @@ test_that("unconstrain_draws returns correct values", {
   # Unconstrain existing draws object
   unconstrained_draws <- fit$unconstrain_draws(draws = fit$draws())
   expect_equal(as.numeric(x_draws), as.numeric(unconstrained_draws))
-  
+
   expect_message(fit$unconstrain_draws(draws = fit$draws(), inc_warmup = TRUE),
                  "'inc_warmup' cannot be used with a draws object. Ignoring.")
 
@@ -224,7 +275,9 @@ test_that("unconstrain_draws returns correct values", {
   mod <- cmdstan_model(write_stan_file(model_code),
                        compile_model_methods = TRUE,
                        force_recompile = TRUE)
-  fit <- mod$sample(data = list(N = 0), chains = 2)
+  utils::capture.output(
+    fit <- mod$sample(data = list(N = 0), chains = 2)
+  )
 
   x_draws <- fit$draws(format = "draws_df")$x
 
@@ -241,10 +294,13 @@ test_that("unconstrain_draws returns correct values", {
 })
 
 test_that("Model methods can be initialised for models with no data", {
-
   stan_file <- write_stan_file("parameters { real x; } model { x ~ std_normal(); }")
   mod <- cmdstan_model(stan_file, compile_model_methods = TRUE, force_recompile = TRUE)
-  expect_no_error(fit <- mod$sample())
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod$sample()
+    )
+  )
   expect_equal(fit$log_prob(5), -12.5)
 })
 
@@ -268,8 +324,10 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
                       force_recompile = TRUE)
   N <- 4
   K <- 3
-  fit <- mod$sample(data = list(N = N, K = K), chains = 1,
-                    iter_warmup = 1, iter_sampling = 5)
+  utils::capture.output(
+    fit <- mod$sample(data = list(N = N, K = K), chains = 1,
+                      iter_warmup = 1, iter_sampling = 5)
+  )
 
   target_skeleton <- list(
     x_real = array(0, dim = 1),

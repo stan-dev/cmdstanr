@@ -1,23 +1,14 @@
-context("model-output_dir-output-basename")
-
 set_cmdstan_path()
-if (getRversion() < '3.5.0') {
-  sandbox <- file.path(tempdir(), "sandbox")
-} else {
-  sandbox <- file.path(tempdir(check = TRUE), "sandbox")
-}
-if (!dir.exists(sandbox)) {
-  dir.create(sandbox)
-  on.exit(unlink(sandbox, recursive = TRUE))
+
+local_output_sandbox <- function(pattern = "sandbox", .local_envir = parent.frame()) {
+  withr::local_tempdir(pattern = pattern, .local_envir = .local_envir)
 }
 
 test_that("all fitting methods work with output_dir", {
+  sandbox <- local_output_sandbox()
   for (method in c("sample", "optimize", "variational")) {
     method_dir <- file.path(sandbox, method)
-    if (!dir.exists(method_dir)) {
-      dir.create(method_dir)
-      on.exit(unlink(method_dir, recursive = TRUE))
-    }
+    dir.create(method_dir, recursive = TRUE, showWarnings = FALSE)
 
     # WSL models use internal WSL tempdir
     if (!os_is_wsl()) {
@@ -81,6 +72,7 @@ test_that("all fitting methods work with output_dir", {
 })
 
 test_that("error if output_dir is invalid", {
+  sandbox <- local_output_sandbox()
   expect_error(
     testing_fit("bernoulli", output_dir = "NOT_A_DIR"),
     "Directory 'NOT_A_DIR' does not exist",
@@ -95,20 +87,17 @@ test_that("error if output_dir is invalid", {
     # FIXME: how do I create an unreadable file on windows?
     not_readable <- file.path(sandbox, "locked")
     dir.create(not_readable, mode = "220")
+    skip_if(file.access(not_readable, 4) == 0,
+            "temp filesystem does not support unreadable test directories")
     expect_error(
       testing_fit("bernoulli", output_dir = not_readable),
       "not readable"
     )
   }
-  file.remove(list.files(sandbox, full.names = TRUE, recursive = TRUE))
 })
 
 test_that("output_dir works with trailing /", {
-  test_dir <- file.path(tempdir(check = TRUE), "output_dir")
-  if (dir.exists(test_dir)) {
-    unlink(test_dir, recursive = TRUE)
-  }
-  dir.create(test_dir)
+  test_dir <- withr::local_tempdir(pattern = "output_dir")
   fit <- testing_fit(
     "bernoulli",
     method = "sample",
