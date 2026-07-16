@@ -1,6 +1,6 @@
 set_cmdstan_path()
 fit_mcmc <- testing_fit("logistic", method = "sample",
-                        seed = 123, chains = 2)
+                        seed = 123, chains = 2, save_metric = FALSE)
 fit_mcmc_0 <- testing_fit("logistic", method = "sample",
                           seed = 123, chains = 2,
                           refresh = 0)

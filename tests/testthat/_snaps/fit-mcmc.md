@@ -125,3 +125,11 @@
       mu
       theta_raw[3]
 
+# save_metric_files works and has clear error message when no files
+
+    Code
+      fit_mcmc$save_metric_files()
+    Condition
+      Error:
+      ! No metric files found. Make sure to set 'save_metric=TRUE' when fitting the model.
+

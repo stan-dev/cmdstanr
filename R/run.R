@@ -258,7 +258,7 @@ CmdStanRun <- R6::R6Class(
                                  timestamp = TRUE,
                                  random = TRUE) {
       current_files <- self$metric_files(include_failed = TRUE) # used so we get error if 0 files
-      if (is.null(current_files)) {
+      if (!length(current_files)) {
         stop(
           "No metric files found. Make sure to set 'save_metric=TRUE' when fitting the model.",
           call. = FALSE
@@ -281,6 +281,7 @@ CmdStanRun <- R6::R6Class(
         " files and set internal paths to new locations:\n",
         paste("-", new_paths, collapse = "\n")
       )
+      private$metric_files_saved_ <- TRUE
       invisible(new_paths)
     },
 
