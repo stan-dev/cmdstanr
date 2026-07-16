@@ -27,10 +27,10 @@
 #'   and memory for models with many parameters.
 #'
 #' @return
-#' `as_cmdstan_fit()` returns a [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace] or
-#' [CmdStanVB] object. Some methods typically defined for those objects will not
-#' work (e.g. `save_data_file()`) but the important methods like `$summary()`,
-#' `$draws()`, `$sampler_diagnostics()` and others will work fine.
+#' `as_cmdstan_fit()` returns a fitted model object ([CmdStanMCMC], [CmdStanVB],
+#' etc.). Some methods typically defined for those objects will not work (e.g.
+#' `save_data_file()`) but the important methods like `$summary()`, `$draws()`,
+#' `$sampler_diagnostics()` and others will work fine.
 #'
 #' `read_cmdstan_csv()` returns a named list with the following components:
 #'
@@ -40,8 +40,8 @@
 #' The other components in the returned list depend on the method that produced
 #' the CSV file(s).
 #'
-#' For [sampling][model-method-sample] the returned list also includes the
-#' following components:
+#' For [MCMC][model-method-sample] the returned list also includes the following
+#' components:
 #'
 #' * `time`: Run time information for the individual chains. The returned object
 #' is the same as for the [$time()][fit-method-time] method except the total run
@@ -67,8 +67,8 @@
 #'
 #' * `point_estimates`: Point estimates for the model parameters.
 #'
-#' For [laplace][model-method-laplace] and
-#' [variational inference][model-method-variational] the returned list also
+#' For the [laplace][model-method-laplace], [pathfinder][model-method-pathfinder]
+#' and [variational][model-method-variational] methods, the returned list also
 #' includes the following components:
 #'
 #' * `draws`: A [`draws_matrix`][posterior::draws_matrix] (or different format
