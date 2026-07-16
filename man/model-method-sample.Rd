@@ -219,21 +219,24 @@ specifying the geometry of the base manifold. See the \emph{Euclidean Metric}
 section of the CmdStan User's Guide for more details. To specify a
 precomputed (inverse) metric, see the \code{inv_metric} argument below.}
 
-\item{metric_file}{(character vector) The paths to JSON or Rdump files (one
-per chain) compatible with CmdStan that contain precomputed inverse
-metrics. The \code{metric_file} argument is inherited from CmdStan but is
-confusing in that the entry in JSON or Rdump file(s) must be named
-\code{inv_metric}, referring to the \emph{inverse} metric. We recommend instead using
-CmdStanR's \code{inv_metric} argument (see below) to specify an inverse metric
-directly using a vector or matrix from your \R session.}
+\item{metric_file}{(character vector) One path, used for all chains, or one
+path per chain to JSON or Rdump files compatible with CmdStan that contain
+precomputed inverse metrics. The \code{metric_file} argument is inherited from
+CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
+named \code{inv_metric}, referring to the \emph{inverse} metric. An alternative to
+\code{metric_file} is the \code{inv_metric} argument (see below), which allows
+specifying an inverse metric directly using a vector or matrix from your \R
+session.}
 
-\item{inv_metric}{(vector, matrix) A vector (if \code{metric='diag_e'}) or a
-matrix (if \code{metric='dense_e'}) for initializing the inverse metric. This
-can be used as an alternative to the \code{metric_file} argument. A vector is
-interpreted as a diagonal metric. The inverse metric is usually set to an
-estimate of the posterior covariance. See the \code{adapt_engaged} argument
-above for details about (and control over) how specifying a precomputed
-inverse metric interacts with adaptation.}
+\item{inv_metric}{(vector, matrix, or list) A vector (if \code{metric = "diag_e"}) or a matrix (if \code{metric = "dense_e"}) for initializing the
+inverse metric. A single vector or matrix is used for all chains. To
+initialize the chains with different inverse metrics, provide a list
+containing one vector or matrix per chain. A length-one list is also used
+for all chains. This can be used as an alternative to the \code{metric_file}
+argument. The inverse metric is usually set to an estimate of the posterior
+covariance. See the \code{adapt_engaged} argument above for details about (and
+control over) how specifying a precomputed inverse metric interacts with
+adaptation.}
 
 \item{init_buffer}{(nonnegative integer) Width of initial fast timestep
 adaptation interval during warmup.}
