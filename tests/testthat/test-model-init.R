@@ -207,6 +207,47 @@ test_that("init can be a function", {
   )
 })
 
+test_that("init function is called once for each init", {
+  n_calls <- 0
+  init_fun <- function() {
+    n_calls <<- n_calls + 1
+    # Using a counter as an init value is not a sensible MCMC init strategy,
+    # but it makes it clear whether the values from each call are written.
+    list(alpha = n_calls, beta = 1:3)
+  }
+  init_paths_zero_arg <- process_init(init_fun, num_procs = 2)
+  withr::defer(unlink(init_paths_zero_arg))
+  expect_equal(n_calls, 2)
+  expect_equal(
+    vapply(init_paths_zero_arg, function(path) {
+      jsonlite::read_json(path, simplifyVector = TRUE)$alpha
+    }, numeric(1), USE.NAMES = FALSE),
+    1:2
+  )
+
+  chain_ids <- integer()
+  init_fun <- function(chain_id) {
+    chain_ids <<- c(chain_ids, chain_id)
+    list(alpha = 0, beta = 1:3)
+  }
+  init_paths_chain_id <- process_init(init_fun, num_procs = 2)
+  withr::defer(unlink(init_paths_chain_id))
+  expect_equal(chain_ids, 1:2)
+})
+
+test_that("init function return value is validated for each init", {
+  init_fun <- function(chain_id) {
+    if (chain_id == 2) {
+      return(data.frame(alpha = 0, beta = 1:3))
+    }
+    list(alpha = 0, beta = 1:3)
+  }
+  expect_error(
+    process_init(init_fun, num_procs = 2),
+    "If 'init' is a function it must return a single list"
+  )
+})
+
 test_that("error if init function specified incorrectly", {
   init_fun <- function(a, b) list(a, b)
   expect_error(
@@ -272,6 +313,17 @@ test_that("print message if not all parameters are initialized", {
 
 test_that("No message printed if options(cmdstanr_warn_inits=FALSE)", {
   withr::local_options(list(cmdstanr_warn_inits = FALSE))
+  model_variables <- list(
+    parameters = list(
+      alpha = list(dimensions = 0),
+      beta = list(dimensions = 1)
+    )
+  )
+  init_paths <- expect_message(
+    process_init(function() list(alpha = 1), 1, model_variables),
+    regexp = NA
+  )
+  withr::defer(unlink(init_paths))
   expect_message(
     utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = list(list(a = 0)), seed = 123)),
     regexp = NA
