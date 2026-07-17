@@ -23,11 +23,17 @@ generate_quantities(
 \item{fitted_params}{(multiple options) The parameter draws to use. One of
 the following:
 \itemize{
-\item A \link{CmdStanMCMC} or \link{CmdStanVB} fitted model object.
-\item A \link[posterior:draws_array]{posterior::draws_array} (for MCMC) or \link[posterior:draws_matrix]{posterior::draws_matrix} (for
-VB) object returned by CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
+\item A \link{CmdStanMCMC}, \link{CmdStanMLE}, \link{CmdStanLaplace}, \link{CmdStanVB}, or
+\link{CmdStanPathfinder} fitted model object.
+\item A \link[posterior:draws_array]{posterior::draws_array} or \link[posterior:draws_matrix]{posterior::draws_matrix} object returned by
+CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
 \item A character vector of paths to CmdStan CSV output files.
 }
+
+For a \link{CmdStanMLE} object, optimization supplies one point estimate, so
+generated quantities that use RNG functions produce only one simulation.
+For \link{CmdStanLaplace}, \link{CmdStanVB}, and \link{CmdStanPathfinder} objects, generated
+quantities are evaluated once per approximate draw.
 
 NOTE: if you plan on making many calls to \verb{$generate_quantities()} then the
 most efficient option is to pass the paths of the CmdStan CSV output files

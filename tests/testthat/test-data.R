@@ -66,17 +66,17 @@ test_that("process_fitted_params() works with basic input types", {
 })
 
 test_that("process_fitted_params() errors with bad args", {
-  error_msg <- "'fitted_params' must be a list of paths to CSV files, a CmdStanMCMC/CmdStanVB object, a posterior::draws_array or a posterior::draws_matrix."
+  error_msg <- paste0(
+    "'fitted_params' must be a list of paths to CSV files, a CmdStanMCMC, ",
+    "CmdStanMLE, CmdStanLaplace, CmdStanVB, or CmdStanPathfinder object, ",
+    "a posterior::draws_array or a posterior::draws_matrix."
+  )
   expect_error(
     process_fitted_params(5),
     error_msg
   )
   expect_error(
     process_fitted_params(NULL),
-    error_msg
-  )
-  expect_error(
-    process_fitted_params(fit_optimize),
     error_msg
   )
 
@@ -104,6 +104,16 @@ test_that("process_fitted_params() errors with bad args", {
       "Unable to obtain draws from the fit object."
     )
   }
+})
+
+test_that("process_fitted_params() works with CmdStanMLE", {
+  file <- process_fitted_params(fit_optimize)
+  fit_params <- data.table::fread(file, skip = "lp__")
+  expect_equal(nrow(fit_params), 1)
+  expect_equal(
+    fit_params$theta,
+    as.numeric(fit_optimize$draws(variables = "theta"))
+  )
 })
 
 test_that("process_fitted_params() works if output_files in fit do not exist", {

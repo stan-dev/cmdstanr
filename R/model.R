@@ -1996,10 +1996,16 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #' @inheritParams model-method-sample
 #' @param fitted_params (multiple options) The parameter draws to use. One of
 #'   the following:
-#'  * A [CmdStanMCMC] or [CmdStanVB] fitted model object.
-#'  * A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for
-#'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
+#'  * A [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace], [CmdStanVB], or
+#'  [CmdStanPathfinder] fitted model object.
+#'  * A [posterior::draws_array] or [posterior::draws_matrix] object returned by
+#'  CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
+#'
+#' For a [CmdStanMLE] object, optimization supplies one point estimate, so
+#' generated quantities that use RNG functions produce only one simulation.
+#' For [CmdStanLaplace], [CmdStanVB], and [CmdStanPathfinder] objects, generated
+#' quantities are evaluated once per approximate draw.
 #'
 #' NOTE: if you plan on making many calls to `$generate_quantities()` then the
 #' most efficient option is to pass the paths of the CmdStan CSV output files
