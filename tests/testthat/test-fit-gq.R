@@ -1,5 +1,3 @@
-context("fitted-gq")
-
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
@@ -66,34 +64,53 @@ test_that("summary() method works after gq", {
 })
 
 test_that("print() method works after gq", {
-  expect_output(expect_s3_class(fit_gq$print(), "CmdStanGQ"), "variable")
-  expect_output(fit_gq$print(max_rows = 1), "# showing 1 of 11 rows")
-  expect_output(fit_gq$print(NULL, c("mad")), "mad")
+  expect_snapshot(
+    expect_s3_class(fit_gq$print(), "CmdStanGQ"),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
 
-  expect_output(fit_gq$print(), "showing 10 of 11 rows")
-  expect_output(fit_gq$print(max_rows = 2), "showing 2 of 11 rows")
-  expect_output(fit_gq$print(max_rows = 11), "sum_y", fixed=TRUE) # last parameter
-  expect_output(fit_gq$print("y_rep", max_rows = 2), "showing 2 of 10 rows")
+  expect_snapshot(
+    fit_gq$print(max_rows = 1),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_gq$print(NULL, c("mad")),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_gq$print(max_rows = 2),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_gq$print(max_rows = 11),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_gq$print("y_rep", max_rows = 2),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_gq$print("y_rep"),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_gq$print(c("y_rep[1]", "sum_y", "y_rep[3]")),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+
   expect_error(
     fit_gq$print(variable = "unknown", max_rows = 20),
     "Can't find the following variable(s): unknown",
     fixed = TRUE
-  ) # unknown parameter
-
-  out <- capture.output(fit_gq$print("y_rep"))
-  expect_length(out, 11) # columns names + 1 y_rep
-  expect_match(out[1], "variable")
-  expect_match(out[2], "y_rep[1]", fixed = TRUE)
-  expect_match(out[9], "y_rep[8]", fixed = TRUE)
-  expect_false(any(grepl("sum_y|theta", out)))
-
-  # make sure the row order is correct
-  out <- capture.output(fit_gq$print(c("y_rep[1]", "sum_y", "y_rep[3]")))
-  expect_length(out, 4)
-  expect_match(out[1], " variable")
-  expect_match(out[2], " y_rep[1]", fixed = TRUE)
-  expect_match(out[3], " sum_y")
-  expect_match(out[4], " y_rep[3]", fixed = TRUE)
+  )
 })
 
 test_that("output() method works after gq", {

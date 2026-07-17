@@ -1,5 +1,3 @@
-context("install")
-
 # avoid parallel on Mac due to strange intermittent TBB errors on Github Actions
 CORES <- if (os_is_macos()) 1 else 2
 
@@ -93,7 +91,7 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
                       wsl = os_is_wsl()),
       "Compiling C++ code",
       fixed = TRUE
@@ -105,7 +103,7 @@ test_that("install_cmdstan() works with version and release_url", {
     expect_message(
       expect_output(
         install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                        version = "2.36.0",
+                        version = "2.37.0",
                         # the URL is intentionally invalid to test that the version has higher priority
                         release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
                         wsl = os_is_wsl()),
@@ -118,14 +116,13 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.36.0")))
-  set_cmdstan_path(cmdstan_default_path())
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
+  set_cmdstan_path()
 })
 
 test_that("toolchain checks on Unix work", {
   skip_if(os_is_windows())
-  path_backup <- Sys.getenv("PATH")
-  Sys.setenv("PATH" = "")
+  withr::local_envvar(c("PATH" = ""))
   if (os_is_macos()) {
     err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
     err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
@@ -143,10 +140,10 @@ test_that("toolchain checks on Unix work", {
     err_msg_make,
     fixed = TRUE
   )
-  Sys.setenv("PATH" = path_backup)
 })
 
 test_that("clean and rebuild works", {
+  set_cmdstan_path()
   expect_output(
     rebuild_cmdstan(cores = CORES),
     paste0("CmdStan v", cmdstan_version(), " built"),
@@ -164,15 +161,15 @@ test_that("github_download_url constructs correct url", {
 test_that("extract_cmdstan_version_from_archive_name parses realistic inputs", {
   expect_equal(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz"
+      "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz"
     ),
-    "2.36.0"
+    "2.37.0"
   )
   expect_equal(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0-linux-arm64.tar.gz"
+      "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0-linux-arm64.tar.gz"
     ),
-    "2.36.0"
+    "2.37.0"
   )
   expect_equal(
     extract_cmdstan_version_from_archive_name(
@@ -188,7 +185,7 @@ test_that("extract_cmdstan_version_from_archive_name parses realistic inputs", {
   )
   expect_null(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/tag/v2.36.0"
+      "https://github.com/stan-dev/cmdstan/releases/tag/v2.37.0"
     )
   )
 })
@@ -237,10 +234,10 @@ test_that("Download failures return error message", {
 test_that("Install from release file works", {
   dir <- tempdir(check = TRUE)
 
-  destfile <- file.path(dir, "cmdstan-2.36.0.tar.gz")
+  destfile <- file.path(dir, "cmdstan-2.37.0.tar.gz")
 
   download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
     destfile)
 
   expect_message(
@@ -307,6 +304,20 @@ test_that("deprecated CMDSTANR_USE_MSYS_TOOLCHAIN is ignored with warning", {
   })
 })
 
+test_that("Rtools helpers compare R versions numerically", {
+  local({
+    local_mocked_bindings(current_r_version = function() numeric_version("4.10.0"))
+    expect_equal(rtools4x_version(), "45")
+  })
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.10.0")
+    )
+    expect_equal(is_ucrt_toolchain(), TRUE)
+  })
+})
+
 test_that("rtools4x_toolchain_path prefers static-posix when available", {
   skip_if(arch_is_aarch64())
   env_var <- paste0(
@@ -314,8 +325,7 @@ test_that("rtools4x_toolchain_path prefers static-posix when available", {
     if (arch_is_aarch64()) "_AARCH64" else "",
     "_HOME"
   )
-  fake_rtools_home <- tempfile(pattern = "rtools-home-pref-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-pref-")
   dir.create(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
@@ -338,8 +348,7 @@ test_that("rtools4x_toolchain_path falls back to mingw64 for legacy layouts", {
     if (arch_is_aarch64()) "_AARCH64" else "",
     "_HOME"
   )
-  fake_rtools_home <- tempfile(pattern = "rtools-home-fallback-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-fallback-")
   dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   file.create(file.path(fake_rtools_home, "mingw64", "bin", "g++.exe"))
@@ -359,8 +368,7 @@ test_that("rtools4x_toolchain_path prefers ABI-compatible legacy fallback", {
     if (arch_is_aarch64()) "_AARCH64" else "",
     "_HOME"
   )
-  fake_rtools_home <- tempfile(pattern = "rtools-home-abi-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-abi-")
   dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(fake_rtools_home, "ucrt64", "bin"),
@@ -369,24 +377,20 @@ test_that("rtools4x_toolchain_path prefers ABI-compatible legacy fallback", {
   file.create(file.path(fake_rtools_home, "ucrt64", "bin", "g++.exe"))
 
   withr::with_envvar(setNames(fake_rtools_home, env_var), {
-    with_mocked_bindings(
-      {
-        expect_equal(
-          rtools4x_toolchain_path(),
-          repair_path(file.path(fake_rtools_home, "mingw64", "bin"))
-        )
-      },
-      is_ucrt_toolchain = function() FALSE
-    )
-    with_mocked_bindings(
-      {
-        expect_equal(
-          rtools4x_toolchain_path(),
-          repair_path(file.path(fake_rtools_home, "ucrt64", "bin"))
-        )
-      },
-      is_ucrt_toolchain = function() TRUE
-    )
+    local({
+      local_mocked_bindings(is_ucrt_toolchain = function() FALSE)
+      expect_equal(
+        rtools4x_toolchain_path(),
+        repair_path(file.path(fake_rtools_home, "mingw64", "bin"))
+      )
+    })
+    local({
+      local_mocked_bindings(is_ucrt_toolchain = function() TRUE)
+      expect_equal(
+        rtools4x_toolchain_path(),
+        repair_path(file.path(fake_rtools_home, "ucrt64", "bin"))
+      )
+    })
   })
 })
 
@@ -396,8 +400,7 @@ test_that("check_rtools4x_windows_toolchain reports checked toolchain paths", {
     if (arch_is_aarch64()) "_AARCH64" else "",
     "_HOME"
   )
-  fake_rtools_home <- tempfile(pattern = "rtools-home-invalid-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-invalid-")
   dir.create(file.path(fake_rtools_home, "usr", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   file.create(file.path(fake_rtools_home, "usr", "bin", "make.exe"))
@@ -423,81 +426,91 @@ test_that("check_rtools4x_windows_toolchain reports checked toolchain paths", {
 })
 
 test_that("toolchain_PATH_env_var() handles missing and configured Rtools homes", {
-  with_mocked_bindings(
-    expect_null(toolchain_PATH_env_var()),
-    os_is_windows = function() FALSE
-  )
-  with_mocked_bindings(
-    expect_null(toolchain_PATH_env_var()),
-    os_is_windows = function() TRUE,
-    rtools4x_home_path = function() ""
-  )
-  with_mocked_bindings(
+  local({
+    local_mocked_bindings(os_is_windows = function() FALSE)
+    expect_null(toolchain_PATH_env_var())
+  })
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      rtools4x_home_path = function() ""
+    )
+    expect_null(toolchain_PATH_env_var())
+  })
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      rtools4x_home_path = function() "C:/rtools",
+      rtools4x_toolchain_path = function() "C:/rtools/ucrt64/bin",
+      repair_path = function(path) path
+    )
     expect_equal(
       toolchain_PATH_env_var(),
       "C:/rtools/usr/bin;C:/rtools/ucrt64/bin"
-    ),
-    os_is_windows = function() TRUE,
-    rtools4x_home_path = function() "C:/rtools",
-    rtools4x_toolchain_path = function() "C:/rtools/ucrt64/bin",
-    repair_path = function(path) path
-  )
+    )
+  })
 })
 
 test_that("check_rtools4x_windows_toolchain reports missing Rtools and make", {
-  fake_rtools_home <- tempfile(pattern = "rtools-home-missing-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-missing-")
 
-  with_mocked_bindings(
+  local({
+    local_mocked_bindings(
+      rtools4x_home_path = function() "",
+      rtools4x_version = function() "44"
+    )
     expect_error(
       check_rtools4x_windows_toolchain(),
       "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
       fixed = TRUE
-    ),
-    rtools4x_home_path = function() "",
-    rtools4x_version = function() "44"
-  )
+    )
+  })
 
   dir.create(file.path(fake_rtools_home, "usr", "bin"),
              recursive = TRUE, showWarnings = FALSE)
-  with_mocked_bindings(
+  local({
+    local_mocked_bindings(
+      rtools4x_home_path = function() fake_rtools_home,
+      rtools4x_version = function() "44"
+    )
     expect_error(
       check_rtools4x_windows_toolchain(),
       "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
       fixed = TRUE
-    ),
-    rtools4x_home_path = function() fake_rtools_home,
-    rtools4x_version = function() "44"
-  )
+    )
+  })
 })
 
 test_that("check_rtools4x_windows_toolchain validates install path and empty candidates", {
-  with_mocked_bindings(
+  local({
+    local_mocked_bindings(
+      rtools4x_home_path = function() "C:/Program Files/Rtools44",
+      rtools4x_version = function() "44"
+    )
     expect_error(
       check_rtools4x_windows_toolchain(),
       "Please reinstall the appropriate Rtools version for this R installation to a valid path",
       fixed = TRUE
-    ),
-    rtools4x_home_path = function() "C:/Program Files/Rtools44",
-    rtools4x_version = function() "44"
-  )
+    )
+  })
 
-  fake_rtools_home <- tempfile(pattern = "rtools-home-empty-", tmpdir = tempdir(check = TRUE))
-  on.exit(unlink(fake_rtools_home, recursive = TRUE), add = TRUE)
+  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-empty-")
   dir.create(file.path(fake_rtools_home, "usr", "bin"),
              recursive = TRUE, showWarnings = FALSE)
   file.create(file.path(fake_rtools_home, "usr", "bin", "make.exe"))
 
-  with_mocked_bindings(
+  local({
+    local_mocked_bindings(
+      rtools4x_home_path = function() fake_rtools_home,
+      rtools4x_version = function() "44",
+      rtools4x_toolchain_candidates = function() character()
+    )
     expect_error(
       check_rtools4x_windows_toolchain(),
       "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
       fixed = TRUE
-    ),
-    rtools4x_home_path = function() fake_rtools_home,
-    rtools4x_version = function() "44",
-    rtools4x_toolchain_candidates = function() character()
-  )
+    )
+  })
 })
 
 test_that("check_cmdstan_toolchain(fix = TRUE) is deprecated", {

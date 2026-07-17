@@ -9,7 +9,8 @@
 #' @export
 #'
 #' @param path (string) The full file path to the CmdStan installation. If
-#'   `NULL` (the default) then the path is set to the default path used by
+#'   `NULL` (the default) then the path is set using the `"CMDSTAN"`
+#'   environment variable when available, otherwise the default path used by
 #'   [install_cmdstan()] if it exists.
 #' @return A string. Either the file path to the CmdStan installation or the
 #'   CmdStan version number.
@@ -39,7 +40,19 @@
 #'
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
-    path <- cmdstan_default_path()
+    env_path <- resolve_cmdstan_path_from_env()
+    if (isTRUE(is.na(env_path))) {
+      unset_cmdstan_path()
+      return(invisible(NULL))
+    }
+    if (!is.null(env_path)) {
+      path <- env_path
+    } else {
+      path <- cmdstan_default_path()
+      if (is.null(path)) {
+        return(invisible(NULL))
+      }
+    }
   }
   if (dir.exists(path)) {
     path <- absolute_path(path)
@@ -50,9 +63,7 @@ set_cmdstan_path <- function(path = NULL) {
         "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer.",
         call. = FALSE
       )
-      .cmdstanr$PATH <- NULL
-      .cmdstanr$VERSION <- NULL
-      .cmdstanr$WSL <- FALSE
+      unset_cmdstan_path()
       return(invisible(path))
     }
     .cmdstanr$PATH <- path
@@ -60,7 +71,7 @@ set_cmdstan_path <- function(path = NULL) {
     .cmdstanr$WSL <- grepl("//wsl$", path, fixed = TRUE)
     message("CmdStan path set to: ", path)
   } else {
-    warning("Path not set. Can't find directory: ", path, call. = FALSE)
+    warning("CmdStan path not set. Can't find directory: ", path, call. = FALSE)
   }
   invisible(path)
 }
@@ -102,6 +113,12 @@ cmdstan_version <- function(error_on_NA = TRUE) {
 .cmdstanr$TEMP_DIR <- NULL
 .cmdstanr$WSL <- FALSE
 
+unset_cmdstan_path <- function() {
+  .cmdstanr$PATH <- NULL
+  .cmdstanr$VERSION <- NULL
+  .cmdstanr$WSL <- FALSE
+}
+
 # path to temp directory
 cmdstan_tempdir <- function() {
   .cmdstanr$TEMP_DIR
@@ -117,19 +134,70 @@ cmdstan_min_version <- function() {
   "2.35.0"
 }
 
-is_supported_cmdstan_version <- function(version) {
-  if (is.null(version)) {
-    return(FALSE)
+# Normalize versions for comparison. This is intentionally looser than
+# cmdstan_version_from_path(): it accepts version strings, paths, and install
+# dir names, and strips release-candidate suffixes.
+cmdstan_version_for_comparison <- function(version) {
+  version <- as.character(version)
+  version <- sub("[/\\\\]+$", "", version)
+  version <- basename(version)
+  version <- sub("^cmdstan-", "", version)
+  sub("-rc[0-9]+$", "", version)
+}
+
+# Scalar comparison of versions numbers. Returns -1, 0, or 1.
+# Empty strings are used when no native or WSL install was found during path discovery.
+cmdstan_version_compare <- function(version, other) {
+  if (length(version) != 1 || is.na(version) || !nzchar(version)) {
+    return(-1L)
   }
+  if (length(other) != 1 || is.na(other) || !nzchar(other)) {
+    return(1L)
+  }
+  utils::compareVersion(
+    cmdstan_version_for_comparison(version),
+    cmdstan_version_for_comparison(other)
+  )
+}
+
+is_supported_cmdstan_version <- function(version) {
   cmp <- tryCatch(
-    suppressWarnings(utils::compareVersion(as.character(version), cmdstan_min_version())),
+    suppressWarnings(cmdstan_version_compare(version, cmdstan_min_version())),
     error = function(e) NA_integer_
   )
   isTRUE(cmp >= 0)
 }
 
-#' cmdstan_default_install_path
-#'
+resolve_cmdstan_path_from_env <- function() {
+  path <- Sys.getenv("CMDSTAN")
+  if (!nzchar(path)) {
+    return(NULL)
+  }
+  if (!dir.exists(path)) {
+    warning(
+      "CmdStan path not set. Can't find directory specified by environment ",
+      "variable 'CMDSTAN'.",
+      call. = FALSE
+    )
+    return(NA_character_)
+  }
+  path <- absolute_path(path)
+  version <- suppressWarnings(read_cmdstan_version(path))
+  if (!is.null(version)) {
+    return(path)
+  }
+  path <- cmdstan_default_path(dir = path)
+  if (is.null(path)) {
+    warning(
+      "CmdStan path not set. No CmdStan installation found in the path ",
+      "specified by the environment variable 'CMDSTAN'.",
+      call. = FALSE
+    )
+    return(NA_character_)
+  }
+  path
+}
+
 #' Path to where  [install_cmdstan()] with default settings installs CmdStan.
 #'
 #' @keywords internal
@@ -140,14 +208,24 @@ cmdstan_default_install_path <- function(wsl = FALSE) {
   if (wsl) {
     file.path(paste0(wsl_dir_prefix(wsl = TRUE), wsl_home_dir()), ".cmdstan")
   } else {
-    file.path(.home_path(), ".cmdstan")
+    file.path(home_path(), ".cmdstan")
   }
 }
 
-#' cmdstan_default_path
-#'
-#' Returns the path to the installation of CmdStan with the most recent release
-#' version.
+home_path <- function() {
+  home <- Sys.getenv("HOME")
+  if (os_is_windows()) {
+    userprofile <- Sys.getenv("USERPROFILE")
+    h_drivepath <- file.path(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"))
+    win_home <- ifelse(userprofile == "", h_drivepath, userprofile)
+    if (win_home != "") {
+      home <- win_home
+    }
+  }
+  home
+}
+
+#' Path to the installation of CmdStan with the most recent release version
 #'
 #' For Windows systems with WSL CmdStan installs, if there are side-by-side WSL
 #' and native installs with the same version then the WSL is preferred.
@@ -180,13 +258,13 @@ cmdstan_default_path <- function(dir = NULL) {
   }
   if (dir.exists(installs_path) || wsl_path_exists) {
     latest_cmdstan <- ifelse(dir.exists(installs_path),
-                             .latest_cmdstan_installed(installs_path), "")
+                             latest_cmdstan_installed(installs_path), "")
     latest_wsl_cmdstan <- ifelse(wsl_path_exists,
-                                 .latest_cmdstan_installed(wsl_installs_path), "")
+                                 latest_cmdstan_installed(wsl_installs_path), "")
     if (!nzchar(latest_cmdstan) && !nzchar(latest_wsl_cmdstan)) {
       return(NULL)
     }
-    if (latest_wsl_cmdstan >= latest_cmdstan) {
+    if (cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
       return(file.path(wsl_installs_path, latest_wsl_cmdstan))
     } else {
       return(file.path(installs_path, latest_cmdstan))
@@ -195,20 +273,26 @@ cmdstan_default_path <- function(dir = NULL) {
   NULL
 }
 
-.latest_cmdstan_installed <- function(installs_path) {
+# Return the newest CmdStan install directory name under an install root
+latest_cmdstan_installed <- function(installs_path) {
   cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-  # if installed in cmdstan folder with no version move to cmdstan-version folder
-  if ("cmdstan" %in% cmdstan_installs) {
-    ver <- read_cmdstan_version(file.path(installs_path, "cmdstan"))
-    old_path <- file.path(installs_path, "cmdstan")
-    new_path <- file.path(installs_path, paste0("cmdstan-", ver))
-    file.rename(old_path, new_path)
-    cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
-  }
   latest_cmdstan <- ""
   if (length(cmdstan_installs) > 0) {
-    cmdstan_installs <- grep("^cmdstan-", cmdstan_installs, value = TRUE)
-    latest_cmdstan <- sort(cmdstan_installs, decreasing = TRUE)[1]
+    cmdstan_installs <- grep(
+      "^cmdstan-[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?$",
+      cmdstan_installs,
+      value = TRUE
+    )
+    if (length(cmdstan_installs) == 0) {
+      return(latest_cmdstan)
+    }
+    # list.dirs() returns dir names, so sort by parsed versions instead of
+    # lexicographic names
+    latest_cmdstan <- cmdstan_installs[order(
+      numeric_version(cmdstan_version_for_comparison(cmdstan_installs)),
+      cmdstan_installs,
+      decreasing = TRUE
+    )[1]]
     if (is_release_candidate(latest_cmdstan)) {
       non_rc_path <- strsplit(latest_cmdstan, "-rc")[[1]][1]
       if (dir.exists(file.path(installs_path, non_rc_path))) {
@@ -219,6 +303,29 @@ cmdstan_default_path <- function(dir = NULL) {
   latest_cmdstan
 }
 
+# Detect WSL UNC paths, which may need path-based version fallback below
+is_wsl_unc_path <- function(path) {
+  is.character(path) &&
+    length(path) == 1 &&
+    !is.na(path) &&
+    startsWith(repair_path(path), "//wsl$/")
+}
+
+# Strict extractor for CmdStan install paths. Unlike
+# cmdstan_version_for_comparison(), it returns NULL for non-CmdStan paths and
+# preserves release-candidate suffixes.
+cmdstan_version_from_path <- function(path) {
+  path <- repair_path(path)
+  match <- regmatches(
+    path,
+    regexpr("cmdstan-[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?$", path)
+  )
+  if (!length(match) || is.na(match) || !nzchar(match)) {
+    return(NULL)
+  }
+  sub("^cmdstan-", "", match)
+}
+
 
 #' Find the version of CmdStan from makefile
 #' @noRd
@@ -226,7 +333,23 @@ cmdstan_default_path <- function(dir = NULL) {
 #' @return Version number as a string.
 read_cmdstan_version <- function(path) {
   makefile_path <- file.path(path, "makefile")
-  if (!file.exists(makefile_path)) {
+  if (is_wsl_unc_path(path)) {
+    makefile <- tryCatch(
+      suppressWarnings(readLines(makefile_path, warn = FALSE)),
+      error = function(e) NULL
+    )
+  } else if (file.exists(makefile_path)) {
+    makefile <- readLines(makefile_path)
+  } else {
+    makefile <- NULL
+  }
+  if (is.null(makefile)) {
+    if (is_wsl_unc_path(path)) {
+      version_from_path <- cmdstan_version_from_path(path)
+      if (!is.null(version_from_path)) {
+        return(version_from_path)
+      }
+    }
     warning(
       "Can't find CmdStan makefile to detect version number. ",
       "Path may not point to valid installation.",
@@ -234,13 +357,13 @@ read_cmdstan_version <- function(path) {
     )
     return(NULL)
   }
-  makefile <- readLines(makefile_path)
   version_line <- grep("^CMDSTAN_VERSION :=", makefile, value = TRUE)
   if (length(version_line) == 0) {
     stop("CmdStan makefile is missing a version number.", call. = FALSE)
   }
   sub("CMDSTAN_VERSION := ", "", version_line)
 }
+
 
 #' Returns whether the supplied installation is a release candidate
 #' @noRd
@@ -253,12 +376,6 @@ is_release_candidate <- function(path) {
   grepl(pattern = "-rc[0-9]*$", x = path)
 }
 
-# unset the path (only used in tests)
-unset_cmdstan_path <- function() {
-  .cmdstanr$PATH <- NULL
-  .cmdstanr$VERSION <- NULL
-  .cmdstanr$WSL <- FALSE
-}
 
 # fake a cmdstan version (only used in tests)
 fake_cmdstan_version <- function(version, mod = NULL) {
@@ -274,17 +391,4 @@ fake_cmdstan_version <- function(version, mod = NULL) {
 }
 reset_cmdstan_version <- function(mod = NULL) {
   fake_cmdstan_version(read_cmdstan_version(cmdstan_path()), mod = mod)
-}
-
-.home_path <- function() {
-  home <- Sys.getenv("HOME")
-  if (os_is_windows()) {
-    userprofile <- Sys.getenv("USERPROFILE")
-    h_drivepath <- file.path(Sys.getenv("HOMEDRIVE"), Sys.getenv("HOMEPATH"))
-    win_home <- ifelse(userprofile == "", h_drivepath, userprofile)
-    if (win_home != "") {
-      home <- win_home
-    }
-  }
-  home
 }

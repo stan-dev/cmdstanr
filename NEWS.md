@@ -1,11 +1,19 @@
 # cmdstanr (development version)
 
+* `pathfinder()` now respects `save_single_paths = TRUE` instead of always
+passing `0` to CmdStan.
+* `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
+to be consistent with other methods.
 * Informative error when exposing functions using names that are reserved 
 keywords (@VisruthSK, #1154)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
 set to `TRUE` for an entire R session via new global options. (#1159)
+* `save_metric_files()` now gives an informative error when metric files were not created and keeps saved metric files after the fitted model is garbage-collected. (#1021)
 * `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing 
 output while reading `STANCFLAGS` from `make`. (#1163)
+* `laplace()` no longer overwrites the internally generated optimizer CSV when
+`mode = NULL` and `output_basename` is supplied. The internally generated
+optimizer CSV now uses the filename `<output_basename>-mode-1.csv`.
 
 * CmdStanModel objects created using `compile_model_methods = TRUE` that are
 then saved and reloaded no longer error in model fitting methods. Model methods

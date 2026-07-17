@@ -99,6 +99,35 @@ CmdStanFit <- R6::R6Class(
   )
 )
 
+#' Materialize model object
+#'
+#' @name fit-method-materialize
+#' @aliases materialize
+#' @description This method collects all posterior draws and diagnostics of a fitted
+#'   model object into R, since the contents of the CmdStan output CSV files are only
+#'   read into R lazily (i.e., as needed).
+#'
+#'
+#' @seealso [`save_object`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic")
+#' object.size(fit)
+#'
+#' fit$materialize()
+#' object.size(fit)
+#' }
+#'
+materialize <- function() {
+  self$draws()
+  try(self$sampler_diagnostics(), silent = TRUE)
+  try(self$init(), silent = TRUE)
+  try(self$profiles(), silent = TRUE)
+  invisible(self)
+}
+CmdStanFit$set("public", name = "materialize", value = materialize)
+
 #' Save fitted model object to a file
 #'
 #' @name fit-method-save_object
@@ -123,7 +152,7 @@ CmdStanFit <- R6::R6Class(
 #' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
 #'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`], [`materialize`]
 #'
 #' @examples
 #' \dontrun{
@@ -138,10 +167,7 @@ CmdStanFit <- R6::R6Class(
 #' }
 #'
 save_object <- function(file, format = c("rds", "qs2"), ...) {
-  self$draws()
-  try(self$sampler_diagnostics(), silent = TRUE)
-  try(self$init(), silent = TRUE)
-  try(self$profiles(), silent = TRUE)
+  self$materialize()
   format <- match.arg(format)
   if (format == "rds") {
     saveRDS(self, file = file, ...)
@@ -742,7 +768,8 @@ CmdStanFit$set("public", name = "lp", value = lp)
 # will be used by a subset of fit objects below
 #' @rdname fit-method-lp
 lp_approx <- function() {
-  as.numeric(self$draws()[, "lp_approx__"])
+  x <- self$draws(variables = "lp_approx__", format = "draws_matrix")
+  as.numeric(x[, "lp_approx__"])
 }
 
 
@@ -889,12 +916,13 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' @name fit-method-save_output_files
 #' @aliases fit-method-save_data_file fit-method-save_latent_dynamics_files
-#'   fit-method-save_profile_files fit-method-output_files fit-method-data_file
-#'   fit-method-latent_dynamics_files fit-method-profile_files
-#'   fit-method-save_config_files fit-method-save_metric_files save_output_files
-#'   save_data_file save_latent_dynamics_files save_profile_files
-#'   save_config_files save_metric_files output_files data_file
-#'   latent_dynamics_files profile_files config_files metric_files
+#' @aliases fit-method-save_profile_files fit-method-output_files fit-method-data_file
+#' @aliases fit-method-latent_dynamics_files fit-method-profile_files
+#' @aliases fit-method-save_config_files fit-method-save_metric_files
+#' @aliases save_output_files save_data_file save_latent_dynamics_files
+#' @aliases save_profile_files save_config_files save_metric_files
+#' @aliases output_files data_file latent_dynamics_files profile_files
+#' @aliases config_files metric_files
 #'
 #' @description All fitted model objects have methods for saving (moving to a
 #'   specified location) the files created by CmdStanR to hold CmdStan output
@@ -931,7 +959,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' For `$save_metric_files()` everything is the same as for
 #' `$save_output_files()` except `"-metric-"` is included in the new
-#' file name after `basename`.
+#' file name after `basename`. Make sure to set `save_metric = TRUE` when
+#' fitting the model.
 #'
 #' For `$save_config_files()` everything is the same as for
 #' `$save_output_files()` except `"-config-"` is included in the new
@@ -1946,8 +1975,8 @@ CmdStanMLE <- R6::R6Class(
 #' }
 #'
 mle <- function(variables = NULL) {
-  x <- self$draws(variables)
-  x <- x[, colnames(x) != "lp__"]
+  x <- self$draws(variables = variables, format = "draws_matrix")
+  x <- x[, colnames(x) != "lp__", drop = FALSE]
   stats::setNames(as.numeric(x), posterior::variables(x))
 }
 CmdStanMLE$set("public", name = "mle", value = mle)

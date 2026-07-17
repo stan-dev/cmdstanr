@@ -1,8 +1,6 @@
-context("fitted-mcmc")
-
 set_cmdstan_path()
 fit_mcmc <- testing_fit("logistic", method = "sample",
-                        seed = 123, chains = 2)
+                        seed = 123, chains = 2, save_metric = FALSE)
 fit_mcmc_0 <- testing_fit("logistic", method = "sample",
                           seed = 123, chains = 2,
                           refresh = 0)
@@ -125,37 +123,60 @@ test_that("summary() method works after mcmc", {
 })
 
 test_that("print() method works after mcmc", {
-  expect_output(expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"), "variable")
-  expect_output(fit_mcmc$print(max_rows = 1), "# showing 1 of 5 rows")
-  expect_output(fit_mcmc$print(NULL, c("ess_sd")), "ess_sd")
+  expect_snapshot(
+    expect_s3_class(fit_mcmc$print(), "CmdStanMCMC"),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_mcmc$print(max_rows = 1),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_mcmc$print(NULL, c("ess_sd")),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
 
   # test on model with more parameters
   fit <- cmdstanr_example("schools_ncp")
-  expect_output(fit$print(), "showing 10 of 19 rows")
-  expect_output(fit$print(max_rows = 2), "showing 2 of 19 rows")
-  expect_output(fit$print(max_rows = 19), "theta[8]", fixed=TRUE) # last parameter
-  expect_output(fit$print("theta", max_rows = 2), "showing 2 of 8 rows")
+  expect_snapshot(
+    fit$print(),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print(max_rows = 2),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print(max_rows = 19),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print("theta", max_rows = 2),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print("theta"),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+
   expect_error(
     fit$print(variable = "unknown", max_rows = 20),
     "Can't find the following variable(s): unknown",
     fixed = TRUE
-  ) # unknown parameter
-
-  out <- capture.output(fit$print("theta"))
-  expect_length(out, 9) # columns names + 8 thetas
-  expect_match(out[1], "variable")
-  expect_match(out[2], "theta[1]", fixed = TRUE)
-  expect_match(out[9], "theta[8]", fixed = TRUE)
-  expect_false(any(grepl("mu|tau|theta_raw", out)))
-
-  # make sure the row order is correct
-  out <- capture.output(fit$print(c("theta[1]", "tau", "mu", "theta_raw[3]")))
-  expect_length(out, 5)
-  expect_match(out[1], " variable")
-  expect_match(out[2], " theta[1]", fixed = TRUE)
-  expect_match(out[3], " tau")
-  expect_match(out[4], " mu")
-  expect_match(out[5], " theta_raw[3]", fixed = TRUE)
+  )
 })
 
 test_that("output() method works after mcmc", {
@@ -331,23 +352,20 @@ test_that("loo works for all draws storage formats", {
   skip_if_not_installed("loo")
   fit <- testing_fit("bernoulli_log_lik")
 
-  options(cmdstanr_draws_format = "draws_array")
+  withr::local_options(list(cmdstanr_draws_format = "draws_array"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_df")
+  withr::local_options(list(cmdstanr_draws_format = "draws_df"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_matrix")
+  withr::local_options(list(cmdstanr_draws_format = "draws_matrix"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_list")
+  withr::local_options(list(cmdstanr_draws_format = "draws_list"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
 
-  options(cmdstanr_draws_format = "draws_rvars")
+  withr::local_options(list(cmdstanr_draws_format = "draws_rvars"))
   expect_s3_class(suppressWarnings(fit$loo()), "loo")
-
-  # reset option
-  options(cmdstanr_draws_format = NULL)
 })
 
 test_that("draws() works for different formats", {
@@ -405,12 +423,37 @@ test_that("diagnostic_summary() works", {
   expect_equal(fit$diagnostic_summary(NULL), list())
 })
 
-test_that("metadata()$time has chains rowss", {
+test_that("metadata()$time has chains rows", {
+  expect_equal(fit_mcmc$metadata()$num_chains, fit_mcmc$num_chains())
   expect_equal(nrow(fit_mcmc$metadata()$time), fit_mcmc$num_chains())
   expect_equal(nrow(fit_mcmc_0$metadata()$time), fit_mcmc_0$num_chains())
   expect_equal(nrow(fit_mcmc_1$metadata()$time), fit_mcmc_1$num_chains())
   expect_equal(nrow(fit_mcmc_2$metadata()$time), fit_mcmc_2$num_chains())
   expect_equal(nrow(fit_mcmc_3$metadata()$time), fit_mcmc_3$num_chains())
+})
+
+test_that("save_metric_files has clear error message when no files", {
+  expect_snapshot(error = TRUE, fit_mcmc$save_metric_files())
+})
+
+test_that("saved metric and config files survive fit cleanup", {
+  dir <- withr::local_tempdir()
+  fit <- testing_fit(
+    "logistic",
+    save_metric = TRUE,
+    save_cmdstan_config = TRUE
+  )
+  metric_paths <- fit$save_metric_files(dir = dir)
+  config_paths <- fit$save_config_files(dir = dir)
+  checkmate::expect_file_exists(metric_paths, extension = "json")
+  checkmate::expect_file_exists(config_paths, extension = "json")
+  expect_gt(min(file.size(metric_paths)), 0)
+  expect_gt(min(file.size(config_paths)), 0)
+
+  rm(fit)
+  gc()
+  checkmate::expect_file_exists(metric_paths, extension = "json")
+  checkmate::expect_file_exists(config_paths, extension = "json")
 })
 
 test_that("sampler_diagnostics() throws informative error when fixed_param=TRUE", {

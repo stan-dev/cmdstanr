@@ -1,5 +1,3 @@
-context("utils")
-
 set_cmdstan_path()
 fit_mcmc <- testing_fit("logistic", method = "sample",
                         seed = 123, chains = 2)
@@ -196,6 +194,36 @@ test_that("cmdstan_make_local() works", {
   expect_equal(cmdstan_make_local(cpp_options = list("TEST4" = TRUE), append = FALSE),
                c("TEST4=true"))
   cmdstan_make_local(cpp_options = as.list(exisiting_make_local), append = FALSE)
+})
+
+test_that("cmdstan_make_local() preserves empty make/local behavior", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(dir, "make", "local"))
+
+  expect_identical(cmdstan_make_local(dir = dir), "")
+})
+
+test_that("cmdstan_make_local() reads back written make flags", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_null(cmdstan_make_local(dir = dir))
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXX" = "clang++", STAN_THREADS = TRUE)
+    ),
+    c("CXX=clang++", "STAN_THREADS=true")
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("PRECOMPILED_HEADERS" = FALSE)),
+    c("CXX=clang++", "STAN_THREADS=true", "PRECOMPILED_HEADERS=false")
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("CXX" = "g++"), append = FALSE),
+    "CXX=g++"
+  )
 })
 
 test_that("matching_variables() works", {

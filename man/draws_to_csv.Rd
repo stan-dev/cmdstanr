@@ -19,7 +19,7 @@ draws_to_csv(
 of sampler diagnostics.}
 
 \item{dir}{(string) An optional path to the directory where the CSV files will be
-written. If not set, \link[base:tempfile]{temporary directory} is used.}
+written. If not set, \link[base:tempdir]{temporary directory} is used.}
 
 \item{basename}{(string) If \code{dir} is specified, `basename`` is used for naming
 the output CSV files. If not specified, the file names are randomly generated.}

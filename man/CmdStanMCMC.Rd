@@ -33,7 +33,7 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} \tab Get summaries of sampler diagnostics and warning messages. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}} \tab Run and print CmdStan's \code{bin/stansummary}. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}} \tab Run and print CmdStan's \code{bin/diagnose}. \cr
-   \code{\link[=fit-method-loo]{$loo()}} \tab Run \code{\link[loo:loo]{loo::loo.array()}} for approximate LOO-CV \cr
+   \code{\link[=fit-method-loo]{$loo()}} \tab Run \code{\link[loo:loo.array]{loo::loo.array()}} for approximate LOO-CV \cr
 }
 
 }
@@ -84,7 +84,7 @@ The Stan and CmdStan documentation:
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
-Other fitted model objects: 
+Other fitted model objects:
 \code{\link{CmdStanDiagnose}},
 \code{\link{CmdStanGQ}},
 \code{\link{CmdStanLaplace}},

@@ -18,36 +18,41 @@
 CmdStanR (\pkg{cmdstanr} package) is an interface to Stan
 (\href{https://mc-stan.org}{mc-stan.org}) for \R users. It provides the
 necessary objects and functions to compile a Stan program and run Stan's
-algorithms from \R via CmdStan, the shell interface to Stan
+algorithms from \R via CmdStan, the command line interface to Stan
 (\href{https://mc-stan.org/users/interfaces/cmdstan}{mc-stan.org/users/interfaces/cmdstan}).
 
 \subsection{Different ways of interfacing with Stan’s C++}{
 
 The RStan interface (\href{https://mc-stan.org/rstan/}{\strong{rstan}} package) is
-an in-memory interface to Stan and relies on R packages like \strong{Rcpp}
-and \strong{inline} to call C++ code from R. On the other hand, the CmdStanR
-interface does not directly call any C++ code from R, instead relying on
-the CmdStan interface behind the scenes for compilation, running
-algorithms, and writing results to output files.
+an in-memory interface to Stan and relies on R packages like \strong{Rcpp} to
+call C++ code from R. On the other hand, the CmdStanR interface does not
+directly call any C++ code from R, instead relying on the CmdStan
+interface behind the scenes for compilation, running algorithms, and
+writing results to output files.
 }
 
 \subsection{Advantages of RStan}{
 \itemize{
 \item Allows other developers to distribute R packages with \emph{pre-compiled}
-Stan programs (like \strong{rstanarm}) on CRAN. (Note: As of 2023, this can
-mostly be achieved with CmdStanR as well. See \href{https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr}{Developing using CmdStanR}.)
+Stan programs (like \strong{rstanarm}) on CRAN, without requiring that
+users have a C++ toolchain installed (see
+\url{https://mc-stan.org/rstantools/} for details). \href{https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr}{Developing using CmdStanR}
+describes how CRAN packages can do something similar using CmdStanR,
+however users are still required to have a working C++ toolchain
+because models are compiled once at installation time rather than on
+CRAN’s servers.
+\item CRAN binaries available for Mac and Windows.
 \item Avoids use of R6 classes, which may result in more familiar syntax for
 many R users.
-\item CRAN binaries available for Mac and Windows.
 }
 }
 
 \subsection{Advantages of CmdStanR}{
 \itemize{
-\item Compatible with latest versions of Stan. Keeping up with Stan releases
-is complicated for RStan, often requiring non-trivial changes to the
-\strong{rstan} package and new CRAN releases of both \strong{rstan} and
-\strong{StanHeaders}. With CmdStanR the latest improvements in Stan will be
+\item Compatible with the latest versions of Stan. Keeping up with Stan
+releases is complicated for RStan, often requiring non-trivial changes
+to the \strong{rstan} package and new CRAN releases of both \strong{rstan} and
+\strong{StanHeaders}. With CmdStanR the latest improvements in Stan are
 available from R immediately after updating CmdStan using
 \code{cmdstanr::install_cmdstan()}.
 \item Running Stan via external processes results in fewer unexpected
@@ -60,9 +65,9 @@ the same license used for CmdStan and the Stan C++ source code.
 }
 }
 \section{Getting started}{
- CmdStanR requires a working version of CmdStan. If
-you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get started,
-otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} to install CmdStan. The vignette
+ CmdStanR requires a working version of CmdStan >=
+2.35. If you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
+started, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} to install CmdStan. The vignette
 \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
 demonstrates the basic functionality of the package.
 
@@ -213,6 +218,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Jonah Gabry \email{jgabry@gmail.com}
   \item Rok Češnovar \email{rok.cesnovar@fri.uni-lj.si}
   \item Andrew Johnson \email{andrew.johnson@arjohnsonau.com} (\href{https://orcid.org/0000-0001-7000-8065}{ORCID})
   \item Steve Bronder
@@ -229,6 +235,7 @@ Other contributors:
   \item Martin Modrák [contributor]
   \item Ven Popov [contributor]
   \item Visruth Srimath Kandali [contributor]
+  \item Aki Vehtari [contributor]
 }
 
 }

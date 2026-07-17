@@ -45,9 +45,9 @@ color_scheme_set("brightblue")
 
 ## Installing CmdStan
 
-CmdStanR requires a working installation of
-[CmdStan](https://mc-stan.org/users/interfaces/cmdstan.html), the shell
-interface to Stan. If you don't have CmdStan installed then CmdStanR can install
+CmdStanR requires a working installation of version 2.35 or later of
+[CmdStan](https://mc-stan.org/users/interfaces/cmdstan.html), the command line
+interface to Stan. If you don't have CmdStan installed, CmdStanR can install
 it for you, assuming you have a suitable C++ toolchain. The requirements are
 described in the CmdStan Guide:
 
@@ -61,8 +61,7 @@ check_cmdstan_toolchain()
 ```
 
 If your toolchain is configured correctly then CmdStan can be installed by
-calling the
-[`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.html)
+calling the [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.html)
 function:
 
 ```{r install_cmdstan-1, include = FALSE}
@@ -401,7 +400,6 @@ We can run Stan's experimental Automatic Differentiation Variational Inference
 method. For details on the ADVI algorithm see the 
 [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/variational-inference-algorithm-advi.html).
 
-
 ```{r variational}
 fit_vb <- mod$variational(
   data = data_list,
@@ -414,9 +412,8 @@ mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
 
 ### Variational (Pathfinder)
 
-Stan version 2.33 introduced a new variational method called Pathfinder, 
-which is intended to be faster and more stable than ADVI. For details on how 
-Pathfinder works see the section in the 
+Stan version 2.33 introduced a new variational method called Pathfinder. 
+For details on how Pathfinder works see the section in the 
 [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro).
 Pathfinder is run using the [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
 method.
@@ -429,7 +426,6 @@ fit_pf <- mod$pathfinder(
 )
 fit_pf$print("theta")
 ```
-
 
 Let's extract the draws, make the same plot we made after running the other
 algorithms, and compare them all. In this simple example the distributions are

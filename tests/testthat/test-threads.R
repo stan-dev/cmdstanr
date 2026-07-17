@@ -1,5 +1,3 @@
-context("threading")
-
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 stan_gq_program <- testing_stan_file("bernoulli_ppc")
@@ -118,6 +116,48 @@ test_that("threading works with variational()", {
   )
   expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 4)
   expect_equal(f$metadata()$threads, 4)
+})
+
+test_that("threading works with pathfinder()", {
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE),
+                       force_recompile = TRUE)
+  pathfinder_args <- list(
+    data = data_file_json,
+    seed = 123,
+    refresh = 0,
+    draws = 10,
+    single_path_draws = 10,
+    num_paths = 1,
+    num_elbo_draws = 10,
+    max_lbfgs_iters = 10
+  )
+
+  expect_error(
+    do.call(mod$pathfinder, pathfinder_args),
+    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!",
+    fixed = TRUE
+  )
+
+  pathfinder_args$threads <- 2
+  expect_output(
+    f <- do.call(mod$pathfinder, pathfinder_args),
+    "Finished in",
+    fixed = TRUE
+  )
+  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 2)
+  expect_equal(f$metadata()$threads, 2)
+
+  pathfinder_args$num_threads <- 2
+  expect_error(
+    do.call(mod$pathfinder, pathfinder_args),
+    "Cannot specify both 'threads' and deprecated 'num_threads'"
+  )
+  pathfinder_args$threads <- NULL
+  pathfinder_args$show_messages <- FALSE
+  expect_warning(
+    do.call(mod$pathfinder, pathfinder_args),
+    "'num_threads' is deprecated. Please use 'threads' instead"
+  )
 })
 
 test_that("threading works with generate_quantities()", {

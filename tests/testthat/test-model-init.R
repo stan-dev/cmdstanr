@@ -1,5 +1,3 @@
-context("model-init")
-
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")
@@ -209,6 +207,47 @@ test_that("init can be a function", {
   )
 })
 
+test_that("init function is called once for each init", {
+  n_calls <- 0
+  init_fun <- function() {
+    n_calls <<- n_calls + 1
+    # Using a counter as an init value is not a sensible MCMC init strategy,
+    # but it makes it clear whether the values from each call are written.
+    list(alpha = n_calls, beta = 1:3)
+  }
+  init_paths_zero_arg <- process_init(init_fun, num_procs = 2)
+  withr::defer(unlink(init_paths_zero_arg))
+  expect_equal(n_calls, 2)
+  expect_equal(
+    vapply(init_paths_zero_arg, function(path) {
+      jsonlite::read_json(path, simplifyVector = TRUE)$alpha
+    }, numeric(1), USE.NAMES = FALSE),
+    1:2
+  )
+
+  chain_ids <- integer()
+  init_fun <- function(chain_id) {
+    chain_ids <<- c(chain_ids, chain_id)
+    list(alpha = 0, beta = 1:3)
+  }
+  init_paths_chain_id <- process_init(init_fun, num_procs = 2)
+  withr::defer(unlink(init_paths_chain_id))
+  expect_equal(chain_ids, 1:2)
+})
+
+test_that("init function return value is validated for each init", {
+  init_fun <- function(chain_id) {
+    if (chain_id == 2) {
+      return(data.frame(alpha = 0, beta = 1:3))
+    }
+    list(alpha = 0, beta = 1:3)
+  }
+  expect_error(
+    process_init(init_fun, num_procs = 2),
+    "If 'init' is a function it must return a single list"
+  )
+})
+
 test_that("error if init function specified incorrectly", {
   init_fun <- function(a, b) list(a, b)
   expect_error(
@@ -240,7 +279,7 @@ test_that("error if init function specified incorrectly", {
 })
 
 test_that("print message if not all parameters are initialized", {
-  options(cmdstanr_warn_inits = NULL) # should default to TRUE
+  withr::local_options(list(cmdstanr_warn_inits = NULL)) # should default to TRUE
   init_list <- list(
     list(
       alpha = 1
@@ -273,7 +312,18 @@ test_that("print message if not all parameters are initialized", {
 })
 
 test_that("No message printed if options(cmdstanr_warn_inits=FALSE)", {
-  options(cmdstanr_warn_inits = FALSE)
+  withr::local_options(list(cmdstanr_warn_inits = FALSE))
+  model_variables <- list(
+    parameters = list(
+      alpha = list(dimensions = 0),
+      beta = list(dimensions = 1)
+    )
+  )
+  init_paths <- expect_message(
+    process_init(function() list(alpha = 1), 1, model_variables),
+    regexp = NA
+  )
+  withr::defer(unlink(init_paths))
   expect_message(
     utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = list(list(a = 0)), seed = 123)),
     regexp = NA
@@ -286,7 +336,6 @@ test_that("No message printed if options(cmdstanr_warn_inits=FALSE)", {
     utils::capture.output(mod_logistic$sample(data = data_list_logistic, init = list(list(alpha = 1),list(alpha = 1)), chains = 2, seed = 123)),
     regexp = NA
   )
-  options(cmdstanr_warn_inits = TRUE)
 })
 
 test_that("Initial values for single-element containers treated correctly", {
@@ -313,33 +362,65 @@ test_that("Initial values for single-element containers treated correctly", {
   )
 })
 
-test_that("Pathfinder inits do not drop dimensions", {
+test_that("Inits from fit/draws work for exe-only models with various parameter types", {
   modcode <- "
-  data {
-    int N;
-    vector[N] y;
-  }
-
   parameters {
-    matrix[N, 1] mu;
-    matrix[1, N] mu_2;
-    vector<lower=0>[N] sigma;
+    real mu_scalar;
+    matrix[1, 1] mu_mat;
+    array[1] real mu_arr1;
+    array[1, 1] real mu_arr2;
+    array[1, 1, 1] real mu_arr3;
+    matrix[3, 1] mu_matN1;
+    matrix[1, 3] mu_mat1N;
   }
-
   model {
-    target += normal_lupdf(y | mu[:, 1], sigma);
-    target += normal_lupdf(y | mu_2[1], sigma);
+    target += normal_lupdf(mu_scalar | 0, 1);
+    target += normal_lupdf(to_vector(mu_mat) | 0, 1);
+    target += normal_lupdf(mu_arr1 | 0, 1);
+    target += normal_lupdf(to_array_1d(mu_arr2) | 0, 1);
+    target += normal_lupdf(to_array_1d(mu_arr3) | 0, 1);
+    target += normal_lupdf(to_vector(mu_matN1) | 0, 1);
+    target += normal_lupdf(to_vector(mu_mat1N) | 0, 1);
   }
   "
+  # model with stan file
   mod <- cmdstan_model(write_stan_file(modcode), force_recompile = TRUE)
-  data <- list(N = 100, y = rnorm(100))
+  # Pathfinder
   utils::capture.output(
-    pf <- mod$pathfinder(data = data, psis_resample = FALSE)
+    pf <- mod$pathfinder(psis_resample = FALSE, calculate_lp = FALSE)
   )
+  
+  # Pathfinder inits with stan file (1 chain)
   expect_no_error(
     utils::capture.output(
-      fit <- mod$sample(data = data, init = pf, chains = 1,
+      fit <- mod$sample(init = pf, chains = 1,
                         iter_warmup = 100, iter_sampling = 100)
+    )
+  )
+  # Pathfinder inits with stan file (2 chains)
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod$sample(init = pf, chains = 2,
+                        iter_warmup = 100, iter_sampling = 100)
+    )
+  )
+
+  # exe-only model (no stan file)
+  tmp_exe <- tempfile(fileext = cmdstan_ext())
+  file.copy(mod$exe_file(), tmp_exe)
+  mod_nostan <- cmdstan_model(exe_file = tmp_exe)
+  # Pathfinder inits without stan file (1 chain)
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod_nostan$sample(init = pf, chains = 1,
+                               iter_warmup = 100, iter_sampling = 100)
+    )
+  )
+  # Pathfinder inits without stan file (2 chains)
+  expect_no_error(
+    utils::capture.output(
+      fit <- mod_nostan$sample(init = pf, chains = 2,
+                               iter_warmup = 100, iter_sampling = 100)
     )
   )
 })

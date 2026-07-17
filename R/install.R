@@ -327,11 +327,17 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
     }
     write(built_flags, file = make_local_path, append = append)
   }
-  if (file.exists(make_local_path)) {
-    return(trimws(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]]))
-  } else {
+  make_local_contents <- tryCatch(
+    suppressWarnings(readLines(make_local_path, warn = FALSE)),
+    error = function(e) NULL
+  )
+  if (is.null(make_local_contents)) {
     return(NULL)
   }
+  if (length(make_local_contents) == 0) {
+    return("")
+  }
+  trimws(strsplit(trimws(paste(make_local_contents, collapse = "\n")), "\n", fixed = TRUE)[[1]])
 }
 
 #' @rdname install_cmdstan
@@ -798,14 +804,15 @@ rtools4x_toolchain_path <- function() {
 
 rtools4x_version <- function() {
   rtools_ver <- NULL
+  r_version <- current_r_version()
 
-  if (R.version$minor < "2.0") {
+  if (r_version < "4.2.0") {
     rtools_ver <- "40"
-  } else if (R.version$minor < "3.0") {
+  } else if (r_version < "4.3.0") {
     rtools_ver <- "42"
-  } else if (R.version$minor < "4.0") {
+  } else if (r_version < "4.4.0") {
     rtools_ver <- "43"
-  } else if (R.version$minor < "5.0") {
+  } else if (r_version < "4.5.0") {
     rtools_ver <- "44"
   } else {
     rtools_ver <- "45"

@@ -1,5 +1,3 @@
-context("opencl")
-
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
 
@@ -128,4 +126,3 @@ test_that("all methods run with valid opencl_ids", {
   expect_false(is.null(fit$metadata()$device))
   expect_false(is.null(fit$metadata()$platform))
 })
-

@@ -20,7 +20,7 @@ The \verb{$init_model_methods()} method compiles and initializes the
 available as methods of the fitted model object. This requires the
 additional \pkg{Rcpp} package.
 
-If a model or fit object was saved with \code{\link[base:readRDS]{base::saveRDS()}} and later
+If a model or fit object was saved with \code{\link[base:saveRDS]{base::saveRDS()}} and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
 the current R session when this method is called.
 

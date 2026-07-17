@@ -1,5 +1,3 @@
-context("model-optimize")
-
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")
@@ -45,17 +43,17 @@ ok_arg_sci_nota_values <- list(
 test_that("optimize() method runs when all arguments specified validly", {
   # specifying all arguments validly
   expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_values))
-  expect_is(fit1, "CmdStanMLE")
+  expect_s3_class(fit1, "CmdStanMLE")
 
   # leaving all at default (except 'data')
   expect_optim_output(fit2 <- mod$optimize(data = data_list, seed = 123))
-  expect_is(fit2, "CmdStanMLE")
+  expect_s3_class(fit2, "CmdStanMLE")
 })
 
 test_that("optimize() method runs when arguments are specified in scientific notation", {
   # specifying all arguments validly
   expect_optim_output(fit1 <- do.call(mod$optimize, ok_arg_sci_nota_values))
-  expect_is(fit1, "CmdStanMLE")
+  expect_s3_class(fit1, "CmdStanMLE")
 })
 
 test_that("optimize() warns if threads specified but not enabled", {

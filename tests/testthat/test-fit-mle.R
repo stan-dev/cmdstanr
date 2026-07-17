@@ -1,5 +1,3 @@
-context("fitted-mle")
-
 set_cmdstan_path()
 fit_mle <- testing_fit("logistic", method = "optimize", seed = 123)
 mod <- testing_model("bernoulli")
@@ -10,6 +8,17 @@ PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 test_that("mle and lp methods work after optimization", {
   expect_named(fit_mle$mle(), PARAM_NAMES)
   checkmate::expect_numeric(fit_mle$lp(), len = 1)
+})
+
+test_that("mle() ignores non-matrix default draws formats", {
+  expected <- fit_mle$draws(format = "draws_matrix")
+  expected <- expected[, colnames(expected) != "lp__", drop = FALSE]
+  expected <- stats::setNames(as.numeric(expected), posterior::variables(expected))
+
+  for (format in c("draws_array", "draws_df")) {
+    withr::local_options(list(cmdstanr_draws_format = format))
+    expect_equal(fit_mle$mle(), expected)
+  }
 })
 
 test_that("summary method works after optimization", {
@@ -24,8 +33,17 @@ test_that("summary method works after optimization", {
 })
 
 test_that("print() method works after optimization", {
-  expect_output(expect_s3_class(fit_mle$print(), "CmdStanMLE"), "estimate")
-  expect_output(fit_mle$print(max_rows = 1), "# showing 1 of 5 rows")
+  expect_snapshot(
+    expect_s3_class(fit_mle$print(), "CmdStanMLE"),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+  expect_snapshot(
+    fit_mle$print(max_rows = 1),
+    transform = transform_print_snapshot,
+    cran = FALSE
+  )
+
   expect_error(
     fit_mle$print(variable = "unknown", max_rows = 20),
     "Can't find the following variable(s): unknown",

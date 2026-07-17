@@ -1,9 +1,5 @@
 skip_if(os_is_macos())
 
-file_that_exists <- "placeholder_exists"
-file_that_doesnt_exist <- "placeholder_doesnt_exist"
-withr::local_file(file_that_exists)
-
 w_path <- function(f) {
   x <- sapply(f, function(fi) wsl_safe_path(absolute_path(fi)))
   names(x) <- NULL
@@ -36,11 +32,20 @@ namespace bernoulli_external_model_namespace
 }"
 
 test_that("cmdstan_model works with user_header with mock", {
+  file_that_exists <- withr::local_tempfile(pattern = "placeholder_exists")
+  file_that_doesnt_exist <- withr::local_tempfile(pattern = "placeholder_doesnt_exist")
   tmpfile <- withr::local_tempfile(lines = hpp, fileext = ".hpp")
+  file.create(file_that_exists)
+  header_mtime <- Sys.time()
+  # On GHA Windows/R 4.1 files created close together sometimes compared equal
+  # and skipped the mocked recompile, so set the header mtime to be in the past
+  # and ensure the exe mtime is newer
+  Sys.setFileTime(file_that_exists, header_mtime - 10)
+  Sys.setFileTime(tmpfile, header_mtime)
 
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(),
+    info_ret = list(status = 0, stdout = "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"),
     code = expect_mock_compile(
       mod <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -64,7 +69,10 @@ test_that("cmdstan_model works with user_header with mock", {
   )
 
   # Check recompilation upon changing header
+  exe_mtime <- header_mtime + 10
+  # Mocked compile does not create the executable that real compilation writes.
   file.create(file_that_exists)
+  Sys.setFileTime(file_that_exists, exe_mtime)
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(),
@@ -73,7 +81,8 @@ test_that("cmdstan_model works with user_header with mock", {
     })
   )
 
-  Sys.setFileTime(tmpfile, Sys.time() + 1) # touch file to trigger recompile
+  header_mtime <- exe_mtime + 10
+  Sys.setFileTime(tmpfile, header_mtime) # touch file to trigger recompile
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(),
@@ -82,8 +91,9 @@ test_that("cmdstan_model works with user_header with mock", {
     })
   )
 
-  # mock does not automatically update file mtime
-  Sys.setFileTime(mod$exe_file(), Sys.time() + 1) # touch file to trigger recompile
+  # Mocked compile does not create the executable that real compilation writes.
+  file.create(mod$exe_file())
+  Sys.setFileTime(mod$exe_file(), header_mtime + 10) # make exe newer than header
 
   # Alternative spec of user header
   with_mocked_cli(

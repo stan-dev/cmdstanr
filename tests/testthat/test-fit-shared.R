@@ -1,5 +1,3 @@
-context("fitted-shared-methods")
-
 set_cmdstan_path()
 fits <- list()
 fits[["sample"]] <- testing_fit("logistic", method = "sample",

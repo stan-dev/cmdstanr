@@ -67,11 +67,11 @@ CmdStanRun <- R6::R6Class(
       self$args$new_files(type = "profile")
     },
     new_config_files = function() {
-      # because CmdStan 2.34 uses the output_file name as the base for the config file
+      # the output_file name is used as the base for the config file
       paste0(tools::file_path_sans_ext(private$output_files_), "_config.json")
     },
     new_metric_files = function() {
-      # because CmdStan 2.34 uses the output_file name as the base for the metric file
+      # the output_file name is used as the base for the metric file
       paste0(tools::file_path_sans_ext(private$output_files_), "_metric.json")
     },
     config_files = function(include_failed = FALSE) {
@@ -251,6 +251,7 @@ CmdStanRun <- R6::R6Class(
         " files and set internal paths to new locations:\n",
         paste("-", new_paths, collapse = "\n")
       )
+      private$config_files_saved_ <- TRUE
       invisible(new_paths)
     },
     save_metric_files = function(dir = ".",
@@ -258,6 +259,12 @@ CmdStanRun <- R6::R6Class(
                                  timestamp = TRUE,
                                  random = TRUE) {
       current_files <- self$metric_files(include_failed = TRUE) # used so we get error if 0 files
+      if (!length(current_files)) {
+        stop(
+          "No metric files found. Make sure to set 'save_metric=TRUE' when fitting the model.",
+          call. = FALSE
+        )
+      }
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -275,6 +282,7 @@ CmdStanRun <- R6::R6Class(
         " files and set internal paths to new locations:\n",
         paste("-", new_paths, collapse = "\n")
       )
+      private$metric_files_saved_ <- TRUE
       invisible(new_paths)
     },
 

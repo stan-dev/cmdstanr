@@ -1,4 +1,3 @@
-context("model-methods")
 skip_if(os_is_wsl())
 
 set_cmdstan_path()
