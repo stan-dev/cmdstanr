@@ -72,12 +72,10 @@ as_cmdstan_fit(
 
 ## Value
 
-`as_cmdstan_fit()` returns a
-[CmdStanMCMC](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[CmdStanMLE](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
-[CmdStanLaplace](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md)
-or [CmdStanVB](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md)
-object. Some methods typically defined for those objects will not work
+`as_cmdstan_fit()` returns a fitted model object
+([CmdStanMCMC](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
+[CmdStanVB](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
+etc.). Some methods typically defined for those objects will not work
 (e.g.
 [`save_data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md))
 but the important methods like `$summary()`, `$draws()`,
@@ -92,7 +90,7 @@ The other components in the returned list depend on the method that
 produced the CSV file(s).
 
 For
-[sampling](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md)
+[MCMC](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md)
 the returned list also includes the following components:
 
 - `time`: Run time information for the individual chains. The returned
@@ -132,11 +130,12 @@ the returned list also includes the following components:
 
 - `point_estimates`: Point estimates for the model parameters.
 
-For
-[laplace](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)
-and [variational
-inference](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md)
-the returned list also includes the following components:
+For the
+[laplace](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[pathfinder](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md)
+and
+[variational](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md)
+methods, the returned list also includes the following components:
 
 - `draws`: A
   [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html)
@@ -159,10 +158,10 @@ the returned list also includes the following components:
 fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
-#> [1] "/tmp/RtmpvFUiGx/logistic-202607111845-1-3d72e5.csv"
-#> [2] "/tmp/RtmpvFUiGx/logistic-202607111845-2-3d72e5.csv"
-#> [3] "/tmp/RtmpvFUiGx/logistic-202607111845-3-3d72e5.csv"
-#> [4] "/tmp/RtmpvFUiGx/logistic-202607111845-4-3d72e5.csv"
+#> [1] "/tmp/RtmpifnrHj/logistic-202607171642-1-3d732a.csv"
+#> [2] "/tmp/RtmpifnrHj/logistic-202607171642-2-3d732a.csv"
+#> [3] "/tmp/RtmpifnrHj/logistic-202607171642-3-3d732a.csv"
+#> [4] "/tmp/RtmpifnrHj/logistic-202607171642-4-3d732a.csv"
 
 # Creating fitting model objects
 
@@ -184,7 +183,7 @@ str(x)
 #>   ..$ stan_version_major  : num 2
 #>   ..$ stan_version_minor  : num 39
 #>   ..$ stan_version_patch  : num 0
-#>   ..$ start_datetime      : chr "2026-07-11 18:45:08 UTC"
+#>   ..$ start_datetime      : chr "2026-07-17 16:42:24 UTC"
 #>   ..$ method              : chr "sample"
 #>   ..$ save_warmup         : int 1
 #>   ..$ thin                : num 1
@@ -205,7 +204,7 @@ str(x)
 #>   ..$ seed                : num 1.12e+09
 #>   ..$ refresh             : num 100
 #>   ..$ sig_figs            : num 8
-#>   ..$ profile_file        : chr "/tmp/RtmpvFUiGx/logistic-profile-202607111845-1-092013.csv"
+#>   ..$ profile_file        : chr "/tmp/RtmpifnrHj/logistic-profile-202607171642-1-092058.csv"
 #>   ..$ save_cmdstan_config : int 0
 #>   ..$ stanc_version       : chr "stanc3 v2.39.0"
 #>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
@@ -221,9 +220,9 @@ str(x)
 #>   ..$ threads_per_chain   : num 1
 #>   ..$ time                :'data.frame': 4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.05 0.051 0.05 0.05
-#>   .. ..$ sampling: num [1:4] 0.051 0.051 0.05 0.052
-#>   .. ..$ total   : num [1:4] 0.101 0.102 0.1 0.102
+#>   .. ..$ warmup  : num [1:4] 0.055 0.056 0.055 0.055
+#>   .. ..$ sampling: num [1:4] 0.056 0.056 0.06 0.057
+#>   .. ..$ total   : num [1:4] 0.111 0.112 0.115 0.112
 #>   ..$ stan_variable_sizes :List of 4
 #>   .. ..$ lp__   : num 1
 #>   .. ..$ alpha  : num 1
@@ -235,9 +234,9 @@ str(x)
 #>   ..$ total : int NA
 #>   ..$ chains:'data.frame':   4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.05 0.051 0.05 0.05
-#>   .. ..$ sampling: num [1:4] 0.051 0.051 0.05 0.052
-#>   .. ..$ total   : num [1:4] 0.101 0.102 0.1 0.102
+#>   .. ..$ warmup  : num [1:4] 0.055 0.056 0.055 0.055
+#>   .. ..$ sampling: num [1:4] 0.056 0.056 0.06 0.057
+#>   .. ..$ total   : num [1:4] 0.111 0.112 0.115 0.112
 #>  $ inv_metric                     :List of 4
 #>   ..$ 1: num [1:4] 0.0458 0.0628 0.0518 0.075
 #>   ..$ 2: num [1:4] 0.0397 0.0649 0.0511 0.0699

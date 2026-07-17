@@ -18,6 +18,11 @@
   set to `TRUE` for an entire R session via new global options.
   ([\#1159](https://github.com/stan-dev/cmdstanr/issues/1159))
 
+- [`save_metric_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)
+  now gives an informative error when metric files were not created and
+  keeps saved metric files after the fitted model is garbage-collected.
+  ([\#1021](https://github.com/stan-dev/cmdstanr/issues/1021))
+
 - [`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
   no longer fails when `MAKEFLAGS` enables directory-printing output
   while reading `STANCFLAGS` from `make`.

@@ -101,7 +101,8 @@ name after `basename`.
 
 For `$save_metric_files()` everything is the same as for
 `$save_output_files()` except `"-metric-"` is included in the new file
-name after `basename`.
+name after `basename`. Make sure to set `save_metric = TRUE` when
+fitting the model.
 
 For `$save_config_files()` everything is the same as for
 `$save_output_files()` except `"-config-"` is included in the new file
@@ -123,10 +124,10 @@ even with multiple MCMC chains the data file is the same.
 # \dontrun{
 fit <- cmdstanr_example()
 fit$output_files()
-#> [1] "/tmp/RtmpvFUiGx/logistic-202607111840-1-749b62.csv"
-#> [2] "/tmp/RtmpvFUiGx/logistic-202607111840-2-749b62.csv"
-#> [3] "/tmp/RtmpvFUiGx/logistic-202607111840-3-749b62.csv"
-#> [4] "/tmp/RtmpvFUiGx/logistic-202607111840-4-749b62.csv"
+#> [1] "/tmp/RtmpifnrHj/logistic-202607171637-1-749ba7.csv"
+#> [2] "/tmp/RtmpifnrHj/logistic-202607171637-2-749ba7.csv"
+#> [3] "/tmp/RtmpifnrHj/logistic-202607171637-3-749ba7.csv"
+#> [4] "/tmp/RtmpifnrHj/logistic-202607171637-4-749ba7.csv"
 fit$data_file()
 #> [1] "/home/runner/work/_temp/Library/cmdstanr/logistic.data.json"
 
@@ -134,21 +135,21 @@ fit$data_file()
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "banana")
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpvFUiGx/banana-202607111840-1-546919.csv
-#> - /tmp/RtmpvFUiGx/banana-202607111840-2-546919.csv
-#> - /tmp/RtmpvFUiGx/banana-202607111840-3-546919.csv
-#> - /tmp/RtmpvFUiGx/banana-202607111840-4-546919.csv
+#> - /tmp/RtmpifnrHj/banana-202607171637-1-54695e.csv
+#> - /tmp/RtmpifnrHj/banana-202607171637-2-54695e.csv
+#> - /tmp/RtmpifnrHj/banana-202607171637-3-54695e.csv
+#> - /tmp/RtmpifnrHj/banana-202607171637-4-54695e.csv
 fit$save_output_files(dir = my_dir, basename = "tomato", timestamp = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpvFUiGx/tomato-1-1f3e18.csv
-#> - /tmp/RtmpvFUiGx/tomato-2-1f3e18.csv
-#> - /tmp/RtmpvFUiGx/tomato-3-1f3e18.csv
-#> - /tmp/RtmpvFUiGx/tomato-4-1f3e18.csv
+#> - /tmp/RtmpifnrHj/tomato-1-1f3e5d.csv
+#> - /tmp/RtmpifnrHj/tomato-2-1f3e5d.csv
+#> - /tmp/RtmpifnrHj/tomato-3-1f3e5d.csv
+#> - /tmp/RtmpifnrHj/tomato-4-1f3e5d.csv
 fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpvFUiGx/lettuce-1.csv
-#> - /tmp/RtmpvFUiGx/lettuce-2.csv
-#> - /tmp/RtmpvFUiGx/lettuce-3.csv
-#> - /tmp/RtmpvFUiGx/lettuce-4.csv
+#> - /tmp/RtmpifnrHj/lettuce-1.csv
+#> - /tmp/RtmpifnrHj/lettuce-2.csv
+#> - /tmp/RtmpifnrHj/lettuce-3.csv
+#> - /tmp/RtmpifnrHj/lettuce-4.csv
 # }
 ```

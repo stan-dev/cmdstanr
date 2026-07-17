@@ -343,23 +343,26 @@ precomputed (inverse) metric, see the <code>inv_metric</code> argument below.</p
 
 
 <dt id="arg-metric-file">metric_file<a class="anchor" aria-label="anchor" href="#arg-metric-file"></a></dt>
-<dd><p>(character vector) The paths to JSON or Rdump files (one
-per chain) compatible with CmdStan that contain precomputed inverse
-metrics. The <code>metric_file</code> argument is inherited from CmdStan but is
-confusing in that the entry in JSON or Rdump file(s) must be named
-<code>inv_metric</code>, referring to the <em>inverse</em> metric. We recommend instead using
-CmdStanR's <code>inv_metric</code> argument (see below) to specify an inverse metric
-directly using a vector or matrix from your <span style="R">R</span> session.</p></dd>
+<dd><p>(character vector) One path, used for all chains, or one
+path per chain to JSON or Rdump files compatible with CmdStan that contain
+precomputed inverse metrics. The <code>metric_file</code> argument is inherited from
+CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
+named <code>inv_metric</code>, referring to the <em>inverse</em> metric. An alternative to
+<code>metric_file</code> is the <code>inv_metric</code> argument (see below), which allows
+specifying an inverse metric directly using a vector or matrix from your <span style="R">R</span>
+session.</p></dd>
 
 
 <dt id="arg-inv-metric">inv_metric<a class="anchor" aria-label="anchor" href="#arg-inv-metric"></a></dt>
-<dd><p>(vector, matrix) A vector (if <code>metric='diag_e'</code>) or a
-matrix (if <code>metric='dense_e'</code>) for initializing the inverse metric. This
-can be used as an alternative to the <code>metric_file</code> argument. A vector is
-interpreted as a diagonal metric. The inverse metric is usually set to an
-estimate of the posterior covariance. See the <code>adapt_engaged</code> argument
-above for details about (and control over) how specifying a precomputed
-inverse metric interacts with adaptation.</p></dd>
+<dd><p>(vector, matrix, or list) A vector (if <code>metric = "diag_e"</code>) or a matrix (if <code>metric = "dense_e"</code>) for initializing the
+inverse metric. A single vector or matrix is used for all chains. To
+initialize the chains with different inverse metrics, provide a list
+containing one vector or matrix per chain. A length-one list is also used
+for all chains. This can be used as an alternative to the <code>metric_file</code>
+argument. The inverse metric is usually set to an estimate of the posterior
+covariance. See the <code>adapt_engaged</code> argument above for details about (and
+control over) how specifying a precomputed inverse metric interacts with
+adaptation.</p></dd>
 
 
 <dt id="arg-init-buffer">init_buffer<a class="anchor" aria-label="anchor" href="#arg-init-buffer"></a></dt>
@@ -721,8 +724,8 @@ https://mc-stan.org/docs/cmdstan-guide/</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   This procedure has not been thoroughly tested and may be unstable </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   or buggy. The interface is subject to change. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 3e-06 seconds </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 2e-06 seconds </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Adjust your expectations accordingly! </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Begin eta adaptation. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration:   1 / 250 [  0%]  (Adaptation) </span>

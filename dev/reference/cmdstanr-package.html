@@ -77,38 +77,43 @@ CmdStanR: the R interface to CmdStan."><meta property="og:image" content="https:
     <p>CmdStanR (<span class="pkg">cmdstanr</span> package) is an interface to Stan
 (<a href="https://mc-stan.org" class="external-link">mc-stan.org</a>) for <span style="R">R</span> users. It provides the
 necessary objects and functions to compile a Stan program and run Stan's
-algorithms from <span style="R">R</span> via CmdStan, the shell interface to Stan
+algorithms from <span style="R">R</span> via CmdStan, the command line interface to Stan
 (<a href="https://mc-stan.org/users/interfaces/cmdstan" class="external-link">mc-stan.org/users/interfaces/cmdstan</a>).</p>
 <div class="section">
 <h3 id="different-ways-of-interfacing-with-stan-s-c-">Different ways of interfacing with Stan’s C++<a class="anchor" aria-label="anchor" href="#different-ways-of-interfacing-with-stan-s-c-"></a></h3>
 
 
 <p>The RStan interface (<a href="https://mc-stan.org/rstan/" class="external-link"><strong>rstan</strong></a> package) is
-an in-memory interface to Stan and relies on R packages like <strong>Rcpp</strong>
-and <strong>inline</strong> to call C++ code from R. On the other hand, the CmdStanR
-interface does not directly call any C++ code from R, instead relying on
-the CmdStan interface behind the scenes for compilation, running
-algorithms, and writing results to output files.</p>
+an in-memory interface to Stan and relies on R packages like <strong>Rcpp</strong> to
+call C++ code from R. On the other hand, the CmdStanR interface does not
+directly call any C++ code from R, instead relying on the CmdStan
+interface behind the scenes for compilation, running algorithms, and
+writing results to output files.</p>
 </div>
 
 <div class="section">
 <h3 id="advantages-of-rstan">Advantages of RStan<a class="anchor" aria-label="anchor" href="#advantages-of-rstan"></a></h3>
 
 <ul><li><p>Allows other developers to distribute R packages with <em>pre-compiled</em>
-Stan programs (like <strong>rstanarm</strong>) on CRAN. (Note: As of 2023, this can
-mostly be achieved with CmdStanR as well. See <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr">Developing using CmdStanR</a>.)</p></li>
+Stan programs (like <strong>rstanarm</strong>) on CRAN, without requiring that
+users have a C++ toolchain installed (see
+<a href="https://mc-stan.org/rstantools/" class="external-link">https://mc-stan.org/rstantools/</a> for details). <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr">Developing using CmdStanR</a>
+describes how CRAN packages can do something similar using CmdStanR,
+however users are still required to have a working C++ toolchain
+because models are compiled once at installation time rather than on
+CRAN’s servers.</p></li>
+<li><p>CRAN binaries available for Mac and Windows.</p></li>
 <li><p>Avoids use of R6 classes, which may result in more familiar syntax for
 many R users.</p></li>
-<li><p>CRAN binaries available for Mac and Windows.</p></li>
 </ul></div>
 
 <div class="section">
 <h3 id="advantages-of-cmdstanr">Advantages of CmdStanR<a class="anchor" aria-label="anchor" href="#advantages-of-cmdstanr"></a></h3>
 
-<ul><li><p>Compatible with latest versions of Stan. Keeping up with Stan releases
-is complicated for RStan, often requiring non-trivial changes to the
-<strong>rstan</strong> package and new CRAN releases of both <strong>rstan</strong> and
-<strong>StanHeaders</strong>. With CmdStanR the latest improvements in Stan will be
+<ul><li><p>Compatible with the latest versions of Stan. Keeping up with Stan
+releases is complicated for RStan, often requiring non-trivial changes
+to the <strong>rstan</strong> package and new CRAN releases of both <strong>rstan</strong> and
+<strong>StanHeaders</strong>. With CmdStanR the latest improvements in Stan are
 available from R immediately after updating CmdStan using
 <code><a href="install_cmdstan.html">cmdstanr::install_cmdstan()</a></code>.</p></li>
 <li><p>Running Stan via external processes results in fewer unexpected
@@ -122,9 +127,9 @@ the same license used for CmdStan and the Stan C++ source code.</p></li>
     </div>
     <div class="section level2">
     <h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a></h2>
-    <p>CmdStanR requires a working version of CmdStan. If
-you already have CmdStan installed see <code><a href="cmdstan_model.html">cmdstan_model()</a></code> to get started,
-otherwise see <code><a href="install_cmdstan.html">install_cmdstan()</a></code> to install CmdStan. The vignette
+    <p>CmdStanR requires a working version of CmdStan &gt;=
+2.35. If you already have CmdStan installed see <code><a href="cmdstan_model.html">cmdstan_model()</a></code> to get
+started, otherwise see <code><a href="install_cmdstan.html">install_cmdstan()</a></code> to install CmdStan. The vignette
 <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html"><em>Getting started with CmdStanR</em></a>
 demonstrates the basic functionality of the package.</p>
 <p>For a list of global <a href="https://rdrr.io/r/base/options.html" class="external-link">options</a> see
@@ -528,7 +533,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>

@@ -128,8 +128,9 @@ to use later in examples.</p>
 <div class="section level2">
 <h2 id="installing-cmdstan">Installing CmdStan<a class="anchor" aria-label="anchor" href="#installing-cmdstan"></a>
 </h2>
-<p>CmdStanR requires a working installation of <a href="https://mc-stan.org/users/interfaces/cmdstan.html" class="external-link">CmdStan</a>,
-the shell interface to Stan. If you don’t have CmdStan installed then
+<p>CmdStanR requires a working installation of version 2.35 or later of
+<a href="https://mc-stan.org/users/interfaces/cmdstan.html" class="external-link">CmdStan</a>,
+the command line interface to Stan. If you don’t have CmdStan installed,
 CmdStanR can install it for you, assuming you have a suitable C++
 toolchain. The requirements are described in the CmdStan Guide:</p>
 <ul>
@@ -269,7 +270,7 @@ Chain 4 finished in 0.0 seconds.
 
 All 4 chains finished successfully.
 Mean chain execution time: 0.0 seconds.
-Total execution time: 0.2 seconds.</code></pre>
+Total execution time: 0.3 seconds.</code></pre>
 <p>There are many more arguments that can be passed to the
 <code>$sample()</code> method. For details follow this link to its
 separate documentation page:</p>
@@ -650,8 +651,8 @@ Finished in  0.1 seconds.</code></pre>
 <h3 id="variational-pathfinder">Variational (Pathfinder)<a class="anchor" aria-label="anchor" href="#variational-pathfinder"></a>
 </h3>
 <p>Stan version 2.33 introduced a new variational method called
-Pathfinder, which is intended to be faster and more stable than ADVI.
-For details on how Pathfinder works see the section in the <a href="https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro" class="external-link">CmdStan
+Pathfinder. For details on how Pathfinder works see the section in the
+<a href="https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro" class="external-link">CmdStan
 User’s Guide</a>. Pathfinder is run using the <a href="https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html"><code>$pathfinder()</code></a>
 method.</p>
 <div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
@@ -750,11 +751,10 @@ format. The saved object can then be read back into R using
 </h3>
 <p>The RStan interface (<a href="https://mc-stan.org/rstan/" class="external-link"><strong>rstan</strong></a> package) is
 an in-memory interface to Stan and relies on R packages like
-<strong>Rcpp</strong> and <strong>inline</strong> to call C++ code from
-R. On the other hand, the CmdStanR interface does not directly call any
-C++ code from R, instead relying on the CmdStan interface behind the
-scenes for compilation, running algorithms, and writing results to
-output files.</p>
+<strong>Rcpp</strong> to call C++ code from R. On the other hand, the
+CmdStanR interface does not directly call any C++ code from R, instead
+relying on the CmdStan interface behind the scenes for compilation,
+running algorithms, and writing results to output files.</p>
 </div>
 <div class="section level3">
 <h3 id="advantages-of-rstan">Advantages of RStan<a class="anchor" aria-label="anchor" href="#advantages-of-rstan"></a>
@@ -762,24 +762,27 @@ output files.</p>
 <ul>
 <li><p>Allows other developers to distribute R packages with
 <em>pre-compiled</em> Stan programs (like <strong>rstanarm</strong>) on
-CRAN. (Note: As of 2023, this can mostly be achieved with CmdStanR as
-well. See <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr">Developing
-using CmdStanR</a>.)</p></li>
+CRAN, without requiring that users have a C++ toolchain installed (see
+<a href="https://mc-stan.org/rstantools/" class="external-link uri">https://mc-stan.org/rstantools/</a> for details). <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr">Developing
+using CmdStanR</a> describes how CRAN packages can do something similar
+using CmdStanR, however users are still required to have a working C++
+toolchain because models are compiled once at installation time rather
+than on CRAN’s servers.</p></li>
+<li><p>CRAN binaries available for Mac and Windows.</p></li>
 <li><p>Avoids use of R6 classes, which may result in more familiar
 syntax for many R users.</p></li>
-<li><p>CRAN binaries available for Mac and Windows.</p></li>
 </ul>
 </div>
 <div class="section level3">
 <h3 id="advantages-of-cmdstanr">Advantages of CmdStanR<a class="anchor" aria-label="anchor" href="#advantages-of-cmdstanr"></a>
 </h3>
 <ul>
-<li><p>Compatible with latest versions of Stan. Keeping up with Stan
+<li><p>Compatible with the latest versions of Stan. Keeping up with Stan
 releases is complicated for RStan, often requiring non-trivial changes
 to the <strong>rstan</strong> package and new CRAN releases of both
 <strong>rstan</strong> and <strong>StanHeaders</strong>. With CmdStanR
-the latest improvements in Stan will be available from R immediately
-after updating CmdStan using
+the latest improvements in Stan are available from R immediately after
+updating CmdStan using
 <code><a href="../reference/install_cmdstan.html">cmdstanr::install_cmdstan()</a></code>.</p></li>
 <li><p>Running Stan via external processes results in fewer unexpected
 crashes, especially in RStudio.</p></li>

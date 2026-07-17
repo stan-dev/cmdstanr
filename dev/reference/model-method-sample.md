@@ -301,23 +301,27 @@ sample(
 
 - metric_file:
 
-  (character vector) The paths to JSON or Rdump files (one per chain)
-  compatible with CmdStan that contain precomputed inverse metrics. The
-  `metric_file` argument is inherited from CmdStan but is confusing in
-  that the entry in JSON or Rdump file(s) must be named `inv_metric`,
-  referring to the *inverse* metric. We recommend instead using
-  CmdStanR's `inv_metric` argument (see below) to specify an inverse
-  metric directly using a vector or matrix from your R session.
+  (character vector) One path, used for all chains, or one path per
+  chain to JSON or Rdump files compatible with CmdStan that contain
+  precomputed inverse metrics. The `metric_file` argument is inherited
+  from CmdStan but is confusing in that the entry in JSON or Rdump
+  file(s) must be named `inv_metric`, referring to the *inverse* metric.
+  An alternative to `metric_file` is the `inv_metric` argument (see
+  below), which allows specifying an inverse metric directly using a
+  vector or matrix from your R session.
 
 - inv_metric:
 
-  (vector, matrix) A vector (if `metric='diag_e'`) or a matrix (if
-  `metric='dense_e'`) for initializing the inverse metric. This can be
-  used as an alternative to the `metric_file` argument. A vector is
-  interpreted as a diagonal metric. The inverse metric is usually set to
-  an estimate of the posterior covariance. See the `adapt_engaged`
-  argument above for details about (and control over) how specifying a
-  precomputed inverse metric interacts with adaptation.
+  (vector, matrix, or list) A vector (if `metric = "diag_e"`) or a
+  matrix (if `metric = "dense_e"`) for initializing the inverse metric.
+  A single vector or matrix is used for all chains. To initialize the
+  chains with different inverse metrics, provide a list containing one
+  vector or matrix per chain. A length-one list is also used for all
+  chains. This can be used as an alternative to the `metric_file`
+  argument. The inverse metric is usually set to an estimate of the
+  posterior covariance. See the `adapt_engaged` argument above for
+  details about (and control over) how specifying a precomputed inverse
+  metric interacts with adaptation.
 
 - init_buffer:
 
@@ -694,8 +698,8 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 #>   This procedure has not been thoroughly tested and may be unstable 
 #>   or buggy. The interface is subject to change. 
 #> ------------------------------------------------------------ 
-#> Gradient evaluation took 3e-06 seconds 
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+#> Gradient evaluation took 2e-06 seconds 
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
 #> Adjust your expectations accordingly! 
 #> Begin eta adaptation. 
 #> Iteration:   1 / 250 [  0%]  (Adaptation) 

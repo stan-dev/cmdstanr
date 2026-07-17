@@ -31,11 +31,11 @@ color_scheme_set("brightblue")
 
 ## Installing CmdStan
 
-CmdStanR requires a working installation of
-[CmdStan](https://mc-stan.org/users/interfaces/cmdstan.html), the shell
-interface to Stan. If you don’t have CmdStan installed then CmdStanR can
-install it for you, assuming you have a suitable C++ toolchain. The
-requirements are described in the CmdStan Guide:
+CmdStanR requires a working installation of version 2.35 or later of
+[CmdStan](https://mc-stan.org/users/interfaces/cmdstan.html), the
+command line interface to Stan. If you don’t have CmdStan installed,
+CmdStanR can install it for you, assuming you have a suitable C++
+toolchain. The requirements are described in the CmdStan Guide:
 
 - <https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html>
 
@@ -225,7 +225,7 @@ fit <- mod$sample(
 
     All 4 chains finished successfully.
     Mean chain execution time: 0.0 seconds.
-    Total execution time: 0.2 seconds.
+    Total execution time: 0.3 seconds.
 
 There are many more arguments that can be passed to the `$sample()`
 method. For details follow this link to its separate documentation page:
@@ -700,9 +700,9 @@ mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
 
 ### Variational (Pathfinder)
 
-Stan version 2.33 introduced a new variational method called Pathfinder,
-which is intended to be faster and more stable than ADVI. For details on
-how Pathfinder works see the section in the [CmdStan User’s
+Stan version 2.33 introduced a new variational method called Pathfinder.
+For details on how Pathfinder works see the section in the [CmdStan
+User’s
 Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro).
 Pathfinder is run using the
 [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
@@ -830,30 +830,35 @@ fit2 <- qs2::qs_read("fit.qs2")
 ### Different ways of interfacing with Stan’s C++
 
 The RStan interface ([**rstan**](https://mc-stan.org/rstan/) package) is
-an in-memory interface to Stan and relies on R packages like **Rcpp**
-and **inline** to call C++ code from R. On the other hand, the CmdStanR
-interface does not directly call any C++ code from R, instead relying on
-the CmdStan interface behind the scenes for compilation, running
-algorithms, and writing results to output files.
+an in-memory interface to Stan and relies on R packages like **Rcpp** to
+call C++ code from R. On the other hand, the CmdStanR interface does not
+directly call any C++ code from R, instead relying on the CmdStan
+interface behind the scenes for compilation, running algorithms, and
+writing results to output files.
 
 ### Advantages of RStan
 
 - Allows other developers to distribute R packages with *pre-compiled*
-  Stan programs (like **rstanarm**) on CRAN. (Note: As of 2023, this can
-  mostly be achieved with CmdStanR as well. See [Developing using
-  CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr).)
+  Stan programs (like **rstanarm**) on CRAN, without requiring that
+  users have a C++ toolchain installed (see
+  <https://mc-stan.org/rstantools/> for details). [Developing using
+  CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr)
+  describes how CRAN packages can do something similar using CmdStanR,
+  however users are still required to have a working C++ toolchain
+  because models are compiled once at installation time rather than on
+  CRAN’s servers.
+
+- CRAN binaries available for Mac and Windows.
 
 - Avoids use of R6 classes, which may result in more familiar syntax for
   many R users.
 
-- CRAN binaries available for Mac and Windows.
-
 ### Advantages of CmdStanR
 
-- Compatible with latest versions of Stan. Keeping up with Stan releases
-  is complicated for RStan, often requiring non-trivial changes to the
-  **rstan** package and new CRAN releases of both **rstan** and
-  **StanHeaders**. With CmdStanR the latest improvements in Stan will be
+- Compatible with the latest versions of Stan. Keeping up with Stan
+  releases is complicated for RStan, often requiring non-trivial changes
+  to the **rstan** package and new CRAN releases of both **rstan** and
+  **StanHeaders**. With CmdStanR the latest improvements in Stan are
   available from R immediately after updating CmdStan using
   [`cmdstanr::install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md).
 

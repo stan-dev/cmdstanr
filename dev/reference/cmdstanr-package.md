@@ -9,36 +9,41 @@ CmdStanR: the R interface to CmdStan.
 CmdStanR (cmdstanr package) is an interface to Stan
 ([mc-stan.org](https://mc-stan.org)) for R users. It provides the
 necessary objects and functions to compile a Stan program and run Stan's
-algorithms from R via CmdStan, the shell interface to Stan
+algorithms from R via CmdStan, the command line interface to Stan
 ([mc-stan.org/users/interfaces/cmdstan](https://mc-stan.org/users/interfaces/cmdstan)).
 
 ### Different ways of interfacing with Stan’s C++
 
 The RStan interface ([**rstan**](https://mc-stan.org/rstan/) package) is
-an in-memory interface to Stan and relies on R packages like **Rcpp**
-and **inline** to call C++ code from R. On the other hand, the CmdStanR
-interface does not directly call any C++ code from R, instead relying on
-the CmdStan interface behind the scenes for compilation, running
-algorithms, and writing results to output files.
+an in-memory interface to Stan and relies on R packages like **Rcpp** to
+call C++ code from R. On the other hand, the CmdStanR interface does not
+directly call any C++ code from R, instead relying on the CmdStan
+interface behind the scenes for compilation, running algorithms, and
+writing results to output files.
 
 ### Advantages of RStan
 
 - Allows other developers to distribute R packages with *pre-compiled*
-  Stan programs (like **rstanarm**) on CRAN. (Note: As of 2023, this can
-  mostly be achieved with CmdStanR as well. See [Developing using
-  CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr).)
+  Stan programs (like **rstanarm**) on CRAN, without requiring that
+  users have a C++ toolchain installed (see
+  <https://mc-stan.org/rstantools/> for details). [Developing using
+  CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr)
+  describes how CRAN packages can do something similar using CmdStanR,
+  however users are still required to have a working C++ toolchain
+  because models are compiled once at installation time rather than on
+  CRAN’s servers.
+
+- CRAN binaries available for Mac and Windows.
 
 - Avoids use of R6 classes, which may result in more familiar syntax for
   many R users.
 
-- CRAN binaries available for Mac and Windows.
-
 ### Advantages of CmdStanR
 
-- Compatible with latest versions of Stan. Keeping up with Stan releases
-  is complicated for RStan, often requiring non-trivial changes to the
-  **rstan** package and new CRAN releases of both **rstan** and
-  **StanHeaders**. With CmdStanR the latest improvements in Stan will be
+- Compatible with the latest versions of Stan. Keeping up with Stan
+  releases is complicated for RStan, often requiring non-trivial changes
+  to the **rstan** package and new CRAN releases of both **rstan** and
+  **StanHeaders**. With CmdStanR the latest improvements in Stan are
   available from R immediately after updating CmdStan using
   [`cmdstanr::install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md).
 
@@ -53,8 +58,8 @@ algorithms, and writing results to output files.
 
 ## Getting started
 
-CmdStanR requires a working version of CmdStan. If you already have
-CmdStan installed see
+CmdStanR requires a working version of CmdStan \>= 2.35. If you already
+have CmdStan installed see
 [`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
 to get started, otherwise see
 [`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
@@ -493,7 +498,7 @@ fit_mcmc_w_init_fun <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_mcmc_w_init_fun_2 <- mod$sample(
   data = stan_data,
