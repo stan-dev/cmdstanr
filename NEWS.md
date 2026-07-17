@@ -11,6 +11,7 @@ set to `TRUE` for an entire R session via new global options. (#1159)
 * `save_metric_files()` now gives an informative error when metric files were not created and keeps saved metric files after the fitted model is garbage-collected. (#1021)
 * `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing 
 output while reading `STANCFLAGS` from `make`. (#1163)
+* `cmdstan_model()` now retains include paths when initialized with both a Stan file and a precompiled executable, fixing model introspection for programs that use `#include` (#1094).
 * `laplace()` no longer overwrites the internally generated optimizer CSV when
 `mode = NULL` and `output_basename` is supplied. The internally generated
 optimizer CSV now uses the filename `<output_basename>-mode-1.csv`.

@@ -109,6 +109,64 @@ test_that("compilation works with include_paths", {
   )
 })
 
+test_that("precompiled models retain include paths", {
+  model_dir <- withr::local_tempdir()
+  write_stan_file(
+    "
+    functions {
+      real silly_logit(real x) {
+        return logit(x);
+      }
+    }
+    ",
+    dir = file.path(model_dir, "utils"),
+    basename = "silly.stan"
+  )
+  stan_file <- write_stan_file(
+    "
+    #include utils/silly.stan
+    data {
+      int<lower=0> N;
+      array[N] int<lower=0, upper=1> y;
+    }
+    parameters {
+      real<lower=0, upper=1> theta;
+    }
+    model {
+      theta ~ beta(1, 1);
+      y ~ bernoulli(theta);
+    }
+    generated quantities {
+      real theta_lin = silly_logit(theta);
+    }
+    ",
+    dir = model_dir,
+    basename = "bernoulli.stan"
+  )
+  compiled_model <- cmdstan_model(
+    stan_file,
+    include_paths = model_dir,
+    quiet = TRUE
+  )
+
+  model_with_explicit_path <- cmdstan_model(
+    stan_file,
+    exe_file = compiled_model$exe_file(),
+    compile = FALSE,
+    include_paths = model_dir
+  )
+  expect_equal(model_with_explicit_path$include_paths(), model_dir)
+  expect_no_error(model_with_explicit_path$variables())
+
+  model_with_automatic_path <- cmdstan_model(
+    stan_file,
+    exe_file = compiled_model$exe_file(),
+    compile = FALSE
+  )
+  expect_equal(model_with_automatic_path$include_paths(), dirname(stan_file))
+  expect_no_error(model_with_automatic_path$variables())
+})
+
 test_that("name in STANCFLAGS is set correctly", {
   local_reproducible_output()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
