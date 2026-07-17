@@ -558,21 +558,22 @@ test_that("returning time works for gq read_cmdstan_csv from fit object", {
   expect_named(gq_csv$time$chains, c("chain_id", "total"))
   if (cmdstan_version() >= "2.39.0") {
     # per-chain times should be non-zero (parsed from CmdStan timing output)
-    expect_true(all(gq_csv$time$chains$total > 0))
+    expect_gt(min(gq_csv$time$chains$total), 0)
   } else {
     # for version < 2.39 per-chain times are reported as 0
-    expect_true(all(gq_csv$time$chains$total == 0))
+    expect_equal(gq_csv$time$chains$total, rep(0, fit_gq$num_chains()))
   }
 })
 
 test_that("gq time from read_cmdstan_csv matches time from fit_gq$time()", {
-  expect_equivalent(
+  expect_equal(
     read_cmdstan_csv(fit_gq$output_files())$time$chains,
-    fit_gq$time()$chains
+    fit_gq$time()$chains,
+    ignore_attr = TRUE
   )
 })
 
-test_that("returning time is NULL for gq CSV without timing", {
+test_that("gq CSV without timing returns zero chain time", {
   csv_files <- test_path("resources", "csv", "bernoulli_ppc-1-gq.csv")
   csv_data <- read_cmdstan_csv(csv_files)
   expect_equal(csv_data$time$total, NA_integer_)

@@ -77,8 +77,11 @@ test_that("generate_quantities works with draws_array", {
 test_that("generate_quantities works with VB and draws_matrix", {
   fit <- testing_fit("bernoulli", method = "variational", seed = 123)
   expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit)
+    fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit)
   )
+  run_times <- fit_gq$time()
+  expect_equal(run_times$chains$chain_id, 1)
+  expect_gte(run_times$chains$total, 0)
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit$draws())
   )
