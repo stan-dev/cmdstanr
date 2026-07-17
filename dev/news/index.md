@@ -28,6 +28,12 @@
   while reading `STANCFLAGS` from `make`.
   ([\#1163](https://github.com/stan-dev/cmdstanr/issues/1163))
 
+- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
+  now retains include paths when initialized with both a Stan file and a
+  precompiled executable, fixing model introspection for programs that
+  use `#include`
+  ([\#1094](https://github.com/stan-dev/cmdstanr/issues/1094)).
+
 - [`laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)
   no longer overwrites the internally generated optimizer CSV when
   `mode = NULL` and `output_basename` is supplied. The internally
