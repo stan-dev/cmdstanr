@@ -14,6 +14,10 @@ grad_log_prob(unconstrained_variables, jacobian = TRUE)
 \item{jacobian}{(logical) Whether to include the log-density adjustments from
 un/constraining variables.}
 }
+\value{
+A numeric vector containing the gradient, with the log probability
+stored in the \code{"log_prob"} attribute.
+}
 \description{
 The \verb{$grad_log_prob()} method provides access to the Stan
 model's \code{log_prob} function and its derivative.

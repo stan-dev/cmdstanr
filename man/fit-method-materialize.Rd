@@ -7,6 +7,9 @@
 \usage{
 materialize()
 }
+\value{
+The fitted model object, invisibly.
+}
 \description{
 This method collects all posterior draws and diagnostics of a
 fitted model object into \R, since the contents of the CmdStan output CSV

@@ -8,14 +8,19 @@
 output(id = NULL)
 }
 \arguments{
-\item{id}{(integer) The chain id. Ignored if the model was not fit using
-MCMC.}
+\item{id}{(integer) The chain id. Ignored except for MCMC and standalone
+generated quantities.}
+}
+\value{
+For MCMC and standalone generated quantities with \code{id=NULL}, a list
+of character vectors containing the console output for each chain. In all
+other cases, \code{NULL} invisibly.
 }
 \description{
-For MCMC, the \verb{$output()} method returns the stdout and stderr
-of all chains as a list of character vectors if \code{id=NULL}. If the \code{id}
-argument is specified it instead pretty prints the console output for a
-single chain.
+For MCMC and standalone generated quantities, the \verb{$output()}
+method returns the stdout and stderr of all chains as a list of character
+vectors if \code{id=NULL}. If the \code{id} argument is specified it instead pretty
+prints the console output for a single chain.
 
 For optimization, Laplace approximation, variational inference, and
 Pathfinder, \verb{$output()} just pretty prints the console output.

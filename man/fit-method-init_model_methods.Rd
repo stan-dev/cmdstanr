@@ -13,6 +13,9 @@ init_model_methods(seed = 1, verbose = FALSE)
 
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
 }
+\value{
+\code{NULL}, invisibly.
+}
 \description{
 The \verb{$init_model_methods()} method compiles and initializes the
 \code{log_prob}, \code{grad_log_prob}, \code{hessian}, \code{constrain_variables},

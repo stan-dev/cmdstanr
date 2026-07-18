@@ -13,6 +13,9 @@ log_prob(unconstrained_variables, jacobian = TRUE)
 \item{jacobian}{(logical) Whether to include the log-density adjustments from
 un/constraining variables.}
 }
+\value{
+A numeric scalar containing the log probability.
+}
 \description{
 The \verb{$log_prob()} method provides access to the Stan model's
 \code{log_prob} function.

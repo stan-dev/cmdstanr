@@ -7,6 +7,9 @@
 \usage{
 metadata()
 }
+\value{
+A named list of metadata.
+}
 \description{
 The \verb{$metadata()} method returns a list of information gathered
 from the CSV output files, including the CmdStan configuration used when

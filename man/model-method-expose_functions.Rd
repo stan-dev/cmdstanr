@@ -16,6 +16,9 @@ available via the \code{functions} field of the R6 object.}
 \item{verbose}{(logical) Should detailed information about generated code be
 printed to the console? Defaults to \code{FALSE}.}
 }
+\value{
+\code{NULL}, invisibly.
+}
 \description{
 The \verb{$expose_functions()} method of a \code{\link{CmdStanModel}} object
 will compile the functions in the Stan program's \code{functions} block and

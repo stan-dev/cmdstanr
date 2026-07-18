@@ -10,6 +10,8 @@
 #' @param override (logical) Override knitr's built-in, RStan-based engine for
 #'   Stan? The default is `TRUE`. See **Details**.
 #'
+#' @return A named list containing the registered engine, invisibly.
+#'
 #' @details
 #' If `override = TRUE` (default), this registers CmdStanR's knitr engine as the
 #' engine for `stan` chunks, replacing knitr's built-in, RStan-based engine. If
@@ -58,6 +60,8 @@ register_knitr_engine <- function(override = TRUE) {
 #'
 #' @param options (named list) Chunk options, as provided by `knitr` during
 #'   chunk execution.
+#' @return A character vector containing the formatted chunk output produced by
+#'   [knitr::engine_output()].
 #' @examples \dontrun{
 #' knitr::knit_engines$set(stan = cmdstanr::eng_cmdstan)
 #' }

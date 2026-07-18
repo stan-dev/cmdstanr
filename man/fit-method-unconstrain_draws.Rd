@@ -24,6 +24,9 @@ format from the \pkg{posterior} package.}
 \item{inc_warmup}{(logical) Should warmup draws be included? Defaults to
 \code{FALSE}.}
 }
+\value{
+A \verb{posterior::draws_*} object in the format specified by \code{format}.
+}
 \description{
 The \verb{$unconstrain_draws()} method transforms all parameter draws
 to the unconstrained scale. The method returns a list for each chain,

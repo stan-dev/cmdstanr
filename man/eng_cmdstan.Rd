@@ -10,6 +10,10 @@ eng_cmdstan(options)
 \item{options}{(named list) Chunk options, as provided by \code{knitr} during
 chunk execution.}
 }
+\value{
+A character vector containing the formatted chunk output produced by
+\code{\link[knitr:engine_output]{knitr::engine_output()}}.
+}
 \description{
 This provides a knitr engine for Stan, suitable for usage when attempting
 to render Stan chunks and compile the model code within to an executable with

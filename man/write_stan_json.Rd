@@ -16,6 +16,9 @@ points to better distinguish between integers and floating point values.
 If \code{TRUE} all \R objects in \code{data} intended for integers must be of integer
 type.}
 }
+\value{
+\code{NULL}, invisibly.
+}
 \description{
 Write data to a JSON file readable by CmdStan
 }

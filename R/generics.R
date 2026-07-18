@@ -7,6 +7,9 @@
 #' @param object The object to be coerced.
 #' @param ... Additional arguments to pass to methods.
 #'
+#' @return An object of the CmdStan fitted-model class corresponding to the
+#'   generic, as returned by the dispatched method.
+#'
 #' @name cmdstan_coercion
 NULL
 

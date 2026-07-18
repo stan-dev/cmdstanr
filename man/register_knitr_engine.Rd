@@ -10,6 +10,9 @@ register_knitr_engine(override = TRUE)
 \item{override}{(logical) Override knitr's built-in, RStan-based engine for
 Stan? The default is \code{TRUE}. See \strong{Details}.}
 }
+\value{
+A named list containing the registered engine, invisibly.
+}
 \description{
 Registers CmdStanR's knitr engine \code{\link[=eng_cmdstan]{eng_cmdstan()}} for processing Stan chunks.
 Refer to the vignette

@@ -11,6 +11,9 @@ unconstrain_variables(variables)
 \item{variables}{(list) A list of parameter values to transform, in the same
 format as provided to the \code{init} argument of the \verb{$sample()} method.}
 }
+\value{
+A numeric vector of unconstrained parameter values.
+}
 \description{
 The \verb{$unconstrain_variables()} method transforms input
 parameters to the unconstrained scale.

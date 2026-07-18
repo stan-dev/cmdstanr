@@ -21,6 +21,10 @@ parameters implied by newly-constrained parameters (defaults to TRUE).}
 \item{generated_quantities}{(logical) Whether to return generated quantities
 implied by newly-constrained parameters (defaults to TRUE).}
 }
+\value{
+A named list of constrained parameter values and, if requested,
+transformed parameters and generated quantities.
+}
 \description{
 The \verb{$constrain_variables()} method transforms input parameters
 to the constrained scale.

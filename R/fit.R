@@ -107,6 +107,8 @@ CmdStanFit <- R6::R6Class(
 #'   fitted model object into \R, since the contents of the CmdStan output CSV
 #'   files are only read into \R lazily (i.e., as needed).
 #'
+#' @return The fitted model object, invisibly.
+#'
 #' @seealso [`save_object`]
 #'
 #' @examples
@@ -147,6 +149,8 @@ CmdStanFit$set("public", name = "materialize", value = materialize)
 #'   \pkg{qs2} package.
 #' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
 #'   or `qs2::qs_save()` (for `format = "qs2"`).
+#'
+#' @return The fitted model object, invisibly.
 #'
 #' @seealso [`materialize`]
 #'
@@ -378,6 +382,8 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
 #'
+#' @return `NULL`, invisibly.
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
@@ -420,6 +426,8 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' @param jacobian (logical) Whether to include the log-density adjustments from
 #'   un/constraining variables.
 #'
+#' @return A numeric scalar containing the log probability.
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
@@ -450,6 +458,9 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'   model's `log_prob` function and its derivative.
 #' @inheritParams fit-method-log_prob
 #'
+#' @return A numeric vector containing the gradient, with the log probability
+#'   stored in the `"log_prob"` attribute.
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
@@ -479,6 +490,9 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' @description The `$hessian()` method provides access to the Stan model's
 #'   `log_prob`, its derivative, and its hessian.
 #' @inheritParams fit-method-log_prob
+#'
+#' @return A named list with elements `log_prob`, `grad_log_prob`, and
+#'   `hessian`.
 #'
 #' @examples
 #' \dontrun{
@@ -511,6 +525,8 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #'
 #' @param variables (list) A list of parameter values to transform, in the same
 #'   format as provided to the `init` argument of the `$sample()` method.
+#'
+#' @return A numeric vector of unconstrained parameter values.
 #'
 #' @examples
 #' \dontrun{
@@ -565,6 +581,8 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #'   format from the \pkg{posterior} package.
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to
 #'  `FALSE`.
+#'
+#' @return A `posterior::draws_*` object in the format specified by `format`.
 #'
 #' @examples
 #' \dontrun{
@@ -651,6 +669,9 @@ CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 #' @param generated_quantities (logical) Whether to include generated quantities
 #'   in the skeleton (defaults to `TRUE`).
 #'
+#' @return A named list suitable for use as the `skeleton` argument to
+#'   [utils::relist()].
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
@@ -683,6 +704,9 @@ CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 #'   parameters implied by newly-constrained parameters (defaults to TRUE).
 #' @param generated_quantities (logical) Whether to return generated quantities
 #'   implied by newly-constrained parameters (defaults to TRUE).
+#'
+#' @return A named list of constrained parameter values and, if requested,
+#'   transformed parameters and generated quantities.
 #'
 #' @examples
 #' \dontrun{
@@ -1139,16 +1163,20 @@ CmdStanFit$set("public", name = "time", value = time)
 #'
 #' @name fit-method-output
 #' @aliases output
-#' @description For MCMC, the `$output()` method returns the stdout and stderr
-#'   of all chains as a list of character vectors if `id=NULL`. If the `id`
-#'   argument is specified it instead pretty prints the console output for a
-#'   single chain.
+#' @description For MCMC and standalone generated quantities, the `$output()`
+#'   method returns the stdout and stderr of all chains as a list of character
+#'   vectors if `id=NULL`. If the `id` argument is specified it instead pretty
+#'   prints the console output for a single chain.
 #'
 #'   For optimization, Laplace approximation, variational inference, and
 #'   Pathfinder, `$output()` just pretty prints the console output.
 #'
-#' @param id (integer) The chain id. Ignored if the model was not fit using
-#'   MCMC.
+#' @param id (integer) The chain id. Ignored except for MCMC and standalone
+#'   generated quantities.
+#'
+#' @return For MCMC and standalone generated quantities with `id=NULL`, a list
+#'   of character vectors containing the console output for each chain. In all
+#'   other cases, `NULL` invisibly.
 #'
 #' @examples
 #' \dontrun{
@@ -1178,6 +1206,8 @@ CmdStanFit$set("public", name = "output", value = output)
 #' @description The `$metadata()` method returns a list of information gathered
 #'   from the CSV output files, including the CmdStan configuration used when
 #'   fitting the model. See **Examples** and [read_cmdstan_csv()].
+#'
+#' @return A named list of metadata.
 #'
 #' @examples
 #' \dontrun{
@@ -2576,6 +2606,9 @@ CmdStanDiagnose$set("public", name = "data_file", value = data_file)
 #'
 #' @details To subset iterations, chains, or draws, use the
 #'   [posterior::subset_draws()] method after creating the `draws` object.
+#'
+#' @return A `posterior::draws_*` object. The default format depends on the
+#'   fitted model class and can be changed using arguments passed through `...`.
 #'
 #' @examples
 #' \dontrun{

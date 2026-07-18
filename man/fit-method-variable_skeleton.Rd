@@ -14,6 +14,10 @@ parameters in the skeleton (defaults to \code{TRUE}).}
 \item{generated_quantities}{(logical) Whether to include generated quantities
 in the skeleton (defaults to \code{TRUE}).}
 }
+\value{
+A named list suitable for use as the \code{skeleton} argument to
+\code{\link[utils:relist]{utils::relist()}}.
+}
 \description{
 The \verb{$variable_skeleton()} method returns the variable skeleton
 needed by \code{utils::relist()} to re-structure a vector of constrained

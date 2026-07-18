@@ -17,6 +17,9 @@ save_object(file, format = c("rds", "qs2"), ...)
 \item{...}{Other arguments to pass to \code{\link[base:saveRDS]{base::saveRDS()}} (for \code{format = "rds"})
 or \code{qs2::qs_save()} (for \code{format = "qs2"}).}
 }
+\value{
+The fitted model object, invisibly.
+}
 \description{
 This method calls \code{\link[=fit-method-materialize]{$materialize()}}
 internally to ensure that all posterior draws and diagnostics are saved

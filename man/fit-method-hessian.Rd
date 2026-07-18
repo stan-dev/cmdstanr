@@ -14,6 +14,10 @@ hessian(unconstrained_variables, jacobian = TRUE)
 \item{jacobian}{(logical) Whether to include the log-density adjustments from
 un/constraining variables.}
 }
+\value{
+A named list with elements \code{log_prob}, \code{grad_log_prob}, and
+\code{hessian}.
+}
 \description{
 The \verb{$hessian()} method provides access to the Stan model's
 \code{log_prob}, its derivative, and its hessian.

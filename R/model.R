@@ -2193,6 +2193,7 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   available via the `functions` field of the R6 object.
 #' @param verbose (logical) Should detailed information about generated code be
 #'   printed to the console? Defaults to `FALSE`.
+#' @return `NULL`, invisibly.
 #' @template seealso-docs
 #' @examples
 #' \dontrun{

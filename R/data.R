@@ -8,6 +8,8 @@
 #' If `TRUE` all \R objects in `data` intended for integers must be of integer
 #' type.
 #'
+#' @return `NULL`, invisibly.
+#'
 #' @details
 #' `write_stan_json()` performs several conversions before writing the JSON
 #' file:
