@@ -9,6 +9,7 @@
 \alias{print.CmdStanLaplace}
 \alias{print.CmdStanVB}
 \alias{print.CmdStanPathfinder}
+\alias{print.CmdStanGQ}
 \title{Compute a summary table of estimates and diagnostics}
 \usage{
 summary(variables = NULL, ...)

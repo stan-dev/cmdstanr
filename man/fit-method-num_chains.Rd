@@ -3,7 +3,7 @@
 \name{fit-method-num_chains}
 \alias{fit-method-num_chains}
 \alias{num_chains}
-\title{Extract number of chains after MCMC}
+\title{Extract the number of chains}
 \usage{
 num_chains()
 }
@@ -11,7 +11,9 @@ num_chains()
 An integer.
 }
 \description{
-The \verb{$num_chains()} method returns the number of MCMC chains.
+The \verb{$num_chains()} method returns the number of chains in a
+\code{\link{CmdStanMCMC}} object or the number of chains used for standalone
+generated quantities in a \code{\link{CmdStanGQ}} object.
 }
 \examples{
 \dontrun{
@@ -21,5 +23,5 @@ fit_mcmc$num_chains()
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanGQ}}
 }

@@ -15,7 +15,9 @@ methods:\tabular{ll}{
    \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}). \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+   \code{\link[=fit-method-output_files]{$output_files()}} \tab Return paths to output CSV files. \cr
    \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
+   \code{\link[=fit-method-data_file]{$data_file()}} \tab Return the path to the JSON data file. \cr
    \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file to a specified location. \cr
 }
 }
