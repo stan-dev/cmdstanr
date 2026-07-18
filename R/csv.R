@@ -78,6 +78,12 @@
 #' For [standalone generated quantities][model-method-generate-quantities] the
 #' returned list also includes the following components:
 #'
+#' * `time`: Run time information for the individual processes, with one row in
+#' the `chains` data frame per CSV file. The returned object is the same as for
+#' the [$time()][fit-method-time] method except the total run time can't be
+#' inferred directly from the CSV files (they may have been generated in
+#' parallel) and is therefore `NA`. For CmdStan versions before 2.39 the
+#' individual process times are reported as zero.
 #' * `generated_quantities`: A [`draws_array`][posterior::draws_array] of
 #' the generated quantities.
 #'
@@ -456,6 +462,7 @@ read_cmdstan_csv <- function(files,
     }
     list(
       metadata = metadata,
+      time = list(total = NA_integer_, chains = metadata$time),
       generated_quantities = draws
     )
   } else if (metadata$method == "pathfinder") {
@@ -653,6 +660,21 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
 
 # csv reading internals ---------------------------------------------------
 
+parse_generated_quantities_time <- function(line) {
+  suffix <- "seconds (Generated Quantities)"
+  line <- trimws(line)
+  if (!startsWith(line, "Elapsed Time:") || !endsWith(line, suffix)) {
+    return(NULL)
+  }
+  time <- trimws(sub(suffix, "", line, fixed = TRUE))
+  time <- trimws(sub("Elapsed Time:", "", time, fixed = TRUE))
+  time <- suppressWarnings(as.double(time))
+  if (is.na(time)) {
+    return(NULL)
+  }
+  time
+}
+
 #' Reads the sampling arguments and the diagonal of the
 #' inverse mass matrix from the comments in a CSV file.
 #'
@@ -786,6 +808,11 @@ read_csv_metadata <- function(csv_file) {
           tmp <- gsub("seconds (Total)", "", tmp, fixed = TRUE)
           tmp <- trimws(gsub(" Elapsed Time: ", "", tmp, fixed = TRUE))
           total_time <- as.numeric(tmp)
+        } else {
+          generated_quantities_time <- parse_generated_quantities_time(tmp)
+          if (!is.null(generated_quantities_time)) {
+            total_time <- generated_quantities_time
+          }
         }
         if (!is.null(csv_file_info$method) &&
             csv_file_info$method == "diagnose" &&
@@ -825,6 +852,11 @@ read_csv_metadata <- function(csv_file) {
       chain_id = csv_file_info$id,
       warmup = warmup_time,
       sampling = sampling_time,
+      total = total_time
+    )
+  } else if (csv_file_info$method == "generate_quantities") {
+    csv_file_info$time <- data.frame(
+      chain_id = csv_file_info$id,
       total = total_time
     )
   }

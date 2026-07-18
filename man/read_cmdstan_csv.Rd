@@ -105,6 +105,12 @@ distribution.
 For \link[=model-method-generate-quantities]{standalone generated quantities} the
 returned list also includes the following components:
 \itemize{
+\item \code{time}: Run time information for the individual processes, with one row in
+the \code{chains} data frame per CSV file. The returned object is the same as for
+the \link[=fit-method-time]{$time()} method except the total run time can't be
+inferred directly from the CSV files (they may have been generated in
+parallel) and is therefore \code{NA}. For CmdStan versions before 2.39 the
+individual process times are reported as zero.
 \item \code{generated_quantities}: A \code{\link[posterior:draws_array]{draws_array}} of
 the generated quantities.
 }
