@@ -244,15 +244,15 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' * For standalone [generated quantities][model-method-generate-quantities], a
 #' 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable).
-#' * For [variational inference][model-method-variational], a 2-D
-#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable) because
-#' there are no chains. An additional variable `lp_approx__` is also included,
-#' which is the log density of the variational approximation to the posterior
-#' evaluated at each of the draws.
-#' * For [Laplace approximation][model-method-laplace] and
-#' [Pathfinder][model-method-pathfinder], a 2-D
+#' * For [variational inference][model-method-variational] and
+#' [Laplace approximation][model-method-laplace], a 2-D
 #' [`draws_matrix`][posterior::draws_matrix] object (draw x variable). An
-#' additional variable `lp_approx__` is also included.
+#' additional variable `lp_approx__` containing the log density of the
+#' corresponding approximation is also included.
+#' * For [Pathfinder][model-method-pathfinder], a 2-D
+#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable).
+#' Additional variables `lp_approx__` and `path__` are also included, with
+#' `path__` identifying the path associated with each draw.
 #' * For [optimization][model-method-optimize], a 1-row
 #' [`draws_matrix`][posterior::draws_matrix] with one column per variable. These
 #' are *not* actually draws, just point estimates stored in the `draws_matrix`

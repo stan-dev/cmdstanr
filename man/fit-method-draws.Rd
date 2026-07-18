@@ -65,15 +65,15 @@ variable).
 \item For standalone \link[=model-method-generate-quantities]{generated quantities}, a
 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
 variable).
-\item For \link[=model-method-variational]{variational inference}, a 2-D
-\code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable) because
-there are no chains. An additional variable \code{lp_approx__} is also included,
-which is the log density of the variational approximation to the posterior
-evaluated at each of the draws.
-\item For \link[=model-method-laplace]{Laplace approximation} and
-\link[=model-method-pathfinder]{Pathfinder}, a 2-D
+\item For \link[=model-method-variational]{variational inference} and
+\link[=model-method-laplace]{Laplace approximation}, a 2-D
 \code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable). An
-additional variable \code{lp_approx__} is also included.
+additional variable \code{lp_approx__} containing the log density of the
+corresponding approximation is also included.
+\item For \link[=model-method-pathfinder]{Pathfinder}, a 2-D
+\code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable).
+Additional variables \code{lp_approx__} and \code{path__} are also included, with
+\code{path__} identifying the path associated with each draw.
 \item For \link[=model-method-optimize]{optimization}, a 1-row
 \code{\link[posterior:draws_matrix]{draws_matrix}} with one column per variable. These
 are \emph{not} actually draws, just point estimates stored in the \code{draws_matrix}
