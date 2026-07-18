@@ -23,9 +23,8 @@ expose them for use in \R. This can also be specified via the
 \code{compile_standalone} argument to the \code{\link[=model-method-compile]{$compile()}}
 method.
 
-This method is also available for fitted model objects (\code{\link{CmdStanMCMC}},
-\code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
-\code{\link{CmdStanPathfinder}}, and \code{\link{CmdStanGQ}}). See \strong{Examples}.
+This method is also available for all fitted model objects. See
+\strong{Examples}.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.

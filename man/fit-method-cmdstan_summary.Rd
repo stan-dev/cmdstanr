@@ -43,6 +43,5 @@ fit$cmdstan_summary()
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanPathfinder}},
 \link{fit-method-summary}
 }

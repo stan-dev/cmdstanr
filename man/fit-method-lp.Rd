@@ -65,7 +65,3 @@ Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
 work?: Evaluating variational inference. \emph{Proceedings of the 35th
 International Conference on Machine Learning}, PMLR 80:5581–5590.
 }
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
-\code{\link{CmdStanPathfinder}}
-}

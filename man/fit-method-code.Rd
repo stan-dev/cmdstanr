@@ -22,7 +22,3 @@ cat(fit$code(), sep = "\n") # pretty print
 }
 
 }
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
-\code{\link{CmdStanPathfinder}}, \code{\link{CmdStanGQ}}
-}

@@ -42,7 +42,3 @@ fit_laplace$time()$total + fit_mle$time()$total # total time
 }
 
 }
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
-\code{\link{CmdStanPathfinder}}, \code{\link{CmdStanGQ}}
-}

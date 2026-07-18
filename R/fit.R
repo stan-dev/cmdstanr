@@ -107,8 +107,7 @@ CmdStanFit <- R6::R6Class(
 #'   fitted model object into \R, since the contents of the CmdStan output CSV
 #'   files are only read into \R lazily (i.e., as needed).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`], [`save_object`]
+#' @seealso [`save_object`]
 #'
 #' @examples
 #' \dontrun{
@@ -149,8 +148,7 @@ CmdStanFit$set("public", name = "materialize", value = materialize)
 #' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
 #'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`], [`materialize`]
+#' @seealso [`materialize`]
 #'
 #' @examples
 #' \dontrun{
@@ -257,9 +255,6 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' format. See [`$mle()`][fit-method-mle] to extract them as a numeric vector.
 #'
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
-#'
 #' @examples
 #' \dontrun{
 #' # logistic regression with intercept alpha and coefficients beta
@@ -331,9 +326,6 @@ CmdStanFit$set("public", name = "draws", value = draws)
 #'   this in the future.
 #'
 #' @return A list of lists. See **Examples**.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`]
 #'
 #' @examples
 #' \dontrun{
@@ -761,9 +753,6 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #' work?: Evaluating variational inference. *Proceedings of the 35th
 #' International Conference on Machine Learning*, PMLR 80:5581–5590.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`]
-#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic")
@@ -827,9 +816,6 @@ lp_approx <- function() {
 #' * Vehtari, A. (2021). Comparison of MCMC effective sample size estimators.
 #'   https://avehtari.github.io/rhat_ess/ess_comparison.html
 #'   (for ESS diagnostics such as `ess_bulk` and `ess_tail`).
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -915,8 +901,7 @@ CmdStanFit$set("public", name = "summary", value = summary)
 #' @param flags An optional character vector of flags (e.g.
 #'   `flags = c("--sig_figs=1")`).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanVB`], [`CmdStanPathfinder`],
-#'   [fit-method-summary]
+#' @seealso [fit-method-summary]
 #'
 #' @examples
 #' \dontrun{
@@ -1002,9 +987,6 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' The methods _without_ the `save_` prefix return character vectors of file
 #' paths without moving any files.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1130,9 +1112,6 @@ CmdStanFit$set("public", name = "metric_files", value = metric_files)
 #' chains. The data frame has columns `"chain_id"`, `"warmup"`, `"sampling"`,
 #' and `"total"`.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
-#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
@@ -1170,9 +1149,6 @@ CmdStanFit$set("public", name = "time", value = time)
 #' @param id (integer) The chain id. Ignored if the model was not fit using
 #'   MCMC.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
-#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
@@ -1201,9 +1177,6 @@ CmdStanFit$set("public", name = "output", value = output)
 #' @description The `$metadata()` method returns a list of information gathered
 #'   from the CSV output files, including the CmdStan configuration used when
 #'   fitting the model. See **Examples** and [read_cmdstan_csv()].
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1237,9 +1210,6 @@ CmdStanFit$set("public", name = "metadata", value = metadata)
 #' @return An integer vector of return codes with length equal to the number of
 #'   CmdStan runs (number of chains for MCMC and one otherwise).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
-#'
 #' @examples
 #' \dontrun{
 #' # example with return codes all zero
@@ -1269,9 +1239,6 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'
 #' @return A list of data frames with profiling data if the profiling CSV files
 #'   were created.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #'
@@ -1324,9 +1291,6 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #' @name fit-method-code
 #' @aliases code
 #' @return A character vector with one element per line of code.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
-#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #'

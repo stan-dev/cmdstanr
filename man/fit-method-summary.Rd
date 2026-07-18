@@ -87,7 +87,3 @@ https://avehtari.github.io/rhat_ess/ess_comparison.html
 (for ESS diagnostics such as \code{ess_bulk} and \code{ess_tail}).
 }
 }
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
-\code{\link{CmdStanPathfinder}}, \code{\link{CmdStanGQ}}
-}
