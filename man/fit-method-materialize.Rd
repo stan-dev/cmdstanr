@@ -8,20 +8,18 @@
 materialize()
 }
 \description{
-This method collects all posterior draws and diagnostics of a fitted
-model object into R, since the contents of the CmdStan output CSV files are only
-read into R lazily (i.e., as needed).
+This method collects all posterior draws and diagnostics of a
+fitted model object into \R, since the contents of the CmdStan output CSV
+files are only read into \R lazily (i.e., as needed).
 }
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")
-object.size(fit)
-
 fit$materialize()
-object.size(fit)
 }
 
 }
 \seealso{
-\code{\link{save_object}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
+\code{\link{CmdStanPathfinder}}, \code{\link{CmdStanGQ}}, \code{\link{save_object}}
 }

@@ -2181,8 +2181,9 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   `compile_standalone` argument to the [`$compile()`][model-method-compile]
 #'   method.
 #'
-#'   This method is also available for fitted model objects ([`CmdStanMCMC`], [`CmdStanVB`], etc.).
-#'   See **Examples**.
+#'   This method is also available for fitted model objects ([`CmdStanMCMC`],
+#'   [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], and [`CmdStanGQ`]). See **Examples**.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.

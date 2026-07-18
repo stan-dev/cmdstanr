@@ -23,10 +23,13 @@ documented in the CmdStan Guide:
 \item https://mc-stan.org/docs/cmdstan-guide/diagnose.html
 }
 
-Although these methods can be used for models fit using the
-\code{\link[=model-method-variational]{$variational()}} method, much of the output is
-currently only relevant for models fit using the
-\code{\link[=model-method-sample]{$sample()}} method.
+These methods can be used for models fit using
+\code{\link[=model-method-sample]{$sample()}},
+\code{\link[=model-method-variational]{$variational()}}, or
+\code{\link[=model-method-pathfinder]{$pathfinder()}}. Much of the output is currently
+only relevant for models fit using \verb{$sample()}. These methods are not
+available for optimization, Laplace approximation, or standalone generated
+quantities.
 
 See the \link[=fit-method-summary]{$summary()} for computing similar summaries in
 R rather than calling CmdStan's utilites.
@@ -40,5 +43,6 @@ fit$cmdstan_summary()
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \link{fit-method-summary}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanPathfinder}},
+\link{fit-method-summary}
 }

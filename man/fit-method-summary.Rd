@@ -6,7 +6,9 @@
 \alias{fit-method-print}
 \alias{print.CmdStanMCMC}
 \alias{print.CmdStanMLE}
+\alias{print.CmdStanLaplace}
 \alias{print.CmdStanVB}
+\alias{print.CmdStanPathfinder}
 \title{Compute a summary table of estimates and diagnostics}
 \usage{
 summary(variables = NULL, ...)
@@ -86,5 +88,6 @@ https://avehtari.github.io/rhat_ess/ess_comparison.html
 }
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
+\code{\link{CmdStanPathfinder}}, \code{\link{CmdStanGQ}}
 }

@@ -26,5 +26,6 @@ str(fit_vb$metadata())
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
+\code{\link{CmdStanPathfinder}}, \code{\link{CmdStanGQ}}
 }

@@ -23,6 +23,8 @@ variational inference the log density of the variational approximation to
 the posterior is available via the \verb{$lp_approx()} method. For
 Laplace approximation the unnormalized density of the approximation to
 the posterior is available via the \verb{$lp_approx()} method.
+For Pathfinder the log density of the approximation to the posterior is
+available via the \verb{$lp_approx()} method.
 
 See the \href{https://mc-stan.org/docs/reference-manual/statements.html}{Increment log density and Distribution Statements}
 sections of the Stan Reference Manual for details on when normalizing
@@ -64,5 +66,6 @@ work?: Evaluating variational inference. \emph{Proceedings of the 35th
 International Conference on Machine Learning}, PMLR 80:5581–5590.
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
+\code{\link{CmdStanPathfinder}}
 }

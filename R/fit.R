@@ -2,9 +2,9 @@
 #' CmdStanFit superclass
 #'
 #' @noRd
-#' @description CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, CmdStanGQ
-#'   all share the methods of the superclass CmdStanFit and also have their own
-#'   unique methods.
+#' @description CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB,
+#'   CmdStanPathfinder, and CmdStanGQ all share the methods of the superclass
+#'   CmdStanFit and also have their own unique methods.
 #'
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
@@ -103,20 +103,17 @@ CmdStanFit <- R6::R6Class(
 #'
 #' @name fit-method-materialize
 #' @aliases materialize
-#' @description This method collects all posterior draws and diagnostics of a fitted
-#'   model object into R, since the contents of the CmdStan output CSV files are only
-#'   read into R lazily (i.e., as needed).
+#' @description This method collects all posterior draws and diagnostics of a
+#'   fitted model object into \R, since the contents of the CmdStan output CSV
+#'   files are only read into \R lazily (i.e., as needed).
 #'
-#'
-#' @seealso [`save_object`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`], [`save_object`]
 #'
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic")
-#' object.size(fit)
-#'
 #' fit$materialize()
-#' object.size(fit)
 #' }
 #'
 materialize <- function() {
@@ -128,41 +125,51 @@ materialize <- function() {
 }
 CmdStanFit$set("public", name = "materialize", value = materialize)
 
+
 #' Save fitted model object to a file
 #'
 #' @name fit-method-save_object
 #' @aliases save_object
-#' @description This method is a wrapper around [base::saveRDS()] that ensures
-#'   that all posterior draws and diagnostics are saved when saving a fitted
-#'   model object. Because the contents of the CmdStan output CSV files are only
-#'   read into R lazily (i.e., as needed), the `$save_object()` method is the
-#'   safest way to guarantee that everything has been read in before saving.
+#' @description This method calls [`$materialize()`][fit-method-materialize]
+#'   internally to ensure that all posterior draws and diagnostics are saved
+#'   when saving a fitted model object. Because the contents of the CmdStan
+#'   output CSV files are only read into R lazily (i.e., as needed), the
+#'   `$save_object()` method is the safest way to guarantee that everything has
+#'   been read in before saving.
 #'
-#'   If you have a big object to save, use `format = "qs2"` to save using the
-#'   **qs2** package.
-#'
-#'   See the "Saving fitted model objects" section of the
-#'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
-#'   vignette for some suggestions on faster model saving for large models.
+#'   By default objects are saved using [base::saveRDS()]. If you have a big
+#'   object to save, we recommend setting `format = "qs2"`, which is faster and
+#'   more memory efficient. Internally this will use `qs2::qs_save()` to save
+#'   the object and you can read it back into \R later with `qs2::qs_read()`.
 #'
 #' @param file (string) Path where the file should be saved.
 #' @param format (string) Serialization format for the object. The default is
-#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the **qs2**
-#'   package.
+#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the
+#'   \pkg{qs2} package.
 #' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
 #'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`], [`materialize`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`], [`materialize`]
 #'
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic")
 #'
-#' temp_rds_file <- tempfile(fileext = ".RDS")
+#' # using default format = "rds"
+#' temp_rds_file <- tempfile(fileext = ".rds")
 #' fit$save_object(file = temp_rds_file)
 #' rm(fit)
 #'
 #' fit <- readRDS(temp_rds_file)
+#' fit$summary()
+#'
+#' # using format = "qs2"
+#' temp_qs2_file <- tempfile(fileext = ".qs2")
+#' fit$save_object(file = temp_qs2_file, format = "qs2")
+#' rm(fit)
+#'
+#' fit <- qs2::qs_read(temp_qs2_file)
 #' fit$summary()
 #' }
 #'
@@ -185,9 +192,11 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'
 #' @name fit-method-draws
 #' @aliases draws
-#' @description Extract posterior draws after MCMC or approximate posterior
-#'   draws after variational approximation using formats provided by the
-#'   \pkg{posterior} package.
+#' @description Extract draws or point estimates from fitted model objects using
+#'   formats provided by the \pkg{posterior} package. Depending on the fitting
+#'   method, these are posterior draws from MCMC, approximate posterior draws
+#'   from variational inference, Laplace approximation, or Pathfinder,
+#'   standalone generated quantities, or a point estimate from optimization.
 #'
 #'   The variables include the parameters, transformed parameters, and
 #'   generated quantities from the Stan program as well as `lp__`, the total
@@ -206,7 +215,7 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   `"draws_matrix"`).
 #'
 #'   * For point estimates from optimization and approximate draws from
-#'   variational inference the default is
+#'   variational inference, Laplace approximation, and Pathfinder the default is
 #'   [`"draws_matrix"`][posterior::draws_array].
 #'
 #'   To use a different format it can be specified as the full name of the
@@ -238,13 +247,18 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' there are no chains. An additional variable `lp_approx__` is also included,
 #' which is the log density of the variational approximation to the posterior
 #' evaluated at each of the draws.
+#' * For [Laplace approximation][model-method-laplace] and
+#' [Pathfinder][model-method-pathfinder], a 2-D
+#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable). An
+#' additional variable `lp_approx__` is also included.
 #' * For [optimization][model-method-optimize], a 1-row
 #' [`draws_matrix`][posterior::draws_matrix] with one column per variable. These
 #' are *not* actually draws, just point estimates stored in the `draws_matrix`
 #' format. See [`$mle()`][fit-method-mle] to extract them as a numeric vector.
 #'
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -318,7 +332,8 @@ CmdStanFit$set("public", name = "draws", value = draws)
 #'
 #' @return A list of lists. See **Examples**.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`]
 #'
 #' @examples
 #' \dontrun{
@@ -714,6 +729,8 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'   the posterior is available via the `$lp_approx()` method. For
 #'   Laplace approximation the unnormalized density of the approximation to
 #'   the posterior is available via the `$lp_approx()` method.
+#'   For Pathfinder the log density of the approximation to the posterior is
+#'   available via the `$lp_approx()` method.
 #'
 #'   See the [Increment log density and Distribution
 #'   Statements](https://mc-stan.org/docs/reference-manual/statements.html)
@@ -744,7 +761,8 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #' work?: Evaluating variational inference. *Proceedings of the 35th
 #' International Conference on Machine Learning*, PMLR 80:5581–5590.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`]
 #'
 #' @examples
 #' \dontrun{
@@ -776,7 +794,8 @@ lp_approx <- function() {
 #' Compute a summary table of estimates and diagnostics
 #'
 #' @name fit-method-summary
-#' @aliases summary fit-method-print print.CmdStanMCMC print.CmdStanMLE print.CmdStanVB
+#' @aliases summary fit-method-print print.CmdStanMCMC print.CmdStanMLE
+#' @aliases print.CmdStanLaplace print.CmdStanVB print.CmdStanPathfinder
 #' @description The `$summary()` method runs
 #'   [`summarise_draws()`][posterior::draws_summary] from the \pkg{posterior}
 #'   package and returns the output. For MCMC, only post-warmup draws are
@@ -809,7 +828,8 @@ lp_approx <- function() {
 #'   https://avehtari.github.io/rhat_ess/ess_comparison.html
 #'   (for ESS diagnostics such as `ess_bulk` and `ess_tail`).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -881,10 +901,13 @@ CmdStanFit$set("public", name = "summary", value = summary)
 #'   * https://mc-stan.org/docs/cmdstan-guide/stansummary.html
 #'   * https://mc-stan.org/docs/cmdstan-guide/diagnose.html
 #'
-#'   Although these methods can be used for models fit using the
-#'   [`$variational()`][model-method-variational] method, much of the output is
-#'   currently only relevant for models fit using the
-#'   [`$sample()`][model-method-sample] method.
+#'   These methods can be used for models fit using
+#'   [`$sample()`][model-method-sample],
+#'   [`$variational()`][model-method-variational], or
+#'   [`$pathfinder()`][model-method-pathfinder]. Much of the output is currently
+#'   only relevant for models fit using `$sample()`. These methods are not
+#'   available for optimization, Laplace approximation, or standalone generated
+#'   quantities.
 #'
 #'   See the [$summary()][fit-method-summary] for computing similar summaries in
 #'   R rather than calling CmdStan's utilites.
@@ -892,7 +915,8 @@ CmdStanFit$set("public", name = "summary", value = summary)
 #' @param flags An optional character vector of flags (e.g.
 #'   `flags = c("--sig_figs=1")`).
 #'
-#' @seealso [`CmdStanMCMC`], [fit-method-summary]
+#' @seealso [`CmdStanMCMC`], [`CmdStanVB`], [`CmdStanPathfinder`],
+#'   [fit-method-summary]
 #'
 #' @examples
 #' \dontrun{
@@ -979,7 +1003,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' The methods _without_ the `save_` prefix return character vectors of file
 #' paths without moving any files.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1105,7 +1130,8 @@ CmdStanFit$set("public", name = "metric_files", value = metric_files)
 #' chains. The data frame has columns `"chain_id"`, `"warmup"`, `"sampling"`,
 #' and `"total"`.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1138,13 +1164,14 @@ CmdStanFit$set("public", name = "time", value = time)
 #'   argument is specified it instead pretty prints the console output for a
 #'   single chain.
 #'
-#'   For optimization and variational inference `$output()` just pretty prints
-#'   the console output.
+#'   For optimization, Laplace approximation, variational inference, and
+#'   Pathfinder, `$output()` just pretty prints the console output.
 #'
 #' @param id (integer) The chain id. Ignored if the model was not fit using
 #'   MCMC.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1175,7 +1202,8 @@ CmdStanFit$set("public", name = "output", value = output)
 #'   from the CSV output files, including the CmdStan configuration used when
 #'   fitting the model. See **Examples** and [read_cmdstan_csv()].
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1209,7 +1237,8 @@ CmdStanFit$set("public", name = "metadata", value = metadata)
 #' @return An integer vector of return codes with length equal to the number of
 #'   CmdStan runs (number of chains for MCMC and one otherwise).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1241,7 +1270,8 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #' @return A list of data frames with profiling data if the profiling CSV files
 #'   were created.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #'
@@ -1295,7 +1325,8 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #' @aliases code
 #' @return A character vector with one element per line of code.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`],
+#'   [`CmdStanPathfinder`], [`CmdStanGQ`]
 #'
 #' @examples
 #'

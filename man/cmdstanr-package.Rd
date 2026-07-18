@@ -42,19 +42,19 @@ however users are still required to have a working C++ toolchain
 because models are compiled once at installation time rather than on
 CRAN’s servers.
 \item CRAN binaries available for Mac and Windows.
-\item Avoids use of R6 classes, which may result in more familiar syntax
-for many R users.
+\item Avoids use of R6 classes, which may result in more familiar syntax for
+many R users.
 }
 }
 
 \subsection{Advantages of CmdStanR}{
 \itemize{
 \item Compatible with the latest versions of Stan. Keeping up with Stan
-releases is complicated for RStan, often requiring non-trivial
-changes to the \strong{rstan} package and new CRAN releases of both
-\strong{rstan} and \strong{StanHeaders}. With CmdStanR the latest improvements
-in Stan are available from R immediately after updating CmdStan
-using \code{cmdstanr::install_cmdstan()}.
+releases is complicated for RStan, often requiring non-trivial changes
+to the \strong{rstan} package and new CRAN releases of both \strong{rstan} and
+\strong{StanHeaders}. With CmdStanR the latest improvements in Stan are
+available from R immediately after updating CmdStan using
+\code{cmdstanr::install_cmdstan()}.
 \item Running Stan via external processes results in fewer unexpected
 crashes, especially in RStudio.
 \item Less memory overhead.

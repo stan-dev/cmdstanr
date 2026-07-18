@@ -17,8 +17,8 @@ of all chains as a list of character vectors if \code{id=NULL}. If the \code{id}
 argument is specified it instead pretty prints the console output for a
 single chain.
 
-For optimization and variational inference \verb{$output()} just pretty prints
-the console output.
+For optimization, Laplace approximation, variational inference, and
+Pathfinder, \verb{$output()} just pretty prints the console output.
 }
 \examples{
 \dontrun{
@@ -36,5 +36,6 @@ fit_vb$output()
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}},
+\code{\link{CmdStanPathfinder}}, \code{\link{CmdStanGQ}}
 }
