@@ -97,7 +97,7 @@ fit_mcmc <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
 #> 
 #> All 4 chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.6 seconds.
+#> Total execution time: 0.5 seconds.
 #> 
 
 # stan program for standalone generated quantities

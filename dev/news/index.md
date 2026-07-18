@@ -30,9 +30,13 @@
 
 - [`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
   now retains include paths when initialized with both a Stan file and a
-  precompiled executable, fixing model introspection for programs that
-  use `#include`
+  precompiled executable
   ([\#1094](https://github.com/stan-dev/cmdstanr/issues/1094)).
+
+- `$generate_quantities()` now also accepts `CmdStanMLE`,
+  `CmdStanLaplace`, and `CmdStanPathfinder` fitted model objects as
+  `fitted_params`.
+  ([\#1203](https://github.com/stan-dev/cmdstanr/issues/1203))
 
 - `$generate_quantities()` now reports per-process execution times with
   CmdStan 2.39 or newer, and

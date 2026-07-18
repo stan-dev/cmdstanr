@@ -30,20 +30,33 @@ generate_quantities(
   (multiple options) The parameter draws to use. One of the following:
 
   - A
-    [CmdStanMCMC](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md)
+    [CmdStanMCMC](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
+    [CmdStanMLE](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
+    [CmdStanLaplace](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md),
+    [CmdStanVB](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
     or
-    [CmdStanVB](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md)
+    [CmdStanPathfinder](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
     fitted model object.
 
   - A
     [posterior::draws_array](https://mc-stan.org/posterior/reference/draws_array.html)
-    (for MCMC) or
+    or
     [posterior::draws_matrix](https://mc-stan.org/posterior/reference/draws_matrix.html)
-    (for VB) object returned by CmdStanR's
+    object returned by CmdStanR's
     [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
     method.
 
   - A character vector of paths to CmdStan CSV output files.
+
+  For a
+  [CmdStanMLE](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
+  object, optimization supplies one point estimate, so generated
+  quantities that use RNG functions produce only one simulation. For
+  [CmdStanLaplace](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md),
+  [CmdStanVB](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
+  and
+  [CmdStanPathfinder](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
+  objects, generated quantities are evaluated once per approximate draw.
 
   NOTE: if you plan on making many calls to `$generate_quantities()`
   then the most efficient option is to pass the paths of the CmdStan CSV
@@ -235,7 +248,7 @@ fit_mcmc <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
 #> 
 #> All 4 chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.5 seconds.
+#> Total execution time: 0.4 seconds.
 #> 
 
 # stan program for standalone generated quantities
@@ -264,7 +277,7 @@ fit_gq <- mod_gq$generate_quantities(fit_mcmc, data = data, seed = 123)
 #> 
 #> All 4 chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.5 seconds.
+#> Total execution time: 0.4 seconds.
 str(fit_gq$draws())
 #>  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 1 1 0 1 1 0 1 ...
 #>  - attr(*, "dimnames")=List of 3

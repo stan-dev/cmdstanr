@@ -95,11 +95,16 @@ based on previously fitted parameters.</p>
 
 <dl><dt id="arg-fitted-params">fitted_params<a class="anchor" aria-label="anchor" href="#arg-fitted-params"></a></dt>
 <dd><p>(multiple options) The parameter draws to use. One of
-the following:</p><ul><li><p>A <a href="CmdStanMCMC.html">CmdStanMCMC</a> or <a href="CmdStanVB.html">CmdStanVB</a> fitted model object.</p></li>
-<li><p>A <a href="https://mc-stan.org/posterior/reference/draws_array.html" class="external-link">posterior::draws_array</a> (for MCMC) or <a href="https://mc-stan.org/posterior/reference/draws_matrix.html" class="external-link">posterior::draws_matrix</a> (for
-VB) object returned by CmdStanR's <code><a href="fit-method-draws.html">$draws()</a></code> method.</p></li>
+the following:</p><ul><li><p>A <a href="CmdStanMCMC.html">CmdStanMCMC</a>, <a href="CmdStanMLE.html">CmdStanMLE</a>, <a href="CmdStanLaplace.html">CmdStanLaplace</a>, <a href="CmdStanVB.html">CmdStanVB</a>, or
+<a href="CmdStanPathfinder.html">CmdStanPathfinder</a> fitted model object.</p></li>
+<li><p>A <a href="https://mc-stan.org/posterior/reference/draws_array.html" class="external-link">posterior::draws_array</a> or <a href="https://mc-stan.org/posterior/reference/draws_matrix.html" class="external-link">posterior::draws_matrix</a> object returned by
+CmdStanR's <code><a href="fit-method-draws.html">$draws()</a></code> method.</p></li>
 <li><p>A character vector of paths to CmdStan CSV output files.</p></li>
-</ul><p>NOTE: if you plan on making many calls to <code>$generate_quantities()</code> then the
+</ul><p>For a <a href="CmdStanMLE.html">CmdStanMLE</a> object, optimization supplies one point estimate, so
+generated quantities that use RNG functions produce only one simulation.
+For <a href="CmdStanLaplace.html">CmdStanLaplace</a>, <a href="CmdStanVB.html">CmdStanVB</a>, and <a href="CmdStanPathfinder.html">CmdStanPathfinder</a> objects, generated
+quantities are evaluated once per approximate draw.</p>
+<p>NOTE: if you plan on making many calls to <code>$generate_quantities()</code> then the
 most efficient option is to pass the paths of the CmdStan CSV output files
 (this avoids CmdStanR having to rewrite the draws contained in the fitted
 model object to CSV each time). If you no longer have the CSV files you can
@@ -262,7 +267,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> All 4 chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.5 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.4 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># stan program for standalone generated quantities</span></span></span>
@@ -291,7 +296,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> All 4 chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.5 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.4 seconds.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">fit_gq</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 1 1 0 1 1 0 1 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  - attr(*, "dimnames")=List of 3</span>
