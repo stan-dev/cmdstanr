@@ -15,9 +15,6 @@ cmdstan_diagnose()
 \item{flags}{An optional character vector of flags (e.g.
 \code{flags = c("--sig_figs=1")}).}
 }
-\value{
-A named list produced by \code{\link[processx:run]{processx::run()}}, returned invisibly.
-}
 \description{
 Run CmdStan's \code{stansummary} and \code{diagnose} utilities. These are
 documented in the CmdStan Guide:
