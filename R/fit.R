@@ -2330,10 +2330,6 @@ CmdStanPathfinder <- R6::R6Class(
   )
 )
 
-#' @rdname fit-method-lp
-lp_approx <- function() {
-  as.numeric(self$draws()[, "lp_approx__"])
-}
 CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 
 
