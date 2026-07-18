@@ -229,9 +229,8 @@ adaptation interval.}
 sampler generates a new sample without changing the current state of the
 Markov chain; only generated quantities may change. This can be useful
 when, for example, trying to generate pseudo-data using the generated
-quantities block. If the parameters block is empty then using
-\code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
-\code{parallel_chains} arguments will be set to \code{1}.}
+quantities block. For CmdStan versions before 2.36, \code{fixed_param = TRUE}
+is mandatory if the parameters block is empty.}
 
 \item{sig_figs}{(positive integer) The number of significant figures used
 when storing the output values. By default, CmdStan represent the output
