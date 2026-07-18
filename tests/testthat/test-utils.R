@@ -138,6 +138,33 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
 
 # misc --------------------------------------------------------------------
 
+test_that("copy_temp_files retains sources if any copy fails", {
+  source_dir <- withr::local_tempdir()
+  destination_dir <- withr::local_tempdir()
+  source_paths <- file.path(source_dir, c("one.csv", "two.csv"))
+  writeLines("one", source_paths[1])
+  writeLines("two", source_paths[2])
+  # Simulate a partial copy failure without relying on platform-specific file
+  # permissions. The original binding is restored at the end of the test.
+  local_mocked_bindings(
+    file.copy = function(...) c(TRUE, FALSE),
+    .package = "base"
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    copy_temp_files(
+      current_paths = source_paths,
+      new_dir = destination_dir,
+      new_basename = "output",
+      ids = 1:2,
+      timestamp = FALSE,
+      random = FALSE
+    )
+  )
+  expect_identical(file.exists(source_paths), c(TRUE, TRUE))
+})
+
 test_that("repair_path() fixes slashes", {
   # all slashes should be single "/", and no trailing slash
   expect_equal(repair_path("a//b\\c/"), "a/b/c")

@@ -70,9 +70,10 @@ included? The default is \code{FALSE.}}
 }
 \value{
 The \verb{$save_*} methods print a message with the new file paths and (invisibly)
-return a character vector of the new paths (or \code{NA} for any that couldn't be
-copied). They also have the side effect of setting the internal paths in the
-fitted model object to the new paths.
+return a character vector of the new paths. If any file cannot be copied then
+the method errors and no original files are removed. The methods also have
+the side effect of setting the internal paths in the fitted model object to
+the new paths.
 
 The methods \emph{without} the \code{save_} prefix return character vectors of file
 paths without moving any files.
