@@ -1905,13 +1905,16 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
-#'   The name "MLE" (used for historical reasons) is a bit misleading since this
-#'   object will contain parameter estimates corresponding to either a mode in
-#'   the constrained parameter space _or_ the unconstrained parameter space,
-#'   depending on the value of the `jacobian` argument when the model is fit
-#'   (and whether the model has constrained parameters). See
-#'   [`$optimize()`][model-method-optimize] and the CmdStan User's Guide for
-#'   more details.
+#'   Following CmdStan's terminology, the object contains an MLE if optimization
+#'   was run with `jacobian=FALSE` and a MAP estimate if it was run with
+#'   `jacobian=TRUE`. The name "MLE" is retained for historical reasons. More
+#'   precisely, the estimates correspond to a mode in either the constrained
+#'   parameter space or the unconstrained parameter space, depending on the
+#'   value of `jacobian` (and whether the model has constrained parameters).
+#'   The `jacobian` argument does not control whether prior terms are included;
+#'   all contributions to the Stan program's target are included under either
+#'   setting. See [`$optimize()`][model-method-optimize] and the CmdStan User's
+#'   Guide for more details.
 #'
 #' @section Methods: `CmdStanMLE` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.
@@ -2003,11 +2006,13 @@ CmdStanMLE <- R6::R6Class(
 #'   which is available via the [`$lp()`][fit-method-lp] method and also
 #'   included in the [`$draws()`][fit-method-draws] method.
 #'
-#'   For models with constrained parameters that are fit with `jacobian=TRUE`,
-#'   the `$mle()` method actually returns the maximum a posteriori (MAP)
-#'   estimate (posterior mode) rather than the MLE. See
-#'   [`$optimize()`][model-method-optimize] and the CmdStan User's Guide for
-#'   more details.
+#'   Following CmdStan's terminology, for models with constrained parameters
+#'   that are fit with `jacobian=TRUE`, this point estimate is called a maximum
+#'   a posteriori (MAP) estimate rather than an MLE. More precisely,
+#'   `jacobian=FALSE` finds a mode of the target in the constrained parameter
+#'   space and `jacobian=TRUE` finds a mode in the unconstrained parameter
+#'   space. See [`$optimize()`][model-method-optimize] and the CmdStan User's
+#'   Guide for more details.
 #'
 #' @param variables (character vector) The variables (parameters, transformed
 #'   parameters, and generated quantities) to include. If NULL (the default)

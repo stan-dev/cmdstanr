@@ -334,7 +334,8 @@ are called in a similar way to the `$sample()` method demonstrated above.
 
 ### Optimization
 
-We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
+Following CmdStan's terminology, we can find the (penalized) maximum likelihood
+estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
 ```{r optimize}
 fit_mle <- mod$optimize(data = data_list, seed = 123)
@@ -351,9 +352,10 @@ mcmc_hist(fit$draws("theta")) +
 ```
 
 For optimization, by default the mode is calculated without the Jacobian
-adjustment for constrained variables, which shifts the mode due to the change of
-variables. To include the Jacobian adjustment and obtain a maximum a posteriori
-(MAP) estimate set `jacobian=TRUE`. See the
+adjustment for constrained variables. Including the Jacobian adjustment by setting `jacobian=TRUE` produces a maximum a posteriori (MAP) estimate. More precisely, the default
+finds a mode of the target in the constrained parameter space, whereas
+`jacobian=TRUE` finds a mode of the corresponding density in the unconstrained
+space. See the
 [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
 section of the CmdStan User's Guide for more details.
 
@@ -369,11 +371,13 @@ fit_map <- mod$optimize(
 
 The [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 method produces a sample from a normal approximation centered at the mode of a
-distribution in the unconstrained space. If the mode is a MAP estimate, the
-samples provide an estimate of the mean and standard deviation of the posterior
-distribution. If the mode is the MLE, the sample provides an estimate of the
-standard error of the likelihood. Whether the mode is the MAP or MLE depends on
-the value of the `jacobian` argument when running optimization. See the
+distribution in the unconstrained space. Following CmdStan's terminology, if
+the mode is a MAP estimate, the draws provide an estimate of the mean and
+standard deviation of the posterior distribution. If the mode is an MLE, the
+draws provide an estimate of the standard error of the likelihood. Whether
+the mode is called MAP or MLE depends on the value of the `jacobian` argument
+when running optimization. The Laplace `jacobian` setting must match the setting
+used for optimization so that both use the same target density. See the
 [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
 chapter of the CmdStan User's Guide for more details.
 

@@ -159,7 +159,8 @@ for constrained parameters. The default is \code{TRUE}. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html}{Laplace Sampling}
 section of the CmdStan User's Guide for more details. If \code{mode} is not
 \code{NULL} then the value of \code{jacobian} must match the value used when
-optimization was originally run. If \code{mode} is \code{NULL} then the value of
+optimization was originally run so the mode and the Laplace approximation
+use the same target density. If \code{mode} is \code{NULL} then the value of
 \code{jacobian} specified here is used when running optimization.}
 
 \item{draws}{(positive integer) The number of draws to take.}
@@ -189,17 +190,22 @@ A \code{\link{CmdStanLaplace}} object.
 \description{
 The \verb{$laplace()} method of a \code{\link{CmdStanModel}} object produces a
 sample from a normal approximation centered at the mode of a distribution
-in the unconstrained space. If the mode is a maximum a posteriori (MAP)
-estimate, the samples provide an estimate of the mean and standard
-deviation of the posterior distribution. If the mode is a maximum
-likelihood estimate (MLE), the sample provides an estimate of the standard
-error of the likelihood. Whether the mode is the MAP or MLE depends on
-the value of the \code{jacobian} argument when running optimization. See the
+in the unconstrained space. Following CmdStan's terminology, if the mode is
+a maximum a posteriori (MAP) estimate, the samples provide an estimate of
+the mean and standard deviation of the posterior distribution. If the mode
+is a maximum likelihood estimate (MLE), the sample provides an estimate of
+the standard error of the likelihood. Whether the mode is called MAP or MLE
+depends on the value of the \code{jacobian} argument when running optimization.
+This terminology does not imply that \code{jacobian} controls whether prior
+terms are included; it controls the parameterization of the density, while
+the Stan program determines the contents of the target. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan.
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+default arguments. These values are also available via the
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
 \examples{
 \dontrun{

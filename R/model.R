@@ -1081,13 +1081,14 @@ CmdStanModel$set("public", name = "format", value = format)
 #' @description The `$sample()` method of a [`CmdStanModel`] object runs Stan's
 #'   main Markov chain Monte Carlo algorithm.
 #'
-#'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
-#'   for more details.
-#'
 #'   After model fitting any diagnostics specified via the `diagnostics`
 #'   argument will be checked and warnings will be printed if warranted.
+#'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @template model-sample-args
@@ -1378,27 +1379,31 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer to find a posterior mode. If the Jacobian adjustment is
-#'   not included (the default), the optimization returns parameter values that
-#'   correspond to a mode of the target in the constrained space (if such mode
-#'   exists). Thus this option is useful for any optimization where we want to
-#'   find the mode in the original constrained parameter space. If the Jacobian
-#'   adjustment is included, the optimization returns parameter values that
-#'   correspond to a mode in the unconstrained space. This is useful, for
-#'   example, if we want to make a distributional approximation of the posterior
-#'   at the mode (see, [Laplace sampling][model-method-laplace], for which the
-#'   Jacobian adjustment needs to be included for correct results). If the model
-#'   has only unconstrained parameters, there is no effect from including the
-#'   Jacobian. See the
+#'   Stan's optimizer. Following CmdStan's terminology, optimization without
+#'   the Jacobian adjustment (the default) returns a maximum likelihood estimate
+#'   (MLE), whereas optimization with the adjustment returns a maximum a
+#'   posteriori (MAP) estimate. More precisely, without the adjustment the
+#'   optimization finds a mode of the target in the original constrained
+#'   parameter space (if the mode exists), whereas with the adjustment it
+#'   finds a mode of the corresponding density in the unconstrained parameter
+#'   space.
+#'
+#'   The `jacobian` argument does not determine whether prior terms are
+#'   included. Every contribution to the Stan program's `target`, including
+#'   prior terms, is included under either setting. The MLE or MAP
+#'   interpretation therefore depends on both the contents of the target and the
+#'   parameterization. The Jacobian adjustment is particularly useful when
+#'   making a distributional approximation in the unconstrained space (see
+#'   [Laplace sampling][model-method-laplace]). If the model has only
+#'   unconstrained parameters, including the Jacobian has no effect. See the
 #'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/index.html)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the [CmdStan User’s
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
-#'   default arguments. The default values can also be obtained by checking the
-#'   metadata of an example model, e.g.,
-#'   `cmdstanr_example(method="optimize")$metadata()`.
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
@@ -1412,12 +1417,14 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
 #' @param jacobian (logical) Whether or not to use the Jacobian adjustment for
-#'   constrained variables. For historical reasons, the default is `FALSE`,
-#'   meaning optimization finds a mode of the target in the original constrained
-#'   parameter space. Setting it to `TRUE` finds a mode in the unconstrained
-#'   space. See the CmdStan User's Guide for more details. For use later with
-#'   [`$laplace()`][model-method-laplace] the `jacobian` argument should
-#'   typically be set to `TRUE`.
+#'   constrained variables. For historical reasons, the default is `FALSE`.
+#'   CmdStan refers to the estimates obtained with `FALSE` and `TRUE` as MLE and
+#'   MAP estimates, respectively. More precisely, `FALSE` finds a mode of the
+#'   target in the constrained parameter space and `TRUE` finds a mode in the
+#'   unconstrained space. This argument does not control whether prior terms are
+#'   included. See the **Description** section and the CmdStan User's Guide for
+#'   more details. For use later with [`$laplace()`][model-method-laplace], the
+#'   `jacobian` argument should typically be set to `TRUE`.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1520,17 +1527,23 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @description The `$laplace()` method of a [`CmdStanModel`] object produces a
 #'   sample from a normal approximation centered at the mode of a distribution
-#'   in the unconstrained space. If the mode is a maximum a posteriori (MAP)
-#'   estimate, the samples provide an estimate of the mean and standard
-#'   deviation of the posterior distribution. If the mode is a maximum
-#'   likelihood estimate (MLE), the sample provides an estimate of the standard
-#'   error of the likelihood. Whether the mode is the MAP or MLE depends on
-#'   the value of the `jacobian` argument when running optimization. See the
+#'   in the unconstrained space. Following CmdStan's terminology, if the mode is
+#'   a maximum a posteriori (MAP) estimate, the samples provide an estimate of
+#'   the mean and standard deviation of the posterior distribution. If the mode
+#'   is a maximum likelihood estimate (MLE), the sample provides an estimate of
+#'   the standard error of the likelihood. Whether the mode is called MAP or MLE
+#'   depends on the value of the `jacobian` argument when running optimization.
+#'   This terminology does not imply that `jacobian` controls whether prior
+#'   terms are included; it controls the parameterization of the density, while
+#'   the Stan program determines the contents of the target. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan.
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @inheritParams model-method-optimize
@@ -1553,7 +1566,8 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
 #'   section of the CmdStan User's Guide for more details. If `mode` is not
 #'   `NULL` then the value of `jacobian` must match the value used when
-#'   optimization was originally run. If `mode` is `NULL` then the value of
+#'   optimization was originally run so the mode and the Laplace approximation
+#'   use the same target density. If `mode` is `NULL` then the value of
 #'   `jacobian` specified here is used when running optimization.
 #'
 #' @return A [`CmdStanLaplace`] object.
@@ -1704,7 +1718,10 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan.
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
@@ -1839,7 +1856,10 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
@@ -1996,20 +2016,26 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #'   runs Stan's standalone generated quantities to obtain generated quantities
 #'   based on previously fitted parameters.
 #'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
+#'
 #' @inheritParams model-method-sample
 #' @param fitted_params (multiple options) The parameter draws to use. One of
 #'   the following:
 #'  * A [CmdStanMCMC] or [CmdStanVB] fitted model object.
 #'  * A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for
-#'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
+#'   VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
 #'
-#' NOTE: if you plan on making many calls to `$generate_quantities()` then the
-#' most efficient option is to pass the paths of the CmdStan CSV output files
-#' (this avoids CmdStanR having to rewrite the draws contained in the fitted
-#' model object to CSV each time). If you no longer have the CSV files you can
-#' use [draws_to_csv()] once to write them and then pass the resulting file
-#' paths to `$generate_quantities()` as many times as needed.
+#'   NOTE: if you plan on making many calls to `$generate_quantities()` then the
+#'   most efficient option is to pass the paths of the CmdStan CSV output files
+#'   (this avoids CmdStanR having to rewrite the draws contained in the fitted
+#'   model object to CSV each time). If you no longer have the CSV files you can
+#'   use [draws_to_csv()] once to write them and then pass the resulting file
+#'   paths to `$generate_quantities()` as many times as needed.
 #'
 #' @return A [`CmdStanGQ`] object.
 #'
@@ -2238,7 +2264,7 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 #' @description The `$cmdstan_defaults()` method of a [`CmdStanModel`]
 #'   object queries the compiled model binary for the default argument
 #'   values used by a given inference method. The returned list uses
-#'   cmdstanr-style argument names (e.g., `iter_sampling` instead of
+#'   CmdStanR-style argument names (e.g., `iter_sampling` instead of
 #'   CmdStan's `num_samples`).
 #'
 #'   The model must be compiled before calling this method.
@@ -2247,7 +2273,7 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 #'   retrieve. One of `"sample"`, `"optimize"`, `"variational"`,
 #'   `"pathfinder"`, or `"laplace"`.
 #' @return A named list of default argument values for the specified
-#'   method, with cmdstanr-style argument names.
+#'   method, with CmdStanR-style argument names.
 #'
 #' @template seealso-docs
 #'

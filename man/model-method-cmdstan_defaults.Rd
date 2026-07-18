@@ -16,13 +16,13 @@ retrieve. One of \code{"sample"}, \code{"optimize"}, \code{"variational"},
 }
 \value{
 A named list of default argument values for the specified
-method, with cmdstanr-style argument names.
+method, with CmdStanR-style argument names.
 }
 \description{
 The \verb{$cmdstan_defaults()} method of a \code{\link{CmdStanModel}}
 object queries the compiled model binary for the default argument
 values used by a given inference method. The returned list uses
-cmdstanr-style argument names (e.g., \code{iter_sampling} instead of
+CmdStanR-style argument names (e.g., \code{iter_sampling} instead of
 CmdStan's \code{num_samples}).
 
 The model must be compiled before calling this method.
