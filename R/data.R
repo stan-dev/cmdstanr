@@ -333,7 +333,8 @@ draws_to_csv <- function(draws,
 #'
 #' @noRd
 #' @param fitted_params Paths to CSV files produced by CmdStan sampling,
-#'  a CmdStanMCMC or CmdStanVB object, a draws_array or draws_matrix.
+#'  a CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, or CmdStanPathfinder
+#'  object, a draws_array or draws_matrix.
 #' @return Paths to CSV files containing parameter values.
 #'
 process_fitted_params <- function(fitted_params) {
@@ -353,7 +354,10 @@ process_fitted_params <- function(fitted_params) {
       fitted_params$sampler_diagnostics()
     )
     paths <- draws_to_csv(draws, sampler_diagnostics)
-  } else if (checkmate::test_r6(fitted_params, "CmdStanVB")) {
+  } else if (checkmate::test_r6(fitted_params, "CmdStanMLE") ||
+             checkmate::test_r6(fitted_params, "CmdStanLaplace") ||
+             checkmate::test_r6(fitted_params, "CmdStanVB") ||
+             checkmate::test_r6(fitted_params, "CmdStanPathfinder")) {
     draws <- tryCatch(
       fitted_params$draws(),
       error = function(cond) {
@@ -368,7 +372,8 @@ process_fitted_params <- function(fitted_params) {
   } else {
     stop(
       "'fitted_params' must be a list of paths to CSV files, ",
-      "a CmdStanMCMC/CmdStanVB object, ",
+      "a CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, or ",
+      "CmdStanPathfinder object, ",
       "a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)
   }
   paths
