@@ -41,7 +41,7 @@ have their own (linked) documentation pages.
 |  |  |
 |----|----|
 | **Method** | **Description** |
-| [`$time()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-time.md) | Report the total run time. |
+| [`$time()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-time.md) | Report total and process-specific run times. |
 | [`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md) | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 | [`$return_codes()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-return_codes.md) | Return the return codes from the CmdStan runs. |
 
@@ -119,13 +119,9 @@ mod_gq <- cmdstan_model(gq_program)
 fit_gq <- mod_gq$generate_quantities(fit_mcmc, data = data, seed = 123)
 #> Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...
 #> 
-#> Chain 1  Elapsed Time: 0.002 seconds (Generated Quantities) 
 #> Chain 1 finished in 0.0 seconds.
-#> Chain 2  Elapsed Time: 0.002 seconds (Generated Quantities) 
 #> Chain 2 finished in 0.0 seconds.
-#> Chain 3  Elapsed Time: 0.002 seconds (Generated Quantities) 
 #> Chain 3 finished in 0.0 seconds.
-#> Chain 4  Elapsed Time: 0.002 seconds (Generated Quantities) 
 #> Chain 4 finished in 0.0 seconds.
 #> 
 #> All 4 chains finished successfully.

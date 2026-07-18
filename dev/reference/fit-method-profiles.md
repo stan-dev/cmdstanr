@@ -72,32 +72,32 @@ fit <- mod_mcmc$sample(data = data, seed = 123, refresh = 0)
 fit$profiles()
 #> [[1]]
 #>         name       thread_id  total_time forward_time reverse_time chain_stack
-#> 1 likelihood 140369575929664 0.000777450  0.000550438  0.000227012        6721
-#> 2         gq 140369575929664 0.000174499  0.000174499  0.000000000           0
+#> 1 likelihood 140193339627328 0.000747497  0.000529639  0.000217858        6721
+#> 2         gq 140193339627328 0.000176621  0.000176621  0.000000000           0
 #>   no_chain_stack autodiff_calls no_autodiff_calls
 #> 1           6721           6721                 1
 #> 2              0              0              1000
 #> 
 #> [[2]]
 #>         name       thread_id  total_time forward_time reverse_time chain_stack
-#> 1         gq 139981614606144 0.000166059  0.000166059  0.000000000           0
-#> 2 likelihood 139981614606144 0.000763087  0.000553256  0.000209831        6792
+#> 1         gq 140176343979840 0.000172500  0.000172500  0.000000000           0
+#> 2 likelihood 140176343979840 0.000748735  0.000528139  0.000220596        6792
 #>   no_chain_stack autodiff_calls no_autodiff_calls
 #> 1              0              0              1000
 #> 2           6792           6792                 1
 #> 
 #> [[3]]
 #>         name       thread_id  total_time forward_time reverse_time chain_stack
-#> 1 likelihood 140500106295104 0.000748755  0.000538973  0.000209782        6797
-#> 2         gq 140500106295104 0.000168812  0.000168812  0.000000000           0
+#> 1         gq 139950545205056 0.000176468  0.000176468  0.000000000           0
+#> 2 likelihood 139950545205056 0.000749874  0.000528963  0.000220911        6797
 #>   no_chain_stack autodiff_calls no_autodiff_calls
-#> 1           6797           6797                 1
-#> 2              0              0              1000
+#> 1              0              0              1000
+#> 2           6797           6797                 1
 #> 
 #> [[4]]
 #>         name       thread_id  total_time forward_time reverse_time chain_stack
-#> 1 likelihood 139985878284096 0.000770664  0.000554699  0.000215965        6979
-#> 2         gq 139985878284096 0.000197538  0.000197538  0.000000000           0
+#> 1 likelihood 139646793942848 0.000768085  0.000541679  0.000226406        6979
+#> 2         gq 139646793942848 0.000173267  0.000173267  0.000000000           0
 #>   no_chain_stack autodiff_calls no_autodiff_calls
 #> 1           6979           6979                 1
 #> 2              0              0              1000

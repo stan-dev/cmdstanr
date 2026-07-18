@@ -34,6 +34,12 @@
   use `#include`
   ([\#1094](https://github.com/stan-dev/cmdstanr/issues/1094)).
 
+- `$generate_quantities()` now reports per-process execution times with
+  CmdStan 2.39 or newer, and
+  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+  returns these times from standalone generated quantities CSV files.
+  ([\#1168](https://github.com/stan-dev/cmdstanr/issues/1168))
+
 - [`laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)
   no longer overwrites the internally generated optimizer CSV when
   `mode = NULL` and `output_basename` is supplied. The internally

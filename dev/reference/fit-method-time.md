@@ -1,10 +1,11 @@
 # Report timing of CmdStan runs
 
-Report the run time in seconds. For MCMC additional information is
-provided about the run times of individual chains and the warmup and
-sampling phases. For Laplace approximation the time only include the
-time for drawing the approximate sample and does not include the time
-taken to run the `$optimize()` method.
+Report the run time in seconds. For MCMC and standalone generated
+quantities additional information is provided about the run times of
+individual chains or processes. For MCMC, timing information is also
+provided for the warmup and sampling phases. For Laplace approximation
+the time only includes the time for drawing the approximate sample and
+does not include the time taken to run the `$optimize()` method.
 
 ## Usage
 
@@ -16,12 +17,18 @@ time()
 
 A list with elements
 
-- `total`: (scalar) The total run time. For MCMC this may be different
-  than the sum of the chain run times if parallelization was used.
+- `total`: (scalar) The total run time. For MCMC and standalone
+  generated quantities this may differ from the sum of the individual
+  run times if parallelization was used.
 
-- `chains`: (data frame) For MCMC only, timing info for the individual
-  chains. The data frame has columns `"chain_id"`, `"warmup"`,
-  `"sampling"`, and `"total"`.
+- `chains`: (data frame) For MCMC and standalone generated quantities,
+  timing information for the individual chains. For MCMC the data frame
+  has columns `"chain_id"`, `"warmup"`, `"sampling"`, and `"total"`. For
+  standalone generated quantities, each row corresponds to one
+  fitted-parameter CSV file and one CmdStan process, and the data frame
+  has columns `"chain_id"` and `"total"`. Variational or optimization
+  input therefore produces one row. With CmdStan versions before 2.39,
+  standalone generated quantities process times are reported as zero.
 
 ## See also
 
@@ -37,35 +44,35 @@ A list with elements
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 fit_mcmc$time()
 #> $total
-#> [1] 0.4771309
+#> [1] 0.4927208
 #> 
 #> $chains
 #>   chain_id warmup sampling total
-#> 1        1  0.019    0.057 0.076
-#> 2        2  0.019    0.056 0.075
-#> 3        3  0.021    0.056 0.077
-#> 4        4  0.019    0.055 0.074
+#> 1        1  0.019    0.056 0.075
+#> 2        2  0.019    0.055 0.074
+#> 3        3  0.020    0.054 0.074
+#> 4        4  0.019    0.054 0.073
 #> 
 
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 fit_vb$time()
 #> $total
-#> [1] 0.1139305
+#> [1] 0.1158617
 #> 
 
 fit_mle <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
 fit_mle$time()
 #> $total
-#> [1] 0.1129968
+#> [1] 0.1144905
 #> 
 
 # use fit_mle to draw samples from laplace approximation
 fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_mle)
 fit_laplace$time() # just time for drawing sample not for running optimize
 #> $total
-#> [1] 0.112927
+#> [1] 0.1138875
 #> 
 fit_laplace$time()$total + fit_mle$time()$total # total time
-#> [1] 0.2259238
+#> [1] 0.2283781
 # }
 ```

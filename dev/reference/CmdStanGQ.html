@@ -90,7 +90,7 @@ all of which have their own (linked) documentation pages.</p><div class="section
 
 <div class="section">
 <h3 id="report-run-times-console-output-return-codes">Report run times, console output, return codes<a class="anchor" aria-label="anchor" href="#report-run-times-console-output-return-codes"></a></h3>
-<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code><a href="fit-method-time.html">$time()</a></code></td><td>Report the total run time.</td></tr><tr><td><code><a href="fit-method-output.html">$output()</a></code></td><td>Return the stdout and stderr of all chains or pretty print the output for a single chain.</td></tr><tr><td><code><a href="fit-method-return_codes.html">$return_codes()</a></code></td><td>Return the return codes from the CmdStan runs.</td></tr></table></div>
+<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code><a href="fit-method-time.html">$time()</a></code></td><td>Report total and process-specific run times.</td></tr><tr><td><code><a href="fit-method-output.html">$output()</a></code></td><td>Return the stdout and stderr of all chains or pretty print the output for a single chain.</td></tr><tr><td><code><a href="fit-method-return_codes.html">$return_codes()</a></code></td><td>Return the return codes from the CmdStan runs.</td></tr></table></div>
 
     </div>
     <div class="section level2">
@@ -160,13 +160,9 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="va">fit_gq</span> <span class="op">&lt;-</span> <span class="va">mod_gq</span><span class="op">$</span><span class="fu">generate_quantities</span><span class="op">(</span><span class="va">fit_mcmc</span>, data <span class="op">=</span> <span class="va">data</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1  Elapsed Time: 0.002 seconds (Generated Quantities) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1 finished in 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2  Elapsed Time: 0.002 seconds (Generated Quantities) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2 finished in 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 3  Elapsed Time: 0.002 seconds (Generated Quantities) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 3 finished in 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 4  Elapsed Time: 0.002 seconds (Generated Quantities) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 4 finished in 0.0 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> All 4 chains finished successfully.</span>

@@ -257,18 +257,14 @@ mod_gq <- cmdstan_model(gq_program)
 fit_gq <- mod_gq$generate_quantities(fit_mcmc, data = data, seed = 123)
 #> Running standalone generated quantities after 4 MCMC chains, 1 chain at a time ...
 #> 
-#> Chain 1  Elapsed Time: 0.002 seconds (Generated Quantities) 
 #> Chain 1 finished in 0.0 seconds.
-#> Chain 2  Elapsed Time: 0.002 seconds (Generated Quantities) 
 #> Chain 2 finished in 0.0 seconds.
-#> Chain 3  Elapsed Time: 0.002 seconds (Generated Quantities) 
 #> Chain 3 finished in 0.0 seconds.
-#> Chain 4  Elapsed Time: 0.002 seconds (Generated Quantities) 
 #> Chain 4 finished in 0.0 seconds.
 #> 
 #> All 4 chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.4 seconds.
+#> Total execution time: 0.5 seconds.
 str(fit_gq$draws())
 #>  'draws_array' int [1:1000, 1:4, 1:10] 0 0 0 1 1 0 1 1 0 1 ...
 #>  - attr(*, "dimnames")=List of 3
