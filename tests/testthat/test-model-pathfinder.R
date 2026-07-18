@@ -103,6 +103,10 @@ expect_pathfinder_output <- function(object, num_chains = NULL) {
 test_that("Pathfinder Runs", {
   expect_pathfinder_output(fit <- mod$pathfinder(data=data_list, seed=1234, refresh = 0))
   expect_s3_class(fit, "CmdStanPathfinder")
+  expect_equal(
+    posterior::variables(fit$draws()),
+    c("lp__", "lp_approx__", "path__", "theta")
+  )
 })
 
 test_that("pathfinder() method works with data files", {

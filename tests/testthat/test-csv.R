@@ -392,6 +392,25 @@ test_that("read_cmdstan_csv() works for laplace", {
   expect_equal(posterior::variables(csv_output_5$draws), c("alpha", "beta[2]"))
 })
 
+test_that("read_cmdstan_csv() works for pathfinder", {
+  csv_output <- read_cmdstan_csv(fit_logistic_pathfinder$output_files())
+  expected_variables <- c(
+    "lp__", "lp_approx__", "path__", "alpha",
+    "beta[1]", "beta[2]", "beta[3]"
+  )
+  expect_equal(posterior::variables(csv_output$draws), expected_variables)
+  expect_equal(csv_output$metadata$variables, expected_variables)
+
+  filtered_output <- read_cmdstan_csv(
+    fit_logistic_pathfinder$output_files(),
+    variables = c("path__", "lp_approx__")
+  )
+  expect_equal(
+    posterior::variables(filtered_output$draws),
+    c("path__", "lp_approx__")
+  )
+})
+
 
 test_that("read_cmdstan_csv() works for generate_quantities", {
   csv_output_1 <- read_cmdstan_csv(fit_gq$output_files())
