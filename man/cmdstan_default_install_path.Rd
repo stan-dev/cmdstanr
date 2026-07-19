@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{cmdstan_default_install_path}
 \alias{cmdstan_default_install_path}
-\title{Path to where  \code{\link[=install_cmdstan]{install_cmdstan()}} with default settings installs CmdStan.}
+\title{Path to where  \code{install_cmdstan()} with default settings installs CmdStan.}
 \usage{
 cmdstan_default_install_path(wsl = FALSE)
 }
@@ -13,6 +13,10 @@ cmdstan_default_install_path(wsl = FALSE)
 The installation path.
 }
 \description{
-Path to where  \code{\link[=install_cmdstan]{install_cmdstan()}} with default settings installs CmdStan.
+Path to where  \code{install_cmdstan()} with default settings installs CmdStan.
+}
+\seealso{
+\code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=set_cmdstan_path]{set_cmdstan_path()}}, and
+\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}.
 }
 \keyword{internal}

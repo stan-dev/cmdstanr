@@ -102,6 +102,10 @@
 #' information not contained in the CSV files. Calling an unavailable method
 #' produces an informative error.
 #'
+#' @seealso [draws_to_csv()] for creating compatible CSV files and
+#'   [`$output_files()`][fit-method-output_files] for locating files created by
+#'   CmdStanR.
+#'
 #' @examples
 #' \dontrun{
 #' # Generate some CSV files to use for demonstration

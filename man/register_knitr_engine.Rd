@@ -49,3 +49,6 @@ specify \code{engine = "cmdstan"} in the chunk options after registering the
 \item \href{https://bookdown.org/yihui/rmarkdown/language-engines.html#stan}{knitr's built-in Stan language engine}
 }
 }
+\seealso{
+\code{\link[=eng_cmdstan]{eng_cmdstan()}}.
+}

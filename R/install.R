@@ -67,6 +67,9 @@
 #' @param wsl (logical) Should CmdStan be installed and run through the Windows
 #'  Subsystem for Linux (WSL). The default is `FALSE`.
 #'
+#' @seealso [set_cmdstan_path()], [cmdstan_default_install_path()], and
+#'   [cmdstan_default_path()].
+#'
 #' @examples
 #' \dontrun{
 #' check_cmdstan_toolchain()

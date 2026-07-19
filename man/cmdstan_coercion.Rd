@@ -39,3 +39,7 @@ These are generic functions intended to primarily be used by developers of
 packages that interface with on CmdStanR. Developers can define methods on
 top of these generics to coerce objects into CmdStanR's fitted model objects.
 }
+\seealso{
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}}, \link{CmdStanMCMC}, \link{CmdStanMLE}, \link{CmdStanLaplace},
+\link{CmdStanVB}, \link{CmdStanPathfinder}, \link{CmdStanGQ}, and \link{CmdStanDiagnose}.
+}

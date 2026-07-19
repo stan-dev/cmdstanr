@@ -19,4 +19,8 @@ and native installs with the same version then the WSL is preferred.
 Otherwise, the most recent release is chosen, regardless of whether it is
 native or WSL.
 }
+\seealso{
+\code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=set_cmdstan_path]{set_cmdstan_path()}}, and
+\code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}.
+}
 \keyword{internal}

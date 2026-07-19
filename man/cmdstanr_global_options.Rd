@@ -43,3 +43,6 @@ JSON file when running MCMC? The default is \code{FALSE}.
 tree and extra information when running CmdStan? The default is \code{FALSE}.
 }
 }
+\seealso{
+\code{\link[=cmdstan_model]{cmdstan_model()}}, \code{\link[=install_cmdstan]{install_cmdstan()}}, and \code{\link[=write_stan_file]{write_stan_file()}}.
+}

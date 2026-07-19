@@ -52,3 +52,6 @@ posterior::as_draws_list(fit)
 }
 
 }
+\seealso{
+\code{\link[=fit-method-draws]{$draws()}} and \code{\link[posterior:as_draws]{posterior::as_draws()}}.
+}

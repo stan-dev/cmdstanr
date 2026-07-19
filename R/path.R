@@ -38,6 +38,9 @@
 #' It is always possible to change the path after loading the package using
 #' `set_cmdstan_path(path)`.
 #'
+#' @seealso [install_cmdstan()], [cmdstan_default_install_path()], and
+#'   [cmdstan_default_path()].
+#'
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
     env_path <- resolve_cmdstan_path_from_env()
@@ -198,12 +201,14 @@ resolve_cmdstan_path_from_env <- function() {
   path
 }
 
-#' Path to where  [install_cmdstan()] with default settings installs CmdStan.
+#' Path to where  `install_cmdstan()` with default settings installs CmdStan.
 #'
 #' @keywords internal
 #' @param wsl Return the directory for WSL installations?
 #' @return The installation path.
 #' @export
+#' @seealso [install_cmdstan()], [set_cmdstan_path()], and
+#'   [cmdstan_default_path()].
 cmdstan_default_install_path <- function(wsl = FALSE) {
   if (wsl) {
     file.path(paste0(wsl_dir_prefix(wsl = TRUE), wsl_home_dir()), ".cmdstan")
@@ -237,6 +242,9 @@ home_path <- function() {
 #' @param dir Path to a custom install folder with CmdStan installations.
 #' @return Path to the CmdStan installation with the most recent release
 #'   version, or `NULL` if no installation found.
+#'
+#' @seealso [install_cmdstan()], [set_cmdstan_path()], and
+#'   [cmdstan_default_install_path()].
 #'
 cmdstan_default_path <- function(dir = NULL) {
   if (!is.null(dir)) {

@@ -59,3 +59,7 @@ print(draws_csv_files)
 }
 
 }
+\seealso{
+\code{\link[=model-method-generate-quantities]{$generate_quantities()}} for
+using the generated CSV files.
+}

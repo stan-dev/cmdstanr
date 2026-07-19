@@ -24,6 +24,9 @@
 #' @return
 #' The fitted model object returned by the selected `method`.
 #'
+#' @seealso [cmdstan_model()] for fitting your own Stan programs and
+#'   [print_stan_file()] for displaying Stan source files.
+#'
 #' @examples
 #' \dontrun{
 #' print_example_program("logistic")

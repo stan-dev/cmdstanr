@@ -241,6 +241,9 @@ any_zero_dims <- function(data) {
 #' The column names line is finally followed by the values of the draws in the same
 #' order as the column names.
 #'
+#' @seealso [`$generate_quantities()`][model-method-generate-quantities] for
+#'   using the generated CSV files.
+#'
 #' @examples
 #' \dontrun{
 #' draws <- posterior::example_draws()

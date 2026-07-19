@@ -72,3 +72,7 @@ cmdstanr_example("schools", "optimize", quiet = FALSE)
 }
 
 }
+\seealso{
+\code{\link[=cmdstan_model]{cmdstan_model()}} for fitting your own Stan programs and
+\code{\link[=print_stan_file]{print_stan_file()}} for displaying Stan source files.
+}

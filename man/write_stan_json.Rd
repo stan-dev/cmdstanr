@@ -70,3 +70,6 @@ write_stan_json(data, file)
 cat(readLines(file), sep = "\n")
 
 }
+\seealso{
+\code{\link{CmdStanModel}} for model fitting methods that accept JSON data.
+}

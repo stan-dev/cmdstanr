@@ -10,6 +10,9 @@
 #' @return An object of the CmdStan fitted-model class corresponding to the
 #'   generic, as returned by the dispatched method.
 #'
+#' @seealso [as_cmdstan_fit()], [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace],
+#'   [CmdStanVB], [CmdStanPathfinder], [CmdStanGQ], and [CmdStanDiagnose].
+#'
 #' @name cmdstan_coercion
 NULL
 

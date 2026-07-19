@@ -463,6 +463,8 @@ create_draws_format <- function(format, ...) {
 #' @export
 #' @param x A [CmdStanMCMC] object.
 #' @return An `mcmc.list` object compatible with the \pkg{coda} package.
+#' @seealso [`$draws()`][fit-method-draws], [CmdStanMCMC], and
+#'   [posterior::as_draws()].
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example()

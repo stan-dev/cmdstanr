@@ -27,3 +27,6 @@ for an example.
 knitr::knit_engines$set(stan = cmdstanr::eng_cmdstan)
 }
 }
+\seealso{
+\code{\link[=register_knitr_engine]{register_knitr_engine()}}.
+}
