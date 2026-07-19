@@ -35,7 +35,7 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 \arguments{
 \item{dir}{(string) The path to the directory in which to install CmdStan.
 The default is to install it in a directory called \code{.cmdstan} within the
-user's home directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstan")}).}
+user's home directory (i.e., \code{file.path(Sys.getenv("HOME"), ".cmdstan")}).}
 
 \item{cores}{(integer) The number of CPU cores to use to parallelize building
 CmdStan and speed up installation. If \code{cores} is not specified then the
@@ -63,13 +63,13 @@ is \code{NULL}, which downloads the latest stable release from
 
 \item{release_url}{(string) The URL for the specific CmdStan release or
 release candidate to install. See \url{https://github.com/stan-dev/cmdstan/releases}.
-The URL should point to the tarball (\code{.tar.gz.} file) itself, e.g.,
+The URL should point to the tarball (\code{.tar.gz} file) itself, e.g.,
 \code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"}.
 If both \code{version} and \code{release_url} are specified then \code{version} will be used.}
 
 \item{release_file}{(string) A file path to a CmdStan release tar.gz file
 downloaded from the releases page: \url{https://github.com/stan-dev/cmdstan/releases}.
-For example: \verb{release_file=""./cmdstan-2.35.0.tar.gz"}. If \code{release_file} is
+For example: \code{release_file="./cmdstan-2.35.0.tar.gz"}. If \code{release_file} is
 specified then both \code{release_url} and \code{version} will be ignored.}
 
 \item{cpp_options}{(list) Any makefile flags/variables to be written to
@@ -77,7 +77,7 @@ the \code{make/local} file. For example, \code{list("CXX" = "clang++")} will for
 the use of clang for compilation.}
 
 \item{check_toolchain}{(logical) Should \code{install_cmdstan()} attempt to check
-that the required toolchain is installed and properly configured. The
+that the required toolchain is installed and properly configured? The
 default is \code{TRUE}.}
 
 \item{wsl}{(logical) Should CmdStan be installed and run through the Windows
