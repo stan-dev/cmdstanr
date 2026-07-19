@@ -1,5 +1,6 @@
 # cmdstanr (development version)
 
+* The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
