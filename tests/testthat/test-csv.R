@@ -398,16 +398,20 @@ test_that("read_cmdstan_csv() works for pathfinder", {
     "lp__", "lp_approx__", "path__", "alpha",
     "beta[1]", "beta[2]", "beta[3]"
   )
+  if (cmdstan_version() < "2.37.0") {
+    # the path__ column was added to pathfinder output in CmdStan 2.37
+    expected_variables <- setdiff(expected_variables, "path__")
+  }
   expect_equal(posterior::variables(csv_output$draws), expected_variables)
   expect_equal(csv_output$metadata$variables, expected_variables)
 
   filtered_output <- read_cmdstan_csv(
     fit_logistic_pathfinder$output_files(),
-    variables = c("path__", "lp_approx__")
+    variables = c("lp_approx__", "lp__")
   )
   expect_equal(
     posterior::variables(filtered_output$draws),
-    c("path__", "lp_approx__")
+    c("lp_approx__", "lp__")
   )
 })
 

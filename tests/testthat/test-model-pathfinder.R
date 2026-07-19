@@ -103,10 +103,12 @@ expect_pathfinder_output <- function(object, num_chains = NULL) {
 test_that("Pathfinder Runs", {
   expect_pathfinder_output(fit <- mod$pathfinder(data=data_list, seed=1234, refresh = 0))
   expect_s3_class(fit, "CmdStanPathfinder")
-  expect_equal(
-    posterior::variables(fit$draws()),
-    c("lp__", "lp_approx__", "path__", "theta")
-  )
+  expected_variables <- c("lp__", "lp_approx__", "path__", "theta")
+  if (cmdstan_version() < "2.37.0") {
+    # the path__ column was added to pathfinder output in CmdStan 2.37
+    expected_variables <- setdiff(expected_variables, "path__")
+  }
+  expect_equal(posterior::variables(fit$draws()), expected_variables)
 })
 
 test_that("pathfinder() method works with data files", {
