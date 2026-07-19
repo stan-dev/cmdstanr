@@ -20,7 +20,9 @@ using the \code{\link[=fit-method-summary]{$print()}} method. The default is 10.
 \item \code{cmdstanr_print_line_numbers}: Should line numbers be included when
 printing a Stan program? The default is \code{FALSE}.
 \item \code{cmdstanr_no_ver_check}: Should the check for a more recent version of
-CmdStan be disabled? The default is \code{FALSE}.
+CmdStan be disabled? The default is \code{FALSE}. Alternatively, set the
+\code{cmdstanr_no_ver_check} environment variable to \code{"true"} (case-insensitive).
+Configure the option or environment variable before attaching the package.
 \item \code{cmdstanr_output_dir}: The directory where CmdStan should write its output
 CSV files when fitting models. The default is a temporary directory. Files in
 a temporary directory are removed as part of \R garbage collection, while
