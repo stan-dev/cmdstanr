@@ -4,13 +4,17 @@
 \alias{CmdStanLaplace}
 \title{CmdStanLaplace objects}
 \description{
-A \code{CmdStanLaplace} object is the fitted model object returned by the
-\code{\link[=model-method-laplace]{$laplace()}} method of a
-\code{\link{CmdStanModel}} object.
+A \code{CmdStanLaplace} object is the fitted model object returned by
+the \code{\link[=model-method-laplace]{$laplace()}} method of a \code{\link{CmdStanModel}}
+object.
+
+Objects created from CSV files using \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} have a reduced set
+of available methods. See \strong{Reconstructed fitted model objects} in the
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} documentation for details.
 }
 \section{Methods}{
- \code{CmdStanLaplace} objects have the following associated methods,
-all of which have their own (linked) documentation pages.
+ \code{CmdStanLaplace} objects have the following associated
+methods, all of which have their own (linked) documentation pages.
 \subsection{Extract contents of fitted model object}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return approximate posterior draws as a \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr

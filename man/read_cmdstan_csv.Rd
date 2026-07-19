@@ -51,9 +51,9 @@ and treedepth.}
 }
 \value{
 \code{as_cmdstan_fit()} returns a fitted model object (\link{CmdStanMCMC}, \link{CmdStanVB},
-etc.). Some methods typically defined for those objects will not work (e.g.
-\code{save_data_file()}) but the important methods like \verb{$summary()}, \verb{$draws()},
-\verb{$sampler_diagnostics()} and others will work fine.
+etc.). A fitted model object created this way has some limitations compared
+to fitted model objects created directly by a model fitting method. See the
+\strong{Reconstructed fitted model objects} section below for details.
 
 \code{read_cmdstan_csv()} returns a named list with the following components:
 \itemize{
@@ -110,14 +110,46 @@ the generated quantities.
 }
 }
 \description{
-\code{read_cmdstan_csv()} is used internally by CmdStanR to read
-CmdStan's output CSV files into \R. It can also be used by CmdStan users as
-a more flexible and efficient alternative to \code{rstan::read_stan_csv()}. See
-the \strong{Value} section for details on the structure of the returned list.
-
+\code{read_cmdstan_csv()} reads CmdStan's output CSV files into \R
+and returns the contents as a list (see the \strong{Value} section for details).
 It is also possible to create CmdStanR's fitted model objects directly from
 CmdStan CSV files using the \code{as_cmdstan_fit()} function.
 }
+\section{Reconstructed fitted model objects}{
+
+\code{as_cmdstan_fit()} reconstructs a fitted model object from CmdStan CSV files.
+The CSV files do not contain all of the information available to the model
+fitting methods, the Stan source, the console output, or the paths to most
+input and auxiliary files, so the reconstructed object has a reduced set of
+methods.
+
+The following methods are available for every reconstructed object:
+\verb{$draws()}, \verb{$lp()}, \verb{$materialize()}, \verb{$metadata()}, \verb{$output_files()},
+\verb{$print()}, \verb{$save_object()}, and \verb{$summary()}. Additional methods are
+available according to the inference method:
+\itemize{
+\item For MCMC, \verb{$diagnostic_summary()}, \verb{$inv_metric()}, \verb{$loo()},
+\verb{$num_chains()}, \verb{$sampler_diagnostics()}, and \verb{$time()} are available.
+However, the total time reported by \verb{$time()} will be \code{NA} because the CSV
+files do not record whether the chains ran in parallel.
+\item For optimization, \verb{$mle()} is available.
+\item For variational inference, Laplace approximation, and Pathfinder,
+\verb{$lp_approx()} is available.
+}
+
+Methods that require the original run are unavailable. These include
+\verb{$init()}, \verb{$output()}, \verb{$return_codes()}, \verb{$code()}, \verb{$profiles()}, and
+\verb{$time()} for methods other than MCMC; the \verb{$cmdstan_summary()} and
+\verb{$cmdstan_diagnose()} utilities; \verb{$save_output_files()}; and the data,
+latent-dynamics, profile, config, and metric file access and save methods.
+Methods that expose or use compiled model functions are also unavailable,
+including \verb{$expose_functions()}, \verb{$init_model_methods()}, \verb{$log_prob()},
+\verb{$grad_log_prob()}, \verb{$hessian()}, \verb{$constrain_variables()},
+\verb{$unconstrain_variables()}, \verb{$unconstrain_draws()}, and
+\verb{$variable_skeleton()}. The \verb{$mode()} method is unavailable for a
+reconstructed Laplace fit.
+}
+
 \examples{
 \dontrun{
 # Generate some CSV files to use for demonstration
@@ -125,13 +157,15 @@ fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
 
-# Creating fitting model objects
+# Creating fitting model objects with as_cmdstan_fit()
 
 # Create a CmdStanMCMC object from the CSV files
 fit2 <- as_cmdstan_fit(csv_files)
 fit2$print("beta")
+str(fit2$draws())
 
-# Using read_cmdstan_csv
+
+# Using read_cmdstan_csv()
 #
 # Read in everything
 x <- read_cmdstan_csv(csv_files)

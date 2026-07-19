@@ -8,6 +8,10 @@ A \code{CmdStanMCMC} object is the fitted model object returned by
 the \code{\link[=model-method-sample]{$sample()}} method of a \code{\link{CmdStanModel}} object.
 Like \code{CmdStanModel} objects, \code{CmdStanMCMC} objects are \link[R6:R6Class]{R6}
 objects.
+
+Objects created from CSV files using \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} have a reduced set
+of available methods. See \strong{Reconstructed fitted model objects} in the
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} documentation for details.
 }
 \section{Methods}{
  \code{CmdStanMCMC} objects have the following associated

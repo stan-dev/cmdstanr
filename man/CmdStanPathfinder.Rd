@@ -4,13 +4,17 @@
 \alias{CmdStanPathfinder}
 \title{CmdStanPathfinder objects}
 \description{
-A \code{CmdStanPathfinder} object is the fitted model object returned by the
-\code{\link[=model-method-pathfinder]{$pathfinder()}} method of a
+A \code{CmdStanPathfinder} object is the fitted model object returned
+by the \code{\link[=model-method-pathfinder]{$pathfinder()}} method of a
 \code{\link{CmdStanModel}} object.
+
+Objects created from CSV files using \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} have a reduced set
+of available methods. See \strong{Reconstructed fitted model objects} in the
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} documentation for details.
 }
 \section{Methods}{
- \code{CmdStanPathfinder} objects have the following associated methods,
-all of which have their own (linked) documentation pages.
+ \code{CmdStanPathfinder} objects have the following associated
+methods, all of which have their own (linked) documentation pages.
 \subsection{Extract contents of fitted model object}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return approximate posterior draws as a \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr

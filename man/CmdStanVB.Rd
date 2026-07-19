@@ -7,6 +7,10 @@
 A \code{CmdStanVB} object is the fitted model object returned by the
 \code{\link[=model-method-variational]{$variational()}} method of a
 \code{\link{CmdStanModel}} object.
+
+Objects created from CSV files using \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} have a reduced set
+of available methods. See \strong{Reconstructed fitted model objects} in the
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} documentation for details.
 }
 \section{Methods}{
  \code{CmdStanVB} objects have the following associated methods,

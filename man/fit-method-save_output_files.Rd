@@ -79,15 +79,21 @@ The methods \emph{without} the \code{save_} prefix return character vectors of f
 paths without moving any files.
 }
 \description{
-All fitted model objects have methods for saving (moving to a
-specified location) the files created by CmdStanR to hold CmdStan output
-csv files and input data files. These methods move the files from their
-current location (possibly the temporary directory) to a user-specified
-location. \strong{The paths stored in the fitted model object will also be
-updated to point to the new file locations.}
+Fitted model objects returned directly by a \code{\link{CmdStanModel}}
+method have methods for saving (moving to a specified location) files
+created by CmdStanR, including CmdStan output CSV files and input data
+files. These methods move the files from their current location (possibly
+the temporary directory) to a user-specified location. \strong{The paths stored
+in the fitted model object will also be updated to point to the new file
+locations.}
 
 The versions without the \code{save_} prefix (e.g., \verb{$output_files()}) return
 the current file paths without moving any files.
+
+Objects created by \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} support \verb{$output_files()} but not the
+other methods documented on this page because the original CmdStan run is
+unavailable. See \strong{Reconstructed fitted model objects} in the
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} documentation for details.
 }
 \section{Details}{
 

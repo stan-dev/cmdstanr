@@ -16,6 +16,10 @@ The \code{jacobian} argument does not control whether prior terms are included;
 all contributions to the Stan program's target are included under either
 setting. See \code{\link[=model-method-optimize]{$optimize()}} and the CmdStan User's
 Guide for more details.
+
+Objects created from CSV files using \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} have a reduced set
+of available methods. See \strong{Reconstructed fitted model objects} in the
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} documentation for details.
 }
 \section{Methods}{
  \code{CmdStanMLE} objects have the following associated methods,

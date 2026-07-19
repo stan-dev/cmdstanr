@@ -968,22 +968,28 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' @aliases output_files data_file latent_dynamics_files profile_files
 #' @aliases config_files metric_files
 #'
-#' @description All fitted model objects have methods for saving (moving to a
-#'   specified location) the files created by CmdStanR to hold CmdStan output
-#'   csv files and input data files. These methods move the files from their
-#'   current location (possibly the temporary directory) to a user-specified
-#'   location. __The paths stored in the fitted model object will also be
-#'   updated to point to the new file locations.__
+#' @description Fitted model objects returned directly by a [`CmdStanModel`]
+#'   method have methods for saving (moving to a specified location) files
+#'   created by CmdStanR, including CmdStan output CSV files and input data
+#'   files. These methods move the files from their current location (possibly
+#'   the temporary directory) to a user-specified location. **The paths stored
+#'   in the fitted model object will also be updated to point to the new file
+#'   locations.**
 #'
 #'   The versions without the `save_` prefix (e.g., `$output_files()`) return
 #'   the current file paths without moving any files.
 #'
+#'   Objects created by [as_cmdstan_fit()] support `$output_files()` but not the
+#'   other methods documented on this page because the original CmdStan run is
+#'   unavailable. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
 #' @param dir (string) Path to directory where the files should be saved.
-#' @param basename (string) Base filename to use. See __Details__.
+#' @param basename (string) Base filename to use. See **Details**.
 #' @param timestamp (logical) Should a timestamp be added to the file name(s)?
-#'   Defaults to `TRUE`. See __Details__.
+#'   Defaults to `TRUE`. See **Details**.
 #' @param random (logical) Should random alphanumeric characters be added to the
-#'   end of the file name(s)? Defaults to `TRUE`. See __Details__.
+#'   end of the file name(s)? Defaults to `TRUE`. See **Details**.
 #'
 #' @section Details:
 #' For `$save_output_files()` the files moved to `dir` will have names of
@@ -1361,6 +1367,10 @@ CmdStanFit$set("public", name = "code", value = code)
 #'   the [`$sample()`][model-method-sample] method of a [`CmdStanModel`] object.
 #'   Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6Class]
 #'   objects.
+#'
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
 #'
 #' @section Methods: `CmdStanMCMC` objects have the following associated
 #'   methods, all of which have their own (linked) documentation pages.
@@ -1926,6 +1936,10 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'   setting. See [`$optimize()`][model-method-optimize] and the CmdStan User's
 #'   Guide for more details.
 #'
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
 #' @section Methods: `CmdStanMLE` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.
 #'
@@ -2055,12 +2069,16 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #' @family fitted model objects
 #' @template seealso-docs
 #'
-#' @description A `CmdStanLaplace` object is the fitted model object returned by the
-#'   [`$laplace()`][model-method-laplace] method of a
-#'   [`CmdStanModel`] object.
+#' @description A `CmdStanLaplace` object is the fitted model object returned by
+#'   the [`$laplace()`][model-method-laplace] method of a [`CmdStanModel`]
+#'   object.
 #'
-#' @section Methods: `CmdStanLaplace` objects have the following associated methods,
-#'   all of which have their own (linked) documentation pages.
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
+#' @section Methods: `CmdStanLaplace` objects have the following associated
+#'   methods, all of which have their own (linked) documentation pages.
 #'
 #'  ## Extract contents of fitted model object
 #'
@@ -2171,6 +2189,10 @@ NULL
 #'   [`$variational()`][model-method-variational] method of a
 #'   [`CmdStanModel`] object.
 #'
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
 #' @section Methods: `CmdStanVB` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.
 #'
@@ -2260,12 +2282,16 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #' @family fitted model objects
 #' @template seealso-docs
 #'
-#' @description A `CmdStanPathfinder` object is the fitted model object returned by the
-#'   [`$pathfinder()`][model-method-pathfinder] method of a
+#' @description A `CmdStanPathfinder` object is the fitted model object returned
+#'   by the [`$pathfinder()`][model-method-pathfinder] method of a
 #'   [`CmdStanModel`] object.
 #'
-#' @section Methods: `CmdStanPathfinder` objects have the following associated methods,
-#'   all of which have their own (linked) documentation pages.
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
+#' @section Methods: `CmdStanPathfinder` objects have the following associated
+#'   methods, all of which have their own (linked) documentation pages.
 #'
 #'  ## Extract contents of fitted model object
 #'
