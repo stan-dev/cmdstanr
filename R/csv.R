@@ -213,7 +213,13 @@ read_cmdstan_csv <- function(files,
       lp = lp
     ))
   }
-  user_variables_subset <- FALSE
+  if (metadata$method == "pathfinder") {
+    pathfinder_variables <- c("lp__", "lp_approx__", "path__")
+    metadata$variables <- c(
+      intersect(pathfinder_variables, metadata$variables),
+      setdiff(metadata$variables, pathfinder_variables)
+    )
+  }
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$variables
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
@@ -225,7 +231,6 @@ read_cmdstan_csv <- function(files,
             paste(res$not_found, collapse = ", "), call. = FALSE)
     }
     variables <- unrepair_variable_names(res$matching)
-    user_variables_subset <- TRUE
   }
   if (is.null(sampler_diagnostics)) {
     sampler_diagnostics <- metadata$sampler_diagnostics
@@ -291,15 +296,6 @@ read_cmdstan_csv <- function(files,
     if (length(variables) > 0) {
       draws_list_id <- length(draws) + 1
       warmup_draws_list_id <- length(warmup_draws) + 1
-      if (metadata$method == "pathfinder") {
-        metadata$variables <- union(metadata$sampler_diagnostics, metadata$variables)
-        if (!user_variables_subset) {
-          # because for pathfinder variables and diagnostics are read in together,
-          # if user hasn't selected a custom subset of variables we need to include
-          # all diagnostics
-          variables <- union(metadata$sampler_diagnostics, variables)
-        }
-      }
       suppressWarnings(
         draws[[draws_list_id]] <- data.table::fread(
           cmd = fread_cmd,
@@ -731,8 +727,12 @@ read_csv_metadata <- function(csv_file) {
       # if no # at the start of line, the line is the CSV header
       all_names <- strsplit(line, ",")[[1]]
       if (all(csv_file_info$algorithm != "fixed_param")) {
+        non_sampler_diagnostics <- c("lp__", "log_p__", "log_g__", "log_q__")
+        if (csv_file_info$method == "pathfinder") {
+          non_sampler_diagnostics <- c(non_sampler_diagnostics, "lp_approx__", "path__")
+        }
         csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
-        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__", "log_q__"))]
+        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% non_sampler_diagnostics)]
         csv_file_info[["variables"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
       } else {
         csv_file_info[["variables"]] <- all_names[!endsWith(all_names, "__")]
