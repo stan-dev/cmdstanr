@@ -1,7 +1,7 @@
 #' Get or set the file path to the CmdStan installation
 #'
 #' @description Use the `set_cmdstan_path()` function to tell CmdStanR where the
-#'   CmdStan installation in located. Once the path has been set,
+#'   CmdStan installation is located. Once the path has been set,
 #'   `cmdstan_path()` will return the full path to the CmdStan installation and
 #'   `cmdstan_version()` will return the CmdStan version number. See **Details**
 #'   for how to avoid manually setting the path in each \R session.

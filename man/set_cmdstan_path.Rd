@@ -31,7 +31,7 @@ CmdStan version string if available. If CmdStan is not found and
 }
 \description{
 Use the \code{set_cmdstan_path()} function to tell CmdStanR where the
-CmdStan installation in located. Once the path has been set,
+CmdStan installation is located. Once the path has been set,
 \code{cmdstan_path()} will return the full path to the CmdStan installation and
 \code{cmdstan_version()} will return the CmdStan version number. See \strong{Details}
 for how to avoid manually setting the path in each \R session.
