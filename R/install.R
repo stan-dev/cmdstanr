@@ -45,7 +45,8 @@
 #'   is `FALSE`, in which case an informative error is thrown instead of
 #'   overwriting the user's installation.
 #' @param timeout (positive real) Timeout (in seconds) for the build stage of
-#'   the installation.
+#'   the installation. The default is 1200 seconds for `install_cmdstan()` and
+#'   600 seconds for `rebuild_cmdstan()`.
 #' @param version (string) The CmdStan release version to install. The default
 #'   is `NULL`, which downloads the latest stable release from
 #'   <https://github.com/stan-dev/cmdstan/releases>.
@@ -66,6 +67,14 @@
 #'   default is `TRUE`.
 #' @param wsl (logical) Should CmdStan be installed and run through the Windows
 #'  Subsystem for Linux (WSL). The default is `FALSE`.
+#'
+#' @return
+#' If a build fails or times out, `install_cmdstan()` issues a warning and
+#' invisibly returns the process result.
+#'
+#' For `cmdstan_make_local()`, if `cpp_options = NULL` then the existing
+#' contents of `make/local` are returned without writing anything; otherwise,
+#' the updated contents are returned.
 #'
 #' @seealso [set_cmdstan_path()], [cmdstan_default_install_path()], and
 #'   [cmdstan_default_path()]
@@ -304,9 +313,6 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @param append (logical) For `cmdstan_make_local()`, should the listed
 #'   makefile flags be appended to the end of the existing `make/local` file?
 #'   The default is `TRUE`. If `FALSE` the file is overwritten.
-#' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
-#'   contents of `make/local` are returned without writing anything, otherwise
-#'   the updated contents are returned.
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,

@@ -55,7 +55,8 @@ is \code{FALSE}, in which case an informative error is thrown instead of
 overwriting the user's installation.}
 
 \item{timeout}{(positive real) Timeout (in seconds) for the build stage of
-the installation.}
+the installation. The default is 1200 seconds for \code{install_cmdstan()} and
+600 seconds for \code{rebuild_cmdstan()}.}
 
 \item{version}{(string) The CmdStan release version to install. The default
 is \code{NULL}, which downloads the latest stable release from
@@ -91,8 +92,11 @@ The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
 is ignored and retained only for compatibility.}
 }
 \value{
-For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
-contents of \code{make/local} are returned without writing anything, otherwise
+If a build fails or times out, \code{install_cmdstan()} issues a warning and
+invisibly returns the process result.
+
+For \code{cmdstan_make_local()}, if \code{cpp_options = NULL} then the existing
+contents of \code{make/local} are returned without writing anything; otherwise,
 the updated contents are returned.
 }
 \description{
