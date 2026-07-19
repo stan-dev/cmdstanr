@@ -75,5 +75,5 @@ identical(readLines(f), readLines(f2))
 }
 \seealso{
 \code{\link[=print_stan_file]{print_stan_file()}}, \code{\link[=cmdstan_model]{cmdstan_model()}}, and
-\link{cmdstanr_global_options}.
+\link{cmdstanr_global_options}
 }

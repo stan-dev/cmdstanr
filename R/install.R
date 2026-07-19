@@ -68,7 +68,7 @@
 #'  Subsystem for Linux (WSL). The default is `FALSE`.
 #'
 #' @seealso [set_cmdstan_path()], [cmdstan_default_install_path()], and
-#'   [cmdstan_default_path()].
+#'   [cmdstan_default_path()]
 #'
 #' @examples
 #' \dontrun{

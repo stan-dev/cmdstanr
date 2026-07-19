@@ -17,6 +17,6 @@ Path to where  \code{install_cmdstan()} with default settings installs CmdStan.
 }
 \seealso{
 \code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=set_cmdstan_path]{set_cmdstan_path()}}, and
-\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}.
+\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}
 }
 \keyword{internal}

@@ -64,5 +64,5 @@ print_stan_file(stan_file)
 
 }
 \seealso{
-\code{\link[=write_stan_file]{write_stan_file()}} and \code{\link[=cmdstan_model]{cmdstan_model()}}.
+\code{\link[=write_stan_file]{write_stan_file()}} and \code{\link[=cmdstan_model]{cmdstan_model()}}
 }

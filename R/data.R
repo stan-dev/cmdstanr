@@ -242,7 +242,7 @@ any_zero_dims <- function(data) {
 #' order as the column names.
 #'
 #' @seealso [`$generate_quantities()`][model-method-generate-quantities] for
-#'   using the generated CSV files.
+#'   using the generated CSV files
 #'
 #' @examples
 #' \dontrun{

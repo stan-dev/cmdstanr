@@ -41,5 +41,5 @@ top of these generics to coerce objects into CmdStanR's fitted model objects.
 }
 \seealso{
 \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}}, \link{CmdStanMCMC}, \link{CmdStanMLE}, \link{CmdStanLaplace},
-\link{CmdStanVB}, \link{CmdStanPathfinder}, \link{CmdStanGQ}, and \link{CmdStanDiagnose}.
+\link{CmdStanVB}, \link{CmdStanPathfinder}, \link{CmdStanGQ}, and \link{CmdStanDiagnose}
 }

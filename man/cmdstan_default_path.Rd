@@ -21,6 +21,6 @@ native or WSL.
 }
 \seealso{
 \code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=set_cmdstan_path]{set_cmdstan_path()}}, and
-\code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}.
+\code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}
 }
 \keyword{internal}

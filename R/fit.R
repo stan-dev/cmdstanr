@@ -2647,7 +2647,7 @@ CmdStanDiagnose$set("public", name = "data_file", value = data_file)
 #' @return A `posterior::draws_*` object. The default format depends on the
 #'   fitted model class and can be changed using arguments passed through `...`.
 #'
-#' @seealso [`$draws()`][fit-method-draws] and [posterior::as_draws()].
+#' @seealso [`$draws()`][fit-method-draws] and [posterior::as_draws()]
 #'
 #' @examples
 #' \dontrun{

@@ -28,7 +28,7 @@
 #' @return The path to the file.
 #'
 #' @seealso [print_stan_file()], [cmdstan_model()], and
-#'   [cmdstanr_global_options].
+#'   [cmdstanr_global_options]
 #'
 #' @examples
 #' # stan program as a single string
@@ -138,7 +138,7 @@ write_stan_file <- function(code,
 #' ```
 #' ````
 #'
-#' @seealso [write_stan_file()] and [cmdstan_model()].
+#' @seealso [write_stan_file()] and [cmdstan_model()]
 #'
 #' @examples
 #' stan_file <- write_stan_file("

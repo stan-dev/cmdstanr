@@ -11,7 +11,7 @@
 #'   generic, as returned by the dispatched method.
 #'
 #' @seealso [as_cmdstan_fit()], [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace],
-#'   [CmdStanVB], [CmdStanPathfinder], [CmdStanGQ], and [CmdStanDiagnose].
+#'   [CmdStanVB], [CmdStanPathfinder], [CmdStanGQ], and [CmdStanDiagnose]
 #'
 #' @name cmdstan_coercion
 NULL

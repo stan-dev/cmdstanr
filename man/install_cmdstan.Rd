@@ -140,5 +140,5 @@ cpp_options <- list(
 }
 \seealso{
 \code{\link[=set_cmdstan_path]{set_cmdstan_path()}}, \code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}, and
-\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}.
+\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}
 }

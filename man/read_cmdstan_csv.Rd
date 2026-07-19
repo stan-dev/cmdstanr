@@ -188,5 +188,5 @@ x <- read_cmdstan_csv(
 \seealso{
 \code{\link[=draws_to_csv]{draws_to_csv()}} for creating compatible CSV files and
 \code{\link[=fit-method-output_files]{$output_files()}} for locating files created by
-CmdStanR.
+CmdStanR
 }

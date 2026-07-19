@@ -40,7 +40,7 @@
 #' * [Register a custom language engine for knitr](https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html)
 #' * [knitr's built-in Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
 #'
-#' @seealso [eng_cmdstan()].
+#' @seealso [eng_cmdstan()]
 #'
 register_knitr_engine <- function(override = TRUE) {
   require_suggested_package("knitr")
@@ -64,7 +64,7 @@ register_knitr_engine <- function(override = TRUE) {
 #'   chunk execution.
 #' @return A character vector containing the formatted chunk output produced by
 #'   [knitr::engine_output()].
-#' @seealso [register_knitr_engine()].
+#' @seealso [register_knitr_engine()]
 #' @examples \dontrun{
 #' knitr::knit_engines$set(stan = cmdstanr::eng_cmdstan)
 #' }

@@ -50,5 +50,5 @@ specify \code{engine = "cmdstan"} in the chunk options after registering the
 }
 }
 \seealso{
-\code{\link[=eng_cmdstan]{eng_cmdstan()}}.
+\code{\link[=eng_cmdstan]{eng_cmdstan()}}
 }

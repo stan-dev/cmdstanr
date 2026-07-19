@@ -62,5 +62,5 @@ It is always possible to change the path after loading the package using
 }
 \seealso{
 \code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}, and
-\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}.
+\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}
 }

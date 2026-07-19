@@ -51,6 +51,6 @@
 #' * `cmdstanr_save_config`: Should a JSON file be saved containing the argument
 #' tree and extra information when running CmdStan? The default is `FALSE`.
 #'
-#' @seealso [cmdstan_model()], [install_cmdstan()], and [write_stan_file()].
+#' @seealso [cmdstan_model()], [install_cmdstan()], and [write_stan_file()]
 #'
 NULL

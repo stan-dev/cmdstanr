@@ -104,7 +104,7 @@
 #'
 #' @seealso [draws_to_csv()] for creating compatible CSV files and
 #'   [`$output_files()`][fit-method-output_files] for locating files created by
-#'   CmdStanR.
+#'   CmdStanR
 #'
 #' @examples
 #' \dontrun{

@@ -39,7 +39,7 @@
 #' `set_cmdstan_path(path)`.
 #'
 #' @seealso [install_cmdstan()], [cmdstan_default_install_path()], and
-#'   [cmdstan_default_path()].
+#'   [cmdstan_default_path()]
 #'
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
@@ -208,7 +208,7 @@ resolve_cmdstan_path_from_env <- function() {
 #' @return The installation path.
 #' @export
 #' @seealso [install_cmdstan()], [set_cmdstan_path()], and
-#'   [cmdstan_default_path()].
+#'   [cmdstan_default_path()]
 cmdstan_default_install_path <- function(wsl = FALSE) {
   if (wsl) {
     file.path(paste0(wsl_dir_prefix(wsl = TRUE), wsl_home_dir()), ".cmdstan")
@@ -244,7 +244,7 @@ home_path <- function() {
 #'   version, or `NULL` if no installation found.
 #'
 #' @seealso [install_cmdstan()], [set_cmdstan_path()], and
-#'   [cmdstan_default_install_path()].
+#'   [cmdstan_default_install_path()]
 #'
 cmdstan_default_path <- function(dir = NULL) {
   if (!is.null(dir)) {
