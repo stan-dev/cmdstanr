@@ -24,7 +24,7 @@ all of which have their own (linked) documentation pages.
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return the point estimate as a 1-row \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
    \code{\link[=fit-method-mle]{$mle()}} \tab Return the point estimate as a numeric vector. \cr
-   \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}). \cr
+   \code{\link[=fit-method-lp]{$lp()}} \tab Return the target log density (\code{lp__}) evaluated by Stan. \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
    \code{\link[=fit-method-profiles]{$profiles()}} \tab Return profiling data. \cr

@@ -18,10 +18,10 @@ A numeric vector. See \strong{Examples}.
 \description{
 The \verb{$mle()} method is only available for \code{\link{CmdStanMLE}}
 objects. It returns the point estimate as a numeric vector with one element
-per variable. The returned vector does \emph{not} include \code{lp__}, the total log
-probability (\code{target}) accumulated in the model block of the Stan program,
-which is available via the \code{\link[=fit-method-lp]{$lp()}} method and also
-included in the \code{\link[=fit-method-draws]{$draws()}} method.
+per variable. The returned vector does \emph{not} include \code{lp__}, the
+target log density evaluated by Stan, up to an additive constant. \code{lp__} is
+available via the \code{\link[=fit-method-lp]{$lp()}} method and also included in the
+\code{\link[=fit-method-draws]{$draws()}} method.
 
 Following CmdStan's terminology, for models with constrained parameters
 that are fit with \code{jacobian=TRUE}, this point estimate is called a maximum

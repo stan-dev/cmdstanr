@@ -15,10 +15,10 @@ A numeric vector with length equal to the number of (post-warmup)
 draws or length equal to \code{1} for optimization.
 }
 \description{
-The \verb{$lp()} method extracts \code{lp__}, the total log probability
-(\code{target}) accumulated in the model block of the Stan program. For
-variational inference the log density of the variational approximation to
-the posterior is available via the \verb{$lp_approx()} method. For
+The \verb{$lp()} method extracts \code{lp__}, the target log density
+evaluated by Stan, up to an additive constant. For variational inference
+the log density of the variational approximation to the posterior is
+available via the \verb{$lp_approx()} method. For
 Laplace approximation the unnormalized density of the approximation to
 the posterior is available via the \verb{$lp_approx()} method.
 For Pathfinder the log density of the approximation to the posterior is
@@ -30,10 +30,20 @@ constants are dropped from log probability calculations.
 }
 \section{Details}{
 
-\code{lp__} is the unnormalized log density on Stan's \href{https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html}{unconstrained space}.
-This will in general be different than the unnormalized model log density
-evaluated at a posterior draw (which is on the constrained space). \code{lp__} is
-intended to diagnose sampling efficiency and evaluate approximations.
+The target includes all contributions to the log probability, which can come
+from the transformed parameters and model blocks, including certain
+user-defined functions. The exact target represented by \code{lp__} depends on the
+inference method:
+\itemize{
+\item For MCMC sampling, variational inference, Pathfinder, and diagnostic mode,
+\code{lp__} is the log density on Stan's \href{https://mc-stan.org/docs/reference-manual/transforms.html}{unconstrained space}
+and includes the Jacobian adjustments for constrained parameters.
+\item For optimization and Laplace approximation, whether the Jacobian adjustments
+are included depends on the \code{jacobian} argument.
+}
+
+For MCMC, \code{lp__} can be used to diagnose sampling efficiency; for
+approximation methods, it can be used to evaluate the approximation.
 
 For variational inference \code{lp_approx__} is the log density of the variational
 approximation to \code{lp__} (also on the unconstrained space). It is exposed in

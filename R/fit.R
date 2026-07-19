@@ -201,8 +201,9 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   standalone generated quantities, or a point estimate from optimization.
 #'
 #'   The variables include the parameters, transformed parameters, and
-#'   generated quantities from the Stan program as well as `lp__`, the total
-#'   log probability (`target`) accumulated in the model block.
+#'   generated quantities from the Stan program as well as `lp__`, the
+#'   target log density evaluated by Stan, up to an additive constant. See
+#'   [`$lp()`][fit-method-lp] for details.
 #'
 #' @inheritParams read_cmdstan_csv
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to
@@ -739,10 +740,10 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'
 #' @name fit-method-lp
 #' @aliases lp lp_approx
-#' @description The `$lp()` method extracts `lp__`, the total log probability
-#'   (`target`) accumulated in the model block of the Stan program. For
-#'   variational inference the log density of the variational approximation to
-#'   the posterior is available via the `$lp_approx()` method. For
+#' @description The `$lp()` method extracts `lp__`, the target log density
+#'   evaluated by Stan, up to an additive constant. For variational inference
+#'   the log density of the variational approximation to the posterior is
+#'   available via the `$lp_approx()` method. For
 #'   Laplace approximation the unnormalized density of the approximation to
 #'   the posterior is available via the `$lp_approx()` method.
 #'   For Pathfinder the log density of the approximation to the posterior is
@@ -754,11 +755,20 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'   constants are dropped from log probability calculations.
 #'
 #' @section Details:
-#' `lp__` is the unnormalized log density on Stan's [unconstrained
-#' space](https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html).
-#' This will in general be different than the unnormalized model log density
-#' evaluated at a posterior draw (which is on the constrained space). `lp__` is
-#' intended to diagnose sampling efficiency and evaluate approximations.
+#' The target includes all contributions to the log probability, which can come
+#' from the transformed parameters and model blocks, including certain
+#' user-defined functions. The exact target represented by `lp__` depends on the
+#' inference method:
+#'
+#' * For MCMC sampling, variational inference, Pathfinder, and diagnostic mode,
+#'   `lp__` is the log density on Stan's [unconstrained
+#'   space](https://mc-stan.org/docs/reference-manual/transforms.html)
+#'   and includes the Jacobian adjustments for constrained parameters.
+#' * For optimization and Laplace approximation, whether the Jacobian adjustments
+#'   are included depends on the `jacobian` argument.
+#'
+#' For MCMC, `lp__` can be used to diagnose sampling efficiency; for
+#' approximation methods, it can be used to evaluate the approximation.
 #'
 #' For variational inference `lp_approx__` is the log density of the variational
 #' approximation to `lp__` (also on the unconstrained space). It is exposed in
@@ -1361,7 +1371,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws] |  Return posterior draws using formats from the \pkg{posterior} package. |
 #'  [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] |  Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. |
-#'  [`$lp()`][fit-method-lp] |  Return the total log probability density (`target`). |
+#'  [`$lp()`][fit-method-lp] |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
@@ -1925,7 +1935,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws]  |  Return the point estimate as a 1-row [`draws_matrix`][posterior::draws_matrix]. |
 #'  [`$mle()`][fit-method-mle]  |  Return the point estimate as a numeric vector. |
-#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`). |
+#'  [`$lp()`][fit-method-lp]  |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$init()`][fit-method-init]  |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
 #'  [`$profiles()`][fit-method-profiles] | Return profiling data. |
@@ -2001,10 +2011,10 @@ CmdStanMLE <- R6::R6Class(
 #' @aliases mle
 #' @description The `$mle()` method is only available for [`CmdStanMLE`]
 #'   objects. It returns the point estimate as a numeric vector with one element
-#'   per variable. The returned vector does *not* include `lp__`, the total log
-#'   probability (`target`) accumulated in the model block of the Stan program,
-#'   which is available via the [`$lp()`][fit-method-lp] method and also
-#'   included in the [`$draws()`][fit-method-draws] method.
+#'   per variable. The returned vector does *not* include `lp__`, the
+#'   target log density evaluated by Stan, up to an additive constant. `lp__` is
+#'   available via the [`$lp()`][fit-method-lp] method and also included in the
+#'   [`$draws()`][fit-method-draws] method.
 #'
 #'   Following CmdStan's terminology, for models with constrained parameters
 #'   that are fit with `jacobian=TRUE`, this point estimate is called a maximum
@@ -2058,7 +2068,7 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
 #'  [`$mode()`][fit-method-mode] | Return the mode as a [`CmdStanMLE`] object. |
-#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$lp()`][fit-method-lp]  |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
@@ -2169,7 +2179,7 @@ NULL
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
-#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$lp()`][fit-method-lp]  |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the variational approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
@@ -2262,7 +2272,7 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
-#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$lp()`][fit-method-lp]  |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
@@ -2518,7 +2528,7 @@ NULL
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$gradients()`][fit-method-gradients] |  Return gradients from diagnostic mode. |
-#'  [`$lp()`][fit-method-lp] |  Return the total log probability density (`target`). |
+#'  [`$lp()`][fit-method-lp] |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
 #'  [`$output_files()`][fit-method-output_files] |  Return paths to output CSV files. |

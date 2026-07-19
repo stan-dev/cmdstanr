@@ -14,7 +14,7 @@ all of which have their own (linked) documentation pages.
 \subsection{Extract contents of fitted model object}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return approximate posterior draws as a \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
-   \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}) computed in the model block of the Stan program. \cr
+   \code{\link[=fit-method-lp]{$lp()}} \tab Return the target log density (\code{lp__}) evaluated by Stan. \cr
    \code{\link[=fit-method-lp]{$lp_approx()}} \tab Return the log density of the variational approximation to the posterior. \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr

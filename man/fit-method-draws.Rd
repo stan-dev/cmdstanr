@@ -88,8 +88,9 @@ from variational inference, Laplace approximation, or Pathfinder,
 standalone generated quantities, or a point estimate from optimization.
 
 The variables include the parameters, transformed parameters, and
-generated quantities from the Stan program as well as \code{lp__}, the total
-log probability (\code{target}) accumulated in the model block.
+generated quantities from the Stan program as well as \code{lp__}, the
+target log density evaluated by Stan, up to an additive constant. See
+\code{\link[=fit-method-lp]{$lp()}} for details.
 }
 \examples{
 \dontrun{
