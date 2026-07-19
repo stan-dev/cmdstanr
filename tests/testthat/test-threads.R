@@ -154,9 +154,8 @@ test_that("threading works with pathfinder()", {
   )
   pathfinder_args$threads <- NULL
   pathfinder_args$show_messages <- FALSE
-  expect_warning(
-    do.call(mod$pathfinder, pathfinder_args),
-    "'num_threads' is deprecated. Please use 'threads' instead"
+  expect_snapshot(
+    invisible(do.call(mod$pathfinder, pathfinder_args))
   )
 })
 

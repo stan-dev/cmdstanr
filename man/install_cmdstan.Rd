@@ -87,8 +87,8 @@ Subsystem for Linux (WSL). The default is \code{FALSE}.}
 makefile flags be appended to the end of the existing \code{make/local} file?
 The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
 
-\item{fix}{As of v1.0 this argument is deprecated and ignored and only
-retained for compatibility.}
+\item{fix}{Deprecated and will be removed in a future release. This argument
+is ignored and retained only for compatibility.}
 }
 \value{
 For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing

@@ -158,7 +158,8 @@ the OpenCL device to use for fitting. The model must be compiled with
 \code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
 effect.}
 
-\item{num_threads}{Deprecated. Please use \code{threads} instead.}
+\item{num_threads}{Deprecated and will be removed in a future release. Use
+\code{threads} instead.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 

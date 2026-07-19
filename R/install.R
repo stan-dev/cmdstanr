@@ -342,13 +342,15 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 
 #' @rdname install_cmdstan
 #' @export
-#' @param fix As of v1.0 this argument is deprecated and ignored and only
-#'   retained for compatibility.
+#' @param fix Deprecated and will be removed in a future release. This argument
+#'   is ignored and retained only for compatibility.
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (isTRUE(fix)) {
-    warning("The 'fix' argument is deprecated and will be removed in a future release.",
-            call. = FALSE)
+    warning(
+      "The 'fix' argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
+      call. = FALSE
+    )
   }
   warn_if_ignored_msys_toolchain_env()
   if (os_is_windows()) {

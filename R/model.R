@@ -1866,7 +1866,8 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., for multi-path pathfinder
 #'   as well as `reduce_sum`).
-#' @param num_threads Deprecated. Please use `threads` instead.
+#' @param num_threads Deprecated and will be removed in a future release. Use
+#'   `threads` instead.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1948,7 +1949,10 @@ pathfinder <- function(data = NULL,
     if (!is.null(threads)) {
       stop("Cannot specify both 'threads' and deprecated 'num_threads'.", call. = FALSE)
     }
-    warning("'num_threads' is deprecated. Please use 'threads' instead.", call. = FALSE)
+    warning(
+      "'num_threads' is deprecated as of CmdStanR 1.0.0 and will be removed in a future release. Please use 'threads' instead.",
+      call. = FALSE
+    )
     threads <- num_threads
   }
   procs <- CmdStanProcs$new(
