@@ -97,7 +97,7 @@ fit <- ex1$sample(
 #> 
 #> All 4 chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.6 seconds.
+#> Total execution time: 0.5 seconds.
 
 print(fit)
 #>  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail

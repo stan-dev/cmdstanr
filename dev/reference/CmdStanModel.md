@@ -324,8 +324,8 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 #>   This procedure has not been thoroughly tested and may be unstable 
 #>   or buggy. The interface is subject to change. 
 #> ------------------------------------------------------------ 
-#> Gradient evaluation took 4e-06 seconds 
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.04 seconds. 
+#> Gradient evaluation took 2e-06 seconds 
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
 #> Adjust your expectations accordingly! 
 #> Begin eta adaptation. 
 #> Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -376,9 +376,9 @@ fit_pf$summary()
 #> # A tibble: 4 × 7
 #>   variable      mean median    sd   mad      q5    q95
 #>   <chr>        <dbl>  <dbl> <dbl> <dbl>   <dbl>  <dbl>
-#> 1 lp_approx__ -1.07  -0.724 0.871 0.306 -2.82   -0.451
-#> 2 path__       2.46   2     1.12  1.48   1       4    
-#> 3 lp__        -7.26  -6.97  0.720 0.304 -8.77   -6.75 
+#> 1 lp__        -7.26  -6.97  0.720 0.304 -8.77   -6.75 
+#> 2 lp_approx__ -1.07  -0.724 0.871 0.306 -2.82   -0.451
+#> 3 path__       2.46   2     1.12  1.48   1       4    
 #> 4 theta        0.258  0.241 0.121 0.119  0.0840  0.475
 mcmc_hist(fit_pf$draws("theta"))
 #> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
