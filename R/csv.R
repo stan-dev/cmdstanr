@@ -85,7 +85,7 @@
 #' input and auxiliary files, so the reconstructed object has a reduced set of
 #' methods.
 #'
-#' The following methods are available for every reconstructed object:
+#' Only the following methods are available for every reconstructed object:
 #' `$draws()`, `$lp()`, `$materialize()`, `$metadata()`, `$output_files()`,
 #' `$print()`, `$save_object()`, and `$summary()`. Additional methods are
 #' available according to the inference method:
@@ -98,17 +98,9 @@
 #' * For variational inference, Laplace approximation, and Pathfinder,
 #'   `$lp_approx()` is available.
 #'
-#' Methods that require the original run are unavailable. These include
-#' `$init()`, `$output()`, `$return_codes()`, `$code()`, `$profiles()`, and
-#' `$time()` for methods other than MCMC; the `$cmdstan_summary()` and
-#' `$cmdstan_diagnose()` utilities; `$save_output_files()`; and the data,
-#' latent-dynamics, profile, config, and metric file access and save methods.
-#' Methods that expose or use compiled model functions are also unavailable,
-#' including `$expose_functions()`, `$init_model_methods()`, `$log_prob()`,
-#' `$grad_log_prob()`, `$hessian()`, `$constrain_variables()`,
-#' `$unconstrain_variables()`, `$unconstrain_draws()`, and
-#' `$variable_skeleton()`. The `$mode()` method is unavailable for a
-#' reconstructed Laplace fit.
+#' All other fitted-model methods are unavailable because they require
+#' information not contained in the CSV files. Calling an unavailable method
+#' produces an informative error.
 #'
 #' @examples
 #' \dontrun{

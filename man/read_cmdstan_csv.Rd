@@ -123,7 +123,7 @@ fitting methods, the Stan source, the console output, or the paths to most
 input and auxiliary files, so the reconstructed object has a reduced set of
 methods.
 
-The following methods are available for every reconstructed object:
+Only the following methods are available for every reconstructed object:
 \verb{$draws()}, \verb{$lp()}, \verb{$materialize()}, \verb{$metadata()}, \verb{$output_files()},
 \verb{$print()}, \verb{$save_object()}, and \verb{$summary()}. Additional methods are
 available according to the inference method:
@@ -137,17 +137,9 @@ files do not record whether the chains ran in parallel.
 \verb{$lp_approx()} is available.
 }
 
-Methods that require the original run are unavailable. These include
-\verb{$init()}, \verb{$output()}, \verb{$return_codes()}, \verb{$code()}, \verb{$profiles()}, and
-\verb{$time()} for methods other than MCMC; the \verb{$cmdstan_summary()} and
-\verb{$cmdstan_diagnose()} utilities; \verb{$save_output_files()}; and the data,
-latent-dynamics, profile, config, and metric file access and save methods.
-Methods that expose or use compiled model functions are also unavailable,
-including \verb{$expose_functions()}, \verb{$init_model_methods()}, \verb{$log_prob()},
-\verb{$grad_log_prob()}, \verb{$hessian()}, \verb{$constrain_variables()},
-\verb{$unconstrain_variables()}, \verb{$unconstrain_draws()}, and
-\verb{$variable_skeleton()}. The \verb{$mode()} method is unavailable for a
-reconstructed Laplace fit.
+All other fitted-model methods are unavailable because they require
+information not contained in the CSV files. Calling an unavailable method
+produces an informative error.
 }
 
 \examples{
