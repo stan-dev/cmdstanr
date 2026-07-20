@@ -1491,8 +1491,8 @@ validate_init <- function(init, num_procs) {
          call. = FALSE)
   } else if (is.character(init)) {
     if (length(init) != 1 && length(init) != num_procs) {
-      stop("If 'init' is specified as a character vector it must have ",
-           "length 1 or number of chains.",
+      stop("If 'init' is specified as a character vector, its length must be ",
+           "1 or equal to the number of chains or Pathfinder paths.",
            call. = FALSE)
     }
     assert_file_exists(init, access = "r")
