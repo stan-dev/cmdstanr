@@ -201,27 +201,6 @@ test_that("Pathfinder init weighting preserves distinct-draw safeguards", {
   )
 })
 
-test_that("draws inits are recycled in order when too few are supplied", {
-  draws <- posterior::as_draws_df(data.frame(theta = c(10, 20)))
-  model_variables <- list(
-    parameters = list(theta = list(dimensions = 0L))
-  )
-  # Return the prepared init lists instead of writing them to JSON files so the
-  # test can inspect which draw is assigned to each chain or path.
-  local_mocked_bindings(process_init = function(init, ...) init)
-
-  inits <- process_init.draws(
-    draws,
-    num_procs = 5,
-    model_variables = model_variables
-  )
-
-  expect_equal(
-    vapply(inits, `[[`, numeric(1), "theta"),
-    c(10, 20, 10, 20, 10)
-  )
-})
-
 test_that("Variational method works as init", {
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_vb_init <- mod_logistic$variational(

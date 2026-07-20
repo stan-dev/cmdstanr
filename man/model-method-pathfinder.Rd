@@ -108,11 +108,10 @@ output. If \code{calculate_lp = FALSE}, uniform weights are used because
 importance weights cannot be calculated. PSIS resampling is used to select
 the draws for \code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
 \item A type inheriting from \code{posterior::draws}. If the draws object has fewer
-draws than the number of requested chains/paths, the draws are reused in
-their existing order until each chain/path has an initialization. If there
-are more draws than requested chains/paths, draws are selected uniformly
-without replacement. If the draws object's parameters are only a subset of
-the model parameters then the other parameters will be drawn by Stan's
+draws than the number of requested chains/paths then the inits will be
+drawn using sampling with replacement. Otherwise sampling without
+replacement will be used. If the draws object's parameters are only a subset
+of the model parameters then the other parameters will be drawn by Stan's
 default initialization. The fit object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
