@@ -29,9 +29,9 @@
 #'  `[-x,x]` on the _unconstrained_ parameter space.
 #'  * The number `0`. This initializes _all_ parameters to `0`.
 #'  * A character vector of paths to JSON or Rdump files containing initial
-#'  values for all or some parameters. A single path is used for all chains or
-#'  Pathfinder paths. Otherwise, supply one path per chain or Pathfinder path.
-#'  See [write_stan_json()] to write \R objects to JSON files compatible with
+#'  values for all or some parameters. For MCMC and Pathfinder, if only a single
+#'  file is provided it will be reused for all chains and paths. See
+#'  [write_stan_json()] to write \R objects to JSON files compatible with
 #'  CmdStan.
 #'  * A list of lists containing initial values for all or some parameters. For
 #'  MCMC the list should contain a sublist for each chain, and for Pathfinder it

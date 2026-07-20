@@ -82,9 +82,9 @@ following:
 \verb{[-x,x]} on the \emph{unconstrained} parameter space.
 \item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
 \item A character vector of paths to JSON or Rdump files containing initial
-values for all or some parameters. A single path is used for all chains or
-Pathfinder paths. Otherwise, supply one path per chain or Pathfinder path.
-See \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
+values for all or some parameters. For MCMC and Pathfinder, if only a single
+file is provided it will be reused for all chains and paths. See
+\code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 \item A list of lists containing initial values for all or some parameters. For
 MCMC the list should contain a sublist for each chain, and for Pathfinder it
