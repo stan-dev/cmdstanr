@@ -871,8 +871,9 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
   csv_file_info$num_threads <- NULL
-  # CmdStan records multi-path Pathfinder inits as one comma-separated value.
-  # Split it so metadata and fit$init() retain one file per path.
+
+  # cmdstan records multi-path Pathfinder inits as one comma-separated value,
+  # so we split it so metadata and fit$init() have one file per path
   if (identical(csv_file_info$method, "pathfinder") &&
       is.character(csv_file_info$init) &&
       isTRUE(csv_file_info$num_paths > 1)) {
@@ -882,7 +883,7 @@ read_csv_metadata <- function(csv_file) {
     csv_file_info$gradients <- gradients
   }
 
-  # Revert any WSL-updated paths before returning the metadata
+  # revert any WSL-updated paths before returning the metadata
   if (os_is_wsl()) {
     csv_file_info$init <- wsl_safe_path(csv_file_info$init, revert = TRUE)
     csv_file_info$profile_file <- wsl_safe_path(csv_file_info$profile_file,
