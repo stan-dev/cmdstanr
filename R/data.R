@@ -23,9 +23,9 @@
 #' the data for certain Stan declarations involving arrays:
 #'
 #' * `array[K] vector[J] v ` can be constructed in \R as a list with `K`
-#' elements where each element a vector of length `J`
+#' elements where each element is a vector of length `J`
 #' * `array[K] matrix[I,J] m ` can be constructed in \R as a list with `K`
-#' elements where each element an `IxJ` matrix
+#' elements where each element is an `IxJ` matrix
 #'
 #' These can also be passed in from \R as arrays instead of lists but the list
 #' option is provided for convenience. Unfortunately for arrays with more than
