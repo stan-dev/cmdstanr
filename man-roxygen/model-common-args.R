@@ -26,9 +26,10 @@
 #' @param init (multiple options) The initialization method to use for the
 #'   variables declared in the parameters block of the Stan program. One of the
 #'   following:
-#'  * A real number `x>0`. This initializes _all_ parameters randomly between
-#'  `[-x,x]` on the _unconstrained_ parameter space.
-#'  * The number `0`. This initializes _all_ parameters to `0`.
+#'  * A real number `x > 0`. This initializes _all_ parameters randomly between
+#'  `[-x, x]` on the _unconstrained_ parameter space.
+#'  * The number `0`. This initializes _all_ parameters to `0` on the
+#'  _unconstrained_ parameter space.
 #'  * A character vector of paths (one per chain) to JSON or Rdump files
 #'  containing initial values for all or some parameters. See
 #'  [write_stan_json()] to write \R objects to JSON files compatible with
@@ -64,7 +65,7 @@
 #'  drawn using sampling with replacement. Otherwise sampling without
 #'  replacement will be used. If the draws object's parameters are only a subset
 #'  of the model parameters then the other parameters will be drawn by Stan's
-#'  default initialization. The fit object must have at least some parameters
+#'  default initialization. The draws object must have at least some parameters
 #'  that are the same name and dimensions as the current Stan model.
 #'
 #' @param save_latent_dynamics (logical) Should auxiliary diagnostic information

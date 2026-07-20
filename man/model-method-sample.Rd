@@ -73,9 +73,10 @@ printed.}
 variables declared in the parameters block of the Stan program. One of the
 following:
 \itemize{
-\item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} on the \emph{unconstrained} parameter space.
-\item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
+\item A real number \code{x > 0}. This initializes \emph{all} parameters randomly between
+\verb{[-x, x]} on the \emph{unconstrained} parameter space.
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0} on the
+\emph{unconstrained} parameter space.
 \item A character vector of paths (one per chain) to JSON or Rdump files
 containing initial values for all or some parameters. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
@@ -111,7 +112,7 @@ draws than the number of requested chains/paths then the inits will be
 drawn using sampling with replacement. Otherwise sampling without
 replacement will be used. If the draws object's parameters are only a subset
 of the model parameters then the other parameters will be drawn by Stan's
-default initialization. The fit object must have at least some parameters
+default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
 
