@@ -52,16 +52,12 @@
 #'  than the requested number of chains/paths then the inits will be drawn using
 #'  sampling with replacement. Otherwise sampling without replacement will be
 #'  used. When a [`CmdStanPathfinder`] fit object is used as the init, if
-#'  CmdStan actually performed PSIS resampling (which requires `num_paths > 1`,
-#'  `psis_resample = TRUE`, and `calculate_lp = TRUE`), CmdStanR selects from
-#'  the returned draws using uniform weights to avoid applying importance
-#'  weights again. If CmdStan did not PSIS-resample the output and
-#'  `calculate_lp = TRUE`, CmdStanR selects draws using Pareto-smoothed
-#'  importance weights. This includes single-path fits with
-#'  `psis_resample = TRUE`, because CmdStan does not PSIS-resample single-path
-#'  output. If `calculate_lp = FALSE`, uniform weights are used because
-#'  importance weights cannot be calculated. PSIS resampling is used to select
-#'  the draws for [`CmdStanVB`], and [`CmdStanLaplace`] fit objects.
+#'  `psis_resample` was set to `FALSE` and `calculate_lp` was set to `TRUE`
+#'  (default), then resampling without replacement with Pareto smoothed weights
+#'  will be used. If `psis_resample` was set to `TRUE` or `calculate_lp` was set
+#'  to `FALSE` then sampling without replacement with uniform weights will be
+#'  used to select the draws. PSIS resampling is used to select the draws for
+#'  [`CmdStanVB`], and [`CmdStanLaplace`] fit objects.
 #'  * A type inheriting from `posterior::draws`. If the draws object has fewer
 #'  draws than the number of requested chains/paths then the inits will be
 #'  drawn using sampling with replacement. Otherwise sampling without

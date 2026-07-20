@@ -1306,13 +1306,6 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   validate_fit_init(init, model_variables)
   # Convert from data.table to data.frame
   draws_df <- init$draws(format = "df")
-  pathfinder_resampled <- FALSE
-  if (inherits(init, "CmdStanPathfinder")) {
-    metadata <- init$metadata()
-    pathfinder_resampled <- metadata$num_paths > 1 &&
-      metadata$psis_resample &&
-      metadata$calculate_lp
-  }
   draws_df$lw <- draws_df$lp__ - draws_df$lp_approx__
   # Replace NaN and Inf with -Inf
   draws_df$lw[!is.finite(draws_df$lw)] <- -Inf
@@ -1338,10 +1331,6 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   if (unique_draws < (0.95 * nrow(draws_df))) {
     temp_df <- stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
     draws_df <- posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
-  }
-  if (pathfinder_resampled) {
-    draws_df$weight <- rep(1.0, nrow(draws_df))
-  } else if (unique_draws < (0.95 * nrow(draws_df))) {
     draws_df$weight <- exp(draws_df$lw - max(draws_df$lw))
   } else {
       draws_df$weight <- posterior::pareto_smooth(
