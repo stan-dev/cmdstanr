@@ -1,5 +1,7 @@
 # cmdstanr (development version)
 
+* Pathfinder fits used as initial values now use uniform weights when CmdStan already PSIS-resampled their draws, avoiding a second application of importance weights.
+* `pathfinder()` now passes separately supplied initial values to every path instead of using only the first path's initial values.
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),

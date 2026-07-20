@@ -871,6 +871,13 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
   csv_file_info$num_threads <- NULL
+  # CmdStan records multi-path Pathfinder inits as one comma-separated value.
+  # Split it so metadata and fit$init() retain one file per path.
+  if (identical(csv_file_info$method, "pathfinder") &&
+      is.character(csv_file_info$init) &&
+      isTRUE(csv_file_info$num_paths > 1)) {
+    csv_file_info$init <- strsplit(csv_file_info$init, ",", fixed = TRUE)[[1]]
+  }
   if (length(gradients) > 0) {
     csv_file_info$gradients <- gradients
   }
