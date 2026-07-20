@@ -501,6 +501,16 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
   if (!is.character(path) || is.null(path) || !os_is_wsl()) {
     return(path)
   }
+  # Apply the existing scalar conversion to each path, forwarding `revert`.
+  if (length(path) != 1L) {
+    return(vapply(
+      path,
+      wsl_safe_path,
+      character(1),
+      revert = revert,
+      USE.NAMES = FALSE
+    ))
+  }
   if (revert) {
     if (!grepl("^/mnt/", path)) {
       return(path)

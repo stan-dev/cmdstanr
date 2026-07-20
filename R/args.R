@@ -155,7 +155,14 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(self$init)) {
-        args$init <- paste0("init=", wsl_safe_path(self$init[idx]))
+        # CmdStan runs all Pathfinder paths in one process. When there is one
+        # init file per path, CmdStan expects one comma-separated argument.
+        init <- if (inherits(self$method_args, "PathfinderArgs")) {
+          self$init
+        } else {
+          self$init[idx]
+        }
+        args$init <- paste0("init=", paste(wsl_safe_path(init), collapse = ","))
       }
 
       if (!is.null(self$data_file)) {
@@ -1306,12 +1313,21 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   validate_fit_init(init, model_variables)
   # Convert from data.table to data.frame
   draws_df <- init$draws(format = "df")
+  pathfinder_resampled <- FALSE
+  if (inherits(init, "CmdStanPathfinder")) {
+    metadata <- init$metadata()
+    pathfinder_resampled <- metadata$num_paths > 1 &&
+      metadata$psis_resample &&
+      metadata$calculate_lp
+  }
   draws_df$lw <- draws_df$lp__ - draws_df$lp_approx__
   # Replace NaN and Inf with -Inf
   draws_df$lw[!is.finite(draws_df$lw)] <- -Inf
-  # Calculate unique draws based on 'lw' using base R functions
-  unique_draws <- length(unique(draws_df$lw))
-  if (num_procs > unique_draws) {
+  # We've been using distinct log weights as a proxy for distinct parameter
+  # vectors, but this isn't perfect. Comparing parameter values directly would
+  # be more accurate.
+  num_unique_log_weights <- length(unique(draws_df$lw))
+  if (num_procs > num_unique_log_weights) {
     if (inherits(init, "CmdStanPathfinder")) {
       algo_name <- " Pathfinder "
       extra_msg <- " Try running Pathfinder with psis_resample=FALSE."
@@ -1326,24 +1342,31 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
       extra_msg <- ""
     }
     stop(paste0("Not enough distinct draws (", num_procs, ") in", algo_name ,
-      "fit to create inits.", extra_msg))
+                "fit to create inits.", extra_msg))
   }
-  if (unique_draws < (0.95 * nrow(draws_df))) {
+  if (num_unique_log_weights < (0.95 * nrow(draws_df))) {
     temp_df <- stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
     draws_df <- posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
+  }
+  if (pathfinder_resampled) {
+    draws_df$weight <- rep(1.0, nrow(draws_df))
+  } else if (num_unique_log_weights < (0.95 * nrow(draws_df))) {
     draws_df$weight <- exp(draws_df$lw - max(draws_df$lw))
   } else {
-      draws_df$weight <- posterior::pareto_smooth(
-        exp(draws_df$lw - max(draws_df$lw)), tail = "right", r_eff=1, return_k=FALSE)
+    draws_df$weight <- posterior::pareto_smooth(
+      exp(draws_df$lw - max(draws_df$lw)), tail = "right", r_eff=1, return_k=FALSE)
   }
-    init_draws_df <- posterior::resample_draws(draws_df, ndraws = num_procs,
-                                              weights = draws_df$weight, method = "simple_no_replace")
-    init_draws_df <- posterior::subset_draws(init_draws_df,
-      variable = setdiff(posterior::variables(init_draws_df), c("lw", "weight")))
-    init_draws_lst <- process_init(init_draws_df,
-                                  num_procs = num_procs, model_variables = model_variables, warn_partial)
-    return(init_draws_lst)
-  }
+  init_draws_df <- posterior::resample_draws(draws_df, ndraws = num_procs,
+                                             weights = draws_df$weight, method = "simple_no_replace")
+  init_draws_df <- posterior::subset_draws(init_draws_df,
+                                           variable = setdiff(posterior::variables(init_draws_df), c("lw", "weight")))
+  process_init(
+    init_draws_df,
+    num_procs = num_procs,
+    model_variables = model_variables,
+    warn_partial
+  )
+}
 
 #' Write initial values to files if provided as a `CmdStanPathfinder` class
 #' @noRd
@@ -1473,8 +1496,8 @@ validate_init <- function(init, num_procs) {
          call. = FALSE)
   } else if (is.character(init)) {
     if (length(init) != 1 && length(init) != num_procs) {
-      stop("If 'init' is specified as a character vector it must have ",
-           "length 1 or number of chains.",
+      stop("If 'init' is specified as a character vector, its length must be ",
+           "1 or equal to the number of chains or Pathfinder paths.",
            call. = FALSE)
     }
     assert_file_exists(init, access = "r")

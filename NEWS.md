@@ -1,6 +1,8 @@
 # cmdstanr (development version)
 
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
+* Pathfinder fits used as initial values now use uniform weights when CmdStan already PSIS-resampled their draws, avoiding a second application of importance weights. (#1206)
+* `pathfinder()` now passes separately supplied initial values to every path instead of using only the first path's initial values. (#1206)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
