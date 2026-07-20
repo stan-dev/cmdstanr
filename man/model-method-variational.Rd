@@ -136,11 +136,12 @@ the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
 the output CSV files is composed of the model name, timestamp, and a
 six-character random hexadecimal suffix.}
 
-\item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represents the output
-values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
-Increasing this value will result in larger output CSV files and thus an
-increased usage of disk space.}
+\item{sig_figs}{(positive integer) The number of significant figures (up to a
+maximum of 18) to use when storing the output values. If \code{NULL} (the
+default), the default from the installed CmdStan version is used. Use
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} to check that
+default. Increasing this value will result in larger output CSV files and
+thus an increased usage of disk space.}
 
 \item{threads}{(positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of

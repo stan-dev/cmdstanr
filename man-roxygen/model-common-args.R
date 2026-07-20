@@ -97,11 +97,12 @@
 #'   the output CSV files is composed of the model name, timestamp, and a
 #'   six-character random hexadecimal suffix.
 #'
-#' @param sig_figs (positive integer) The number of significant figures used
-#'   when storing the output values. By default, CmdStan represents the output
-#'   values with 6 significant figures. The upper limit for `sig_figs` is 18.
-#'   Increasing this value will result in larger output CSV files and thus an
-#'   increased usage of disk space.
+#' @param sig_figs (positive integer) The number of significant figures (up to a
+#'   maximum of 18) to use when storing the output values. If `NULL` (the
+#'   default), the default from the installed CmdStan version is used. Use
+#'   [`$cmdstan_defaults()`][model-method-cmdstan_defaults] to check that
+#'   default. Increasing this value will result in larger output CSV files and
+#'   thus an increased usage of disk space.
 #'
 #' @param opencl_ids (integer vector of length 2) The platform and device IDs of
 #'   the OpenCL device to use for fitting. The model must be compiled with
