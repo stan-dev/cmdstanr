@@ -63,7 +63,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="cmdstanr-development-version">cmdstanr (development version)<a class="anchor" aria-label="anchor" href="#cmdstanr-development-version"></a></h2>
-<ul><li><p><code><a href="../reference/model-method-pathfinder.html">pathfinder()</a></code> now respects <code>save_single_paths = TRUE</code> instead of always passing <code>0</code> to CmdStan.</p></li>
+<ul><li><p>Pathfinder fits used as initial values now use uniform weights when CmdStan already PSIS-resampled their draws, avoiding a second application of importance weights. (<a href="https://github.com/stan-dev/cmdstanr/issues/1206" class="external-link">#1206</a>)</p></li>
+<li><p><code><a href="../reference/model-method-pathfinder.html">pathfinder()</a></code> now passes separately supplied initial values to every path instead of using only the first path’s initial values. (<a href="https://github.com/stan-dev/cmdstanr/issues/1206" class="external-link">#1206</a>)</p></li>
+<li><p><code><a href="../reference/model-method-pathfinder.html">pathfinder()</a></code> now respects <code>save_single_paths = TRUE</code> instead of always passing <code>0</code> to CmdStan.</p></li>
 <li><p><code><a href="../reference/model-method-pathfinder.html">pathfinder()</a></code> now uses <code>threads</code> argument (<code>num_threads</code> is deprecated), to be consistent with other methods.</p></li>
 <li><p>Informative error when exposing functions using names that are reserved keywords (<a href="https://github.com/VisruthSK" class="external-link">@VisruthSK</a>, <a href="https://github.com/stan-dev/cmdstanr/issues/1154" class="external-link">#1154</a>)</p></li>
 <li><p><code>save_cmdstan_config</code> and <code>save_metric</code> default to <code>FALSE</code> but can be set to <code>TRUE</code> for an entire R session via new global options. (<a href="https://github.com/stan-dev/cmdstanr/issues/1159" class="external-link">#1159</a>)</p></li>

@@ -186,41 +186,51 @@ variables declared in the parameters block of the Stan program. One of the
 following:</p><ul><li><p>A real number <code>x&gt;0</code>. This initializes <em>all</em> parameters randomly between
 <code>[-x,x]</code> on the <em>unconstrained</em> parameter space.</p></li>
 <li><p>The number <code>0</code>. This initializes <em>all</em> parameters to <code>0</code>.</p></li>
-<li><p>A character vector of paths (one per chain) to JSON or Rdump files
-containing initial values for all or some parameters. See
+<li><p>A character vector of paths to JSON or Rdump files containing initial
+values for all or some parameters. For MCMC and Pathfinder, if only a single
+file is provided it will be reused for all chains and paths. See
 <code><a href="write_stan_json.html">write_stan_json()</a></code> to write <span style="R">R</span> objects to JSON files compatible with
 CmdStan.</p></li>
 <li><p>A list of lists containing initial values for all or some parameters. For
-MCMC the list should contain a sublist for each chain. For other model
-fitting methods there should be just one sublist. The sublists should have
-named elements corresponding to the parameters for which you are specifying
-initial values. See <strong>Examples</strong>.</p></li>
+MCMC the list should contain a sublist for each chain, and for Pathfinder it
+should contain a sublist for each path. For other model fitting methods
+there should be just one sublist. The sublists should have named elements
+corresponding to the parameters for which you are specifying initial
+values. See <strong>Examples</strong>.</p></li>
 <li><p>A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
-take no arguments or a single argument <code>chain_id</code>. For MCMC, if the function
-has argument <code>chain_id</code> it will be supplied with the chain id (from 1 to
-number of chains) when called to generate the initial values. See
-<strong>Examples</strong>.</p></li>
+take no arguments or a single argument <code>chain_id</code>. For MCMC and Pathfinder,
+the function is called once for each chain or path. If the function has the
+<code>chain_id</code> argument, it receives the chain or path number, starting at 1.
+See <strong>Examples</strong>.</p></li>
 <li><p>A <code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code>, <code><a href="CmdStanMLE.html">CmdStanMLE</a></code>, <code><a href="CmdStanVB.html">CmdStanVB</a></code>, <code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code>,
 or <code><a href="CmdStanLaplace.html">CmdStanLaplace</a></code> fit object. If the fit object's parameters are only a
 subset of the model parameters then the other parameters will be drawn by
 Stan's default initialization. The fit object must have at least some
 parameters that are the same name and dimensions as the current Stan model.
-For the <code>sample</code> and <code>pathfinder</code> method, if the fit object has fewer draws
-than the requested number of chains/paths then the inits will be drawn using
-sampling with replacement. Otherwise sampling without replacement will be
-used. When a <code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code> fit object is used as the init, if
-<code>psis_resample</code> was set to <code>FALSE</code> and <code>calculate_lp</code> was set to <code>TRUE</code>
-(default), then resampling without replacement with Pareto smoothed weights
-will be used. If <code>psis_resample</code> was set to <code>TRUE</code> or <code>calculate_lp</code> was set
-to <code>FALSE</code> then sampling without replacement with uniform weights will be
-used to select the draws. PSIS resampling is used to select the draws for
-<code><a href="CmdStanVB.html">CmdStanVB</a></code>, and <code><a href="CmdStanLaplace.html">CmdStanLaplace</a></code> fit objects.</p></li>
+For the <code>sample</code> and <code>pathfinder</code> methods, which need one initialization per
+chain or path, the inits are drawn from the fit object without replacement,
+so it must contain at least as many draws as the number of chains/paths. For
+<code><a href="CmdStanVB.html">CmdStanVB</a></code>, <code><a href="CmdStanLaplace.html">CmdStanLaplace</a></code>, and <code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code> fit objects the
+draws must additionally be <em>distinct</em>. A <code><a href="CmdStanMLE.html">CmdStanMLE</a></code> fit object is the
+exception: its single draw (the mode) is used to initialize every chain or
+path. When a <code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code> fit object is used as the init, if
+CmdStan actually performed PSIS resampling (which requires <code>num_paths &gt; 1</code>,
+<code>psis_resample = TRUE</code>, and <code>calculate_lp = TRUE</code>), CmdStanR selects from
+the returned draws using uniform weights to avoid applying importance
+weights again. If CmdStan did not PSIS-resample the output and
+<code>calculate_lp = TRUE</code>, CmdStanR selects draws using Pareto-smoothed
+importance weights. This includes single-path fits with
+<code>psis_resample = TRUE</code>, because CmdStan does not PSIS-resample single-path
+output. If <code>calculate_lp = FALSE</code>, uniform weights are used because
+importance weights cannot be calculated. PSIS resampling is used to select
+the draws for <code><a href="CmdStanVB.html">CmdStanVB</a></code>, and <code><a href="CmdStanLaplace.html">CmdStanLaplace</a></code> fit objects.</p></li>
 <li><p>A type inheriting from <code><a href="https://mc-stan.org/posterior/reference/draws.html" class="external-link">posterior::draws</a></code>. If the draws object has fewer
-draws than the number of requested chains/paths then the inits will be
-drawn using sampling with replacement. Otherwise sampling without
-replacement will be used. If the draws object's parameters are only a subset
-of the model parameters then the other parameters will be drawn by Stan's
+draws than the number of requested chains/paths, the draws are reused in
+their existing order until each chain/path has an initialization. If there
+are more draws than requested chains/paths, draws are selected uniformly
+without replacement. If the draws object's parameters are only a subset of
+the model parameters then the other parameters will be drawn by Stan's
 default initialization. The fit object must have at least some parameters
 that are the same name and dimensions as the current Stan model.</p></li>
 </ul></dd>
@@ -532,7 +542,7 @@ https://mc-stan.org/docs/cmdstan-guide/</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.1 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use 'posterior' package for summaries</span></span></span>
@@ -810,7 +820,7 @@ https://mc-stan.org/docs/cmdstan-guide/</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span><span class="op">$</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>

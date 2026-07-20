@@ -2,6 +2,16 @@
 
 ## cmdstanr (development version)
 
+- Pathfinder fits used as initial values now use uniform weights when
+  CmdStan already PSIS-resampled their draws, avoiding a second
+  application of importance weights.
+  ([\#1206](https://github.com/stan-dev/cmdstanr/issues/1206))
+
+- [`pathfinder()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md)
+  now passes separately supplied initial values to every path instead of
+  using only the first path’s initial values.
+  ([\#1206](https://github.com/stan-dev/cmdstanr/issues/1206))
+
 - [`pathfinder()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md)
   now respects `save_single_paths = TRUE` instead of always passing `0`
   to CmdStan.

@@ -93,24 +93,27 @@ variational(
 
   - The number `0`. This initializes *all* parameters to `0`.
 
-  - A character vector of paths (one per chain) to JSON or Rdump files
-    containing initial values for all or some parameters. See
+  - A character vector of paths to JSON or Rdump files containing
+    initial values for all or some parameters. For MCMC and Pathfinder,
+    if only a single file is provided it will be reused for all chains
+    and paths. See
     [`write_stan_json()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_json.md)
     to write R objects to JSON files compatible with CmdStan.
 
   - A list of lists containing initial values for all or some
     parameters. For MCMC the list should contain a sublist for each
-    chain. For other model fitting methods there should be just one
-    sublist. The sublists should have named elements corresponding to
-    the parameters for which you are specifying initial values. See
+    chain, and for Pathfinder it should contain a sublist for each path.
+    For other model fitting methods there should be just one sublist.
+    The sublists should have named elements corresponding to the
+    parameters for which you are specifying initial values. See
     **Examples**.
 
   - A function that returns a single list with names corresponding to
     the parameters for which you are specifying initial values. The
     function can take no arguments or a single argument `chain_id`. For
-    MCMC, if the function has argument `chain_id` it will be supplied
-    with the chain id (from 1 to number of chains) when called to
-    generate the initial values. See **Examples**.
+    MCMC and Pathfinder, the function is called once for each chain or
+    path. If the function has the `chain_id` argument, it receives the
+    chain or path number, starting at 1. See **Examples**.
 
   - A
     [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
@@ -123,18 +126,30 @@ variational(
     model parameters then the other parameters will be drawn by Stan's
     default initialization. The fit object must have at least some
     parameters that are the same name and dimensions as the current Stan
-    model. For the `sample` and `pathfinder` method, if the fit object
-    has fewer draws than the requested number of chains/paths then the
-    inits will be drawn using sampling with replacement. Otherwise
-    sampling without replacement will be used. When a
+    model. For the `sample` and `pathfinder` methods, which need one
+    initialization per chain or path, the inits are drawn from the fit
+    object without replacement, so it must contain at least as many
+    draws as the number of chains/paths. For
+    [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
+    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md),
+    and
     [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
-    fit object is used as the init, if `psis_resample` was set to
-    `FALSE` and `calculate_lp` was set to `TRUE` (default), then
-    resampling without replacement with Pareto smoothed weights will be
-    used. If `psis_resample` was set to `TRUE` or `calculate_lp` was set
-    to `FALSE` then sampling without replacement with uniform weights
-    will be used to select the draws. PSIS resampling is used to select
-    the draws for
+    fit objects the draws must additionally be *distinct*. A
+    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
+    fit object is the exception: its single draw (the mode) is used to
+    initialize every chain or path. When a
+    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
+    fit object is used as the init, if CmdStan actually performed PSIS
+    resampling (which requires `num_paths > 1`, `psis_resample = TRUE`,
+    and `calculate_lp = TRUE`), CmdStanR selects from the returned draws
+    using uniform weights to avoid applying importance weights again. If
+    CmdStan did not PSIS-resample the output and `calculate_lp = TRUE`,
+    CmdStanR selects draws using Pareto-smoothed importance weights.
+    This includes single-path fits with `psis_resample = TRUE`, because
+    CmdStan does not PSIS-resample single-path output. If
+    `calculate_lp = FALSE`, uniform weights are used because importance
+    weights cannot be calculated. PSIS resampling is used to select the
+    draws for
     [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
     and
     [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md)
@@ -143,12 +158,14 @@ variational(
   - A type inheriting from
     [`posterior::draws`](https://mc-stan.org/posterior/reference/draws.html).
     If the draws object has fewer draws than the number of requested
-    chains/paths then the inits will be drawn using sampling with
-    replacement. Otherwise sampling without replacement will be used. If
-    the draws object's parameters are only a subset of the model
-    parameters then the other parameters will be drawn by Stan's default
-    initialization. The fit object must have at least some parameters
-    that are the same name and dimensions as the current Stan model.
+    chains/paths, the draws are reused in their existing order until
+    each chain/path has an initialization. If there are more draws than
+    requested chains/paths, draws are selected uniformly without
+    replacement. If the draws object's parameters are only a subset of
+    the model parameters then the other parameters will be drawn by
+    Stan's default initialization. The fit object must have at least
+    some parameters that are the same name and dimensions as the current
+    Stan model.
 
 - save_latent_dynamics:
 
@@ -570,8 +587,8 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 #>   This procedure has not been thoroughly tested and may be unstable 
 #>   or buggy. The interface is subject to change. 
 #> ------------------------------------------------------------ 
-#> Gradient evaluation took 2e-06 seconds 
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
+#> Gradient evaluation took 3e-06 seconds 
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
 #> Adjust your expectations accordingly! 
 #> Begin eta adaptation. 
 #> Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -711,7 +728,7 @@ fit_mcmc_w_init_fun_2 <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2$init()
 #> [[1]]
