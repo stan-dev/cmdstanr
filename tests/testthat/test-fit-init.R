@@ -147,33 +147,37 @@ test_that("Pathfinder fit initializations use the intended weights", {
   expect_equal(pareto_smooth_calls, 2L)
 })
 
-test_that("Pathfinder init weighting preserves unique-log-weight safeguard", {
-  # The existing safeguard treats these two log weights as a proxy for two
-  # distinct parameter vectors.
+test_that("Pathfinder init candidates are distinct target parameter vectors", {
   draws <- posterior::as_draws_df(data.frame(
-    theta = c(1, 1, 2, 2),
-    lp__ = c(1, 1, 2, 2),
+    theta = c(1, 1, 2, 3),
+    unused = c(10, 20, 30, 40),
+    lp__ = c(1, 1, 1, 1),
     lp_approx__ = 0
   ))
+  model_variables <- list(
+    parameters = list(theta = list(dimensions = 0L))
+  )
   pathfinder_fit <- structure(
     list(
       draws = function(format) draws,
       metadata = function() list(
         num_paths = 4,
         psis_resample = TRUE,
-        calculate_lp = TRUE
+        calculate_lp = TRUE,
+        stan_variables = c("theta", "unused")
       ),
       return_codes = function() 0
     ),
     class = "CmdStanPathfinder"
   )
 
+  candidates_seen <- NULL
   weights_seen <- NULL
   method_seen <- NULL
-  # Fail if Pareto smoothing is called, and record how draws are selected.
   local_mocked_bindings(
     pareto_smooth = function(...) stop("Pareto smoothing should not be used"),
     resample_draws = function(x, ndraws, weights = NULL, method, ...) {
+      candidates_seen <<- x
       weights_seen <<- weights
       method_seen <<- method
       x[seq_len(ndraws), , drop = FALSE]
@@ -182,22 +186,16 @@ test_that("Pathfinder init weighting preserves unique-log-weight safeguard", {
   )
   local_mocked_bindings(process_init = function(init, ...) init)
 
-  process_init.CmdStanPathfinder(pathfinder_fit, 2)
-
-  expect_equal(unique(weights_seen), 1)
-  expect_equal(method_seen, "simple_no_replace")
-  # The existing proxy finds only two distinct log weights, so requesting three
-  # initial values produces the existing error and Pathfinder guidance.
-  error_message <- tryCatch(
-    process_init.CmdStanPathfinder(pathfinder_fit, 3),
-    error = function(cnd) conditionMessage(cnd)
+  expect_no_error(
+    process_init.CmdStanPathfinder(pathfinder_fit, 3, model_variables)
   )
-  expect_equal(
-    error_message,
-    paste0(
-      "Not enough distinct draws (3) in Pathfinder fit to create inits.",
-      " Try running Pathfinder with psis_resample=FALSE."
-    )
+
+  expect_equal(candidates_seen$theta, c(1, 2, 3))
+  expect_equal(weights_seen, c(2, 1, 1))
+  expect_equal(method_seen, "simple_no_replace")
+  expect_snapshot(
+    error = TRUE,
+    process_init.CmdStanPathfinder(pathfinder_fit, 4, model_variables)
   )
 })
 

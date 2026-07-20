@@ -1306,13 +1306,23 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
-#' @importFrom stats aggregate
 process_init_approx <- function(init, num_procs, model_variables = NULL,
                                 warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                 ...) {
   validate_fit_init(init, model_variables)
   # Convert from data.table to data.frame
   draws_df <- init$draws(format = "df")
+  if (is.null(model_variables)) {
+    model_variables <- model_variables_from_draws(draws_df)
+  }
+  init_variables <- matching_variables(
+    names(model_variables$parameters),
+    posterior::variables(draws_df)
+  )$matching
+  init_groups <- vctrs::vec_group_id(
+    as.data.frame(draws_df)[, init_variables, drop = FALSE]
+  )
+  num_init_groups <- attr(init_groups, "n")
   pathfinder_resampled <- FALSE
   if (inherits(init, "CmdStanPathfinder")) {
     metadata <- init$metadata()
@@ -1320,14 +1330,11 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
       metadata$psis_resample &&
       metadata$calculate_lp
   }
-  draws_df$lw <- draws_df$lp__ - draws_df$lp_approx__
+  log_weights <- draws_df$lp__ - draws_df$lp_approx__
   # Replace NaN and Inf with -Inf
-  draws_df$lw[!is.finite(draws_df$lw)] <- -Inf
-  # We've been using distinct log weights as a proxy for distinct parameter
-  # vectors, but this isn't perfect. Comparing parameter values directly would
-  # be more accurate.
-  num_unique_log_weights <- length(unique(draws_df$lw))
-  if (num_procs > num_unique_log_weights) {
+  log_weights[!is.finite(log_weights)] <- -Inf
+  num_unique_log_weights <- length(unique(log_weights))
+  if (num_procs > num_init_groups) {
     if (inherits(init, "CmdStanPathfinder")) {
       algo_name <- " Pathfinder "
       extra_msg <- " Try running Pathfinder with psis_resample=FALSE."
@@ -1344,22 +1351,21 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
     stop(paste0("Not enough distinct draws (", num_procs, ") in", algo_name ,
                 "fit to create inits.", extra_msg))
   }
-  if (num_unique_log_weights < (0.95 * nrow(draws_df))) {
-    temp_df <- stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
-    draws_df <- posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
-  }
   if (pathfinder_resampled) {
-    draws_df$weight <- rep(1.0, nrow(draws_df))
+    weights <- rep(1.0, nrow(draws_df))
   } else if (num_unique_log_weights < (0.95 * nrow(draws_df))) {
-    draws_df$weight <- exp(draws_df$lw - max(draws_df$lw))
+    weights <- exp(log_weights - max(log_weights))
   } else {
-    draws_df$weight <- posterior::pareto_smooth(
-      exp(draws_df$lw - max(draws_df$lw)), tail = "right", r_eff=1, return_k=FALSE)
+    weights <- posterior::pareto_smooth(
+      exp(log_weights - max(log_weights)), tail = "right", r_eff=1, return_k=FALSE)
+  }
+  if (num_init_groups < nrow(draws_df)) {
+    # Both group IDs and rowsum output follow first-occurrence order.
+    draws_df <- draws_df[!duplicated(init_groups), , drop = FALSE]
+    weights <- unname(drop(rowsum(weights, init_groups, reorder = FALSE)))
   }
   init_draws_df <- posterior::resample_draws(draws_df, ndraws = num_procs,
-                                             weights = draws_df$weight, method = "simple_no_replace")
-  init_draws_df <- posterior::subset_draws(init_draws_df,
-                                           variable = setdiff(posterior::variables(init_draws_df), c("lw", "weight")))
+                                             weights = weights, method = "simple_no_replace")
   process_init(
     init_draws_df,
     num_procs = num_procs,
