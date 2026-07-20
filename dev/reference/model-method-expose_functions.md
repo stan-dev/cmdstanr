@@ -98,7 +98,7 @@ fit <- mod$sample(refresh = 0)
 #> 
 #> All 4 chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.4 seconds.
+#> Total execution time: 0.5 seconds.
 #> 
 fit$expose_functions() # already compiled because of above but this would compile them otherwise
 #> Functions already compiled, nothing to do!
