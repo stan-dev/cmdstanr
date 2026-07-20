@@ -16,7 +16,7 @@ check_syntax(
 \item{pedantic}{(logical) Should pedantic mode be turned on? The default is
 \code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
 Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html}{\emph{Pedantic mode} chapter} in
-the Stan Reference Manual.}
+the Stan User's Guide.}
 
 \item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
@@ -38,7 +38,7 @@ is valid.
 \description{
 The \verb{$check_syntax()} method of a \code{\link{CmdStanModel}} object
 checks the Stan program for syntax errors and returns \code{TRUE} (invisibly) if
-parsing succeeds. If invalid syntax in found an error is thrown.
+parsing succeeds. If invalid syntax is found an error is thrown.
 }
 \examples{
 \dontrun{

@@ -33,6 +33,9 @@
 #' \R list and an array must be used instead. For this example the array in \R
 #' should have dimensions `KxLxJ`.
 #'
+#' @seealso [`$variables()`][model-method-variables] for inspecting the input
+#'   and output variables of a Stan program.
+#'
 #' @examples
 #' x <- matrix(rnorm(10), 5, 2)
 #' y <- rpois(nrow(x), lambda = 10)

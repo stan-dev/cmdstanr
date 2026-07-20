@@ -829,15 +829,17 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'   a list, each element representing a Stan model block: `data`, `parameters`,
 #'   `transformed_parameters` and `generated_quantities`.
 #'
-#'   Each element contains a list of variables, with each variables represented
-#'   as a list with infromation on its scalar type (`real` or `int`) and
+#'   Each element contains a list of variables, with each variable represented
+#'   as a list with information on its scalar type (`real` or `int`) and
 #'   number of dimensions.
 #'
 #'   `transformed data` is not included, as variables in that block are not
 #'   part of the model's input or output.
 #'
-#' @return The `$variables()` returns a list with information on input and
-#'   output variables for each of the Stan model blocks.
+#' @return The method returns a list with information on input and output
+#'   variables for each of the Stan model blocks.
+#'
+#' @seealso [write_stan_json()] for writing data for CmdStan.
 #'
 #' @examples
 #' \dontrun{
@@ -878,13 +880,13 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #'
 #' @description The `$check_syntax()` method of a [`CmdStanModel`] object
 #'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if
-#'   parsing succeeds. If invalid syntax in found an error is thrown.
+#'   parsing succeeds. If invalid syntax is found an error is thrown.
 #'
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
-#'   the Stan Reference Manual.
+#'   the Stan User's Guide.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -1002,11 +1004,11 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @family CmdStanModel methods
 #'
 #' @description The `$format()` method of a [`CmdStanModel`] object
-#'   runs stanc's auto-formatter on the model code. Either saves the formatted
-#'   model directly back to the file or prints it for inspection.
+#'   runs stanc's auto-formatter on the model code. It either saves the
+#'   formatted model directly back to the file or prints it for inspection.
 #'
 #' @param overwrite_file (logical) Should the formatted code be written back
-#'   to the input model file. The default is `FALSE`.
+#'   to the input model file? The default is `FALSE`.
 #' @param canonicalize (list or logical) Defines whether or not the compiler
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
 #'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
@@ -1014,17 +1016,19 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   are passed to `stanc`. See the
 #'   [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
-#' @param backup (logical) If `TRUE`, create stanfile.bak backups before
-#'   writing to the file. Disable this option if you're sure you have other
-#'   copies of the file or are using a version control system like Git. Defaults
-#'   to `TRUE`. The value is ignored if `overwrite_file = FALSE`.
+#' @param backup (logical) If `TRUE`, create a backup before writing to the
+#'   file. The backup filename is the Stan filename followed by
+#'   `.bak-YYYYMMDDHHMMSS`, where the final digits encode the timestamp. Disable
+#'   this option if you're sure you have other copies of the file or are using a
+#'   version control system like Git. Defaults to `TRUE`. The value is ignored
+#'   if `overwrite_file = FALSE`.
 #' @param max_line_length (integer) The maximum length of a line when formatting.
 #'   The default is `NULL`, which defers to the default line length of stanc.
 #' @param quiet (logical) Should informational messages be suppressed? The
 #'   default is `FALSE`.
 #'
-#' @return The `$format()` method returns `TRUE` (invisibly) if the model
-#'   is valid.
+#' @return The `$format()` method returns `TRUE` (invisibly) if formatting
+#'   succeeds.
 #'
 #' @template seealso-docs
 #'
@@ -2111,12 +2115,13 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #'   VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
 #'
-#'   NOTE: if you plan on making many calls to `$generate_quantities()` then the
-#'   most efficient option is to pass the paths of the CmdStan CSV output files
-#'   (this avoids CmdStanR having to rewrite the draws contained in the fitted
-#'   model object to CSV each time). If you no longer have the CSV files you can
-#'   use [draws_to_csv()] once to write them and then pass the resulting file
-#'   paths to `$generate_quantities()` as many times as needed.
+#'   NOTE: CmdStan CSV paths are used directly. A [CmdStanMCMC] object also
+#'   reuses its original output files when they are available. If any of those
+#'   files are unavailable, CmdStanR writes the in-memory draws to temporary CSV
+#'   files. [CmdStanVB] and posterior draws objects are converted to temporary
+#'   CSV files on each call. For repeated calls that require this conversion, we
+#'   recommend using [draws_to_csv()] once and passing the resulting paths to
+#'   `$generate_quantities()`.
 #'
 #' @return A [`CmdStanGQ`] object.
 #'

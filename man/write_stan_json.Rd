@@ -70,3 +70,7 @@ write_stan_json(data, file)
 cat(readLines(file), sep = "\n")
 
 }
+\seealso{
+\code{\link[=model-method-variables]{$variables()}} for inspecting the input
+and output variables of a Stan program.
+}
