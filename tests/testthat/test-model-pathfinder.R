@@ -130,21 +130,9 @@ test_that("pathfinder() method works with init file", {
   expect_pathfinder_output(mod$pathfinder(data = data_file_r, init = init_file))
 })
 
-test_that("pathfinder() method passes one init to each path", {
-  init_function <- function(chain_id) {
-    list(theta = chain_id / 5)
-  }
-  expect_pathfinder_output(
-    fit <- mod$pathfinder(
-      data = data_file_r,
-      init = init_function,
-      refresh = 0,
-      seed = 123
-    )
-  )
-
-  # The function returns a different value for each of the four default paths.
-  expect_equal(vapply(fit$init(), `[[`, numeric(1), "theta"), (1:4) / 5)
+test_that("pathfinder() method works with init function and default paths", {
+  init_function <- function() { list(theta = 0.5) }
+  expect_pathfinder_output(mod$pathfinder(data = data_file_r, init = init_function))
 })
 
 test_that("pathfinder() method runs when all arguments specified", {

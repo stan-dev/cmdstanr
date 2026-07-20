@@ -155,14 +155,7 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(self$init)) {
-        # CmdStan runs all Pathfinder paths in one process. When there is one
-        # init file per path, CmdStan expects one comma-separated argument.
-        init <- if (inherits(self$method_args, "PathfinderArgs")) {
-          self$init
-        } else {
-          self$init[idx]
-        }
-        args$init <- paste0("init=", paste(wsl_safe_path(init), collapse = ","))
+        args$init <- paste0("init=", wsl_safe_path(self$init[idx]))
       }
 
       if (!is.null(self$data_file)) {
