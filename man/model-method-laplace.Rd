@@ -59,41 +59,51 @@ following:
 \item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
 \verb{[-x,x]} on the \emph{unconstrained} parameter space.
 \item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
-\item A character vector of paths (one per chain) to JSON or Rdump files
-containing initial values for all or some parameters. See
+\item A character vector of paths to JSON or Rdump files containing initial
+values for all or some parameters. For MCMC and Pathfinder, if only a single
+file is provided it will be reused for all chains and paths. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 \item A list of lists containing initial values for all or some parameters. For
-MCMC the list should contain a sublist for each chain. For other model
-fitting methods there should be just one sublist. The sublists should have
-named elements corresponding to the parameters for which you are specifying
-initial values. See \strong{Examples}.
+MCMC the list should contain a sublist for each chain, and for Pathfinder it
+should contain a sublist for each path. For other model fitting methods
+there should be just one sublist. The sublists should have named elements
+corresponding to the parameters for which you are specifying initial
+values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
-take no arguments or a single argument \code{chain_id}. For MCMC, if the function
-has argument \code{chain_id} it will be supplied with the chain id (from 1 to
-number of chains) when called to generate the initial values. See
-\strong{Examples}.
+take no arguments or a single argument \code{chain_id}. For MCMC and Pathfinder,
+the function is called once for each chain or path. If the function has the
+\code{chain_id} argument, it receives the chain or path number, starting at 1.
+See \strong{Examples}.
 \item A \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanPathfinder}},
 or \code{\link{CmdStanLaplace}} fit object. If the fit object's parameters are only a
 subset of the model parameters then the other parameters will be drawn by
 Stan's default initialization. The fit object must have at least some
 parameters that are the same name and dimensions as the current Stan model.
-For the \code{sample} and \code{pathfinder} method, if the fit object has fewer draws
-than the requested number of chains/paths then the inits will be drawn using
-sampling with replacement. Otherwise sampling without replacement will be
-used. When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
-\code{psis_resample} was set to \code{FALSE} and \code{calculate_lp} was set to \code{TRUE}
-(default), then resampling without replacement with Pareto smoothed weights
-will be used. If \code{psis_resample} was set to \code{TRUE} or \code{calculate_lp} was set
-to \code{FALSE} then sampling without replacement with uniform weights will be
-used to select the draws. PSIS resampling is used to select the draws for
-\code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
+For the \code{sample} and \code{pathfinder} methods, which need one initialization per
+chain or path, the inits are drawn from the fit object without replacement,
+so it must contain at least as many draws as the number of chains/paths. For
+\code{\link{CmdStanVB}}, \code{\link{CmdStanLaplace}}, and \code{\link{CmdStanPathfinder}} fit objects the
+draws must additionally be \emph{distinct}. A \code{\link{CmdStanMLE}} fit object is the
+exception: its single draw (the mode) is used to initialize every chain or
+path. When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
+CmdStan actually performed PSIS resampling (which requires \code{num_paths > 1},
+\code{psis_resample = TRUE}, and \code{calculate_lp = TRUE}), CmdStanR selects from
+the returned draws using uniform weights to avoid applying importance
+weights again. If CmdStan did not PSIS-resample the output and
+\code{calculate_lp = TRUE}, CmdStanR selects draws using Pareto-smoothed
+importance weights. This includes single-path fits with
+\code{psis_resample = TRUE}, because CmdStan does not PSIS-resample single-path
+output. If \code{calculate_lp = FALSE}, uniform weights are used because
+importance weights cannot be calculated. PSIS resampling is used to select
+the draws for \code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
 \item A type inheriting from \code{posterior::draws}. If the draws object has fewer
-draws than the number of requested chains/paths then the inits will be
-drawn using sampling with replacement. Otherwise sampling without
-replacement will be used. If the draws object's parameters are only a subset
-of the model parameters then the other parameters will be drawn by Stan's
+draws than the number of requested chains/paths, the draws are reused in
+their existing order until each chain/path has an initialization. If there
+are more draws than requested chains/paths, draws are selected uniformly
+without replacement. If the draws object's parameters are only a subset of
+the model parameters then the other parameters will be drawn by Stan's
 default initialization. The fit object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
