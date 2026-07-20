@@ -16,13 +16,9 @@ draws or length equal to \code{1} for optimization.
 }
 \description{
 The \verb{$lp()} method extracts \code{lp__}, the target log density
-evaluated by Stan, up to an additive constant. For variational inference
-the log density of the variational approximation to the posterior is
-available via the \verb{$lp_approx()} method. For
-Laplace approximation the unnormalized density of the approximation to
-the posterior is available via the \verb{$lp_approx()} method.
-For Pathfinder the log density of the approximation to the posterior is
-available via the \verb{$lp_approx()} method.
+evaluated by Stan, up to an additive constant. For variational inference,
+Laplace approximation, and Pathfinder, the log density of the corresponding
+approximating distribution is available via \verb{$lp_approx()}.
 
 See the \href{https://mc-stan.org/docs/reference-manual/statements.html}{Increment log density and Distribution Statements}
 sections of the Stan Reference Manual for details on when normalizing
@@ -50,9 +46,13 @@ approximation to \code{lp__} (also on the unconstrained space). It is exposed in
 the variational method for performing the checks described in Yao et al.
 (2018) and implemented in the \pkg{loo} package.
 
-For Laplace approximation \code{lp_approx__} is the unnormalized density of the
-Laplace approximation. It can be used to perform the same checks as in the
-case of the variational method described in Yao et al. (2018).
+For Laplace approximation \code{lp_approx__} is CmdStan's \code{log_q__}: the
+unnormalized log density of the normal approximation on the unconstrained
+space. It can be used to perform the same checks as in the case of the
+variational method described in Yao et al. (2018).
+
+For Pathfinder \code{lp_approx__} is the log density of the approximating
+distribution on the unconstrained space.
 }
 
 \examples{
@@ -65,6 +65,9 @@ fit_mle$lp()
 
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 plot(fit_vb$lp(), fit_vb$lp_approx())
+
+fit_pathfinder <- cmdstanr_example("logistic", method = "pathfinder")
+plot(fit_pathfinder$lp(), fit_pathfinder$lp_approx())
 }
 
 }

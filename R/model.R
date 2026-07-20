@@ -181,20 +181,30 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  `$stan_file()` | Return the file path to the Stan program. |
-#'  `$code()` | Return Stan program as a character vector. |
-#'  `$print()`|  Print readable version of Stan program. |
+#'  [`$stan_file()`][model-method-model-info] | Return the file path to the Stan program. |
+#'  [`$has_stan_file()`][model-method-model-info] | Check whether the model was created with a Stan file. |
+#'  [`$code()`][model-method-model-info] | Return Stan program as a character vector. |
+#'  [`$print()`][model-method-model-info] | Print readable version of Stan program. |
 #'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
 #'  [`$format()`][model-method-format]  |  Format and canonicalize the Stan model code. |
+#'
+#'  ## Model information
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$model_name()`][model-method-model-info] | Return the model name. |
+#'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
+#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version associated with the model. |
+#'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
 #'
 #'  ## Compilation
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$compile()`][model-method-compile]  |  Compile Stan program. |
-#'  [`$exe_file()`][model-method-compile] |  Return the file path to the compiled executable. |
-#'  [`$hpp_file()`][model-method-compile] |  Return the file path to the `.hpp` file containing the generated C++ code. |
-#'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
+#'  [`$exe_file()`][model-method-model-info] |  Return or set the file path to the compiled executable. |
+#'  [`$hpp_file()`][model-method-model-info] |  Return the file path to the `.hpp` file containing the generated C++ code. |
+#'  [`$save_hpp_file()`][model-method-model-info] |  Save the `.hpp` file containing the generated C++ code. |
 #'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'  [`$cmdstan_defaults()`][model-method-cmdstan_defaults] |  Get CmdStan default argument values for a method. |
 #'
@@ -348,7 +358,7 @@ CmdStanModel <- R6::R6Class(
     },
     hpp_file = function() {
       if (!length(private$hpp_file_)) {
-        stop("The .hpp file does not exists. Please (re)compile the model.", call. = FALSE)
+        stop("The .hpp file does not exist. Please (re)compile the model.", call. = FALSE)
       }
       private$hpp_file_
     },
@@ -367,6 +377,63 @@ CmdStanModel <- R6::R6Class(
     }
   )
 )
+
+# CmdStanModel information methods ---------------------------------------------
+
+#' Access information from a `CmdStanModel` object
+#'
+#' @name model-method-model-info
+#' @family CmdStanModel methods
+#'
+#' @description These methods access information stored in a [`CmdStanModel`]
+#'   object, print its Stan program, and manage paths to its executable and
+#'   generated C++ file.
+#'
+#' @usage
+#' stan_file()
+#' has_stan_file()
+#' code()
+#' print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
+#' model_name()
+#' exe_file(path = NULL)
+#' include_paths()
+#' cmdstan_version()
+#' cpp_options()
+#' hpp_file()
+#' save_hpp_file(dir = NULL)
+#'
+#' @param line_numbers (logical) Should line numbers be printed? The default is
+#'   `getOption("cmdstanr_print_line_numbers", FALSE)`.
+#' @param path (string) The path to a model executable. If `NULL` (the default),
+#'   `$exe_file()` returns the current path. Otherwise, the stored path is
+#'   updated before being returned.
+#' @param dir (string) The directory in which to save the `.hpp` file. The
+#'   default is the directory containing the Stan program.
+#'
+#' @return
+#' * `$stan_file()` returns a path as a string, or `character(0)` if the model
+#'   was created without a Stan file.
+#' * `$has_stan_file()` returns `TRUE` if the model was created with a Stan file
+#'   and `FALSE` otherwise.
+#' * `$code()` returns a character vector with one element per line of Stan
+#'   code, or `NULL` if the model was created without a Stan file.
+#' * `$print()` returns the [`CmdStanModel`] object invisibly.
+#' * `$model_name()` returns the model name as a string.
+#' * `$exe_file()` returns a path as a string, or `character(0)` if no
+#'   executable path is set.
+#' * `$include_paths()` returns a character vector of paths or `NULL`.
+#' * `$cmdstan_version()` returns a CmdStan version as a string.
+#' * `$cpp_options()` returns a named list of C++ options.
+#' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
+#'   was generated while compiling this model object. It errors if no `.hpp`
+#'   path is available, such as when an up-to-date executable was reused.
+#' * `$save_hpp_file()` requires an available `.hpp` file. It moves the file to
+#'   `dir`, updates the stored path, and returns the new path invisibly.
+#'
+#' @seealso [`$compile()`][model-method-compile] and [cmdstan_model()]
+#' @template seealso-docs
+#'
+NULL
 
 # CmdStanModel methods -----------------------------------
 
@@ -387,25 +454,27 @@ CmdStanModel <- R6::R6Class(
 #'   is possible to set `compile=FALSE` in the call to `cmdstan_model()` and
 #'   subsequently call the `$compile()` method directly.
 #'
-#'   After compilation, the paths to the executable and the `.hpp` file
-#'   containing the generated C++ code are available via the `$exe_file()` and
-#'   `$hpp_file()` methods. The default is to create the executable in the same
-#'   directory as the Stan program and to write the generated C++ code in a
-#'   temporary directory. To save the C++ code to a non-temporary location use
-#'   `$save_hpp_file(dir)`.
+#'   After compilation, the path to the executable is available via
+#'   [`$exe_file()`][model-method-model-info]. If compilation generated C++ code
+#'   instead of reusing an up-to-date executable, its path is also available via
+#'   [`$hpp_file()`][model-method-model-info]. Use `force_recompile=TRUE` to
+#'   force generation of the C++ code. By default, the executable is created in
+#'   the same directory as the Stan program and the generated C++ code is
+#'   written to a temporary directory. To save the C++ code to a non-temporary
+#'   location use
+#'   [`$save_hpp_file(dir)`][model-method-model-info].
 #'
 #' @param quiet (logical) Should the verbose output from CmdStan during
 #'   compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
 #'   output.
 #' @param dir (string) The path to the directory in which to store the CmdStan
-#'   executable (or `.hpp` file if using `$save_hpp_file()`). The default is the
-#'   same location as the Stan program.
+#'   executable. The default is the same location as the Stan program.
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   section](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
-#'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
+#'   the Stan User's Guide. **Note:** to do a pedantic check for a model
 #'   without compiling it or for a model that is already compiled the
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
 #' @param include_paths (character vector) Paths to directories where Stan
@@ -420,16 +489,18 @@ CmdStanModel <- R6::R6Class(
 #'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
-#'   `stanc` chapter of the CmdStan Guide for more details on available options:
-#'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
-#' @param force_recompile (logical) Should the model be recompiled even if was
-#'   not modified since last compiled. The default is `FALSE`. Can also be set
-#'   via a global `cmdstanr_force_recompile` option.
+#'   [`stanc` chapter of the CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for more details
+#'   on available options.
+#' @param force_recompile (logical) Should the model be recompiled even if it
+#'   has not been modified since it was last compiled? The default is `FALSE`.
+#'   Can also be set via a global `cmdstanr_force_recompile` option.
 #' @param compile_model_methods (logical) Compile additional model methods
-#'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
-#'   `unconstrain_variables()`). Note: the compiled model-method bindings are
-#'   not preserved in a usable form when saving a model object. If you plan to
-#'   save and reload the model object before model fitting, we recommend instead
+#'   (`log_prob()`, `grad_log_prob()`, `hessian()`, `constrain_variables()`,
+#'   `unconstrain_variables()`, `unconstrain_draws()`, and
+#'   `variable_skeleton()`). Note: the compiled model-method bindings are not
+#'   preserved in a usable form when saving a model object. If you plan to save
+#'   and reload the model object before model fitting, we recommend instead
 #'   waiting to compile the model methods until after fitting via
 #'   [`fit$init_model_methods()`][fit-method-init_model_methods].
 #' @param compile_standalone (logical) Should functions in the Stan model be
@@ -444,11 +515,14 @@ CmdStanModel <- R6::R6Class(
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
 #'   returns the [`CmdStanModel`] object invisibly.
 #'
-#'   After compilation, the `$exe_file()`, `$hpp_file()`, and `$save_hpp_file()`
-#'   methods can be used and return file paths.
+#'   The [`$exe_file()`][model-method-model-info] method returns the executable
+#'   path. If compilation generated C++ code, the
+#'   [`$hpp_file()`][model-method-model-info] and
+#'   [`$save_hpp_file()`][model-method-model-info] methods can also be used. See
+#'   their linked documentation for return values.
 #'
 #' @seealso The [`$check_syntax()`][model-method-check_syntax] method to check
-#'   Stan syntax or enable pedantic model without compiling.
+#'   Stan syntax or enable pedantic mode without compiling.
 #' @template seealso-docs
 #'
 #' @examples

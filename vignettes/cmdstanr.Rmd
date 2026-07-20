@@ -219,8 +219,9 @@ fit$summary(
 #### CmdStan's stansummary utility
 
 CmdStan itself provides a `stansummary` utility that can be called using the
-`$cmdstan_summary()` method. This method will print summaries but won't return
-anything.
+`$cmdstan_summary()` method. This method prints summaries produced by CmdStan
+but, unlike `$summary()`, does not return them as a data frame for further use
+in R.
 
 ### Posterior draws
 
@@ -322,7 +323,8 @@ sum(diagnostics$num_divergent)
 #### CmdStan's diagnose utility
 
 CmdStan itself provides a `diagnose` utility that can be called using
-the `$cmdstan_diagnose()` method. This method will print warnings but won't return anything.
+the `$cmdstan_diagnose()` method. This method prints CmdStan's diagnostic output
+but does not return it as a structured R object.
 
 
 ## Running optimization and variational inference

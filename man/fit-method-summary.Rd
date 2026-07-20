@@ -13,11 +13,19 @@
 \title{Compute a summary table of estimates and diagnostics}
 \usage{
 summary(variables = NULL, ...)
+print(variables = NULL, ..., digits = 2,
+  max_rows = getOption("cmdstanr_max_rows", 10))
 }
 \arguments{
 \item{variables}{(character vector) The variables to include.}
 
 \item{...}{Optional arguments to pass to \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.}
+
+\item{digits}{(integer) The number of digits to display after the decimal
+point. Used only by \verb{$print()}. Defaults to \code{2}.}
+
+\item{max_rows}{(integer) The maximum number of rows to print. Used only by
+\verb{$print()}. Defaults to \code{getOption("cmdstanr_max_rows", 10)}.}
 }
 \value{
 The \verb{$summary()} method returns the tibble data frame created by

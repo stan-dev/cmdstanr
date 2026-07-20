@@ -14,11 +14,22 @@ fitting the model using Stan's algorithms.
 methods, many of which have their own (linked) documentation pages:
 \subsection{Stan code}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
-   \verb{$stan_file()} \tab Return the file path to the Stan program. \cr
-   \verb{$code()} \tab Return Stan program as a character vector. \cr
-   \verb{$print()} \tab Print readable version of Stan program. \cr
+   \code{\link[=model-method-model-info]{$stan_file()}} \tab Return the file path to the Stan program. \cr
+   \code{\link[=model-method-model-info]{$has_stan_file()}} \tab Check whether the model was created with a Stan file. \cr
+   \code{\link[=model-method-model-info]{$code()}} \tab Return Stan program as a character vector. \cr
+   \code{\link[=model-method-model-info]{$print()}} \tab Print readable version of Stan program. \cr
    \code{\link[=model-method-check_syntax]{$check_syntax()}} \tab Check Stan syntax without having to compile. \cr
    \code{\link[=model-method-format]{$format()}} \tab Format and canonicalize the Stan model code. \cr
+}
+
+}
+
+\subsection{Model information}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=model-method-model-info]{$model_name()}} \tab Return the model name. \cr
+   \code{\link[=model-method-model-info]{$include_paths()}} \tab Return the Stan include paths. \cr
+   \code{\link[=model-method-model-info]{$cmdstan_version()}} \tab Return the CmdStan version associated with the model. \cr
+   \code{\link[=model-method-model-info]{$cpp_options()}} \tab Return the C++ options associated with the model. \cr
 }
 
 }
@@ -26,9 +37,9 @@ methods, many of which have their own (linked) documentation pages:
 \subsection{Compilation}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=model-method-compile]{$compile()}} \tab Compile Stan program. \cr
-   \code{\link[=model-method-compile]{$exe_file()}} \tab Return the file path to the compiled executable. \cr
-   \code{\link[=model-method-compile]{$hpp_file()}} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
-   \code{\link[=model-method-compile]{$save_hpp_file()}} \tab Save the \code{.hpp} file containing the generated C++ code. \cr
+   \code{\link[=model-method-model-info]{$exe_file()}} \tab Return or set the file path to the compiled executable. \cr
+   \code{\link[=model-method-model-info]{$hpp_file()}} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
+   \code{\link[=model-method-model-info]{$save_hpp_file()}} \tab Save the \code{.hpp} file containing the generated C++ code. \cr
    \code{\link[=model-method-expose_functions]{$expose_functions()}} \tab Expose Stan functions for use in R. \cr
    \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} \tab Get CmdStan default argument values for a method. \cr
 }

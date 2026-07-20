@@ -1,7 +1,7 @@
 #' Coercion methods for CmdStan objects
 #'
 #' These are generic functions intended to primarily be used by developers of
-#' packages that interface with on CmdStanR. Developers can define methods on
+#' packages that interface with CmdStanR. Developers can define methods on
 #' top of these generics to coerce objects into CmdStanR's fitted model objects.
 #'
 #' @param object The object to be coerced.

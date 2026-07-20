@@ -57,16 +57,17 @@ metric_files(include_failed = FALSE)
 \arguments{
 \item{dir}{(string) Path to directory where the files should be saved.}
 
-\item{basename}{(string) Base filename to use. See \strong{Details}.}
+\item{basename}{(string) Base filename to use. If \code{NULL} (the default), the
+model name is used. See \strong{Details}.}
 
 \item{timestamp}{(logical) Should a timestamp be added to the file name(s)?
 Defaults to \code{TRUE}. See \strong{Details}.}
 
-\item{random}{(logical) Should random alphanumeric characters be added to the
-end of the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.}
+\item{random}{(logical) Should a six-character random hexadecimal suffix be
+added to the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.}
 
 \item{include_failed}{(logical) Should CmdStan runs that failed also be
-included? The default is \code{FALSE.}}
+included? The default is \code{FALSE}.}
 }
 \value{
 The \verb{$save_*} methods print a message with the new file paths and (invisibly)
@@ -98,34 +99,34 @@ unavailable. See \strong{Reconstructed fitted model objects} in the
 \section{Details}{
 
 For \verb{$save_output_files()} the files moved to \code{dir} will have names of
-the form \code{basename-timestamp-id-random}, where
+the form \code{basename-timestamp-id-random.csv}, where
 \itemize{
-\item \code{basename} is the user's provided \code{basename} argument;
+\item \code{basename} is the user's provided \code{basename} argument or, if \code{NULL}, the
+model name;
 \item \code{timestamp} is of the form \code{format(Sys.time(), "\%Y\%m\%d\%H\%M")};
 \item \code{id} is the MCMC chain id (or \code{1} for non MCMC);
-\item \code{random} contains six random alphanumeric characters;
+\item \code{random} contains six random hexadecimal characters.
 }
 
-For \verb{$save_latent_dynamics_files()} everything is the same as for
-\verb{$save_output_files()} except \code{"-diagnostic-"} is included in the new
-file name after \code{basename}. The \verb{$latent_dynamics_files()} and
+\verb{$save_latent_dynamics_files()} uses the pattern
+\code{basename-diagnostic-timestamp-id-random.csv}. The
+\verb{$latent_dynamics_files()} and
 \verb{$save_latent_dynamics_files()} methods apply only to \code{\link{CmdStanMCMC}} and
 \code{\link{CmdStanVB}} objects created with \code{save_latent_dynamics = TRUE}.
 
-For \verb{$save_profile_files()} everything is the same as for
-\verb{$save_output_files()} except \code{"-profile-"} is included in the new
-file name after \code{basename}.
+\verb{$save_profile_files()} uses the pattern
+\code{basename-profile-timestamp-id-random.csv}.
 
-For \verb{$save_metric_files()} everything is the same as for
-\verb{$save_output_files()} except \code{"-metric-"} is included in the new
-file name after \code{basename}. Make sure to set \code{save_metric = TRUE} when
-fitting the model.
+\verb{$save_metric_files()} uses the pattern
+\code{basename-metric-timestamp-id-random.json}. Make sure to set
+\code{save_metric = TRUE} when fitting the model.
 
-For \verb{$save_config_files()} everything is the same as for
-\verb{$save_output_files()} except \code{"-config-"} is included in the new
-file name after \code{basename}.
+\verb{$save_config_files()} uses the pattern
+\code{basename-config-timestamp-id-random.json}. Make sure to set
+\code{save_cmdstan_config = TRUE} when fitting the model.
 
-For \verb{$save_data_file()} no \code{id} is included in the file name because even
+\verb{$save_data_file()} uses the pattern \code{basename-timestamp-random.ext}, where
+\code{.ext} is the original data file extension. No \code{id} is included because even
 with multiple MCMC chains the data file is the same.
 }
 

@@ -16,7 +16,7 @@
 #'   Stan program.
 #' @param dir (string) An optional path to the directory where the file will be
 #'   written. If omitted, a global option `cmdstanr_write_stan_file_dir` is
-#'   used. If the global options is not set, [temporary directory][base::tempdir]
+#'   used. If the global option is not set, [temporary directory][base::tempdir]
 #'   is used.
 #' @param basename (string) If `dir` is specified, optionally the basename to
 #'   use for the file created. If not specified a file name is generated
