@@ -9,14 +9,15 @@
 #'   appendices in the CmdStan guide for details on using these formats.
 #'  * `NULL` or an empty list if the Stan program has no data block.
 #'
-#' @param seed (positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-#'   In the case of multi-chain sampling the single `seed` will automatically be
-#'   augmented by the run (chain) ID so that each chain uses a different
-#'   seed. The exception is the transformed data block, which defaults to using
-#'   same seed for all chains so that the same data is generated for all chains
-#'   if RNG functions are used. The only time `seed` should be specified as a
-#'   vector (one element per chain) is if RNG functions are used in transformed
-#'   data and the goal is to generate *different* data for each chain.
+#' @param seed (non-negative integer(s)) A seed for the (P)RNG to pass to
+#'   CmdStan. In the case of multi-chain sampling the single `seed` will
+#'   automatically be augmented by the run (chain) ID so that each chain uses a
+#'   different seed. The exception is the transformed data block, which defaults
+#'   to using same seed for all chains so that the same data is generated for
+#'   all chains if RNG functions are used. The only time `seed` should be
+#'   specified as a vector (one element per chain) is if RNG functions are used
+#'   in transformed data and the goal is to generate *different* data for each
+#'   chain.
 #'
 #' @param refresh (non-negative integer) The number of iterations between
 #'   printed screen updates. If `refresh = 0`, only error messages will be
