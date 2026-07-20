@@ -183,11 +183,11 @@ pathfinder should return. The number of draws PSIS sampling samples from
 will be equal to \code{single_path_draws * num_paths}.}
 
 \item{draws}{(positive integer) Number of draws to return after performing
-pareto smooted importance sampling (PSIS). This should be smaller than
-\code{single_path_draws * num_paths} (future versions of CmdStan will throw a
-warning).}
+Pareto smoothed importance sampling (PSIS). This should be smaller than
+\code{single_path_draws * num_paths}.}
 
-\item{num_paths}{(positive integer) Number of single pathfinders to run.}
+\item{num_paths}{(positive integer) Number of single pathfinders to run. The
+default is \code{4}.}
 
 \item{max_lbfgs_iters}{(positive integer) The maximum number of iterations
 for LBFGS.}
