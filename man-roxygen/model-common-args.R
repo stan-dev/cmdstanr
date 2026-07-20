@@ -50,10 +50,13 @@
 #'  subset of the model parameters then the other parameters will be drawn by
 #'  Stan's default initialization. The fit object must have at least some
 #'  parameters that are the same name and dimensions as the current Stan model.
-#'  For the `sample` and `pathfinder` method, if the fit object has fewer draws
-#'  than the requested number of chains/paths then the inits will be drawn using
-#'  sampling with replacement. Otherwise sampling without replacement will be
-#'  used. When a [`CmdStanPathfinder`] fit object is used as the init, if
+#'  For the `sample` and `pathfinder` methods, which need one initialization per
+#'  chain or path, the inits are drawn from the fit object without replacement,
+#'  so it must contain at least as many draws as the number of chains/paths. For
+#'  [`CmdStanVB`], [`CmdStanLaplace`], and [`CmdStanPathfinder`] fit objects the
+#'  draws must additionally be _distinct_. A [`CmdStanMLE`] fit object is the
+#'  exception: its single draw (the mode) is used to initialize every chain or
+#'  path. When a [`CmdStanPathfinder`] fit object is used as the init, if
 #'  CmdStan actually performed PSIS resampling (which requires `num_paths > 1`,
 #'  `psis_resample = TRUE`, and `calculate_lp = TRUE`), CmdStanR selects from
 #'  the returned draws using uniform weights to avoid applying importance
