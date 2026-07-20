@@ -147,9 +147,9 @@ test_that("Pathfinder fit initializations use the intended weights", {
   expect_equal(pareto_smooth_calls, 2L)
 })
 
-test_that("Pathfinder init weighting preserves distinct-draw safeguards", {
-  # These draws contain only two different importance weights, as can happen
-  # when CmdStan's PSIS resampling returns duplicate draws.
+test_that("Pathfinder init weighting preserves unique-log-weight safeguard", {
+  # The existing safeguard treats these two log weights as a proxy for two
+  # distinct parameter vectors.
   draws <- posterior::as_draws_df(data.frame(
     theta = c(1, 1, 2, 2),
     lp__ = c(1, 1, 2, 2),
@@ -186,8 +186,8 @@ test_that("Pathfinder init weighting preserves distinct-draw safeguards", {
 
   expect_equal(unique(weights_seen), 1)
   expect_equal(method_seen, "simple_no_replace")
-  # There are only two distinct draws, so asking for three initial values should
-  # produce the existing error and suggest disabling PSIS resampling.
+  # The existing proxy finds only two distinct log weights, so requesting three
+  # initial values produces the existing error and Pathfinder guidance.
   error_message <- tryCatch(
     process_init.CmdStanPathfinder(pathfinder_fit, 3),
     error = function(cnd) conditionMessage(cnd)
