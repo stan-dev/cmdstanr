@@ -28,21 +28,23 @@
 #'  * A real number `x>0`. This initializes _all_ parameters randomly between
 #'  `[-x,x]` on the _unconstrained_ parameter space.
 #'  * The number `0`. This initializes _all_ parameters to `0`.
-#'  * A character vector of paths (one per chain) to JSON or Rdump files
-#'  containing initial values for all or some parameters. See
-#'  [write_stan_json()] to write \R objects to JSON files compatible with
+#'  * A character vector of paths to JSON or Rdump files containing initial
+#'  values for all or some parameters. A single path is used for all chains or
+#'  Pathfinder paths. Otherwise, supply one path per chain or Pathfinder path.
+#'  See [write_stan_json()] to write \R objects to JSON files compatible with
 #'  CmdStan.
 #'  * A list of lists containing initial values for all or some parameters. For
-#'  MCMC the list should contain a sublist for each chain. For other model
-#'  fitting methods there should be just one sublist. The sublists should have
-#'  named elements corresponding to the parameters for which you are specifying
-#'  initial values. See **Examples**.
+#'  MCMC the list should contain a sublist for each chain, and for Pathfinder it
+#'  should contain a sublist for each path. For other model fitting methods
+#'  there should be just one sublist. The sublists should have named elements
+#'  corresponding to the parameters for which you are specifying initial
+#'  values. See **Examples**.
 #'  * A function that returns a single list with names corresponding to the
 #'  parameters for which you are specifying initial values. The function can
-#'  take no arguments or a single argument `chain_id`. For MCMC, if the function
-#'  has argument `chain_id` it will be supplied with the chain id (from 1 to
-#'  number of chains) when called to generate the initial values. See
-#'  **Examples**.
+#'  take no arguments or a single argument `chain_id`. For MCMC and Pathfinder,
+#'  the function is called once for each chain or path. If the function has the
+#'  `chain_id` argument, it receives the chain or path number, starting at 1.
+#'  See **Examples**.
 #'  * A [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanPathfinder`],
 #'  or [`CmdStanLaplace`] fit object. If the fit object's parameters are only a
 #'  subset of the model parameters then the other parameters will be drawn by
