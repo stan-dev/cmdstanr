@@ -108,7 +108,9 @@ the form \code{basename-timestamp-id-random}, where
 
 For \verb{$save_latent_dynamics_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-diagnostic-"} is included in the new
-file name after \code{basename}.
+file name after \code{basename}. The \verb{$latent_dynamics_files()} and
+\verb{$save_latent_dynamics_files()} methods apply only to \code{\link{CmdStanMCMC}} and
+\code{\link{CmdStanVB}} objects created with \code{save_latent_dynamics = TRUE}.
 
 For \verb{$save_profile_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-profile-"} is included in the new

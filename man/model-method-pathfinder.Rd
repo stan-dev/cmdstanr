@@ -10,7 +10,6 @@ pathfinder(
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  save_latent_dynamics = FALSE,
   output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
@@ -112,16 +111,6 @@ default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
 
-\item{save_latent_dynamics}{(logical) Should auxiliary diagnostic information
-about the latent dynamics be written to temporary diagnostic CSV files?
-This argument replaces CmdStan's \code{diagnostic_file} argument and the content
-written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (for some algorithms no content may be written). The default is
-\code{FALSE}, which is appropriate for almost every use case. To save the
-temporary files created when \code{save_latent_dynamics=TRUE} see the
-\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
-method.}
-
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC there will be one file per chain; for other
 methods there will be a single file. For interactive use this can typically
@@ -196,8 +185,15 @@ for LBFGS.}
 \item{num_elbo_draws}{(positive integer) Number of draws to make when
 calculating the ELBO of the approximation at each iteration of LBFGS.}
 
-\item{save_single_paths}{(logical) Whether to save the results of single
-pathfinder runs in multi-pathfinder.}
+\item{save_single_paths}{(logical) Whether to save the output from each
+single-Pathfinder run. For a multi-path run, CmdStan writes one Stan CSV
+file containing draws and one JSON file containing the L-BFGS and ELBO
+iterations for each path. For a single-path run, the main output CSV
+contains the draws and CmdStan writes an additional JSON file. The
+auxiliary files are written to \code{output_dir}, or to a temporary directory
+if \code{output_dir = NULL}. They are not included in the paths returned by the
+fitted object's \verb{$output_files()} method. See the \href{https://mc-stan.org/docs/cmdstan-guide/pathfinder_config.html#single-path-pathfinder-outputs}{CmdStan User's Guide}
+for details.}
 
 \item{psis_resample}{(logical) Whether to perform pareto smoothed importance sampling.
 If \code{TRUE}, the number of draws returned will be equal to \code{draws}.

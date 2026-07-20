@@ -123,14 +123,12 @@ that are the same name and dimensions as the current Stan model.
 }}
 
 \item{save_latent_dynamics}{(logical) Should auxiliary diagnostic information
-about the latent dynamics be written to temporary diagnostic CSV files?
-This argument replaces CmdStan's \code{diagnostic_file} argument and the content
-written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (for some algorithms no content may be written). The default is
-\code{FALSE}, which is appropriate for almost every use case. To save the
-temporary files created when \code{save_latent_dynamics=TRUE} see the
-\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
-method.}
+about the sampler or variational algorithm be written to diagnostic CSV
+files? This argument replaces CmdStan's \code{diagnostic_file} argument. The
+content is controlled by the user's CmdStan installation. The default is
+\code{FALSE}, which is appropriate for almost every use case. To save temporary
+diagnostic files permanently, use
+\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC there will be one file per chain; for other

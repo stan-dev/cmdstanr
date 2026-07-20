@@ -1091,6 +1091,7 @@ CmdStanModel$set("public", name = "format", value = format)
 #'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
+#' @template model-save-latent-dynamics-arg
 #' @template model-sample-args
 #'
 #' @return A [`CmdStanMCMC`] object.
@@ -1450,7 +1451,6 @@ optimize <- function(data = NULL,
                      seed = NULL,
                      refresh = NULL,
                      init = NULL,
-                     save_latent_dynamics = FALSE,
                      output_dir = getOption("cmdstanr_output_dir"),
                      output_basename = NULL,
                      sig_figs = NULL,
@@ -1501,7 +1501,7 @@ optimize <- function(data = NULL,
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data, model_variables),
-    save_latent_dynamics = save_latent_dynamics,
+    save_latent_dynamics = FALSE,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -1547,7 +1547,6 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @template model-common-args
 #' @inheritParams model-method-optimize
-#' @param save_latent_dynamics Ignored for this method.
 #' @param mode (multiple options) The mode to center the approximation at. One
 #'   of the following:
 #'   * A [`CmdStanMLE`] object from a previous run of [`$optimize()`][model-method-optimize].
@@ -1604,7 +1603,6 @@ laplace <- function(data = NULL,
                     seed = NULL,
                     refresh = NULL,
                     init = NULL,
-                    save_latent_dynamics = FALSE,
                     output_dir = getOption("cmdstanr_output_dir"),
                     output_basename = NULL,
                     sig_figs = NULL,
@@ -1651,7 +1649,6 @@ laplace <- function(data = NULL,
       seed = seed,
       refresh = refresh,
       init = init,
-      save_latent_dynamics = FALSE,
       output_dir = output_dir,
       output_basename = mode_output_basename,
       sig_figs = sig_figs,
@@ -1724,6 +1721,7 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
+#' @template model-save-latent-dynamics-arg
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when using the Stan
@@ -1888,8 +1886,16 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   for LBFGS.
 #' @param num_elbo_draws (positive integer) Number of draws to make when
 #'   calculating the ELBO of the approximation at each iteration of LBFGS.
-#' @param save_single_paths (logical) Whether to save the results of single
-#'   pathfinder runs in multi-pathfinder.
+#' @param save_single_paths (logical) Whether to save the output from each
+#'   single-Pathfinder run. For a multi-path run, CmdStan writes one Stan CSV
+#'   file containing draws and one JSON file containing the L-BFGS and ELBO
+#'   iterations for each path. For a single-path run, the main output CSV
+#'   contains the draws and CmdStan writes an additional JSON file. The
+#'   auxiliary files are written to `output_dir`, or to a temporary directory
+#'   if `output_dir = NULL`. They are not included in the paths returned by the
+#'   fitted object's `$output_files()` method. See the [CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder_config.html#single-path-pathfinder-outputs)
+#'   for details.
 #' @param psis_resample (logical) Whether to perform pareto smoothed importance sampling.
 #'  If `TRUE`, the number of draws returned will be equal to `draws`.
 #'  If `FALSE`, the number of draws returned will be equal to `single_path_draws * num_paths`.
@@ -1899,8 +1905,6 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'  ELBO in the pathfinder steps. All other draws will have a log probability of `NA`.
 #'  A value of `FALSE` will also turn off pareto smoothed importance sampling as the
 #'  lp calculation is needed for PSIS.
-#' @param save_single_paths (logical) Whether to save the results of single
-#'   pathfinder runs in multi-pathfinder.
 #' @return A [`CmdStanPathfinder`] object.
 #'
 #' @references
@@ -1920,7 +1924,6 @@ pathfinder <- function(data = NULL,
                        seed = NULL,
                        refresh = NULL,
                        init = NULL,
-                       save_latent_dynamics = FALSE,
                        output_dir = getOption("cmdstanr_output_dir"),
                        output_basename = NULL,
                        sig_figs = NULL,
@@ -1992,7 +1995,7 @@ pathfinder <- function(data = NULL,
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data, model_variables),
-    save_latent_dynamics = save_latent_dynamics,
+    save_latent_dynamics = FALSE,
     seed = seed,
     init = init,
     refresh = refresh,

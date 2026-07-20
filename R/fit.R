@@ -1001,7 +1001,9 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' For `$save_latent_dynamics_files()` everything is the same as for
 #' `$save_output_files()` except `"-diagnostic-"` is included in the new
-#' file name after `basename`.
+#' file name after `basename`. The `$latent_dynamics_files()` and
+#' `$save_latent_dynamics_files()` methods apply only to [`CmdStanMCMC`] and
+#' [`CmdStanVB`] objects created with `save_latent_dynamics = TRUE`.
 #'
 #' For `$save_profile_files()` everything is the same as for
 #' `$save_output_files()` except `"-profile-"` is included in the new
@@ -1972,8 +1974,6 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$save_output_files()`][fit-method-save_output_files]  |  Save output CSV files to a specified location. |
 #'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file]  |  Save JSON data file to a specified location. |
-#'  [`$latent_dynamics_files()`][fit-method-latent_dynamics_files] |  Return paths to diagnostic CSV files. |
-#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
 #'  [`$profile_files()`][fit-method-profile_files] |  Return paths to profiling CSV files. |
 #'  [`$save_profile_files()`][fit-method-save_profile_files] |  Save profiling CSV files to a specified location. |
 #'  [`$config_files()`][fit-method-save_config_files] |  Return paths to CmdStan configuration JSON files. |
@@ -2110,8 +2110,6 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
 #'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
-#'  [`$latent_dynamics_files()`][fit-method-latent_dynamics_files] |  Return paths to diagnostic CSV files. |
-#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
 #'  [`$profile_files()`][fit-method-profile_files] |  Return paths to profiling CSV files. |
 #'  [`$save_profile_files()`][fit-method-save_profile_files] |  Save profiling CSV files to a specified location. |
 #'  [`$config_files()`][fit-method-save_config_files] |  Return paths to CmdStan configuration JSON files. |
@@ -2324,8 +2322,6 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
 #'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
-#'  [`$latent_dynamics_files()`][fit-method-latent_dynamics_files] |  Return paths to diagnostic CSV files. |
-#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
 #'  [`$profile_files()`][fit-method-profile_files] |  Return paths to profiling CSV files. |
 #'  [`$save_profile_files()`][fit-method-save_profile_files] |  Save profiling CSV files to a specified location. |
 #'  [`$config_files()`][fit-method-save_config_files] |  Return paths to CmdStan configuration JSON files. |

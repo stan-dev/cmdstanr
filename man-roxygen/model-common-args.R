@@ -68,16 +68,6 @@
 #'  default initialization. The draws object must have at least some parameters
 #'  that are the same name and dimensions as the current Stan model.
 #'
-#' @param save_latent_dynamics (logical) Should auxiliary diagnostic information
-#'   about the latent dynamics be written to temporary diagnostic CSV files?
-#'   This argument replaces CmdStan's `diagnostic_file` argument and the content
-#'   written to CSV is controlled by the user's CmdStan installation and not
-#'   CmdStanR (for some algorithms no content may be written). The default is
-#'   `FALSE`, which is appropriate for almost every use case. To save the
-#'   temporary files created when `save_latent_dynamics=TRUE` see the
-#'   [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
-#'   method.
-#'
 #' @param output_dir (string) A path to a directory where CmdStan should write
 #'   its output CSV files. For MCMC there will be one file per chain; for other
 #'   methods there will be a single file. For interactive use this can typically

@@ -152,11 +152,12 @@ test_that("pathfinder() saves single path outputs", {
   )
 
   expect_equal(basename(fit$output_files()), "pathfinder-1.csv")
-  single_path_files <- file.path(
-    output_dir,
-    paste0("pathfinder-1_path_", 1:2, ".csv")
-  )
-  expect_equal(file.exists(single_path_files), rep(TRUE, 2))
+  single_path_files <- file.path(output_dir, paste0(
+    "pathfinder-1_path_",
+    rep(1:2, each = 2),
+    c(".csv", ".json")
+  ))
+  expect_equal(file.exists(single_path_files), rep(TRUE, 4))
 })
 
 test_that("pathfinder() method runs when the stan file is removed", {

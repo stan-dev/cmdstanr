@@ -46,8 +46,6 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
    \code{\link[=fit-method-data_file]{$data_file()}} \tab Return the path to the JSON data file. \cr
    \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file to a specified location. \cr
-   \code{\link[=fit-method-latent_dynamics_files]{$latent_dynamics_files()}} \tab Return paths to diagnostic CSV files. \cr
-   \code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}} \tab Save diagnostic CSV files to a specified location. \cr
    \code{\link[=fit-method-profile_files]{$profile_files()}} \tab Return paths to profiling CSV files. \cr
    \code{\link[=fit-method-save_profile_files]{$save_profile_files()}} \tab Save profiling CSV files to a specified location. \cr
    \code{\link[=fit-method-save_config_files]{$config_files()}} \tab Return paths to CmdStan configuration JSON files. \cr

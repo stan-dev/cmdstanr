@@ -10,7 +10,6 @@ laplace(
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  save_latent_dynamics = FALSE,
   output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
@@ -99,8 +98,6 @@ of the model parameters then the other parameters will be drawn by Stan's
 default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
-
-\item{save_latent_dynamics}{Ignored for this method.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC there will be one file per chain; for other

@@ -5,6 +5,7 @@
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
 to be consistent with other methods.
+* The `save_latent_dynamics` argument is now limited to `$sample()`, `$sample_mpi()`, and `$variational()`, matching the CmdStan algorithms that support diagnostic CSV output.
 * Informative error when exposing functions using names that are reserved 
 keywords (@VisruthSK, #1154)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
