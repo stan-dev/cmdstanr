@@ -63,7 +63,7 @@ model executable.}
 
 \item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
 In the case of multi-chain sampling the single \code{seed} will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
+augmented by the run (chain) ID so that each chain uses a different
 seed. The exception is the transformed data block, which defaults to using
 same seed for all chains so that the same data is generated for all chains
 if RNG functions are used. The only time \code{seed} should be specified as a
@@ -233,7 +233,7 @@ quantities block. For CmdStan versions before 2.36, \code{fixed_param = TRUE}
 is mandatory if the parameters block is empty.}
 
 \item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
+when storing the output values. By default, CmdStan represents the output
 values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
 Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
@@ -261,7 +261,7 @@ currently available diagnostics are \code{"divergences"}, \code{"treedepth"}, an
 
 These diagnostics are also available after fitting. The
 \code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}} method provides
-access the diagnostic values for each iteration and the
+access to the diagnostic values for each iteration and the
 \code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} method provides
 summaries of the diagnostics and can regenerate the warning messages.
 

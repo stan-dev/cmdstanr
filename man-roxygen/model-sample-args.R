@@ -87,7 +87,7 @@
 #'
 #'   These diagnostics are also available after fitting. The
 #'   [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] method provides
-#'   access the diagnostic values for each iteration and the
+#'   access to the diagnostic values for each iteration and the
 #'   [`$diagnostic_summary()`][fit-method-diagnostic_summary] method provides
 #'   summaries of the diagnostics and can regenerate the warning messages.
 #'
@@ -96,7 +96,7 @@
 #'   using the [`$summary()`][fit-method-summary] method.
 #' @param save_metric (logical) When `TRUE`, call CmdStan with
 #'   argument `"adaptation save_metric=1"` to save the adapted metric in
-#'   separate JSON file with elements `"stepsize"`, `"metric_type"` and
+#'   a separate JSON file with elements `"stepsize"`, `"metric_type"` and
 #'   `"inv_metric"`. The default is `FALSE` but can be set to `TRUE` for an
 #'   entire \R session by `options(cmdstanr_save_metric = TRUE)`.
 #'

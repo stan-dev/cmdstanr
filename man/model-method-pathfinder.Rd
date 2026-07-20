@@ -53,7 +53,7 @@ appendices in the CmdStan guide for details on using these formats.
 
 \item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
 In the case of multi-chain sampling the single \code{seed} will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
+augmented by the run (chain) ID so that each chain uses a different
 seed. The exception is the transformed data block, which defaults to using
 same seed for all chains so that the same data is generated for all chains
 if RNG functions are used. The only time \code{seed} should be specified as a
@@ -143,7 +143,7 @@ the output CSV files is composed of the model name, timestamp, and a
 six-character random hexadecimal suffix.}
 
 \item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
+when storing the output values. By default, CmdStan represents the output
 values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
 Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
