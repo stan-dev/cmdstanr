@@ -37,7 +37,7 @@ separate. To combine the chains use any of the other formats (e.g.
 \code{"draws_matrix"}).
 \item For point estimates from optimization and approximate draws from
 variational inference, Laplace approximation, and Pathfinder the default is
-\code{\link[posterior:draws_array]{"draws_matrix"}}.
+\code{\link[posterior:draws_matrix]{"draws_matrix"}}.
 }
 
 To use a different format it can be specified as the full name of the

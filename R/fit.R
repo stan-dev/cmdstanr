@@ -219,7 +219,7 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'
 #'   * For point estimates from optimization and approximate draws from
 #'   variational inference, Laplace approximation, and Pathfinder the default is
-#'   [`"draws_matrix"`][posterior::draws_array].
+#'   [`"draws_matrix"`][posterior::draws_matrix].
 #'
 #'   To use a different format it can be specified as the full name of the
 #'   format from the \pkg{posterior} package (e.g. `format = "draws_df"`) or
