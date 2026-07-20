@@ -132,6 +132,12 @@ runs Stan's basic diagnostic feature that will calculate the gradients
 of the initial state and compare them with gradients calculated by
 finite differences. Discrepancies between the two indicate that there is
 a problem with the model or initial states or else there is a bug in Stan.
+
+Unlike other CmdStan methods, \verb{$diagnose()} does not expose \code{show_messages}
+or \code{show_exceptions} arguments. CmdStan's standard output is not printed
+during execution, while standard error is always displayed. The captured
+console output can be inspected with the returned object's
+\code{\link[=fit-method-output]{$output()}} method.
 }
 \examples{
 \dontrun{
@@ -143,6 +149,10 @@ test$gradients()
 
 }
 \seealso{
+The \code{\link[=fit-method-gradients]{$gradients()}} method for accessing the
+gradients and the \code{\link[=fit-method-output]{$output()}} method for displaying
+the captured console output.
+
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
 documentation and tutorials.

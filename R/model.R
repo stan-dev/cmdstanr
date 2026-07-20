@@ -2229,6 +2229,12 @@ CmdStanModel$set("public", name = "generate_quantities", value = generate_quanti
 #'   finite differences. Discrepancies between the two indicate that there is
 #'   a problem with the model or initial states or else there is a bug in Stan.
 #'
+#'   Unlike other CmdStan methods, `$diagnose()` does not expose `show_messages`
+#'   or `show_exceptions` arguments. CmdStan's standard output is not printed
+#'   during execution, while standard error is always displayed. The captured
+#'   console output can be inspected with the returned object's
+#'   [`$output()`][fit-method-output] method.
+#'
 #' @inheritParams model-method-sample
 #' @param epsilon (positive real) The finite difference step size. Default
 #'   value is 1e-6.
@@ -2236,6 +2242,9 @@ CmdStanModel$set("public", name = "generate_quantities", value = generate_quanti
 #'
 #' @return A [`CmdStanDiagnose`] object.
 #'
+#' @seealso The [`$gradients()`][fit-method-gradients] method for accessing the
+#'   gradients and the [`$output()`][fit-method-output] method for displaying
+#'   the captured console output.
 #' @template seealso-docs
 #' @inherit CmdStanDiagnose examples
 #'
