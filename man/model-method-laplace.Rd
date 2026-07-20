@@ -83,12 +83,16 @@ For the \code{sample} and \code{pathfinder} method, if the fit object has fewer 
 than the requested number of chains/paths then the inits will be drawn using
 sampling with replacement. Otherwise sampling without replacement will be
 used. When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
-\code{psis_resample} was set to \code{FALSE} and \code{calculate_lp} was set to \code{TRUE}
-(default), then resampling without replacement with Pareto smoothed weights
-will be used. If \code{psis_resample} was set to \code{TRUE} or \code{calculate_lp} was set
-to \code{FALSE} then sampling without replacement with uniform weights will be
-used to select the draws. PSIS resampling is used to select the draws for
-\code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
+CmdStan actually performed PSIS resampling (which requires \code{num_paths > 1},
+\code{psis_resample = TRUE}, and \code{calculate_lp = TRUE}), CmdStanR selects from
+the returned draws using uniform weights to avoid applying importance
+weights again. If CmdStan did not PSIS-resample the output and
+\code{calculate_lp = TRUE}, CmdStanR selects draws using Pareto-smoothed
+importance weights. This includes single-path fits with
+\code{psis_resample = TRUE}, because CmdStan does not PSIS-resample single-path
+output. If \code{calculate_lp = FALSE}, uniform weights are used because
+importance weights cannot be calculated. PSIS resampling is used to select
+the draws for \code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
 \item A type inheriting from \code{posterior::draws}. If the draws object has fewer
 draws than the number of requested chains/paths then the inits will be
 drawn using sampling with replacement. Otherwise sampling without
