@@ -1,39 +1,38 @@
 ### Different ways of interfacing with Stan's C++
 
-The RStan interface ([**rstan**](https://mc-stan.org/rstan/) package) is an
-in-memory interface to Stan and relies on R packages like **Rcpp** to call C++
-code from R. On the other hand, the CmdStanR interface does not directly call
-any C++ code from R, instead relying on the CmdStan interface behind the scenes
-for compilation, running algorithms, and writing results to output files.
+The RStan interface ([**rstan**](https://mc-stan.org/rstan/) package) provides
+its core functionality through an in-memory interface to Stan and relies on R
+packages such as **Rcpp** to call C++ code from R. CmdStanR's core model
+compilation and inference workflow instead runs CmdStan in external processes
+and reads the resulting output files. Only optional CmdStanR features, such as
+`$expose_functions()` and the additional model methods, use **Rcpp** to call
+compiled C++ code directly from R.
 
 ### Advantages of RStan
 
-* Allows other developers to distribute R packages with
-_pre-compiled_ Stan programs (like **rstanarm**) on CRAN, without requiring that
-users have a C++ toolchain installed (see https://mc-stan.org/rstantools/ for
-details). [Developing using CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr)
-describes how CRAN packages can do something similar using CmdStanR, however
-users are still required to have a working C++ toolchain because models are 
-compiled once at installation time rather than on CRAN's servers.
+* CRAN provides binary versions of RStan for Windows and macOS. RStan-based
+packages can also include precompiled Stan models in their binary packages, which allows users to run the models without a local C++ toolchain. 
 
-* CRAN binaries available for Mac and Windows.
+  CmdStanR-based packages can use
+  [`instantiate`](https://wlandau.github.io/instantiate/) to compile models
+  once during package installation. Because CRAN's build machines do not 
+  provide CmdStan, packages using this workflow currently need to be installed
+  from source with CmdStan and a C++ toolchain available.
 
 * Avoids use of R6 classes, which may result in more familiar syntax for many R users. 
 
 
 ### Advantages of CmdStanR
 
-* Compatible with the latest versions of Stan. Keeping up with Stan releases is
-complicated for RStan, often requiring non-trivial changes to the **rstan**
-package and new CRAN releases of both **rstan** and **StanHeaders**. With
-CmdStanR the latest improvements in Stan are available from R immediately
-after updating CmdStan using `cmdstanr::install_cmdstan()`.
+* CmdStan is installed separately from CmdStanR, so users can often update to a new Stan release by updating CmdStan without waiting for a new CmdStanR release.
 
-* Running Stan via external processes results in fewer unexpected crashes,
-especially in RStudio.
+* Running CmdStan in external processes isolates inference from the R process,
+reducing the risk that a failure during inference terminates the R session.
 
-* Less memory overhead.
+* Potentially lower memory use in the R session. CmdStan writes results to CSV
+files, and CmdStanR loads draws into R only when requested. This can avoid
+retaining all output in memory during fitting.
 
-* More permissive license. RStan uses the GPL-3 license while the license for
-CmdStanR is BSD-3, which is a bit more permissive and is the same license used
-for CmdStan and the Stan C++ source code.
+* More permissive license. RStan uses the GPL (>= 3) license while the license
+for CmdStanR is BSD 3-clause, which is a bit more permissive and is the same
+license used for CmdStan and the Stan C++ source code.
