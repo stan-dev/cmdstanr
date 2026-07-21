@@ -389,8 +389,6 @@ CmdStanModel <- R6::R6Class(
 #'   object, print its Stan program, and manage paths to its executable and
 #'   generated C++ file.
 #'
-#'   The available methods are:
-#'
 #'   ```
 #'   stan_file()
 #'   has_stan_file()
