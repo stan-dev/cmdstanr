@@ -199,6 +199,33 @@ test_that("Pathfinder init candidates are distinct target parameter vectors", {
   )
 })
 
+test_that("VB and Laplace inits error with the right algorithm label", {
+  # theta collapses to a single distinct candidate, so requesting more inits
+  # than that triggers the "not enough distinct draws" error and exercises the
+  # per-algorithm label used in the message.
+  draws <- posterior::as_draws_df(data.frame(theta = c(1, 1)))
+  model_variables <- list(
+    parameters = list(theta = list(dimensions = 0L))
+  )
+  make_fit <- function(cls) structure(
+    list(
+      draws = function(format) draws,
+      metadata = function() list(stan_variables = "theta"),
+      return_codes = function() 0
+    ),
+    class = cls
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    process_init.CmdStanVB(make_fit("CmdStanVB"), 2, model_variables)
+  )
+  expect_snapshot(
+    error = TRUE,
+    process_init.CmdStanLaplace(make_fit("CmdStanLaplace"), 2, model_variables)
+  )
+})
+
 test_that("draws inits are recycled in order when too few are supplied", {
   draws <- posterior::as_draws_df(data.frame(theta = c(10, 20)))
   model_variables <- list(
