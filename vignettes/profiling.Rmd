@@ -45,7 +45,7 @@ data {
   int<lower=1> k;
   int<lower=0> n;
   matrix[n, k] X;
-  array[n] int y;
+  array[n] int<lower=0, upper=1> y;
 }
 parameters {
   vector[k] beta;
@@ -83,7 +83,7 @@ data {
   int<lower=1> k;
   int<lower=0> n;
   matrix[n, k] X;
-  array[n] int y;
+  array[n] int<lower=0, upper=1> y;
 }
 parameters {
   vector[k] beta;
@@ -109,13 +109,14 @@ information for any sections with `profile` statements.
 model <- cmdstan_model(profiling_bernoulli_logit)
 
 # Generate some fake data
+set.seed(123)
+
 n <- 1000
 k <- 20
 X <- matrix(rnorm(n * k), ncol = k)
 
-y <- 3 * X[,1] - 2 * X[,2] + 1
-p <- runif(n)
-y <- ifelse(p < (1 / (1 + exp(-y))), 1, 0)
+eta <- 3 * X[,1] - 2 * X[,2] + 1
+y <- rbinom(n, size = 1, prob = plogis(eta))
 stan_data <- list(k = ncol(X), n = nrow(X), y = y, X = X)
 
 # Run one chain of the model
@@ -128,7 +129,7 @@ The raw profiling information can then be accessed with the `$profiles()`
 method, which returns a list containing one data frame per chain (profiles
 across multiple chains are not automatically aggregated). Details on the column
 names are available in the
-[CmdStan documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
+[CmdStan documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file).
 
 ```{r profiles}
 fit$profiles()
@@ -156,7 +157,7 @@ data {
   int<lower=1> k;
   int<lower=0> n;
   matrix[n, k] X;
-  array[n] int y;
+  array[n] int<lower=0, upper=1> y;
 }
 parameters {
   vector[k] beta;
@@ -189,7 +190,7 @@ faster than in the previous model.
 ## Per-gradient timings, and memory usage
 
 The other columns of the profiling output are documented in the
-[CmdStan documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
+[CmdStan documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file).
 
 The timing numbers are broken down by forward pass and reverse pass, and the
 `chain_stack` and `no_chain_stack` columns contain information about how many
