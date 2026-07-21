@@ -125,15 +125,19 @@ fit <- model$sample(data = stan_data, chains = 1)
 
 ## Accessing the profiling information from R
 
-The raw profiling information can then be accessed with the `$profiles()`
+The raw profiling information can then be accessed with the
+[`$profiles()`](https://mc-stan.org/cmdstanr/reference/fit-method-profiles.html)
 method, which returns a list containing one data frame per chain (profiles
-across multiple chains are not automatically aggregated). Details on the column
-names are available in the
+across multiple chains are not automatically aggregated). Details on the
+column names are available in the
 [CmdStan documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file).
 
 ```{r profiles}
 fit$profiles()
 ```
+
+The `total_time`, `forward_time`, and `reverse_time` columns are measured in
+seconds.
 
 The `total_time` column is the total time spent inside a given profile
 statement. It is clear that the vast majority of time is spent in the likelihood
@@ -141,7 +145,7 @@ function.
 
 ## Comparing to a faster version of the model
 
-Stan's specialized glm functions can be used to make models like this faster. In
+Stan's specialized GLM functions can be used to make models like this faster. In
 this case the likelihood can be replaced with
 
 ```
@@ -187,14 +191,15 @@ fit_glm$profiles()
 We can see from the `total_time` column that the likelihood computation is
 faster than in the previous model.
 
-## Per-gradient timings, and memory usage
+## Per-gradient timings and autodiff variable counts
 
 The other columns of the profiling output are documented in the
 [CmdStan documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file).
 
-The timing numbers are broken down by forward pass and reverse pass, and the
-`chain_stack` and `no_chain_stack` columns contain information about how many
-autodiff variables were saved in the process of performing a calculation.
+The timing numbers are broken down by forward pass and reverse pass. The
+`chain_stack` and `no_chain_stack` columns report the numbers of objects
+allocated on the chaining and non-chaining autodiff stacks. These counts can
+serve as rough proxies for memory use, but they are not measurements in bytes.
 
 These numbers are all totals -- times are the total times over the whole
 calculation, and `chain_stack` counts are similarly the total counts of autodiff
@@ -204,7 +209,7 @@ seeds). To compute these, use the `autodiff_calls` column.
 
 ```{r per-gradient}
 profile_chain_1 <- fit$profiles()[[1]]
-per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
+per_gradient_timing <- profile_chain_1$total_time / profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
@@ -212,13 +217,15 @@ print(per_gradient_timing) # two elements for the two profile statements in the 
 
 After sampling (or optimization or variational inference) finishes, CmdStan stores
 the profiling data in CSV files in a temporary location.
-The paths of the profiling CSV files can be retrieved using `$profile_files()`.
+The paths of the profiling CSV files can be retrieved using
+[`$profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html).
 
 ```{r profile_files}
 fit$profile_files()
 ```
 
-These can be saved to a more permanent location with the `$save_profile_files()`
+These can be saved to a more permanent location with the
+[`$save_profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html)
 method.
 
 ```{r save_profile_files, eval=FALSE}

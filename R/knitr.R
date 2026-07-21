@@ -60,8 +60,9 @@ register_knitr_engine <- function(override = TRUE) {
 #' [R Markdown CmdStan Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html)
 #' for an example.
 #'
-#' @param options (named list) Chunk options, as provided by `knitr` during
-#'   chunk execution.
+#' @param options (named list) Chunk options supplied by `knitr`. The
+#'   `output.var` element is required and must be a single character string
+#'   naming the `CmdStanModel` object created by the chunk.
 #' @return A character vector containing the formatted chunk output produced by
 #'   [knitr::engine_output()].
 #' @seealso [register_knitr_engine()]

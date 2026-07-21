@@ -21,9 +21,9 @@ vignette: >
 This vignette demonstrates how to use the OpenCL capabilities of CmdStan with
 CmdStanR.
 
-Users can expect speedups with OpenCL when using vectorized probability
-distribution functions (functions with the `_lpdf` or `_lpmf` suffix) and when
-the input variables contain at least 20,000 elements.
+OpenCL may provide speedups for vectorized probability distribution functions
+(functions with the `_lpdf` or `_lpmf` suffix), especially with large input
+variables. The crossover point depends on the function and hardware.
 
 The actual speedup for a model will depend on the particular `lpdf/lpmf`
 functions used and whether the `lpdf/lpmf` functions are the bottlenecks of the
@@ -39,21 +39,27 @@ In order to establish the bottlenecks in your model we recommend using
 OpenCL is supported on most modern CPUs and GPUs. In order to use
 OpenCL in CmdStanR, an OpenCL runtime for the target device must be installed.
 A guide for the most common devices is available in the CmdStan manual's
-[chapter on parallelization](https://mc-stan.org/docs/2_26/cmdstan-guide/parallelization.html#opencl).
+[chapter on parallelization](https://mc-stan.org/docs/cmdstan-guide/parallelization.html#opencl).
 
-In case of using Windows, CmdStan requires the `OpenCL.lib` to compile the model.
-If you experience issue compiling the model with OpenCL, run the below script and set
-`path_to_opencl_lib` to the path to the `OpenCL.lib` file on your system.
-If you are using CUDA, the path should be similar to the one listed here.
+On Windows, CmdStan's linker must be able to find the `OpenCL.lib` library
+installed by the OpenCL runtime. CmdStan automatically links against OpenCL,
+but if the library directory is not on the linker's search path, add it to
+`LDFLAGS_OPENCL` in CmdStan's `make/local` file. The required path depends on
+the installed runtime.
+
+This change persists in `make/local`, so inspect the existing configuration
+before modifying it:
 
 ```{r windows-opencl, eval=FALSE}
-path_to_opencl_lib <- "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64"
-cpp_options = list(
-  paste0("LDFLAGS+= -L\"",path_to_opencl_lib,"\" -lOpenCL")
-)
+# Check the current contents of make/local without modifying them
+cmdstan_make_local()
 
-cmdstanr::cmdstan_make_local(cpp_options = cpp_options)
-cmdstanr::rebuild_cmdstan()
+opencl_lib_dir <- "C:/path/to/directory/containing/OpenCL.lib"
+cmdstan_make_local(
+  cpp_options = list(
+    LDFLAGS_OPENCL = paste0('-L"', opencl_lib_dir, '"')
+  )
+)
 ```
 
 ## Compiling a model with OpenCL
@@ -92,6 +98,7 @@ Some fake data will be useful to run this model:
 library(cmdstanr)
 
 # Generate some fake data
+set.seed(123)
 n <- 250000
 k <- 20
 X <- matrix(rnorm(n * k), ncol = k)
@@ -111,16 +118,19 @@ To build the model with OpenCL support, add
 ```{r compile-opencl, message=FALSE, results='hide'}
 # Compile the model with STAN_OPENCL=TRUE
 mod_cl <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan",
-                        cpp_options = list(stan_opencl = TRUE))
+                        cpp_options = list(stan_opencl = TRUE),
+                        force_recompile = TRUE)
 ```
+
+For an integrated GPU, also set `integrated_opencl = TRUE` in `cpp_options`.
 
 ## Running models with OpenCL
 
-Running models with OpenCL requires specifying the OpenCL platform and device
-on which to run the model (there can be multiple). If the system has one GPU
-and no OpenCL CPU runtime, the platform and device IDs of the GPU are typically
-both `0`, but the `clinfo` tool can be used to figure out for sure which devices
-are available.
+When multiple OpenCL platforms or devices are available, their IDs can be
+specified to select which device to use. If the system has one GPU and no OpenCL
+CPU runtime, the default platform and device IDs of `0` will typically select
+the GPU, so the IDs can be omitted. The `clinfo` tool can be used to figure out
+for sure which devices are available.
 
 On an Ubuntu system with both CPU and GPU OpenCL support, `clinfo -l` outputs:
 
@@ -133,12 +143,12 @@ Platform #1: Intel(R) CPU Runtime for OpenCL(TM) Applications
 
 On this system the GPU is platform ID 0 and device ID 0, while the CPU is
 platform ID 1, device ID 0. These can be specified with the `opencl_ids`
-argument when running a model. The `opencl_ids` is  supplied as a vector of
-length 2, where the first element is the platform ID and the second argument is
-the device ID.
+argument when running a model. The `opencl_ids` argument is supplied as a
+vector of length 2, where the first element is the platform ID and the second
+element is the device ID.
 
 ```{r fit-opencl}
-fit_cl <- mod_cl$sample(data = mdata, chains = 4, parallel_chains = 4,
+fit_cl <- mod_cl$sample(data = mdata, seed = 123, chains = 4, parallel_chains = 4,
                         opencl_ids = c(0, 0), refresh = 0)
 ```
 
@@ -147,7 +157,8 @@ We'll also run a version without OpenCL and compare the run times.
 ```{r fit-cpu, message=FALSE}
 # no OpenCL version
 mod <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan", force_recompile = TRUE)
-fit_cpu <- mod$sample(data = mdata, chains = 4, parallel_chains = 4, refresh = 0)
+fit_cpu <- mod$sample(data = mdata, seed = 123, chains = 4,
+                      parallel_chains = 4, refresh = 0)
 ```
 
 The speedup of the OpenCL model is:
@@ -155,6 +166,6 @@ The speedup of the OpenCL model is:
 fit_cpu$time()$total / fit_cl$time()$total
 ```
 
-This speedup will be determined by the particular GPU/CPU used, the input
-problem sizes (data as well as parameters) and if the model uses functions that
-can be run on the GPU or other OpenCL devices.
+This ratio is illustrative. It depends on the particular GPU and CPU, the input
+problem sizes, whether GPU-supported functions dominate the computation, and
+how concurrent chains share the OpenCL device.

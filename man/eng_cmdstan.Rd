@@ -7,8 +7,9 @@
 eng_cmdstan(options)
 }
 \arguments{
-\item{options}{(named list) Chunk options, as provided by \code{knitr} during
-chunk execution.}
+\item{options}{(named list) Chunk options supplied by \code{knitr}. The
+\code{output.var} element is required and must be a single character string
+naming the \code{CmdStanModel} object created by the chunk.}
 }
 \value{
 A character vector containing the formatted chunk output produced by

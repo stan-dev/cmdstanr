@@ -15,14 +15,6 @@ vignette: >
 ```{r child="children/_settings-knitr.Rmd"}
 ```
 
-```{r include=FALSE}
-# Needed temporarily to avoid weird rendering of posterior's tibbles
-# in pkgdown sites
-print.tbl_df <- function(x, ...) {
-  print.data.frame(x)
-}
-```
-
 ## Summary statistics
 
 We can easily customize the summary statistics reported by `$summary()` and `$print()`.
