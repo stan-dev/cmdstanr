@@ -439,8 +439,8 @@ See the [diagnostic CSV output documentation](https://mc-stan.org/docs/cmdstan-g
 
 CmdStanR can of course be used for developing other packages that require
 compiling and running Stan models as well as using new or custom Stan features
-available through CmdStan. Even though CmdStanR is not itself on CRAN, it 
-can still be used by packages that are on CRAN. 
+available through CmdStan. Even though CmdStanR is not itself on CRAN, it
+can still be used by packages that are on CRAN.
 
 ### Compiling Stan models during package installation
 

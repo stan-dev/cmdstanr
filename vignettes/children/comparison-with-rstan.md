@@ -11,11 +11,11 @@ compiled C++ code directly from R.
 ### Advantages of RStan
 
 * CRAN provides binary versions of RStan for Windows and macOS. RStan-based
-packages can also include precompiled Stan models in their binary packages, which allows users to run the models without a local C++ toolchain. 
+packages can also include precompiled Stan models in their binary packages, which allows users to run the models without a local C++ toolchain.
 
   CmdStanR-based packages can use
   [`instantiate`](https://wlandau.github.io/instantiate/) to compile models
-  once during package installation. Because CRAN's build machines do not 
+  once during package installation. Because CRAN's build machines do not
   provide CmdStan, packages using this workflow currently need to be installed
   from source with CmdStan and a C++ toolchain available.
 

@@ -497,7 +497,7 @@ fit2 <- qs2::qs_read("fit.qs2")
 
 ## Additional resources
 
-There are additional vignettes available that discuss many other aspects of 
+There are additional vignettes available that discuss many other aspects of
 using CmdStanR. These can be found online at the CmdStanR website:
 
 * https://mc-stan.org/cmdstanr/articles/index.html
