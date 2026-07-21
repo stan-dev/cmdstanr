@@ -46,13 +46,11 @@ Before the package can be used it needs to know where the CmdStan
 installation is located. When the package is loaded it tries to help automate
 this to avoid having to manually set the path every session:
 \itemize{
-\item If the \link[=Sys.setenv]{environment variable} \code{"CMDSTAN"} exists at load time
-then its value will be automatically set as the default path to CmdStan for
-the \R session. If the environment variable \code{"CMDSTAN"} is set, but a valid
-CmdStan is not found in the supplied path, the path is treated as a top
-folder that contains CmdStan installations. In that case, the CmdStan
-installation with the largest version number will be set as the path to
-CmdStan for the \R session.
+\item If the \link[=Sys.setenv]{environment variable} \code{"CMDSTAN"} points directly to
+a valid CmdStan installation at load time, that path is used for the \R
+session. If it instead points to an existing parent directory containing
+versioned CmdStan installations, the installation with the largest version
+number is used.
 \item If no environment variable is found when loaded but any directory in the
 form \code{".cmdstan/cmdstan-[version]"} (e.g., \code{".cmdstan/cmdstan-2.35.0"}),
 exists in the user's home directory (\code{Sys.getenv("HOME")}, \emph{not} the current

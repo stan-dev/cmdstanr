@@ -134,7 +134,7 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 fit_vb$summary()
 mcmc_hist(fit_vb$draws("theta"))
 
-# Run 'pathfinder' method, a new alternative to the variational method
+# Run the Pathfinder variational inference method
 fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 fit_pf$summary()
 mcmc_hist(fit_pf$draws("theta"))

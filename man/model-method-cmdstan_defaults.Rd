@@ -10,9 +10,9 @@ cmdstan_defaults(
 )
 }
 \arguments{
-\item{method}{(string) The inference method whose defaults to
-retrieve. One of \code{"sample"}, \code{"optimize"}, \code{"variational"},
-\code{"pathfinder"}, or \code{"laplace"}.}
+\item{method}{(string) The inference method for which to retrieve default
+argument values. One of \code{"sample"}, \code{"optimize"}, \code{"variational"},
+\code{"pathfinder"}, or \code{"laplace"}. The default is \code{"sample"}.}
 }
 \value{
 A named list of default argument values for the specified

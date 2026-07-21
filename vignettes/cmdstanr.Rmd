@@ -29,7 +29,7 @@ CmdStan, the command line interface to Stan. First we install the R package
 by running the following command in R.
 
 ```{r install, eval=FALSE}
-# we recommend running this is a fresh R session or restarting your current session
+# we recommend running this in a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
 
@@ -65,7 +65,7 @@ calling the [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install
 function:
 
 ```{r install_cmdstan-1, include = FALSE}
-if (!dir.exists(cmdstan_default_path())) {
+if (is.null(cmdstan_default_path())) {
   install_cmdstan()
 }
 ```
@@ -77,8 +77,10 @@ Before CmdStanR can be used it needs to know where the CmdStan installation is
 located. When the package is loaded it tries to help automate this to avoid
 having to manually set the path every session:
 
-1. If the environment variable `"CMDSTAN"` exists at load time then its value
-will be automatically set as the default path to CmdStan for the R session. This
+1. If the environment variable `"CMDSTAN"` points directly to a valid CmdStan
+installation at load time, that path is used for the R session. If it instead
+points to an existing parent directory containing versioned CmdStan
+installations, the installation with the largest version number is used. This
 is useful if your CmdStan installation is not located in the default directory
 that would have been used by `install_cmdstan()` (see #2).
 
@@ -197,7 +199,7 @@ fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 fit$summary(
   variables = NULL,
   posterior::default_summary_measures(),
-  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+  extra_quantiles = ~posterior::quantile2(., probs = c(0.025, 0.975))
 )
 ```
 
@@ -212,7 +214,7 @@ fit$summary(
  print.data.frame(fit$summary(
    variables = NULL,
    posterior::default_summary_measures(),
-   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+   extra_quantiles = ~posterior::quantile2(., probs = c(0.025, 0.975))
  ))
 ```
 
@@ -310,7 +312,7 @@ divergences.
 ```{r fit-with-warnings, results='hold'}
 fit_with_warning <- cmdstanr_example("schools")
 ```
-After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit$diagnostic_summary()`.
+After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit_with_warning$diagnostic_summary()`.
 
 ```{r diagnostic_summary-with-warnings}
 diagnostics <- fit_with_warning$diagnostic_summary()
@@ -325,7 +327,6 @@ sum(diagnostics$num_divergent)
 CmdStan itself provides a `diagnose` utility that can be called using
 the `$cmdstan_diagnose()` method. This method prints CmdStan's diagnostic output
 but does not return it as a structured R object.
-
 
 ## Running optimization and variational inference
 
@@ -418,7 +419,7 @@ mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
 
 ### Variational (Pathfinder)
 
-Stan version 2.33 introduced a new variational method called Pathfinder. 
+Stan version 2.33 introduced the Pathfinder variational inference method.
 For details on how Pathfinder works see the section in the 
 [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro).
 Pathfinder is run using the [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
@@ -460,17 +461,24 @@ mcmc_hist(fit$draws("theta"), binwidth = 0.025) +
 ```
 
 For more details on the `$optimize()`, `$laplace()`, `$variational()`, and 
-`pathfinder()` methods, follow these links to their documentation pages.
+`$pathfinder()` methods, follow these links to their documentation pages.
 
 * [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
 * [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 * [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
 * [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
 
+## Running standalone generated quantities
+
+The [`$generate_quantities()`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.html)
+method runs a Stan program's `generated quantities` block using parameter values
+from a previous fit, without rerunning inference. It accepts fitted model
+objects produced by any of the fitting methods described above. See the method
+documentation for details and a complete example.
 
 ## Saving fitted model objects
 
-The [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+The [`$save_object()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
 method provided by CmdStanR is the most convenient way to save a fitted model
 object to disk and ensure that all of the contents are available when reading
 the object back into R. By default, `fit$save_object()` will use the `RDS`

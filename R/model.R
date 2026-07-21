@@ -102,7 +102,7 @@
 #' fit_vb$summary()
 #' mcmc_hist(fit_vb$draws("theta"))
 #'
-#' # Run 'pathfinder' method, a new alternative to the variational method
+#' # Run the Pathfinder variational inference method
 #' fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 #' fit_pf$summary()
 #' mcmc_hist(fit_pf$draws("theta"))
@@ -2364,9 +2364,9 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 #'
 #'   The model must be compiled before calling this method.
 #'
-#' @param method (string) The inference method whose defaults to
-#'   retrieve. One of `"sample"`, `"optimize"`, `"variational"`,
-#'   `"pathfinder"`, or `"laplace"`.
+#' @param method (string) The inference method for which to retrieve default
+#'   argument values. One of `"sample"`, `"optimize"`, `"variational"`,
+#'   `"pathfinder"`, or `"laplace"`. The default is `"sample"`.
 #' @return A named list of default argument values for the specified
 #'   method, with CmdStanR-style argument names.
 #'
