@@ -389,23 +389,21 @@ CmdStanModel <- R6::R6Class(
 #'   object, print its Stan program, and manage paths to its executable and
 #'   generated C++ file.
 #'
-#' @section Usage:
-#' These methods are called on a `CmdStanModel` object. If the object is named
-#' `mod`, the method signatures are:
+#'   The available methods are:
 #'
-#' ```
-#' mod$stan_file()
-#' mod$has_stan_file()
-#' mod$code()
-#' mod$print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
-#' mod$model_name()
-#' mod$exe_file(path = NULL)
-#' mod$include_paths()
-#' mod$cmdstan_version()
-#' mod$cpp_options()
-#' mod$hpp_file()
-#' mod$save_hpp_file(dir = NULL)
-#' ```
+#'   ```
+#'   stan_file()
+#'   has_stan_file()
+#'   code()
+#'   print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
+#'   model_name()
+#'   exe_file(path = NULL)
+#'   include_paths()
+#'   cmdstan_version()
+#'   cpp_options()
+#'   hpp_file()
+#'   save_hpp_file(dir = NULL)
+#'   ```
 #'
 #' @param line_numbers (logical) Should line numbers be printed? The default is
 #'   `getOption("cmdstanr_print_line_numbers", FALSE)`.

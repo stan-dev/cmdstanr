@@ -40,26 +40,22 @@ path is available, such as when an up-to-date executable was reused.
 These methods access information stored in a \code{\link{CmdStanModel}}
 object, print its Stan program, and manage paths to its executable and
 generated C++ file.
-}
-\section{Usage}{
 
-These methods are called on a \code{CmdStanModel} object. If the object is named
-\code{mod}, the method signatures are:
+The available methods are:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{mod$stan_file()
-mod$has_stan_file()
-mod$code()
-mod$print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
-mod$model_name()
-mod$exe_file(path = NULL)
-mod$include_paths()
-mod$cmdstan_version()
-mod$cpp_options()
-mod$hpp_file()
-mod$save_hpp_file(dir = NULL)
+\if{html}{\out{<div class="sourceCode">}}\preformatted{stan_file()
+has_stan_file()
+code()
+print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
+model_name()
+exe_file(path = NULL)
+include_paths()
+cmdstan_version()
+cpp_options()
+hpp_file()
+save_hpp_file(dir = NULL)
 }\if{html}{\out{</div>}}
 }
-
 \seealso{
 \code{\link[=model-method-compile]{$compile()}} and \code{\link[=cmdstan_model]{cmdstan_model()}}
 
