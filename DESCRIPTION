@@ -40,7 +40,7 @@ Depends:
     R (>= 4.0.0)
 Imports:
     checkmate,
-    data.table,
+    data.table (>= 1.11.6),
     jsonlite (>= 1.8.7),
     posterior (>= 1.5.0),
     processx (>= 3.5.0),

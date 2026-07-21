@@ -1151,20 +1151,26 @@ CmdStanFit$set("public", name = "metric_files", value = metric_files)
 #'
 #' @name fit-method-time
 #' @aliases time
-#' @description Report the run time in seconds. For MCMC additional information
-#'   is provided about the run times of individual chains and the warmup and
-#'   sampling phases. For Laplace approximation the reported time includes only
-#'   the time for drawing the approximate sample and does not include the time
-#'   taken to run the `$optimize()` method.
+#' @description Report the run time in seconds. For MCMC and standalone
+#'   generated quantities additional information is provided about the run
+#'   times of individual chains or processes. For MCMC, timing information is
+#'   also provided for the warmup and sampling phases. For Laplace approximation
+#'   the reported time includes only the time for drawing the approximate sample
+#'   and does not include the time taken to run the `$optimize()` method.
 #'
 #' @return
 #' A list with elements
-#' * `total`: (scalar) The total run time. For MCMC this may be different than
-#' the sum of the chain run times if parallelization was used.
+#' * `total`: (scalar) The total run time. For MCMC and standalone generated
+#' quantities this may differ from the sum of the individual run times if
+#' parallelization was used.
 #' * `chains`: (data frame) For MCMC and standalone generated quantities,
 #' timing information for the individual chains. For MCMC the data frame has
 #' columns `"chain_id"`, `"warmup"`, `"sampling"`, and `"total"`. For standalone
-#' generated quantities it has columns `"chain_id"` and `"total"`.
+#' generated quantities, each row corresponds to one fitted-parameter CSV file
+#' and one CmdStan process, and the data frame has columns `"chain_id"` and
+#' `"total"`. Variational or optimization input therefore produces one row.
+#' With CmdStan versions before 2.39, standalone generated quantities process
+#' times are reported as zero.
 #'
 #' @examples
 #' \dontrun{
@@ -2431,7 +2437,7 @@ CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  [`$time()`][fit-method-time] | Report the total run time. |
+#'  [`$time()`][fit-method-time] | Report total and process-specific run times. |
 #'  [`$output()`][fit-method-output] | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'

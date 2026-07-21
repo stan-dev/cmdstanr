@@ -10,20 +10,26 @@ time()
 \value{
 A list with elements
 \itemize{
-\item \code{total}: (scalar) The total run time. For MCMC this may be different than
-the sum of the chain run times if parallelization was used.
+\item \code{total}: (scalar) The total run time. For MCMC and standalone generated
+quantities this may differ from the sum of the individual run times if
+parallelization was used.
 \item \code{chains}: (data frame) For MCMC and standalone generated quantities,
 timing information for the individual chains. For MCMC the data frame has
 columns \code{"chain_id"}, \code{"warmup"}, \code{"sampling"}, and \code{"total"}. For standalone
-generated quantities it has columns \code{"chain_id"} and \code{"total"}.
+generated quantities, each row corresponds to one fitted-parameter CSV file
+and one CmdStan process, and the data frame has columns \code{"chain_id"} and
+\code{"total"}. Variational or optimization input therefore produces one row.
+With CmdStan versions before 2.39, standalone generated quantities process
+times are reported as zero.
 }
 }
 \description{
-Report the run time in seconds. For MCMC additional information
-is provided about the run times of individual chains and the warmup and
-sampling phases. For Laplace approximation the reported time includes only
-the time for drawing the approximate sample and does not include the time
-taken to run the \verb{$optimize()} method.
+Report the run time in seconds. For MCMC and standalone
+generated quantities additional information is provided about the run
+times of individual chains or processes. For MCMC, timing information is
+also provided for the warmup and sampling phases. For Laplace approximation
+the reported time includes only the time for drawing the approximate sample
+and does not include the time taken to run the \verb{$optimize()} method.
 }
 \examples{
 \dontrun{

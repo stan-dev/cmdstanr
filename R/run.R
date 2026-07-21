@@ -357,7 +357,7 @@ CmdStanRun <- R6::R6Class(
       } else if (self$method() == "generate_quantities") {
         chain_time <- data.frame(
           chain_id = self$procs$proc_ids()[self$procs$is_finished()],
-          total = self$procs$proc_total_time()[self$procs$is_finished()]
+          total = as.vector(self$procs$proc_total_time())
         )
 
         time <- list(total = self$procs$total_time(), chains = chain_time)
@@ -1143,6 +1143,8 @@ CmdStanGQProcs <- R6::R6Class(
         if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
           # if the process just finished make sure we process all
           # input and mark the process finished
+          self$process_output(id)
+          self$process_error_output(id)
           if (self$get_proc(id)$get_exit_status() == 0) {
             self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
           } else {
@@ -1164,8 +1166,13 @@ CmdStanGQProcs <- R6::R6Class(
         if (nzchar(line)) {
           if (self$proc_state(id) == 1 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 1.5)
-          } else if (self$proc_state(id) >= 2 && private$show_stdout_messages_) {
-            cat("Chain", id, line, "\n")
+          } else {
+            generated_quantities_time <- parse_generated_quantities_time(line)
+            if (!is.null(generated_quantities_time)) {
+              private$proc_total_time_[[id]] <- generated_quantities_time
+            } else if (self$proc_state(id) >= 2 && private$show_stdout_messages_) {
+              cat("Chain", id, line, "\n")
+            }
           }
         } else {
           # after the metadata is printed and we found a blank line

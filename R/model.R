@@ -2110,18 +2110,24 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #' @inheritParams model-method-sample
 #' @param fitted_params (multiple options) The parameter draws to use. One of
 #'   the following:
-#'  * A [CmdStanMCMC] or [CmdStanVB] fitted model object.
-#'  * A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for
-#'   VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
+#'  * A [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace], [CmdStanVB], or
+#'  [CmdStanPathfinder] fitted model object.
+#'  * A [posterior::draws_array] or [posterior::draws_matrix] object returned by
+#'  CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
 #'
-#'   NOTE: CmdStan CSV paths are used directly. A [CmdStanMCMC] object also
-#'   reuses its original output files when they are available. If any of those
-#'   files are unavailable, CmdStanR writes the in-memory draws to temporary CSV
-#'   files. [CmdStanVB] and posterior draws objects are converted to temporary
-#'   CSV files on each call. For repeated calls that require this conversion, we
-#'   recommend using [draws_to_csv()] once and passing the resulting paths to
-#'   `$generate_quantities()`.
+#' For a [CmdStanMLE] object, optimization supplies one point estimate, so
+#' generated quantities that use RNG functions produce only one simulation.
+#' For [CmdStanLaplace], [CmdStanVB], and [CmdStanPathfinder] objects, generated
+#' quantities are evaluated once per approximate draw.
+#'
+#' NOTE: CmdStan CSV paths are used directly. A [CmdStanMCMC] object also reuses
+#' its original output files when they are available. If any of those files are
+#' unavailable, CmdStanR writes the in-memory draws to temporary CSV files.
+#' Other fitted model objects and posterior draws objects are converted to
+#' temporary CSV files on each call. For repeated calls that require this
+#' conversion, we recommend using [draws_to_csv()] once and passing the
+#' resulting paths to `$generate_quantities()`.
 #'
 #' @return A [`CmdStanGQ`] object.
 #'
