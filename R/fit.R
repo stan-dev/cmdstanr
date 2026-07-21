@@ -818,10 +818,6 @@ lp_approx <- function() {
 #' @aliases summary fit-method-print print.CmdStanMCMC print.CmdStanMLE
 #' @aliases print.CmdStanLaplace print.CmdStanVB print.CmdStanPathfinder
 #' @aliases print.CmdStanGQ
-#' @usage
-#' summary(variables = NULL, ...)
-#' print(variables = NULL, ..., digits = 2,
-#'   max_rows = getOption("cmdstanr_max_rows", 10))
 #' @description The `$summary()` method runs
 #'   [`summarise_draws()`][posterior::draws_summary] from the \pkg{posterior}
 #'   package and returns the output. For MCMC, only post-warmup draws are
@@ -833,14 +829,14 @@ lp_approx <- function() {
 #'   `$summary()` because it is designed to only compute the summary statistics
 #'   for the variables that will actually fit in the printed output whereas
 #'   `$summary()` will compute them for all of the specified variables in order
-#'   to be able to return them to the user. See **Examples**.
+#'   to be able to return them to the user. The `$print()` method accepts the
+#'   same `variables` and `...` arguments as `$summary()`. It also has a `digits`
+#'   argument for the number of digits to display after the decimal point
+#'   (default `2`) and a `max_rows` argument for the maximum number of rows to
+#'   print (default `getOption("cmdstanr_max_rows", 10)`). See **Examples**.
 #'
 #' @param variables (character vector) The variables to include.
 #' @param ... Optional arguments to pass to [`posterior::summarise_draws()`][posterior::draws_summary].
-#' @param digits (integer) The number of digits to display after the decimal
-#'   point. Used only by `$print()`. Defaults to `2`.
-#' @param max_rows (integer) The maximum number of rows to print. Used only by
-#'   `$print()`. Defaults to `getOption("cmdstanr_max_rows", 10)`.
 #'
 #' @return
 #' The `$summary()` method returns the tibble data frame created by
@@ -2157,9 +2153,6 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 CmdStanLaplace <- R6::R6Class(
   classname = "CmdStanLaplace",
   inherit = CmdStanFit,
-  public = list(
-    mode = function() self$runset$args$method_args$mode_object
-  ),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
@@ -2179,7 +2172,6 @@ CmdStanLaplace$set("public", name = "lp_approx", value = lp_approx)
 #'
 #' @name fit-method-mode
 #' @aliases mode
-#' @usage mode()
 #' @description The `$mode()` method returns the mode used to center the
 #'   Laplace approximation. This method is only available for
 #'   [`CmdStanLaplace`] objects returned by
@@ -2190,7 +2182,10 @@ CmdStanLaplace$set("public", name = "lp_approx", value = lp_approx)
 #'
 #' @seealso [`CmdStanLaplace`], [`$laplace()`][model-method-laplace]
 #'
-NULL
+mode <- function() {
+  self$runset$args$method_args$mode_object
+}
+CmdStanLaplace$set("public", name = "mode", value = mode)
 
 
 # CmdStanVB ---------------------------------------------------------------
@@ -2461,9 +2456,6 @@ CmdStanGQ <- R6::R6Class(
   classname = "CmdStanGQ",
   inherit = CmdStanFit,
   public = list(
-    fitted_params_files = function() {
-      self$runset$args$method_args$fitted_params
-    },
     num_chains = function() {
       super$num_procs()
     },
@@ -2538,7 +2530,6 @@ CmdStanGQ <- R6::R6Class(
 #'
 #' @name fit-method-fitted_params_files
 #' @aliases fitted_params_files
-#' @usage fitted_params_files()
 #' @description The `$fitted_params_files()` method returns the paths to the
 #'   CmdStan CSV files used as the `fitted_params` input to standalone
 #'   generated quantities.
@@ -2548,7 +2539,14 @@ CmdStanGQ <- R6::R6Class(
 #' @seealso [`CmdStanGQ`],
 #'   [`$generate_quantities()`][model-method-generate-quantities]
 #'
-NULL
+fitted_params_files <- function() {
+  self$runset$args$method_args$fitted_params
+}
+CmdStanGQ$set(
+  "public",
+  name = "fitted_params_files",
+  value = fitted_params_files
+)
 
 
 # CmdStan Diagnose --------------------------------------------------------

@@ -3,19 +3,6 @@
 \name{model-method-model-info}
 \alias{model-method-model-info}
 \title{Access information from a \code{CmdStanModel} object}
-\usage{
-stan_file()
-has_stan_file()
-code()
-print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
-model_name()
-exe_file(path = NULL)
-include_paths()
-cmdstan_version()
-cpp_options()
-hpp_file()
-save_hpp_file(dir = NULL)
-}
 \arguments{
 \item{line_numbers}{(logical) Should line numbers be printed? The default is
 \code{getOption("cmdstanr_print_line_numbers", FALSE)}.}

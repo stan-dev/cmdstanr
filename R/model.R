@@ -389,19 +389,6 @@ CmdStanModel <- R6::R6Class(
 #'   object, print its Stan program, and manage paths to its executable and
 #'   generated C++ file.
 #'
-#' @usage
-#' stan_file()
-#' has_stan_file()
-#' code()
-#' print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
-#' model_name()
-#' exe_file(path = NULL)
-#' include_paths()
-#' cmdstan_version()
-#' cpp_options()
-#' hpp_file()
-#' save_hpp_file(dir = NULL)
-#'
 #' @param line_numbers (logical) Should line numbers be printed? The default is
 #'   `getOption("cmdstanr_print_line_numbers", FALSE)`.
 #' @param path (string) The path to a model executable. If `NULL` (the default),

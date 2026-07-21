@@ -13,19 +13,11 @@
 \title{Compute a summary table of estimates and diagnostics}
 \usage{
 summary(variables = NULL, ...)
-print(variables = NULL, ..., digits = 2,
-  max_rows = getOption("cmdstanr_max_rows", 10))
 }
 \arguments{
 \item{variables}{(character vector) The variables to include.}
 
 \item{...}{Optional arguments to pass to \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}.}
-
-\item{digits}{(integer) The number of digits to display after the decimal
-point. Used only by \verb{$print()}. Defaults to \code{2}.}
-
-\item{max_rows}{(integer) The maximum number of rows to print. Used only by
-\verb{$print()}. Defaults to \code{getOption("cmdstanr_max_rows", 10)}.}
 }
 \value{
 The \verb{$summary()} method returns the tibble data frame created by
@@ -46,7 +38,11 @@ fitted model object itself. The \verb{$print()} method may also be faster than
 \verb{$summary()} because it is designed to only compute the summary statistics
 for the variables that will actually fit in the printed output whereas
 \verb{$summary()} will compute them for all of the specified variables in order
-to be able to return them to the user. See \strong{Examples}.
+to be able to return them to the user. The \verb{$print()} method accepts the
+same \code{variables} and \code{...} arguments as \verb{$summary()}. It also has a \code{digits}
+argument for the number of digits to display after the decimal point
+(default \code{2}) and a \code{max_rows} argument for the maximum number of rows to
+print (default \code{getOption("cmdstanr_max_rows", 10)}). See \strong{Examples}.
 }
 \examples{
 \dontrun{
