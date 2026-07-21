@@ -41,8 +41,6 @@ These methods access information stored in a \code{\link{CmdStanModel}}
 object, print its Stan program, and manage paths to its executable and
 generated C++ file.
 
-The available methods are:
-
 \if{html}{\out{<div class="sourceCode">}}\preformatted{stan_file()
 has_stan_file()
 code()
