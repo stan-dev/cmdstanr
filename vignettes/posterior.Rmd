@@ -16,7 +16,7 @@ vignette: >
 ```
 
 ```{r include=FALSE}
-# Needed temporarily to avoiding weird rendering of posterior's tibbles
+# Needed temporarily to avoid weird rendering of posterior's tibbles
 # in pkgdown sites
 print.tbl_df <- function(x, ...) {
   print.data.frame(x)
@@ -32,22 +32,24 @@ fit <- cmdstanr::cmdstanr_example("schools", method = "sample")
 fit$summary()
 ```
 
-By default all variables are summaries with the follow functions:
+By default, all variables are summarized with the following functions:
 ```{r}
 posterior::default_summary_measures()
 ```
 
-To change the variables summarized, we use the variables argument
+To change the variables summarized, use the `variables` argument:
 ```{r}
 fit$summary(variables = c("mu", "tau"))
 ```
 
-We can additionally change which functions are used
+We can also change which functions are used:
 ```{r}
 fit$summary(variables = c("mu", "tau"), mean, sd)
 ```
 
-To summarize all variables with non-default functions, it is necessary to set explicitly set the variables argument, either to `NULL` or the full vector of variable names.
+To summarize all variables with non-default functions, it is necessary to
+explicitly set the `variables` argument, either to `NULL` or the full vector of
+variable names.
 ```{r}
 fit$summary(variables = NULL, "mean", "median")
 ```
