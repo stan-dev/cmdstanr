@@ -1,6 +1,7 @@
 # cmdstanr (development version)
 
 * Pathfinder fits used as initial values now use uniform weights when CmdStan already PSIS-resampled their draws, avoiding a second application of importance weights. (#1206)
+* Pathfinder fits used as initial values now correctly treat draws with different initialization parameter values as distinct even when their log weights are equal, and collapse duplicate resampled draws while retaining their selection frequency. (#1207)
 * `pathfinder()` now passes separately supplied initial values to every path instead of using only the first path's initial values. (#1206)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
