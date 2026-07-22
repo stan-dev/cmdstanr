@@ -76,7 +76,6 @@ CmdStanRun <- R6::R6Class(
     },
     config_files = function(include_failed = FALSE) {
       files <- private$config_files_
-      files_win_path <- sapply(private$config_files_, wsl_safe_path, revert = TRUE)
       if (include_failed) {
         files
       } else {
@@ -86,7 +85,6 @@ CmdStanRun <- R6::R6Class(
     },
     metric_files = function(include_failed = FALSE) {
       files <- private$metric_files_
-      files_win_path <- sapply(private$metric_files_, wsl_safe_path, revert = TRUE)
       if (include_failed) {
         files
       } else {

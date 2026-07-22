@@ -1,5 +1,6 @@
 # cmdstanr (development version)
 
+* When using CmdStan through WSL, paths for output, diagnostic, profile, config, and metric files now remain accessible to Windows R when an explicit output directory is supplied. (#1110; related: #1113)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * Pathfinder fits used as initial values now use uniform weights when CmdStan already PSIS-resampled their draws, avoiding a second application of importance weights. (#1206)
 * Pathfinder fits used as initial values now correctly treat draws with different initialization parameter values as distinct even when their log weights are equal, and collapse duplicate resampled draws while retaining their selection frequency. (#1207)
