@@ -35,12 +35,13 @@ generated quantities that use RNG functions produce only one simulation.
 For \link{CmdStanLaplace}, \link{CmdStanVB}, and \link{CmdStanPathfinder} objects, generated
 quantities are evaluated once per approximate draw.
 
-NOTE: if you plan on making many calls to \verb{$generate_quantities()} then the
-most efficient option is to pass the paths of the CmdStan CSV output files
-(this avoids CmdStanR having to rewrite the draws contained in the fitted
-model object to CSV each time). If you no longer have the CSV files you can
-use \code{\link[=draws_to_csv]{draws_to_csv()}} once to write them and then pass the resulting file
-paths to \verb{$generate_quantities()} as many times as needed.}
+NOTE: CmdStan CSV paths are used directly. A \link{CmdStanMCMC} object also reuses
+its original output files when they are available. If any of those files are
+unavailable, CmdStanR writes the in-memory draws to temporary CSV files.
+Other fitted model objects and posterior draws objects are converted to
+temporary CSV files on each call. For repeated calls that require this
+conversion, we recommend using \code{\link[=draws_to_csv]{draws_to_csv()}} once and passing the
+resulting paths to \verb{$generate_quantities()}.}
 
 \item{data}{(multiple options) The data to use for the variables specified in
 the data block of the Stan program. One of the following:
@@ -55,14 +56,15 @@ appendices in the CmdStan guide for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
-\item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-In the case of multi-chain sampling the single \code{seed} will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to using
-same seed for all chains so that the same data is generated for all chains
-if RNG functions are used. The only time \code{seed} should be specified as a
-vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate \emph{different} data for each chain.}
+\item{seed}{(non-negative integer(s)) A seed for the (P)RNG to pass to
+CmdStan. In the case of multi-chain sampling the single \code{seed} will
+automatically be augmented by the run (chain) ID so that each chain uses a
+different seed. The exception is the transformed data block, which defaults
+to using same seed for all chains so that the same data is generated for
+all chains if RNG functions are used. The only time \code{seed} should be
+specified as a vector (one element per chain) is if RNG functions are used
+in transformed data and the goal is to generate \emph{different} data for each
+chain.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC there will be one file per chain; for other
@@ -83,14 +85,15 @@ corresponding to the defaults used by \verb{$save_output_files()}.
 
 \item{output_basename}{(string) A string to use as a prefix for the names of
 the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
-the output CSV files will be comprised from the model name, timestamp, and
-5 random characters.}
+the output CSV files is composed of the model name, timestamp, and a
+six-character random hexadecimal suffix.}
 
-\item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
-values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
-Increasing this value will result in larger output CSV files and thus an
-increased usage of disk space.}
+\item{sig_figs}{(positive integer) The number of significant figures (up to a
+maximum of 18) to use when storing the output values. If \code{NULL} (the
+default), the default from the installed CmdStan version is used. Use
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} to check that
+default. Increasing this value will result in larger output CSV files and
+thus an increased usage of disk space.}
 
 \item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
 to run in parallel. If \code{parallel_chains} is not specified then the default
@@ -132,6 +135,11 @@ A \code{\link{CmdStanGQ}} object.
 The \verb{$generate_quantities()} method of a \code{\link{CmdStanModel}} object
 runs Stan's standalone generated quantities to obtain generated quantities
 based on previously fitted parameters.
+
+Any argument left as \code{NULL} will default to the default value used by the
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+default arguments. These values are also available via the
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
 \examples{
 \dontrun{
@@ -196,6 +204,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

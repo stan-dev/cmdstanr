@@ -28,8 +28,8 @@ Report the run time in seconds. For MCMC and standalone
 generated quantities additional information is provided about the run
 times of individual chains or processes. For MCMC, timing information is
 also provided for the warmup and sampling phases. For Laplace approximation
-the time only includes the time for drawing the approximate sample and does
-not include the time taken to run the \verb{$optimize()} method.
+the reported time includes only the time for drawing the approximate sample
+and does not include the time taken to run the \verb{$optimize()} method.
 }
 \examples{
 \dontrun{
@@ -48,7 +48,4 @@ fit_laplace$time() # just time for drawing sample not for running optimize
 fit_laplace$time()$total + fit_mle$time()$total # total time
 }
 
-}
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }

@@ -30,8 +30,9 @@ model that fixes the problem with divergences.
 To print the Stan code for a given \code{example} use
 \code{print_example_program(example)}.}
 
-\item{method}{(string) Which fitting method should be used? The default is
-the \code{"sample"} method (MCMC).}
+\item{method}{(string) The fitting method to use. One of \code{"sample"},
+\code{"optimize"}, \code{"laplace"}, \code{"variational"}, \code{"pathfinder"}, or
+\code{"diagnose"}. The default is \code{"sample"} (MCMC).}
 
 \item{...}{Arguments passed to the chosen \code{method}. See the help pages for
 the individual methods for details.}
@@ -42,7 +43,9 @@ wrapped in \code{\link[utils:capture.output]{utils::capture.output()}}.}
 \item{force_recompile}{Passed to the \link[=model-method-compile]{$compile()} method.}
 }
 \value{
-The fitted model object returned by the selected \code{method}.
+\code{cmdstanr_example()} returns the fitted model object from the selected
+\code{method}. \code{print_example_program()} invisibly returns \code{NULL} after printing
+the Stan code.
 }
 \description{
 Fit models for use in examples
@@ -71,4 +74,8 @@ fit_schools_ncp_mcmc$summary()
 cmdstanr_example("schools", "optimize", quiet = FALSE)
 }
 
+}
+\seealso{
+\code{\link[=cmdstan_model]{cmdstan_model()}} for fitting your own Stan programs and
+\code{\link[=print_stan_file]{print_stan_file()}} for displaying Stan source files
 }

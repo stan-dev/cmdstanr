@@ -1,5 +1,6 @@
 # cmdstanr (development version)
 
+* The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * Pathfinder fits used as initial values now use uniform weights when CmdStan already PSIS-resampled their draws, avoiding a second application of importance weights. (#1206)
 * Pathfinder fits used as initial values now correctly treat draws with different initialization parameter values as distinct even when their log weights are equal, and collapse duplicate resampled draws while retaining their selection frequency. (#1207)
 * `pathfinder()` now passes separately supplied initial values to every path instead of using only the first path's initial values. (#1206)
@@ -7,20 +8,21 @@
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
 to be consistent with other methods.
+* The `save_latent_dynamics` argument is now limited to `$sample()`, `$sample_mpi()`, and `$variational()`, matching the CmdStan algorithms that support diagnostic CSV output.
 * Informative error when exposing functions using names that are reserved 
 keywords (@VisruthSK, #1154)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
 set to `TRUE` for an entire R session via new global options. (#1159)
-* `save_metric_files()` now gives an informative error when metric files were 
+* `save_metric_files()` now gives an informative error when metric files were
 not created and keeps saved metric files after the fitted model is garbage-collected. (#1021)
 * `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing 
 output while reading `STANCFLAGS` from `make`. (#1163)
-* `cmdstan_model()` now retains include paths when initialized with both a Stan file 
+* `cmdstan_model()` now retains include paths when initialized with both a Stan file
 and a precompiled executable (#1094).
-* `$generate_quantities()` now also accepts `CmdStanMLE`, `CmdStanLaplace`, 
+* `$generate_quantities()` now also accepts `CmdStanMLE`, `CmdStanLaplace`,
 and `CmdStanPathfinder` fitted model objects as `fitted_params`. (#1203)
-* `$generate_quantities()` now reports per-process execution times with 
-CmdStan 2.39 or newer, and `read_cmdstan_csv()` returns these times from 
+* `$generate_quantities()` now reports per-process execution times with
+CmdStan 2.39 or newer, and `read_cmdstan_csv()` returns these times from
 standalone generated quantities CSV files. (#1168)
 * `laplace()` no longer overwrites the internally generated optimizer CSV when
 `mode = NULL` and `output_basename` is supplied. The internally generated

@@ -9,14 +9,15 @@
 #'   appendices in the CmdStan guide for details on using these formats.
 #'  * `NULL` or an empty list if the Stan program has no data block.
 #'
-#' @param seed (positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-#'   In the case of multi-chain sampling the single `seed` will automatically be
-#'   augmented by the the run (chain) ID so that each chain uses a different
-#'   seed. The exception is the transformed data block, which defaults to using
-#'   same seed for all chains so that the same data is generated for all chains
-#'   if RNG functions are used. The only time `seed` should be specified as a
-#'   vector (one element per chain) is if RNG functions are used in transformed
-#'   data and the goal is to generate *different* data for each chain.
+#' @param seed (non-negative integer(s)) A seed for the (P)RNG to pass to
+#'   CmdStan. In the case of multi-chain sampling the single `seed` will
+#'   automatically be augmented by the run (chain) ID so that each chain uses a
+#'   different seed. The exception is the transformed data block, which defaults
+#'   to using same seed for all chains so that the same data is generated for
+#'   all chains if RNG functions are used. The only time `seed` should be
+#'   specified as a vector (one element per chain) is if RNG functions are used
+#'   in transformed data and the goal is to generate *different* data for each
+#'   chain.
 #'
 #' @param refresh (non-negative integer) The number of iterations between
 #'   printed screen updates. If `refresh = 0`, only error messages will be
@@ -25,9 +26,10 @@
 #' @param init (multiple options) The initialization method to use for the
 #'   variables declared in the parameters block of the Stan program. One of the
 #'   following:
-#'  * A real number `x>0`. This initializes _all_ parameters randomly between
-#'  `[-x,x]` on the _unconstrained_ parameter space.
-#'  * The number `0`. This initializes _all_ parameters to `0`.
+#'  * A real number `x > 0`. This initializes _all_ parameters randomly between
+#'  `[-x, x]` on the _unconstrained_ parameter space.
+#'  * The number `0`. This initializes _all_ parameters to `0` on the
+#'  _unconstrained_ parameter space.
 #'  * A character vector of paths to JSON or Rdump files containing initial
 #'  values for all or some parameters. For MCMC and Pathfinder, if only a single
 #'  file is provided it will be reused for all chains and paths. See
@@ -73,18 +75,8 @@
 #'  are more draws than requested chains/paths, draws are selected uniformly
 #'  without replacement. If the draws object's parameters are only a subset of
 #'  the model parameters then the other parameters will be drawn by Stan's
-#'  default initialization. The fit object must have at least some parameters
+#'  default initialization. The draws object must have at least some parameters
 #'  that are the same name and dimensions as the current Stan model.
-#'
-#' @param save_latent_dynamics (logical) Should auxiliary diagnostic information
-#'   about the latent dynamics be written to temporary diagnostic CSV files?
-#'   This argument replaces CmdStan's `diagnostic_file` argument and the content
-#'   written to CSV is controlled by the user's CmdStan installation and not
-#'   CmdStanR (for some algorithms no content may be written). The default is
-#'   `FALSE`, which is appropriate for almost every use case. To save the
-#'   temporary files created when `save_latent_dynamics=TRUE` see the
-#'   [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
-#'   method.
 #'
 #' @param output_dir (string) A path to a directory where CmdStan should write
 #'   its output CSV files. For MCMC there will be one file per chain; for other
@@ -104,14 +96,15 @@
 #'
 #' @param output_basename (string) A string to use as a prefix for the names of
 #'   the output CSV files of CmdStan. If `NULL` (the default), the basename of
-#'   the output CSV files will be comprised from the model name, timestamp, and
-#'   5 random characters.
+#'   the output CSV files is composed of the model name, timestamp, and a
+#'   six-character random hexadecimal suffix.
 #'
-#' @param sig_figs (positive integer) The number of significant figures used
-#'   when storing the output values. By default, CmdStan represent the output
-#'   values with 6 significant figures. The upper limit for `sig_figs` is 18.
-#'   Increasing this value will result in larger output CSV files and thus an
-#'   increased usage of disk space.
+#' @param sig_figs (positive integer) The number of significant figures (up to a
+#'   maximum of 18) to use when storing the output values. If `NULL` (the
+#'   default), the default from the installed CmdStan version is used. Use
+#'   [`$cmdstan_defaults()`][model-method-cmdstan_defaults] to check that
+#'   default. Increasing this value will result in larger output CSV files and
+#'   thus an increased usage of disk space.
 #'
 #' @param opencl_ids (integer vector of length 2) The platform and device IDs of
 #'   the OpenCL device to use for fitting. The model must be compiled with

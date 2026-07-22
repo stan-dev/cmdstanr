@@ -102,7 +102,7 @@
 #' fit_vb$summary()
 #' mcmc_hist(fit_vb$draws("theta"))
 #'
-#' # Run 'pathfinder' method, a new alternative to the variational method
+#' # Run the Pathfinder variational inference method
 #' fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 #' fit_pf$summary()
 #' mcmc_hist(fit_pf$draws("theta"))
@@ -181,20 +181,30 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  `$stan_file()` | Return the file path to the Stan program. |
-#'  `$code()` | Return Stan program as a character vector. |
-#'  `$print()`|  Print readable version of Stan program. |
+#'  [`$stan_file()`][model-method-model-info] | Return the file path to the Stan program. |
+#'  [`$has_stan_file()`][model-method-model-info] | Check whether the model was created with a Stan file. |
+#'  [`$code()`][model-method-model-info] | Return Stan program as a character vector. |
+#'  [`$print()`][model-method-model-info] | Print readable version of Stan program. |
 #'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
 #'  [`$format()`][model-method-format]  |  Format and canonicalize the Stan model code. |
+#'
+#'  ## Model information
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$model_name()`][model-method-model-info] | Return the model name. |
+#'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
+#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version associated with the model. |
+#'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
 #'
 #'  ## Compilation
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$compile()`][model-method-compile]  |  Compile Stan program. |
-#'  [`$exe_file()`][model-method-compile] |  Return the file path to the compiled executable. |
-#'  [`$hpp_file()`][model-method-compile] |  Return the file path to the `.hpp` file containing the generated C++ code. |
-#'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
+#'  [`$exe_file()`][model-method-model-info] |  Return or set the file path to the compiled executable. |
+#'  [`$hpp_file()`][model-method-model-info] |  Return the file path to the `.hpp` file containing the generated C++ code. |
+#'  [`$save_hpp_file()`][model-method-model-info] |  Save the `.hpp` file containing the generated C++ code. |
 #'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'  [`$cmdstan_defaults()`][model-method-cmdstan_defaults] |  Get CmdStan default argument values for a method. |
 #'
@@ -211,6 +221,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$sample()`][model-method-sample] |  Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. |
 #'  [`$sample_mpi()`][model-method-sample_mpi] |  Run CmdStan's `"sample"` method with [MPI](https://mc-stan.org/math/md_doxygen_2parallelism__support_2mpi__parallelism.html), return [`CmdStanMCMC`] object. |
 #'  [`$optimize()`][model-method-optimize] |  Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. |
+#'  [`$laplace()`][model-method-laplace] |  Run CmdStan's `"laplace"` method, return [`CmdStanLaplace`] object. |
 #'  [`$variational()`][model-method-variational] |  Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. |
 #'  [`$pathfinder()`][model-method-pathfinder] |  Run CmdStan's `"pathfinder"` method, return [`CmdStanPathfinder`] object. |
 #'  [`$generate_quantities()`][model-method-generate-quantities] |  Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`] object. |
@@ -347,7 +358,7 @@ CmdStanModel <- R6::R6Class(
     },
     hpp_file = function() {
       if (!length(private$hpp_file_)) {
-        stop("The .hpp file does not exists. Please (re)compile the model.", call. = FALSE)
+        stop("The .hpp file does not exist. Please (re)compile the model.", call. = FALSE)
       }
       private$hpp_file_
     },
@@ -366,6 +377,64 @@ CmdStanModel <- R6::R6Class(
     }
   )
 )
+
+# CmdStanModel information methods ---------------------------------------------
+
+#' Access information from a `CmdStanModel` object
+#'
+#' @name model-method-model-info
+#' @family CmdStanModel methods
+#'
+#' @description These methods access information stored in a [`CmdStanModel`]
+#'   object, print its Stan program, and manage paths to its executable and
+#'   generated C++ file.
+#'
+#'   ```
+#'   stan_file()
+#'   has_stan_file()
+#'   code()
+#'   print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
+#'   model_name()
+#'   exe_file(path = NULL)
+#'   include_paths()
+#'   cmdstan_version()
+#'   cpp_options()
+#'   hpp_file()
+#'   save_hpp_file(dir = NULL)
+#'   ```
+#'
+#' @param line_numbers (logical) Should line numbers be printed? The default is
+#'   `getOption("cmdstanr_print_line_numbers", FALSE)`.
+#' @param path (string) The path to a model executable. If `NULL` (the default),
+#'   `$exe_file()` returns the current path. Otherwise, the stored path is
+#'   updated before being returned.
+#' @param dir (string) The directory in which to save the `.hpp` file. The
+#'   default is the directory containing the Stan program.
+#'
+#' @return
+#' * `$stan_file()` returns a path as a string, or `character(0)` if the model
+#'   was created without a Stan file.
+#' * `$has_stan_file()` returns `TRUE` if the model was created with a Stan file
+#'   and `FALSE` otherwise.
+#' * `$code()` returns a character vector with one element per line of Stan
+#'   code, or `NULL` if the model was created without a Stan file.
+#' * `$print()` returns the [`CmdStanModel`] object invisibly.
+#' * `$model_name()` returns the model name as a string.
+#' * `$exe_file()` returns a path as a string, or `character(0)` if no
+#'   executable path is set.
+#' * `$include_paths()` returns a character vector of paths or `NULL`.
+#' * `$cmdstan_version()` returns a CmdStan version as a string.
+#' * `$cpp_options()` returns a named list of C++ options.
+#' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
+#'   was generated while compiling this model object. It errors if no `.hpp`
+#'   path is available, such as when an up-to-date executable was reused.
+#' * `$save_hpp_file()` requires an available `.hpp` file. It moves the file to
+#'   `dir`, updates the stored path, and returns the new path invisibly.
+#'
+#' @seealso [`$compile()`][model-method-compile] and [cmdstan_model()]
+#' @template seealso-docs
+#'
+NULL
 
 # CmdStanModel methods -----------------------------------
 
@@ -386,25 +455,27 @@ CmdStanModel <- R6::R6Class(
 #'   is possible to set `compile=FALSE` in the call to `cmdstan_model()` and
 #'   subsequently call the `$compile()` method directly.
 #'
-#'   After compilation, the paths to the executable and the `.hpp` file
-#'   containing the generated C++ code are available via the `$exe_file()` and
-#'   `$hpp_file()` methods. The default is to create the executable in the same
-#'   directory as the Stan program and to write the generated C++ code in a
-#'   temporary directory. To save the C++ code to a non-temporary location use
-#'   `$save_hpp_file(dir)`.
+#'   After compilation, the path to the executable is available via
+#'   [`$exe_file()`][model-method-model-info]. If compilation generated C++ code
+#'   instead of reusing an up-to-date executable, its path is also available via
+#'   [`$hpp_file()`][model-method-model-info]. Use `force_recompile=TRUE` to
+#'   force generation of the C++ code. By default, the executable is created in
+#'   the same directory as the Stan program and the generated C++ code is
+#'   written to a temporary directory. To save the C++ code to a non-temporary
+#'   location use
+#'   [`$save_hpp_file(dir)`][model-method-model-info].
 #'
 #' @param quiet (logical) Should the verbose output from CmdStan during
 #'   compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
 #'   output.
 #' @param dir (string) The path to the directory in which to store the CmdStan
-#'   executable (or `.hpp` file if using `$save_hpp_file()`). The default is the
-#'   same location as the Stan program.
+#'   executable. The default is the same location as the Stan program.
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   section](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
-#'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
+#'   the Stan User's Guide. **Note:** to do a pedantic check for a model
 #'   without compiling it or for a model that is already compiled the
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
 #' @param include_paths (character vector) Paths to directories where Stan
@@ -419,16 +490,18 @@ CmdStanModel <- R6::R6Class(
 #'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
-#'   `stanc` chapter of the CmdStan Guide for more details on available options:
-#'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
-#' @param force_recompile (logical) Should the model be recompiled even if was
-#'   not modified since last compiled. The default is `FALSE`. Can also be set
-#'   via a global `cmdstanr_force_recompile` option.
+#'   [`stanc` chapter of the CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for more details
+#'   on available options.
+#' @param force_recompile (logical) Should the model be recompiled even if it
+#'   has not been modified since it was last compiled? The default is `FALSE`.
+#'   Can also be set via a global `cmdstanr_force_recompile` option.
 #' @param compile_model_methods (logical) Compile additional model methods
-#'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
-#'   `unconstrain_variables()`). Note: the compiled model-method bindings are
-#'   not preserved in a usable form when saving a model object. If you plan to
-#'   save and reload the model object before model fitting, we recommend instead
+#'   (`log_prob()`, `grad_log_prob()`, `hessian()`, `constrain_variables()`,
+#'   `unconstrain_variables()`, `unconstrain_draws()`, and
+#'   `variable_skeleton()`). Note: the compiled model-method bindings are not
+#'   preserved in a usable form when saving a model object. If you plan to save
+#'   and reload the model object before model fitting, we recommend instead
 #'   waiting to compile the model methods until after fitting via
 #'   [`fit$init_model_methods()`][fit-method-init_model_methods].
 #' @param compile_standalone (logical) Should functions in the Stan model be
@@ -443,11 +516,14 @@ CmdStanModel <- R6::R6Class(
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
 #'   returns the [`CmdStanModel`] object invisibly.
 #'
-#'   After compilation, the `$exe_file()`, `$hpp_file()`, and `$save_hpp_file()`
-#'   methods can be used and return file paths.
+#'   The [`$exe_file()`][model-method-model-info] method returns the executable
+#'   path. If compilation generated C++ code, the
+#'   [`$hpp_file()`][model-method-model-info] and
+#'   [`$save_hpp_file()`][model-method-model-info] methods can also be used. See
+#'   their linked documentation for return values.
 #'
 #' @seealso The [`$check_syntax()`][model-method-check_syntax] method to check
-#'   Stan syntax or enable pedantic model without compiling.
+#'   Stan syntax or enable pedantic mode without compiling.
 #' @template seealso-docs
 #'
 #' @examples
@@ -754,15 +830,17 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'   a list, each element representing a Stan model block: `data`, `parameters`,
 #'   `transformed_parameters` and `generated_quantities`.
 #'
-#'   Each element contains a list of variables, with each variables represented
-#'   as a list with infromation on its scalar type (`real` or `int`) and
+#'   Each element contains a list of variables, with each variable represented
+#'   as a list with information on its scalar type (`real` or `int`) and
 #'   number of dimensions.
 #'
 #'   `transformed data` is not included, as variables in that block are not
 #'   part of the model's input or output.
 #'
-#' @return The `$variables()` returns a list with information on input and
-#'   output variables for each of the Stan model blocks.
+#' @return The method returns a list with information on input and output
+#'   variables for each of the Stan model blocks.
+#'
+#' @seealso [write_stan_json()] for writing data for CmdStan.
 #'
 #' @examples
 #' \dontrun{
@@ -803,13 +881,13 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #'
 #' @description The `$check_syntax()` method of a [`CmdStanModel`] object
 #'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if
-#'   parsing succeeds. If invalid syntax in found an error is thrown.
+#'   parsing succeeds. If invalid syntax is found an error is thrown.
 #'
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
-#'   the Stan Reference Manual.
+#'   the Stan User's Guide.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -927,11 +1005,11 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @family CmdStanModel methods
 #'
 #' @description The `$format()` method of a [`CmdStanModel`] object
-#'   runs stanc's auto-formatter on the model code. Either saves the formatted
-#'   model directly back to the file or prints it for inspection.
+#'   runs stanc's auto-formatter on the model code. It either saves the
+#'   formatted model directly back to the file or prints it for inspection.
 #'
 #' @param overwrite_file (logical) Should the formatted code be written back
-#'   to the input model file. The default is `FALSE`.
+#'   to the input model file? The default is `FALSE`.
 #' @param canonicalize (list or logical) Defines whether or not the compiler
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
 #'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
@@ -939,17 +1017,19 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   are passed to `stanc`. See the
 #'   [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
-#' @param backup (logical) If `TRUE`, create stanfile.bak backups before
-#'   writing to the file. Disable this option if you're sure you have other
-#'   copies of the file or are using a version control system like Git. Defaults
-#'   to `TRUE`. The value is ignored if `overwrite_file = FALSE`.
+#' @param backup (logical) If `TRUE`, create a backup before writing to the
+#'   file. The backup filename is the Stan filename followed by
+#'   `.bak-YYYYMMDDHHMMSS`, where the final digits encode the timestamp. Disable
+#'   this option if you're sure you have other copies of the file or are using a
+#'   version control system like Git. Defaults to `TRUE`. The value is ignored
+#'   if `overwrite_file = FALSE`.
 #' @param max_line_length (integer) The maximum length of a line when formatting.
 #'   The default is `NULL`, which defers to the default line length of stanc.
 #' @param quiet (logical) Should informational messages be suppressed? The
 #'   default is `FALSE`.
 #'
-#' @return The `$format()` method returns `TRUE` (invisibly) if the model
-#'   is valid.
+#' @return The `$format()` method returns `TRUE` (invisibly) if formatting
+#'   succeeds.
 #'
 #' @template seealso-docs
 #'
@@ -1080,15 +1160,17 @@ CmdStanModel$set("public", name = "format", value = format)
 #' @description The `$sample()` method of a [`CmdStanModel`] object runs Stan's
 #'   main Markov chain Monte Carlo algorithm.
 #'
-#'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
-#'   for more details.
-#'
 #'   After model fitting any diagnostics specified via the `diagnostics`
 #'   argument will be checked and warnings will be printed if warranted.
 #'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
+#'
 #' @template model-common-args
+#' @template model-save-latent-dynamics-arg
 #' @template model-sample-args
 #'
 #' @return A [`CmdStanMCMC`] object.
@@ -1377,27 +1459,31 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer to find a posterior mode. If the Jacobian adjustment is
-#'   not included (the default), the optimization returns parameter values that
-#'   correspond to a mode of the target in the constrained space (if such mode
-#'   exists). Thus this option is useful for any optimization where we want to
-#'   find the mode in the original constrained parameter space. If the Jacobian
-#'   adjustment is included, the optimization returns parameter values that
-#'   correspond to a mode in the unconstrained space. This is useful, for
-#'   example, if we want to make a distributional approximation of the posterior
-#'   at the mode (see, [Laplace sampling][model-method-laplace], for which the
-#'   Jacobian adjustment needs to be included for correct results). If the model
-#'   has only unconstrained parameters, there is no effect from including the
-#'   Jacobian. See the
+#'   Stan's optimizer. Following CmdStan's terminology, optimization without
+#'   the Jacobian adjustment (the default) returns a maximum likelihood estimate
+#'   (MLE), whereas optimization with the adjustment returns a maximum a
+#'   posteriori (MAP) estimate. More precisely, without the adjustment the
+#'   optimization finds a mode of the target in the original constrained
+#'   parameter space (if the mode exists), whereas with the adjustment it
+#'   finds a mode of the corresponding density in the unconstrained parameter
+#'   space.
+#'
+#'   The `jacobian` argument does not determine whether prior terms are
+#'   included. Every contribution to the Stan program's `target`, including
+#'   prior terms, is included under either setting. The MLE or MAP
+#'   interpretation therefore depends on both the contents of the target and the
+#'   parameterization. The Jacobian adjustment is particularly useful when
+#'   making a distributional approximation in the unconstrained space (see
+#'   [Laplace sampling][model-method-laplace]). If the model has only
+#'   unconstrained parameters, including the Jacobian has no effect. See the
 #'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/index.html)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the [CmdStan User’s
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
-#'   default arguments. The default values can also be obtained by checking the
-#'   metadata of an example model, e.g.,
-#'   `cmdstanr_example(method="optimize")$metadata()`.
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
@@ -1411,12 +1497,14 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
 #' @param jacobian (logical) Whether or not to use the Jacobian adjustment for
-#'   constrained variables. For historical reasons, the default is `FALSE`,
-#'   meaning optimization finds a mode of the target in the original constrained
-#'   parameter space. Setting it to `TRUE` finds a mode in the unconstrained
-#'   space. See the CmdStan User's Guide for more details. For use later with
-#'   [`$laplace()`][model-method-laplace] the `jacobian` argument should
-#'   typically be set to `TRUE`.
+#'   constrained variables. For historical reasons, the default is `FALSE`.
+#'   CmdStan refers to the estimates obtained with `FALSE` and `TRUE` as MLE and
+#'   MAP estimates, respectively. More precisely, `FALSE` finds a mode of the
+#'   target in the constrained parameter space and `TRUE` finds a mode in the
+#'   unconstrained space. This argument does not control whether prior terms are
+#'   included. See the **Description** section and the CmdStan User's Guide for
+#'   more details. For use later with [`$laplace()`][model-method-laplace], the
+#'   `jacobian` argument should typically be set to `TRUE`.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1442,7 +1530,6 @@ optimize <- function(data = NULL,
                      seed = NULL,
                      refresh = NULL,
                      init = NULL,
-                     save_latent_dynamics = FALSE,
                      output_dir = getOption("cmdstanr_output_dir"),
                      output_basename = NULL,
                      sig_figs = NULL,
@@ -1493,7 +1580,7 @@ optimize <- function(data = NULL,
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data, model_variables),
-    save_latent_dynamics = save_latent_dynamics,
+    save_latent_dynamics = FALSE,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -1519,21 +1606,26 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @description The `$laplace()` method of a [`CmdStanModel`] object produces a
 #'   sample from a normal approximation centered at the mode of a distribution
-#'   in the unconstrained space. If the mode is a maximum a posteriori (MAP)
-#'   estimate, the samples provide an estimate of the mean and standard
-#'   deviation of the posterior distribution. If the mode is a maximum
-#'   likelihood estimate (MLE), the sample provides an estimate of the standard
-#'   error of the likelihood. Whether the mode is the MAP or MLE depends on
-#'   the value of the `jacobian` argument when running optimization. See the
+#'   in the unconstrained space. Following CmdStan's terminology, if the mode is
+#'   a maximum a posteriori (MAP) estimate, the samples provide an estimate of
+#'   the mean and standard deviation of the posterior distribution. If the mode
+#'   is a maximum likelihood estimate (MLE), the sample provides an estimate of
+#'   the standard error of the likelihood. Whether the mode is called MAP or MLE
+#'   depends on the value of the `jacobian` argument when running optimization.
+#'   This terminology does not imply that `jacobian` controls whether prior
+#'   terms are included; it controls the parameterization of the density, while
+#'   the Stan program determines the contents of the target. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan.
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @inheritParams model-method-optimize
-#' @param save_latent_dynamics Ignored for this method.
 #' @param mode (multiple options) The mode to center the approximation at. One
 #'   of the following:
 #'   * A [`CmdStanMLE`] object from a previous run of [`$optimize()`][model-method-optimize].
@@ -1552,7 +1644,8 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
 #'   section of the CmdStan User's Guide for more details. If `mode` is not
 #'   `NULL` then the value of `jacobian` must match the value used when
-#'   optimization was originally run. If `mode` is `NULL` then the value of
+#'   optimization was originally run so the mode and the Laplace approximation
+#'   use the same target density. If `mode` is `NULL` then the value of
 #'   `jacobian` specified here is used when running optimization.
 #'
 #' @return A [`CmdStanLaplace`] object.
@@ -1589,7 +1682,6 @@ laplace <- function(data = NULL,
                     seed = NULL,
                     refresh = NULL,
                     init = NULL,
-                    save_latent_dynamics = FALSE,
                     output_dir = getOption("cmdstanr_output_dir"),
                     output_basename = NULL,
                     sig_figs = NULL,
@@ -1636,7 +1728,6 @@ laplace <- function(data = NULL,
       seed = seed,
       refresh = refresh,
       init = init,
-      save_latent_dynamics = FALSE,
       output_dir = output_dir,
       output_basename = mode_output_basename,
       sig_figs = sig_figs,
@@ -1703,9 +1794,13 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan.
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
+#' @template model-save-latent-dynamics-arg
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when using the Stan
@@ -1838,14 +1933,18 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., for multi-path pathfinder
 #'   as well as `reduce_sum`).
-#' @param num_threads Deprecated. Please use `threads` instead.
+#' @param num_threads Deprecated and will be removed in a future release. Use
+#'   `threads` instead.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1858,16 +1957,24 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   pathfinder should return. The number of draws PSIS sampling samples from
 #'   will be equal to `single_path_draws * num_paths`.
 #' @param draws (positive integer) Number of draws to return after performing
-#'   pareto smooted importance sampling (PSIS). This should be smaller than
-#'   `single_path_draws * num_paths` (future versions of CmdStan will throw a
-#'   warning).
-#' @param num_paths (positive integer) Number of single pathfinders to run.
+#'   Pareto smoothed importance sampling (PSIS). This should be smaller than
+#'   `single_path_draws * num_paths`.
+#' @param num_paths (positive integer) Number of single pathfinders to run. The
+#'   default is `4`.
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations
 #'   for LBFGS.
 #' @param num_elbo_draws (positive integer) Number of draws to make when
 #'   calculating the ELBO of the approximation at each iteration of LBFGS.
-#' @param save_single_paths (logical) Whether to save the results of single
-#'   pathfinder runs in multi-pathfinder.
+#' @param save_single_paths (logical) Whether to save the output from each
+#'   single-Pathfinder run. For a multi-path run, CmdStan writes one Stan CSV
+#'   file containing draws and one JSON file containing the L-BFGS and ELBO
+#'   iterations for each path. For a single-path run, the main output CSV
+#'   contains the draws and CmdStan writes an additional JSON file. The
+#'   auxiliary files are written to `output_dir`, or to a temporary directory
+#'   if `output_dir = NULL`. They are not included in the paths returned by the
+#'   fitted object's `$output_files()` method. See the [CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder_config.html#single-path-pathfinder-outputs)
+#'   for details.
 #' @param psis_resample (logical) Whether to perform pareto smoothed importance sampling.
 #'  If `TRUE`, the number of draws returned will be equal to `draws`.
 #'  If `FALSE`, the number of draws returned will be equal to `single_path_draws * num_paths`.
@@ -1877,8 +1984,6 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'  ELBO in the pathfinder steps. All other draws will have a log probability of `NA`.
 #'  A value of `FALSE` will also turn off pareto smoothed importance sampling as the
 #'  lp calculation is needed for PSIS.
-#' @param save_single_paths (logical) Whether to save the results of single
-#'   pathfinder runs in multi-pathfinder.
 #' @return A [`CmdStanPathfinder`] object.
 #'
 #' @references
@@ -1898,7 +2003,6 @@ pathfinder <- function(data = NULL,
                        seed = NULL,
                        refresh = NULL,
                        init = NULL,
-                       save_latent_dynamics = FALSE,
                        output_dir = getOption("cmdstanr_output_dir"),
                        output_basename = NULL,
                        sig_figs = NULL,
@@ -1927,7 +2031,10 @@ pathfinder <- function(data = NULL,
     if (!is.null(threads)) {
       stop("Cannot specify both 'threads' and deprecated 'num_threads'.", call. = FALSE)
     }
-    warning("'num_threads' is deprecated. Please use 'threads' instead.", call. = FALSE)
+    warning(
+      "'num_threads' is deprecated as of CmdStanR 1.0.0 and will be removed in a future release. Please use 'threads' instead.",
+      call. = FALSE
+    )
     threads <- num_threads
   }
   procs <- CmdStanProcs$new(
@@ -1967,7 +2074,7 @@ pathfinder <- function(data = NULL,
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data, model_variables),
-    save_latent_dynamics = save_latent_dynamics,
+    save_latent_dynamics = FALSE,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -1995,6 +2102,12 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #'   runs Stan's standalone generated quantities to obtain generated quantities
 #'   based on previously fitted parameters.
 #'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
+#'
 #' @inheritParams model-method-sample
 #' @param fitted_params (multiple options) The parameter draws to use. One of
 #'   the following:
@@ -2009,12 +2122,13 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #' For [CmdStanLaplace], [CmdStanVB], and [CmdStanPathfinder] objects, generated
 #' quantities are evaluated once per approximate draw.
 #'
-#' NOTE: if you plan on making many calls to `$generate_quantities()` then the
-#' most efficient option is to pass the paths of the CmdStan CSV output files
-#' (this avoids CmdStanR having to rewrite the draws contained in the fitted
-#' model object to CSV each time). If you no longer have the CSV files you can
-#' use [draws_to_csv()] once to write them and then pass the resulting file
-#' paths to `$generate_quantities()` as many times as needed.
+#' NOTE: CmdStan CSV paths are used directly. A [CmdStanMCMC] object also reuses
+#' its original output files when they are available. If any of those files are
+#' unavailable, CmdStanR writes the in-memory draws to temporary CSV files.
+#' Other fitted model objects and posterior draws objects are converted to
+#' temporary CSV files on each call. For repeated calls that require this
+#' conversion, we recommend using [draws_to_csv()] once and passing the
+#' resulting paths to `$generate_quantities()`.
 #'
 #' @return A [`CmdStanGQ`] object.
 #'
@@ -2122,6 +2236,12 @@ CmdStanModel$set("public", name = "generate_quantities", value = generate_quanti
 #'   finite differences. Discrepancies between the two indicate that there is
 #'   a problem with the model or initial states or else there is a bug in Stan.
 #'
+#'   Unlike other CmdStan methods, `$diagnose()` does not expose `show_messages`
+#'   or `show_exceptions` arguments. CmdStan's standard output is not printed
+#'   during execution, while standard error is always displayed. The captured
+#'   console output can be inspected with the returned object's
+#'   [`$output()`][fit-method-output] method.
+#'
 #' @inheritParams model-method-sample
 #' @param epsilon (positive real) The finite difference step size. Default
 #'   value is 1e-6.
@@ -2129,6 +2249,9 @@ CmdStanModel$set("public", name = "generate_quantities", value = generate_quanti
 #'
 #' @return A [`CmdStanDiagnose`] object.
 #'
+#' @seealso The [`$gradients()`][fit-method-gradients] method for accessing the
+#'   gradients and the [`$output()`][fit-method-output] method for displaying
+#'   the captured console output.
 #' @template seealso-docs
 #' @inherit CmdStanDiagnose examples
 #'
@@ -2187,8 +2310,8 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   `compile_standalone` argument to the [`$compile()`][model-method-compile]
 #'   method.
 #'
-#'   This method is also available for fitted model objects ([`CmdStanMCMC`], [`CmdStanVB`], etc.).
-#'   See **Examples**.
+#'   This method is also available for all fitted model objects. See
+#'   **Examples**.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
@@ -2198,6 +2321,7 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   available via the `functions` field of the R6 object.
 #' @param verbose (logical) Should detailed information about generated code be
 #'   printed to the console? Defaults to `FALSE`.
+#' @return `NULL`, invisibly.
 #' @template seealso-docs
 #' @examples
 #' \dontrun{
@@ -2242,16 +2366,16 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 #' @description The `$cmdstan_defaults()` method of a [`CmdStanModel`]
 #'   object queries the compiled model binary for the default argument
 #'   values used by a given inference method. The returned list uses
-#'   cmdstanr-style argument names (e.g., `iter_sampling` instead of
+#'   CmdStanR-style argument names (e.g., `iter_sampling` instead of
 #'   CmdStan's `num_samples`).
 #'
 #'   The model must be compiled before calling this method.
 #'
-#' @param method (string) The inference method whose defaults to
-#'   retrieve. One of `"sample"`, `"optimize"`, `"variational"`,
-#'   `"pathfinder"`, or `"laplace"`.
+#' @param method (string) The inference method for which to retrieve default
+#'   argument values. One of `"sample"`, `"optimize"`, `"variational"`,
+#'   `"pathfinder"`, or `"laplace"`. The default is `"sample"`.
 #' @return A named list of default argument values for the specified
-#'   method, with cmdstanr-style argument names.
+#'   method, with CmdStanR-style argument names.
 #'
 #' @template seealso-docs
 #'

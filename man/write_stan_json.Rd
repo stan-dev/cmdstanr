@@ -16,6 +16,9 @@ points to better distinguish between integers and floating point values.
 If \code{TRUE} all \R objects in \code{data} intended for integers must be of integer
 type.}
 }
+\value{
+\code{NULL}, invisibly.
+}
 \description{
 Write data to a JSON file readable by CmdStan
 }
@@ -33,9 +36,9 @@ The \code{list} to \code{array} conversion is intended to make it easier to prep
 the data for certain Stan declarations involving arrays:
 \itemize{
 \item \verb{array[K] vector[J] v } can be constructed in \R as a list with \code{K}
-elements where each element a vector of length \code{J}
+elements where each element is a vector of length \code{J}
 \item \verb{array[K] matrix[I,J] m } can be constructed in \R as a list with \code{K}
-elements where each element an \code{IxJ} matrix
+elements where each element is an \code{IxJ} matrix
 }
 
 These can also be passed in from \R as arrays instead of lists but the list
@@ -66,4 +69,8 @@ file <- tempfile(fileext = ".json")
 write_stan_json(data, file)
 cat(readLines(file), sep = "\n")
 
+}
+\seealso{
+\code{\link[=model-method-variables]{$variables()}} for inspecting the input
+and output variables of a Stan program.
 }

@@ -7,6 +7,9 @@
 \usage{
 metadata()
 }
+\value{
+A named list of metadata.
+}
 \description{
 The \verb{$metadata()} method returns a list of information gathered
 from the CSV output files, including the CmdStan configuration used when
@@ -24,7 +27,4 @@ fit_vb <- cmdstanr_example("logistic", method = "variational")
 str(fit_vb$metadata())
 }
 
-}
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }

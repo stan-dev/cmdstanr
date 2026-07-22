@@ -7,8 +7,13 @@
 eng_cmdstan(options)
 }
 \arguments{
-\item{options}{(named list) Chunk options, as provided by \code{knitr} during
-chunk execution.}
+\item{options}{(named list) Chunk options supplied by \code{knitr}. The
+\code{output.var} element is required and must be a single character string
+naming the \code{CmdStanModel} object created by the chunk.}
+}
+\value{
+A character vector containing the formatted chunk output produced by
+\code{\link[knitr:engine_output]{knitr::engine_output()}}.
 }
 \description{
 This provides a knitr engine for Stan, suitable for usage when attempting
@@ -22,4 +27,7 @@ for an example.
 \dontrun{
 knitr::knit_engines$set(stan = cmdstanr::eng_cmdstan)
 }
+}
+\seealso{
+\code{\link[=register_knitr_engine]{register_knitr_engine()}}
 }

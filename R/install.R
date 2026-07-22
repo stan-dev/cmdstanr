@@ -29,7 +29,7 @@
 #' @export
 #' @param dir (string) The path to the directory in which to install CmdStan.
 #'   The default is to install it in a directory called `.cmdstan` within the
-#'   user's home directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstan")`).
+#'   user's home directory (i.e., `file.path(Sys.getenv("HOME"), ".cmdstan")`).
 #' @param cores (integer) The number of CPU cores to use to parallelize building
 #'   CmdStan and speed up installation. If `cores` is not specified then the
 #'   default is to look for the option `"mc.cores"`, which can be set for an
@@ -45,27 +45,39 @@
 #'   is `FALSE`, in which case an informative error is thrown instead of
 #'   overwriting the user's installation.
 #' @param timeout (positive real) Timeout (in seconds) for the build stage of
-#'   the installation.
+#'   the installation. The default is 1200 seconds for `install_cmdstan()` and
+#'   600 seconds for `rebuild_cmdstan()`.
 #' @param version (string) The CmdStan release version to install. The default
 #'   is `NULL`, which downloads the latest stable release from
 #'   <https://github.com/stan-dev/cmdstan/releases>.
 #' @param release_url (string) The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
-#'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
+#'   The URL should point to the tarball (`.tar.gz` file) itself, e.g.,
 #'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param release_file (string) A file path to a CmdStan release tar.gz file
 #'   downloaded from the releases page: <https://github.com/stan-dev/cmdstan/releases>.
-#'   For example: `release_file=""./cmdstan-2.35.0.tar.gz"`. If `release_file` is
+#'   For example: `release_file="./cmdstan-2.35.0.tar.gz"`. If `release_file` is
 #'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
 #'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
 #'   the use of clang for compilation.
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
-#'   that the required toolchain is installed and properly configured. The
+#'   that the required toolchain is installed and properly configured? The
 #'   default is `TRUE`.
 #' @param wsl (logical) Should CmdStan be installed and run through the Windows
 #'  Subsystem for Linux (WSL). The default is `FALSE`.
+#'
+#' @return
+#' If a build fails or times out, `install_cmdstan()` issues a warning and
+#' invisibly returns the process result.
+#'
+#' For `cmdstan_make_local()`, if `cpp_options = NULL` then the existing
+#' contents of `make/local` are returned without writing anything; otherwise,
+#' the updated contents are returned.
+#'
+#' @seealso [set_cmdstan_path()], [cmdstan_default_install_path()], and
+#'   [cmdstan_default_path()]
 #'
 #' @examples
 #' \dontrun{
@@ -301,9 +313,6 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @param append (logical) For `cmdstan_make_local()`, should the listed
 #'   makefile flags be appended to the end of the existing `make/local` file?
 #'   The default is `TRUE`. If `FALSE` the file is overwritten.
-#' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
-#'   contents of `make/local` are returned without writing anything, otherwise
-#'   the updated contents are returned.
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -342,13 +351,15 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 
 #' @rdname install_cmdstan
 #' @export
-#' @param fix As of v1.0 this argument is deprecated and ignored and only
-#'   retained for compatibility.
+#' @param fix Deprecated and will be removed in a future release. This argument
+#'   is ignored and retained only for compatibility.
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (isTRUE(fix)) {
-    warning("The 'fix' argument is deprecated and will be removed in a future release.",
-            call. = FALSE)
+    warning(
+      "The 'fix' argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
+      call. = FALSE
+    )
   }
   warn_if_ignored_msys_toolchain_env()
   if (os_is_windows()) {

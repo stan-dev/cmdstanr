@@ -29,7 +29,7 @@ CmdStan, the command line interface to Stan. First we install the R package
 by running the following command in R.
 
 ```{r install, eval=FALSE}
-# we recommend running this is a fresh R session or restarting your current session
+# we recommend running this in a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
 
@@ -65,7 +65,7 @@ calling the [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install
 function:
 
 ```{r install_cmdstan-1, include = FALSE}
-if (!dir.exists(cmdstan_default_path())) {
+if (is.null(cmdstan_default_path())) {
   install_cmdstan()
 }
 ```
@@ -77,8 +77,10 @@ Before CmdStanR can be used it needs to know where the CmdStan installation is
 located. When the package is loaded it tries to help automate this to avoid
 having to manually set the path every session:
 
-1. If the environment variable `"CMDSTAN"` exists at load time then its value
-will be automatically set as the default path to CmdStan for the R session. This
+1. If the environment variable `"CMDSTAN"` points directly to a valid CmdStan
+installation at load time, that path is used for the R session. If it instead
+points to an existing parent directory containing versioned CmdStan
+installations, the installation with the largest version number is used. This
 is useful if your CmdStan installation is not located in the default directory
 that would have been used by `install_cmdstan()` (see #2).
 
@@ -163,7 +165,9 @@ fit <- mod$sample(
 )
 ```
 
-There are many more arguments that can be passed to the `$sample()` method.
+There are many more arguments that can be passed to the `$sample()` method. For
+example, initial values can be specified with the `init` argument, including by
+passing a fitted model object produced by any of CmdStanR's fitting methods.
 For details follow this link to its separate documentation page:
 
 * [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
@@ -186,7 +190,7 @@ first argument specifies the variables to summarize and any arguments
 after that are passed on to `posterior::summarise_draws()` to specify
 which summaries to compute, whether to use multiple cores, etc.
 
-```{r summary, eval=FALSE}
+```{r summary}
 fit$summary()
 fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 
@@ -197,30 +201,16 @@ fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 fit$summary(
   variables = NULL,
   posterior::default_summary_measures(),
-  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+  extra_quantiles = ~posterior::quantile2(., probs = c(0.025, 0.975))
 )
-```
-
-```{r, echo=FALSE}
- # NOTE: the hack of using print.data.frame in chunks with echo=FALSE
- # is used because the pillar formatting of posterior draws_summary objects
- # isn't playing nicely with pkgdown::build_articles().
- options(digits = 2)
- print.data.frame(fit$summary())
- print.data.frame(fit$summary(variables = c("theta", "lp__"), "mean", "sd"))
- print.data.frame(fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5)))
- print.data.frame(fit$summary(
-   variables = NULL,
-   posterior::default_summary_measures(),
-   extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
- ))
 ```
 
 #### CmdStan's stansummary utility
 
 CmdStan itself provides a `stansummary` utility that can be called using the
-`$cmdstan_summary()` method. This method will print summaries but won't return
-anything.
+`$cmdstan_summary()` method. This method prints summaries produced by CmdStan
+but, unlike `$summary()`, does not return them as a data frame for further use
+in R.
 
 ### Posterior draws
 
@@ -309,7 +299,7 @@ divergences.
 ```{r fit-with-warnings, results='hold'}
 fit_with_warning <- cmdstanr_example("schools")
 ```
-After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit$diagnostic_summary()`.
+After fitting there is a warning about divergences. We can also regenerate this warning message later using `fit_with_warning$diagnostic_summary()`.
 
 ```{r diagnostic_summary-with-warnings}
 diagnostics <- fit_with_warning$diagnostic_summary()
@@ -322,8 +312,8 @@ sum(diagnostics$num_divergent)
 #### CmdStan's diagnose utility
 
 CmdStan itself provides a `diagnose` utility that can be called using
-the `$cmdstan_diagnose()` method. This method will print warnings but won't return anything.
-
+the `$cmdstan_diagnose()` method. This method prints CmdStan's diagnostic output
+but does not return it as a structured R object.
 
 ## Running optimization and variational inference
 
@@ -334,7 +324,8 @@ are called in a similar way to the `$sample()` method demonstrated above.
 
 ### Optimization
 
-We can find the (penalized) maximum likelihood estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
+Following CmdStan's terminology, we can find the (penalized) maximum likelihood
+estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
 ```{r optimize}
 fit_mle <- mod$optimize(data = data_list, seed = 123)
@@ -351,9 +342,10 @@ mcmc_hist(fit$draws("theta")) +
 ```
 
 For optimization, by default the mode is calculated without the Jacobian
-adjustment for constrained variables, which shifts the mode due to the change of
-variables. To include the Jacobian adjustment and obtain a maximum a posteriori
-(MAP) estimate set `jacobian=TRUE`. See the
+adjustment for constrained variables. Including the Jacobian adjustment by setting `jacobian=TRUE` produces a maximum a posteriori (MAP) estimate. More precisely, the default
+finds a mode of the target in the constrained parameter space, whereas
+`jacobian=TRUE` finds a mode of the corresponding density in the unconstrained
+space. See the
 [Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
 section of the CmdStan User's Guide for more details.
 
@@ -369,11 +361,13 @@ fit_map <- mod$optimize(
 
 The [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 method produces a sample from a normal approximation centered at the mode of a
-distribution in the unconstrained space. If the mode is a MAP estimate, the
-samples provide an estimate of the mean and standard deviation of the posterior
-distribution. If the mode is the MLE, the sample provides an estimate of the
-standard error of the likelihood. Whether the mode is the MAP or MLE depends on
-the value of the `jacobian` argument when running optimization. See the
+distribution in the unconstrained space. Following CmdStan's terminology, if
+the mode is a MAP estimate, the draws provide an estimate of the mean and
+standard deviation of the posterior distribution. If the mode is an MLE, the
+draws provide an estimate of the standard error of the likelihood. Whether
+the mode is called MAP or MLE depends on the value of the `jacobian` argument
+when running optimization. The Laplace `jacobian` setting must match the setting
+used for optimization so that both use the same target density. See the
 [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
 chapter of the CmdStan User's Guide for more details.
 
@@ -412,7 +406,7 @@ mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
 
 ### Variational (Pathfinder)
 
-Stan version 2.33 introduced a new variational method called Pathfinder. 
+Stan version 2.33 introduced the Pathfinder variational inference method.
 For details on how Pathfinder works see the section in the 
 [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro).
 Pathfinder is run using the [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
@@ -454,17 +448,24 @@ mcmc_hist(fit$draws("theta"), binwidth = 0.025) +
 ```
 
 For more details on the `$optimize()`, `$laplace()`, `$variational()`, and 
-`pathfinder()` methods, follow these links to their documentation pages.
+`$pathfinder()` methods, follow these links to their documentation pages.
 
 * [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
 * [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 * [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
 * [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
 
+## Running standalone generated quantities
+
+The [`$generate_quantities()`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.html)
+method runs a Stan program's `generated quantities` block using parameter values
+from a previous fit, without rerunning inference. It accepts fitted model
+objects produced by any of the fitting methods described above. See the method
+documentation for details and a complete example.
 
 ## Saving fitted model objects
 
-The [`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
+The [`$save_object()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
 method provided by CmdStanR is the most convenient way to save a fitted model
 object to disk and ensure that all of the contents are available when reading
 the object back into R. By default, `fit$save_object()` will use the `RDS`
@@ -496,8 +497,8 @@ fit2 <- qs2::qs_read("fit.qs2")
 
 ## Additional resources
 
-There are additional vignettes available that discuss other aspects of using
-CmdStanR. These can be found online at the CmdStanR website:
+There are additional vignettes available that discuss many other aspects of
+using CmdStanR. These can be found online at the CmdStanR website:
 
 * https://mc-stan.org/cmdstanr/articles/index.html
 

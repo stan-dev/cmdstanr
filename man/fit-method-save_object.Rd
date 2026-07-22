@@ -11,39 +11,50 @@ save_object(file, format = c("rds", "qs2"), ...)
 \item{file}{(string) Path where the file should be saved.}
 
 \item{format}{(string) Serialization format for the object. The default is
-\code{"rds"}. The \code{"qs2"} format uses \code{qs2::qs_save()} and requires the \strong{qs2}
-package.}
+\code{"rds"}. The \code{"qs2"} format uses \code{qs2::qs_save()} and requires the
+\pkg{qs2} package.}
 
 \item{...}{Other arguments to pass to \code{\link[base:saveRDS]{base::saveRDS()}} (for \code{format = "rds"})
 or \code{qs2::qs_save()} (for \code{format = "qs2"}).}
 }
+\value{
+The fitted model object, invisibly.
+}
 \description{
-This method is a wrapper around \code{\link[base:saveRDS]{base::saveRDS()}} that ensures
-that all posterior draws and diagnostics are saved when saving a fitted
-model object. Because the contents of the CmdStan output CSV files are only
-read into R lazily (i.e., as needed), the \verb{$save_object()} method is the
-safest way to guarantee that everything has been read in before saving.
+This method calls \code{\link[=fit-method-materialize]{$materialize()}}
+internally to ensure that all posterior draws and diagnostics are saved
+when saving a fitted model object. Because the contents of the CmdStan
+output CSV files are only read into R lazily (i.e., as needed), the
+\verb{$save_object()} method is the safest way to guarantee that everything has
+been read in before saving.
 
-If you have a big object to save, use \code{format = "qs2"} to save using the
-\strong{qs2} package.
-
-See the "Saving fitted model objects" section of the
-\href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
-vignette for some suggestions on faster model saving for large models.
+By default objects are saved using \code{\link[base:saveRDS]{base::saveRDS()}}. If you have a big
+object to save, we recommend setting \code{format = "qs2"}, which is faster and
+more memory efficient. Internally this will use \code{qs2::qs_save()} to save
+the object and you can read it back into \R later with \code{qs2::qs_read()}.
 }
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")
 
-temp_rds_file <- tempfile(fileext = ".RDS")
+# using default format = "rds"
+temp_rds_file <- tempfile(fileext = ".rds")
 fit$save_object(file = temp_rds_file)
 rm(fit)
 
 fit <- readRDS(temp_rds_file)
 fit$summary()
+
+# using format = "qs2"
+temp_qs2_file <- tempfile(fileext = ".qs2")
+fit$save_object(file = temp_qs2_file, format = "qs2")
+rm(fit)
+
+fit <- qs2::qs_read(temp_qs2_file)
+fit$summary()
 }
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}, \code{\link{materialize}}
+\code{\link{materialize}}
 }

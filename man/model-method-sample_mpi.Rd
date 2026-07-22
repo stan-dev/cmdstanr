@@ -61,14 +61,15 @@ processes. For example, \code{mpi_args = list("n" = 4)} launches the executable
 as \verb{mpiexec -n 4 model_executable}, followed by CmdStan arguments for the
 model executable.}
 
-\item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-In the case of multi-chain sampling the single \code{seed} will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to using
-same seed for all chains so that the same data is generated for all chains
-if RNG functions are used. The only time \code{seed} should be specified as a
-vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate \emph{different} data for each chain.}
+\item{seed}{(non-negative integer(s)) A seed for the (P)RNG to pass to
+CmdStan. In the case of multi-chain sampling the single \code{seed} will
+automatically be augmented by the run (chain) ID so that each chain uses a
+different seed. The exception is the transformed data block, which defaults
+to using same seed for all chains so that the same data is generated for
+all chains if RNG functions are used. The only time \code{seed} should be
+specified as a vector (one element per chain) is if RNG functions are used
+in transformed data and the goal is to generate \emph{different} data for each
+chain.}
 
 \item{refresh}{(non-negative integer) The number of iterations between
 printed screen updates. If \code{refresh = 0}, only error messages will be
@@ -78,9 +79,10 @@ printed.}
 variables declared in the parameters block of the Stan program. One of the
 following:
 \itemize{
-\item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} on the \emph{unconstrained} parameter space.
-\item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
+\item A real number \code{x > 0}. This initializes \emph{all} parameters randomly between
+\verb{[-x, x]} on the \emph{unconstrained} parameter space.
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0} on the
+\emph{unconstrained} parameter space.
 \item A character vector of paths to JSON or Rdump files containing initial
 values for all or some parameters. For MCMC and Pathfinder, if only a single
 file is provided it will be reused for all chains and paths. See
@@ -126,19 +128,17 @@ their existing order until each chain/path has an initialization. If there
 are more draws than requested chains/paths, draws are selected uniformly
 without replacement. If the draws object's parameters are only a subset of
 the model parameters then the other parameters will be drawn by Stan's
-default initialization. The fit object must have at least some parameters
+default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
 
 \item{save_latent_dynamics}{(logical) Should auxiliary diagnostic information
-about the latent dynamics be written to temporary diagnostic CSV files?
-This argument replaces CmdStan's \code{diagnostic_file} argument and the content
-written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (for some algorithms no content may be written). The default is
-\code{FALSE}, which is appropriate for almost every use case. To save the
-temporary files created when \code{save_latent_dynamics=TRUE} see the
-\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
-method.}
+about the sampler or variational algorithm be written to diagnostic CSV
+files? This argument replaces CmdStan's \code{diagnostic_file} argument. The
+content is controlled by the user's CmdStan installation. The default is
+\code{FALSE}, which is appropriate for almost every use case. To save temporary
+diagnostic files permanently, use
+\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC there will be one file per chain; for other
@@ -159,8 +159,8 @@ corresponding to the defaults used by \verb{$save_output_files()}.
 
 \item{output_basename}{(string) A string to use as a prefix for the names of
 the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
-the output CSV files will be comprised from the model name, timestamp, and
-5 random characters.}
+the output CSV files is composed of the model name, timestamp, and a
+six-character random hexadecimal suffix.}
 
 \item{chains}{(positive integer) The number of Markov chains to run. The
 default is 4.}
@@ -239,15 +239,15 @@ adaptation interval.}
 sampler generates a new sample without changing the current state of the
 Markov chain; only generated quantities may change. This can be useful
 when, for example, trying to generate pseudo-data using the generated
-quantities block. If the parameters block is empty then using
-\code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
-\code{parallel_chains} arguments will be set to \code{1}.}
+quantities block. For CmdStan versions before 2.36, \code{fixed_param = TRUE}
+is mandatory if the parameters block is empty.}
 
-\item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
-values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
-Increasing this value will result in larger output CSV files and thus an
-increased usage of disk space.}
+\item{sig_figs}{(positive integer) The number of significant figures (up to a
+maximum of 18) to use when storing the output values. If \code{NULL} (the
+default), the default from the installed CmdStan version is used. Use
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} to check that
+default. Increasing this value will result in larger output CSV files and
+thus an increased usage of disk space.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
 during the execution process, such as iteration numbers and elapsed times.
@@ -272,7 +272,7 @@ currently available diagnostics are \code{"divergences"}, \code{"treedepth"}, an
 
 These diagnostics are also available after fitting. The
 \code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}} method provides
-access the diagnostic values for each iteration and the
+access to the diagnostic values for each iteration and the
 \code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} method provides
 summaries of the diagnostics and can regenerate the warning messages.
 
@@ -360,6 +360,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

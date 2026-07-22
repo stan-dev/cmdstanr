@@ -8,16 +8,16 @@
 variables()
 }
 \value{
-The \verb{$variables()} returns a list with information on input and
-output variables for each of the Stan model blocks.
+The method returns a list with information on input and output
+variables for each of the Stan model blocks.
 }
 \description{
 The \verb{$variables()} method of a \code{\link{CmdStanModel}} object returns
 a list, each element representing a Stan model block: \code{data}, \code{parameters},
 \code{transformed_parameters} and \code{generated_quantities}.
 
-Each element contains a list of variables, with each variables represented
-as a list with infromation on its scalar type (\code{real} or \code{int}) and
+Each element contains a list of variables, with each variable represented
+as a list with information on its scalar type (\code{real} or \code{int}) and
 number of dimensions.
 
 \verb{transformed data} is not included, as variables in that block are not
@@ -36,6 +36,8 @@ mod$variables()
 
 }
 \seealso{
+\code{\link[=write_stan_json]{write_stan_json()}} for writing data for CmdStan.
+
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
@@ -45,6 +47,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

@@ -1,7 +1,7 @@
 #' Get or set the file path to the CmdStan installation
 #'
 #' @description Use the `set_cmdstan_path()` function to tell CmdStanR where the
-#'   CmdStan installation in located. Once the path has been set,
+#'   CmdStan installation is located. Once the path has been set,
 #'   `cmdstan_path()` will return the full path to the CmdStan installation and
 #'   `cmdstan_version()` will return the CmdStan version number. See **Details**
 #'   for how to avoid manually setting the path in each \R session.
@@ -12,21 +12,29 @@
 #'   `NULL` (the default) then the path is set using the `"CMDSTAN"`
 #'   environment variable when available, otherwise the default path used by
 #'   [install_cmdstan()] if it exists.
-#' @return A string. Either the file path to the CmdStan installation or the
-#'   CmdStan version number.
+#'
+#' @return
+#' `set_cmdstan_path()` invisibly returns the supplied or automatically resolved
+#' path. If `path = NULL` and no installation is found, it invisibly returns
+#' `NULL`.
+#'
+#' `cmdstan_path()` returns the current CmdStan path as a string or it errors if
+#' no path has been set.
+#'
+#' `cmdstan_version()` returns the CmdStan version as a string. If CmdStan is not
+#' found, it errors when `error_on_NA = TRUE` and returns `NULL` when
+#' `error_on_NA = FALSE`.
 #'
 #' @details
 #' Before the package can be used it needs to know where the CmdStan
 #' installation is located. When the package is loaded it tries to help automate
 #' this to avoid having to manually set the path every session:
 #'
-#' * If the [environment variable][Sys.setenv()] `"CMDSTAN"` exists at load time
-#' then its value will be automatically set as the default path to CmdStan for
-#' the \R session. If the environment variable `"CMDSTAN"` is set, but a valid
-#' CmdStan is not found in the supplied path, the path is treated as a top
-#' folder that contains CmdStan installations. In that case, the CmdStan
-#' installation with the largest version number will be set as the path to
-#' CmdStan for the \R session.
+#' * If the [environment variable][Sys.setenv()] `"CMDSTAN"` points directly to
+#' a valid CmdStan installation at load time, that path is used for the \R
+#' session. If it instead points to an existing parent directory containing
+#' versioned CmdStan installations, the installation with the largest version
+#' number is used.
 #' * If no environment variable is found when loaded but any directory in the
 #' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.35.0"`),
 #' exists in the user's home directory (`Sys.getenv("HOME")`, *not* the current
@@ -37,6 +45,9 @@
 #'
 #' It is always possible to change the path after loading the package using
 #' `set_cmdstan_path(path)`.
+#'
+#' @seealso [install_cmdstan()], [cmdstan_default_install_path()], and
+#'   [cmdstan_default_path()]
 #'
 set_cmdstan_path <- function(path = NULL) {
   if (is.null(path)) {
@@ -92,8 +103,6 @@ cmdstan_path <- function() {
 #' @param error_on_NA (logical) Should an error be thrown if CmdStan is not
 #'   found. The default is `TRUE`. If `FALSE`, `cmdstan_version()` returns
 #'   `NULL`.
-#' @return CmdStan version string if available. If CmdStan is not found and
-#'   `error_on_NA` is `FALSE`, `cmdstan_version()` returns `NULL`.
 cmdstan_version <- function(error_on_NA = TRUE) {
   version <- .cmdstanr$VERSION
   if (is.null(version) && error_on_NA) {
@@ -198,12 +207,14 @@ resolve_cmdstan_path_from_env <- function() {
   path
 }
 
-#' Path to where  [install_cmdstan()] with default settings installs CmdStan.
+#' Path to where  `install_cmdstan()` with default settings installs CmdStan.
 #'
 #' @keywords internal
 #' @param wsl Return the directory for WSL installations?
 #' @return The installation path.
 #' @export
+#' @seealso [install_cmdstan()], [set_cmdstan_path()], and
+#'   [cmdstan_default_path()]
 cmdstan_default_install_path <- function(wsl = FALSE) {
   if (wsl) {
     file.path(paste0(wsl_dir_prefix(wsl = TRUE), wsl_home_dir()), ".cmdstan")
@@ -237,6 +248,9 @@ home_path <- function() {
 #' @param dir Path to a custom install folder with CmdStan installations.
 #' @return Path to the CmdStan installation with the most recent release
 #'   version, or `NULL` if no installation found.
+#'
+#' @seealso [install_cmdstan()], [set_cmdstan_path()], and
+#'   [cmdstan_default_install_path()]
 #'
 cmdstan_default_path <- function(dir = NULL) {
   if (!is.null(dir)) {

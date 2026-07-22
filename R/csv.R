@@ -1,10 +1,7 @@
 #' Read CmdStan CSV files into R
 #'
-#' @description `read_cmdstan_csv()` is used internally by CmdStanR to read
-#'   CmdStan's output CSV files into \R. It can also be used by CmdStan users as
-#'   a more flexible and efficient alternative to `rstan::read_stan_csv()`. See
-#'   the **Value** section for details on the structure of the returned list.
-#'
+#' @description `read_cmdstan_csv()` reads CmdStan's output CSV files into \R
+#'   and returns the contents as a list (see the **Value** section for details).
 #'   It is also possible to create CmdStanR's fitted model objects directly from
 #'   CmdStan CSV files using the `as_cmdstan_fit()` function.
 #'
@@ -28,9 +25,9 @@
 #'
 #' @return
 #' `as_cmdstan_fit()` returns a fitted model object ([CmdStanMCMC], [CmdStanVB],
-#' etc.). Some methods typically defined for those objects will not work (e.g.
-#' `save_data_file()`) but the important methods like `$summary()`, `$draws()`,
-#' `$sampler_diagnostics()` and others will work fine.
+#' etc.). A fitted model object created this way has some limitations compared
+#' to fitted model objects created directly by a model fitting method. See the
+#' **Reconstructed fitted model objects** section below for details.
 #'
 #' `read_cmdstan_csv()` returns a named list with the following components:
 #'
@@ -87,6 +84,34 @@
 #' * `generated_quantities`: A [`draws_array`][posterior::draws_array] of
 #' the generated quantities.
 #'
+#' @section Reconstructed fitted model objects:
+#' `as_cmdstan_fit()` reconstructs a fitted model object from CmdStan CSV files.
+#' The CSV files do not contain all of the information available to the model
+#' fitting methods, the Stan source, the console output, or the paths to most
+#' input and auxiliary files, so the reconstructed object has a reduced set of
+#' methods.
+#'
+#' Only the following methods are available for every reconstructed object:
+#' `$draws()`, `$lp()`, `$materialize()`, `$metadata()`, `$output_files()`,
+#' `$print()`, `$save_object()`, and `$summary()`. Additional methods are
+#' available according to the inference method:
+#'
+#' * For MCMC, `$diagnostic_summary()`, `$inv_metric()`, `$loo()`,
+#'   `$num_chains()`, `$sampler_diagnostics()`, and `$time()` are available.
+#'   However, the total time reported by `$time()` will be `NA` because the CSV
+#'   files do not record whether the chains ran in parallel.
+#' * For optimization, `$mle()` is available.
+#' * For variational inference, Laplace approximation, and Pathfinder,
+#'   `$lp_approx()` is available.
+#'
+#' All other fitted-model methods are unavailable because they require
+#' information not contained in the CSV files. Calling an unavailable method
+#' produces an informative error.
+#'
+#' @seealso [draws_to_csv()] for creating compatible CSV files and
+#'   [`$output_files()`][fit-method-output_files] for locating files created by
+#'   CmdStanR
+#'
 #' @examples
 #' \dontrun{
 #' # Generate some CSV files to use for demonstration
@@ -94,13 +119,15 @@
 #' csv_files <- fit1$output_files()
 #' print(csv_files)
 #'
-#' # Creating fitting model objects
+#' # Creating fitting model objects with as_cmdstan_fit()
 #'
 #' # Create a CmdStanMCMC object from the CSV files
 #' fit2 <- as_cmdstan_fit(csv_files)
 #' fit2$print("beta")
+#' str(fit2$draws())
 #'
-#' # Using read_cmdstan_csv
+#'
+#' # Using read_cmdstan_csv()
 #' #
 #' # Read in everything
 #' x <- read_cmdstan_csv(csv_files)
@@ -627,18 +654,25 @@ CmdStanPathfinder_CSV <- R6::R6Class(
 
 # these methods are unavailable because there's no CmdStanRun object
 unavailable_methods_CmdStanFit_CSV <- c(
-    "cmdstan_diagnose", "cmdstan_summary",
-    "save_data_file", "data_file",
-    "save_latent_dynamics_files", "latent_dynamics_files",
-    "save_output_files",
-    "init",
-    "output",
-    "return_codes",
-    "code",
-    "num_procs",
-    "save_profile_files", "profile_files", "profiles",
-    "time" # available for MCMC not others
-  )
+  "cmdstan_diagnose", "cmdstan_summary",
+  "code",
+  "save_data_file", "data_file",
+  "save_latent_dynamics_files", "latent_dynamics_files",
+  "save_profile_files", "profile_files", "profiles",
+  "save_config_files", "config_files",
+  "save_metric_files", "metric_files",
+  "save_output_files",
+  "init",
+  "output",
+  "return_codes",
+  "num_procs",
+  "time", # available for MCMC, not other methods
+  "expose_functions",
+  "init_model_methods",
+  "log_prob", "grad_log_prob", "hessian",
+  "constrain_variables", "unconstrain_variables", "unconstrain_draws",
+  "variable_skeleton"
+)
 error_unavailable_CmdStanFit_CSV <- function(...) {
   stop("This method is not available for objects created using as_cmdstan_fit().",
        call. = FALSE)
@@ -652,6 +686,7 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
   CmdStanLaplace_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
   CmdStanPathfinder_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
 }
+CmdStanLaplace_CSV$set("public", name = "mode", value = error_unavailable_CmdStanFit_CSV)
 
 
 # csv reading internals ---------------------------------------------------

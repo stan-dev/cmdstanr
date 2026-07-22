@@ -10,7 +10,6 @@ laplace(
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  save_latent_dynamics = FALSE,
   output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
@@ -39,14 +38,15 @@ appendices in the CmdStan guide for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
-\item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-In the case of multi-chain sampling the single \code{seed} will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to using
-same seed for all chains so that the same data is generated for all chains
-if RNG functions are used. The only time \code{seed} should be specified as a
-vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate \emph{different} data for each chain.}
+\item{seed}{(non-negative integer(s)) A seed for the (P)RNG to pass to
+CmdStan. In the case of multi-chain sampling the single \code{seed} will
+automatically be augmented by the run (chain) ID so that each chain uses a
+different seed. The exception is the transformed data block, which defaults
+to using same seed for all chains so that the same data is generated for
+all chains if RNG functions are used. The only time \code{seed} should be
+specified as a vector (one element per chain) is if RNG functions are used
+in transformed data and the goal is to generate \emph{different} data for each
+chain.}
 
 \item{refresh}{(non-negative integer) The number of iterations between
 printed screen updates. If \code{refresh = 0}, only error messages will be
@@ -56,9 +56,10 @@ printed.}
 variables declared in the parameters block of the Stan program. One of the
 following:
 \itemize{
-\item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} on the \emph{unconstrained} parameter space.
-\item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
+\item A real number \code{x > 0}. This initializes \emph{all} parameters randomly between
+\verb{[-x, x]} on the \emph{unconstrained} parameter space.
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0} on the
+\emph{unconstrained} parameter space.
 \item A character vector of paths to JSON or Rdump files containing initial
 values for all or some parameters. For MCMC and Pathfinder, if only a single
 file is provided it will be reused for all chains and paths. See
@@ -104,11 +105,9 @@ their existing order until each chain/path has an initialization. If there
 are more draws than requested chains/paths, draws are selected uniformly
 without replacement. If the draws object's parameters are only a subset of
 the model parameters then the other parameters will be drawn by Stan's
-default initialization. The fit object must have at least some parameters
+default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
-
-\item{save_latent_dynamics}{Ignored for this method.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC there will be one file per chain; for other
@@ -129,14 +128,15 @@ corresponding to the defaults used by \verb{$save_output_files()}.
 
 \item{output_basename}{(string) A string to use as a prefix for the names of
 the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
-the output CSV files will be comprised from the model name, timestamp, and
-5 random characters.}
+the output CSV files is composed of the model name, timestamp, and a
+six-character random hexadecimal suffix.}
 
-\item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
-values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
-Increasing this value will result in larger output CSV files and thus an
-increased usage of disk space.}
+\item{sig_figs}{(positive integer) The number of significant figures (up to a
+maximum of 18) to use when storing the output values. If \code{NULL} (the
+default), the default from the installed CmdStan version is used. Use
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} to check that
+default. Increasing this value will result in larger output CSV files and
+thus an increased usage of disk space.}
 
 \item{threads}{(positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of
@@ -169,7 +169,8 @@ for constrained parameters. The default is \code{TRUE}. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html}{Laplace Sampling}
 section of the CmdStan User's Guide for more details. If \code{mode} is not
 \code{NULL} then the value of \code{jacobian} must match the value used when
-optimization was originally run. If \code{mode} is \code{NULL} then the value of
+optimization was originally run so the mode and the Laplace approximation
+use the same target density. If \code{mode} is \code{NULL} then the value of
 \code{jacobian} specified here is used when running optimization.}
 
 \item{draws}{(positive integer) The number of draws to take.}
@@ -199,17 +200,22 @@ A \code{\link{CmdStanLaplace}} object.
 \description{
 The \verb{$laplace()} method of a \code{\link{CmdStanModel}} object produces a
 sample from a normal approximation centered at the mode of a distribution
-in the unconstrained space. If the mode is a maximum a posteriori (MAP)
-estimate, the samples provide an estimate of the mean and standard
-deviation of the posterior distribution. If the mode is a maximum
-likelihood estimate (MLE), the sample provides an estimate of the standard
-error of the likelihood. Whether the mode is the MAP or MLE depends on
-the value of the \code{jacobian} argument when running optimization. See the
+in the unconstrained space. Following CmdStan's terminology, if the mode is
+a maximum a posteriori (MAP) estimate, the samples provide an estimate of
+the mean and standard deviation of the posterior distribution. If the mode
+is a maximum likelihood estimate (MLE), the sample provides an estimate of
+the standard error of the likelihood. Whether the mode is called MAP or MLE
+depends on the value of the \code{jacobian} argument when running optimization.
+This terminology does not imply that \code{jacobian} controls whether prior
+terms are included; it controls the parameterization of the density, while
+the Stan program determines the contents of the target. See the
 \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
 for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan.
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+default arguments. These values are also available via the
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
 \examples{
 \dontrun{
@@ -251,6 +257,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

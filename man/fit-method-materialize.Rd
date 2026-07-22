@@ -7,18 +7,18 @@
 \usage{
 materialize()
 }
+\value{
+The fitted model object, invisibly.
+}
 \description{
-This method collects all posterior draws and diagnostics of a fitted
-model object into R, since the contents of the CmdStan output CSV files are only
-read into R lazily (i.e., as needed).
+This method collects all posterior draws and diagnostics of a
+fitted model object into \R, since the contents of the CmdStan output CSV
+files are only read into \R lazily (i.e., as needed).
 }
 \examples{
 \dontrun{
 fit <- cmdstanr_example("logistic")
-object.size(fit)
-
 fit$materialize()
-object.size(fit)
 }
 
 }

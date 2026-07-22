@@ -969,6 +969,11 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
       }
     }
   }
+
+  expect_snapshot(
+    error = TRUE,
+    fits$laplace$mode()
+  )
 })
 
 test_that("as_cmdstan_fit can check MCMC diagnostics", {

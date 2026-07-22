@@ -36,6 +36,3 @@ str(fit$init())
 }
 
 }
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}
-}

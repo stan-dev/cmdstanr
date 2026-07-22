@@ -29,22 +29,24 @@ appendices in the CmdStan guide for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
-\item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-In the case of multi-chain sampling the single \code{seed} will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to using
-same seed for all chains so that the same data is generated for all chains
-if RNG functions are used. The only time \code{seed} should be specified as a
-vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate \emph{different} data for each chain.}
+\item{seed}{(non-negative integer(s)) A seed for the (P)RNG to pass to
+CmdStan. In the case of multi-chain sampling the single \code{seed} will
+automatically be augmented by the run (chain) ID so that each chain uses a
+different seed. The exception is the transformed data block, which defaults
+to using same seed for all chains so that the same data is generated for
+all chains if RNG functions are used. The only time \code{seed} should be
+specified as a vector (one element per chain) is if RNG functions are used
+in transformed data and the goal is to generate \emph{different} data for each
+chain.}
 
 \item{init}{(multiple options) The initialization method to use for the
 variables declared in the parameters block of the Stan program. One of the
 following:
 \itemize{
-\item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} on the \emph{unconstrained} parameter space.
-\item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
+\item A real number \code{x > 0}. This initializes \emph{all} parameters randomly between
+\verb{[-x, x]} on the \emph{unconstrained} parameter space.
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0} on the
+\emph{unconstrained} parameter space.
 \item A character vector of paths to JSON or Rdump files containing initial
 values for all or some parameters. For MCMC and Pathfinder, if only a single
 file is provided it will be reused for all chains and paths. See
@@ -90,7 +92,7 @@ their existing order until each chain/path has an initialization. If there
 are more draws than requested chains/paths, draws are selected uniformly
 without replacement. If the draws object's parameters are only a subset of
 the model parameters then the other parameters will be drawn by Stan's
-default initialization. The fit object must have at least some parameters
+default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
 
@@ -113,8 +115,8 @@ corresponding to the defaults used by \verb{$save_output_files()}.
 
 \item{output_basename}{(string) A string to use as a prefix for the names of
 the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
-the output CSV files will be comprised from the model name, timestamp, and
-5 random characters.}
+the output CSV files is composed of the model name, timestamp, and a
+six-character random hexadecimal suffix.}
 
 \item{epsilon}{(positive real) The finite difference step size. Default
 value is 1e-6.}
@@ -130,6 +132,12 @@ runs Stan's basic diagnostic feature that will calculate the gradients
 of the initial state and compare them with gradients calculated by
 finite differences. Discrepancies between the two indicate that there is
 a problem with the model or initial states or else there is a bug in Stan.
+
+Unlike other CmdStan methods, \verb{$diagnose()} does not expose \code{show_messages}
+or \code{show_exceptions} arguments. CmdStan's standard output is not printed
+during execution, while standard error is always displayed. The captured
+console output can be inspected with the returned object's
+\code{\link[=fit-method-output]{$output()}} method.
 }
 \examples{
 \dontrun{
@@ -141,6 +149,10 @@ test$gradients()
 
 }
 \seealso{
+The \code{\link[=fit-method-gradients]{$gradients()}} method for accessing the
+gradients and the \code{\link[=fit-method-output]{$output()}} method for displaying
+the captured console output.
+
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
 documentation and tutorials.
@@ -159,6 +171,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

@@ -6,24 +6,32 @@
 \description{
 A \code{CmdStanMLE} object is the fitted model object returned by the
 \code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object.
-The name "MLE" (used for historical reasons) is a bit misleading since this
-object will contain parameter estimates corresponding to either a mode in
-the constrained parameter space \emph{or} the unconstrained parameter space,
-depending on the value of the \code{jacobian} argument when the model is fit
-(and whether the model has constrained parameters). See
-\code{\link[=model-method-optimize]{$optimize()}} and the CmdStan User's Guide for
-more details.
+Following CmdStan's terminology, the object contains an MLE if optimization
+was run with \code{jacobian=FALSE} and a MAP estimate if it was run with
+\code{jacobian=TRUE}. The name "MLE" is retained for historical reasons. More
+precisely, the estimates correspond to a mode in either the constrained
+parameter space or the unconstrained parameter space, depending on the
+value of \code{jacobian} (and whether the model has constrained parameters).
+The \code{jacobian} argument does not control whether prior terms are included;
+all contributions to the Stan program's target are included under either
+setting. See \code{\link[=model-method-optimize]{$optimize()}} and the CmdStan User's
+Guide for more details.
+
+Objects created from CSV files using \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} have a reduced set
+of available methods. See \strong{Reconstructed fitted model objects} in the
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} documentation for details.
 }
 \section{Methods}{
  \code{CmdStanMLE} objects have the following associated methods,
 all of which have their own (linked) documentation pages.
 \subsection{Extract contents of fitted model object}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
-   \code{\link[=fit-method-draws]{draws()}} \tab Return the point estimate as a 1-row \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
+   \code{\link[=fit-method-draws]{$draws()}} \tab Return the point estimate as a 1-row \code{\link[posterior:draws_matrix]{draws_matrix}}. \cr
    \code{\link[=fit-method-mle]{$mle()}} \tab Return the point estimate as a numeric vector. \cr
-   \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}). \cr
+   \code{\link[=fit-method-lp]{$lp()}} \tab Return the target log density (\code{lp__}) evaluated by Stan. \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+   \code{\link[=fit-method-profiles]{$profiles()}} \tab Return profiling data. \cr
    \code{\link[=fit-method-code]{$code()}} \tab Return Stan code as a character vector. \cr
 }
 
@@ -31,6 +39,7 @@ all of which have their own (linked) documentation pages.
 
 \subsection{Summarize inferences}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-print]{$print()}} \tab Print a summary of the point estimate. \cr
    \code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 }
 
@@ -38,9 +47,16 @@ all of which have their own (linked) documentation pages.
 
 \subsection{Save fitted model object and temporary files}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-materialize]{$materialize()}} \tab Read all draws and diagnostics into memory. \cr
    \code{\link[=fit-method-save_object]{$save_object()}} \tab Save fitted model object to a file. \cr
+   \code{\link[=fit-method-output_files]{$output_files()}} \tab Return paths to output CSV files. \cr
    \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
+   \code{\link[=fit-method-data_file]{$data_file()}} \tab Return the path to the JSON data file. \cr
    \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file to a specified location. \cr
+   \code{\link[=fit-method-profile_files]{$profile_files()}} \tab Return paths to profiling CSV files. \cr
+   \code{\link[=fit-method-save_profile_files]{$save_profile_files()}} \tab Save profiling CSV files to a specified location. \cr
+   \code{\link[=fit-method-save_config_files]{$config_files()}} \tab Return paths to CmdStan configuration JSON files. \cr
+   \code{\link[=fit-method-save_config_files]{$save_config_files()}} \tab Save CmdStan configuration JSON files to a specified location. \cr
 }
 
 }
@@ -60,7 +76,7 @@ all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-init_model_methods]{$init_model_methods()}} \tab Expose methods for log-probability, gradients, parameter constraining and unconstraining. \cr
    \code{\link[=fit-method-log_prob]{$log_prob()}} \tab Calculate log-prob. \cr
    \code{\link[=fit-method-grad_log_prob]{$grad_log_prob()}} \tab Calculate log-prob and gradient. \cr
-   \code{\link[=fit-method-hessian]{$hessian()}} \tab Calculate log-prob, gradient, and hessian. \cr
+   \code{\link[=fit-method-hessian]{$hessian()}} \tab Calculate log-prob, gradient, and Hessian. \cr
    \code{\link[=fit-method-constrain_variables]{$constrain_variables()}} \tab Transform a set of unconstrained parameter values to the constrained scale. \cr
    \code{\link[=fit-method-unconstrain_variables]{$unconstrain_variables()}} \tab Transform a set of parameter values to the unconstrained scale. \cr
    \code{\link[=fit-method-unconstrain_draws]{$unconstrain_draws()}} \tab Transform all parameter draws to the unconstrained scale. \cr
