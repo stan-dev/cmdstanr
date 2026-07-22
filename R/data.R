@@ -189,7 +189,7 @@ process_data <- function(data, model_variables = NULL) {
           if (!is.factor(data[[var_name]])) {
             if (!isTRUE(all(is_wholenumber(data[[var_name]])))) {
               # Don't warn for NULL/NA, as different warnings are used for those
-              if (!isTRUE(any(is.na(data[[var_name]])))) {
+              if (!isTRUE(anyNA(data[[var_name]]))) {
                 warning("A non-integer value was supplied for '", var_name, "'!",
                         " It will be truncated to an integer.", call. = FALSE)
               }
@@ -210,11 +210,6 @@ process_data <- function(data, model_variables = NULL) {
   path
 }
 
-# check if any objects in the data list have zero as one of their dimensions
-any_zero_dims <- function(data) {
-  has_zero_dims <- sapply(data, function(x) any(dim(x) == 0))
-  any(has_zero_dims)
-}
 
 #' Write posterior draws objects to CSV files suitable for running standalone generated
 #' quantities with CmdStan.

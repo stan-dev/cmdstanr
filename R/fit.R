@@ -1682,7 +1682,7 @@ loo <- function(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...)
     }
   }
 
-  if (moment_match == TRUE) {
+  if (isTRUE(moment_match)) {
     # Moment-matching requires log-prob, constrain, and unconstrain methods
     if (is.null(private$model_methods_env_$model_ptr)) {
       self$init_model_methods()
