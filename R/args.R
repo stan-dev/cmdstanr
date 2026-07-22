@@ -61,7 +61,7 @@ CmdStanArgs <- R6::R6Class(
       self$using_tempdir <- is.null(output_dir)
       self$model_variables <- model_variables
       self$save_cmdstan_config <- save_cmdstan_config
-      if (os_is_wsl() && is.null(output_dir)) {
+      if (os_is_wsl() && self$using_tempdir) {
         # Want to ensure that any files under WSL are written to a tempdir within
         # WSL to avoid IO performance issues
         self$output_dir <- file.path(wsl_dir_prefix(), wsl_tempdir())
