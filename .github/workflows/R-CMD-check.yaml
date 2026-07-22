@@ -58,6 +58,7 @@ jobs:
         run: |
           Sys.getenv("PATH")
           Sys.getenv("RTOOLS40_HOME")
+          rtools40_home <- Sys.getenv("RTOOLS40_HOME")
           rtools_bin_dir <- file.path(rtools40_home, "usr", "bin")
           file.exists(file.path(rtools_bin_dir, "make.exe"))
 
