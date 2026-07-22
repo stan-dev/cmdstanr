@@ -728,7 +728,7 @@ toolchain_PATH_env_var <- function() {
   # This variable is set at installation since R 4.2
   #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
   rtools_soft <- repair_path(tools::Rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE))
-  rtools_dir <- file.path(rtools_dir, "bin")
+  rtools_dir <- file.path(rtools_soft, "bin")
   rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
 
   if (file.exists(file.path(rtools_bin_dir, "make.exe")) &&
