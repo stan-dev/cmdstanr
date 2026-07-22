@@ -134,6 +134,7 @@ validate_cpp_options <- function(cpp_options) {
 # cpp_options must be a list
 # opencl_ids returned unchanged
 assert_valid_opencl <- function(opencl_ids, cpp_options) {
+  names(cpp_options) <- tolower(names(cpp_options))
   if (is.null(cpp_options[["stan_opencl"]])
       && !is.null(opencl_ids)) {
     stop("'opencl_ids' is set but the model was not compiled for use with OpenCL.",
@@ -145,6 +146,7 @@ assert_valid_opencl <- function(opencl_ids, cpp_options) {
 
 # cpp_options must be a list
 assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
+  names(cpp_options) <- tolower(names(cpp_options))
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)

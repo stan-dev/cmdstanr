@@ -37,6 +37,16 @@ test_that("validate_cpp_options works", {
   expect_warning(validate_cpp_options(list(STAN_OPENCL = FALSE)))
 })
 
+test_that("cpp option checks are case-insensitive", {
+  expect_identical(
+    assert_valid_threads(2L, list(STAN_THREADS = TRUE)),
+    2L
+  )
+  expect_identical(
+    assert_valid_opencl(c(0L, 0L), list(STAN_OPENCL = TRUE)),
+    c(0L, 0L)
+  )
+})
 
 test_that("exe_info cpp_options comparison works", {
   exe_info_all_flags_off <- exe_info_style_cpp_options(list())

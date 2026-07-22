@@ -43,7 +43,7 @@ program.}
 to compile with the Stan model.}
 
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
-model (\code{STAN_THREADS}, \code{STAN_MPI}, \code{STAN_OPENCL}, etc.). Anything you would
+model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would
 otherwise write in the \code{make/local} file. For an example of using threading
 see the Stan case study
 \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
