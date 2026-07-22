@@ -16,12 +16,15 @@ unconstrain_variables(variables)
   (list) A list of parameter values to transform, in the same format as
   provided to the `init` argument of the `$sample()` method.
 
+## Value
+
+A numeric vector of unconstrained parameter values.
+
 ## See also
 
 [`log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md),
 [`grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md),
 [`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
-`unconstrain_variables()`,
 [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md),
 [`variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md),
 [`hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md)

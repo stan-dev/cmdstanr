@@ -110,15 +110,15 @@ sample_mpi(
 
 - seed:
 
-  (positive integer(s)) A seed for the (P)RNG to pass to CmdStan. In the
-  case of multi-chain sampling the single `seed` will automatically be
-  augmented by the the run (chain) ID so that each chain uses a
-  different seed. The exception is the transformed data block, which
-  defaults to using same seed for all chains so that the same data is
-  generated for all chains if RNG functions are used. The only time
-  `seed` should be specified as a vector (one element per chain) is if
-  RNG functions are used in transformed data and the goal is to generate
-  *different* data for each chain.
+  (non-negative integer(s)) A seed for the (P)RNG to pass to CmdStan. In
+  the case of multi-chain sampling the single `seed` will automatically
+  be augmented by the run (chain) ID so that each chain uses a different
+  seed. The exception is the transformed data block, which defaults to
+  using same seed for all chains so that the same data is generated for
+  all chains if RNG functions are used. The only time `seed` should be
+  specified as a vector (one element per chain) is if RNG functions are
+  used in transformed data and the goal is to generate *different* data
+  for each chain.
 
 - refresh:
 
@@ -131,10 +131,11 @@ sample_mpi(
   declared in the parameters block of the Stan program. One of the
   following:
 
-  - A real number `x>0`. This initializes *all* parameters randomly
-    between `[-x,x]` on the *unconstrained* parameter space.
+  - A real number `x > 0`. This initializes *all* parameters randomly
+    between `[-x, x]` on the *unconstrained* parameter space.
 
-  - The number `0`. This initializes *all* parameters to `0`.
+  - The number `0`. This initializes *all* parameters to `0` on the
+    *unconstrained* parameter space.
 
   - A character vector of paths to JSON or Rdump files containing
     initial values for all or some parameters. For MCMC and Pathfinder,
@@ -206,21 +207,19 @@ sample_mpi(
     requested chains/paths, draws are selected uniformly without
     replacement. If the draws object's parameters are only a subset of
     the model parameters then the other parameters will be drawn by
-    Stan's default initialization. The fit object must have at least
+    Stan's default initialization. The draws object must have at least
     some parameters that are the same name and dimensions as the current
     Stan model.
 
 - save_latent_dynamics:
 
-  (logical) Should auxiliary diagnostic information about the latent
-  dynamics be written to temporary diagnostic CSV files? This argument
-  replaces CmdStan's `diagnostic_file` argument and the content written
-  to CSV is controlled by the user's CmdStan installation and not
-  CmdStanR (for some algorithms no content may be written). The default
-  is `FALSE`, which is appropriate for almost every use case. To save
-  the temporary files created when `save_latent_dynamics=TRUE` see the
-  [`$save_latent_dynamics_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)
-  method.
+  (logical) Should auxiliary diagnostic information about the sampler or
+  variational algorithm be written to diagnostic CSV files? This
+  argument replaces CmdStan's `diagnostic_file` argument. The content is
+  controlled by the user's CmdStan installation. The default is `FALSE`,
+  which is appropriate for almost every use case. To save temporary
+  diagnostic files permanently, use
+  [`$save_latent_dynamics_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md).
 
 - output_dir:
 
@@ -248,8 +247,8 @@ sample_mpi(
 
   (string) A string to use as a prefix for the names of the output CSV
   files of CmdStan. If `NULL` (the default), the basename of the output
-  CSV files will be comprised from the model name, timestamp, and 5
-  random characters.
+  CSV files is composed of the model name, timestamp, and a
+  six-character random hexadecimal suffix.
 
 - chains:
 
@@ -361,17 +360,17 @@ sample_mpi(
   sampler generates a new sample without changing the current state of
   the Markov chain; only generated quantities may change. This can be
   useful when, for example, trying to generate pseudo-data using the
-  generated quantities block. If the parameters block is empty then
-  using `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the
-  `chains` and `parallel_chains` arguments will be set to `1`.
+  generated quantities block. For CmdStan versions before 2.36,
+  `fixed_param = TRUE` is mandatory if the parameters block is empty.
 
 - sig_figs:
 
-  (positive integer) The number of significant figures used when storing
-  the output values. By default, CmdStan represent the output values
-  with 6 significant figures. The upper limit for `sig_figs` is 18.
-  Increasing this value will result in larger output CSV files and thus
-  an increased usage of disk space.
+  (positive integer) The number of significant figures (up to a maximum
+  of 18) to use when storing the output values. If `NULL` (the default),
+  the default from the installed CmdStan version is used. Use
+  [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
+  to check that default. Increasing this value will result in larger
+  output CSV files and thus an increased usage of disk space.
 
 - show_messages:
 
@@ -406,7 +405,7 @@ sample_mpi(
 
   These diagnostics are also available after fitting. The
   [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-sampler_diagnostics.md)
-  method provides access the diagnostic values for each iteration and
+  method provides access to the diagnostic values for each iteration and
   the
   [`$diagnostic_summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-diagnostic_summary.md)
   method provides summaries of the diagnostics and can regenerate the
@@ -466,6 +465,7 @@ Other CmdStanModel methods:
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),

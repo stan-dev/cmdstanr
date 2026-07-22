@@ -93,13 +93,14 @@ of sampler diagnostics.</p></dd>
 
 
 <dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
-<dd><p>(string) An optional path to the directory where the CSV files will be
-written. If not set, <a href="https://rdrr.io/r/base/tempfile.html" class="external-link">temporary directory</a> is used.</p></dd>
+<dd><p>(string) An optional path to the directory where the CSV files
+will be written. If not set, <a href="https://rdrr.io/r/base/tempfile.html" class="external-link">temporary directory</a> is used.</p></dd>
 
 
 <dt id="arg-basename">basename<a class="anchor" aria-label="anchor" href="#arg-basename"></a></dt>
-<dd><p>(string) If <code>dir</code> is specified, `basename“ is used for naming
-the output CSV files. If not specified, the file names are randomly generated.</p></dd>
+<dd><p>(string) The base name for the output CSV files. The default
+is <code>"fittedParams"</code>. A timestamp, chain ID, and six-character random
+hexadecimal suffix are appended to the base name.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -109,15 +110,22 @@ the output CSV files. If not specified, the file names are randomly generated.</
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>draws_to_csv()</code> generates a CSV suitable for running standalone generated
-quantities with CmdStan. The CSV file contains a single comment <code>#num_samples</code>,
-which equals the number of iterations in the supplied draws object.</p>
-<p>The comment is followed by the column names. The first column is the <code>lp__</code> value,
-followed by sampler diagnostics and finnaly other variables of the draws object.
-#' If the draws object does not contain the <code>lp__</code> or sampler diagnostics variables,
-columns with zeros are created in order to conform with the requirements of the
-standalone generated quantities method of CmdStan.</p>
+quantities with CmdStan. The CSV file contains a single comment
+<code># num_samples = &lt;n&gt;</code>, where <code>&lt;n&gt;</code> is the number of iterations in the
+supplied draws object.</p>
+<p>The comment is followed by the column names. The first column is the <code>lp__</code>
+value, followed by sampler diagnostics and finally other variables of the
+draws object. If the draws object does not contain the <code>lp__</code> or sampler
+diagnostics variables, columns with zeros are created in order to conform
+with the requirements of the standalone generated quantities method of
+CmdStan.</p>
 <p>The column names line is finally followed by the values of the draws in the same
 order as the column names.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="model-method-generate-quantities.html">$generate_quantities()</a></code> for
+using the generated CSV files</p></div>
     </div>
 
     <div class="section level2">
@@ -127,13 +135,13 @@ order as the column names.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">draws_csv_files</span> <span class="op">&lt;-</span> <span class="fu">draws_to_csv</span><span class="op">(</span><span class="va">draws</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">draws_csv_files</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpILyGYQ/fittedParams-202607220030-1-193853.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/RtmpILyGYQ/fittedParams-202607220030-2-193853.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/RtmpILyGYQ/fittedParams-202607220030-3-193853.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/RtmpILyGYQ/fittedParams-202607220030-4-193853.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpR10Vum/fittedParams-202607220353-1-193848.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/RtmpR10Vum/fittedParams-202607220353-2-193848.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/RtmpR10Vum/fittedParams-202607220353-3-193848.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/RtmpR10Vum/fittedParams-202607220353-4-193848.csv"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># draws_csv_files &lt;- draws_to_csv(draws,</span></span></span>
-<span class="r-in"><span><span class="co">#                                 sampler_diagnostic = sampler_diagnostics,</span></span></span>
+<span class="r-in"><span><span class="co">#                                 sampler_diagnostics = sampler_diagnostics,</span></span></span>
 <span class="r-in"><span><span class="co">#                                 dir = "~/my_folder",</span></span></span>
 <span class="r-in"><span><span class="co">#                                 basename = "my-samples")</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

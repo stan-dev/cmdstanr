@@ -54,6 +54,12 @@ To make the code block collapsible:
     print_stan_file("path/to/model.stan", fold = TRUE)
     ```
 
+## See also
+
+[`write_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_file.md)
+and
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
+
 ## Examples
 
 ``` r

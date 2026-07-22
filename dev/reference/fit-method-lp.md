@@ -1,11 +1,9 @@
 # Extract log probability (target)
 
-The `$lp()` method extracts `lp__`, the total log probability (`target`)
-accumulated in the model block of the Stan program. For variational
-inference the log density of the variational approximation to the
-posterior is available via the `$lp_approx()` method. For Laplace
-approximation the unnormalized density of the approximation to the
-posterior is available via the `$lp_approx()` method.
+The `$lp()` method extracts `lp__`, the target log density evaluated by
+Stan, up to an additive constant. For variational inference, Laplace
+approximation, and Pathfinder, the log density of the corresponding
+approximating distribution is available via `$lp_approx()`.
 
 See the [Increment log density and Distribution
 Statements](https://mc-stan.org/docs/reference-manual/statements.html)
@@ -18,8 +16,6 @@ constants are dropped from log probability calculations.
 lp()
 
 lp_approx()
-
-lp_approx()
 ```
 
 ## Value
@@ -29,34 +25,40 @@ or length equal to `1` for optimization.
 
 ## Details
 
-`lp__` is the unnormalized log density on Stan's [unconstrained
-space](https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html).
-This will in general be different than the unnormalized model log
-density evaluated at a posterior draw (which is on the constrained
-space). `lp__` is intended to diagnose sampling efficiency and evaluate
-approximations.
+The target includes all contributions to the log probability, which can
+come from the transformed parameters and model blocks, including certain
+user-defined functions. The exact target represented by `lp__` depends
+on the inference method:
+
+- For MCMC sampling, variational inference, Pathfinder, and diagnostic
+  mode, `lp__` is the log density on Stan's [unconstrained
+  space](https://mc-stan.org/docs/reference-manual/transforms.html) and
+  includes the Jacobian adjustments for constrained parameters.
+
+- For optimization and Laplace approximation, whether the Jacobian
+  adjustments are included depends on the `jacobian` argument.
+
+For MCMC, `lp__` can be used to diagnose sampling efficiency; for
+approximation methods, it can be used to evaluate the approximation.
 
 For variational inference `lp_approx__` is the log density of the
 variational approximation to `lp__` (also on the unconstrained space).
 It is exposed in the variational method for performing the checks
 described in Yao et al. (2018) and implemented in the loo package.
 
-For Laplace approximation `lp_approx__` is the unnormalized density of
-the Laplace approximation. It can be used to perform the same checks as
-in the case of the variational method described in Yao et al. (2018).
+For Laplace approximation `lp_approx__` is CmdStan's `log_q__`: the
+unnormalized log density of the normal approximation on the
+unconstrained space. It can be used to perform the same checks as in the
+case of the variational method described in Yao et al. (2018).
+
+For Pathfinder `lp_approx__` is the log density of the approximating
+distribution on the unconstrained space.
 
 ## References
 
 Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did
 it work?: Evaluating variational inference. *Proceedings of the 35th
 International Conference on Machine Learning*, PMLR 80:5581–5590.
-
-## See also
-
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
-[`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md),
-[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md)
 
 ## Examples
 
@@ -72,6 +74,10 @@ fit_mle$lp()
 
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 plot(fit_vb$lp(), fit_vb$lp_approx())
+
+
+fit_pathfinder <- cmdstanr_example("logistic", method = "pathfinder")
+plot(fit_pathfinder$lp(), fit_pathfinder$lp_approx())
 
 # }
 ```

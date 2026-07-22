@@ -32,36 +32,57 @@ Run CmdStan from R.
 
 - [`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
   : Create a new CmdStanModel object
+
 - [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
   : CmdStanModel objects
+
 - [`check_syntax()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md)
   : Check syntax of a Stan program
+
 - [`cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
   : Get CmdStan default argument values
+
 - [`compile()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
   : Compile a Stan program
+
 - [`diagnose()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md)
   : Run Stan's diagnose method
+
 - [`expose_functions()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md)
   : Expose Stan functions to R
+
 - [`format()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md)
   : Run stanc's auto-formatter on the model code.
+
 - [`generate_quantities()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md)
   : Run Stan's standalone generated quantities method
+
 - [`laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)
   : Run Stan's Laplace algorithm
+
+- [`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md)
+  :
+
+  Access information from a `CmdStanModel` object
+
 - [`optimize()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md)
   : Run Stan's optimization algorithms
+
 - [`pathfinder()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md)
   : Run Stan's Pathfinder Variational Inference Algorithm
+
 - [`sample()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md)
   : Run Stan's MCMC algorithms
+
 - [`sample_mpi()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample_mpi.md)
   : Run Stan's MCMC algorithms with MPI
+
 - [`variables()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variables.md)
   : Input and output variables of a Stan program
+
 - [`variational()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md)
   : Run Stan's variational approximation algorithms
+
 - [`cmdstanr_example()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstanr_example.md)
   [`print_example_program()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstanr_example.md)
   : Fit models for use in examples
@@ -108,6 +129,9 @@ Run CmdStan from R.
 - [`draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
   : Extract posterior draws
 
+- [`fitted_params_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-fitted_params_files.md)
+  : Extract the fitted-parameter CSV files used for generated quantities
+
 - [`grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md)
   : Calculate the log-probability and the gradient w.r.t. each input for
   a given vector of unconstrained parameters
@@ -116,8 +140,8 @@ Run CmdStan from R.
   : Extract gradients after diagnostic mode
 
 - [`hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md)
-  : Calculate the log-probability , the gradient w.r.t. each input, and
-  the hessian for a given vector of unconstrained parameters
+  : Calculate the log-probability, the gradient w.r.t. each input, and
+  the Hessian for a given vector of unconstrained parameters
 
 - [`init()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init.md)
   : Extract user-specified initial values
@@ -149,8 +173,11 @@ Run CmdStan from R.
 - [`mle()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-mle.md)
   : Extract point estimate after optimization
 
+- [`mode()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-mode.md)
+  : Extract the mode used for a Laplace approximation
+
 - [`num_chains()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-num_chains.md)
-  : Extract number of chains after MCMC
+  : Extract the number of chains
 
 - [`output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md)
   : Access console output

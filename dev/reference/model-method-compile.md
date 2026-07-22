@@ -15,12 +15,16 @@ However it is possible to set `compile=FALSE` in the call to
 [`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
 and subsequently call the `$compile()` method directly.
 
-After compilation, the paths to the executable and the `.hpp` file
-containing the generated C++ code are available via the `$exe_file()`
-and `$hpp_file()` methods. The default is to create the executable in
-the same directory as the Stan program and to write the generated C++
-code in a temporary directory. To save the C++ code to a non-temporary
-location use `$save_hpp_file(dir)`.
+After compilation, the path to the executable is available via
+[`$exe_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md).
+If compilation generated C++ code instead of reusing an up-to-date
+executable, its path is also available via
+[`$hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md).
+Use `force_recompile=TRUE` to force generation of the C++ code. By
+default, the executable is created in the same directory as the Stan
+program and the generated C++ code is written to a temporary directory.
+To save the C++ code to a non-temporary location use
+[`$save_hpp_file(dir)`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md).
 
 ## Usage
 
@@ -51,8 +55,7 @@ compile(
 - dir:
 
   (string) The path to the directory in which to store the CmdStan
-  executable (or `.hpp` file if using `$save_hpp_file()`). The default
-  is the same location as the Stan program.
+  executable. The default is the same location as the Stan program.
 
 - pedantic:
 
@@ -60,8 +63,8 @@ compile(
   Pedantic mode attempts to warn you about potential issues in your Stan
   program beyond syntax errors. For details see the [*Pedantic mode*
   section](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html)
-  in the Stan Reference Manual. **Note:** to do a pedantic check for a
-  model without compiling it or for a model that is already compiled the
+  in the Stan User's Guide. **Note:** to do a pedantic check for a model
+  without compiling it or for a model that is already compiled the
   [`$check_syntax()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md)
   method can be used instead.
 
@@ -86,23 +89,28 @@ compile(
 - stanc_options:
 
   (list) Any Stan-to-C++ transpiler options to be used when compiling
-  the model. See the **Examples** section below as well as the `stanc`
-  chapter of the CmdStan Guide for more details on available options:
-  https://mc-stan.org/docs/cmdstan-guide/stanc.html.
+  the model. See the **Examples** section below as well as the [`stanc`
+  chapter of the CmdStan User's
+  Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for more
+  details on available options.
 
 - force_recompile:
 
-  (logical) Should the model be recompiled even if was not modified
-  since last compiled. The default is `FALSE`. Can also be set via a
-  global `cmdstanr_force_recompile` option.
+  (logical) Should the model be recompiled even if it has not been
+  modified since it was last compiled? The default is `FALSE`. Can also
+  be set via a global `cmdstanr_force_recompile` option.
 
 - compile_model_methods:
 
   (logical) Compile additional model methods
   ([`log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md),
   [`grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md),
+  [`hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md),
   [`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
-  [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md)).
+  [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md),
+  [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md),
+  and
+  [`variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md)).
   Note: the compiled model-method bindings are not preserved in a usable
   form when saving a model object. If you plan to save and reload the
   model object before model fitting, we recommend instead waiting to
@@ -132,14 +140,21 @@ object, but it also returns the
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
 object invisibly.
 
-After compilation, the `$exe_file()`, `$hpp_file()`, and
-`$save_hpp_file()` methods can be used and return file paths.
+The
+[`$exe_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md)
+method returns the executable path. If compilation generated C++ code,
+the
+[`$hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md)
+and
+[`$save_hpp_file()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md)
+methods can also be used. See their linked documentation for return
+values.
 
 ## See also
 
 The
 [`$check_syntax()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md)
-method to check Stan syntax or enable pedantic model without compiling.
+method to check Stan syntax or enable pedantic mode without compiling.
 
 The CmdStanR website
 ([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
@@ -161,6 +176,7 @@ Other CmdStanModel methods:
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
@@ -196,7 +212,7 @@ model {
 }
 ")
 mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#> Warning in '/tmp/RtmpILyGYQ/model-1bd7494c5435.stan', line 6, column 2 to column 7:
+#> Warning in '/tmp/RtmpR10Vum/model-1bcc4ee81333.stan', line 6, column 2 to column 7:
 #>     Parameter sigma is given a exponential distribution, which has strictly
 #>     positive support, but sigma was not constrained to be strictly positive.
 

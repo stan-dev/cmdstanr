@@ -36,8 +36,9 @@ print_example_program(example = c("logistic", "schools", "schools_ncp"))
 
 - method:
 
-  (string) Which fitting method should be used? The default is the
-  `"sample"` method (MCMC).
+  (string) The fitting method to use. One of `"sample"`, `"optimize"`,
+  `"laplace"`, `"variational"`, `"pathfinder"`, or `"diagnose"`. The
+  default is `"sample"` (MCMC).
 
 - ...:
 
@@ -57,7 +58,16 @@ print_example_program(example = c("logistic", "schools", "schools_ncp"))
 
 ## Value
 
-The fitted model object returned by the selected `method`.
+`cmdstanr_example()` returns the fitted model object from the selected
+`method`. `print_example_program()` invisibly returns `NULL` after
+printing the Stan code.
+
+## See also
+
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
+for fitting your own Stan programs and
+[`print_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/print_stan_file.md)
+for displaying Stan source files
 
 ## Examples
 

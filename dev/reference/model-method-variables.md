@@ -6,8 +6,8 @@ object returns a list, each element representing a Stan model block:
 `data`, `parameters`, `transformed_parameters` and
 `generated_quantities`.
 
-Each element contains a list of variables, with each variables
-represented as a list with infromation on its scalar type (`real` or
+Each element contains a list of variables, with each variable
+represented as a list with information on its scalar type (`real` or
 `int`) and number of dimensions.
 
 `transformed data` is not included, as variables in that block are not
@@ -21,10 +21,13 @@ variables()
 
 ## Value
 
-The `$variables()` returns a list with information on input and output
-variables for each of the Stan model blocks.
+The method returns a list with information on input and output variables
+for each of the Stan model blocks.
 
 ## See also
+
+[`write_stan_json()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_json.md)
+for writing data for CmdStan.
 
 Other CmdStanModel methods:
 [`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),
@@ -35,6 +38,7 @@ Other CmdStanModel methods:
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),

@@ -91,6 +91,10 @@ type.</p></dd>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p><code>NULL</code>, invisibly.</p>
+    </div>
+    <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>write_stan_json()</code> performs several conversions before writing the JSON
 file:</p><ul><li><p><code>logical</code> -&gt; <code>integer</code> (<code>TRUE</code> -&gt; <code>1</code>, <code>FALSE</code> -&gt; <code>0</code>)</p></li>
@@ -99,14 +103,19 @@ file:</p><ul><li><p><code>logical</code> -&gt; <code>integer</code> (<code>TRUE<
 <li><p><code>table</code> -&gt; <code>vector</code>, <code>matrix</code>, or <code>array</code> (depending on dimensions of table)</p></li>
 </ul><p>The <code>list</code> to <code>array</code> conversion is intended to make it easier to prepare
 the data for certain Stan declarations involving arrays:</p><ul><li><p><code>array[K] vector[J] v </code> can be constructed in <span style="R">R</span> as a list with <code>K</code>
-elements where each element a vector of length <code>J</code></p></li>
+elements where each element is a vector of length <code>J</code></p></li>
 <li><p><code>array[K] matrix[I,J] m </code> can be constructed in <span style="R">R</span> as a list with <code>K</code>
-elements where each element an <code>IxJ</code> matrix</p></li>
+elements where each element is an <code>IxJ</code> matrix</p></li>
 </ul><p>These can also be passed in from <span style="R">R</span> as arrays instead of lists but the list
 option is provided for convenience. Unfortunately for arrays with more than
 one dimension (e.g. <code>array[K,L] vector[J] v </code>) it is not possible to use an
 <span style="R">R</span> list and an array must be used instead. For this example the array in <span style="R">R</span>
 should have dimensions <code>KxLxJ</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="model-method-variables.html">$variables()</a></code> for inspecting the input
+and output variables of a Stan program.</p></div>
     </div>
 
     <div class="section level2">
@@ -126,13 +135,13 @@ should have dimensions <code>KxLxJ</code>.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   "N": 5,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   "K": 2,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   "x": [</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [0.710346515685883, 0.372003230867959],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [-0.248198556052917, -0.609858300092441],</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     [0.675270015431045, 1.0439388958914],</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     [-0.595348959958748, -0.302706284526524],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [0.110090411151627, 1.41728126064142]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [0.110090411151627, 1.41728126064142],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [0.372003230867959, -0.867101064629448],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [-0.609858300092441, -2.21814114794348]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "y": [15, 14, 10, 9, 11],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   "y": [9, 11, 13, 10, 13],</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   "z": [1, 0]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-in"><span></span></span>

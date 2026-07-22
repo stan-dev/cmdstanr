@@ -5,16 +5,16 @@ will compile the functions in the Stan program's functions block and
 expose them for use in R. This can also be specified via the
 compile_standalone argument to the $compile()
 method.
-This method is also available for fitted model objects (CmdStanMCMC, CmdStanVB, etc.).
-See Examples.
+This method is also available for all fitted model objects. See
+Examples.
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors."><meta property="og:description" content="The $expose_functions() method of a CmdStanModel object
 will compile the functions in the Stan program's functions block and
 expose them for use in R. This can also be specified via the
 compile_standalone argument to the $compile()
 method.
-This method is also available for fitted model objects (CmdStanMCMC, CmdStanVB, etc.).
-See Examples.
+This method is also available for all fitted model objects. See
+Examples.
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -84,8 +84,8 @@ will compile the functions in the Stan program's <code>functions</code> block an
 expose them for use in <span style="R">R</span>. This can also be specified via the
 <code>compile_standalone</code> argument to the <code><a href="model-method-compile.html">$compile()</a></code>
 method.</p>
-<p>This method is also available for fitted model objects (<code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code>, <code><a href="CmdStanVB.html">CmdStanVB</a></code>, etc.).
-See <strong>Examples</strong>.</p>
+<p>This method is also available for all fitted model objects. See
+<strong>Examples</strong>.</p>
 <p>Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.</p>
     </div>
@@ -111,6 +111,10 @@ printed to the console? Defaults to <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p><code>NULL</code>, invisibly.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>The CmdStanR website
 (<a href="https://mc-stan.org/cmdstanr/">mc-stan.org/cmdstanr</a>) for online
@@ -125,6 +129,7 @@ documentation and tutorials.</p>
 <code><a href="model-method-format.html">model-method-format</a></code>,
 <code><a href="model-method-generate-quantities.html">model-method-generate-quantities</a></code>,
 <code><a href="model-method-laplace.html">model-method-laplace</a></code>,
+<code><a href="model-method-model-info.html">model-method-model-info</a></code>,
 <code><a href="model-method-optimize.html">model-method-optimize</a></code>,
 <code><a href="model-method-pathfinder.html">model-method-pathfinder</a></code>,
 <code><a href="model-method-sample.html">model-method-sample</a></code>,

@@ -8,10 +8,8 @@ block and expose them for use in R. This can also be specified via the
 [`$compile()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
 method.
 
-This method is also available for fitted model objects
-([`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-etc.). See **Examples**.
+This method is also available for all fitted model objects. See
+**Examples**.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.
@@ -35,6 +33,10 @@ expose_functions(global = FALSE, verbose = FALSE)
   (logical) Should detailed information about generated code be printed
   to the console? Defaults to `FALSE`.
 
+## Value
+
+`NULL`, invisibly.
+
 ## See also
 
 The CmdStanR website
@@ -57,6 +59,7 @@ Other CmdStanModel methods:
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),

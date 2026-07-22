@@ -18,32 +18,22 @@ fit <- cmdstanr::cmdstanr_example("schools", method = "sample")
 fit$summary()
 ```
 
-       variable       mean     median       sd      mad          q5       q95
-    1      lp__ -58.320756 -58.622925 4.918566 5.131560 -66.0873865 -49.96255
-    2        mu   6.765315   6.853504 4.477501 4.441462  -0.5815009  13.94432
-    3       tau   5.329521   4.561805 3.392980 3.206039   1.2538663  11.88650
-    4  theta[1]   9.614873   9.056704 7.011170 6.517894  -0.9236177  21.53582
-    5  theta[2]   7.011599   7.109942 5.882246 5.815888  -2.8740180  16.35239
-    6  theta[3]   5.762381   6.062503 6.908729 6.531089  -6.0668909  16.06493
-    7  theta[4]   6.658352   6.724928 5.967391 5.795691  -3.1409733  16.19117
-    8  theta[5]   4.856853   5.073774 6.104925 5.838099  -5.6258228  14.22750
-    9  theta[6]   5.766387   6.078693 6.138783 5.934561  -4.5991732  15.27158
-    10 theta[7]   9.343667   9.036606 6.217535 5.913166  -0.2544706  19.78362
-    11 theta[8]   7.177659   7.188460 6.679874 6.127754  -3.7721206  17.68597
-           rhat  ess_bulk  ess_tail
-    1  1.016399  359.7406  315.6200
-    2  1.004802  537.1418  889.3897
-    3  1.016214  358.8192  282.9631
-    4  1.003541 1065.6346 1806.9754
-    5  1.002917  833.6323 1890.8652
-    6  1.003206  876.9884 1844.4931
-    7  1.002243  888.6417 2203.8935
-    8  1.003200  695.3974 1277.5894
-    9  1.002718  825.3426 1678.0983
-    10 1.004303 1019.5252 2068.0670
-    11 1.004031  950.0452 1717.5853
+     [38;5;246m# A tibble: 11 × 10 [39m
+       variable   mean median    sd   mad      q5   q95  rhat ess_bulk ess_tail
+        [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m     [3m [38;5;246m<dbl> [39m [23m     [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m 1 [39m lp__     - [31m58 [39m [31m. [39m [31m3 [39m  - [31m58 [39m [31m. [39m [31m6 [39m   4.92  5.13 - [31m66 [39m [31m. [39m [31m1 [39m   - [31m50 [39m [31m. [39m [31m0 [39m  1.02     360.     316.
+     [38;5;250m 2 [39m mu         6.77   6.85  4.48  4.44  - [31m0 [39m [31m. [39m [31m582 [39m  13.9  1.00     537.     889.
+     [38;5;250m 3 [39m tau        5.33   4.56  3.39  3.21   1.25   11.9  1.02     359.     283.
+     [38;5;250m 4 [39m theta[1]   9.61   9.06  7.01  6.52  - [31m0 [39m [31m. [39m [31m924 [39m  21.5  1.00     [4m1 [24m066.     [4m1 [24m807.
+     [38;5;250m 5 [39m theta[2]   7.01   7.11  5.88  5.82  - [31m2 [39m [31m. [39m [31m87 [39m   16.4  1.00     834.     [4m1 [24m891.
+     [38;5;250m 6 [39m theta[3]   5.76   6.06  6.91  6.53  - [31m6 [39m [31m. [39m [31m0 [39m [31m7 [39m   16.1  1.00     877.     [4m1 [24m844.
+     [38;5;250m 7 [39m theta[4]   6.66   6.72  5.97  5.80  - [31m3 [39m [31m. [39m [31m14 [39m   16.2  1.00     889.     [4m2 [24m204.
+     [38;5;250m 8 [39m theta[5]   4.86   5.07  6.10  5.84  - [31m5 [39m [31m. [39m [31m63 [39m   14.2  1.00     695.     [4m1 [24m278.
+     [38;5;250m 9 [39m theta[6]   5.77   6.08  6.14  5.93  - [31m4 [39m [31m. [39m [31m60 [39m   15.3  1.00     825.     [4m1 [24m678.
+     [38;5;250m10 [39m theta[7]   9.34   9.04  6.22  5.91  - [31m0 [39m [31m. [39m [31m254 [39m  19.8  1.00     [4m1 [24m020.     [4m2 [24m068.
+     [38;5;250m11 [39m theta[8]   7.18   7.19  6.68  6.13  - [31m3 [39m [31m. [39m [31m77 [39m   17.7  1.00     950.     [4m1 [24m718.
 
-By default all variables are summaries with the follow functions:
+By default, all variables are summarized with the following functions:
 
 ``` r
 
@@ -52,52 +42,55 @@ posterior::default_summary_measures()
 
     [1] "mean"      "median"    "sd"        "mad"       "quantile2"
 
-To change the variables summarized, we use the variables argument
+To change the variables summarized, use the `variables` argument:
 
 ``` r
 
 fit$summary(variables = c("mu", "tau"))
 ```
 
-      variable     mean   median       sd      mad         q5      q95     rhat
-    1       mu 6.765315 6.853504 4.477501 4.441462 -0.5815009 13.94432 1.004802
-    2      tau 5.329521 4.561805 3.392980 3.206039  1.2538663 11.88650 1.016214
-      ess_bulk ess_tail
-    1 537.1418 889.3897
-    2 358.8192 282.9631
+     [38;5;246m# A tibble: 2 × 10 [39m
+      variable  mean median    sd   mad     q5   q95  rhat ess_bulk ess_tail
+       [3m [38;5;246m<chr> [39m [23m     [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m     [3m [38;5;246m<dbl> [39m [23m     [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m mu        6.77   6.85  4.48  4.44 - [31m0 [39m [31m. [39m [31m582 [39m  13.9  1.00     537.     889.
+     [38;5;250m2 [39m tau       5.33   4.56  3.39  3.21  1.25   11.9  1.02     359.     283.
 
-We can additionally change which functions are used
+We can also change which functions are used:
 
 ``` r
 
 fit$summary(variables = c("mu", "tau"), mean, sd)
 ```
 
-      variable     mean       sd
-    1       mu 6.765315 4.477501
-    2      tau 5.329521 3.392980
+     [38;5;246m# A tibble: 2 × 3 [39m
+      variable  mean    sd
+       [3m [38;5;246m<chr> [39m [23m     [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m mu        6.77  4.48
+     [38;5;250m2 [39m tau       5.33  3.39
 
 To summarize all variables with non-default functions, it is necessary
-to set explicitly set the variables argument, either to `NULL` or the
-full vector of variable names.
+to explicitly set the `variables` argument, either to `NULL` or the full
+vector of variable names.
 
 ``` r
 
 fit$summary(variables = NULL, "mean", "median")
 ```
 
-       variable       mean     median
-    1      lp__ -58.320756 -58.622925
-    2        mu   6.765315   6.853504
-    3       tau   5.329521   4.561805
-    4  theta[1]   9.614873   9.056704
-    5  theta[2]   7.011599   7.109942
-    6  theta[3]   5.762381   6.062503
-    7  theta[4]   6.658352   6.724928
-    8  theta[5]   4.856853   5.073774
-    9  theta[6]   5.766387   6.078693
-    10 theta[7]   9.343667   9.036606
-    11 theta[8]   7.177659   7.188460
+     [38;5;246m# A tibble: 11 × 3 [39m
+       variable   mean median
+        [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m 1 [39m lp__     - [31m58 [39m [31m. [39m [31m3 [39m  - [31m58 [39m [31m. [39m [31m6 [39m 
+     [38;5;250m 2 [39m mu         6.77   6.85
+     [38;5;250m 3 [39m tau        5.33   4.56
+     [38;5;250m 4 [39m theta[1]   9.61   9.06
+     [38;5;250m 5 [39m theta[2]   7.01   7.11
+     [38;5;250m 6 [39m theta[3]   5.76   6.06
+     [38;5;250m 7 [39m theta[4]   6.66   6.72
+     [38;5;250m 8 [39m theta[5]   4.86   5.07
+     [38;5;250m 9 [39m theta[6]   5.77   6.08
+     [38;5;250m10 [39m theta[7]   9.34   9.04
+     [38;5;250m11 [39m theta[8]   7.18   7.19
 
 Summary functions can be specified by character string, function, or
 using a formula (or anything else supported by
@@ -118,9 +111,11 @@ fit$summary(
 )        
 ```
 
-      variable     MEAN   median    My_SD      10%       90%     Minimum
-    1       mu 6.765315 6.853504 4.477501 0.887486 12.502440 -10.8368510
-    2      tau 5.329521 4.561805 3.392980 1.608897  9.942976   0.7203539
+     [38;5;246m# A tibble: 2 × 7 [39m
+      variable  MEAN median My_SD `10%` `90%` Minimum
+       [3m [38;5;246m<chr> [39m [23m     [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m mu        6.77   6.85  4.48 0.887 12.5  - [31m10 [39m [31m. [39m [31m8 [39m  
+     [38;5;250m2 [39m tau       5.33   4.56  3.39 1.61   9.94   0.720
 
 Arguments to all summary functions can also be specified with `.args`.
 
@@ -129,30 +124,35 @@ Arguments to all summary functions can also be specified with `.args`.
 fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, .05, .95, .975)))
 ```
 
-      variable      2.5%         5%      95%    97.5%
-    1       mu -2.039372 -0.5815009 13.94432 15.33313
-    2      tau  1.093560  1.2538663 11.88650 13.82409
+     [38;5;246m# A tibble: 2 × 5 [39m
+      variable `2.5%`   `5%` `95%` `97.5%`
+       [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m mu        - [31m2 [39m [31m. [39m [31m0 [39m [31m4 [39m - [31m0 [39m [31m. [39m [31m582 [39m  13.9    15.3
+     [38;5;250m2 [39m tau        1.09  1.25   11.9    13.8
 
-The summary functions are applied to the array of sample values, with
-dimension `iter_sampling`x`chains`.
+Each summary function is applied separately to each variable and
+receives a matrix whose rows are saved iterations and whose columns are
+chains.
 
 ``` r
 
 fit$summary(variables = NULL, dim, colMeans)
 ```
 
-       variable dim.1 dim.2          1          2          3          4
-    1      lp__  1000     4 -57.940185 -57.459900 -58.267713 -59.615226
-    2        mu  1000     4   7.116265   6.765985   7.052251   6.126758
-    3       tau  1000     4   5.159391   4.798012   5.249758   6.110924
-    4  theta[1]  1000     4   9.965227   9.050620   9.975194   9.468451
-    5  theta[2]  1000     4   7.498667   6.885330   7.271205   6.391194
-    6  theta[3]  1000     4   6.219639   6.012905   6.002472   4.814506
-    7  theta[4]  1000     4   7.177726   6.617560   6.775441   6.062680
-    8  theta[5]  1000     4   5.009475   5.175509   5.170864   4.071566
-    9  theta[6]  1000     4   6.211830   5.758704   6.051311   5.043702
-    10 theta[7]  1000     4   9.483258   8.951447   9.533311   9.406654
-    11 theta[8]  1000     4   7.650810   7.091832   7.564064   6.403932
+     [38;5;246m# A tibble: 11 × 7 [39m
+       variable dim.1 dim.2    `1`    `2`    `3`    `4`
+        [3m [38;5;246m<chr> [39m [23m     [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m 1 [39m lp__       [4m1 [24m000     4 - [31m57 [39m [31m. [39m [31m9 [39m  - [31m57 [39m [31m. [39m [31m5 [39m  - [31m58 [39m [31m. [39m [31m3 [39m  - [31m59 [39m [31m. [39m [31m6 [39m 
+     [38;5;250m 2 [39m mu         [4m1 [24m000     4   7.12   6.77   7.05   6.13
+     [38;5;250m 3 [39m tau        [4m1 [24m000     4   5.16   4.80   5.25   6.11
+     [38;5;250m 4 [39m theta[1]   [4m1 [24m000     4   9.97   9.05   9.98   9.47
+     [38;5;250m 5 [39m theta[2]   [4m1 [24m000     4   7.50   6.89   7.27   6.39
+     [38;5;250m 6 [39m theta[3]   [4m1 [24m000     4   6.22   6.01   6.00   4.81
+     [38;5;250m 7 [39m theta[4]   [4m1 [24m000     4   7.18   6.62   6.78   6.06
+     [38;5;250m 8 [39m theta[5]   [4m1 [24m000     4   5.01   5.18   5.17   4.07
+     [38;5;250m 9 [39m theta[6]   [4m1 [24m000     4   6.21   5.76   6.05   5.04
+     [38;5;250m10 [39m theta[7]   [4m1 [24m000     4   9.48   8.95   9.53   9.41
+     [38;5;250m11 [39m theta[8]   [4m1 [24m000     4   7.65   7.09   7.56   6.40
 
 For this reason users may have unexpected results if they use
 [`stats::var()`](https://rdrr.io/r/stats/cor.html) directly, as it will
@@ -166,12 +166,15 @@ function, which can also be accessed via
 fit$summary(c("mu", "tau"), posterior::variance, ~var(as.vector(.x)))
 ```
 
-      variable posterior::variance ~var(as.vector(.x))
-    1       mu            20.04802            20.04802
-    2      tau            11.51232            11.51232
+     [38;5;246m# A tibble: 2 × 3 [39m
+      variable `posterior::variance` `~var(as.vector(.x))`
+       [3m [38;5;246m<chr> [39m [23m                     [3m [38;5;246m<dbl> [39m [23m                  [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m mu                        20.0                  20.0
+     [38;5;250m2 [39m tau                       11.5                  11.5
 
-Summary functions need not be numeric, but these won’t work with
-`$print()`.
+Summary functions need not return numeric values when used with
+`$summary()`. The `$print()` method requires numeric summary columns
+because it rounds them to the requested number of digits.
 
 ``` r
 
@@ -179,18 +182,20 @@ strict_pos <- function(x) if (all(x > 0)) "yes" else "no"
 fit$summary(variables = NULL, "Strictly Positive" = strict_pos)
 ```
 
-       variable Strictly Positive
-    1      lp__                no
-    2        mu                no
-    3       tau               yes
-    4  theta[1]                no
-    5  theta[2]                no
-    6  theta[3]                no
-    7  theta[4]                no
-    8  theta[5]                no
-    9  theta[6]                no
-    10 theta[7]                no
-    11 theta[8]                no
+     [38;5;246m# A tibble: 11 × 2 [39m
+       variable `Strictly Positive`
+        [3m [38;5;246m<chr> [39m [23m     [3m [38;5;246m<chr> [39m [23m              
+     [38;5;250m 1 [39m lp__     no                 
+     [38;5;250m 2 [39m mu       no                 
+     [38;5;250m 3 [39m tau      yes                
+     [38;5;250m 4 [39m theta[1] no                 
+     [38;5;250m 5 [39m theta[2] no                 
+     [38;5;250m 6 [39m theta[3] no                 
+     [38;5;250m 7 [39m theta[4] no                 
+     [38;5;250m 8 [39m theta[5] no                 
+     [38;5;250m 9 [39m theta[6] no                 
+     [38;5;250m10 [39m theta[7] no                 
+     [38;5;250m11 [39m theta[8] no                 
 
 ``` r
 
@@ -205,102 +210,180 @@ which is called by `$summary()`.
 
 The
 [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.html)
-method can be used to extract the posterior draws in formats provided by
-the [**posterior**](https://mc-stan.org/posterior/) package. Here we
-demonstrate only the `draws_array` and `draws_df` formats, but the
-**posterior** package supports other useful formats as well.
+method extracts draws in formats provided by the
+[**posterior**](https://mc-stan.org/posterior/) package. The [*Getting
+started with
+CmdStanR*](https://mc-stan.org/cmdstanr/articles/cmdstanr.html#extracting-draws)
+vignette introduces the most commonly used formats and how to convert
+between them.
 
 ``` r
 
-# default is a 3-D draws_array object from the posterior package
-# iterations x chains x variables
-draws_arr <- fit$draws() # or format="array"
-str(draws_arr)
+fit$draws("mu")
 ```
 
-     'draws_array' num [1:1000, 1:4, 1:11] -62.1 -61.3 -65.7 -62.3 -61.9 ...
-     - attr(*, "dimnames")=List of 3
-      ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
-      ..$ chain    : chr [1:4] "1" "2" "3" "4"
-      ..$ variable : chr [1:11] "lp__" "mu" "tau" "theta[1]" ...
+    # A draws_array: 1000 iterations, 4 chains, and 1 variables
+    , , variable = mu
+
+             chain
+    iteration    1  2    3   4
+            1  9.4 13  8.0 4.2
+            2  8.3 13 -2.5 3.2
+            3  7.2 13  2.0 3.2
+            4 14.6 13  6.3 3.2
+            5  8.0 13 10.5 3.2
+
+    # ... with 995 more iterations
 
 ``` r
 
-# draws x variables data frame
-draws_df <- fit$draws(format = "df")
-str(draws_df)
+fit$draws("theta")
 ```
 
-    draws_df [4,000 × 14] (S3: draws_df/draws/tbl_df/tbl/data.frame)
-     $ lp__      : num [1:4000] -62.1 -61.3 -65.7 -62.3 -61.9 ...
-     $ mu        : num [1:4000] 9.45 8.3 7.18 14.58 8.05 ...
-     $ tau       : num [1:4000] 2.89 7.73 7.83 9.74 4.56 ...
-     $ theta[1]  : num [1:4000] 4.47 4.66 28.35 18.82 4.38 ...
-     $ theta[2]  : num [1:4000] 8.24 10.1 10.44 14.88 3.87 ...
-     $ theta[3]  : num [1:4000] 1.6 3.47 16.71 16.04 2 ...
-     $ theta[4]  : num [1:4000] 16.56 13.11 4.21 2.07 16.29 ...
-     $ theta[5]  : num [1:4000] 8.61 9.57 4.53 2.41 13.09 ...
-     $ theta[6]  : num [1:4000] 14.08 18.04 -4.96 7.73 9.37 ...
-     $ theta[7]  : num [1:4000] 8.79 11.78 18.94 18.14 4.92 ...
-     $ theta[8]  : num [1:4000] 10.713 4.423 20.456 18.698 0.802 ...
-     $ .chain    : int [1:4000] 1 1 1 1 1 1 1 1 1 1 ...
-     $ .iteration: int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...
-     $ .draw     : int [1:4000] 1 2 3 4 5 6 7 8 9 10 ...
+    # A draws_array: 1000 iterations, 4 chains, and 8 variables
+    , , variable = theta[1]
+
+             chain
+    iteration    1  2    3   4
+            1  4.5 14 17.0 6.0
+            2  4.7 13 12.3 2.5
+            3 28.4 13  6.4 2.5
+            4 18.8 13 -1.6 2.5
+            5  4.4 13  2.2 2.5
+
+    , , variable = theta[2]
+
+             chain
+    iteration    1  2     3   4
+            1  8.2 12 15.08 5.9
+            2 10.1 13  4.29 5.0
+            3 10.4 13 -0.86 5.0
+            4 14.9 13  1.48 5.0
+            5  3.9 13  9.04 5.0
+
+    , , variable = theta[3]
+
+             chain
+    iteration    1  2     3   4
+            1  1.6 16 13.17 4.4
+            2  3.5 14 -4.18 3.2
+            3 16.7 14 -4.22 3.2
+            4 16.0 12 12.32 3.2
+            5  2.0 12  0.82 3.2
+
+    , , variable = theta[4]
+
+             chain
+    iteration    1  2     3   4
+            1 16.6 11 -1.16 2.9
+            2 13.1 13  5.97 2.5
+            3  4.2 11  0.81 2.5
+            4  2.1 14  9.74 2.5
+            5 16.3 14  1.55 2.5
+
+    # ... with 995 more iterations, and 4 more variables
 
 ``` r
 
-print(draws_df)
+fit$draws(c("mu", "theta[1]"), format = "df")
 ```
 
-    # A draws_df: 1000 iterations, 4 chains, and 11 variables
-       lp__   mu  tau theta[1] theta[2] theta[3] theta[4] theta[5]
-    1   -62  9.4  2.9      4.5     8.24      1.6    16.56      8.6
-    2   -61  8.3  7.7      4.7    10.10      3.5    13.11      9.6
-    3   -66  7.2  7.8     28.4    10.44     16.7     4.21      4.5
-    4   -62 14.6  9.7     18.8    14.88     16.0     2.07      2.4
-    5   -62  8.0  4.6      4.4     3.87      2.0    16.29     13.1
-    6   -59  5.8  5.3     12.5     0.31     10.4    12.50      8.3
-    7   -63 10.9  4.7      4.2     3.85     15.1     1.61      5.2
-    8   -65  8.6  7.0     17.0    15.23     10.6    -4.47     -3.2
-    9   -64 11.7 11.6     17.7    15.32      5.4    21.99     -4.1
-    10  -66 16.9  9.5     27.9    15.86     15.0     0.05     18.3
-    # ... with 3990 more draws, and 3 more variables
+    # A draws_df: 1000 iterations, 4 chains, and 2 variables
+         mu theta[1]
+    1   9.4      4.5
+    2   8.3      4.7
+    3   7.2     28.4
+    4  14.6     18.8
+    5   8.0      4.4
+    6   5.8     12.5
+    7  10.9      4.2
+    8   8.6     17.0
+    9  11.7     17.7
+    10 16.9     27.9
+    # ... with 3990 more draws
     # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 
-To convert an existing draws object to a different format use the
-`posterior::as_draws_*()` functions.
+For MCMC fits, `inc_warmup = TRUE` includes warmup draws, but only if
+`save_warmup = TRUE` was specified when fitting the model.
 
-To manipulate the `draws` objects use the various methods described in
-the **posterior** package
+For more ways to manipulate draws, see the **posterior** package
 [vignettes](https://mc-stan.org/posterior/articles/index.html) and
 [documentation](https://mc-stan.org/posterior/reference/index.html).
 
 ### Structured draws similar to `rstan::extract()`
 
-The **posterior** package’s `rvar` format provides a multidimensional,
-sample-based representation of random variables. See
-<https://mc-stan.org/posterior/articles/rvar.html> for details. In
-addition to being useful in its own right, this format also allows
-CmdStanR users to obtain draws in a similar format to
-`rstan::extract()`.
+The **posterior** package provides two useful ways to work with
+variables while preserving their original dimensions.
 
-Suppose we have a parameter `matrix[2,3] x`. The `rvar` format lets you
-interact with `x` as if it’s a `2 x 3` matrix and automatically applies
-operations over the many posterior draws of `x`. To instead directly
-access the draws of `x` while maintaining the structure of the matrix
-use
-[`posterior::draws_of()`](https://mc-stan.org/posterior/reference/draws_of.html).
-For example:
+[`posterior::extract_list_of_variable_arrays()`](https://mc-stan.org/posterior/reference/extract_list_of_variable_arrays.html)
+returns a named list containing one array per variable. Setting
+`with_chains = FALSE` combines the chains, giving the same general
+structure as the list returned by `rstan::extract()`:
 
 ``` r
 
-draws <- posterior::as_draws_rvars(fit$draws())
-x_rvar <- draws$x
-x_array <- posterior::draws_of(draws$x)
+draw_arrays <- posterior::extract_list_of_variable_arrays(
+  fit$draws(),
+  variables = c("mu", "theta"),
+  with_chains = FALSE
+)
+str(draw_arrays)
 ```
 
-The object `x_rvar` will be an `rvar` that can be used like a `2 x 3`
-matrix, with the draws handled behind the scenes. The object `x_array`
-will be a `4000 x 2 x 3` array (assuming `4000` posterior draws), which
-is the same as it would be after being extracted from the list returned
-by `rstan::extract()`.
+    List of 2
+     $ mu   : num [1:4000, 1] 9.45 8.3 7.18 14.58 8.05 ...
+      ..- attr(*, "dimnames")=List of 2
+      .. ..$ : chr [1:4000] "1" "2" "3" "4" ...
+      .. ..$ : NULL
+     $ theta: num [1:4000, 1:8] 4.47 4.66 28.35 18.82 4.38 ...
+      ..- attr(*, "dimnames")=List of 2
+      .. ..$ : chr [1:4000] "1" "2" "3" "4" ...
+      .. ..$ : NULL
+
+The first dimension of each array indexes draws, and any remaining
+dimensions match the dimensions of the corresponding Stan variable.
+
+Alternatively, the **posterior** package’s `rvar` format represents each
+variable as a multidimensional random variable, with its posterior draws
+handled behind the scenes:
+
+``` r
+
+draws_rvars <- posterior::as_draws_rvars(
+  fit$draws(c("mu", "theta"))
+)
+theta_rvar <- draws_rvars$theta
+
+# Compute the difference for every draw using natural vector indexing
+# The posterior draws are handled automatically
+theta_difference <- theta_rvar[1] - theta_rvar[2]
+theta_difference
+```
+
+    rvar<1000,4>[1]  [38;5;246mmean ± sd: [39m
+    [1] 2.6 ± 7.7 
+
+``` r
+
+hist(
+  posterior::draws_of(theta_difference),
+  main = "Difference between theta[1] and theta[2]",
+  xlab = "theta[1] - theta[2]"
+)
+```
+
+![](posterior_files/figure-html/structured-draws-1.png)
+
+``` r
+
+# Direct access to the underlying draws is also available
+theta_array <- posterior::draws_of(theta_rvar)
+dim(theta_array)
+```
+
+    [1] 4000    8
+
+The object `theta_rvar` behaves like the vector declared in the Stan
+program. `theta_array` provides direct access to its underlying draws,
+with the first dimension indexing draws. See the [`rvar`
+vignette](https://mc-stan.org/posterior/articles/rvar.html) for details.

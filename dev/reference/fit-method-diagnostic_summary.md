@@ -11,7 +11,7 @@ size are *not* handled by this method. Those diagnostics are provided
 via the
 [`$summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-summary.md)
 method (using
-[`posterior::summarize_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html)).
+[`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html)).
 
 ## Usage
 
@@ -27,8 +27,8 @@ diagnostic_summary(
 - diagnostics:
 
   (character vector) One or more diagnostics to check. The currently
-  supported diagnostics are `"divergences`, `"treedepth"`, and `"ebfmi`.
-  The default is to check all of them.
+  supported diagnostics are `"divergences"`, `"treedepth"`, and
+  `"ebfmi"`. The default is to check all of them.
 
 - quiet:
 

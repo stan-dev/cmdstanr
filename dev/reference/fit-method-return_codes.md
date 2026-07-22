@@ -14,25 +14,13 @@ return_codes()
 An integer vector of return codes with length equal to the number of
 CmdStan runs (number of chains for MCMC and one otherwise).
 
-## See also
-
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
-[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-[`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md)
-
 ## Examples
 
 ``` r
 # \dontrun{
 # example with return codes all zero
 fit_mcmc <- cmdstanr_example("schools", method = "sample")
-#> Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
-#> Chain 3 Exception: normal_lpdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpILyGYQ/model-1bd739103e6e.stan', line 14, column 2 to column 41)
-#> Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
-#> Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
-#> Chain 3 
-#> Warning: 214 of 4000 (5.0%) transitions ended with a divergence.
+#> Warning: 145 of 4000 (4.0%) transitions ended with a divergence.
 #> See https://mc-stan.org/misc/warnings for details.
 #> Warning: 1 of 4 chains had an E-BFMI less than 0.3.
 #> See https://mc-stan.org/misc/warnings for details.

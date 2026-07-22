@@ -3,7 +3,7 @@
 The `$check_syntax()` method of a
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
 object checks the Stan program for syntax errors and returns `TRUE`
-(invisibly) if parsing succeeds. If invalid syntax in found an error is
+(invisibly) if parsing succeeds. If invalid syntax is found an error is
 thrown.
 
 ## Usage
@@ -25,7 +25,7 @@ check_syntax(
   Pedantic mode attempts to warn you about potential issues in your Stan
   program beyond syntax errors. For details see the [*Pedantic mode*
   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html)
-  in the Stan Reference Manual.
+  in the Stan User's Guide.
 
 - include_paths:
 
@@ -73,6 +73,7 @@ Other CmdStanModel methods:
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
@@ -106,11 +107,11 @@ mod$check_syntax()
 # pedantic mode will warn that lambda should be constrained to be positive
 # and that lambda has no prior distribution
 mod$check_syntax(pedantic = TRUE)
-#> Warning in '/tmp/RtmpILyGYQ/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:
+#> Warning in '/tmp/RtmpR10Vum/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:
 #>     The parameter lambda has no priors. This means either no prior is
 #>     provided, or the prior(s) depend on data variables. In the later case,
 #>     this may be a false positive.
-#> Warning in '/tmp/RtmpILyGYQ/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:
+#> Warning in '/tmp/RtmpR10Vum/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:
 #>     A poisson distribution is given parameter lambda as a rate parameter
 #>     (argument 1), but lambda was not constrained to be strictly positive.
 #> Stan program is syntactically correct

@@ -96,8 +96,9 @@ model that fixes the problem with divergences.</p></li>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>(string) Which fitting method should be used? The default is
-the <code>"sample"</code> method (MCMC).</p></dd>
+<dd><p>(string) The fitting method to use. One of <code>"sample"</code>,
+<code>"optimize"</code>, <code>"laplace"</code>, <code>"variational"</code>, <code>"pathfinder"</code>, or
+<code>"diagnose"</code>. The default is <code>"sample"</code> (MCMC).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -116,7 +117,14 @@ wrapped in <code><a href="https://rdrr.io/r/utils/capture.output.html" class="ex
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The fitted model object returned by the selected <code>method</code>.</p>
+    <p><code>cmdstanr_example()</code> returns the fitted model object from the selected
+<code>method</code>. <code>print_example_program()</code> invisibly returns <code>NULL</code> after printing
+the Stan code.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="cmdstan_model.html">cmdstan_model()</a></code> for fitting your own Stan programs and
+<code><a href="print_stan_file.html">print_stan_file()</a></code> for displaying Stan source files</p></div>
     </div>
 
     <div class="section level2">

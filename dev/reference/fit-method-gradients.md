@@ -10,7 +10,7 @@ gradients()
 
 ## Value
 
-A list of lists. See **Examples**.
+A data frame containing the gradients for all parameters.
 
 ## See also
 

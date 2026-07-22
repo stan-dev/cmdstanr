@@ -4,16 +4,19 @@ The `$mle()` method is only available for
 [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
 objects. It returns the point estimate as a numeric vector with one
 element per variable. The returned vector does *not* include `lp__`, the
-total log probability (`target`) accumulated in the model block of the
-Stan program, which is available via the
+target log density evaluated by Stan, up to an additive constant. `lp__`
+is available via the
 [`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md)
 method and also included in the
 [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
 method.
 
-For models with constrained parameters that are fit with
-`jacobian=TRUE`, the `$mle()` method actually returns the maximum a
-posteriori (MAP) estimate (posterior mode) rather than the MLE. See
+Following CmdStan's terminology, for models with constrained parameters
+that are fit with `jacobian=TRUE`, this point estimate is called a
+maximum a posteriori (MAP) estimate rather than an MLE. More precisely,
+`jacobian=FALSE` finds a mode of the target in the constrained parameter
+space and `jacobian=TRUE` finds a mode in the unconstrained parameter
+space. See
 [`$optimize()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md)
 and the CmdStan User's Guide for more details.
 
@@ -46,12 +49,12 @@ A numeric vector. See **Examples**.
 fit <- cmdstanr_example("logistic", method = "optimize")
 fit$mle("alpha")
 #>     alpha 
-#> 0.3644674 
+#> 0.3644665 
 fit$mle("beta")
 #>    beta[1]    beta[2]    beta[3] 
-#> -0.6315813 -0.2589377  0.6484929 
+#> -0.6315625 -0.2589803  0.6484943 
 fit$mle("beta[2]")
 #>    beta[2] 
-#> -0.2589377 
+#> -0.2589803 
 # }
 ```

@@ -1,12 +1,12 @@
 # Access console output
 
-For MCMC, the `$output()` method returns the stdout and stderr of all
-chains as a list of character vectors if `id=NULL`. If the `id` argument
-is specified it instead pretty prints the console output for a single
-chain.
+For MCMC and standalone generated quantities, the `$output()` method
+returns the stdout and stderr of all chains as a list of character
+vectors if `id=NULL`. If the `id` argument is specified it instead
+pretty prints the console output for a single chain.
 
-For optimization and variational inference `$output()` just pretty
-prints the console output.
+For optimization, Laplace approximation, variational inference, and
+Pathfinder, `$output()` just pretty prints the console output.
 
 ## Usage
 
@@ -18,14 +18,14 @@ output(id = NULL)
 
 - id:
 
-  (integer) The chain id. Ignored if the model was not fit using MCMC.
+  (integer) The chain id. Ignored except for MCMC and standalone
+  generated quantities.
 
-## See also
+## Value
 
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
-[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-[`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md)
+For MCMC and standalone generated quantities with `id=NULL`, a list of
+character vectors containing the console output for each chain. In all
+other cases, `NULL` invisibly.
 
 ## Examples
 
@@ -65,13 +65,13 @@ fit_mcmc$output(1)
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 1594616579
+#>   seed = 1099664120
 #> output
-#>   file = /tmp/RtmpILyGYQ/logistic-202607220036-1-678f5b.csv
+#>   file = /tmp/RtmpR10Vum/logistic-202607220358-1-249efc.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpILyGYQ/logistic-profile-202607220036-1-659a5b.csv
+#>   profile_file = /tmp/RtmpR10Vum/logistic-profile-202607220358-1-4dc273.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -104,9 +104,9 @@ fit_mcmc$output(1)
 #> Iteration: 1900 / 2000 [ 95%]  (Sampling)
 #> Iteration: 2000 / 2000 [100%]  (Sampling)
 #> 
-#>  Elapsed Time: 0.019 seconds (Warm-up)
-#>                0.054 seconds (Sampling)
-#>                0.073 seconds (Total)
+#>  Elapsed Time: 0.02 seconds (Warm-up)
+#>                0.055 seconds (Sampling)
+#>                0.075 seconds (Total)
 out <- fit_mcmc$output()
 str(out)
 #> List of 4
@@ -137,19 +137,19 @@ fit_mle$output()
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 1099664120
+#>   seed = 1792129562
 #> output
-#>   file = /tmp/RtmpILyGYQ/logistic-202607220036-1-249f07.csv
+#>   file = /tmp/RtmpR10Vum/logistic-202607220358-1-616963.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpILyGYQ/logistic-profile-202607220036-1-4dc27e.csv
+#>   profile_file = /tmp/RtmpR10Vum/logistic-profile-202607220358-1-3c988f.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
-#> Initial log joint probability = -146.866
+#> Initial log joint probability = -124.053
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes 
-#>        7      -63.9218   0.000162409   0.000529241      0.8648      0.8648       10   
+#>        7      -63.9218   0.000438087    0.00107529           1           1       10   
 #> Optimization terminated normally: 
 #>   Convergence detected: relative gradient magnitude is below tolerance
 
@@ -175,13 +175,13 @@ fit_vb$output()
 #>   file = /home/runner/work/_temp/Library/cmdstanr/logistic.data.json
 #> init = 2 (Default)
 #> random
-#>   seed = 1792129562
+#>   seed = 1973439605
 #> output
-#>   file = /tmp/RtmpILyGYQ/logistic-202607220036-1-61696e.csv
+#>   file = /tmp/RtmpR10Vum/logistic-202607220358-1-07c4c7.csv
 #>   diagnostic_file =  (Default)
 #>   refresh = 100 (Default)
 #>   sig_figs = 8 (Default)
-#>   profile_file = /tmp/RtmpILyGYQ/logistic-profile-202607220036-1-3c989a.csv
+#>   profile_file = /tmp/RtmpR10Vum/logistic-profile-202607220358-1-58071e.csv
 #>   save_cmdstan_config = false (Default)
 #> num_threads = 1 (Default)
 #> 
@@ -193,8 +193,8 @@ fit_vb$output()
 #> 
 #> 
 #> 
-#> Gradient evaluation took 8e-06 seconds
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+#> Gradient evaluation took 7e-06 seconds
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
 #> Adjust your expectations accordingly!
 #> 
 #> 
@@ -208,9 +208,9 @@ fit_vb$output()
 #> 
 #> Begin stochastic gradient ascent.
 #>   iter             ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
-#>    100          -66.607             1.000            1.000
-#>    200          -66.405             0.502            1.000
-#>    300          -66.323             0.335            0.003   MEDIAN ELBO CONVERGED
+#>    100          -66.790             1.000            1.000
+#>    200          -66.398             0.503            1.000
+#>    300          -66.186             0.336            0.006   MEDIAN ELBO CONVERGED
 #> 
 #> Drawing a sample of size 1000 from the approximate posterior... 
 #> COMPLETED.

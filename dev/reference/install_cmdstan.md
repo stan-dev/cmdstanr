@@ -63,7 +63,7 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
   (string) The path to the directory in which to install CmdStan. The
   default is to install it in a directory called `.cmdstan` within the
-  user's home directory (i.e,
+  user's home directory (i.e.,
   `file.path(Sys.getenv("HOME"), ".cmdstan")`).
 
 - cores:
@@ -92,7 +92,8 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 - timeout:
 
   (positive real) Timeout (in seconds) for the build stage of the
-  installation.
+  installation. The default is 1200 seconds for `install_cmdstan()` and
+  600 seconds for `rebuild_cmdstan()`.
 
 - version:
 
@@ -104,7 +105,7 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
   (string) The URL for the specific CmdStan release or release candidate
   to install. See <https://github.com/stan-dev/cmdstan/releases>. The
-  URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
+  URL should point to the tarball (`.tar.gz` file) itself, e.g.,
   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
   If both `version` and `release_url` are specified then `version` will
   be used.
@@ -113,7 +114,7 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
   (string) A file path to a CmdStan release tar.gz file downloaded from
   the releases page: <https://github.com/stan-dev/cmdstan/releases>. For
-  example: `release_file=""./cmdstan-2.35.0.tar.gz"`. If `release_file`
+  example: `release_file="./cmdstan-2.35.0.tar.gz"`. If `release_file`
   is specified then both `release_url` and `version` will be ignored.
 
 - cpp_options:
@@ -125,7 +126,7 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 - check_toolchain:
 
   (logical) Should `install_cmdstan()` attempt to check that the
-  required toolchain is installed and properly configured. The default
+  required toolchain is installed and properly configured? The default
   is `TRUE`.
 
 - wsl:
@@ -141,14 +142,24 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
 - fix:
 
-  As of v1.0 this argument is deprecated and ignored and only retained
-  for compatibility.
+  Deprecated and will be removed in a future release. This argument is
+  ignored and retained only for compatibility.
 
 ## Value
 
-For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
-contents of `make/local` are returned without writing anything,
-otherwise the updated contents are returned.
+If a build fails or times out, `install_cmdstan()` issues a warning and
+invisibly returns the process result.
+
+For `cmdstan_make_local()`, if `cpp_options = NULL` then the existing
+contents of `make/local` are returned without writing anything;
+otherwise, the updated contents are returned.
+
+## See also
+
+[`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/dev/reference/set_cmdstan_path.md),
+[`cmdstan_default_install_path()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_default_install_path.md),
+and
+[`cmdstan_default_path()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_default_path.md)
 
 ## Examples
 

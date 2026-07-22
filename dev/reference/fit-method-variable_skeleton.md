@@ -22,6 +22,11 @@ variable_skeleton(transformed_parameters = TRUE, generated_quantities = TRUE)
   (logical) Whether to include generated quantities in the skeleton
   (defaults to `TRUE`).
 
+## Value
+
+A named list suitable for use as the `skeleton` argument to
+[`utils::relist()`](https://rdrr.io/r/utils/relist.html).
+
 ## See also
 
 [`log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md),
@@ -29,7 +34,6 @@ variable_skeleton(transformed_parameters = TRUE, generated_quantities = TRUE)
 [`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
 [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md),
 [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md),
-`variable_skeleton()`,
 [`hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md)
 
 ## Examples

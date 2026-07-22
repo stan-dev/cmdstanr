@@ -5,6 +5,13 @@ The `$generate_quantities()` method of a
 object runs Stan's standalone generated quantities to obtain generated
 quantities based on previously fitted parameters.
 
+Any argument left as `NULL` will default to the default value used by
+the installed version of CmdStan. See the [CmdStan User’s
+Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+default arguments. These values are also available via the
+[`$cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
+method.
+
 ## Usage
 
 ``` r
@@ -58,14 +65,15 @@ generate_quantities(
   [CmdStanPathfinder](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
   objects, generated quantities are evaluated once per approximate draw.
 
-  NOTE: if you plan on making many calls to `$generate_quantities()`
-  then the most efficient option is to pass the paths of the CmdStan CSV
-  output files (this avoids CmdStanR having to rewrite the draws
-  contained in the fitted model object to CSV each time). If you no
-  longer have the CSV files you can use
+  NOTE: CmdStan CSV paths are used directly. A
+  [CmdStanMCMC](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md)
+  object also reuses its original output files when they are available.
+  If any of those files are unavailable, CmdStanR writes the in-memory
+  draws to temporary CSV files. Other fitted model objects and posterior
+  draws objects are converted to temporary CSV files on each call. For
+  repeated calls that require this conversion, we recommend using
   [`draws_to_csv()`](https://mc-stan.org/cmdstanr/dev/reference/draws_to_csv.md)
-  once to write them and then pass the resulting file paths to
-  `$generate_quantities()` as many times as needed.
+  once and passing the resulting paths to `$generate_quantities()`.
 
 - data:
 
@@ -89,15 +97,15 @@ generate_quantities(
 
 - seed:
 
-  (positive integer(s)) A seed for the (P)RNG to pass to CmdStan. In the
-  case of multi-chain sampling the single `seed` will automatically be
-  augmented by the the run (chain) ID so that each chain uses a
-  different seed. The exception is the transformed data block, which
-  defaults to using same seed for all chains so that the same data is
-  generated for all chains if RNG functions are used. The only time
-  `seed` should be specified as a vector (one element per chain) is if
-  RNG functions are used in transformed data and the goal is to generate
-  *different* data for each chain.
+  (non-negative integer(s)) A seed for the (P)RNG to pass to CmdStan. In
+  the case of multi-chain sampling the single `seed` will automatically
+  be augmented by the run (chain) ID so that each chain uses a different
+  seed. The exception is the transformed data block, which defaults to
+  using same seed for all chains so that the same data is generated for
+  all chains if RNG functions are used. The only time `seed` should be
+  specified as a vector (one element per chain) is if RNG functions are
+  used in transformed data and the goal is to generate *different* data
+  for each chain.
 
 - output_dir:
 
@@ -125,16 +133,17 @@ generate_quantities(
 
   (string) A string to use as a prefix for the names of the output CSV
   files of CmdStan. If `NULL` (the default), the basename of the output
-  CSV files will be comprised from the model name, timestamp, and 5
-  random characters.
+  CSV files is composed of the model name, timestamp, and a
+  six-character random hexadecimal suffix.
 
 - sig_figs:
 
-  (positive integer) The number of significant figures used when storing
-  the output values. By default, CmdStan represent the output values
-  with 6 significant figures. The upper limit for `sig_figs` is 18.
-  Increasing this value will result in larger output CSV files and thus
-  an increased usage of disk space.
+  (positive integer) The number of significant figures (up to a maximum
+  of 18) to use when storing the output values. If `NULL` (the default),
+  the default from the installed CmdStan version is used. Use
+  [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
+  to check that default. Increasing this value will result in larger
+  output CSV files and thus an increased usage of disk space.
 
 - parallel_chains:
 
@@ -211,6 +220,7 @@ Other CmdStanModel methods:
 [`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),

@@ -9,11 +9,14 @@ In most cases the user does not need to explicitly call the $compile()
 method as compilation will occur when calling cmdstan_model(). However it
 is possible to set compile=FALSE in the call to cmdstan_model() and
 subsequently call the $compile() method directly.
-After compilation, the paths to the executable and the .hpp file
-containing the generated C++ code are available via the $exe_file() and
-$hpp_file() methods. The default is to create the executable in the same
-directory as the Stan program and to write the generated C++ code in a
-temporary directory. To save the C++ code to a non-temporary location use
+After compilation, the path to the executable is available via
+$exe_file(). If compilation generated C++ code
+instead of reusing an up-to-date executable, its path is also available via
+$hpp_file(). Use force_recompile=TRUE to
+force generation of the C++ code. By default, the executable is created in
+the same directory as the Stan program and the generated C++ code is
+written to a temporary directory. To save the C++ code to a non-temporary
+location use
 $save_hpp_file(dir)."><meta property="og:description" content="The $compile() method of a CmdStanModel object checks the
 syntax of the Stan program, translates the program to C++, and creates a
 compiled executable. To just check the syntax of a Stan program without
@@ -23,11 +26,14 @@ In most cases the user does not need to explicitly call the $compile()
 method as compilation will occur when calling cmdstan_model(). However it
 is possible to set compile=FALSE in the call to cmdstan_model() and
 subsequently call the $compile() method directly.
-After compilation, the paths to the executable and the .hpp file
-containing the generated C++ code are available via the $exe_file() and
-$hpp_file() methods. The default is to create the executable in the same
-directory as the Stan program and to write the generated C++ code in a
-temporary directory. To save the C++ code to a non-temporary location use
+After compilation, the path to the executable is available via
+$exe_file(). If compilation generated C++ code
+instead of reusing an up-to-date executable, its path is also available via
+$hpp_file(). Use force_recompile=TRUE to
+force generation of the C++ code. By default, the executable is created in
+the same directory as the Stan program and the generated C++ code is
+written to a temporary directory. To save the C++ code to a non-temporary
+location use
 $save_hpp_file(dir)."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -100,12 +106,15 @@ instead.</p>
 method as compilation will occur when calling <code><a href="cmdstan_model.html">cmdstan_model()</a></code>. However it
 is possible to set <code>compile=FALSE</code> in the call to <code><a href="cmdstan_model.html">cmdstan_model()</a></code> and
 subsequently call the <code>$compile()</code> method directly.</p>
-<p>After compilation, the paths to the executable and the <code>.hpp</code> file
-containing the generated C++ code are available via the <code>$exe_file()</code> and
-<code>$hpp_file()</code> methods. The default is to create the executable in the same
-directory as the Stan program and to write the generated C++ code in a
-temporary directory. To save the C++ code to a non-temporary location use
-<code>$save_hpp_file(dir)</code>.</p>
+<p>After compilation, the path to the executable is available via
+<code><a href="model-method-model-info.html">$exe_file()</a></code>. If compilation generated C++ code
+instead of reusing an up-to-date executable, its path is also available via
+<code><a href="model-method-model-info.html">$hpp_file()</a></code>. Use <code>force_recompile=TRUE</code> to
+force generation of the C++ code. By default, the executable is created in
+the same directory as the Stan program and the generated C++ code is
+written to a temporary directory. To save the C++ code to a non-temporary
+location use
+<code><a href="model-method-model-info.html">$save_hpp_file(dir)</a></code>.</p>
     </div>
 
     <div class="section level2">
@@ -138,15 +147,14 @@ output.</p></dd>
 
 <dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
 <dd><p>(string) The path to the directory in which to store the CmdStan
-executable (or <code>.hpp</code> file if using <code>$save_hpp_file()</code>). The default is the
-same location as the Stan program.</p></dd>
+executable. The default is the same location as the Stan program.</p></dd>
 
 
 <dt id="arg-pedantic">pedantic<a class="anchor" aria-label="anchor" href="#arg-pedantic"></a></dt>
 <dd><p>(logical) Should pedantic mode be turned on? The default is
 <code>FALSE</code>. Pedantic mode attempts to warn you about potential issues in your
 Stan program beyond syntax errors. For details see the <a href="https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html" class="external-link"><em>Pedantic mode</em> section</a> in
-the Stan Reference Manual. <strong>Note:</strong> to do a pedantic check for a model
+the Stan User's Guide. <strong>Note:</strong> to do a pedantic check for a model
 without compiling it or for a model that is already compiled the
 <code><a href="model-method-check_syntax.html">$check_syntax()</a></code> method can be used instead.</p></dd>
 
@@ -173,22 +181,23 @@ see the Stan case study
 <dt id="arg-stanc-options">stanc_options<a class="anchor" aria-label="anchor" href="#arg-stanc-options"></a></dt>
 <dd><p>(list) Any Stan-to-C++ transpiler options to be used
 when compiling the model. See the <strong>Examples</strong> section below as well as the
-<code>stanc</code> chapter of the CmdStan Guide for more details on available options:
-https://mc-stan.org/docs/cmdstan-guide/stanc.html.</p></dd>
+<a href="https://mc-stan.org/docs/cmdstan-guide/stanc.html" class="external-link"><code>stanc</code> chapter of the CmdStan User's Guide</a> for more details
+on available options.</p></dd>
 
 
 <dt id="arg-force-recompile">force_recompile<a class="anchor" aria-label="anchor" href="#arg-force-recompile"></a></dt>
-<dd><p>(logical) Should the model be recompiled even if was
-not modified since last compiled. The default is <code>FALSE</code>. Can also be set
-via a global <code>cmdstanr_force_recompile</code> option.</p></dd>
+<dd><p>(logical) Should the model be recompiled even if it
+has not been modified since it was last compiled? The default is <code>FALSE</code>.
+Can also be set via a global <code>cmdstanr_force_recompile</code> option.</p></dd>
 
 
 <dt id="arg-compile-model-methods">compile_model_methods<a class="anchor" aria-label="anchor" href="#arg-compile-model-methods"></a></dt>
 <dd><p>(logical) Compile additional model methods
-(<code><a href="fit-method-log_prob.html">log_prob()</a></code>, <code><a href="fit-method-grad_log_prob.html">grad_log_prob()</a></code>, <code><a href="fit-method-constrain_variables.html">constrain_variables()</a></code>,
-<code><a href="fit-method-unconstrain_variables.html">unconstrain_variables()</a></code>). Note: the compiled model-method bindings are
-not preserved in a usable form when saving a model object. If you plan to
-save and reload the model object before model fitting, we recommend instead
+(<code><a href="fit-method-log_prob.html">log_prob()</a></code>, <code><a href="fit-method-grad_log_prob.html">grad_log_prob()</a></code>, <code><a href="fit-method-hessian.html">hessian()</a></code>, <code><a href="fit-method-constrain_variables.html">constrain_variables()</a></code>,
+<code><a href="fit-method-unconstrain_variables.html">unconstrain_variables()</a></code>, <code><a href="fit-method-unconstrain_draws.html">unconstrain_draws()</a></code>, and
+<code><a href="fit-method-variable_skeleton.html">variable_skeleton()</a></code>). Note: the compiled model-method bindings are not
+preserved in a usable form when saving a model object. If you plan to save
+and reload the model object before model fitting, we recommend instead
 waiting to compile the model methods until after fitting via
 <code><a href="fit-method-init_model_methods.html">fit$init_model_methods()</a></code>.</p></dd>
 
@@ -211,13 +220,16 @@ compilation, but skip the actual C++ compilation. Used to speedup tests.</p></dd
     <p>The <code>$compile()</code> method is called for its side effect of creating the
 executable and adding its path to the <code><a href="CmdStanModel.html">CmdStanModel</a></code> object, but it also
 returns the <code><a href="CmdStanModel.html">CmdStanModel</a></code> object invisibly.</p>
-<p>After compilation, the <code>$exe_file()</code>, <code>$hpp_file()</code>, and <code>$save_hpp_file()</code>
-methods can be used and return file paths.</p>
+<p>The <code><a href="model-method-model-info.html">$exe_file()</a></code> method returns the executable
+path. If compilation generated C++ code, the
+<code><a href="model-method-model-info.html">$hpp_file()</a></code> and
+<code><a href="model-method-model-info.html">$save_hpp_file()</a></code> methods can also be used. See
+their linked documentation for return values.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>The <code><a href="model-method-check_syntax.html">$check_syntax()</a></code> method to check
-Stan syntax or enable pedantic model without compiling.</p>
+Stan syntax or enable pedantic mode without compiling.</p>
 <p>The CmdStanR website
 (<a href="https://mc-stan.org/cmdstanr/">mc-stan.org/cmdstanr</a>) for online
 documentation and tutorials.</p>
@@ -231,6 +243,7 @@ documentation and tutorials.</p>
 <code><a href="model-method-format.html">model-method-format</a></code>,
 <code><a href="model-method-generate-quantities.html">model-method-generate-quantities</a></code>,
 <code><a href="model-method-laplace.html">model-method-laplace</a></code>,
+<code><a href="model-method-model-info.html">model-method-model-info</a></code>,
 <code><a href="model-method-optimize.html">model-method-optimize</a></code>,
 <code><a href="model-method-pathfinder.html">model-method-pathfinder</a></code>,
 <code><a href="model-method-sample.html">model-method-sample</a></code>,
@@ -266,7 +279,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="st">}</span></span></span>
 <span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file_pedantic</span>, pedantic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/RtmpILyGYQ/model-1bd7494c5435.stan', line 6, column 2 to column 7:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/RtmpR10Vum/model-1bcc4ee81333.stan', line 6, column 2 to column 7:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     Parameter sigma is given a exponential distribution, which has strictly</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     positive support, but sigma was not constrained to be strictly positive.</span>
 <span class="r-in"><span></span></span>

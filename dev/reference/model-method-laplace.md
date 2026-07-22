@@ -3,17 +3,24 @@
 The `$laplace()` method of a
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
 object produces a sample from a normal approximation centered at the
-mode of a distribution in the unconstrained space. If the mode is a
-maximum a posteriori (MAP) estimate, the samples provide an estimate of
-the mean and standard deviation of the posterior distribution. If the
-mode is a maximum likelihood estimate (MLE), the sample provides an
-estimate of the standard error of the likelihood. Whether the mode is
-the MAP or MLE depends on the value of the `jacobian` argument when
-running optimization. See the [CmdStan User’s
-Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details.
+mode of a distribution in the unconstrained space. Following CmdStan's
+terminology, if the mode is a maximum a posteriori (MAP) estimate, the
+samples provide an estimate of the mean and standard deviation of the
+posterior distribution. If the mode is a maximum likelihood estimate
+(MLE), the sample provides an estimate of the standard error of the
+likelihood. Whether the mode is called MAP or MLE depends on the value
+of the `jacobian` argument when running optimization. This terminology
+does not imply that `jacobian` controls whether prior terms are
+included; it controls the parameterization of the density, while the
+Stan program determines the contents of the target. See the [CmdStan
+User’s Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details.
 
 Any argument left as `NULL` will default to the default value used by
-the installed version of CmdStan.
+the installed version of CmdStan. See the [CmdStan User’s
+Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+default arguments. These values are also available via the
+[`$cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
+method.
 
 ## Usage
 
@@ -23,7 +30,6 @@ laplace(
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  save_latent_dynamics = FALSE,
   output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
@@ -63,15 +69,15 @@ laplace(
 
 - seed:
 
-  (positive integer(s)) A seed for the (P)RNG to pass to CmdStan. In the
-  case of multi-chain sampling the single `seed` will automatically be
-  augmented by the the run (chain) ID so that each chain uses a
-  different seed. The exception is the transformed data block, which
-  defaults to using same seed for all chains so that the same data is
-  generated for all chains if RNG functions are used. The only time
-  `seed` should be specified as a vector (one element per chain) is if
-  RNG functions are used in transformed data and the goal is to generate
-  *different* data for each chain.
+  (non-negative integer(s)) A seed for the (P)RNG to pass to CmdStan. In
+  the case of multi-chain sampling the single `seed` will automatically
+  be augmented by the run (chain) ID so that each chain uses a different
+  seed. The exception is the transformed data block, which defaults to
+  using same seed for all chains so that the same data is generated for
+  all chains if RNG functions are used. The only time `seed` should be
+  specified as a vector (one element per chain) is if RNG functions are
+  used in transformed data and the goal is to generate *different* data
+  for each chain.
 
 - refresh:
 
@@ -84,10 +90,11 @@ laplace(
   declared in the parameters block of the Stan program. One of the
   following:
 
-  - A real number `x>0`. This initializes *all* parameters randomly
-    between `[-x,x]` on the *unconstrained* parameter space.
+  - A real number `x > 0`. This initializes *all* parameters randomly
+    between `[-x, x]` on the *unconstrained* parameter space.
 
-  - The number `0`. This initializes *all* parameters to `0`.
+  - The number `0`. This initializes *all* parameters to `0` on the
+    *unconstrained* parameter space.
 
   - A character vector of paths to JSON or Rdump files containing
     initial values for all or some parameters. For MCMC and Pathfinder,
@@ -159,13 +166,9 @@ laplace(
     requested chains/paths, draws are selected uniformly without
     replacement. If the draws object's parameters are only a subset of
     the model parameters then the other parameters will be drawn by
-    Stan's default initialization. The fit object must have at least
+    Stan's default initialization. The draws object must have at least
     some parameters that are the same name and dimensions as the current
     Stan model.
-
-- save_latent_dynamics:
-
-  Ignored for this method.
 
 - output_dir:
 
@@ -193,16 +196,17 @@ laplace(
 
   (string) A string to use as a prefix for the names of the output CSV
   files of CmdStan. If `NULL` (the default), the basename of the output
-  CSV files will be comprised from the model name, timestamp, and 5
-  random characters.
+  CSV files is composed of the model name, timestamp, and a
+  six-character random hexadecimal suffix.
 
 - sig_figs:
 
-  (positive integer) The number of significant figures used when storing
-  the output values. By default, CmdStan represent the output values
-  with 6 significant figures. The upper limit for `sig_figs` is 18.
-  Increasing this value will result in larger output CSV files and thus
-  an increased usage of disk space.
+  (positive integer) The number of significant figures (up to a maximum
+  of 18) to use when storing the output values. If `NULL` (the default),
+  the default from the installed CmdStan version is used. Use
+  [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
+  to check that default. Increasing this value will result in larger
+  output CSV files and thus an increased usage of disk space.
 
 - threads:
 
@@ -254,8 +258,10 @@ laplace(
   Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
   section of the CmdStan User's Guide for more details. If `mode` is not
   `NULL` then the value of `jacobian` must match the value used when
-  optimization was originally run. If `mode` is `NULL` then the value of
-  `jacobian` specified here is used when running optimization.
+  optimization was originally run so the mode and the Laplace
+  approximation use the same target density. If `mode` is `NULL` then
+  the value of `jacobian` specified here is used when running
+  optimization.
 
 - draws:
 
@@ -316,6 +322,7 @@ Other CmdStanModel methods:
 [`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
@@ -344,9 +351,9 @@ mod$print()
 
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit_mode <- mod$optimize(data = stan_data, jacobian = TRUE)
-#> Initial log joint probability = -7.29048 
+#> Initial log joint probability = -7.12639 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        5      -6.74802   0.000375213    5.2166e-07           1           1        8    
+#>        4      -6.74802    0.00348588   7.79186e-05           1           1        7    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -369,15 +376,15 @@ fit_laplace$summary()
 #> # A tibble: 3 × 7
 #>   variable      mean median    sd   mad     q5      q95
 #>   <chr>        <dbl>  <dbl> <dbl> <dbl>  <dbl>    <dbl>
-#> 1 lp__        -7.21  -6.97  0.661 0.299 -8.43  -6.75   
-#> 2 lp_approx__ -0.475 -0.216 0.679 0.300 -1.81  -0.00226
-#> 3 theta        0.265  0.248 0.119 0.119  0.102  0.490  
+#> 1 lp__        -7.22  -6.96  0.679 0.287 -8.46  -6.75   
+#> 2 lp_approx__ -0.477 -0.219 0.666 0.300 -1.79  -0.00196
+#> 3 theta        0.267  0.247 0.121 0.113  0.101  0.500  
 
 # if mode isn't specified optimize is run internally first
 fit_laplace <- mod$laplace(data = stan_data)
-#> Initial log joint probability = -7.57147 
+#> Initial log joint probability = -6.74804 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        5      -6.74802   0.000128922   5.69153e-07           1           1        8    
+#>        2      -6.74802     0.0031365   7.14072e-06           1           1        5    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -399,9 +406,9 @@ fit_laplace$summary()
 #> # A tibble: 3 × 7
 #>   variable      mean median    sd   mad      q5      q95
 #>   <chr>        <dbl>  <dbl> <dbl> <dbl>   <dbl>    <dbl>
-#> 1 lp__        -7.28  -7.00  0.776 0.342 -8.67   -6.75   
-#> 2 lp_approx__ -0.542 -0.259 0.768 0.345 -2.10   -0.00282
-#> 3 theta        0.271  0.254 0.129 0.129  0.0967  0.507  
+#> 1 lp__        -7.25  -6.97  0.721 0.297 -8.70   -6.75   
+#> 2 lp_approx__ -0.515 -0.223 0.724 0.300 -2.00   -0.00218
+#> 3 theta        0.265  0.240 0.125 0.120  0.0978  0.500  
 
 # plot approximate posterior
 bayesplot::mcmc_hist(fit_laplace$draws("theta"))

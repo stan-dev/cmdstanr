@@ -19,6 +19,10 @@ register_knitr_engine(override = TRUE)
   (logical) Override knitr's built-in, RStan-based engine for Stan? The
   default is `TRUE`. See **Details**.
 
+## Value
+
+A named list containing the registered engine, invisibly.
+
 ## Details
 
 If `override = TRUE` (default), this registers CmdStanR's knitr engine
@@ -52,3 +56,7 @@ the `cmdstan` engine with `override = FALSE`.
 
 - [knitr's built-in Stan language
   engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
+
+## See also
+
+[`eng_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/eng_cmdstan.md)

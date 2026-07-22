@@ -1,14 +1,24 @@
 # Save output and data files
 
-All fitted model objects have methods for saving (moving to a specified
-location) the files created by CmdStanR to hold CmdStan output csv files
-and input data files. These methods move the files from their current
-location (possibly the temporary directory) to a user-specified
-location. **The paths stored in the fitted model object will also be
-updated to point to the new file locations.**
+Fitted model objects returned directly by a
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
+method have methods for saving (moving to a specified location) files
+created by CmdStanR, including CmdStan output CSV files and input data
+files. These methods move the files from their current location
+(possibly the temporary directory) to a user-specified location. **The
+paths stored in the fitted model object will also be updated to point to
+the new file locations.**
 
 The versions without the `save_` prefix (e.g., `$output_files()`) return
 the current file paths without moving any files.
+
+Objects created by
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+support `$output_files()` but not the other methods documented on this
+page because the original CmdStan run is unavailable. See
+**Reconstructed fitted model objects** in the
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+documentation for details.
 
 ## Usage
 
@@ -51,7 +61,8 @@ metric_files(include_failed = FALSE)
 
 - basename:
 
-  (string) Base filename to use. See **Details**.
+  (string) Base filename to use. If `NULL` (the default), the model name
+  is used. See **Details**.
 
 - timestamp:
 
@@ -60,20 +71,21 @@ metric_files(include_failed = FALSE)
 
 - random:
 
-  (logical) Should random alphanumeric characters be added to the end of
+  (logical) Should a six-character random hexadecimal suffix be added to
   the file name(s)? Defaults to `TRUE`. See **Details**.
 
 - include_failed:
 
   (logical) Should CmdStan runs that failed also be included? The
-  default is `FALSE.`
+  default is `FALSE`.
 
 ## Value
 
 The `$save_*` methods print a message with the new file paths and
-(invisibly) return a character vector of the new paths (or `NA` for any
-that couldn't be copied). They also have the side effect of setting the
-internal paths in the fitted model object to the new paths.
+(invisibly) return a character vector of the new paths. If any file
+cannot be copied then the method errors and no original files are
+removed. The methods also have the side effect of setting the internal
+paths in the fitted model object to the new paths.
 
 The methods *without* the `save_` prefix return character vectors of
 file paths without moving any files.
@@ -81,42 +93,40 @@ file paths without moving any files.
 ## Details
 
 For `$save_output_files()` the files moved to `dir` will have names of
-the form `basename-timestamp-id-random`, where
+the form `basename-timestamp-id-random.csv`, where
 
-- `basename` is the user's provided `basename` argument;
+- `basename` is the user's provided `basename` argument or, if `NULL`,
+  the model name;
 
 - `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
 
 - `id` is the MCMC chain id (or `1` for non MCMC);
 
-- `random` contains six random alphanumeric characters;
+- `random` contains six random hexadecimal characters.
 
-For `$save_latent_dynamics_files()` everything is the same as for
-`$save_output_files()` except `"-diagnostic-"` is included in the new
-file name after `basename`.
+`$save_latent_dynamics_files()` uses the pattern
+`basename-diagnostic-timestamp-id-random.csv`. The
+`$latent_dynamics_files()` and `$save_latent_dynamics_files()` methods
+apply only to
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md)
+and
+[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md)
+objects created with `save_latent_dynamics = TRUE`.
 
-For `$save_profile_files()` everything is the same as for
-`$save_output_files()` except `"-profile-"` is included in the new file
-name after `basename`.
+`$save_profile_files()` uses the pattern
+`basename-profile-timestamp-id-random.csv`.
 
-For `$save_metric_files()` everything is the same as for
-`$save_output_files()` except `"-metric-"` is included in the new file
-name after `basename`. Make sure to set `save_metric = TRUE` when
-fitting the model.
+`$save_metric_files()` uses the pattern
+`basename-metric-timestamp-id-random.json`. Make sure to set
+`save_metric = TRUE` when fitting the model.
 
-For `$save_config_files()` everything is the same as for
-`$save_output_files()` except `"-config-"` is included in the new file
-name after `basename`.
+`$save_config_files()` uses the pattern
+`basename-config-timestamp-id-random.json`. Make sure to set
+`save_cmdstan_config = TRUE` when fitting the model.
 
-For `$save_data_file()` no `id` is included in the file name because
-even with multiple MCMC chains the data file is the same.
-
-## See also
-
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
-[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-[`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md)
+`$save_data_file()` uses the pattern `basename-timestamp-random.ext`,
+where `.ext` is the original data file extension. No `id` is included
+because even with multiple MCMC chains the data file is the same.
 
 ## Examples
 
@@ -124,10 +134,10 @@ even with multiple MCMC chains the data file is the same.
 # \dontrun{
 fit <- cmdstanr_example()
 fit$output_files()
-#> [1] "/tmp/RtmpILyGYQ/logistic-202607220036-1-6357e5.csv"
-#> [2] "/tmp/RtmpILyGYQ/logistic-202607220036-2-6357e5.csv"
-#> [3] "/tmp/RtmpILyGYQ/logistic-202607220036-3-6357e5.csv"
-#> [4] "/tmp/RtmpILyGYQ/logistic-202607220036-4-6357e5.csv"
+#> [1] "/tmp/RtmpR10Vum/logistic-202607220358-1-749b08.csv"
+#> [2] "/tmp/RtmpR10Vum/logistic-202607220358-2-749b08.csv"
+#> [3] "/tmp/RtmpR10Vum/logistic-202607220358-3-749b08.csv"
+#> [4] "/tmp/RtmpR10Vum/logistic-202607220358-4-749b08.csv"
 fit$data_file()
 #> [1] "/home/runner/work/_temp/Library/cmdstanr/logistic.data.json"
 
@@ -135,21 +145,21 @@ fit$data_file()
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "banana")
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpILyGYQ/banana-202607220036-1-0aefe6.csv
-#> - /tmp/RtmpILyGYQ/banana-202607220036-2-0aefe6.csv
-#> - /tmp/RtmpILyGYQ/banana-202607220036-3-0aefe6.csv
-#> - /tmp/RtmpILyGYQ/banana-202607220036-4-0aefe6.csv
+#> - /tmp/RtmpR10Vum/banana-202607220358-1-5468bf.csv
+#> - /tmp/RtmpR10Vum/banana-202607220358-2-5468bf.csv
+#> - /tmp/RtmpR10Vum/banana-202607220358-3-5468bf.csv
+#> - /tmp/RtmpR10Vum/banana-202607220358-4-5468bf.csv
 fit$save_output_files(dir = my_dir, basename = "tomato", timestamp = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpILyGYQ/tomato-1-507f26.csv
-#> - /tmp/RtmpILyGYQ/tomato-2-507f26.csv
-#> - /tmp/RtmpILyGYQ/tomato-3-507f26.csv
-#> - /tmp/RtmpILyGYQ/tomato-4-507f26.csv
+#> - /tmp/RtmpR10Vum/tomato-1-1f3dbe.csv
+#> - /tmp/RtmpR10Vum/tomato-2-1f3dbe.csv
+#> - /tmp/RtmpR10Vum/tomato-3-1f3dbe.csv
+#> - /tmp/RtmpR10Vum/tomato-4-1f3dbe.csv
 fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpILyGYQ/lettuce-1.csv
-#> - /tmp/RtmpILyGYQ/lettuce-2.csv
-#> - /tmp/RtmpILyGYQ/lettuce-3.csv
-#> - /tmp/RtmpILyGYQ/lettuce-4.csv
+#> - /tmp/RtmpR10Vum/lettuce-1.csv
+#> - /tmp/RtmpR10Vum/lettuce-2.csv
+#> - /tmp/RtmpR10Vum/lettuce-3.csv
+#> - /tmp/RtmpR10Vum/lettuce-4.csv
 # }
 ```

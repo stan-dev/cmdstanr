@@ -83,26 +83,28 @@ algorithms from <span style="R">R</span> via CmdStan, the command line interface
 <h3 id="different-ways-of-interfacing-with-stan-s-c-">Different ways of interfacing with Stan’s C++<a class="anchor" aria-label="anchor" href="#different-ways-of-interfacing-with-stan-s-c-"></a></h3>
 
 
-<p>The RStan interface (<a href="https://mc-stan.org/rstan/" class="external-link"><strong>rstan</strong></a> package) is
-an in-memory interface to Stan and relies on R packages like <strong>Rcpp</strong> to
-call C++ code from R. On the other hand, the CmdStanR interface does not
-directly call any C++ code from R, instead relying on the CmdStan
-interface behind the scenes for compilation, running algorithms, and
-writing results to output files.</p>
+<p>The RStan interface (<a href="https://mc-stan.org/rstan/" class="external-link"><strong>rstan</strong></a> package)
+provides its core functionality through an in-memory interface to Stan
+and relies on R packages such as <strong>Rcpp</strong> to call C++ code from R.
+CmdStanR’s core model compilation and inference workflow instead runs
+CmdStan in external processes and reads the resulting output files. Only
+optional CmdStanR features, such as <code>$expose_functions()</code> and the
+additional model methods, use <strong>Rcpp</strong> to call compiled C++ code
+directly from R.</p>
 </div>
 
 <div class="section">
 <h3 id="advantages-of-rstan">Advantages of RStan<a class="anchor" aria-label="anchor" href="#advantages-of-rstan"></a></h3>
 
-<ul><li><p>Allows other developers to distribute R packages with <em>pre-compiled</em>
-Stan programs (like <strong>rstanarm</strong>) on CRAN, without requiring that
-users have a C++ toolchain installed (see
-<a href="https://mc-stan.org/rstantools/" class="external-link">https://mc-stan.org/rstantools/</a> for details). <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr">Developing using CmdStanR</a>
-describes how CRAN packages can do something similar using CmdStanR,
-however users are still required to have a working C++ toolchain
-because models are compiled once at installation time rather than on
-CRAN’s servers.</p></li>
-<li><p>CRAN binaries available for Mac and Windows.</p></li>
+<ul><li><p>CRAN provides binary versions of RStan for Windows and macOS.
+RStan-based packages can also include precompiled Stan models in their
+binary packages, which allows users to run the models without a local
+C++ toolchain.</p>
+<p>CmdStanR-based packages can use
+<a href="https://wlandau.github.io/instantiate/" class="external-link"><code>instantiate</code></a> to compile
+models once during package installation. Because CRAN’s build machines
+do not provide CmdStan, packages using this workflow currently need to
+be installed from source with CmdStan and a C++ toolchain available.</p></li>
 <li><p>Avoids use of R6 classes, which may result in more familiar syntax for
 many R users.</p></li>
 </ul></div>
@@ -110,18 +112,18 @@ many R users.</p></li>
 <div class="section">
 <h3 id="advantages-of-cmdstanr">Advantages of CmdStanR<a class="anchor" aria-label="anchor" href="#advantages-of-cmdstanr"></a></h3>
 
-<ul><li><p>Compatible with the latest versions of Stan. Keeping up with Stan
-releases is complicated for RStan, often requiring non-trivial changes
-to the <strong>rstan</strong> package and new CRAN releases of both <strong>rstan</strong> and
-<strong>StanHeaders</strong>. With CmdStanR the latest improvements in Stan are
-available from R immediately after updating CmdStan using
-<code><a href="install_cmdstan.html">cmdstanr::install_cmdstan()</a></code>.</p></li>
-<li><p>Running Stan via external processes results in fewer unexpected
-crashes, especially in RStudio.</p></li>
-<li><p>Less memory overhead.</p></li>
-<li><p>More permissive license. RStan uses the GPL-3 license while the
-license for CmdStanR is BSD-3, which is a bit more permissive and is
-the same license used for CmdStan and the Stan C++ source code.</p></li>
+<ul><li><p>CmdStan is installed separately from CmdStanR, so users can often
+update to a new Stan release by updating CmdStan without waiting for a
+new CmdStanR release.</p></li>
+<li><p>Running CmdStan in external processes isolates inference from the R
+process, reducing the risk that a failure during inference terminates
+the R session.</p></li>
+<li><p>Potentially lower memory use in the R session. CmdStan writes results
+to CSV files, and CmdStanR loads draws into R only when requested.
+This can avoid retaining all output in memory during fitting.</p></li>
+<li><p>More permissive license. RStan uses the GPL (&gt;= 3) license while the
+license for CmdStanR is BSD 3-clause, which is a bit more permissive
+and is the same license used for CmdStan and the Stan C++ source code.</p></li>
 </ul></div>
 
     </div>
@@ -274,7 +276,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.1 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use 'posterior' package for summaries</span></span></span>
@@ -440,7 +442,7 @@ documentation and tutorials.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.</span>
 <span class="r-plt img"><img src="cmdstanr-package-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Run 'pathfinder' method, a new alternative to the variational method</span></span></span>
+<span class="r-in"><span><span class="co"># Run the Pathfinder variational inference method</span></span></span>
 <span class="r-in"><span><span class="va">fit_pf</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">pathfinder</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] :Initial log joint density = -18.273334 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
@@ -533,7 +535,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>
@@ -552,7 +554,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span><span class="op">$</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
@@ -584,7 +586,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_optim_w_init_list</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>

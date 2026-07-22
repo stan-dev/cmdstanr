@@ -1,9 +1,9 @@
 # Coercion methods for CmdStan objects
 
 These are generic functions intended to primarily be used by developers
-of packages that interface with on CmdStanR. Developers can define
-methods on top of these generics to coerce objects into CmdStanR's
-fitted model objects.
+of packages that interface with CmdStanR. Developers can define methods
+on top of these generics to coerce objects into CmdStanR's fitted model
+objects.
 
 ## Usage
 
@@ -32,3 +32,20 @@ as.CmdStanDiagnose(object, ...)
 - ...:
 
   Additional arguments to pass to methods.
+
+## Value
+
+An object of the CmdStan fitted-model class corresponding to the
+generic, as returned by the dispatched method.
+
+## See also
+
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md),
+[CmdStanMCMC](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
+[CmdStanMLE](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
+[CmdStanLaplace](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md),
+[CmdStanVB](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
+[CmdStanPathfinder](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md),
+[CmdStanGQ](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md),
+and
+[CmdStanDiagnose](https://mc-stan.org/cmdstanr/dev/reference/CmdStanDiagnose.md)

@@ -39,11 +39,22 @@ as_draws(x, ...)
   [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
   method (e.g., `variables`, `inc_warmup`, etc.).
 
+## Value
+
+A `posterior::draws_*` object. The default format depends on the fitted
+model class and can be changed using arguments passed through `...`.
+
 ## Details
 
 To subset iterations, chains, or draws, use the
 [`posterior::subset_draws()`](https://mc-stan.org/posterior/reference/subset_draws.html)
 method after creating the `draws` object.
+
+## See also
+
+[`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
+and
+[`posterior::as_draws()`](https://mc-stan.org/posterior/reference/draws.html)
 
 ## Examples
 

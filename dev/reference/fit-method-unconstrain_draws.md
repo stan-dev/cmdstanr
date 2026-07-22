@@ -1,11 +1,9 @@
 # Transform all parameter draws to the unconstrained scale
 
 The `$unconstrain_draws()` method transforms all parameter draws to the
-unconstrained scale. The method returns a list for each chain,
-containing the parameter values from each iteration on the unconstrained
-scale. If called with no arguments, then the draws within the fit object
-are unconstrained. Alternatively, either an existing draws object or a
-character vector of paths to CSV files can be passed.
+unconstrained scale. If called with no arguments, then the draws within
+the fit object are unconstrained. Alternatively, either an existing
+draws object or a character vector of paths to CSV files can be passed.
 
 ## Usage
 
@@ -32,11 +30,18 @@ unconstrain_draws(
 - format:
 
   (string) The format of the returned draws. Must be a valid format from
-  the posterior package.
+  the posterior package. Defaults to
+  `getOption("cmdstanr_draws_format", "draws_array")`.
 
 - inc_warmup:
 
-  (logical) Should warmup draws be included? Defaults to `FALSE`.
+  (logical) Should warmup draws be included when using draws from the
+  fit object or CSV files? Defaults to `FALSE`. If `draws` is supplied,
+  `inc_warmup` is ignored with a message.
+
+## Value
+
+A `posterior::draws_*` object in the format specified by `format`.
 
 ## See also
 
@@ -44,7 +49,6 @@ unconstrain_draws(
 [`grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md),
 [`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
 [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md),
-`unconstrain_draws()`,
 [`variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md),
 [`hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md)
 

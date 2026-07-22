@@ -81,11 +81,15 @@ fitting the model using Stan's algorithms.</p>
     <p><code>CmdStanModel</code> objects have the following associated
 methods, many of which have their own (linked) documentation pages:</p><div class="section">
 <h3 id="stan-code">Stan code<a class="anchor" aria-label="anchor" href="#stan-code"></a></h3>
-<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code>$stan_file()</code></td><td>Return the file path to the Stan program.</td></tr><tr><td><code>$code()</code></td><td>Return Stan program as a character vector.</td></tr><tr><td><code>$print()</code></td><td>Print readable version of Stan program.</td></tr><tr><td><code><a href="model-method-check_syntax.html">$check_syntax()</a></code></td><td>Check Stan syntax without having to compile.</td></tr><tr><td><code><a href="model-method-format.html">$format()</a></code></td><td>Format and canonicalize the Stan model code.</td></tr></table></div>
+<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code><a href="model-method-model-info.html">$stan_file()</a></code></td><td>Return the file path to the Stan program.</td></tr><tr><td><code><a href="model-method-model-info.html">$has_stan_file()</a></code></td><td>Check whether the model was created with a Stan file.</td></tr><tr><td><code><a href="model-method-model-info.html">$code()</a></code></td><td>Return Stan program as a character vector.</td></tr><tr><td><code><a href="model-method-model-info.html">$print()</a></code></td><td>Print readable version of Stan program.</td></tr><tr><td><code><a href="model-method-check_syntax.html">$check_syntax()</a></code></td><td>Check Stan syntax without having to compile.</td></tr><tr><td><code><a href="model-method-format.html">$format()</a></code></td><td>Format and canonicalize the Stan model code.</td></tr></table></div>
+
+<div class="section">
+<h3 id="model-information">Model information<a class="anchor" aria-label="anchor" href="#model-information"></a></h3>
+<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code><a href="model-method-model-info.html">$model_name()</a></code></td><td>Return the model name.</td></tr><tr><td><code><a href="model-method-model-info.html">$include_paths()</a></code></td><td>Return the Stan include paths.</td></tr><tr><td><code><a href="model-method-model-info.html">$cmdstan_version()</a></code></td><td>Return the CmdStan version associated with the model.</td></tr><tr><td><code><a href="model-method-model-info.html">$cpp_options()</a></code></td><td>Return the C++ options associated with the model.</td></tr></table></div>
 
 <div class="section">
 <h3 id="compilation">Compilation<a class="anchor" aria-label="anchor" href="#compilation"></a></h3>
-<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code><a href="model-method-compile.html">$compile()</a></code></td><td>Compile Stan program.</td></tr><tr><td><code><a href="model-method-compile.html">$exe_file()</a></code></td><td>Return the file path to the compiled executable.</td></tr><tr><td><code><a href="model-method-compile.html">$hpp_file()</a></code></td><td>Return the file path to the <code>.hpp</code> file containing the generated C++ code.</td></tr><tr><td><code><a href="model-method-compile.html">$save_hpp_file()</a></code></td><td>Save the <code>.hpp</code> file containing the generated C++ code.</td></tr><tr><td><code><a href="model-method-expose_functions.html">$expose_functions()</a></code></td><td>Expose Stan functions for use in R.</td></tr><tr><td><code><a href="model-method-cmdstan_defaults.html">$cmdstan_defaults()</a></code></td><td>Get CmdStan default argument values for a method.</td></tr></table></div>
+<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code><a href="model-method-compile.html">$compile()</a></code></td><td>Compile Stan program.</td></tr><tr><td><code><a href="model-method-model-info.html">$exe_file()</a></code></td><td>Return or set the file path to the compiled executable.</td></tr><tr><td><code><a href="model-method-model-info.html">$hpp_file()</a></code></td><td>Return the file path to the <code>.hpp</code> file containing the generated C++ code.</td></tr><tr><td><code><a href="model-method-model-info.html">$save_hpp_file()</a></code></td><td>Save the <code>.hpp</code> file containing the generated C++ code.</td></tr><tr><td><code><a href="model-method-expose_functions.html">$expose_functions()</a></code></td><td>Expose Stan functions for use in R.</td></tr><tr><td><code><a href="model-method-cmdstan_defaults.html">$cmdstan_defaults()</a></code></td><td>Get CmdStan default argument values for a method.</td></tr></table></div>
 
 <div class="section">
 <h3 id="diagnostics">Diagnostics<a class="anchor" aria-label="anchor" href="#diagnostics"></a></h3>
@@ -93,7 +97,7 @@ methods, many of which have their own (linked) documentation pages:</p><div clas
 
 <div class="section">
 <h3 id="model-fitting">Model fitting<a class="anchor" aria-label="anchor" href="#model-fitting"></a></h3>
-<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code><a href="model-method-sample.html">$sample()</a></code></td><td>Run CmdStan's <code>"sample"</code> method, return <code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code> object.</td></tr><tr><td><code><a href="model-method-sample_mpi.html">$sample_mpi()</a></code></td><td>Run CmdStan's <code>"sample"</code> method with <a href="https://mc-stan.org/math/md_doxygen_2parallelism__support_2mpi__parallelism.html" class="external-link">MPI</a>, return <code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code> object.</td></tr><tr><td><code><a href="model-method-optimize.html">$optimize()</a></code></td><td>Run CmdStan's <code>"optimize"</code> method, return <code><a href="CmdStanMLE.html">CmdStanMLE</a></code> object.</td></tr><tr><td><code><a href="model-method-variational.html">$variational()</a></code></td><td>Run CmdStan's <code>"variational"</code> method, return <code><a href="CmdStanVB.html">CmdStanVB</a></code> object.</td></tr><tr><td><code><a href="model-method-pathfinder.html">$pathfinder()</a></code></td><td>Run CmdStan's <code>"pathfinder"</code> method, return <code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code> object.</td></tr><tr><td><code><a href="model-method-generate-quantities.html">$generate_quantities()</a></code></td><td>Run CmdStan's <code>"generate quantities"</code> method, return <code><a href="CmdStanGQ.html">CmdStanGQ</a></code> object.</td></tr></table></div>
+<table class="table table"><tr><td><strong>Method</strong></td><td><strong>Description</strong></td></tr><tr><td><code><a href="model-method-sample.html">$sample()</a></code></td><td>Run CmdStan's <code>"sample"</code> method, return <code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code> object.</td></tr><tr><td><code><a href="model-method-sample_mpi.html">$sample_mpi()</a></code></td><td>Run CmdStan's <code>"sample"</code> method with <a href="https://mc-stan.org/math/md_doxygen_2parallelism__support_2mpi__parallelism.html" class="external-link">MPI</a>, return <code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code> object.</td></tr><tr><td><code><a href="model-method-optimize.html">$optimize()</a></code></td><td>Run CmdStan's <code>"optimize"</code> method, return <code><a href="CmdStanMLE.html">CmdStanMLE</a></code> object.</td></tr><tr><td><code><a href="model-method-laplace.html">$laplace()</a></code></td><td>Run CmdStan's <code>"laplace"</code> method, return <code><a href="CmdStanLaplace.html">CmdStanLaplace</a></code> object.</td></tr><tr><td><code><a href="model-method-variational.html">$variational()</a></code></td><td>Run CmdStan's <code>"variational"</code> method, return <code><a href="CmdStanVB.html">CmdStanVB</a></code> object.</td></tr><tr><td><code><a href="model-method-pathfinder.html">$pathfinder()</a></code></td><td>Run CmdStan's <code>"pathfinder"</code> method, return <code><a href="CmdStanPathfinder.html">CmdStanPathfinder</a></code> object.</td></tr><tr><td><code><a href="model-method-generate-quantities.html">$generate_quantities()</a></code></td><td>Run CmdStan's <code>"generate quantities"</code> method, return <code><a href="CmdStanGQ.html">CmdStanGQ</a></code> object.</td></tr></table></div>
 
     </div>
     <div class="section level2">
@@ -224,7 +228,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.1 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use 'posterior' package for summaries</span></span></span>
@@ -304,7 +308,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        6      -5.00402   0.000246518   8.73164e-07           1           1        9    </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Optimization terminated normally:  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Convergence detected: relative gradient magnitude is below tolerance </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.1 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Finished in  0.3 seconds.</span>
 <span class="r-in"><span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 2</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable estimate</span>
@@ -390,7 +394,7 @@ documentation and tutorials.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.</span>
 <span class="r-plt img"><img src="CmdStanModel-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Run 'pathfinder' method, a new alternative to the variational method</span></span></span>
+<span class="r-in"><span><span class="co"># Run the Pathfinder variational inference method</span></span></span>
 <span class="r-in"><span><span class="va">fit_pf</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">pathfinder</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] :Initial log joint density = -18.273334 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Path [1] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  </span>
@@ -483,7 +487,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>
@@ -502,7 +506,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_mcmc_w_init_fun_2</span><span class="op">$</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
@@ -534,7 +538,7 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Both chains finished successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mean chain execution time: 0.0 seconds.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.3 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Total execution time: 0.2 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_optim_w_init_list</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">stan_data</span>,</span></span>

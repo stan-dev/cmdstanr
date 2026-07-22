@@ -104,22 +104,22 @@ Popov</h4>
     
     
 <p>R Markdown supports a variety of languages through the use of knitr
-language engines. Where users wish to write Stan programs as chunks
-directly in R Markdown documents there are three options:</p>
+language engines. When users wish to write Stan programs as chunks
+directly in R Markdown or Quarto documents, there are three options:</p>
 <ol style="list-style-type: decimal">
-<li>the user wishes all the Stan chunks in the R Markdown document to be
-processed using RStan;<br>
-</li>
-<li>all Stan chunks are to be processed using CmdStanR; and.<br>
-</li>
-<li>some chunks are to be processed by RStan and some by CmdStanR.</li>
+<li>all Stan chunks are processed using RStan;</li>
+<li>all Stan chunks are processed using CmdStanR; and</li>
+<li>some chunks are processed by RStan and some by CmdStanR.</li>
 </ol>
 <p>Behind the scenes in each option, the engine compiles the model code
 in each chunk and creates an object that provides methods to run the
-model: a <code>stanmodel</code> if Rstan is being used, or a
+model: a <code>stanmodel</code> if RStan is being used, or a
 <code>CmdStanModel</code> in the CmdStanR case. This model object is
 assigned to a variable with the name given by the
 <code>output.var</code> chunk option.</p>
+<p>Every chunk processed by CmdStanR’s engine must set
+<code>output.var</code> to a single character string naming the
+<code>CmdStanModel</code> object created by the chunk.</p>
 <div class="section level2">
 <h2 id="option-1-using-rstan-for-all-chunks">Option 1: Using RStan for all chunks<a class="anchor" aria-label="anchor" href="#option-1-using-rstan-for-all-chunks"></a>
 </h2>
@@ -202,17 +202,18 @@ code above would look like this:</p>
 <h2 id="option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document">Option 3: Using both RStan and CmdStanR in the same R Markdown
 document<a class="anchor" aria-label="anchor" href="#option-3-using-both-rstan-and-cmdstanr-in-the-same-r-markdown-document"></a>
 </h2>
-<p>While the default behavior is to override the built-in
-<code>stan</code> engine because the assumption is that the user is
-probably not using both RStan and CmdStanR in the same document or
-project, the option to use both exists. When registering CmdStanR’s
-knitr engine, set <code>override = FALSE</code> to register the engine
-as a <code>cmdstan</code> engine:</p>
+<p>To use both RStan and CmdStanR engines, start in a fresh R session in
+which <code>register_knitr_engine(override = TRUE)</code> has not
+already replaced knitr’s built-in <code>stan</code> engine. Then set
+<code>override = FALSE</code> to register CmdStanR’s engine as a
+<code>cmdstan</code> engine:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/register_knitr_engine.html">register_knitr_engine</a></span><span class="op">(</span>override <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p>This will cause <code>stan</code> chunks to be processed by knitr’s
-built-in, RStan-based engine and only use CmdStanR’s knitr engine for
-<code>cmdstan</code> chunks:</p>
+<p>In that fresh session, <code>stan</code> chunks continue to use
+knitr’s built-in, RStan-based engine, while <code>cmdstan</code> chunks
+use CmdStanR’s engine. Calling
+<code>register_knitr_engine(override = FALSE)</code> does not restore a
+<code>stan</code> engine that was previously replaced.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>```{stan, output.var="model_obj1"}</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>// Results in a stanmodel object from RStan</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>```</span>

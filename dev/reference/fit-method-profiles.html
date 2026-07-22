@@ -88,10 +88,6 @@ See <code><a href="fit-method-save_output_files.html">save_profile_files()</a></
     <p>A list of data frames with profiling data if the profiling CSV files
 were created.</p>
     </div>
-    <div class="section level2">
-    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="CmdStanMCMC.html">CmdStanMCMC</a></code>, <code><a href="CmdStanMLE.html">CmdStanMLE</a></code>, <code><a href="CmdStanVB.html">CmdStanVB</a></code>, <code><a href="CmdStanGQ.html">CmdStanGQ</a></code></p></div>
-    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -138,35 +134,35 @@ were created.</p>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name       thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 139991423485760 0.000172239  0.000172239  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 139991423485760 0.000751932  0.000523864  0.000228068        6721</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140174112151360 0.000169029  0.000169029  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140174112151360 0.000758973  0.000551066  0.000207907        6721</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2           6721           6721                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name       thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 likelihood 140172529010496 0.000770918  0.000533281  0.000237637        6792</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2         gq 140172529010496 0.000179280  0.000179280  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140710968952640 0.000169199  0.000169199  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140710968952640 0.000757543  0.000547831  0.000209712        6792</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1           6792           6792                 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2              0              0              1000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           6792           6792                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[3]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name       thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140044849370944 0.000176851  0.000176851  0.000000000           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140044849370944 0.000746761  0.000526170  0.000220591        6797</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140401191962432 0.000169501  0.000169501  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140401191962432 0.000785060  0.000573757  0.000211303        6797</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2           6797           6797                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [[4]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         name       thread_id  total_time forward_time reverse_time chain_stack</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 likelihood 139728372983616 0.000774858  0.000549095  0.000225763        6979</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2         gq 139728372983616 0.000172035  0.000172035  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         gq 140153642039104 0.000165950  0.000165950  0.000000000           0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 likelihood 140153642039104 0.000784745  0.000544667  0.000240078        6979</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   no_chain_stack autodiff_calls no_autodiff_calls</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1           6979           6979                 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2              0              0              1000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1              0              0              1000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           6979           6979                 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

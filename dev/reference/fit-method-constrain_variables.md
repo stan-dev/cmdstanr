@@ -29,11 +29,15 @@ constrain_variables(
   (logical) Whether to return generated quantities implied by
   newly-constrained parameters (defaults to TRUE).
 
+## Value
+
+A named list of constrained parameter values and, if requested,
+transformed parameters and generated quantities.
+
 ## See also
 
 [`log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md),
 [`grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md),
-`constrain_variables()`,
 [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md),
 [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md),
 [`variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md),
@@ -62,7 +66,6 @@ fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #> /usr/include/c++/13/bits/stl_iterator_base_types.h:127:34: note: declared here
 #>   127 |     struct _GLIBCXX17_DEPRECATED iterator
 #>       |                                  ^~~~~~~~
-#> cc1plus: note: unrecognized command-line option ‘-Wno-unknown-warning-option’ may have been intended to silence earlier diagnostics
 #> In file included from ../tbb_2020.3/src/tbb/concurrent_queue.cpp:22:
 #> ../tbb_2020.3/include/tbb/internal/_concurrent_queue_impl.h:749:21: warning: ‘template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator’ is deprecated [-Wdeprecated-declarations]
 #>   749 |         public std::iterator<std::forward_iterator_tag,Value> {
@@ -81,6 +84,7 @@ fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #> /usr/include/c++/13/bits/stl_iterator_base_types.h:127:34: note: declared here
 #>   127 |     struct _GLIBCXX17_DEPRECATED iterator
 #>       |                                  ^~~~~~~~
+#> cc1plus: note: unrecognized command-line option ‘-Wno-unknown-warning-option’ may have been intended to silence earlier diagnostics
 #> cc1plus: note: unrecognized command-line option ‘-Wno-unknown-warning-option’ may have been intended to silence earlier diagnostics
 #> $alpha
 #> [1] 0.5

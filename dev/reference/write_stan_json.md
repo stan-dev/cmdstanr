@@ -24,6 +24,10 @@ write_stan_json(data, file, always_decimal = FALSE)
   distinguish between integers and floating point values. If `TRUE` all
   R objects in `data` intended for integers must be of integer type.
 
+## Value
+
+`NULL`, invisibly.
+
 ## Details
 
 `write_stan_json()` performs several conversions before writing the JSON
@@ -43,16 +47,21 @@ The `list` to `array` conversion is intended to make it easier to
 prepare the data for certain Stan declarations involving arrays:
 
 - `array[K] vector[J] v ` can be constructed in R as a list with `K`
-  elements where each element a vector of length `J`
+  elements where each element is a vector of length `J`
 
 - `array[K] matrix[I,J] m ` can be constructed in R as a list with `K`
-  elements where each element an `IxJ` matrix
+  elements where each element is an `IxJ` matrix
 
 These can also be passed in from R as arrays instead of lists but the
 list option is provided for convenience. Unfortunately for arrays with
 more than one dimension (e.g. `array[K,L] vector[J] v `) it is not
 possible to use an R list and an array must be used instead. For this
 example the array in R should have dimensions `KxLxJ`.
+
+## See also
+
+[`$variables()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variables.md)
+for inspecting the input and output variables of a Stan program.
 
 ## Examples
 
@@ -72,13 +81,13 @@ cat(readLines(file), sep = "\n")
 #>   "N": 5,
 #>   "K": 2,
 #>   "x": [
-#>     [0.710346515685883, 0.372003230867959],
-#>     [-0.248198556052917, -0.609858300092441],
 #>     [0.675270015431045, 1.0439388958914],
 #>     [-0.595348959958748, -0.302706284526524],
-#>     [0.110090411151627, 1.41728126064142]
+#>     [0.110090411151627, 1.41728126064142],
+#>     [0.372003230867959, -0.867101064629448],
+#>     [-0.609858300092441, -2.21814114794348]
 #>   ],
-#>   "y": [15, 14, 10, 9, 11],
+#>   "y": [9, 11, 13, 10, 13],
 #>   "z": [1, 0]
 #> }
 

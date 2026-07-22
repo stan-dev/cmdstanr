@@ -29,7 +29,7 @@ Consider a simple logistic regression with parameters `alpha` and
       int<lower=1> k;
       int<lower=0> n;
       matrix[n, k] X;
-      array[n] int y;
+      array[n] int<lower=0, upper=1> y;
     }
     parameters {
       vector[k] beta;
@@ -67,7 +67,7 @@ data {
   int<lower=1> k;
   int<lower=0> n;
   matrix[n, k] X;
-  array[n] int y;
+  array[n] int<lower=0, upper=1> y;
 }
 parameters {
   vector[k] beta;
@@ -94,13 +94,14 @@ information for any sections with `profile` statements.
 model <- cmdstan_model(profiling_bernoulli_logit)
 
 # Generate some fake data
+set.seed(123)
+
 n <- 1000
 k <- 20
 X <- matrix(rnorm(n * k), ncol = k)
 
-y <- 3 * X[,1] - 2 * X[,2] + 1
-p <- runif(n)
-y <- ifelse(p < (1 / (1 + exp(-y))), 1, 0)
+eta <- 3 * X[,1] - 2 * X[,2] + 1
+y <- rbinom(n, size = 1, prob = plogis(eta))
 stan_data <- list(k = ncol(X), n = nrow(X), y = y, X = X)
 
 # Run one chain of the model
@@ -110,10 +111,11 @@ fit <- model$sample(data = stan_data, chains = 1)
 ### Accessing the profiling information from R
 
 The raw profiling information can then be accessed with the
-`$profiles()` method, which returns a list containing one data frame per
-chain (profiles across multiple chains are not automatically
-aggregated). Details on the column names are available in the [CmdStan
-documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
+[`$profiles()`](https://mc-stan.org/cmdstanr/reference/fit-method-profiles.html)
+method, which returns a list containing one data frame per chain
+(profiles across multiple chains are not automatically aggregated).
+Details on the column names are available in the [CmdStan
+documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file).
 
 ``` r
 
@@ -122,11 +124,14 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1     priors 140383938467648 0.003736696  0.002720368  0.001016328       34904
-    2 likelihood 140383938467648 0.665779120  0.517160940  0.148618180       52356
+    1     priors 139720857155392 0.004161347  0.003242867   0.00091848       34026
+    2 likelihood 139720857155392 0.641927980  0.512748640   0.12917934       51039
       no_chain_stack autodiff_calls no_autodiff_calls
-    1          34904          17452                 1
-    2       34921452          17452                 1
+    1          34026          17013                 1
+    2       34043013          17013                 1
+
+The `total_time`, `forward_time`, and `reverse_time` columns are
+measured in seconds.
 
 The `total_time` column is the total time spent inside a given profile
 statement. It is clear that the vast majority of time is spent in the
@@ -134,7 +139,7 @@ likelihood function.
 
 ### Comparing to a faster version of the model
 
-Stan’s specialized glm functions can be used to make models like this
+Stan’s specialized GLM functions can be used to make models like this
 faster. In this case the likelihood can be replaced with
 
     y ~ bernoulli_logit_glm(X, alpha, beta);
@@ -150,7 +155,7 @@ data {
   int<lower=1> k;
   int<lower=0> n;
   matrix[n, k] X;
-  array[n] int y;
+  array[n] int<lower=0, upper=1> y;
 }
 parameters {
   vector[k] beta;
@@ -181,24 +186,25 @@ fit_glm$profiles()
 
     [[1]]
             name       thread_id total_time forward_time reverse_time chain_stack
-    1     priors 140206964016960 0.00366307  0.002655451  0.001007619       34214
-    2 likelihood 140206964016960 0.43055453  0.429434690  0.001119842       51321
+    1     priors 140656141043520 0.00405505  0.003042065  0.001012985       35528
+    2 likelihood 140656141043520 0.44389696  0.442833480  0.001063478       53292
       no_chain_stack autodiff_calls no_autodiff_calls
-    1          34214          17107                 1
-    2          17107          17107                 1
+    1          35528          17764                 1
+    2          17764          17764                 1
 
 We can see from the `total_time` column that the likelihood computation
 is faster than in the previous model.
 
-### Per-gradient timings, and memory usage
+### Per-gradient timings and autodiff variable counts
 
 The other columns of the profiling output are documented in the [CmdStan
-documentation](https://mc-stan.org/docs/2_26/cmdstan-guide/stan-csv.html#profiling-csv-output-file).
+documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file).
 
-The timing numbers are broken down by forward pass and reverse pass, and
-the `chain_stack` and `no_chain_stack` columns contain information about
-how many autodiff variables were saved in the process of performing a
-calculation.
+The timing numbers are broken down by forward pass and reverse pass. The
+`chain_stack` and `no_chain_stack` columns report the numbers of objects
+allocated on the chaining and non-chaining autodiff stacks. These counts
+can serve as rough proxies for memory use, but they are not measurements
+in bytes.
 
 These numbers are all totals – times are the total times over the whole
 calculation, and `chain_stack` counts are similarly the total counts of
@@ -210,28 +216,29 @@ across runs with different seeds). To compute these, use the
 ``` r
 
 profile_chain_1 <- fit$profiles()[[1]]
-per_gradient_timing <- profile_chain_1$total_time/profile_chain_1$autodiff_calls
+per_gradient_timing <- profile_chain_1$total_time / profile_chain_1$autodiff_calls
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 2.141128e-07 3.814916e-05
+    [1] 2.445981e-07 3.773162e-05
 
 ### Accessing and saving the profile files
 
 After sampling (or optimization or variational inference) finishes,
 CmdStan stores the profiling data in CSV files in a temporary location.
 The paths of the profiling CSV files can be retrieved using
-`$profile_files()`.
+[`$profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html).
 
 ``` r
 
 fit$profile_files()
 ```
 
-    [1] "/tmp/RtmplHvjM8/model_96c18d764c15ce710d63062fb5f15758-profile-202607220042-1-80690b.csv"
+    [1] "/tmp/RtmphZLvLD/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202607220404-1-8ee314.csv"
 
 These can be saved to a more permanent location with the
-`$save_profile_files()` method.
+[`$save_profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html)
+method.
 
 ``` r
 

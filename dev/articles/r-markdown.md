@@ -1,19 +1,22 @@
 # R Markdown CmdStan Engine
 
 R Markdown supports a variety of languages through the use of knitr
-language engines. Where users wish to write Stan programs as chunks
-directly in R Markdown documents there are three options:
+language engines. When users wish to write Stan programs as chunks
+directly in R Markdown or Quarto documents, there are three options:
 
-1.  the user wishes all the Stan chunks in the R Markdown document to be
-    processed using RStan;  
-2.  all Stan chunks are to be processed using CmdStanR; and.  
-3.  some chunks are to be processed by RStan and some by CmdStanR.
+1.  all Stan chunks are processed using RStan;
+2.  all Stan chunks are processed using CmdStanR; and
+3.  some chunks are processed by RStan and some by CmdStanR.
 
 Behind the scenes in each option, the engine compiles the model code in
 each chunk and creates an object that provides methods to run the model:
-a `stanmodel` if Rstan is being used, or a `CmdStanModel` in the
+a `stanmodel` if RStan is being used, or a `CmdStanModel` in the
 CmdStanR case. This model object is assigned to a variable with the name
 given by the `output.var` chunk option.
+
+Every chunk processed by CmdStanR’s engine must set `output.var` to a
+single character string naming the `CmdStanModel` object created by the
+chunk.
 
 ## Option 1: Using RStan for all chunks
 
@@ -108,20 +111,20 @@ print(fit)
 
 ## Option 3: Using both RStan and CmdStanR in the same R Markdown document
 
-While the default behavior is to override the built-in `stan` engine
-because the assumption is that the user is probably not using both RStan
-and CmdStanR in the same document or project, the option to use both
-exists. When registering CmdStanR’s knitr engine, set `override = FALSE`
-to register the engine as a `cmdstan` engine:
+To use both RStan and CmdStanR engines, start in a fresh R session in
+which `register_knitr_engine(override = TRUE)` has not already replaced
+knitr’s built-in `stan` engine. Then set `override = FALSE` to register
+CmdStanR’s engine as a `cmdstan` engine:
 
 ``` r
 
 register_knitr_engine(override = FALSE)
 ```
 
-This will cause `stan` chunks to be processed by knitr’s built-in,
-RStan-based engine and only use CmdStanR’s knitr engine for `cmdstan`
-chunks:
+In that fresh session, `stan` chunks continue to use knitr’s built-in,
+RStan-based engine, while `cmdstan` chunks use CmdStanR’s engine.
+Calling `register_knitr_engine(override = FALSE)` does not restore a
+`stan` engine that was previously replaced.
 
 ```` default
 ```{stan, output.var="model_obj1"}

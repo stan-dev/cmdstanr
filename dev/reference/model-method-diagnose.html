@@ -4,11 +4,21 @@
 runs Stan's basic diagnostic feature that will calculate the gradients
 of the initial state and compare them with gradients calculated by
 finite differences. Discrepancies between the two indicate that there is
-a problem with the model or initial states or else there is a bug in Stan."><meta property="og:description" content="The $diagnose() method of a CmdStanModel object
+a problem with the model or initial states or else there is a bug in Stan.
+Unlike other CmdStan methods, $diagnose() does not expose show_messages
+or show_exceptions arguments. CmdStan's standard output is not printed
+during execution, while standard error is always displayed. The captured
+console output can be inspected with the returned object's
+$output() method."><meta property="og:description" content="The $diagnose() method of a CmdStanModel object
 runs Stan's basic diagnostic feature that will calculate the gradients
 of the initial state and compare them with gradients calculated by
 finite differences. Discrepancies between the two indicate that there is
-a problem with the model or initial states or else there is a bug in Stan."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
+a problem with the model or initial states or else there is a bug in Stan.
+Unlike other CmdStan methods, $diagnose() does not expose show_messages
+or show_exceptions arguments. CmdStan's standard output is not printed
+during execution, while standard error is always displayed. The captured
+console output can be inspected with the returned object's
+$output() method."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -76,6 +86,11 @@ runs Stan's basic diagnostic feature that will calculate the gradients
 of the initial state and compare them with gradients calculated by
 finite differences. Discrepancies between the two indicate that there is
 a problem with the model or initial states or else there is a bug in Stan.</p>
+<p>Unlike other CmdStan methods, <code>$diagnose()</code> does not expose <code>show_messages</code>
+or <code>show_exceptions</code> arguments. CmdStan's standard output is not printed
+during execution, while standard error is always displayed. The captured
+console output can be inspected with the returned object's
+<code><a href="fit-method-output.html">$output()</a></code> method.</p>
     </div>
 
     <div class="section level2">
@@ -109,22 +124,24 @@ appendices in the CmdStan guide for details on using these formats.</p></li>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-In the case of multi-chain sampling the single <code>seed</code> will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to using
-same seed for all chains so that the same data is generated for all chains
-if RNG functions are used. The only time <code>seed</code> should be specified as a
-vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate <em>different</em> data for each chain.</p></dd>
+<dd><p>(non-negative integer(s)) A seed for the (P)RNG to pass to
+CmdStan. In the case of multi-chain sampling the single <code>seed</code> will
+automatically be augmented by the run (chain) ID so that each chain uses a
+different seed. The exception is the transformed data block, which defaults
+to using same seed for all chains so that the same data is generated for
+all chains if RNG functions are used. The only time <code>seed</code> should be
+specified as a vector (one element per chain) is if RNG functions are used
+in transformed data and the goal is to generate <em>different</em> data for each
+chain.</p></dd>
 
 
 <dt id="arg-init">init<a class="anchor" aria-label="anchor" href="#arg-init"></a></dt>
 <dd><p>(multiple options) The initialization method to use for the
 variables declared in the parameters block of the Stan program. One of the
-following:</p><ul><li><p>A real number <code>x&gt;0</code>. This initializes <em>all</em> parameters randomly between
-<code>[-x,x]</code> on the <em>unconstrained</em> parameter space.</p></li>
-<li><p>The number <code>0</code>. This initializes <em>all</em> parameters to <code>0</code>.</p></li>
+following:</p><ul><li><p>A real number <code>x &gt; 0</code>. This initializes <em>all</em> parameters randomly between
+<code>[-x, x]</code> on the <em>unconstrained</em> parameter space.</p></li>
+<li><p>The number <code>0</code>. This initializes <em>all</em> parameters to <code>0</code> on the
+<em>unconstrained</em> parameter space.</p></li>
 <li><p>A character vector of paths to JSON or Rdump files containing initial
 values for all or some parameters. For MCMC and Pathfinder, if only a single
 file is provided it will be reused for all chains and paths. See
@@ -170,7 +187,7 @@ their existing order until each chain/path has an initialization. If there
 are more draws than requested chains/paths, draws are selected uniformly
 without replacement. If the draws object's parameters are only a subset of
 the model parameters then the other parameters will be drawn by Stan's
-default initialization. The fit object must have at least some parameters
+default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.</p></li>
 </ul></dd>
 
@@ -195,8 +212,8 @@ corresponding to the defaults used by <code>$save_output_files()</code>.</p></li
 <dt id="arg-output-basename">output_basename<a class="anchor" aria-label="anchor" href="#arg-output-basename"></a></dt>
 <dd><p>(string) A string to use as a prefix for the names of
 the output CSV files of CmdStan. If <code>NULL</code> (the default), the basename of
-the output CSV files will be comprised from the model name, timestamp, and
-5 random characters.</p></dd>
+the output CSV files is composed of the model name, timestamp, and a
+six-character random hexadecimal suffix.</p></dd>
 
 
 <dt id="arg-epsilon">epsilon<a class="anchor" aria-label="anchor" href="#arg-epsilon"></a></dt>
@@ -214,7 +231,10 @@ value is 1e-6.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>The CmdStanR website
+    <div class="dont-index"><p>The <code><a href="fit-method-gradients.html">$gradients()</a></code> method for accessing the
+gradients and the <code><a href="fit-method-output.html">$output()</a></code> method for displaying
+the captured console output.</p>
+<p>The CmdStanR website
 (<a href="https://mc-stan.org/cmdstanr/">mc-stan.org/cmdstanr</a>) for online
 documentation and tutorials.</p>
 <p>The Stan and CmdStan documentation:</p><ul><li><p>Stan documentation: <a href="https://mc-stan.org/users/documentation/" class="external-link">mc-stan.org/users/documentation</a></p></li>
@@ -227,6 +247,7 @@ documentation and tutorials.</p>
 <code><a href="model-method-format.html">model-method-format</a></code>,
 <code><a href="model-method-generate-quantities.html">model-method-generate-quantities</a></code>,
 <code><a href="model-method-laplace.html">model-method-laplace</a></code>,
+<code><a href="model-method-model-info.html">model-method-model-info</a></code>,
 <code><a href="model-method-optimize.html">model-method-optimize</a></code>,
 <code><a href="model-method-pathfinder.html">model-method-pathfinder</a></code>,
 <code><a href="model-method-sample.html">model-method-sample</a></code>,
@@ -243,10 +264,10 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="co"># retrieve the gradients</span></span></span>
 <span class="r-in"><span><span class="va">test</span><span class="op">$</span><span class="fu">gradients</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   param_idx     value    model finite_diff        error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         0  0.280159  2.33901     2.33901  3.60982e-09</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2         1 -1.312800  8.36477     8.36477 -1.04252e-08</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3         2 -1.170490 13.60250    13.60250 -2.52653e-08</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4         3  0.848480  1.14582     1.14582 -1.07726e-08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         0 -0.600900  19.8734     19.8734 -2.39168e-08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         1  0.489817 -19.1212    -19.1212  3.71502e-09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3         2 -0.823247  10.2858     10.2858  3.22936e-08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4         3 -1.493100  32.6105     32.6105 -5.45285e-09</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

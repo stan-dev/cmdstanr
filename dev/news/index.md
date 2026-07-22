@@ -2,6 +2,10 @@
 
 ## cmdstanr (development version)
 
+- The `CMDSTANR_NO_VER_CHECK` R option and environment variable are
+  deprecated as of CmdStanR 1.0.0; use the lowercase
+  `cmdstanr_no_ver_check` forms instead.
+
 - Pathfinder fits used as initial values now use uniform weights when
   CmdStan already PSIS-resampled their draws, avoiding a second
   application of importance weights.
@@ -25,6 +29,10 @@
 - [`pathfinder()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md)
   now uses `threads` argument (`num_threads` is deprecated), to be
   consistent with other methods.
+
+- The `save_latent_dynamics` argument is now limited to `$sample()`,
+  `$sample_mpi()`, and `$variational()`, matching the CmdStan algorithms
+  that support diagnostic CSV output.
 
 - Informative error when exposing functions using names that are
   reserved keywords ([@VisruthSK](https://github.com/VisruthSK),

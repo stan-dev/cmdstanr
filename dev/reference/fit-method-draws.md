@@ -1,12 +1,16 @@
 # Extract posterior draws
 
-Extract posterior draws after MCMC or approximate posterior draws after
-variational approximation using formats provided by the posterior
-package.
+Extract draws or point estimates from fitted model objects using formats
+provided by the posterior package. Depending on the fitting method,
+these are posterior draws from MCMC, approximate posterior draws from
+variational inference, Laplace approximation, or Pathfinder, standalone
+generated quantities, or a point estimate from optimization.
 
 The variables include the parameters, transformed parameters, and
-generated quantities from the Stan program as well as `lp__`, the total
-log probability (`target`) accumulated in the model block.
+generated quantities from the Stan program as well as `lp__`, the target
+log density evaluated by Stan, up to an additive constant. See
+[`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md)
+for details.
 
 ## Usage
 
@@ -56,8 +60,9 @@ draws(
     of the other formats (e.g. `"draws_matrix"`).
 
   - For point estimates from optimization and approximate draws from
-    variational inference the default is
-    [`"draws_matrix"`](https://mc-stan.org/posterior/reference/draws_array.html).
+    variational inference, Laplace approximation, and Pathfinder the
+    default is
+    [`"draws_matrix"`](https://mc-stan.org/posterior/reference/draws_matrix.html).
 
   To use a different format it can be specified as the full name of the
   format from the posterior package (e.g. `format = "draws_df"`) or
@@ -93,13 +98,22 @@ Depends on the value of `format`. The defaults are:
   object (iteration x chain x variable).
 
 - For [variational
-  inference](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md),
+  inference](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md)
+  and [Laplace
+  approximation](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
   a 2-D
   [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html)
-  object (draw x variable) because there are no chains. An additional
-  variable `lp_approx__` is also included, which is the log density of
-  the variational approximation to the posterior evaluated at each of
-  the draws.
+  object (draw x variable). An additional variable `lp_approx__`
+  containing the log density of the corresponding approximation is also
+  included.
+
+- For
+  [Pathfinder](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
+  a 2-D
+  [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html)
+  object (draw x variable). Additional variables `lp_approx__` and
+  `path__` are also included, with `path__` identifying the path
+  associated with each draw.
 
 - For
   [optimization](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
@@ -109,13 +123,6 @@ Depends on the value of `format`. The defaults are:
   point estimates stored in the `draws_matrix` format. See
   [`$mle()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-mle.md)
   to extract them as a numeric vector.
-
-## See also
-
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
-[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-[`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md)
 
 ## Examples
 

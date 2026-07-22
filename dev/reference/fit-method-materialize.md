@@ -10,6 +10,10 @@ are only read into R lazily (i.e., as needed).
 materialize()
 ```
 
+## Value
+
+The fitted model object, invisibly.
+
 ## See also
 
 [`save_object`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_object.md)
@@ -19,11 +23,6 @@ materialize()
 ``` r
 # \dontrun{
 fit <- cmdstanr_example("logistic")
-object.size(fit)
-#> 432 bytes
-
 fit$materialize()
-object.size(fit)
-#> 432 bytes
 # }
 ```

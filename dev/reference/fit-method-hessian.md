@@ -1,7 +1,7 @@
-# Calculate the log-probability , the gradient w.r.t. each input, and the hessian for a given vector of unconstrained parameters
+# Calculate the log-probability, the gradient w.r.t. each input, and the Hessian for a given vector of unconstrained parameters
 
 The `$hessian()` method provides access to the Stan model's `log_prob`,
-its derivative, and its hessian.
+its derivative, and its Hessian.
 
 ## Usage
 
@@ -18,7 +18,11 @@ hessian(unconstrained_variables, jacobian = TRUE)
 - jacobian:
 
   (logical) Whether to include the log-density adjustments from
-  un/constraining variables.
+  constraining or unconstraining variables.
+
+## Value
+
+A named list with elements `log_prob`, `grad_log_prob`, and `hessian`.
 
 ## See also
 
@@ -27,8 +31,7 @@ hessian(unconstrained_variables, jacobian = TRUE)
 [`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
 [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md),
 [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md),
-[`variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md),
-`hessian()`
+[`variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md)
 
 ## Examples
 

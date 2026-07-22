@@ -207,14 +207,15 @@ model executable.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-In the case of multi-chain sampling the single <code>seed</code> will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to using
-same seed for all chains so that the same data is generated for all chains
-if RNG functions are used. The only time <code>seed</code> should be specified as a
-vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate <em>different</em> data for each chain.</p></dd>
+<dd><p>(non-negative integer(s)) A seed for the (P)RNG to pass to
+CmdStan. In the case of multi-chain sampling the single <code>seed</code> will
+automatically be augmented by the run (chain) ID so that each chain uses a
+different seed. The exception is the transformed data block, which defaults
+to using same seed for all chains so that the same data is generated for
+all chains if RNG functions are used. The only time <code>seed</code> should be
+specified as a vector (one element per chain) is if RNG functions are used
+in transformed data and the goal is to generate <em>different</em> data for each
+chain.</p></dd>
 
 
 <dt id="arg-refresh">refresh<a class="anchor" aria-label="anchor" href="#arg-refresh"></a></dt>
@@ -226,9 +227,10 @@ printed.</p></dd>
 <dt id="arg-init">init<a class="anchor" aria-label="anchor" href="#arg-init"></a></dt>
 <dd><p>(multiple options) The initialization method to use for the
 variables declared in the parameters block of the Stan program. One of the
-following:</p><ul><li><p>A real number <code>x&gt;0</code>. This initializes <em>all</em> parameters randomly between
-<code>[-x,x]</code> on the <em>unconstrained</em> parameter space.</p></li>
-<li><p>The number <code>0</code>. This initializes <em>all</em> parameters to <code>0</code>.</p></li>
+following:</p><ul><li><p>A real number <code>x &gt; 0</code>. This initializes <em>all</em> parameters randomly between
+<code>[-x, x]</code> on the <em>unconstrained</em> parameter space.</p></li>
+<li><p>The number <code>0</code>. This initializes <em>all</em> parameters to <code>0</code> on the
+<em>unconstrained</em> parameter space.</p></li>
 <li><p>A character vector of paths to JSON or Rdump files containing initial
 values for all or some parameters. For MCMC and Pathfinder, if only a single
 file is provided it will be reused for all chains and paths. See
@@ -274,21 +276,19 @@ their existing order until each chain/path has an initialization. If there
 are more draws than requested chains/paths, draws are selected uniformly
 without replacement. If the draws object's parameters are only a subset of
 the model parameters then the other parameters will be drawn by Stan's
-default initialization. The fit object must have at least some parameters
+default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.</p></li>
 </ul></dd>
 
 
 <dt id="arg-save-latent-dynamics">save_latent_dynamics<a class="anchor" aria-label="anchor" href="#arg-save-latent-dynamics"></a></dt>
 <dd><p>(logical) Should auxiliary diagnostic information
-about the latent dynamics be written to temporary diagnostic CSV files?
-This argument replaces CmdStan's <code>diagnostic_file</code> argument and the content
-written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (for some algorithms no content may be written). The default is
-<code>FALSE</code>, which is appropriate for almost every use case. To save the
-temporary files created when <code>save_latent_dynamics=TRUE</code> see the
-<code><a href="fit-method-save_output_files.html">$save_latent_dynamics_files()</a></code>
-method.</p></dd>
+about the sampler or variational algorithm be written to diagnostic CSV
+files? This argument replaces CmdStan's <code>diagnostic_file</code> argument. The
+content is controlled by the user's CmdStan installation. The default is
+<code>FALSE</code>, which is appropriate for almost every use case. To save temporary
+diagnostic files permanently, use
+<code><a href="fit-method-save_output_files.html">$save_latent_dynamics_files()</a></code>.</p></dd>
 
 
 <dt id="arg-output-dir">output_dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
@@ -311,8 +311,8 @@ corresponding to the defaults used by <code>$save_output_files()</code>.</p></li
 <dt id="arg-output-basename">output_basename<a class="anchor" aria-label="anchor" href="#arg-output-basename"></a></dt>
 <dd><p>(string) A string to use as a prefix for the names of
 the output CSV files of CmdStan. If <code>NULL</code> (the default), the basename of
-the output CSV files will be comprised from the model name, timestamp, and
-5 random characters.</p></dd>
+the output CSV files is composed of the model name, timestamp, and a
+six-character random hexadecimal suffix.</p></dd>
 
 
 <dt id="arg-chains">chains<a class="anchor" aria-label="anchor" href="#arg-chains"></a></dt>
@@ -425,17 +425,17 @@ adaptation interval.</p></dd>
 sampler generates a new sample without changing the current state of the
 Markov chain; only generated quantities may change. This can be useful
 when, for example, trying to generate pseudo-data using the generated
-quantities block. If the parameters block is empty then using
-<code>fixed_param=TRUE</code> is mandatory. When <code>fixed_param=TRUE</code> the <code>chains</code> and
-<code>parallel_chains</code> arguments will be set to <code>1</code>.</p></dd>
+quantities block. For CmdStan versions before 2.36, <code>fixed_param = TRUE</code>
+is mandatory if the parameters block is empty.</p></dd>
 
 
 <dt id="arg-sig-figs">sig_figs<a class="anchor" aria-label="anchor" href="#arg-sig-figs"></a></dt>
-<dd><p>(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
-values with 6 significant figures. The upper limit for <code>sig_figs</code> is 18.
-Increasing this value will result in larger output CSV files and thus an
-increased usage of disk space.</p></dd>
+<dd><p>(positive integer) The number of significant figures (up to a
+maximum of 18) to use when storing the output values. If <code>NULL</code> (the
+default), the default from the installed CmdStan version is used. Use
+<code><a href="model-method-cmdstan_defaults.html">$cmdstan_defaults()</a></code> to check that
+default. Increasing this value will result in larger output CSV files and
+thus an increased usage of disk space.</p></dd>
 
 
 <dt id="arg-show-messages">show_messages<a class="anchor" aria-label="anchor" href="#arg-show-messages"></a></dt>
@@ -465,7 +465,7 @@ currently available diagnostics are <code>"divergences"</code>, <code>"treedepth
 <code>"ebfmi"</code> (the default is to check all of them).</p>
 <p>These diagnostics are also available after fitting. The
 <code><a href="fit-method-sampler_diagnostics.html">$sampler_diagnostics()</a></code> method provides
-access the diagnostic values for each iteration and the
+access to the diagnostic values for each iteration and the
 <code><a href="fit-method-diagnostic_summary.html">$diagnostic_summary()</a></code> method provides
 summaries of the diagnostics and can regenerate the warning messages.</p>
 <p>Diagnostics like R-hat and effective sample size are <em>not</em> currently
@@ -514,6 +514,7 @@ details on MPI support in Stan.</p>
 <code><a href="model-method-format.html">model-method-format</a></code>,
 <code><a href="model-method-generate-quantities.html">model-method-generate-quantities</a></code>,
 <code><a href="model-method-laplace.html">model-method-laplace</a></code>,
+<code><a href="model-method-model-info.html">model-method-model-info</a></code>,
 <code><a href="model-method-optimize.html">model-method-optimize</a></code>,
 <code><a href="model-method-pathfinder.html">model-method-pathfinder</a></code>,
 <code><a href="model-method-sample.html">model-method-sample</a></code>,

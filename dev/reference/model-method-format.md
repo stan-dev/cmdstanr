@@ -2,8 +2,9 @@
 
 The `$format()` method of a
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
-object runs stanc's auto-formatter on the model code. Either saves the
-formatted model directly back to the file or prints it for inspection.
+object runs stanc's auto-formatter on the model code. It either saves
+the formatted model directly back to the file or prints it for
+inspection.
 
 ## Usage
 
@@ -22,7 +23,7 @@ format(
 - overwrite_file:
 
   (logical) Should the formatted code be written back to the input model
-  file. The default is `FALSE`.
+  file? The default is `FALSE`.
 
 - canonicalize:
 
@@ -36,10 +37,12 @@ format(
 
 - backup:
 
-  (logical) If `TRUE`, create stanfile.bak backups before writing to the
-  file. Disable this option if you're sure you have other copies of the
-  file or are using a version control system like Git. Defaults to
-  `TRUE`. The value is ignored if `overwrite_file = FALSE`.
+  (logical) If `TRUE`, create a backup before writing to the file. The
+  backup filename is the Stan filename followed by
+  `.bak-YYYYMMDDHHMMSS`, where the final digits encode the timestamp.
+  Disable this option if you're sure you have other copies of the file
+  or are using a version control system like Git. Defaults to `TRUE`.
+  The value is ignored if `overwrite_file = FALSE`.
 
 - max_line_length:
 
@@ -53,7 +56,8 @@ format(
 
 ## Value
 
-The `$format()` method returns `TRUE` (invisibly) if the model is valid.
+The `$format()` method returns `TRUE` (invisibly) if formatting
+succeeds.
 
 ## See also
 
@@ -77,6 +81,7 @@ Other CmdStanModel methods:
 [`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
@@ -122,7 +127,7 @@ mod$format(canonicalize = list("deprecations"))
 
 # overwrite the original file instead of just printing it
 mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
-#> Old version of the model stored to /tmp/RtmpILyGYQ/model_757a40a9bc18f0e4dd1fe7eec4863b8e.stan.bak-20260722004109.
+#> Old version of the model stored to /tmp/RtmpR10Vum/model_757a40a9bc18f0e4dd1fe7eec4863b8e.stan.bak-20260722040311.
 mod$compile()
 # }
 ```

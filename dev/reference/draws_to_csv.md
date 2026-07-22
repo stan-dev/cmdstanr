@@ -32,9 +32,9 @@ draws_to_csv(
 
 - basename:
 
-  (string) If `dir` is specified, \`basename“ is used for naming the
-  output CSV files. If not specified, the file names are randomly
-  generated.
+  (string) The base name for the output CSV files. The default is
+  `"fittedParams"`. A timestamp, chain ID, and six-character random
+  hexadecimal suffix are appended to the base name.
 
 ## Value
 
@@ -44,18 +44,23 @@ Paths to CSV files (one per chain).
 
 `draws_to_csv()` generates a CSV suitable for running standalone
 generated quantities with CmdStan. The CSV file contains a single
-comment `#num_samples`, which equals the number of iterations in the
-supplied draws object.
+comment `# num_samples = <n>`, where `<n>` is the number of iterations
+in the supplied draws object.
 
 The comment is followed by the column names. The first column is the
-`lp__` value, followed by sampler diagnostics and finnaly other
-variables of the draws object. \#' If the draws object does not contain
-the `lp__` or sampler diagnostics variables, columns with zeros are
-created in order to conform with the requirements of the standalone
-generated quantities method of CmdStan.
+`lp__` value, followed by sampler diagnostics and finally other
+variables of the draws object. If the draws object does not contain the
+`lp__` or sampler diagnostics variables, columns with zeros are created
+in order to conform with the requirements of the standalone generated
+quantities method of CmdStan.
 
 The column names line is finally followed by the values of the draws in
 the same order as the column names.
+
+## See also
+
+[`$generate_quantities()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md)
+for using the generated CSV files
 
 ## Examples
 
@@ -65,13 +70,13 @@ draws <- posterior::example_draws()
 
 draws_csv_files <- draws_to_csv(draws)
 print(draws_csv_files)
-#> [1] "/tmp/RtmpILyGYQ/fittedParams-202607220030-1-193853.csv"
-#> [2] "/tmp/RtmpILyGYQ/fittedParams-202607220030-2-193853.csv"
-#> [3] "/tmp/RtmpILyGYQ/fittedParams-202607220030-3-193853.csv"
-#> [4] "/tmp/RtmpILyGYQ/fittedParams-202607220030-4-193853.csv"
+#> [1] "/tmp/RtmpR10Vum/fittedParams-202607220353-1-193848.csv"
+#> [2] "/tmp/RtmpR10Vum/fittedParams-202607220353-2-193848.csv"
+#> [3] "/tmp/RtmpR10Vum/fittedParams-202607220353-3-193848.csv"
+#> [4] "/tmp/RtmpR10Vum/fittedParams-202607220353-4-193848.csv"
 
 # draws_csv_files <- draws_to_csv(draws,
-#                                 sampler_diagnostic = sampler_diagnostics,
+#                                 sampler_diagnostics = sampler_diagnostics,
 #                                 dir = "~/my_folder",
 #                                 basename = "my-samples")
 # }

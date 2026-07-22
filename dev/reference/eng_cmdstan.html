@@ -91,10 +91,20 @@ for an example.</p>
 
 
 <dl><dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
-<dd><p>(named list) Chunk options, as provided by <code>knitr</code> during
-chunk execution.</p></dd>
+<dd><p>(named list) Chunk options supplied by <code>knitr</code>. The
+<code>output.var</code> element is required and must be a single character string
+naming the <code>CmdStanModel</code> object created by the chunk.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>A character vector containing the formatted chunk output produced by
+<code><a href="https://rdrr.io/pkg/knitr/man/engine_output.html" class="external-link">knitr::engine_output()</a></code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="register_knitr_engine.html">register_knitr_engine()</a></code></p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

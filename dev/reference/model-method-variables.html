@@ -3,15 +3,15 @@
   </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_3-0.4.10/font.css" rel="stylesheet"><link href="../deps/Source_Code_Pro-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- Font Awesome 7.0.1 for Bluesky icon --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" referrerpolicy="no-referrer"><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Input and output variables of a Stan program — model-method-variables"><meta name="description" content="The $variables() method of a CmdStanModel object returns
 a list, each element representing a Stan model block: data, parameters,
 transformed_parameters and generated_quantities.
-Each element contains a list of variables, with each variables represented
-as a list with infromation on its scalar type (real or int) and
+Each element contains a list of variables, with each variable represented
+as a list with information on its scalar type (real or int) and
 number of dimensions.
 transformed data is not included, as variables in that block are not
 part of the model's input or output."><meta property="og:description" content="The $variables() method of a CmdStanModel object returns
 a list, each element representing a Stan model block: data, parameters,
 transformed_parameters and generated_quantities.
-Each element contains a list of variables, with each variables represented
-as a list with infromation on its scalar type (real or int) and
+Each element contains a list of variables, with each variable represented
+as a list with information on its scalar type (real or int) and
 number of dimensions.
 transformed data is not included, as variables in that block are not
 part of the model's input or output."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
@@ -80,8 +80,8 @@ part of the model's input or output."><meta property="og:image" content="https:/
     <p>The <code>$variables()</code> method of a <code><a href="CmdStanModel.html">CmdStanModel</a></code> object returns
 a list, each element representing a Stan model block: <code>data</code>, <code>parameters</code>,
 <code>transformed_parameters</code> and <code>generated_quantities</code>.</p>
-<p>Each element contains a list of variables, with each variables represented
-as a list with infromation on its scalar type (<code>real</code> or <code>int</code>) and
+<p>Each element contains a list of variables, with each variable represented
+as a list with information on its scalar type (<code>real</code> or <code>int</code>) and
 number of dimensions.</p>
 <p><code>transformed data</code> is not included, as variables in that block are not
 part of the model's input or output.</p>
@@ -94,12 +94,13 @@ part of the model's input or output.</p>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The <code>$variables()</code> returns a list with information on input and
-output variables for each of the Stan model blocks.</p>
+    <p>The method returns a list with information on input and output
+variables for each of the Stan model blocks.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>Other CmdStanModel methods:
+    <div class="dont-index"><p><code><a href="write_stan_json.html">write_stan_json()</a></code> for writing data for CmdStan.</p>
+<p>Other CmdStanModel methods:
 <code><a href="model-method-check_syntax.html">model-method-check_syntax</a></code>,
 <code><a href="model-method-cmdstan_defaults.html">model-method-cmdstan_defaults</a></code>,
 <code><a href="model-method-compile.html">model-method-compile</a></code>,
@@ -108,6 +109,7 @@ output variables for each of the Stan model blocks.</p>
 <code><a href="model-method-format.html">model-method-format</a></code>,
 <code><a href="model-method-generate-quantities.html">model-method-generate-quantities</a></code>,
 <code><a href="model-method-laplace.html">model-method-laplace</a></code>,
+<code><a href="model-method-model-info.html">model-method-model-info</a></code>,
 <code><a href="model-method-optimize.html">model-method-optimize</a></code>,
 <code><a href="model-method-pathfinder.html">model-method-pathfinder</a></code>,
 <code><a href="model-method-sample.html">model-method-sample</a></code>,

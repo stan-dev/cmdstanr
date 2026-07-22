@@ -3,10 +3,10 @@
 ## Introduction
 
 This vignette is intended to be read after the [*Getting started with
-CmdStanR*](http://mc-stan.org/cmdstanr/articles/cmdstanr.md) vignette.
-Please read that first for important background. In this document we
-provide additional details about compiling models, passing in data, and
-how CmdStan output is saved and read back into R.
+CmdStanR*](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
+vignette. Please read that first for important background. In this
+document we provide additional details about compiling models, passing
+in data, and how CmdStan output is saved and read back into R.
 
 We will only use the `$sample()` method in examples, but all model
 fitting methods work in a similar way under the hood.
@@ -29,7 +29,12 @@ executable.
 
 ``` r
 
-stan_file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+# Copy the example so the vignette does not modify the CmdStan installation.
+example_stan_file <- file.path(
+  cmdstan_path(), "examples", "bernoulli", "bernoulli.stan"
+)
+stan_file <- tempfile(pattern = "bernoulli-", fileext = ".stan")
+invisible(file.copy(example_stan_file, stan_file))
 mod <- cmdstan_model(stan_file)
 mod$print()
 ```
@@ -51,14 +56,14 @@ mod$print()
 mod$stan_file()
 ```
 
-    [1] "/home/runner/.cmdstan/cmdstan-2.39.0/examples/bernoulli/bernoulli.stan"
+    [1] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39.stan"
 
 ``` r
 
 mod$exe_file()
 ```
 
-    [1] "/home/runner/.cmdstan/cmdstan-2.39.0/examples/bernoulli/bernoulli"
+    [1] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39"
 
 Subsequently, if you create a `CmdStanModel` object from the same Stan
 file then compilation will be skipped (assuming the file hasn’t
@@ -73,7 +78,7 @@ Internally,
 [`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
 first creates the `CmdStanModel` object from just the Stan file and then
 calls its
-[`$compile()`](http://mc-stan.org/cmdstanr/reference/model-method-compile.md)
+[`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
 method. Optional arguments to the `$compile()` method can be passed via
 `...`.
 
@@ -83,7 +88,7 @@ mod <- cmdstan_model(
   stan_file,
   force_recompile = TRUE,
   include_paths = "paths/to/directories/with/included/files",
-  cpp_options = list(stan_threads = TRUE, STANC2 = TRUE)
+  cpp_options = list(stan_threads = TRUE)
 )
 ```
 
@@ -108,7 +113,7 @@ mod$compile()
 mod$exe_file()
 ```
 
-    [1] "/home/runner/.cmdstan/cmdstan-2.39.0/examples/bernoulli/bernoulli"
+    [1] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39"
 
 ### Pedantic check
 
@@ -116,7 +121,7 @@ CmdStanR will always check that your Stan program does not contain any
 invalid syntax but with `pedantic` mode enabled the check will also warn
 you about other potential issues in your model, for example:
 
-- Distribution usages issues: distribution arguments do not match the
+- Distribution usage issues: distribution arguments do not match the
   distribution specification, or some specific distribution is used in
   an inadvisable way.
 - Unused parameter: a parameter is defined but does not contribute to
@@ -125,19 +130,21 @@ you about other potential issues in your model, for example:
   constants are used as distribution arguments.
 - Control flow depends on a parameter: branching control flow (like
   if/else) depends on a parameter value.
-- Parameter has multiple twiddles: a parameter is on the left-hand side
-  of multiple twiddles (i.e., multiple `~` symbols).
+- Parameter has multiple tildes: a parameter is on the left-hand side of
+  multiple tildes (i.e., multiple `~` symbols).
 - Parameter has zero or multiple priors: a parameter has zero or more
   than one prior distribution.
 - Variable is used before assignment: a variable is used before being
   assigned a value.
 - Strict or nonsensical parameter bounds: a parameter is given
   questionable bounds.
+- Nonlinear transformations: a nonlinear transformation on the left-hand
+  side of a sampling statement may require a Jacobian adjustment.
 
 For the latest information on the checks performed in pedantic mode see
 the [Pedantic mode
-chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html)
-in the Stan Reference Manual.
+section](https://mc-stan.org/docs/stan-users-guide/using-stanc.html#pedantic-mode)
+in the Stan User’s Guide.
 
 Pedantic mode is available when compiling the model or when using the
 separate `$check_syntax()` method of a `CmdStanModel` object. Internally
@@ -171,11 +178,11 @@ compilation approach described above).
 
 ``` r
 mod_pedantic <- cmdstan_model(stan_file_pedantic, pedantic = TRUE)
-Warning in '/tmp/Rtmp8Aok1D/model-38e4576b9e65.stan', line 8, column 2 to column 14:
+Warning in '/tmp/Rtmp4BnS2t/model-389bc997c52.stan', line 8, column 2 to column 14:
     The parameter lambda has no priors. This means either no prior is
     provided, or the prior(s) depend on data variables. In the later case,
     this may be a false positive.
-Warning in '/tmp/Rtmp8Aok1D/model-38e4576b9e65.stan', line 11, column 14 to column 20:
+Warning in '/tmp/Rtmp4BnS2t/model-389bc997c52.stan', line 11, column 14 to column 20:
     A poisson distribution is given parameter lambda as a rate parameter
     (argument 1), but lambda was not constrained to be strictly positive.
 ```
@@ -185,11 +192,11 @@ argument to the `$check_syntax()` method.
 
 ``` r
 mod_pedantic$check_syntax(pedantic = TRUE)
-Warning in '/tmp/Rtmp8Aok1D/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:
+Warning in '/tmp/Rtmp4BnS2t/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:
     The parameter lambda has no priors. This means either no prior is
     provided, or the prior(s) depend on data variables. In the later case,
     this may be a false positive.
-Warning in '/tmp/Rtmp8Aok1D/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:
+Warning in '/tmp/Rtmp4BnS2t/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:
     A poisson distribution is given parameter lambda as a rate parameter
     (argument 1), but lambda was not constrained to be strictly positive.
 Stan program is syntactically correct
@@ -207,11 +214,11 @@ rm(mod_pedantic)
 
 mod_pedantic <- cmdstan_model(stan_file_pedantic, compile = FALSE)
 mod_pedantic$check_syntax(pedantic = TRUE)
-Warning in '/tmp/Rtmp8Aok1D/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:
+Warning in '/tmp/Rtmp4BnS2t/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:
     The parameter lambda has no priors. This means either no prior is
     provided, or the prior(s) depend on data variables. In the later case,
     this may be a false positive.
-Warning in '/tmp/Rtmp8Aok1D/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:
+Warning in '/tmp/Rtmp4BnS2t/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:
     A poisson distribution is given parameter lambda as a rate parameter
     (argument 1), but lambda was not constrained to be strictly positive.
 Stan program is syntactically correct
@@ -221,7 +228,9 @@ Stan program is syntactically correct
 
 You can obtain the names, types and dimensions of the data, parameters,
 transformed parameters and generated quantities variables of a Stan
-model using the `$variables()` method of the `CmdStanModel` object.
+model using the `$variables()` method of the `CmdStanModel` object. This
+method works whether or not the model has been compiled. Here we use
+`compile = FALSE` because compilation is not required.
 
 ``` r
 
@@ -246,7 +255,7 @@ model {
   target += normal_lpdf(y | theta, sigma);
 }
 ")
-mod_v <- cmdstan_model(stan_file_variables)
+mod_v <- cmdstan_model(stan_file_variables, compile = FALSE)
 variables <- mod_v$variables()
 ```
 
@@ -354,7 +363,7 @@ mod <- cmdstan_model(stan_file, dir = "path/to/directory/for/executable")
 
 There are three data formats that CmdStanR allows when fitting a model:
 
-- named list of R objects
+- Named list of R objects
 - JSON file
 - R dump file
 
@@ -423,18 +432,9 @@ fit <- mod$sample(data = json_file)
 
 ### R dump file
 
-Finally, it is also possible to use the R dump file format. This is
-*not* recommended because CmdStan can process JSON faster than R dump,
-but CmdStanR allows it because CmdStan will accept files created by
-`rstan::stan_rdump()`:
-
-``` r
-
-rdump_file <- tempfile(fileext = ".data.R")
-rstan::stan_rdump(names(data_list), file = rdump_file, envir = list2env(data_list))
-cat(readLines(rdump_file), sep = "\n")
-fit <- mod$sample(data = rdump_file)
-```
+CmdStanR also accepts data in the R dump format because CmdStan supports
+it. However, JSON is faster for CmdStan to process and is the
+recommended file format.
 
 ## Writing CmdStan output to CSV
 
@@ -454,10 +454,10 @@ CmdStan to CSV files in a temporary directory.
 fit$output_files()
 ```
 
-    [1] "/tmp/Rtmp8Aok1D/bernoulli-202607220042-1-5be41c.csv"
-    [2] "/tmp/Rtmp8Aok1D/bernoulli-202607220042-2-5be41c.csv"
-    [3] "/tmp/Rtmp8Aok1D/bernoulli-202607220042-3-5be41c.csv"
-    [4] "/tmp/Rtmp8Aok1D/bernoulli-202607220042-4-5be41c.csv"
+    [1] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-202607220404-1-5be3d3.csv"
+    [2] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-202607220404-2-5be3d3.csv"
+    [3] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-202607220404-3-5be3d3.csv"
+    [4] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-202607220404-4-5be3d3.csv"
 
 These files will be lost if you end your R session or if you remove the
 `fit` object and force (or wait for) garbage collection.
@@ -477,8 +477,8 @@ gc()
 ```
 
               used (Mb) gc trigger  (Mb) max used (Mb)
-    Ncells 1248856 66.7    2562382 136.9  1650990 88.2
-    Vcells 2165473 16.6    8388608  64.0  4945796 37.8
+    Ncells 1271466 68.0    2628188 140.4  1648578 88.1
+    Vcells 2190480 16.8    8388608  64.0  4901549 37.4
 
 ``` r
 
@@ -682,7 +682,7 @@ str(csv_contents)
       ..$ stan_version_major  : num 2
       ..$ stan_version_minor  : num 39
       ..$ stan_version_patch  : num 0
-      ..$ start_datetime      : chr "2026-07-22 00:42:09 UTC"
+      ..$ start_datetime      : chr "2026-07-22 04:04:02 UTC"
       ..$ method              : chr "sample"
       ..$ save_warmup         : int 0
       ..$ thin                : num 1
@@ -703,13 +703,13 @@ str(csv_contents)
       ..$ seed                : num 31749990
       ..$ refresh             : num 100
       ..$ sig_figs            : num 8
-      ..$ profile_file        : chr "/tmp/Rtmp8Aok1D/bernoulli-profile-202607220042-1-2c6fec.csv"
+      ..$ profile_file        : chr "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-profile-202607220404-1-2c6fa3.csv"
       ..$ save_cmdstan_config : int 0
       ..$ stanc_version       : chr "stanc3 v2.39.0"
       ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
       ..$ variables           : chr [1:2] "lp__" "theta"
       ..$ step_size_adaptation: num [1:4] 0.895 0.892 0.942 0.929
-      ..$ model_name          : chr "bernoulli_model"
+      ..$ model_name          : chr "bernoulli_389b4a9caf39_model"
       ..$ adapt_engaged       : int 1
       ..$ adapt_delta         : num 0.8
       ..$ max_treedepth       : num 10
@@ -720,8 +720,8 @@ str(csv_contents)
       ..$ time                :'data.frame':    4 obs. of  4 variables:
       .. ..$ chain_id: num [1:4] 1 2 3 4
       .. ..$ warmup  : num [1:4] 0.002 0.002 0.002 0.002
-      .. ..$ sampling: num [1:4] 0.004 0.005 0.004 0.004
-      .. ..$ total   : num [1:4] 0.006 0.007 0.006 0.006
+      .. ..$ sampling: num [1:4] 0.005 0.005 0.005 0.005
+      .. ..$ total   : num [1:4] 0.007 0.007 0.007 0.007
       ..$ stan_variable_sizes :List of 2
       .. ..$ lp__ : num 1
       .. ..$ theta: num 1
@@ -732,8 +732,8 @@ str(csv_contents)
       ..$ chains:'data.frame':  4 obs. of  4 variables:
       .. ..$ chain_id: num [1:4] 1 2 3 4
       .. ..$ warmup  : num [1:4] 0.002 0.002 0.002 0.002
-      .. ..$ sampling: num [1:4] 0.004 0.005 0.004 0.004
-      .. ..$ total   : num [1:4] 0.006 0.007 0.006 0.006
+      .. ..$ sampling: num [1:4] 0.005 0.005 0.005 0.005
+      .. ..$ total   : num [1:4] 0.007 0.007 0.007 0.007
      $ inv_metric                     :List of 4
       ..$ 1: num 0.588
       ..$ 2: num 0.545
@@ -770,7 +770,7 @@ fit2 <- as_cmdstan_fit(fit$output_files())
 
 This is pointless in our case since we have the original `fit` object,
 but this function can be used to create fitted model objects
-(`CmdStanMCMC`, `CmdStanMLE`, etc.) from any CmdStan CSV files.
+(`CmdStanMCMC`, `CmdStanMLE`, etc.) from CmdStan CSV files.
 
 ### Saving and accessing advanced algorithm info (latent dynamics)
 
@@ -793,10 +793,10 @@ fit <- mod$sample(data = data_list, save_latent_dynamics = TRUE)
 fit$latent_dynamics_files()
 ```
 
-    [1] "/tmp/Rtmp8Aok1D/bernoulli-diagnostic-202607220042-1-057271.csv"
-    [2] "/tmp/Rtmp8Aok1D/bernoulli-diagnostic-202607220042-2-057271.csv"
-    [3] "/tmp/Rtmp8Aok1D/bernoulli-diagnostic-202607220042-3-057271.csv"
-    [4] "/tmp/Rtmp8Aok1D/bernoulli-diagnostic-202607220042-4-057271.csv"
+    [1] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-diagnostic-202607220404-1-057228.csv"
+    [2] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-diagnostic-202607220404-2-057228.csv"
+    [3] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-diagnostic-202607220404-3-057228.csv"
+    [4] "/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-diagnostic-202607220404-4-057228.csv"
 
 ``` r
 
@@ -842,33 +842,37 @@ head(x[, c("theta", "p_theta", "g_theta")])
 Our model has a single parameter `theta` and the three columns above
 correspond to `theta` in the *unconstrained* space (`theta` on the
 constrained space is accessed via `fit$draws()`), the auxiliary momentum
-`p_theta`, and the gradient `g_theta`. In general, each of these three
-columns will exist for *every* parameter in the model.
+`p_theta`, and the gradient `g_theta`. In general, these three
+quantities are recorded for every parameter in the model. Container
+parameters are organized into columns for each scalar element in the
+unconstrained parameterization. CmdStan uses period-separated indices
+for these elements, for example `theta.1`, `p_theta.1`, and `g_theta.1`.
+See the [diagnostic CSV output
+documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#diagnostic-csv-output-file)
+for more details.
 
 ## Developing using CmdStanR
 
 CmdStanR can of course be used for developing other packages that
 require compiling and running Stan models as well as using new or custom
-Stan features available through CmdStan.
+Stan features available through CmdStan. Even though CmdStanR is not
+itself on CRAN, it can still be used by packages that are on CRAN.
 
-### Pre-compiled Stan models in R packages
+### Compiling Stan models during package installation
 
-You may compile a Stan model at runtime (e.g. just before sampling), or
-you may compile all the models inside the package file system in advance
-at installation time. The latter avoids compilations at runtime, which
-matters in centrally managed R installations where users should not
-compile their own software.
+Stan models used by an R package can be compiled at runtime or during
+installation from source. Installation-time compilation builds
+executables on the installing system so they can be reused without
+recompilation at runtime. This is different from including compiled
+executables in the source package: compiled artifacts are generally not
+portable across platforms, and [CRAN source packages may not contain
+binary executable
+code](https://cran.r-project.org/web/packages/policies.html#Source-packages).
 
-To pre-compile all the models in a package, you may create top-level
-scripts `configure` and `configure.win` which run
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
-with `compile = TRUE` and save the compiled executables somewhere inside
-the `inst/` folder of the package source. The
-[`instantiate`](https://wlandau.github.io/instantiate/) package helps
-developers configure packages this way, and it documents other topics
-such as submitting to CRAN and administering CmdStan. Kevin Ushey’s
-[`configure`](https://github.com/kevinushey/configure) package helps
-create and manage package configuration files in general.
+The [`instantiate`](https://wlandau.github.io/instantiate/) package
+provides a current workflow for installation-time compilation. See the
+`instantiate` documentation for requirements, limitations, and advice on
+preparing for CRAN submission.
 
 ### Troubleshooting and debugging
 
@@ -880,23 +884,23 @@ enabled for an entire R session by setting the option
 
 ``` r
 
-options("cmdstanr_verbose"=TRUE)
+options(cmdstanr_verbose = TRUE)
 
 mod <- cmdstan_model(stan_file, force_recompile = TRUE)
 ```
 
-    Running make /tmp/Rtmp8Aok1D/model-38e4374dbeb4 \
-      'STANCFLAGS +=  --name=bernoulli_model'
+    Running make /tmp/Rtmp4BnS2t/model-389b48275819 \
+      'STANCFLAGS +=  --name=bernoulli-389b4a9caf39_model'
 
     --- Translating Stan model to C++ code ---
-    bin/stanc --name=bernoulli_model --o=/tmp/Rtmp8Aok1D/model-38e4374dbeb4.hpp /tmp/Rtmp8Aok1D/model-38e4374dbeb4.stan
+    bin/stanc --name=bernoulli-389b4a9caf39_model --o=/tmp/Rtmp4BnS2t/model-389b48275819.hpp /tmp/Rtmp4BnS2t/model-389b48275819.stan
 
     --- Compiling C++ code ---
-    g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS          -c -Wno-ignored-attributes   -x c++ -o /tmp/Rtmp8Aok1D/model-38e4374dbeb4.o /tmp/Rtmp8Aok1D/model-38e4374dbeb4.hpp
+    g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS          -c -Wno-ignored-attributes   -x c++ -o /tmp/Rtmp4BnS2t/model-389b48275819.o /tmp/Rtmp4BnS2t/model-389b48275819.hpp
 
     --- Linking model ---
-    g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS               -Wl,-L,"/home/runner/.cmdstan/cmdstan-2.39.0/stan/lib/stan_math/lib/tbb"   -Wl,-rpath,"/home/runner/.cmdstan/cmdstan-2.39.0/stan/lib/stan_math/lib/tbb"      /tmp/Rtmp8Aok1D/model-38e4374dbeb4.o src/cmdstan/main.o       -ltbb   stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a  stan/lib/stan_math/lib/tbb/libtbb.so.2 -o /tmp/Rtmp8Aok1D/model-38e4374dbeb4
-    rm /tmp/Rtmp8Aok1D/model-38e4374dbeb4.o /tmp/Rtmp8Aok1D/model-38e4374dbeb4.hpp
+    g++ -Wno-deprecated-declarations -std=c++17 -pthread -D_REENTRANT -Wno-sign-compare -Wno-ignored-attributes -Wno-class-memaccess      -I stan/lib/stan_math/lib/tbb_2020.3/include    -O3 -I src -I stan/src -I stan/lib/rapidjson_1.1.0/ -I lib/CLI11-1.9.1/ -I stan/lib/stan_math/ -I stan/lib/stan_math/lib/eigen_3.4.0 -I stan/lib/stan_math/lib/boost_1.87.0 -I stan/lib/stan_math/lib/sundials_6.1.1/include -I stan/lib/stan_math/lib/sundials_6.1.1/src/sundials    -DBOOST_DISABLE_ASSERTS               -Wl,-L,"/home/runner/.cmdstan/cmdstan-2.39.0/stan/lib/stan_math/lib/tbb"   -Wl,-rpath,"/home/runner/.cmdstan/cmdstan-2.39.0/stan/lib/stan_math/lib/tbb"      /tmp/Rtmp4BnS2t/model-389b48275819.o src/cmdstan/main.o       -ltbb   stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a  stan/lib/stan_math/lib/tbb/libtbb.so.2 -o /tmp/Rtmp4BnS2t/model-389b48275819
+    rm /tmp/Rtmp4BnS2t/model-389b48275819.o /tmp/Rtmp4BnS2t/model-389b48275819.hpp
     stan_version_major = 2
     stan_version_minor = 39
     stan_version_patch = 0
@@ -917,10 +921,10 @@ fit <- mod$sample(
 
     Running MCMC with 1 chain...
 
-    Running ./bernoulli 'id=1' random 'seed=1376020223' data \
-      'file=/tmp/Rtmp8Aok1D/standata-38e42507cc18.json' output \
-      'file=/tmp/Rtmp8Aok1D/bernoulli-202607220042-1-1e143e.csv' \
-      'profile_file=/tmp/Rtmp8Aok1D/bernoulli-profile-202607220042-1-3dcc19.csv' \
+    Running ./bernoulli-389b4a9caf39 'id=1' random 'seed=1376020223' data \
+      'file=/tmp/Rtmp4BnS2t/standata-389b656e5f7.json' output \
+      'file=/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-202607220404-1-1e13f5.csv' \
+      'profile_file=/tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-profile-202607220404-1-3dcbd0.csv' \
       'save_cmdstan_config=0' 'method=sample' 'num_samples=100' 'num_warmup=100' \
       'save_warmup=0' 'algorithm=hmc' 'engine=nuts' adapt 'engaged=1' \
       'save_metric=0'
@@ -952,20 +956,20 @@ fit <- mod$sample(
     Chain 1     num_chains = 1 (Default) 
     Chain 1 id = 1 (Default) 
     Chain 1 data 
-    Chain 1   file = /tmp/Rtmp8Aok1D/standata-38e42507cc18.json 
+    Chain 1   file = /tmp/Rtmp4BnS2t/standata-389b656e5f7.json 
     Chain 1 init = 2 (Default) 
     Chain 1 random 
     Chain 1   seed = 1376020223 
     Chain 1 output 
-    Chain 1   file = /tmp/Rtmp8Aok1D/bernoulli-202607220042-1-1e143e.csv 
+    Chain 1   file = /tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-202607220404-1-1e13f5.csv 
     Chain 1   diagnostic_file =  (Default) 
     Chain 1   refresh = 100 (Default) 
     Chain 1   sig_figs = 8 (Default) 
-    Chain 1   profile_file = /tmp/Rtmp8Aok1D/bernoulli-profile-202607220042-1-3dcc19.csv 
+    Chain 1   profile_file = /tmp/Rtmp4BnS2t/bernoulli-389b4a9caf39-profile-202607220404-1-3dcbd0.csv 
     Chain 1   save_cmdstan_config = false (Default) 
     Chain 1 num_threads = 1 (Default) 
-    Chain 1 Gradient evaluation took 3e-06 seconds 
-    Chain 1 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+    Chain 1 Gradient evaluation took 2e-06 seconds 
+    Chain 1 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
     Chain 1 Adjust your expectations accordingly! 
     Chain 1 WARNING: There aren't enough warmup iterations to fit the 
     Chain 1          three stages of adaptation as currently configured. 

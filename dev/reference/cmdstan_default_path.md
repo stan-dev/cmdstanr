@@ -21,3 +21,10 @@ cmdstan_default_path(dir = NULL)
 
 Path to the CmdStan installation with the most recent release version,
 or `NULL` if no installation found.
+
+## See also
+
+[`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md),
+[`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/dev/reference/set_cmdstan_path.md),
+and
+[`cmdstan_default_install_path()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_default_install_path.md)

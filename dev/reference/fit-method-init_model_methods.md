@@ -30,6 +30,10 @@ init_model_methods(seed = 1, verbose = FALSE)
 
   (logical) Whether to show verbose logging during compilation.
 
+## Value
+
+`NULL`, invisibly.
+
 ## See also
 
 [`log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md),

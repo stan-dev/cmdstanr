@@ -36,7 +36,7 @@ write_stan_file(
 
   (string) An optional path to the directory where the file will be
   written. If omitted, a global option `cmdstanr_write_stan_file_dir` is
-  used. If the global options is not set, [temporary
+  used. If the global option is not set, [temporary
   directory](https://rdrr.io/r/base/tempfile.html) is used.
 
 - basename:
@@ -59,6 +59,13 @@ write_stan_file(
 
 The path to the file.
 
+## See also
+
+[`print_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/print_stan_file.md),
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md),
+and
+[cmdstanr_global_options](https://mc-stan.org/cmdstanr/dev/reference/cmdstanr_global_options.md)
+
 ## Examples
 
 ``` r
@@ -78,7 +85,7 @@ model {
 
 f <- write_stan_file(stan_program)
 print(f)
-#> [1] "/tmp/RtmpILyGYQ/model_0fc14724391f86141648501cc6535151.stan"
+#> [1] "/tmp/RtmpR10Vum/model_0fc14724391f86141648501cc6535151.stan"
 
 lines <- readLines(f)
 print(lines)

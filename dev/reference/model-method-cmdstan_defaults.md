@@ -3,7 +3,7 @@
 The `$cmdstan_defaults()` method of a
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
 object queries the compiled model binary for the default argument values
-used by a given inference method. The returned list uses cmdstanr-style
+used by a given inference method. The returned list uses CmdStanR-style
 argument names (e.g., `iter_sampling` instead of CmdStan's
 `num_samples`).
 
@@ -21,14 +21,14 @@ cmdstan_defaults(
 
 - method:
 
-  (string) The inference method whose defaults to retrieve. One of
-  `"sample"`, `"optimize"`, `"variational"`, `"pathfinder"`, or
-  `"laplace"`.
+  (string) The inference method for which to retrieve default argument
+  values. One of `"sample"`, `"optimize"`, `"variational"`,
+  `"pathfinder"`, or `"laplace"`. The default is `"sample"`.
 
 ## Value
 
 A named list of default argument values for the specified method, with
-cmdstanr-style argument names.
+CmdStanR-style argument names.
 
 ## See also
 
@@ -52,6 +52,7 @@ Other CmdStanModel methods:
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),

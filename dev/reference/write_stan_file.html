@@ -112,7 +112,7 @@ Stan program.</p></dd>
 <dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
 <dd><p>(string) An optional path to the directory where the file will be
 written. If omitted, a global option <code>cmdstanr_write_stan_file_dir</code> is
-used. If the global options is not set, <a href="https://rdrr.io/r/base/tempfile.html" class="external-link">temporary directory</a>
+used. If the global option is not set, <a href="https://rdrr.io/r/base/tempfile.html" class="external-link">temporary directory</a>
 is used.</p></dd>
 
 
@@ -136,6 +136,11 @@ determine the file name if <code>basename</code> is not set.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The path to the file.</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="print_stan_file.html">print_stan_file()</a></code>, <code><a href="cmdstan_model.html">cmdstan_model()</a></code>, and
+<a href="cmdstanr_global_options.html">cmdstanr_global_options</a></p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -155,7 +160,7 @@ determine the file name if <code>basename</code> is not set.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">write_stan_file</span><span class="op">(</span><span class="va">stan_program</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpILyGYQ/model_0fc14724391f86141648501cc6535151.stan"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpR10Vum/model_0fc14724391f86141648501cc6535151.stan"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">lines</span><span class="op">)</span></span></span>

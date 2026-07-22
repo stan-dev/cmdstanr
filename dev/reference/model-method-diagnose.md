@@ -8,6 +8,14 @@ calculated by finite differences. Discrepancies between the two indicate
 that there is a problem with the model or initial states or else there
 is a bug in Stan.
 
+Unlike other CmdStan methods, `$diagnose()` does not expose
+`show_messages` or `show_exceptions` arguments. CmdStan's standard
+output is not printed during execution, while standard error is always
+displayed. The captured console output can be inspected with the
+returned object's
+[`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md)
+method.
+
 ## Usage
 
 ``` r
@@ -46,15 +54,15 @@ diagnose(
 
 - seed:
 
-  (positive integer(s)) A seed for the (P)RNG to pass to CmdStan. In the
-  case of multi-chain sampling the single `seed` will automatically be
-  augmented by the the run (chain) ID so that each chain uses a
-  different seed. The exception is the transformed data block, which
-  defaults to using same seed for all chains so that the same data is
-  generated for all chains if RNG functions are used. The only time
-  `seed` should be specified as a vector (one element per chain) is if
-  RNG functions are used in transformed data and the goal is to generate
-  *different* data for each chain.
+  (non-negative integer(s)) A seed for the (P)RNG to pass to CmdStan. In
+  the case of multi-chain sampling the single `seed` will automatically
+  be augmented by the run (chain) ID so that each chain uses a different
+  seed. The exception is the transformed data block, which defaults to
+  using same seed for all chains so that the same data is generated for
+  all chains if RNG functions are used. The only time `seed` should be
+  specified as a vector (one element per chain) is if RNG functions are
+  used in transformed data and the goal is to generate *different* data
+  for each chain.
 
 - init:
 
@@ -62,10 +70,11 @@ diagnose(
   declared in the parameters block of the Stan program. One of the
   following:
 
-  - A real number `x>0`. This initializes *all* parameters randomly
-    between `[-x,x]` on the *unconstrained* parameter space.
+  - A real number `x > 0`. This initializes *all* parameters randomly
+    between `[-x, x]` on the *unconstrained* parameter space.
 
-  - The number `0`. This initializes *all* parameters to `0`.
+  - The number `0`. This initializes *all* parameters to `0` on the
+    *unconstrained* parameter space.
 
   - A character vector of paths to JSON or Rdump files containing
     initial values for all or some parameters. For MCMC and Pathfinder,
@@ -137,7 +146,7 @@ diagnose(
     requested chains/paths, draws are selected uniformly without
     replacement. If the draws object's parameters are only a subset of
     the model parameters then the other parameters will be drawn by
-    Stan's default initialization. The fit object must have at least
+    Stan's default initialization. The draws object must have at least
     some parameters that are the same name and dimensions as the current
     Stan model.
 
@@ -167,8 +176,8 @@ diagnose(
 
   (string) A string to use as a prefix for the names of the output CSV
   files of CmdStan. If `NULL` (the default), the basename of the output
-  CSV files will be comprised from the model name, timestamp, and 5
-  random characters.
+  CSV files is composed of the model name, timestamp, and a
+  six-character random hexadecimal suffix.
 
 - epsilon:
 
@@ -186,6 +195,12 @@ A
 object.
 
 ## See also
+
+The
+[`$gradients()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-gradients.md)
+method for accessing the gradients and the
+[`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md)
+method for displaying the captured console output.
 
 The CmdStanR website
 ([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
@@ -207,6 +222,7 @@ Other CmdStanModel methods:
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
@@ -223,9 +239,9 @@ test <- cmdstanr_example("logistic", method = "diagnose")
 # retrieve the gradients
 test$gradients()
 #>   param_idx     value    model finite_diff        error
-#> 1         0  0.280159  2.33901     2.33901  3.60982e-09
-#> 2         1 -1.312800  8.36477     8.36477 -1.04252e-08
-#> 3         2 -1.170490 13.60250    13.60250 -2.52653e-08
-#> 4         3  0.848480  1.14582     1.14582 -1.07726e-08
+#> 1         0 -0.600900  19.8734     19.8734 -2.39168e-08
+#> 2         1  0.489817 -19.1212    -19.1212  3.71502e-09
+#> 3         2 -0.823247  10.2858     10.2858  3.22936e-08
+#> 4         3 -1.493100  32.6105     32.6105 -5.45285e-09
 # }
 ```

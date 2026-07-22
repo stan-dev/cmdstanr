@@ -2,28 +2,34 @@
 
 The `$optimize()` method of a
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
-object runs Stan's optimizer to find a posterior mode. If the Jacobian
-adjustment is not included (the default), the optimization returns
-parameter values that correspond to a mode of the target in the
-constrained space (if such mode exists). Thus this option is useful for
-any optimization where we want to find the mode in the original
-constrained parameter space. If the Jacobian adjustment is included, the
-optimization returns parameter values that correspond to a mode in the
-unconstrained space. This is useful, for example, if we want to make a
-distributional approximation of the posterior at the mode (see, [Laplace
-sampling](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
-for which the Jacobian adjustment needs to be included for correct
-results). If the model has only unconstrained parameters, there is no
-effect from including the Jacobian. See the [CmdStan User's
+object runs Stan's optimizer. Following CmdStan's terminology,
+optimization without the Jacobian adjustment (the default) returns a
+maximum likelihood estimate (MLE), whereas optimization with the
+adjustment returns a maximum a posteriori (MAP) estimate. More
+precisely, without the adjustment the optimization finds a mode of the
+target in the original constrained parameter space (if the mode exists),
+whereas with the adjustment it finds a mode of the corresponding density
+in the unconstrained parameter space.
+
+The `jacobian` argument does not determine whether prior terms are
+included. Every contribution to the Stan program's `target`, including
+prior terms, is included under either setting. The MLE or MAP
+interpretation therefore depends on both the contents of the target and
+the parameterization. The Jacobian adjustment is particularly useful
+when making a distributional approximation in the unconstrained space
+(see [Laplace
+sampling](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)).
+If the model has only unconstrained parameters, including the Jacobian
+has no effect. See the [CmdStan User's
 Guide](https://mc-stan.org/docs/cmdstan-guide/index.html) for more
 details.
 
 Any argument left as `NULL` will default to the default value used by
 the installed version of CmdStan. See the [CmdStan User’s
 Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
-default arguments. The default values can also be obtained by checking
-the metadata of an example model, e.g.,
-`cmdstanr_example(method="optimize")$metadata()`.
+default arguments. These values are also available via the
+[`$cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
+method.
 
 ## Usage
 
@@ -33,7 +39,6 @@ optimize(
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  save_latent_dynamics = FALSE,
   output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
@@ -79,15 +84,15 @@ optimize(
 
 - seed:
 
-  (positive integer(s)) A seed for the (P)RNG to pass to CmdStan. In the
-  case of multi-chain sampling the single `seed` will automatically be
-  augmented by the the run (chain) ID so that each chain uses a
-  different seed. The exception is the transformed data block, which
-  defaults to using same seed for all chains so that the same data is
-  generated for all chains if RNG functions are used. The only time
-  `seed` should be specified as a vector (one element per chain) is if
-  RNG functions are used in transformed data and the goal is to generate
-  *different* data for each chain.
+  (non-negative integer(s)) A seed for the (P)RNG to pass to CmdStan. In
+  the case of multi-chain sampling the single `seed` will automatically
+  be augmented by the run (chain) ID so that each chain uses a different
+  seed. The exception is the transformed data block, which defaults to
+  using same seed for all chains so that the same data is generated for
+  all chains if RNG functions are used. The only time `seed` should be
+  specified as a vector (one element per chain) is if RNG functions are
+  used in transformed data and the goal is to generate *different* data
+  for each chain.
 
 - refresh:
 
@@ -100,10 +105,11 @@ optimize(
   declared in the parameters block of the Stan program. One of the
   following:
 
-  - A real number `x>0`. This initializes *all* parameters randomly
-    between `[-x,x]` on the *unconstrained* parameter space.
+  - A real number `x > 0`. This initializes *all* parameters randomly
+    between `[-x, x]` on the *unconstrained* parameter space.
 
-  - The number `0`. This initializes *all* parameters to `0`.
+  - The number `0`. This initializes *all* parameters to `0` on the
+    *unconstrained* parameter space.
 
   - A character vector of paths to JSON or Rdump files containing
     initial values for all or some parameters. For MCMC and Pathfinder,
@@ -175,21 +181,9 @@ optimize(
     requested chains/paths, draws are selected uniformly without
     replacement. If the draws object's parameters are only a subset of
     the model parameters then the other parameters will be drawn by
-    Stan's default initialization. The fit object must have at least
+    Stan's default initialization. The draws object must have at least
     some parameters that are the same name and dimensions as the current
     Stan model.
-
-- save_latent_dynamics:
-
-  (logical) Should auxiliary diagnostic information about the latent
-  dynamics be written to temporary diagnostic CSV files? This argument
-  replaces CmdStan's `diagnostic_file` argument and the content written
-  to CSV is controlled by the user's CmdStan installation and not
-  CmdStanR (for some algorithms no content may be written). The default
-  is `FALSE`, which is appropriate for almost every use case. To save
-  the temporary files created when `save_latent_dynamics=TRUE` see the
-  [`$save_latent_dynamics_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)
-  method.
 
 - output_dir:
 
@@ -217,16 +211,17 @@ optimize(
 
   (string) A string to use as a prefix for the names of the output CSV
   files of CmdStan. If `NULL` (the default), the basename of the output
-  CSV files will be comprised from the model name, timestamp, and 5
-  random characters.
+  CSV files is composed of the model name, timestamp, and a
+  six-character random hexadecimal suffix.
 
 - sig_figs:
 
-  (positive integer) The number of significant figures used when storing
-  the output values. By default, CmdStan represent the output values
-  with 6 significant figures. The upper limit for `sig_figs` is 18.
-  Increasing this value will result in larger output CSV files and thus
-  an increased usage of disk space.
+  (positive integer) The number of significant figures (up to a maximum
+  of 18) to use when storing the output values. If `NULL` (the default),
+  the default from the installed CmdStan version is used. Use
+  [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md)
+  to check that default. Increasing this value will result in larger
+  output CSV files and thus an increased usage of disk space.
 
 - threads:
 
@@ -254,12 +249,14 @@ optimize(
 - jacobian:
 
   (logical) Whether or not to use the Jacobian adjustment for
-  constrained variables. For historical reasons, the default is `FALSE`,
-  meaning optimization finds a mode of the target in the original
-  constrained parameter space. Setting it to `TRUE` finds a mode in the
-  unconstrained space. See the CmdStan User's Guide for more details.
-  For use later with
-  [`$laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)
+  constrained variables. For historical reasons, the default is `FALSE`.
+  CmdStan refers to the estimates obtained with `FALSE` and `TRUE` as
+  MLE and MAP estimates, respectively. More precisely, `FALSE` finds a
+  mode of the target in the constrained parameter space and `TRUE` finds
+  a mode in the unconstrained space. This argument does not control
+  whether prior terms are included. See the **Description** section and
+  the CmdStan User's Guide for more details. For use later with
+  [`$laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
   the `jacobian` argument should typically be set to `TRUE`.
 
 - init_alpha:
@@ -354,6 +351,7 @@ Other CmdStanModel methods:
 [`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
 [`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
 [`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
 [`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
 [`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
 [`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample_mpi.md),
@@ -560,9 +558,9 @@ fit_optim$summary()
 # Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
 # to the posterior
 fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
-#> Initial log joint probability = -6.75039 
+#> Initial log joint probability = -13.2844 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        3      -6.74802   0.000426715    6.8958e-06      0.9982      0.9982        6    
+#>        5      -6.74802    0.00177214   4.32793e-05           1           1        8    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -593,11 +591,11 @@ fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
 #> Finished in  0.1 seconds.
 fit_laplace$summary()
 #> # A tibble: 3 × 7
-#>   variable      mean median    sd   mad      q5      q95
-#>   <chr>        <dbl>  <dbl> <dbl> <dbl>   <dbl>    <dbl>
-#> 1 lp__        -7.24  -6.97  0.712 0.307 -8.63   -6.75   
-#> 2 lp_approx__ -0.503 -0.225 0.724 0.309 -1.95   -0.00238
-#> 3 theta        0.269  0.251 0.123 0.120  0.0995  0.500  
+#>   variable      mean median    sd   mad     q5      q95
+#>   <chr>        <dbl>  <dbl> <dbl> <dbl>  <dbl>    <dbl>
+#> 1 lp__        -7.23  -6.96  0.687 0.294 -8.47  -6.75   
+#> 2 lp_approx__ -0.483 -0.216 0.676 0.298 -1.80  -0.00168
+#> 3 theta        0.269  0.248 0.122 0.119  0.102  0.494  
 
 # Run 'variational' method to use ADVI to approximate posterior
 fit_vb <- mod$variational(data = stan_data, seed = 123)
@@ -606,8 +604,8 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 #>   This procedure has not been thoroughly tested and may be unstable 
 #>   or buggy. The interface is subject to change. 
 #> ------------------------------------------------------------ 
-#> Gradient evaluation took 3e-06 seconds 
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+#> Gradient evaluation took 2e-06 seconds 
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
 #> Adjust your expectations accordingly! 
 #> Begin eta adaptation. 
 #> Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -635,7 +633,7 @@ mcmc_hist(fit_vb$draws("theta"))
 #> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
 
 
-# Run 'pathfinder' method, a new alternative to the variational method
+# Run the Pathfinder variational inference method
 fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 #> Path [1] :Initial log joint density = -18.273334 
 #> Path [1] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
@@ -671,47 +669,47 @@ mcmc_hist(fit_pf$draws("theta"))
 fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
                          history_size=50, max_lbfgs_iters=100)
 #> Warning: Number of PSIS draws is larger than the total number of draws returned by the single Pathfinders. This is likely unintentional and leads to re-sampling from the same draws. 
-#> Path [1] :Initial log joint density = -6.859263 
+#> Path [1] :Initial log joint density = -6.825541 
 #> Path [1] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               4      -6.748e+00      7.843e-04   6.493e-06    1.000e+00  1.000e+00       123 -6.226e+00 -6.261e+00                   
-#> Path [1] :Best Iter: [3] ELBO (-6.226247) evaluations: (123) 
-#> Path [2] :Initial log joint density = -9.619450 
+#>               4      -6.748e+00      4.876e-04   2.940e-06    1.000e+00  1.000e+00       123 -6.238e+00 -6.285e+00                   
+#> Path [1] :Best Iter: [3] ELBO (-6.238186) evaluations: (123) 
+#> Path [2] :Initial log joint density = -12.278280 
 #> Path [2] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               5      -6.748e+00      5.107e-04   5.391e-06    1.000e+00  1.000e+00       156 -6.160e+00 -6.204e+00                   
-#> Path [2] :Best Iter: [4] ELBO (-6.160165) evaluations: (156) 
-#> Path [3] :Initial log joint density = -7.183229 
+#>               5      -6.748e+00      1.376e-03   2.681e-05    1.000e+00  1.000e+00       156 -6.203e+00 -6.219e+00                   
+#> Path [2] :Best Iter: [4] ELBO (-6.202924) evaluations: (156) 
+#> Path [3] :Initial log joint density = -17.768639 
 #> Path [3] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               4      -6.748e+00      4.068e-03   1.007e-04    1.000e+00  1.000e+00       123 -6.157e+00 -6.278e+00                   
-#> Path [3] :Best Iter: [3] ELBO (-6.156509) evaluations: (123) 
-#> Path [4] :Initial log joint density = -7.071206 
+#>               5      -6.748e+00      1.019e-03   2.434e-05    1.000e+00  1.000e+00       156 -6.241e+00 -6.250e+00                   
+#> Path [3] :Best Iter: [2] ELBO (-6.240674) evaluations: (156) 
+#> Path [4] :Initial log joint density = -6.852691 
 #> Path [4] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               5      -6.748e+00      9.780e-05   4.856e-08    1.000e+00  1.000e+00       156 -6.183e+00 -6.223e+00                   
-#> Path [4] :Best Iter: [2] ELBO (-6.183424) evaluations: (156) 
-#> Path [5] :Initial log joint density = -17.194044 
+#>               4      -6.748e+00      9.558e-05   1.256e-05    9.465e-01  9.465e-01       123 -6.223e+00 -6.242e+00                   
+#> Path [4] :Best Iter: [3] ELBO (-6.222913) evaluations: (123) 
+#> Path [5] :Initial log joint density = -9.278568 
 #> Path [5] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               5      -6.748e+00      1.354e-03   3.648e-05    1.000e+00  1.000e+00       156 -6.225e+00 -6.270e+00                   
-#> Path [5] :Best Iter: [4] ELBO (-6.225186) evaluations: (156) 
-#> Path [6] :Initial log joint density = -6.805573 
+#>               5      -6.748e+00      4.025e-04   3.717e-06    1.000e+00  1.000e+00       156 -6.219e+00 -6.225e+00                   
+#> Path [5] :Best Iter: [4] ELBO (-6.218958) evaluations: (156) 
+#> Path [6] :Initial log joint density = -7.189594 
 #> Path [6] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               4      -6.748e+00      3.267e-04   1.508e-06    1.000e+00  1.000e+00       123 -6.208e+00 -6.220e+00                   
-#> Path [6] :Best Iter: [3] ELBO (-6.208137) evaluations: (123) 
-#> Path [7] :Initial log joint density = -6.787966 
+#>               4      -6.748e+00      4.133e-03   1.034e-04    1.000e+00  1.000e+00       123 -6.193e+00 -6.289e+00                   
+#> Path [6] :Best Iter: [2] ELBO (-6.192833) evaluations: (123) 
+#> Path [7] :Initial log joint density = -6.777846 
 #> Path [7] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               4      -6.748e+00      1.982e-04   6.553e-07    1.000e+00  1.000e+00       123 -6.202e+00 -6.255e+00                   
-#> Path [7] :Best Iter: [3] ELBO (-6.202327) evaluations: (123) 
-#> Path [8] :Initial log joint density = -15.227267 
+#>               4      -6.748e+00      1.321e-04   3.331e-07    1.000e+00  1.000e+00       123 -6.246e+00 -6.186e+00                   
+#> Path [7] :Best Iter: [4] ELBO (-6.185839) evaluations: (123) 
+#> Path [8] :Initial log joint density = -6.760918 
 #> Path [8] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               5      -6.748e+00      2.021e-03   6.059e-05    1.000e+00  1.000e+00       156 -6.140e+00 -6.201e+00                   
-#> Path [8] :Best Iter: [3] ELBO (-6.140407) evaluations: (156) 
-#> Path [9] :Initial log joint density = -12.598412 
+#>               3      -6.748e+00      1.992e-03   9.071e-05    1.000e+00  1.000e+00        91 -6.203e+00 -6.185e+00                   
+#> Path [8] :Best Iter: [3] ELBO (-6.184505) evaluations: (91) 
+#> Path [9] :Initial log joint density = -7.104752 
 #> Path [9] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               5      -6.748e+00      1.515e-03   3.204e-05    1.000e+00  1.000e+00       156 -6.200e+00 -6.289e+00                   
-#> Path [9] :Best Iter: [3] ELBO (-6.200390) evaluations: (156) 
-#> Path [10] :Initial log joint density = -6.770435 
+#>               5      -6.748e+00      1.259e-04   7.577e-08    1.000e+00  1.000e+00       156 -6.126e+00 -6.230e+00                   
+#> Path [9] :Best Iter: [2] ELBO (-6.125705) evaluations: (156) 
+#> Path [10] :Initial log joint density = -6.764273 
 #> Path [10] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
-#>               3      -6.748e+00      2.025e-03   2.128e-06    9.723e-01  9.723e-01        91 -6.242e+00 -6.281e+00                   
-#> Path [10] :Best Iter: [2] ELBO (-6.242400) evaluations: (91) 
-#> Pareto k value (0.85) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
+#>               3      -6.748e+00      1.605e-03   7.477e-06    9.781e-01  9.781e-01        91 -6.255e+00 -6.260e+00                   
+#> Path [10] :Best Iter: [2] ELBO (-6.254538) evaluations: (91) 
+#> Pareto k value (0.71) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
 #> Finished in  0.1 seconds.
 
 # Specifying initial values as a function

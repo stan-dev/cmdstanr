@@ -4,13 +4,24 @@ A `CmdStanMLE` object is the fitted model object returned by the
 [`$optimize()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md)
 method of a
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
-object. The name "MLE" (used for historical reasons) is a bit misleading
-since this object will contain parameter estimates corresponding to
-either a mode in the constrained parameter space *or* the unconstrained
-parameter space, depending on the value of the `jacobian` argument when
-the model is fit (and whether the model has constrained parameters). See
+object. Following CmdStan's terminology, the object contains an MLE if
+optimization was run with `jacobian=FALSE` and a MAP estimate if it was
+run with `jacobian=TRUE`. The name "MLE" is retained for historical
+reasons. More precisely, the estimates correspond to a mode in either
+the constrained parameter space or the unconstrained parameter space,
+depending on the value of `jacobian` (and whether the model has
+constrained parameters). The `jacobian` argument does not control
+whether prior terms are included; all contributions to the Stan
+program's target are included under either setting. See
 [`$optimize()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md)
 and the CmdStan User's Guide for more details.
+
+Objects created from CSV files using
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+have a reduced set of available methods. See **Reconstructed fitted
+model objects** in the
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+documentation for details.
 
 ## Methods
 
@@ -22,11 +33,12 @@ have their own (linked) documentation pages.
 |  |  |
 |----|----|
 | **Method** | **Description** |
-| [`draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md) | Return the point estimate as a 1-row [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html). |
+| [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md) | Return the point estimate as a 1-row [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html). |
 | [`$mle()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-mle.md) | Return the point estimate as a numeric vector. |
-| [`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md) | Return the total log probability density (`target`). |
+| [`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md) | Return the target log density (`lp__`) evaluated by Stan. |
 | [`$init()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init.md) | Return user-specified initial values. |
 | [`$metadata()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-metadata.md) | Return a list of metadata gathered from the CmdStan CSV files. |
+| [`$profiles()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-profiles.md) | Return profiling data. |
 | [`$code()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-code.md) | Return Stan code as a character vector. |
 
 ### Summarize inferences
@@ -34,6 +46,7 @@ have their own (linked) documentation pages.
 |  |  |
 |----|----|
 | **Method** | **Description** |
+| [`$print()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-summary.md) | Print a summary of the point estimate. |
 | [`$summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-summary.md) | Run [`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html). |
 
 ### Save fitted model object and temporary files
@@ -41,9 +54,16 @@ have their own (linked) documentation pages.
 |  |  |
 |----|----|
 | **Method** | **Description** |
+| [`$materialize()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-materialize.md) | Read all draws and diagnostics into memory. |
 | [`$save_object()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_object.md) | Save fitted model object to a file. |
+| [`$output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Return paths to output CSV files. |
 | [`$save_output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save output CSV files to a specified location. |
+| [`$data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Return the path to the JSON data file. |
 | [`$save_data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save JSON data file to a specified location. |
+| [`$profile_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Return paths to profiling CSV files. |
+| [`$save_profile_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save profiling CSV files to a specified location. |
+| [`$config_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Return paths to CmdStan configuration JSON files. |
+| [`$save_config_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save CmdStan configuration JSON files to a specified location. |
 
 ### Report run times, console output, return codes
 
@@ -63,7 +83,7 @@ have their own (linked) documentation pages.
 | [`$init_model_methods()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init_model_methods.md) | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
 | [`$log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md) | Calculate log-prob. |
 | [`$grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md) | Calculate log-prob and gradient. |
-| [`$hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md) | Calculate log-prob, gradient, and hessian. |
+| [`$hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md) | Calculate log-prob, gradient, and Hessian. |
 | [`$constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md) | Transform a set of unconstrained parameter values to the constrained scale. |
 | [`$unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md) | Transform a set of parameter values to the unconstrained scale. |
 | [`$unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md) | Transform all parameter draws to the unconstrained scale. |

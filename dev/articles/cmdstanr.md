@@ -14,7 +14,7 @@ package by running the following command in R.
 
 ``` r
 
-# we recommend running this is a fresh R session or restarting your current session
+# we recommend running this in a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
 
@@ -64,10 +64,13 @@ Before CmdStanR can be used it needs to know where the CmdStan
 installation is located. When the package is loaded it tries to help
 automate this to avoid having to manually set the path every session:
 
-1.  If the environment variable `"CMDSTAN"` exists at load time then its
-    value will be automatically set as the default path to CmdStan for
-    the R session. This is useful if your CmdStan installation is not
-    located in the default directory that would have been used by
+1.  If the environment variable `"CMDSTAN"` points directly to a valid
+    CmdStan installation at load time, that path is used for the R
+    session. If it instead points to an existing parent directory
+    containing versioned CmdStan installations, the installation with
+    the largest version number is used. This is useful if your CmdStan
+    installation is not located in the default directory that would have
+    been used by
     [`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
     (see \#2).
 
@@ -228,7 +231,10 @@ fit <- mod$sample(
     Total execution time: 0.3 seconds.
 
 There are many more arguments that can be passed to the `$sample()`
-method. For details follow this link to its separate documentation page:
+method. For example, initial values can be specified with the `init`
+argument, including by passing a fitted model object produced by any of
+CmdStanR’s fitting methods. For details follow this link to its separate
+documentation page:
 
 - [`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.html)
 
@@ -256,39 +262,58 @@ etc.
 ``` r
 
 fit$summary()
+```
+
+     [38;5;246m# A tibble: 2 × 10 [39m
+      variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
+       [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m     [3m [38;5;246m<dbl> [39m [23m     [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  - [31m7 [39m [31m. [39m [31m0 [39m [31m1 [39m  0.805 0.345 - [31m8 [39m [31m. [39m [31m82 [39m   - [31m6 [39m [31m. [39m [31m75 [39m   1.00     [4m1 [24m834.     [4m2 [24m187.
+     [38;5;250m2 [39m theta     0.257  0.243 0.124 0.126  0.079 [4m2 [24m  0.486  1.00     [4m1 [24m165.     [4m1 [24m581.
+
+``` r
+
 fit$summary(variables = c("theta", "lp__"), "mean", "sd")
+```
+
+     [38;5;246m# A tibble: 2 × 3 [39m
+      variable   mean    sd
+       [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m theta     0.257 0.124
+     [38;5;250m2 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  0.805
+
+``` r
 
 # use a formula to summarize arbitrary functions, e.g. Pr(theta <= 0.5)
 fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
+```
+
+     [38;5;246m# A tibble: 1 × 2 [39m
+      variable pr_lt_half
+       [3m [38;5;246m<chr> [39m [23m          [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m theta         0.960
+
+``` r
 
 # summarise all variables with default and additional summary measures
 fit$summary(
   variables = NULL,
   posterior::default_summary_measures(),
-  extra_quantiles = ~posterior::quantile2(., probs = c(.0275, .975))
+  extra_quantiles = ~posterior::quantile2(., probs = c(0.025, 0.975))
 )
 ```
 
-      variable  mean median   sd  mad     q5   q95 rhat ess_bulk ess_tail
-    1     lp__ -7.30  -7.01 0.81 0.35 -8.821 -6.75    1     1834     2187
-    2    theta  0.26   0.24 0.12 0.13  0.079  0.49    1     1165     1581
-
-      variable  mean   sd
-    1    theta  0.26 0.12
-    2     lp__ -7.30 0.81
-
-      variable pr_lt_half
-    1    theta       0.96
-
-      variable  mean median   sd  mad     q5   q95  q2.75 q97.5
-    1     lp__ -7.30  -7.01 0.81 0.35 -8.821 -6.75 -9.333 -6.75
-    2    theta  0.26   0.24 0.12 0.13  0.079  0.49  0.065  0.53
+     [38;5;246m# A tibble: 2 × 9 [39m
+      variable   mean median    sd   mad      q5    q95    q2.5  q97.5
+       [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m
+     [38;5;250m1 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  - [31m7 [39m [31m. [39m [31m0 [39m [31m1 [39m  0.805 0.345 - [31m8 [39m [31m. [39m [31m82 [39m   - [31m6 [39m [31m. [39m [31m75 [39m  - [31m9 [39m [31m. [39m [31m37 [39m   - [31m6 [39m [31m. [39m [31m75 [39m 
+     [38;5;250m2 [39m theta     0.257  0.243 0.124 0.126  0.079 [4m2 [24m  0.486  0.061 [4m5 [24m  0.531
 
 #### CmdStan’s stansummary utility
 
 CmdStan itself provides a `stansummary` utility that can be called using
-the `$cmdstan_summary()` method. This method will print summaries but
-won’t return anything.
+the `$cmdstan_summary()` method. This method prints summaries produced
+by CmdStan but, unlike `$summary()`, does not return them as a data
+frame for further use in R.
 
 ### Posterior draws
 
@@ -441,7 +466,7 @@ fit$diagnostic_summary()
     [1] 0 0 0 0
 
     $ebfmi
-    [1] 1.1 1.0 1.1 1.1
+    [1] 1.114870 1.030279 1.053383 1.077471
 
 We see the number of divergences for each of the four chains, the number
 of times the maximum treedepth was hit for each chain, and the E-BFMI
@@ -463,7 +488,8 @@ fit_with_warning <- cmdstanr_example("schools")
     See https://mc-stan.org/misc/warnings for details.
 
 After fitting there is a warning about divergences. We can also
-regenerate this warning message later using `fit$diagnostic_summary()`.
+regenerate this warning message later using
+`fit_with_warning$diagnostic_summary()`.
 
 ``` r
 
@@ -488,7 +514,7 @@ print(diagnostics)
     [1] 0 0 0 0
 
     $ebfmi
-    [1] 0.33 0.37 0.33 0.26
+    [1] 0.3271278 0.3747243 0.3263650 0.2647513
 
 ``` r
 
@@ -501,8 +527,8 @@ sum(diagnostics$num_divergent)
 #### CmdStan’s diagnose utility
 
 CmdStan itself provides a `diagnose` utility that can be called using
-the `$cmdstan_diagnose()` method. This method will print warnings but
-won’t return anything.
+the `$cmdstan_diagnose()` method. This method prints CmdStan’s
+diagnostic output but does not return it as a structured R object.
 
 ## Running optimization and variational inference
 
@@ -514,7 +540,8 @@ These are run via the `$optimize()`, `$laplace()`, `$variational()`, and
 
 ### Optimization
 
-We can find the (penalized) maximum likelihood estimate (MLE) using
+Following CmdStan’s terminology, we can find the (penalized) maximum
+likelihood estimate (MLE) using
 [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
 ``` r
@@ -543,8 +570,8 @@ fit_mle$print() # includes lp__ (log prob calculated by Stan program)
 fit_mle$mle("theta")
 ```
 
-    theta 
-      0.2 
+        theta 
+    0.2000001 
 
 Here’s a plot comparing the penalized MLE to the posterior distribution
 of `theta`.
@@ -566,10 +593,12 @@ mcmc_hist(fit$draws("theta")) +
 ![](cmdstanr_files/figure-html/plot-mle-1.png)
 
 For optimization, by default the mode is calculated without the Jacobian
-adjustment for constrained variables, which shifts the mode due to the
-change of variables. To include the Jacobian adjustment and obtain a
-maximum a posteriori (MAP) estimate set `jacobian=TRUE`. See the
-[Maximum Likelihood
+adjustment for constrained variables. Including the Jacobian adjustment
+by setting `jacobian=TRUE` produces a maximum a posteriori (MAP)
+estimate. More precisely, the default finds a mode of the target in the
+constrained parameter space, whereas `jacobian=TRUE` finds a mode of the
+corresponding density in the unconstrained space. See the [Maximum
+Likelihood
 Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
 section of the CmdStan User’s Guide for more details.
 
@@ -594,12 +623,15 @@ fit_map <- mod$optimize(
 The
 [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 method produces a sample from a normal approximation centered at the
-mode of a distribution in the unconstrained space. If the mode is a MAP
-estimate, the samples provide an estimate of the mean and standard
-deviation of the posterior distribution. If the mode is the MLE, the
-sample provides an estimate of the standard error of the likelihood.
-Whether the mode is the MAP or MLE depends on the value of the
-`jacobian` argument when running optimization. See the [Laplace
+mode of a distribution in the unconstrained space. Following CmdStan’s
+terminology, if the mode is a MAP estimate, the draws provide an
+estimate of the mean and standard deviation of the posterior
+distribution. If the mode is an MLE, the draws provide an estimate of
+the standard error of the likelihood. Whether the mode is called MAP or
+MLE depends on the value of the `jacobian` argument when running
+optimization. The Laplace `jacobian` setting must match the setting used
+for optimization so that both use the same target density. See the
+[Laplace
 Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
 chapter of the CmdStan User’s Guide for more details.
 
@@ -664,8 +696,8 @@ fit_vb <- mod$variational(
       This procedure has not been thoroughly tested and may be unstable 
       or buggy. The interface is subject to change. 
     ------------------------------------------------------------ 
-    Gradient evaluation took 3e-06 seconds 
-    1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+    Gradient evaluation took 2e-06 seconds 
+    1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
     Adjust your expectations accordingly! 
     Begin eta adaptation. 
     Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -700,9 +732,9 @@ mcmc_hist(fit_vb$draws("theta"), binwidth = 0.025)
 
 ### Variational (Pathfinder)
 
-Stan version 2.33 introduced a new variational method called Pathfinder.
-For details on how Pathfinder works see the section in the [CmdStan
-User’s
+Stan version 2.33 introduced the Pathfinder variational inference
+method. For details on how Pathfinder works see the section in the
+[CmdStan User’s
 Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder-intro.html#pathfinder-intro).
 Pathfinder is run using the
 [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
@@ -785,19 +817,28 @@ mcmc_hist(fit$draws("theta"), binwidth = 0.025) +
 ![](cmdstanr_files/figure-html/plot-compare-mcmc-1.png)
 
 For more details on the `$optimize()`, `$laplace()`, `$variational()`,
-and
-[`pathfinder()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md)
-methods, follow these links to their documentation pages.
+and `$pathfinder()` methods, follow these links to their documentation
+pages.
 
 - [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html)
 - [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 - [`$variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.html)
 - [`$pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.html)
 
+## Running standalone generated quantities
+
+The
+[`$generate_quantities()`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.html)
+method runs a Stan program’s `generated quantities` block using
+parameter values from a previous fit, without rerunning inference. It
+accepts fitted model objects produced by any of the fitting methods
+described above. See the method documentation for details and a complete
+example.
+
 ## Saving fitted model objects
 
 The
-[`$save_object()`](http://mc-stan.org/cmdstanr/reference/fit-method-save_object.md)
+[`$save_object()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
 method provided by CmdStanR is the most convenient way to save a fitted
 model object to disk and ensure that all of the contents are available
 when reading the object back into R. By default, `fit$save_object()`
@@ -829,52 +870,53 @@ fit2 <- qs2::qs_read("fit.qs2")
 
 ### Different ways of interfacing with Stan’s C++
 
-The RStan interface ([**rstan**](https://mc-stan.org/rstan/) package) is
-an in-memory interface to Stan and relies on R packages like **Rcpp** to
-call C++ code from R. On the other hand, the CmdStanR interface does not
-directly call any C++ code from R, instead relying on the CmdStan
-interface behind the scenes for compilation, running algorithms, and
-writing results to output files.
+The RStan interface ([**rstan**](https://mc-stan.org/rstan/) package)
+provides its core functionality through an in-memory interface to Stan
+and relies on R packages such as **Rcpp** to call C++ code from R.
+CmdStanR’s core model compilation and inference workflow instead runs
+CmdStan in external processes and reads the resulting output files. Only
+optional CmdStanR features, such as `$expose_functions()` and the
+additional model methods, use **Rcpp** to call compiled C++ code
+directly from R.
 
 ### Advantages of RStan
 
-- Allows other developers to distribute R packages with *pre-compiled*
-  Stan programs (like **rstanarm**) on CRAN, without requiring that
-  users have a C++ toolchain installed (see
-  <https://mc-stan.org/rstantools/> for details). [Developing using
-  CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr)
-  describes how CRAN packages can do something similar using CmdStanR,
-  however users are still required to have a working C++ toolchain
-  because models are compiled once at installation time rather than on
-  CRAN’s servers.
+- CRAN provides binary versions of RStan for Windows and macOS.
+  RStan-based packages can also include precompiled Stan models in their
+  binary packages, which allows users to run the models without a local
+  C++ toolchain.
 
-- CRAN binaries available for Mac and Windows.
+  CmdStanR-based packages can use
+  [`instantiate`](https://wlandau.github.io/instantiate/) to compile
+  models once during package installation. Because CRAN’s build machines
+  do not provide CmdStan, packages using this workflow currently need to
+  be installed from source with CmdStan and a C++ toolchain available.
 
 - Avoids use of R6 classes, which may result in more familiar syntax for
   many R users.
 
 ### Advantages of CmdStanR
 
-- Compatible with the latest versions of Stan. Keeping up with Stan
-  releases is complicated for RStan, often requiring non-trivial changes
-  to the **rstan** package and new CRAN releases of both **rstan** and
-  **StanHeaders**. With CmdStanR the latest improvements in Stan are
-  available from R immediately after updating CmdStan using
-  [`cmdstanr::install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md).
+- CmdStan is installed separately from CmdStanR, so users can often
+  update to a new Stan release by updating CmdStan without waiting for a
+  new CmdStanR release.
 
-- Running Stan via external processes results in fewer unexpected
-  crashes, especially in RStudio.
+- Running CmdStan in external processes isolates inference from the R
+  process, reducing the risk that a failure during inference terminates
+  the R session.
 
-- Less memory overhead.
+- Potentially lower memory use in the R session. CmdStan writes results
+  to CSV files, and CmdStanR loads draws into R only when requested.
+  This can avoid retaining all output in memory during fitting.
 
-- More permissive license. RStan uses the GPL-3 license while the
-  license for CmdStanR is BSD-3, which is a bit more permissive and is
-  the same license used for CmdStan and the Stan C++ source code.
+- More permissive license. RStan uses the GPL (\>= 3) license while the
+  license for CmdStanR is BSD 3-clause, which is a bit more permissive
+  and is the same license used for CmdStan and the Stan C++ source code.
 
 ## Additional resources
 
-There are additional vignettes available that discuss other aspects of
-using CmdStanR. These can be found online at the CmdStanR website:
+There are additional vignettes available that discuss many other aspects
+of using CmdStanR. These can be found online at the CmdStanR website:
 
 - <https://mc-stan.org/cmdstanr/articles/index.html>
 

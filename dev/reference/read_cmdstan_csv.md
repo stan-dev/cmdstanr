@@ -1,12 +1,9 @@
 # Read CmdStan CSV files into R
 
-`read_cmdstan_csv()` is used internally by CmdStanR to read CmdStan's
-output CSV files into R. It can also be used by CmdStan users as a more
-flexible and efficient alternative to `rstan::read_stan_csv()`. See the
-**Value** section for details on the structure of the returned list.
-
-It is also possible to create CmdStanR's fitted model objects directly
-from CmdStan CSV files using the `as_cmdstan_fit()` function.
+`read_cmdstan_csv()` reads CmdStan's output CSV files into R and returns
+the contents as a list (see the **Value** section for details). It is
+also possible to create CmdStanR's fitted model objects directly from
+CmdStan CSV files using the `as_cmdstan_fit()` function.
 
 ## Usage
 
@@ -75,11 +72,10 @@ as_cmdstan_fit(
 `as_cmdstan_fit()` returns a fitted model object
 ([CmdStanMCMC](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
 [CmdStanVB](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-etc.). Some methods typically defined for those objects will not work
-(e.g.
-[`save_data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md))
-but the important methods like `$summary()`, `$draws()`,
-`$sampler_diagnostics()` and others will work fine.
+etc.). A fitted model object created this way has some limitations
+compared to fitted model objects created directly by a model fitting
+method. See the **Reconstructed fitted model objects** section below for
+details.
 
 `read_cmdstan_csv()` returns a named list with the following components:
 
@@ -159,6 +155,41 @@ the returned list also includes the following components:
   [`draws_array`](https://mc-stan.org/posterior/reference/draws_array.html)
   of the generated quantities.
 
+## Reconstructed fitted model objects
+
+`as_cmdstan_fit()` reconstructs a fitted model object from CmdStan CSV
+files. The CSV files do not contain all of the information available to
+the model fitting methods, the Stan source, the console output, or the
+paths to most input and auxiliary files, so the reconstructed object has
+a reduced set of methods.
+
+Only the following methods are available for every reconstructed object:
+`$draws()`, `$lp()`, `$materialize()`, `$metadata()`, `$output_files()`,
+`$print()`, `$save_object()`, and `$summary()`. Additional methods are
+available according to the inference method:
+
+- For MCMC, `$diagnostic_summary()`, `$inv_metric()`, `$loo()`,
+  `$num_chains()`, `$sampler_diagnostics()`, and `$time()` are
+  available. However, the total time reported by `$time()` will be `NA`
+  because the CSV files do not record whether the chains ran in
+  parallel.
+
+- For optimization, `$mle()` is available.
+
+- For variational inference, Laplace approximation, and Pathfinder,
+  `$lp_approx()` is available.
+
+All other fitted-model methods are unavailable because they require
+information not contained in the CSV files. Calling an unavailable
+method produces an informative error.
+
+## See also
+
+[`draws_to_csv()`](https://mc-stan.org/cmdstanr/dev/reference/draws_to_csv.md)
+for creating compatible CSV files and
+[`$output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)
+for locating files created by CmdStanR
+
 ## Examples
 
 ``` r
@@ -167,22 +198,29 @@ the returned list also includes the following components:
 fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
-#> [1] "/tmp/RtmpILyGYQ/logistic-202607220041-1-2d8347.csv"
-#> [2] "/tmp/RtmpILyGYQ/logistic-202607220041-2-2d8347.csv"
-#> [3] "/tmp/RtmpILyGYQ/logistic-202607220041-3-2d8347.csv"
-#> [4] "/tmp/RtmpILyGYQ/logistic-202607220041-4-2d8347.csv"
+#> [1] "/tmp/RtmpR10Vum/logistic-202607220403-1-3d728b.csv"
+#> [2] "/tmp/RtmpR10Vum/logistic-202607220403-2-3d728b.csv"
+#> [3] "/tmp/RtmpR10Vum/logistic-202607220403-3-3d728b.csv"
+#> [4] "/tmp/RtmpR10Vum/logistic-202607220403-4-3d728b.csv"
 
-# Creating fitting model objects
+# Creating fitting model objects with as_cmdstan_fit()
 
 # Create a CmdStanMCMC object from the CSV files
 fit2 <- as_cmdstan_fit(csv_files)
 fit2$print("beta")
 #>  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail
-#>   beta[1] -0.66  -0.66 0.25 0.26 -1.07 -0.27 1.00     3856     2887
-#>   beta[2] -0.28  -0.28 0.23 0.22 -0.66  0.08 1.00     4057     3082
-#>   beta[3]  0.68   0.67 0.27 0.27  0.24  1.12 1.00     4184     3314
+#>   beta[1] -0.66  -0.65 0.25 0.25 -1.09 -0.27 1.00     4276     3053
+#>   beta[2] -0.28  -0.28 0.22 0.22 -0.65  0.09 1.00     4109     3014
+#>   beta[3]  0.68   0.68 0.27 0.27  0.25  1.12 1.00     4188     3186
+str(fit2$draws())
+#>  'draws_array' num [1:1000, 1:4, 1:105] -64.7 -65.7 -64 -65.1 -65.8 ...
+#>  - attr(*, "dimnames")=List of 3
+#>   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
+#>   ..$ chain    : chr [1:4] "1" "2" "3" "4"
+#>   ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
 
-# Using read_cmdstan_csv
+
+# Using read_cmdstan_csv()
 #
 # Read in everything
 x <- read_cmdstan_csv(csv_files)
@@ -192,7 +230,7 @@ str(x)
 #>   ..$ stan_version_major  : num 2
 #>   ..$ stan_version_minor  : num 39
 #>   ..$ stan_version_patch  : num 0
-#>   ..$ start_datetime      : chr "2026-07-22 00:41:35 UTC"
+#>   ..$ start_datetime      : chr "2026-07-22 04:03:36 UTC"
 #>   ..$ method              : chr "sample"
 #>   ..$ save_warmup         : int 1
 #>   ..$ thin                : num 1
@@ -210,15 +248,15 @@ str(x)
 #>   ..$ num_chains          : int 4
 #>   ..$ id                  : num [1:4] 1 2 3 4
 #>   ..$ init                : num [1:4] 2 2 2 2
-#>   ..$ seed                : num 1.13e+09
+#>   ..$ seed                : num 1.12e+09
 #>   ..$ refresh             : num 100
 #>   ..$ sig_figs            : num 8
-#>   ..$ profile_file        : chr "/tmp/RtmpILyGYQ/logistic-profile-202607220041-1-0e8c0a.csv"
+#>   ..$ profile_file        : chr "/tmp/RtmpR10Vum/logistic-profile-202607220403-1-091fb9.csv"
 #>   ..$ save_cmdstan_config : int 0
 #>   ..$ stanc_version       : chr "stanc3 v2.39.0"
 #>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
 #>   ..$ variables           : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
-#>   ..$ step_size_adaptation: num [1:4] 0.719 0.707 0.744 0.765
+#>   ..$ step_size_adaptation: num [1:4] 0.739 0.791 0.725 0.664
 #>   ..$ model_name          : chr "logistic_model"
 #>   ..$ adapt_engaged       : int 1
 #>   ..$ adapt_delta         : num 0.8
@@ -229,9 +267,9 @@ str(x)
 #>   ..$ threads_per_chain   : num 1
 #>   ..$ time                :'data.frame': 4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.053 0.053 0.053 0.054
-#>   .. ..$ sampling: num [1:4] 0.054 0.056 0.055 0.054
-#>   .. ..$ total   : num [1:4] 0.107 0.109 0.108 0.108
+#>   .. ..$ warmup  : num [1:4] 0.055 0.055 0.055 0.054
+#>   .. ..$ sampling: num [1:4] 0.056 0.056 0.055 0.057
+#>   .. ..$ total   : num [1:4] 0.111 0.111 0.11 0.111
 #>   ..$ stan_variable_sizes :List of 4
 #>   .. ..$ lp__   : num 1
 #>   .. ..$ alpha  : num 1
@@ -243,35 +281,35 @@ str(x)
 #>   ..$ total : int NA
 #>   ..$ chains:'data.frame':   4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.053 0.053 0.053 0.054
-#>   .. ..$ sampling: num [1:4] 0.054 0.056 0.055 0.054
-#>   .. ..$ total   : num [1:4] 0.107 0.109 0.108 0.108
+#>   .. ..$ warmup  : num [1:4] 0.055 0.055 0.055 0.054
+#>   .. ..$ sampling: num [1:4] 0.056 0.056 0.055 0.057
+#>   .. ..$ total   : num [1:4] 0.111 0.111 0.11 0.111
 #>  $ inv_metric                     :List of 4
-#>   ..$ 1: num [1:4] 0.0493 0.0644 0.0579 0.0815
-#>   ..$ 2: num [1:4] 0.049 0.0753 0.0527 0.0737
-#>   ..$ 3: num [1:4] 0.0458 0.0542 0.0484 0.0712
-#>   ..$ 4: num [1:4] 0.0538 0.0607 0.0473 0.0771
+#>   ..$ 1: num [1:4] 0.0458 0.0628 0.0518 0.075
+#>   ..$ 2: num [1:4] 0.0397 0.0649 0.0511 0.0699
+#>   ..$ 3: num [1:4] 0.048 0.0699 0.0535 0.0802
+#>   ..$ 4: num [1:4] 0.052 0.0771 0.0511 0.0773
 #>  $ step_size                      :List of 4
-#>   ..$ 1: num 0.719
-#>   ..$ 2: num 0.707
-#>   ..$ 3: num 0.744
-#>   ..$ 4: num 0.765
-#>  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:105] -69.3 -69.3 -69.3 -68.8 -68.8 ...
+#>   ..$ 1: num 0.739
+#>   ..$ 2: num 0.791
+#>   ..$ 3: num 0.725
+#>   ..$ 4: num 0.664
+#>  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:105] -87.9 -87.9 -87.9 -72.2 -65.1 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #>   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
-#>  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -66 -64.8 -64.8 -65.4 -66.1 ...
+#>  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -64.7 -65.7 -64 -65.1 -65.8 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #>   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
-#>  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 0.933 0 0 0.964 0.492 ...
+#>  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 1 0 0 1 0.757 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #>   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#>  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.864 1 0.733 0.951 0.921 ...
+#>  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 1 0.805 0.925 0.841 0.975 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"

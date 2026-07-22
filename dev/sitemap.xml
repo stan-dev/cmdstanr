@@ -36,6 +36,7 @@
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-diagnostic_summary.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.html</loc></url>
+<url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-fitted_params_files.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-gradients.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.html</loc></url>
@@ -48,6 +49,7 @@
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-materialize.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-metadata.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-mle.html</loc></url>
+<url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-mode.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-num_chains.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/fit-method-profiles.html</loc></url>
@@ -70,6 +72,7 @@
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-format.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.html</loc></url>
+<url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.html</loc></url>
 <url><loc>https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.html</loc></url>

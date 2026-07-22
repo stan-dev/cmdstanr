@@ -18,12 +18,16 @@ grad_log_prob(unconstrained_variables, jacobian = TRUE)
 - jacobian:
 
   (logical) Whether to include the log-density adjustments from
-  un/constraining variables.
+  constraining or unconstraining variables.
+
+## Value
+
+A numeric vector containing the gradient, with the log probability
+stored in the `"log_prob"` attribute.
 
 ## See also
 
 [`log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md),
-`grad_log_prob()`,
 [`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
 [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md),
 [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md),
