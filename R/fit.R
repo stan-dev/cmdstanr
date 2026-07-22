@@ -1797,11 +1797,19 @@ diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfm
 CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summary)
 
 
-#' Extract inverse metric (mass matrix) after MCMC
+#' Extract inverse metric (inverse mass matrix) after MCMC
 #'
 #' @name fit-method-inv_metric
 #' @aliases inv_metric
-#' @description Extract the inverse metric (mass matrix) for each MCMC chain.
+#' @description Extract the inverse metric (inverse mass matrix) for each MCMC
+#'   chain.
+#'
+#'   The inverse metric is defined over the unconstrained parameter space, so
+#'   its entries do not necessarily correspond one-to-one with the constrained
+#'   parameters declared in the `parameters` block (some transformations from
+#'   constrained to unconstrained change dimensions). See **Examples** for a
+#'   way to add names to the entries of the inverse metric when the model
+#'   has parameters that change dimensions when unconstrained.
 #'
 #' @param matrix (logical) If a diagonal metric was used, setting `matrix =
 #'   FALSE` returns a list containing just the diagonals of the matrices instead
@@ -1815,12 +1823,36 @@ CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summar
 #'
 #' @examples
 #' \dontrun{
-#' fit <- cmdstanr_example("logistic")
-#' fit$inv_metric()
-#' fit$inv_metric(matrix=FALSE)
+#' stan_file <- write_stan_file("
+#'   parameters {
+#'     simplex[3] theta;
+#'   }
+#'   model {
+#'     theta ~ dirichlet(rep_vector(1, 3));
+#'   }
+#' ")
+#' mod <- cmdstan_model(stan_file)
 #'
-#' fit <- cmdstanr_example("logistic", metric = "dense_e")
-#' fit$inv_metric()
+#' # use higher output precision so the simplex remains valid after CSV rounding
+#' fit <- mod$sample(chains = 1, sig_figs = 10)
+#'
+#' # even though theta has 3 elements, the inverse metric is 2x2 because the
+#' # simplex constraint reduces the dimension. we set `matrix = FALSE` in this case
+#' # because we estimated a diagonal matrix (we didn't set `metric = "dense_e"`
+#' # when fitting the model), so we can just look at the diagonal elements
+#' inv_metric <- fit$inv_metric(matrix = FALSE)
+#'
+#' # the list has 1 element since we only ran 1 chain for simplicity
+#' print(inv_metric)
+#'
+#' # get names of unconstrained parameters and add them to the inverse metric
+#' # (unconstrain_draws() requires compiling additional methods)
+#' inv_metric_names <- posterior::variables(fit$unconstrain_draws())
+#' inv_metric <- lapply(inv_metric, stats::setNames, nm = inv_metric_names)
+#'
+#' # the names will be theta[1] and theta[2], but these are not the same as
+#' # the first two elements of the constrained theta in the Stan program
+#' inv_metric
 #' }
 #'
 inv_metric <- function(matrix = TRUE) {
