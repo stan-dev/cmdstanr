@@ -6,6 +6,12 @@ transformed_parameters and generated_quantities.
 Each element contains a list of variables, with each variable represented
 as a list with information on its scalar type (real or int) and
 number of dimensions.
+The number of dimensions reported is the number of indexing dimensions in
+the declared Stan variable, equivalently the number of indices needed to
+access one scalar element. This means a scalar has 0 dimensions, a vector
+or one-dimensional array has 1, and a matrix or two-dimensional array has
+2. Array dimensions are added to any vector or matrix dimensions, so
+array[J] matrix[N, K] has 3 dimensions. See Examples.
 transformed data is not included, as variables in that block are not
 part of the model's input or output."><meta property="og:description" content="The $variables() method of a CmdStanModel object returns
 a list, each element representing a Stan model block: data, parameters,
@@ -13,6 +19,12 @@ transformed_parameters and generated_quantities.
 Each element contains a list of variables, with each variable represented
 as a list with information on its scalar type (real or int) and
 number of dimensions.
+The number of dimensions reported is the number of indexing dimensions in
+the declared Stan variable, equivalently the number of indices needed to
+access one scalar element. This means a scalar has 0 dimensions, a vector
+or one-dimensional array has 1, and a matrix or two-dimensional array has
+2. Array dimensions are added to any vector or matrix dimensions, so
+array[J] matrix[N, K] has 3 dimensions. See Examples.
 transformed data is not included, as variables in that block are not
 part of the model's input or output."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -83,6 +95,12 @@ a list, each element representing a Stan model block: <code>data</code>, <code>p
 <p>Each element contains a list of variables, with each variable represented
 as a list with information on its scalar type (<code>real</code> or <code>int</code>) and
 number of dimensions.</p>
+<p>The number of dimensions reported is the number of indexing dimensions in
+the declared Stan variable, equivalently the number of indices needed to
+access one scalar element. This means a scalar has 0 dimensions, a vector
+or one-dimensional array has 1, and a matrix or two-dimensional array has
+2. Array dimensions are added to any vector or matrix dimensions, so
+<code>array[J] matrix[N, K]</code> has 3 dimensions. See <strong>Examples</strong>.</p>
 <p><code>transformed data</code> is not included, as variables in that block are not
 part of the model's input or output.</p>
     </div>
@@ -120,50 +138,44 @@ variables for each of the Stan model blocks.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"examples/bernoulli/bernoulli.stan"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">stan_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">"</span></span></span>
+<span class="r-in"><span><span class="st">data {</span></span></span>
+<span class="r-in"><span><span class="st">  int N;</span></span></span>
+<span class="r-in"><span><span class="st">  array[2, 3] int y;</span></span></span>
+<span class="r-in"><span><span class="st">}</span></span></span>
+<span class="r-in"><span><span class="st">parameters {</span></span></span>
+<span class="r-in"><span><span class="st">  real alpha;</span></span></span>
+<span class="r-in"><span><span class="st">  vector[N] beta;</span></span></span>
+<span class="r-in"><span><span class="st">  array[2] matrix[3, 4] theta;</span></span></span>
+<span class="r-in"><span><span class="st">}</span></span></span>
+<span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># create a `CmdStanModel` object, compiling the model is not required</span></span></span>
-<span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># create a CmdStanModel object, compiling the model is not required</span></span></span>
+<span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">stan_file</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">variables</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $parameters</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $parameters$theta</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $parameters$theta$type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "real"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $parameters$theta$dimensions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $included_files</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$N</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$N$type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "int"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$N$dimensions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$y</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$y$type</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "int"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$y$dimensions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $transformed_parameters</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> named list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $generated_quantities</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> named list()</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">vars</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">variables</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">vars</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> List of 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ parameters            :List of 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ alpha:List of 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ type      : chr "real"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ dimensions: int 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ beta :List of 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ type      : chr "real"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ dimensions: int 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ theta:List of 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ type      : chr "real"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ dimensions: int 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ included_files        : list()</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ data                  :List of 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ N:List of 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ type      : chr "int"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ dimensions: int 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ y:List of 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ type      : chr "int"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ dimensions: int 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ transformed_parameters: Named list()</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ generated_quantities  : Named list()</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
