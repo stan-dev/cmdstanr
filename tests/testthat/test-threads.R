@@ -22,7 +22,7 @@ test_that("threading works with sample()", {
 
   expect_error(
     mod$sample(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!",
+    "The model executable was built with threading enabled but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
 
@@ -55,7 +55,7 @@ test_that("threading works with optimize()", {
 
   expect_error(
     mod$optimize(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!",
+    "The model executable was built with threading enabled but 'threads' was not set!",
     fixed = TRUE
   )
 
@@ -89,7 +89,7 @@ test_that("threading works with variational()", {
 
   expect_error(
     mod$variational(data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!",
+    "The model executable was built with threading enabled but 'threads' was not set!",
     fixed = TRUE
   )
 
@@ -134,7 +134,7 @@ test_that("threading works with pathfinder()", {
 
   expect_error(
     do.call(mod$pathfinder, pathfinder_args),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!",
+    "The model executable was built with threading enabled but 'threads' was not set!",
     fixed = TRUE
   )
 
@@ -169,7 +169,7 @@ test_that("threading works with generate_quantities()", {
   )
   expect_error(
     mod_gq$generate_quantities(fitted_params = f, data = data_file_json),
-    "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads_per_chain' was not set!",
+    "The model executable was built with threading enabled but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
   expect_output(
@@ -202,6 +202,10 @@ test_that("executable metadata takes precedence over compile options", {
     stan_program,
     cpp_options = list(stan_threads = FALSE),
     force_recompile = TRUE
+  )
+  expect_snapshot(
+    error = TRUE,
+    mod$sample(data = data_file_json, chains = 1)
   )
   expect_output(
     fit <- mod$sample(

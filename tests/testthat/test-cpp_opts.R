@@ -56,6 +56,12 @@ test_that("cpp option lookup is exact and case-insensitive", {
     ),
     FALSE
   )
+  expect_null(
+    cpp_option_value(
+      list(STAN_OPENCL = TRUE, stan_opencl = NULL),
+      "stan_opencl"
+    )
+  )
   expect_null(cpp_option_value(list(stan_opencl_x = TRUE), "stan_opencl"))
 })
 

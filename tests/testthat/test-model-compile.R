@@ -930,9 +930,14 @@ test_that("compile() detects stan_opencl without case or partial matching", {
     force_recompile = TRUE,
     dry_run = TRUE
   )
+  expect_length(received_stancflags, 2)
   expect_equal(
-    vapply(received_stancflags, \(x) "--use-opencl" %in% x, logical(1)),
-    rep(TRUE, 2)
+    vapply(
+      received_stancflags,
+      function(x) "--use-opencl" %in% x,
+      logical(1)
+    ),
+    rep(TRUE, length(received_stancflags))
   )
 
   received_stancflags <- list()
@@ -941,9 +946,14 @@ test_that("compile() detects stan_opencl without case or partial matching", {
     force_recompile = TRUE,
     dry_run = TRUE
   )
+  expect_length(received_stancflags, 2)
   expect_equal(
-    vapply(received_stancflags, \(x) "--use-opencl" %in% x, logical(1)),
-    rep(FALSE, 2)
+    vapply(
+      received_stancflags,
+      function(x) "--use-opencl" %in% x,
+      logical(1)
+    ),
+    rep(FALSE, length(received_stancflags))
   )
 })
 

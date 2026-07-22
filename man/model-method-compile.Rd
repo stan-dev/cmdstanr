@@ -45,8 +45,12 @@ to compile with the Stan model.}
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
 model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would
 otherwise write in the \code{make/local} file. For an example of using threading
-see the Stan case study
-\href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
+see the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
+\strong{Note:} For historical reasons, CmdStan treats some options as enabled
+whenever their \code{Make} variable is non-empty. In particular, setting
+\code{stan_threads} to \code{FALSE} passes \code{STAN_THREADS=FALSE} to \code{Make}, which
+still enables threading! To leave threading disabled, simply omit
+\code{stan_threads} entirely or set it to \code{NULL}.}
 
 \item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
 when compiling the model. See the \strong{Examples} section below as well as the

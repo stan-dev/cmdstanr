@@ -17,7 +17,7 @@
       assert_valid_threads(NULL, list(STAN_THREADS = TRUE))
     Condition
       Error:
-      ! The model was compiled with 'cpp_options = list(stan_threads = TRUE)' but 'threads' was not set!
+      ! The model executable was built with threading enabled but 'threads' was not set!
 
 # cpp option checks do not use partial matching
 

@@ -486,8 +486,13 @@ NULL
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
 #'   otherwise write in the `make/local` file. For an example of using threading
-#'   see the Stan case study
-#'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'   see the Stan case study [Reduce Sum: A Minimal
+#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'   **Note:** For historical reasons, CmdStan treats some options as enabled
+#'   whenever their `Make` variable is non-empty. In particular, setting
+#'   `stan_threads` to `FALSE` passes `STAN_THREADS=FALSE` to `Make`, which
+#'   still enables threading! To leave threading disabled, simply omit
+#'   `stan_threads` entirely or set it to `NULL`.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   [`stanc` chapter of the CmdStan User's

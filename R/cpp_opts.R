@@ -132,7 +132,8 @@ validate_cpp_options <- function(cpp_options) {
 # check specific options for validity ---------------------------------
 cpp_option_value <- function(cpp_options, option) {
   # CmdStanR input and executable metadata can use different casing. Prefer
-  # the last match because later executable metadata best describes the binary.
+  # the final match, even when it is NULL, because later executable metadata
+  # best describes the binary.
   matches <- which(tolower(names(cpp_options)) == tolower(option))
   if (length(matches) == 0) {
     return(NULL)
@@ -171,8 +172,8 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
     }
   } else if (isTRUE(stan_threads) && is.null(threads)) {
     stop(
-      "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-      "but '", threads_arg, "' was not set!",
+      "The model executable was built with threading enabled but '",
+      threads_arg, "' was not set!",
       call. = FALSE
     )
   }
