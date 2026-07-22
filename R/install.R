@@ -727,18 +727,18 @@ toolchain_PATH_env_var <- function() {
         return(NULL)
       }
       return(paste0(rtools_bin_dir, ";", rtools_dir))
-    } else {
-      # Lookup the configured toolchain location for the installation
-      # This variable is set at installation since R 4.2
-      #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
-      rtools_soft <- repair_path(tools::Rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE))
-      rtools_dir <- file.path(rtools_soft, "bin")
-      rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
+    }
+  } else {
+    # Lookup the configured toolchain location for the installation
+    # This variable is set at installation since R 4.2
+    #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
+    rtools_soft <- repair_path(tools::Rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE))
+    rtools_dir <- file.path(rtools_soft, "bin")
+    rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
 
-      if (file.exists(file.path(rtools_bin_dir, "make.exe")) &&
-            file.exists(file.path(rtools_dir, "c++.exe"))) {
-        return(paste0(rtools_bin_dir, ";", rtools_dir))
-      }
+    if (file.exists(file.path(rtools_bin_dir, "make.exe")) &&
+          file.exists(file.path(rtools_dir, "c++.exe"))) {
+      return(paste0(rtools_bin_dir, ";", rtools_dir))
     }
   }
 
