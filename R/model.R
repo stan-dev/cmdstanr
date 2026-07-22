@@ -603,7 +603,7 @@ compile <- function(quiet = TRUE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  if (isTRUE(cpp_options$stan_opencl)) {
+  if (isTRUE(cpp_option_value(cpp_options, "stan_opencl"))) {
     stanc_options[["use-opencl"]] <- TRUE
   }
 

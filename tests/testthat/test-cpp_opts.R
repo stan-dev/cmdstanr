@@ -37,14 +37,84 @@ test_that("validate_cpp_options works", {
   expect_warning(validate_cpp_options(list(STAN_OPENCL = FALSE)))
 })
 
+test_that("cpp option lookup is exact and case-insensitive", {
+  cpp_options <- list(STAN_THREADS = TRUE)
+  expect_identical(cpp_option_value(cpp_options, "stan_threads"), TRUE)
+  expect_named(cpp_options, "STAN_THREADS")
+
+  expect_identical(
+    cpp_option_value(
+      list(stan_threads = FALSE, STAN_THREADS = TRUE),
+      "stan_threads"
+    ),
+    TRUE
+  )
+  expect_identical(
+    cpp_option_value(
+      list(STAN_THREADS = TRUE, stan_threads = FALSE),
+      "stan_threads"
+    ),
+    FALSE
+  )
+  expect_null(cpp_option_value(list(stan_opencl_x = TRUE), "stan_opencl"))
+})
+
 test_that("cpp option checks are case-insensitive", {
   expect_identical(
     assert_valid_threads(2L, list(STAN_THREADS = TRUE)),
     2L
   )
   expect_identical(
+    assert_valid_threads(2L, list(stan_threads = TRUE)),
+    2L
+  )
+  expect_identical(
     assert_valid_opencl(c(0L, 0L), list(STAN_OPENCL = TRUE)),
     c(0L, 0L)
+  )
+  expect_identical(
+    assert_valid_opencl(c(0L, 0L), list(stan_opencl = TRUE)),
+    c(0L, 0L)
+  )
+})
+
+test_that("lowercase stan_threads behavior remains unchanged", {
+  expect_null(assert_valid_threads(NULL, list(stan_threads = FALSE)))
+  expect_null(assert_valid_threads(NULL, list(stan_threads = "dummy string")))
+  expect_snapshot({
+    assert_valid_threads(2L, list(stan_threads = FALSE))
+    assert_valid_threads(2L, list(stan_threads = "dummy string"))
+  })
+})
+
+test_that("cpp option checks prefer the last case-insensitive match", {
+  expect_identical(
+    assert_valid_threads(
+      2L,
+      list(stan_threads = FALSE, STAN_THREADS = TRUE)
+    ),
+    2L
+  )
+  expect_identical(
+    assert_valid_opencl(
+      c(0L, 0L),
+      list(stan_opencl = NULL, STAN_OPENCL = TRUE)
+    ),
+    c(0L, 0L)
+  )
+})
+
+test_that("uppercase stan_threads requires a thread count", {
+  expect_snapshot(
+    error = TRUE,
+    assert_valid_threads(NULL, list(STAN_THREADS = TRUE))
+  )
+})
+
+test_that("cpp option checks do not use partial matching", {
+  expect_snapshot(
+    error = TRUE,
+    assert_valid_opencl(c(0L, 0L), list(stan_opencl_x = TRUE))
   )
 })
 
