@@ -35,20 +35,20 @@ test_that("all fitting methods work with output_dir", {
                  normalizePath(method_dir))
     files <- normalizePath(list.files(method_dir, full.names = TRUE))
     if (method == "sample") {
-      mult <- 3
       expect_equal(files[grepl("metric", files)],
                    normalizePath(sapply(fit$metric_files(), wsl_safe_path, revert = TRUE,
                                         USE.NAMES = FALSE)))
       expect_equal(files[grepl("config", files)],
                    normalizePath(sapply(fit$config_files(), wsl_safe_path, revert = TRUE,
                                         USE.NAMES = FALSE)))
+      expected_file_count <- 2L * fit$num_chains() + fit$num_procs()
     } else {
-      mult <- 2
       expect_equal(files[grepl("config", files)],
                    normalizePath(sapply(fit$config_files(), wsl_safe_path, revert = TRUE,
                                         USE.NAMES = FALSE)))
+      expected_file_count <- 2L * fit$num_procs()
     }
-    expect_equal(length(list.files(method_dir)), mult * fit$num_procs())
+    expect_equal(length(list.files(method_dir)), expected_file_count)
 
 
     # specifying output_dir
@@ -67,7 +67,7 @@ test_that("all fitting methods work with output_dir", {
   files <- list.files(file.path(sandbox, "sample"))
   expect_equal(
     sum(grepl("diagnostic", files)),
-    fit$num_procs()
+    fit$num_chains()
   )
 })
 
@@ -106,5 +106,5 @@ test_that("output_dir works with trailing /", {
   )
   expect_equal(normalizePath(fit$runset$args$output_dir),
                normalizePath(test_dir))
-  expect_equal(length(list.files(test_dir)), fit$num_procs())
+  expect_equal(length(list.files(test_dir)), fit$num_chains())
 })

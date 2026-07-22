@@ -87,6 +87,11 @@ updated to point to the new file locations.}
 
 The versions without the \code{save_} prefix (e.g., \verb{$output_files()}) return
 the current file paths without moving any files.
+
+Output, latent-dynamics, and adapted-metric files are chain-scoped. Profile
+and saved-configuration files are CmdStan-invocation-scoped. A threaded
+multi-chain run therefore has one output/diagnostic/metric file per logical
+chain but one profile/configuration file per physical CmdStan invocation.
 }
 \section{Details}{
 
@@ -105,7 +110,8 @@ file name after \code{basename}.
 
 For \verb{$save_profile_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-profile-"} is included in the new
-file name after \code{basename}.
+file name after \code{basename} and the \code{id} identifies the physical CmdStan
+invocation rather than a logical chain.
 
 For \verb{$save_metric_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-metric-"} is included in the new
@@ -113,7 +119,8 @@ file name after \code{basename}.
 
 For \verb{$save_config_files()} everything is the same as for
 \verb{$save_output_files()} except \code{"-config-"} is included in the new
-file name after \code{basename}.
+file name after \code{basename} and the \code{id} identifies the physical CmdStan
+invocation rather than a logical chain.
 
 For \verb{$save_data_file()} no \code{id} is included in the file name because even
 with multiple MCMC chains the data file is the same.

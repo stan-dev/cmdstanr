@@ -114,13 +114,17 @@ test_that("print() method works after gq", {
 })
 
 test_that("output() method works after gq", {
+  raw_output <- fit_gq$output()
   checkmate::expect_list(
-    fit_gq$output(),
+    raw_output,
     types = "character",
     any.missing = FALSE,
     len = fit_gq$runset$num_procs()
   )
-  expect_output(fit_gq$output(id = 1), "method = generate_quantities")
+  expect_true(any(grepl("method = generate_quantities", unlist(raw_output))))
+  filtered_output <- capture.output(fit_gq$output(id = 1))
+  expected_prefix <- paste0("Chain [", fit_gq$runset$chain_ids()[[1]], "]")
+  expect_true(all(startsWith(filtered_output, expected_prefix)))
 })
 
 test_that("time() works after gq", {
@@ -132,7 +136,7 @@ test_that("time() works after gq", {
     run_times$chains,
     any.missing = FALSE,
     types = c("integer", "numeric"),
-    nrows = fit_gq$runset$num_procs(),
+    nrows = 0L,
     ncols = 2
   )
 })

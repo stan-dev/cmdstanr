@@ -15,6 +15,8 @@ all of which have their own (linked) documentation pages.
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return the generated quantities as a \code{\link[posterior:draws_array]{draws_array}}. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+   \code{\link[=fit-method-num_chains]{$num_chains()}} \tab Return the number of logical chains. \cr
+   \code{\link[=fit-method-num_procs]{$num_procs()}} \tab Return the number of physical CmdStan invocations. \cr
    \code{\link[=fit-method-code]{$code()}} \tab Return Stan code as a character vector. \cr
 }
 
@@ -39,7 +41,7 @@ all of which have their own (linked) documentation pages.
 \subsection{Report run times, console output, return codes}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
-   \code{\link[=fit-method-output]{$output()}} \tab Return the stdout and stderr of all chains or pretty print the output for a single chain. \cr
+   \code{\link[=fit-method-output]{$output()}} \tab Return raw invocation output or print chain-attributed lines. \cr
    \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
 }
 

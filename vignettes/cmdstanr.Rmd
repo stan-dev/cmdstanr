@@ -84,7 +84,7 @@ is useful if your CmdStan installation is not located in the default directory
 that would have been used by `install_cmdstan()` (see #2).
 
 2. If no environment variable is found when loaded but any directory in the form
-`".cmdstan/cmdstan-[version]"`, for example `".cmdstan/cmdstan-2.35.0"`,
+`".cmdstan/cmdstan-[version]"`, for example `".cmdstan/cmdstan-2.38.0"`,
 exists in the user's home directory (`Sys.getenv("HOME")`,
 *not* the current working directory) then the path to the CmdStan with the
 largest version number will be set as the path to CmdStan for the R session.
@@ -163,6 +163,30 @@ fit <- mod$sample(
   refresh = 500 # print update every 500 iters
 )
 ```
+
+CmdStanR derives chain execution from the compiled executable. If the model was
+compiled with `cpp_options = list(stan_threads = TRUE)`, all four logical chains
+above run in one CmdStan invocation and share one thread pool. Otherwise
+CmdStanR launches one process per chain, with at most `parallel_chains` active at
+once. The preferred direct control for the shared pool is `threads`:
+
+```{r threaded-sample, eval=FALSE}
+mod_threaded <- cmdstan_model(
+  "model.stan",
+  cpp_options = list(stan_threads = TRUE)
+)
+fit <- mod_threaded$sample(
+  data = data_list,
+  chains = 4,
+  threads = 8
+)
+```
+
+`threads_per_chain` remains available as a sizing heuristic when `threads` is
+not supplied. It does not reserve threads for individual chains. For threaded
+multi-chain fits, `fit$num_chains()` and chain CSV methods remain chain-scoped,
+while `fit$num_procs()`, `fit$return_codes()`, raw console output, profiles, and
+saved configurations are invocation-scoped.
 
 There are many more arguments that can be passed to the `$sample()` method.
 For details follow this link to its separate documentation page:

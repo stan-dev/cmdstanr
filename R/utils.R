@@ -760,8 +760,13 @@ get_cmdstan_flags <- function(flag_name) {
   flags <- gsub("-I ", "-I", flags, fixed = TRUE)
   flags <- strsplit(flags, " ", fixed = TRUE)[[1]]
   include_flags <- grep("^-I", flags)
-  flags <- gsub("^-I", paste0(cmdstan_path, "/"), flags)
-  flags[include_flags] <- paste0("-I", shQuote(flags[include_flags]))
+  include_paths <- sub("^-I", "", flags[include_flags])
+  relative_paths <- !fs::is_absolute_path(include_paths)
+  include_paths[relative_paths] <- file.path(
+    cmdstan_path,
+    include_paths[relative_paths]
+  )
+  flags[include_flags] <- paste0("-I", shQuote(include_paths))
   flags <- paste(flags, collapse = " ")
 
   # shQuote Remaining " stan/" paths

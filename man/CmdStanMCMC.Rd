@@ -21,6 +21,7 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
    \code{\link[=fit-method-num_chains]{$num_chains()}} \tab Return the number of MCMC chains. \cr
+   \code{\link[=fit-method-num_procs]{$num_procs()}} \tab Return the number of physical CmdStan invocations. \cr
    \code{\link[=fit-method-code]{$code()}} \tab Return Stan code as a character vector. \cr
 }
 
@@ -33,7 +34,7 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} \tab Get summaries of sampler diagnostics and warning messages. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}} \tab Run and print CmdStan's \code{bin/stansummary}. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}} \tab Run and print CmdStan's \code{bin/diagnose}. \cr
-   \code{\link[=fit-method-loo]{$loo()}} \tab Run \code{\link[loo:loo.array]{loo::loo.array()}} for approximate LOO-CV \cr
+   \code{\link[=fit-method-loo]{$loo()}} \tab Run \code{\link[loo:loo]{loo::loo.array()}} for approximate LOO-CV \cr
 }
 
 }
@@ -50,7 +51,7 @@ methods, all of which have their own (linked) documentation pages.
 
 \subsection{Report run times, console output, return codes}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
-   \code{\link[=fit-method-output]{$output()}} \tab Return the stdout and stderr of all chains or pretty print the output for a single chain. \cr
+   \code{\link[=fit-method-output]{$output()}} \tab Return raw invocation output or print chain-attributed lines. \cr
    \code{\link[=fit-method-time]{$time()}} \tab Report total and chain-specific run times. \cr
    \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
 }

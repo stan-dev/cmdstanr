@@ -53,14 +53,12 @@ expect_no_recompilation <- function(mod, ...) {
 }
 
 expect_sample_output <- function(object, num_chains = NULL) {
-
-  output <- "Running MCMC with"
+  output <- "Running [0-9]+ chains? in [0-9]+ CmdStan invocations?"
   if (!is.null(num_chains)) {
-    if (num_chains == 1) {
-      output <- paste(output, num_chains, "chain")
-    } else {
-      output <- paste(output, num_chains, "sequential chain")
-    }
+    output <- paste0(
+      "Running ", num_chains, " chain", if (num_chains == 1) "" else "s",
+      " in [0-9]+ CmdStan invocation"
+    )
   }
   expect_output(object, output)
 }
@@ -87,14 +85,13 @@ expect_vb_output <- function(object) {
 }
 
 expect_gq_output <- function(object, num_chains = NULL) {
-
-  output <- "Running standalone generated quantities after "
+  output <- "Running standalone generated quantities for [0-9]+ chains? in [0-9]+ CmdStan invocations?"
   if (!is.null(num_chains)) {
-    if (num_chains == 1) {
-      output <- paste(output, num_chains, "chain")
-    } else {
-      output <- paste(output, num_chains, "sequential chain")
-    }
+    output <- paste0(
+      "Running standalone generated quantities for ", num_chains,
+      " chain", if (num_chains == 1) "" else "s",
+      " in [0-9]+ CmdStan invocation"
+    )
   }
   expect_output(object, output)
 }

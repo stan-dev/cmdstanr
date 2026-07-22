@@ -11,29 +11,64 @@
 #' @noRd
 #' @param args A `CmdStanArgs` object.
 #' @param procs A `CmdStanProcs` object.
+#' @param run_plan An optional `CmdStanRunPlan` object.
+#' @param file_stages File staging records owned by the run.
 #'
 CmdStanRun <- R6::R6Class(
   classname = "CmdStanRun",
   public = list(
     args = NULL,
     procs = NULL,
-    initialize = function(args, procs) {
+    plan = NULL,
+    initialize = function(args, procs, run_plan = NULL, file_stages = list()) {
       checkmate::assert_r6(args, classes = "CmdStanArgs")
       checkmate::assert_r6(procs, classes = "CmdStanProcs")
+      checkmate::assert_r6(
+        run_plan,
+        classes = "CmdStanRunPlan",
+        null.ok = TRUE
+      )
+      checkmate::assert_list(file_stages)
       self$args <- args
       self$procs <- procs
-      private$output_files_ <- self$new_output_files()
-      private$profile_files_ <- self$new_profile_files()
-      if (!is.null(self$args$save_cmdstan_config) &&
-          as.logical(self$args$save_cmdstan_config)) {
-        private$config_files_ <- self$new_config_files()
-      }
-      if (!is.null(self$args$method_args$save_metric) &&
-          as.logical(self$args$method_args$save_metric)) {
-        private$metric_files_ <- self$new_metric_files()
-      }
-      if (self$args$save_latent_dynamics) {
-        private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
+      self$plan <- run_plan
+      private$file_stages_ <- file_stages
+      if (is.null(self$plan)) {
+        private$output_files_ <- self$new_output_files()
+        private$profile_files_ <- self$new_profile_files()
+        if (!is.null(self$args$save_cmdstan_config) &&
+            as.logical(self$args$save_cmdstan_config)) {
+          private$config_files_ <- self$new_config_files()
+        }
+        if (!is.null(self$args$method_args$save_metric) &&
+            as.logical(self$args$method_args$save_metric)) {
+          private$metric_files_ <- self$new_metric_files()
+        }
+        if (self$args$save_latent_dynamics) {
+          private$latent_dynamics_files_ <- self$new_latent_dynamics_files()
+        }
+      } else {
+        if (self$plan$num_invocations() != self$procs$num_procs()) {
+          stop(
+            "The run plan and process registry have different invocation counts.",
+            call. = FALSE
+          )
+        }
+        planned_chain_ids <- lapply(
+          self$plan$invocations,
+          function(invocation) invocation$chain_ids
+        )
+        if (!identical(self$procs$invocation_chain_ids(), planned_chain_ids)) {
+          stop(
+            "The run plan and process registry have different logical-chain mappings.",
+            call. = FALSE
+          )
+        }
+        private$output_files_ <- self$plan$chain_artifacts$output
+        private$latent_dynamics_files_ <- self$plan$chain_artifacts$diagnostic
+        private$metric_files_ <- self$plan$chain_artifacts$metric
+        private$profile_files_ <- self$plan$invocation_artifacts$profile
+        private$config_files_ <- self$plan$invocation_artifacts$config
       }
       if (os_is_wsl()) {
         # While the executable built under WSL will be stored in the Windows
@@ -50,6 +85,55 @@ CmdStanRun <- R6::R6Class(
     },
     num_procs = function() self$procs$num_procs(),
     proc_ids = function() self$procs$proc_ids(),
+    num_chains = function() {
+      if (is.null(self$plan)) self$num_procs() else self$plan$num_chains()
+    },
+    chain_ids = function() {
+      if (is.null(self$plan)) self$args$proc_ids else self$plan$chain_ids
+    },
+    invocation_env = function(id) {
+      if (is.null(self$plan)) {
+        return(character())
+      }
+      self$plan$invocations[[id]]$env
+    },
+    chain_output = function(id) {
+      checkmate::assert_integerish(
+        id,
+        lower = 1,
+        upper = self$num_chains(),
+        len = 1,
+        any.missing = FALSE
+      )
+      id <- as.integer(id)
+      if (is.null(self$plan)) {
+        return(self$procs$proc_output(id))
+      }
+      effective_id <- self$plan$chain_ids[[id]]
+      self$procs$chain_output(effective_id)
+    },
+    add_live_run_metadata = function(metadata) {
+      if (is.null(self$plan)) {
+        return(metadata)
+      }
+      if (length(metadata$id) == self$plan$num_chains()) {
+        metadata$id <- self$plan$chain_ids
+      }
+      if (is.data.frame(metadata$time) &&
+          nrow(metadata$time) == self$plan$num_chains()) {
+        metadata$time$chain_id <- self$plan$chain_ids
+      }
+      if (is.character(self$args$init)) {
+        metadata$init <- self$args$init
+      }
+      metadata$parallel_chains <- self$plan$requested_parallel_chains
+      metadata$threads_per_chain <- if (is.null(self$plan$requested_threads)) {
+        self$plan$requested_threads_per_chain %||% 1L
+      } else {
+        NULL
+      }
+      metadata
+    },
     exe_file = function() self$args$exe_file,
     stan_code = function() self$args$stan_code,
     model_methods_env = function() self$args$model_methods_env,
@@ -76,11 +160,10 @@ CmdStanRun <- R6::R6Class(
     },
     config_files = function(include_failed = FALSE) {
       files <- private$config_files_
-      files_win_path <- sapply(private$config_files_, wsl_safe_path, revert = TRUE)
       if (include_failed) {
         files
       } else {
-        ok <- self$procs$is_finished() | self$procs$is_queued()
+        ok <- private$successful_invocations_()
         files[ok]
       }
     },
@@ -90,7 +173,7 @@ CmdStanRun <- R6::R6Class(
       if (include_failed) {
         files
       } else {
-        ok <- self$procs$is_finished() | self$procs$is_queued()
+        ok <- private$successful_chains_()
         files[ok]
       }
     },
@@ -105,7 +188,7 @@ CmdStanRun <- R6::R6Class(
       if (include_failed) {
         private$latent_dynamics_files_
       } else {
-        ok <- self$procs$is_finished() | self$procs$is_queued()
+        ok <- private$successful_chains_()
         private$latent_dynamics_files_[ok]
       }
     },
@@ -113,12 +196,15 @@ CmdStanRun <- R6::R6Class(
       if (include_failed) {
         private$output_files_
       } else {
-        ok <- self$procs$is_finished() | self$procs$is_queued()
+        ok <- private$successful_chains_()
         private$output_files_[ok]
       }
     },
     profile_files = function(include_failed = FALSE) {
       files <- private$profile_files_
+      if (include_failed) {
+        return(files)
+      }
       if (!length(files) || !any(file.exists(files))) {
         stop(
           "No profile files found. ",
@@ -126,12 +212,7 @@ CmdStanRun <- R6::R6Class(
           call. = FALSE
         )
       }
-      if (include_failed) {
-        files
-      } else {
-        ok <- self$procs$is_finished() | self$procs$is_queued()
-        files[ok]
-      }
+      files[private$successful_invocations_()]
     },
     save_output_files = function(dir = ".",
                                  basename = NULL,
@@ -142,7 +223,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
-        ids = self$procs$proc_ids(),
+        ids = self$chain_ids(),
         ext = ".csv",
         timestamp = timestamp,
         random = random
@@ -167,7 +248,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
-        ids = self$proc_ids(),
+        ids = self$chain_ids(),
         ext = ".csv",
         timestamp = timestamp,
         random = random
@@ -187,7 +268,7 @@ CmdStanRun <- R6::R6Class(
                                   basename = NULL,
                                   timestamp = TRUE,
                                   random = TRUE) {
-      current_files <- self$profile_files(include_failed = TRUE) # used so we get error if 0 files
+      current_files <- self$profile_files()
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -251,6 +332,7 @@ CmdStanRun <- R6::R6Class(
         " files and set internal paths to new locations:\n",
         paste("-", new_paths, collapse = "\n")
       )
+      private$config_files_saved_ <- TRUE
       invisible(new_paths)
     },
     save_metric_files = function(dir = ".",
@@ -262,7 +344,7 @@ CmdStanRun <- R6::R6Class(
         current_paths = current_files,
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-metric"),
-        ids = self$proc_ids(),
+        ids = self$chain_ids(),
         ext = ".json",
         timestamp = timestamp,
         random = random
@@ -275,11 +357,15 @@ CmdStanRun <- R6::R6Class(
         " files and set internal paths to new locations:\n",
         paste("-", new_paths, collapse = "\n")
       )
+      private$metric_files_saved_ <- TRUE
       invisible(new_paths)
     },
 
     command = function() self$args$command(),
     command_args = function() {
+      if (!is.null(self$plan)) {
+        return(lapply(self$plan$invocations, `[[`, "command_args"))
+      }
       if (!length(private$command_args_)) {
         # create a list of character vectors (one per run/chain) of cmdstan arguments
         private$command_args_ <- lapply(self$procs$proc_ids(), function(j) {
@@ -295,12 +381,30 @@ CmdStanRun <- R6::R6Class(
     },
 
     run_cmdstan = function() {
+      on.exit(private$restore_file_stages_(), add = TRUE)
       run_method <- paste0("run_", self$method(), "_")
       private[[run_method]]()
+      private$restore_file_stages_()
+      private$validate_invocation_outputs_()
+      if (self$method() %in% c("sample", "generate_quantities")) {
+        if (self$num_chains() == 1L) {
+          self$procs$report_time(1L)
+        } else {
+          self$procs$report_time()
+        }
+      }
     },
 
     run_cmdstan_mpi = function(mpi_cmd, mpi_args) {
+      on.exit(private$restore_file_stages_(), add = TRUE)
       private$run_sample_(mpi_cmd, mpi_args)
+      private$restore_file_stages_()
+      private$validate_invocation_outputs_()
+      if (self$num_chains() == 1L) {
+        self$procs$report_time(1L)
+      } else {
+        self$procs$report_time()
+      }
     },
 
     #' Run `bin/stansummary` or `bin/diagnose`
@@ -346,12 +450,41 @@ CmdStanRun <- R6::R6Class(
     time = function() {
       if (self$method() %in% c("laplace", "optimize", "variational", "pathfinder")) {
         time <- list(total = self$procs$total_time())
-      } else if (self$method() == "generate_quantities") {
-        chain_time <- data.frame(
-          chain_id = self$procs$proc_ids()[self$procs$is_finished()],
-          total = self$procs$proc_total_time()[self$procs$is_finished()]
+      } else if (!is.null(self$plan) && self$method() == "sample") {
+        metadata <- lapply(
+          self$output_files(include_failed = FALSE),
+          read_csv_metadata
         )
-
+        chain_time <- if (length(metadata)) {
+          do.call(rbind, lapply(metadata, `[[`, "time"))
+        } else {
+          data.frame(
+            chain_id = integer(),
+            warmup = numeric(),
+            sampling = numeric(),
+            total = numeric()
+          )
+        }
+        if (nrow(chain_time) == self$plan$num_chains()) {
+          chain_time$chain_id <- self$plan$chain_ids
+        }
+        time <- list(total = self$procs$total_time(), chains = chain_time)
+      } else if (!is.null(self$plan) &&
+                 self$method() == "generate_quantities") {
+        metadata <- lapply(
+          self$output_files(include_failed = FALSE),
+          read_csv_metadata
+        )
+        chain_time <- do.call(
+          rbind,
+          lapply(metadata, function(x) x$time %||% NULL)
+        )
+        if (is.null(chain_time)) {
+          chain_time <- data.frame(chain_id = integer(), total = numeric())
+        }
+        if (nrow(chain_time) == self$plan$num_chains()) {
+          chain_time$chain_id <- self$plan$chain_ids
+        }
         time <- list(total = self$procs$total_time(), chains = chain_time)
       } else {
         chain_ids <- names(self$procs$is_finished())
@@ -378,8 +511,61 @@ CmdStanRun <- R6::R6Class(
     config_files_saved_ = FALSE,
     metric_files_saved_ = FALSE,
     command_args_ = list(),
+    file_stages_ = list(),
+
+    successful_invocations_ = function() {
+      self$procs$is_finished() | self$procs$is_queued()
+    },
+
+    successful_chains_ = function() {
+      if (is.null(self$plan)) {
+        return(private$successful_invocations_())
+      }
+      ok <- rep(FALSE, self$plan$num_chains())
+      invocation_ok <- private$successful_invocations_()
+      for (invocation in self$plan$invocations) {
+        ok[invocation$chain_indices] <- invocation_ok[[invocation$invocation_id]]
+      }
+      ok
+    },
+
+    restore_file_stages_ = function() {
+      for (stage in private$file_stages_) {
+        stage$restore_outputs()
+      }
+      for (stage in private$file_stages_) {
+        stage$cleanup()
+      }
+      invisible(NULL)
+    },
+
+    validate_invocation_outputs_ = function() {
+      if (is.null(self$plan) ||
+          !self$method() %in% c("sample", "generate_quantities")) {
+        return(invisible(NULL))
+      }
+      for (invocation in self$plan$invocations) {
+        invocation_id <- invocation$invocation_id
+        if (!self$procs$is_finished(invocation_id)) {
+          next
+        }
+        files <- private$output_files_[invocation$chain_indices]
+        valid <- all(file.exists(files)) && all(vapply(
+          files,
+          function(file) {
+            !inherits(try(read_csv_metadata(file), silent = TRUE), "try-error")
+          },
+          logical(1)
+        ))
+        if (!valid) {
+          self$procs$set_proc_state(invocation_id, 7)
+        }
+      }
+      invisible(NULL)
+    },
 
     finalize = function() {
+      private$restore_file_stages_()
       if (self$args$using_tempdir) {
         temp_files <- c(
           if (!private$output_files_saved_)
@@ -428,70 +614,55 @@ check_target_exe <- function(exe) {
   }
 }
 
-.run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
+.run_invocations <- function(mpi_cmd = NULL, mpi_args = NULL) {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
-  if (!is.null(mpi_cmd)) {
-    if (is.null(mpi_args)) {
-      mpi_args <- list()
-    }
-    mpi_args[["exe"]] <- wsl_safe_path(self$exe_file())
-  }
-  if (procs$num_procs() == 1) {
-    start_msg <- "Running MCMC with 1 chain"
-  } else if (procs$num_procs() == procs$parallel_procs()) {
-    start_msg <- paste0("Running MCMC with ", procs$num_procs(), " parallel chains")
-  } else {
-    if (procs$parallel_procs() == 1) {
-      if (!is.null(mpi_cmd)) {
-        if (!is.null(mpi_args[["n"]])) {
-          mpi_n_process <- mpi_args[["n"]]
-        } else if (!is.null(mpi_args[["np"]])) {
-          mpi_n_process <- mpi_args[["np"]]
-        }
-        if (is.null(mpi_n_process)) {
-          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI")
-        } else {
-          start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains using MPI with ", mpi_n_process, " processes")
-        }
-      } else {
-        start_msg <- paste0("Running MCMC with ", procs$num_procs(), " sequential chains")
-      }
-    } else {
-      start_msg <- paste0("Running MCMC with ", procs$num_procs(), " chains, at most ", procs$parallel_procs(), " in parallel")
-    }
-  }
-  if (is.null(procs$threads_per_proc())) {
-    if (procs$show_stdout_messages()) {
-      cat(paste0(start_msg, "...\n\n"))
-    }
-  } else {
-    if (procs$show_stdout_messages()) {
-      cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
-    }
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
-  }
   start_time <- Sys.time()
-  chains <- procs$proc_ids()
-  chain_ind <- 1
+  invocation_ids <- procs$proc_ids()
+  invocation_index <- 1L
   while (!all(procs$is_finished() | procs$is_failed())) {
     while (procs$active_procs() != procs$parallel_procs() && procs$any_queued()) {
-      chain_id <- chains[chain_ind]
+      invocation_id <- invocation_ids[[invocation_index]]
+      if (is.null(self$plan)) {
+        command <- self$command()
+        command_args <- self$command_args()[[invocation_id]]
+        env <- if (is.null(procs$threads_per_proc())) {
+          NULL
+        } else {
+          cmdstan_thread_env(procs$threads_per_proc())
+        }
+        invocation_mpi_cmd <- mpi_cmd
+        invocation_mpi_args <- mpi_args
+      } else {
+        invocation <- self$plan$invocations[[invocation_id]]
+        command <- invocation$command
+        command_args <- invocation$command_args
+        env <- if (length(invocation$env)) invocation$env else NULL
+        invocation_mpi_cmd <- invocation$mpi_cmd %||% mpi_cmd
+        invocation_mpi_args <- invocation$mpi_args %||% mpi_args
+      }
+      if (!is.null(invocation_mpi_cmd)) {
+        invocation_mpi_args <- invocation_mpi_args %||% list()
+        invocation_mpi_args[["exe"]] <- wsl_safe_path(self$exe_file())
+      }
       procs$new_proc(
-        id = chain_id,
-        command = self$command(),
-        args = self$command_args()[[chain_id]],
+        id = invocation_id,
+        command = command,
+        args = command_args,
         wd = dirname(self$exe_file()),
-        mpi_cmd = mpi_cmd,
-        mpi_args = mpi_args
+        env = env,
+        mpi_cmd = invocation_mpi_cmd,
+        mpi_args = invocation_mpi_args
       )
-      procs$mark_proc_start(chain_id)
+      if (is_verbose_mode() && length(env)) {
+        message(
+          "CmdStan child environment: ",
+          paste(paste0(names(env), "=", unname(env)), collapse = " ")
+        )
+      }
+      procs$mark_proc_start(invocation_id)
       procs$set_active_procs(procs$active_procs() + 1)
-      chain_ind <- chain_ind + 1
+      invocation_index <- invocation_index + 1L
     }
     start_active_procs <- procs$active_procs()
 
@@ -499,10 +670,10 @@ check_target_exe <- function(exe) {
            procs$active_procs() > 0) {
       procs$wait(0.1)
       procs$poll(0)
-      for (chain_id in chains) {
-        if (!procs$is_queued(chain_id)) {
-          procs$process_output(chain_id)
-          procs$process_error_output(chain_id)
+      for (invocation_id in invocation_ids) {
+        if (!procs$is_queued(invocation_id)) {
+          procs$process_output(invocation_id)
+          procs$process_error_output(invocation_id)
         }
       }
       procs$set_active_procs(procs$num_alive())
@@ -510,83 +681,87 @@ check_target_exe <- function(exe) {
     procs$check_finished()
   }
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
-  procs$report_time()
+}
+CmdStanRun$set("private", name = "run_invocations_", value = .run_invocations)
+
+.run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
+  procs <- self$procs
+  num_chains <- self$num_chains()
+  num_invocations <- self$num_procs()
+  if (procs$show_stdout_messages()) {
+    start_msg <- paste0(
+      "Running ", num_chains, " chain", if (num_chains == 1L) "" else "s",
+      " in ", num_invocations, " CmdStan invocation",
+      if (num_invocations == 1L) "" else "s"
+    )
+    is_mpi <- !is.null(mpi_cmd) || (!is.null(self$plan) &&
+      any(vapply(self$plan$invocations, function(x) !is.null(x$mpi_cmd), logical(1))))
+    if (!is.null(self$plan)) {
+      total_threads <- if (length(self$plan$invocations[[1]]$env)) {
+        self$plan$invocations[[1]]$num_threads
+      } else {
+        procs$parallel_procs()
+      }
+    }
+    if (is_mpi) {
+      invocation_mpi_args <- if (!is.null(self$plan)) {
+        self$plan$invocations[[1]]$mpi_args
+      } else {
+        mpi_args
+      }
+      ranks <- invocation_mpi_args[["n"]] %||% invocation_mpi_args[["np"]]
+      start_msg <- paste0(start_msg, " using MPI")
+      if (!is.null(ranks)) {
+        start_msg <- paste0(start_msg, " with ", ranks, " ranks")
+      }
+      if (!is.null(self$plan) && length(self$plan$invocations[[1]]$env)) {
+        start_msg <- paste0(
+          start_msg,
+          if (is.null(ranks)) " with " else " and ",
+          total_threads, " thread", if (total_threads == 1L) "" else "s",
+          " per rank"
+        )
+      }
+    } else if (!is.null(self$plan)) {
+      start_msg <- paste0(start_msg, " with ", total_threads, " total thread",
+                          if (total_threads == 1L) "" else "s")
+    }
+    cat(start_msg, "...\n\n", sep = "")
+  }
+  private$run_invocations_(mpi_cmd, mpi_args)
 }
 CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 
 .run_generate_quantities <- function() {
   procs <- self$procs
-  on.exit(procs$cleanup(), add = TRUE)
-  if (procs$num_procs() == 1) {
-    start_msg <- "Running standalone generated quantities after 1 MCMC chain"
-  } else if (procs$num_procs() == procs$parallel_procs()) {
-    start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, all chains in parallel ")
-  } else {
-    if (procs$parallel_procs() == 1) {
-      start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, 1 chain at a time ")
-    } else {
-      start_msg <- paste0("Running standalone generated quantities after ", procs$num_procs(), " MCMC chains, ", procs$parallel_procs(), " chains at a time ")
-    }
-  }
-  if (is.null(procs$threads_per_proc())) {
-    if (procs$show_stdout_messages()) {
-      cat(paste0(start_msg, "...\n\n"))
-    }
-  } else {
-    if (procs$show_stdout_messages()) {
-      cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
-    }
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
-  }
-  start_time <- Sys.time()
-  chains <- procs$proc_ids()
-  chain_ind <- 1
-  while (!all(procs$is_finished() | procs$is_failed())) {
-    while (procs$active_procs() != procs$parallel_procs() && procs$any_queued()) {
-      chain_id <- chains[chain_ind]
-      procs$new_proc(
-        id = chain_id,
-        command = self$command(),
-        args = self$command_args()[[chain_id]],
-        wd = dirname(self$exe_file())
-      )
-      procs$mark_proc_start(chain_id)
-      procs$set_active_procs(procs$active_procs() + 1)
-      chain_ind <- chain_ind + 1
-    }
-    start_active_procs <- procs$active_procs()
-
-    while (procs$active_procs() == start_active_procs &&
-           procs$active_procs() > 0) {
-      procs$wait(0.1)
-      procs$poll(0)
-      for (chain_id in chains) {
-        if (!procs$is_queued(chain_id)) {
-          procs$process_output(chain_id)
-          procs$process_error_output(chain_id)
-        }
+  if (procs$show_stdout_messages()) {
+    start_msg <- paste0(
+      "Running standalone generated quantities for ", self$num_chains(),
+      " chain", if (self$num_chains() == 1L) "" else "s",
+      " in ", self$num_procs(), " CmdStan invocation",
+      if (self$num_procs() == 1L) "" else "s"
+    )
+    if (!is.null(self$plan)) {
+      total_threads <- if (length(self$plan$invocations[[1]]$env)) {
+        self$plan$invocations[[1]]$num_threads
+      } else {
+        procs$parallel_procs()
       }
-      procs$set_active_procs(procs$num_alive())
+      start_msg <- paste0(start_msg, " with ", total_threads, " total thread",
+                          if (total_threads == 1L) "" else "s")
     }
-    procs$check_finished()
+    cat(start_msg, "...\n\n", sep = "")
   }
-  procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
-  procs$report_time()
+  private$run_invocations_()
 }
 CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_generate_quantities)
 
 .run_other <- function() {
   procs <- self$procs
-  if (!is.null(procs$threads_per_proc())) {
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
+  child_env <- if (is.null(procs$threads_per_proc())) {
+    NULL
+  } else {
+    cmdstan_thread_env(procs$threads_per_proc())
   }
   start_time <- Sys.time()
   id <- 1
@@ -594,7 +769,8 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     id = id,
     command = self$command(),
     args = self$command_args()[[id]],
-    wd = dirname(self$exe_file())
+    wd = dirname(self$exe_file()),
+    env = child_env
   )
   procs$set_active_procs(1)
   procs$mark_proc_start(id)
@@ -638,12 +814,10 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs
-  if (!is.null(procs$threads_per_proc())) {
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
+  child_env <- if (is.null(procs$threads_per_proc())) {
+    NULL
+  } else {
+    cmdstan_thread_env(procs$threads_per_proc())
   }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
@@ -659,6 +833,7 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
       wd = dirname(self$exe_file()),
       stderr = stderr_file,
       stdout = stdout_file,
+      env = child_env,
       error_on_status = FALSE
     )
   )
@@ -702,19 +877,40 @@ CmdStanProcs <- R6::R6Class(
     initialize = function(num_procs,
                           parallel_procs = NULL,
                           threads_per_proc = NULL,
+                          invocation_chain_ids = NULL,
                           show_stderr_messages = TRUE,
                           show_stdout_messages = TRUE) {
       checkmate::assert_integerish(num_procs, lower = 1, len = 1, any.missing = FALSE)
       checkmate::assert_integerish(parallel_procs, lower = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
       checkmate::assert_integerish(threads_per_proc, lower = 1, len = 1, null.ok = TRUE)
+      if (is.null(invocation_chain_ids)) {
+        invocation_chain_ids <- lapply(seq_len(num_procs), as.integer)
+      }
+      checkmate::assert_list(invocation_chain_ids, len = num_procs)
+      for (chain_ids in invocation_chain_ids) {
+        checkmate::assert_integerish(
+          chain_ids,
+          lower = 1,
+          min.len = 1,
+          unique = TRUE,
+          any.missing = FALSE
+        )
+      }
+      all_chain_ids <- unlist(invocation_chain_ids, use.names = FALSE)
+      if (anyDuplicated(all_chain_ids)) {
+        stop("Every logical chain ID must belong to exactly one invocation.", call. = FALSE)
+      }
       private$num_procs_ <- as.integer(num_procs)
       if (is.null(parallel_procs)) {
         private$parallel_procs_ <- private$num_procs_
       } else {
         private$parallel_procs_ <- as.integer(parallel_procs)
       }
-      private$threads_per_proc_ <- as.integer(threads_per_proc)
-      private$threads_per_proc_ <- threads_per_proc
+      private$threads_per_proc_ <- if (is.null(threads_per_proc)) {
+        NULL
+      } else {
+        as.integer(threads_per_proc)
+      }
       private$active_procs_ <- 0
       private$proc_ids_ <- seq_len(num_procs)
       zeros <- rep(0, num_procs)
@@ -722,6 +918,15 @@ CmdStanProcs <- R6::R6Class(
       private$proc_state_ <- zeros
       private$proc_start_time_ <- zeros
       private$proc_total_time_ <- zeros
+      private$invocation_chain_ids_ <- lapply(invocation_chain_ids, as.integer)
+      private$chain_output_ <- stats::setNames(
+        vector("list", length(all_chain_ids)),
+        as.character(all_chain_ids)
+      )
+      private$chain_progress_ <- stats::setNames(
+        rep(0L, length(all_chain_ids)),
+        as.character(all_chain_ids)
+      )
       private$show_stderr_messages_ <- show_stderr_messages
       private$show_stdout_messages_ <- show_stdout_messages
       invisible(self)
@@ -744,6 +949,71 @@ CmdStanProcs <- R6::R6Class(
     proc_ids = function() {
       private$proc_ids_
     },
+    invocation_chain_ids = function(id = NULL) {
+      if (is.null(id)) {
+        return(private$invocation_chain_ids_)
+      }
+      private$invocation_chain_ids_[[id]]
+    },
+    num_chains = function() {
+      sum(lengths(private$invocation_chain_ids_))
+    },
+    num_failed_chains = function() {
+      failed <- self$is_failed()
+      if (!any(failed)) {
+        return(0L)
+      }
+      as.integer(sum(lengths(private$invocation_chain_ids_[failed])))
+    },
+    record_chain_output = function(line) {
+      chain_id <- parse_chain_output_id(line)
+      if (is.na(chain_id) ||
+          !as.character(chain_id) %in% names(private$chain_output_)) {
+        return(invisible(FALSE))
+      }
+      key <- as.character(chain_id)
+      private$chain_output_[[key]] <- c(private$chain_output_[[key]], line)
+      parsed_line <- sub("^Chain \\[[0-9]+\\](?: |$)", "", line, perl = TRUE)
+      progress <- private$chain_progress_[[key]]
+      if (grepl("Rejecting initial value:|Exception:", parsed_line, perl = TRUE)) {
+        progress <- max(progress, 2L)
+      }
+      if (grepl("Iteration:", parsed_line, fixed = TRUE)) {
+        if (grepl("Sampling", parsed_line, fixed = TRUE)) {
+          progress <- max(progress, 4L)
+        } else {
+          progress <- max(progress, 3L)
+        }
+      }
+      if (grepl("\\[100%\\]|Elapsed Time:", parsed_line, perl = TRUE)) {
+        progress <- max(progress, 5L)
+      }
+      private$chain_progress_[[key]] <- as.integer(progress)
+      invisible(TRUE)
+    },
+    chain_output = function(chain_id) {
+      checkmate::assert_integerish(
+        chain_id,
+        lower = 1,
+        len = 1,
+        any.missing = FALSE
+      )
+      key <- as.character(as.integer(chain_id))
+      if (!key %in% names(private$chain_output_)) {
+        stop("Unknown logical chain ID ", chain_id, ".", call. = FALSE)
+      }
+      private$chain_output_[[key]]
+    },
+    chain_progress = function(chain_id = NULL) {
+      if (is.null(chain_id)) {
+        return(private$chain_progress_)
+      }
+      key <- as.character(as.integer(chain_id))
+      if (!key %in% names(private$chain_progress_)) {
+        stop("Unknown logical chain ID ", chain_id, ".", call. = FALSE)
+      }
+      private$chain_progress_[[key]]
+    },
     cleanup = function() {
       lapply(private$processes_, function(p) {
         try(p$kill_tree(), silent = TRUE)
@@ -759,7 +1029,13 @@ CmdStanProcs <- R6::R6Class(
     get_proc = function(id) {
       private$processes_[[id]]
     },
-    new_proc = function(id, command, args, wd, mpi_cmd = NULL, mpi_args = NULL) {
+    new_proc = function(id,
+                        command,
+                        args,
+                        wd,
+                        env = NULL,
+                        mpi_cmd = NULL,
+                        mpi_args = NULL) {
       if (!is.null(mpi_cmd)) {
         exe_name <- mpi_args[["exe"]]
         mpi_args[["exe"]] <- NULL
@@ -775,14 +1051,21 @@ CmdStanProcs <- R6::R6Class(
           toolchain_PATH_env_var(),
           tbb_path()
         ),
-        private$processes_[[id]] <- wsl_compatible_process_new(
-          command = command,
-          args = args,
-          wd = wd,
-          stdout = "|",
-          stderr = "|",
-          echo_cmd = is_verbose_mode()
-        )
+        {
+          child_env <- env
+          if (!is.null(child_env) && !("PATH" %in% names(child_env))) {
+            child_env <- c(child_env, PATH = Sys.getenv("PATH"))
+          }
+          private$processes_[[id]] <- wsl_compatible_process_new(
+            command = command,
+            args = args,
+            wd = wd,
+            env = child_env,
+            stdout = "|",
+            stderr = "|",
+            echo_cmd = is_verbose_mode()
+          )
+        }
       )
       invisible(self)
     },
@@ -824,8 +1107,12 @@ CmdStanProcs <- R6::R6Class(
           # input and mark the process finished
           self$process_output(id)
           self$process_error_output(id)
+          if (self$get_proc(id)$get_exit_status() == 0) {
+            self$set_proc_state(id = id, new_state = 5)
+          } else {
+            self$set_proc_state(id = id, new_state = 4)
+          }
           self$mark_proc_stop(id)
-          self$report_time(id)
         }
       }
       invisible(self)
@@ -872,6 +1159,10 @@ CmdStanProcs <- R6::R6Class(
     },
     set_proc_state = function(id, new_state) {
       private$proc_state_[[id]] <- new_state
+      if (identical(as.integer(new_state), 7L)) {
+        chain_ids <- private$invocation_chain_ids_[[id]]
+        private$chain_progress_[as.character(chain_ids)] <- 7L
+      }
     },
     mark_proc_start = function(id) {
       private$proc_state_[[id]] <- 1
@@ -884,6 +1175,8 @@ CmdStanProcs <- R6::R6Class(
       } else {
         private$proc_state_[[id]] <- 7
       }
+      chain_ids <- private$invocation_chain_ids_[[id]]
+      private$chain_progress_[as.character(chain_ids)] <- private$proc_state_[[id]]
       invisible(self)
     },
     is_error_message = function(line) {
@@ -897,8 +1190,13 @@ CmdStanProcs <- R6::R6Class(
       if (length(err_out)) {
         for (err_line in err_out) {
           private$proc_output_[[id]] <- c(private$proc_output_[[id]], err_line)
+          self$record_chain_output(err_line)
           if (private$show_stderr_messages_) {
-            message("Chain ", id, " ", err_line)
+            if (is.na(parse_chain_output_id(err_line))) {
+              message("Chain ", id, " ", err_line)
+            } else {
+              message(err_line)
+            }
           }
         }
       }
@@ -971,7 +1269,10 @@ CmdStanProcs <- R6::R6Class(
     proc_error_ouput_ = list(),
     total_time_ = numeric(),
     show_stderr_messages_ = TRUE,
-    show_stdout_messages_ = TRUE
+    show_stdout_messages_ = TRUE,
+    invocation_chain_ids_ = list(),
+    chain_output_ = list(),
+    chain_progress_ = integer()
   )
 )
 
@@ -988,7 +1289,21 @@ CmdStanMCMCProcs <- R6::R6Class(
       }
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
+        self$record_chain_output(line)
         if (nzchar(line)) {
+          chain_prefixed <- grepl("^Chain \\[[0-9]+\\](?: |$)", line, perl = TRUE)
+          parsed_line <- sub("^Chain \\[[0-9]+\\](?: |$)", "", line, perl = TRUE)
+          parse_section_time <- function(value) {
+            match <- regexpr(
+              "[0-9]+(?:\\.[0-9]+)?(?:[eE][-+]?[0-9]+)?(?=\\s+seconds)",
+              value,
+              perl = TRUE
+            )
+            if (match[[1]] < 0L) {
+              return(NA_real_)
+            }
+            as.double(regmatches(value, match))
+          }
           ignore_line <- FALSE
           last_section_start_time <- private$proc_section_time_[id, "last_section_start"]
           state <- private$proc_state_[[id]]
@@ -1003,65 +1318,65 @@ CmdStanMCMCProcs <- R6::R6Class(
           # (Note: state 2 is only used because rejection in cmdstan is printed
           # to stdout not stderr and we want to avoid printing the intial chain metadata)
           next_state <- state
-          if (state < 3 && grepl("refresh =", line, perl = TRUE)) {
+          if (state < 3 && grepl("refresh =", parsed_line, perl = TRUE)) {
             state <- 1.5
             next_state <- 1.5
           }
-          if (state <= 3 && grepl("Rejecting initial value:", line, perl = TRUE)) {
+          if (state <= 3 && grepl("Rejecting initial value:", parsed_line, perl = TRUE)) {
             state <- 2
             next_state <- 2
           }
-          if (state < 3 && grepl("Iteration:", line, perl = TRUE)) {
+          if (state < 3 && grepl("Iteration:", parsed_line, perl = TRUE)) {
             state <- 3 # 3 =  warmup
             next_state <- 3
           }
-          if (state < 3 && grepl("Elapsed Time:", line, perl = TRUE)) {
+          if (state < 3 && grepl("Elapsed Time:", parsed_line, perl = TRUE)) {
             state <- 5 # 5 = end of sampling
             next_state <- 5
           }
           if (private$proc_state_[[id]] == 3 &&
-              grepl("(Sampling)", line, perl = TRUE)) {
+              grepl("(Sampling)", parsed_line, perl = TRUE)) {
             next_state <- 4 # 4 = sampling
           }
-          if (grepl("\\[100%\\]", line, perl = TRUE)) {
+          if (grepl("\\[100%\\]", parsed_line, perl = TRUE)) {
             next_state <- 5 # writing csv and finishing
           }
-          if (grepl("seconds (Total)", line, fixed = TRUE)) {
-            private$proc_total_time_[[id]] <- as.double(trimws(sub("seconds (Total)", "", line, fixed = TRUE)))
+          if (grepl("seconds (Total)", parsed_line, fixed = TRUE)) {
+            private$proc_total_time_[[id]] <- parse_section_time(parsed_line)
             next_state <- 5
             state <- 5
           }
-          if (grepl("seconds (Sampling)", line, fixed = TRUE)) {
-            private$proc_section_time_[id, "sampling"] <- as.double(trimws(sub("seconds (Sampling)", "", line, fixed = TRUE)))
+          if (grepl("seconds (Sampling)", parsed_line, fixed = TRUE)) {
+            private$proc_section_time_[id, "sampling"] <- parse_section_time(parsed_line)
             next_state <- 5
             state <- 5
           }
-          if (grepl("seconds (Warm-up)", line, fixed = TRUE)) {
-            private$proc_section_time_[id, "warmup"] <- as.double(trimws(sub("Elapsed Time: ", "", sub("seconds (Warm-up)", "", line, fixed = TRUE), fixed = TRUE)))
+          if (grepl("seconds (Warm-up)", parsed_line, fixed = TRUE)) {
+            private$proc_section_time_[id, "warmup"] <- parse_section_time(parsed_line)
             next_state <- 5
             state <- 5
           }
-          if (grepl("Gradient evaluation took", line, fixed = TRUE)
-              || grepl("leapfrog steps per transition would take", line, fixed = TRUE)
-              || grepl("Adjust your expectations accordingly!", line, fixed = TRUE)
-              || grepl("stanc_version", line, fixed = TRUE)
-              || grepl("stancflags", line, fixed = TRUE)) {
+          if (grepl("Gradient evaluation took", parsed_line, fixed = TRUE)
+              || grepl("leapfrog steps per transition would take", parsed_line, fixed = TRUE)
+              || grepl("Adjust your expectations accordingly!", parsed_line, fixed = TRUE)
+              || grepl("stanc_version", parsed_line, fixed = TRUE)
+              || grepl("stancflags", parsed_line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
           if ((state > 1.5 && state < 5 && !ignore_line && private$show_stdout_messages_) || is_verbose_mode()) {
             if (state == 2) {
-              message("Chain ", id, " ", line)
+              if (chain_prefixed) message(line) else message("Chain ", id, " ", line)
             } else {
-              cat("Chain", id, line, "\n")
+              if (chain_prefixed) cat(line, "\n") else cat("Chain", id, line, "\n")
             }
           }
-          if (self$is_error_message(line)) {
+          if (self$is_error_message(parsed_line)) {
             # will print all remaining output in case of exceptions
             if (state == 1) {
               state <- 2;
             }
             if (private$show_stderr_messages_) {
-              message("Chain ", id, " ", line)
+              if (chain_prefixed) message(line) else message("Chain ", id, " ", line)
             }
           }
           private$proc_state_[[id]] <- next_state
@@ -1079,22 +1394,56 @@ CmdStanMCMCProcs <- R6::R6Class(
       }
       if (!is.null(id)) {
         if (self$proc_state(id) == 7) {
-          warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+          chain_ids <- self$invocation_chain_ids(id)
+          if (length(chain_ids) == 1L) {
+            warning(
+              "Chain ", chain_ids, " finished unexpectedly!\n",
+              immediate. = TRUE,
+              call. = FALSE
+            )
+          } else if (length(chain_ids) == self$num_chains()) {
+            warning(
+              "All chains finished unexpectedly!\n",
+              immediate. = TRUE,
+              call. = FALSE
+            )
+          } else {
+            warning(
+              length(chain_ids), " chain(s) finished unexpectedly!\n",
+              immediate. = TRUE,
+              call. = FALSE
+            )
+          }
+        } else if (length(self$invocation_chain_ids(id)) > 1L) {
+          cat(
+            "CmdStan invocation", id, "finished in",
+            base::format(round(self$proc_total_time(id), 1), nsmall = 1),
+            "seconds.\n"
+          )
         } else {
-          cat("Chain", id, "finished in", base::format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+          cat(
+            "Chain", self$invocation_chain_ids(id), "finished in",
+            base::format(round(self$proc_total_time(id), 1), nsmall = 1),
+            "seconds.\n"
+          )
         }
         return(invisible(NULL))
       } else {
-        num_chains <- self$num_procs()
+        num_chains <- self$num_chains()
         if (num_chains > 1) {
-          num_failed <- self$num_failed()
+          num_failed <- self$num_failed_chains()
           if (num_failed == 0) {
             if (num_chains == 2) {
               cat("\nBoth chains finished successfully.\n")
             } else {
               cat("\nAll", num_chains, "chains finished successfully.\n")
             }
-            cat("Mean chain execution time:",
+            timing_scope <- if (all(lengths(self$invocation_chain_ids()) == 1L)) {
+              "chain"
+            } else {
+              "invocation"
+            }
+            cat("Mean", timing_scope, "execution time:",
                 base::format(round(mean(self$proc_total_time()), 1), nsmall = 1),
                 "seconds.\n")
             cat("Total execution time:",
@@ -1135,13 +1484,14 @@ CmdStanGQProcs <- R6::R6Class(
         if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
           # if the process just finished make sure we process all
           # input and mark the process finished
+          self$process_output(id)
+          self$process_error_output(id)
           if (self$get_proc(id)$get_exit_status() == 0) {
             self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
           } else {
             self$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
           }
           self$mark_proc_stop(id)
-          self$report_time(id)
         }
       }
       invisible(self)
@@ -1153,11 +1503,14 @@ CmdStanGQProcs <- R6::R6Class(
       }
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
+        self$record_chain_output(line)
         if (nzchar(line)) {
-          if (self$proc_state(id) == 1 && grepl("refresh = ", line, perl = TRUE)) {
+          chain_prefixed <- grepl("^Chain \\[[0-9]+\\](?: |$)", line, perl = TRUE)
+          parsed_line <- sub("^Chain \\[[0-9]+\\](?: |$)", "", line, perl = TRUE)
+          if (self$proc_state(id) == 1 && grepl("refresh = ", parsed_line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 1.5)
           } else if (self$proc_state(id) >= 2 && private$show_stdout_messages_) {
-            cat("Chain", id, line, "\n")
+            if (chain_prefixed) cat(line, "\n") else cat("Chain", id, line, "\n")
           }
         } else {
           # after the metadata is printed and we found a blank line
@@ -1175,22 +1528,56 @@ CmdStanGQProcs <- R6::R6Class(
       }
       if (!is.null(id)) {
         if (self$proc_state(id) == 7) {
-          warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
+          chain_ids <- self$invocation_chain_ids(id)
+          if (length(chain_ids) == 1L) {
+            warning(
+              "Chain ", chain_ids, " finished unexpectedly!\n",
+              immediate. = TRUE,
+              call. = FALSE
+            )
+          } else if (length(chain_ids) == self$num_chains()) {
+            warning(
+              "All chains finished unexpectedly!\n",
+              immediate. = TRUE,
+              call. = FALSE
+            )
+          } else {
+            warning(
+              length(chain_ids), " chain(s) finished unexpectedly!\n",
+              immediate. = TRUE,
+              call. = FALSE
+            )
+          }
+        } else if (length(self$invocation_chain_ids(id)) > 1L) {
+          cat(
+            "CmdStan invocation", id, "finished in",
+            base::format(round(self$proc_total_time(id), 1), nsmall = 1),
+            "seconds.\n"
+          )
         } else {
-          cat("Chain", id, "finished in", base::format(round(self$proc_total_time(id), 1), nsmall = 1), "seconds.\n")
+          cat(
+            "Chain", self$invocation_chain_ids(id), "finished in",
+            base::format(round(self$proc_total_time(id), 1), nsmall = 1),
+            "seconds.\n"
+          )
         }
         return(invisible(NULL))
       } else {
-        num_chains <- self$num_procs()
+        num_chains <- self$num_chains()
         if (num_chains > 1) {
-          num_failed <- self$num_failed()
+          num_failed <- self$num_failed_chains()
           if (num_failed == 0) {
             if (num_chains == 2) {
               cat("\nBoth chains finished successfully.\n")
             } else {
               cat("\nAll", num_chains, "chains finished successfully.\n")
             }
-            cat("Mean chain execution time:",
+            timing_scope <- if (all(lengths(self$invocation_chain_ids()) == 1L)) {
+              "chain"
+            } else {
+              "invocation"
+            }
+            cat("Mean", timing_scope, "execution time:",
                 base::format(round(mean(self$proc_total_time()), 1), nsmall = 1),
                 "seconds.\n")
             cat("Total execution time:",

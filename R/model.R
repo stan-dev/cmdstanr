@@ -232,6 +232,7 @@ CmdStanModel <- R6::R6Class(
     stanc_options_ = list(),
     include_paths_ = NULL,
     using_user_header_ = FALSE,
+    exe_info_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -281,11 +282,19 @@ CmdStanModel <- R6::R6Class(
       # as the version the model was compiled with
       private$cmdstan_version_ <- cmdstan_version()
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
+        info_result <- run_info_cli(self$exe_file())
+        if (!is.null(info_result$status) && !is.na(info_result$status) &&
+            info_result$status == 0) {
+          private$exe_info_ <- tryCatch(
+            parse_exe_info_string(info_result$stdout),
+            error = function(error) NULL
+          )
+        }
+        cpp_options <- private$exe_info_
         for (cpp_option_name in names(cpp_options)) {
           if (cpp_option_name != "stan_version" &&
               (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
-            private$cpp_options_[[cpp_option_name]] <- cpp_options[[cpp_option_name]]
+            private$cpp_options_[[toupper(cpp_option_name)]] <- cpp_options[[cpp_option_name]]
           }
         }
       }
@@ -333,6 +342,9 @@ CmdStanModel <- R6::R6Class(
     },
     exe_file = function(path = NULL) {
       if (!is.null(path)) {
+        if (!identical(private$exe_file_, path)) {
+          private$exe_info_ <- NULL
+        }
         private$exe_file_ <- path
       }
       private$exe_file_
@@ -342,6 +354,23 @@ CmdStanModel <- R6::R6Class(
     },
     cpp_options = function() {
       private$cpp_options_
+    },
+    exe_info = function() {
+      if (!length(self$exe_file()) || !file.exists(self$exe_file())) {
+        stop(
+          "Model not compiled. Try running the compile() method first.",
+          call. = FALSE
+        )
+      }
+      valid_cache <- is.list(private$exe_info_) &&
+        is.logical(private$exe_info_$stan_threads) &&
+        length(private$exe_info_$stan_threads) == 1L &&
+        is.character(private$exe_info_$stan_version) &&
+        length(private$exe_info_$stan_version) == 1L
+      if (!valid_cache) {
+        private$exe_info_ <- read_exe_info(self$exe_file())
+      }
+      private$exe_info_
     },
     hpp_file = function() {
       if (!length(private$hpp_file_)) {
@@ -729,6 +758,7 @@ compile <- function(quiet = TRUE,
   private$cmdstan_version_ <- cmdstan_version()
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
+  private$exe_info_ <- NULL
   private$precompile_cpp_options_ <- NULL
   private$precompile_stanc_options_ <- NULL
   private$precompile_include_paths_ <- NULL
@@ -1078,6 +1108,12 @@ CmdStanModel$set("public", name = "format", value = format)
 #' @description The `$sample()` method of a [`CmdStanModel`] object runs Stan's
 #'   main Markov chain Monte Carlo algorithm.
 #'
+#'   CmdStanR derives the execution topology from the compiled executable. With
+#'   `STAN_THREADS=TRUE`, all logical chains run in one CmdStan invocation using
+#'   a shared thread pool. Otherwise CmdStanR launches one invocation per chain
+#'   and limits their concurrency with `parallel_chains`. This rule also applies
+#'   when `fixed_param=TRUE` and when OpenCL is enabled.
+#'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the
 #'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
@@ -1117,6 +1153,7 @@ sample <- function(data = NULL,
                    chains = 4,
                    parallel_chains = getOption("mc.cores", 1),
                    chain_ids = seq_len(chains),
+                   threads = NULL,
                    threads_per_chain = NULL,
                    opencl_ids = NULL,
                    iter_warmup = NULL,
@@ -1151,13 +1188,38 @@ sample <- function(data = NULL,
   if (fixed_param) {
     save_warmup <- FALSE
   }
-  procs <- CmdStanMCMCProcs$new(
-    num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
-    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
-    show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages
+  chains <- as.integer(checkmate::assert_integerish(
+    chains,
+    lower = 1,
+    len = 1,
+    any.missing = FALSE
+  ))
+  checkmate::assert_integerish(
+    parallel_chains,
+    lower = 1,
+    len = 1,
+    null.ok = TRUE,
+    any.missing = FALSE
   )
+  parallel_chains <- as.integer(parallel_chains %||% chains)
+  stan_threads <- cmdstan_chain_run_capability(self$exe_info())
+  num_threads <- resolve_num_threads(
+    threads = threads,
+    threads_per_chain = threads_per_chain,
+    chains = chains,
+    parallel_chains = parallel_chains,
+    stan_threads = stan_threads
+  )
+  normalized <- normalize_chain_scalar_args(
+    seed = seed,
+    step_size = step_size,
+    chain_ids = chain_ids,
+    chains = chains,
+    stan_threads = stan_threads
+  )
+  seed <- normalized$seed
+  step_size <- normalized$step_size
+  chain_ids <- normalized$chain_ids
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
@@ -1189,7 +1251,7 @@ sample <- function(data = NULL,
     standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
-    proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
+    proc_ids = chain_ids,
     data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
@@ -1202,7 +1264,34 @@ sample <- function(data = NULL,
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
-  runset <- CmdStanRun$new(args, procs)
+  planned <- build_cmdstan_run_plan(
+    cmdstan_args = args,
+    stan_threads = stan_threads,
+    num_threads = num_threads,
+    requested_parallel_chains = parallel_chains,
+    requested_threads = threads,
+    requested_threads_per_chain = threads_per_chain
+  )
+  procs <- CmdStanMCMCProcs$new(
+    num_procs = planned$plan$num_invocations(),
+    invocation_chain_ids = lapply(
+      planned$plan$invocations,
+      function(invocation) invocation$chain_ids
+    ),
+    parallel_procs = if (stan_threads) {
+      1L
+    } else {
+      min(parallel_chains, planned$plan$num_invocations())
+    },
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages
+  )
+  runset <- CmdStanRun$new(
+    args,
+    procs,
+    run_plan = planned$plan,
+    file_stages = planned$stages
+  )
   runset$run_cmdstan()
   CmdStanMCMC$new(runset)
 }
@@ -1243,6 +1332,12 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   other MPI launch arguments (`mpi_args`). In most cases, it is enough to
 #'   only define the number of processes. To use `n_procs` processes specify
 #'   `mpi_args = list("n" = n_procs)`.
+#'
+#'   If the MPI executable also reports `STAN_THREADS=TRUE`, one MPI launcher
+#'   owns all logical chains. `mpi_args` controls the number of ranks and
+#'   `threads` controls the TBB pool size initialized by each rank; these are
+#'   independent resource dimensions. An unthreaded MPI executable retains one
+#'   sequential launcher invocation per logical chain.
 #'
 #' @inheritParams model-method-sample
 #' @param mpi_cmd (string) The MPI launcher used for launching MPI
@@ -1288,7 +1383,10 @@ sample_mpi <- function(data = NULL,
                        output_dir = getOption("cmdstanr_output_dir"),
                        output_basename = NULL,
                        chains = 1,
+                       parallel_chains = getOption("mc.cores", 1),
                        chain_ids = seq_len(chains),
+                       threads = NULL,
+                       threads_per_chain = NULL,
                        iter_warmup = NULL,
                        iter_sampling = NULL,
                        save_warmup = FALSE,
@@ -1311,15 +1409,40 @@ sample_mpi <- function(data = NULL,
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
   if (fixed_param) {
-    chains <- 1
     save_warmup <- FALSE
   }
-  procs <- CmdStanMCMCProcs$new(
-    num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
-    parallel_procs = 1,
-    show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages
+  chains <- as.integer(checkmate::assert_integerish(
+    chains,
+    lower = 1,
+    len = 1,
+    any.missing = FALSE
+  ))
+  checkmate::assert_integerish(
+    parallel_chains,
+    lower = 1,
+    len = 1,
+    null.ok = TRUE,
+    any.missing = FALSE
   )
+  parallel_chains <- as.integer(parallel_chains %||% chains)
+  stan_threads <- cmdstan_chain_run_capability(self$exe_info())
+  num_threads <- resolve_num_threads(
+    threads = threads,
+    threads_per_chain = threads_per_chain,
+    chains = chains,
+    parallel_chains = parallel_chains,
+    stan_threads = stan_threads
+  )
+  normalized <- normalize_chain_scalar_args(
+    seed = seed,
+    step_size = step_size,
+    chain_ids = chain_ids,
+    chains = chains,
+    stan_threads = stan_threads
+  )
+  seed <- normalized$seed
+  step_size <- normalized$step_size
+  chain_ids <- normalized$chain_ids
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
@@ -1350,7 +1473,7 @@ sample_mpi <- function(data = NULL,
     standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
-    proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
+    proc_ids = chain_ids,
     data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
@@ -1362,7 +1485,36 @@ sample_mpi <- function(data = NULL,
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
-  runset <- CmdStanRun$new(args, procs)
+  planned <- build_cmdstan_run_plan(
+    cmdstan_args = args,
+    stan_threads = stan_threads,
+    num_threads = num_threads,
+    requested_parallel_chains = parallel_chains,
+    requested_threads = threads,
+    requested_threads_per_chain = threads_per_chain,
+    mpi_cmd = mpi_cmd,
+    mpi_args = mpi_args
+  )
+  procs <- CmdStanMCMCProcs$new(
+    num_procs = planned$plan$num_invocations(),
+    invocation_chain_ids = lapply(
+      planned$plan$invocations,
+      function(invocation) invocation$chain_ids
+    ),
+    parallel_procs = if (stan_threads) {
+      1L
+    } else {
+      1L
+    },
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages
+  )
+  runset <- CmdStanRun$new(
+    args,
+    procs,
+    run_plan = planned$plan,
+    file_stages = planned$stages
+  )
   runset$run_cmdstan_mpi(mpi_cmd, mpi_args)
   CmdStanMCMC$new(runset)
 }
@@ -1401,7 +1553,8 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`).
+#'   using the Stan functions `reduce_sum()` or `map_rect()`). If omitted, the
+#'   default is `1`.
 #' @param iter (positive integer) The maximum number of iterations.
 #' @param algorithm (string) The optimization algorithm. One of `"lbfgs"`,
 #'   `"bfgs"`, or `"newton"`. The control parameters below are only available
@@ -1707,7 +1860,7 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when using the Stan
-#'   functions `reduce_sum()` or `map_rect()`).
+#'   functions `reduce_sum()` or `map_rect()`). If omitted, the default is `1`.
 #' @param algorithm (string) The algorithm. Either `"meanfield"` or
 #'   `"fullrank"`.
 #' @param iter (positive integer) The _maximum_ number of iterations.
@@ -1842,7 +1995,7 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., for multi-path pathfinder
-#'   as well as `reduce_sum`).
+#'   as well as `reduce_sum`). If omitted, the default is `1`.
 #' @param num_threads Deprecated. Please use `threads` instead.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
@@ -1993,6 +2146,11 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #'   runs Stan's standalone generated quantities to obtain generated quantities
 #'   based on previously fitted parameters.
 #'
+#'   A threaded executable processes every fitted-parameter chain in one
+#'   CmdStan invocation and still writes one generated-quantities CSV per
+#'   logical chain. An unthreaded executable retains one invocation per chain,
+#'   scheduled up to `parallel_chains` at a time.
+#'
 #' @inheritParams model-method-sample
 #' @param fitted_params (multiple options) The parameter draws to use. One of
 #'   the following:
@@ -2062,18 +2220,37 @@ generate_quantities <- function(fitted_params,
                                 output_basename = NULL,
                                 sig_figs = NULL,
                                 parallel_chains = getOption("mc.cores", 1),
+                                threads = NULL,
                                 threads_per_chain = NULL,
                                 opencl_ids = NULL,
                                 show_messages = TRUE,
                                 show_exceptions = TRUE) {
   fitted_params_files <- process_fitted_params(fitted_params)
-  procs <- CmdStanGQProcs$new(
-    num_procs = length(fitted_params_files),
-    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
-    show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages
+  chains <- length(fitted_params_files)
+  checkmate::assert_integerish(
+    parallel_chains,
+    lower = 1,
+    len = 1,
+    null.ok = TRUE,
+    any.missing = FALSE
   )
+  parallel_chains <- as.integer(parallel_chains %||% chains)
+  stan_threads <- cmdstan_chain_run_capability(self$exe_info())
+  num_threads <- resolve_num_threads(
+    threads = threads,
+    threads_per_chain = threads_per_chain,
+    chains = chains,
+    parallel_chains = parallel_chains,
+    stan_threads = stan_threads
+  )
+  normalized <- normalize_chain_scalar_args(
+    seed = seed,
+    step_size = NULL,
+    chain_ids = seq_len(chains),
+    chains = chains,
+    stan_threads = stan_threads
+  )
+  seed <- normalized$seed
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
     model_variables <- self$variables()
@@ -2087,7 +2264,7 @@ generate_quantities <- function(fitted_params,
     standalone_env = self$functions,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
-    proc_ids = seq_along(fitted_params_files),
+    proc_ids = normalized$chain_ids,
     data_file = process_data(data, model_variables),
     seed = seed,
     output_dir = output_dir,
@@ -2096,7 +2273,34 @@ generate_quantities <- function(fitted_params,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables
   )
-  runset <- CmdStanRun$new(args, procs)
+  planned <- build_cmdstan_run_plan(
+    cmdstan_args = args,
+    stan_threads = stan_threads,
+    num_threads = num_threads,
+    requested_parallel_chains = parallel_chains,
+    requested_threads = threads,
+    requested_threads_per_chain = threads_per_chain
+  )
+  procs <- CmdStanGQProcs$new(
+    num_procs = planned$plan$num_invocations(),
+    invocation_chain_ids = lapply(
+      planned$plan$invocations,
+      function(invocation) invocation$chain_ids
+    ),
+    parallel_procs = if (stan_threads) {
+      1L
+    } else {
+      min(parallel_chains, planned$plan$num_invocations())
+    },
+    show_stderr_messages = show_exceptions,
+    show_stdout_messages = show_messages
+  )
+  runset <- CmdStanRun$new(
+    args,
+    procs,
+    run_plan = planned$plan,
+    file_stages = planned$stages
+  )
   runset$run_cmdstan()
   CmdStanGQ$new(runset)
 }

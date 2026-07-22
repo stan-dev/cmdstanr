@@ -22,7 +22,7 @@
 #'   C++ toolchain. It is called internally by `install_cmdstan()` but can also
 #'   be called directly by the user.
 #'
-#'   **CmdStan versions older than 2.35.0 are no longer supported.** If you need
+#'   **CmdStan versions older than 2.38.0 are no longer supported.** If you need
 #'   to work with an older CmdStan version we recommend installing an older
 #'   CmdStanR release from GitHub.
 #'
@@ -52,11 +52,11 @@
 #' @param release_url (string) The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
 #'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
-#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
+#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.38.0/cmdstan-2.38.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param release_file (string) A file path to a CmdStan release tar.gz file
 #'   downloaded from the releases page: <https://github.com/stan-dev/cmdstan/releases>.
-#'   For example: `release_file=""./cmdstan-2.35.0.tar.gz"`. If `release_file` is
+#'   For example: `release_file=""./cmdstan-2.38.0.tar.gz"`. If `release_file` is
 #'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
 #'   the `make/local` file. For example, `list("CXX" = "clang++")` will force

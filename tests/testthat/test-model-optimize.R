@@ -57,6 +57,9 @@ test_that("optimize() method runs when arguments are specified in scientific not
 })
 
 test_that("optimize() warns if threads specified but not enabled", {
+  if (isTRUE(mod$exe_info()$stan_threads)) {
+    skip("The local CmdStan make configuration forces STAN_THREADS=true.")
+  }
   expect_warning(
     expect_optim_output(fit <- mod$optimize(data = data_list, threads = 2,
                                             seed = 123)),

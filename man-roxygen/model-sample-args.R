@@ -1,20 +1,29 @@
 #' @param chains (positive integer) The number of Markov chains to run. The
 #'   default is 4.
-#' @param parallel_chains (positive integer) The _maximum_ number of MCMC chains
-#'   to run in parallel. If `parallel_chains` is not specified then the default
-#'   is to look for the option `"mc.cores"`, which can be set for an entire \R
-#'   session by `options(mc.cores=value)`. If the `"mc.cores"` option has not
-#'   been set then the default is `1`.
+#' @param parallel_chains (positive integer) For an executable without threading
+#'   support, the _maximum_ number of MCMC chain processes to run in parallel.
+#'   For a threaded executable all chains run in one CmdStan invocation and this
+#'   value contributes only to the default thread-pool size; it is not a hard
+#'   chain-concurrency limit. If `parallel_chains` is not specified then the
+#'   default is to look for the option `"mc.cores"`, which can be set for an
+#'   entire \R session by `options(mc.cores=value)`. If the `"mc.cores"` option
+#'   has not been set then the default is `1`.
 #' @param chain_ids (integer vector) A vector of chain IDs. Must contain as many
 #'   unique positive integers as the number of chains. If not set, the default
-#'   chain IDs are used (integers starting from `1`).
-#' @param threads_per_chain (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
-#'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
-#'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
-#'   contrast with `parallel_chains`, which specifies the number of chains to
-#'   run in parallel. The actual number of CPU cores used is
-#'   `parallel_chains*threads_per_chain`. For an example of using threading see
+#'   chain IDs are used (integers starting from `1`). For a threaded executable,
+#'   CmdStan runs all chains in one invocation and therefore requires consecutive
+#'   IDs; nonconsecutive IDs are replaced by a consecutive sequence starting at
+#'   the first supplied ID, with a warning.
+#' @param threads (positive integer) For a model
+#'   [compiled][model-method-compile] with threading support, the total size of
+#'   the thread pool shared by all chains in the CmdStan invocation. This is the
+#'   canonical thread control for sampling and standalone generated quantities.
+#'   It cannot be supplied together with `threads_per_chain`.
+#' @param threads_per_chain (positive integer) A compatibility heuristic used
+#'   only when `threads` is not supplied. For a threaded executable, CmdStanR
+#'   calculates the shared thread-pool size as
+#'   `min(chains, parallel_chains) * (threads_per_chain %||% 1)`. It does not
+#'   reserve or allocate a fixed number of threads to each chain. For an example see
 #'   the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #'
@@ -41,7 +50,9 @@
 #'   statistic.
 #' @param step_size (positive real) The _initial_ step size for the discrete
 #'   approximation to continuous Hamiltonian dynamics. This is further tuned
-#'   during warmup.
+#'   during warmup. A vector remains supported for an unthreaded executable.
+#'   For a threaded executable a vector is reduced to its first value with a
+#'   warning because all chains belong to one CmdStan invocation.
 #' @param metric (string) One of `"diag_e"`, `"dense_e"`, or `"unit_e"`,
 #'   specifying the geometry of the base manifold. See the _Euclidean Metric_
 #'   section of the CmdStan User's Guide for more details. To specify a
@@ -72,8 +83,7 @@
 #'   Markov chain; only generated quantities may change. This can be useful
 #'   when, for example, trying to generate pseudo-data using the generated
 #'   quantities block. If the parameters block is empty then using
-#'   `fixed_param=TRUE` is mandatory. When `fixed_param=TRUE` the `chains` and
-#'   `parallel_chains` arguments will be set to `1`.
+#'   `fixed_param=TRUE` is mandatory.
 #' @param diagnostics (character vector) The diagnostics to automatically check
 #'   and warn about after sampling. Setting this to an empty string `""` or
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the

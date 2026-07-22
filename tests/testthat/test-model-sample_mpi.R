@@ -27,7 +27,12 @@ test_that("sample_mpi() works", {
   } else {
     tbb_cxx_type <- "gcc"
   }
-  cpp_options = list(cxx="mpicxx", stan_mpi = TRUE, tbb_cxx_type=tbb_cxx_type)
+  cpp_options <- list(
+    cxx = "mpicxx",
+    stan_mpi = TRUE,
+    stan_threads = TRUE,
+    tbb_cxx_type = tbb_cxx_type
+  )
   mod_mpi <- cmdstan_model(mpi_file, cpp_options = cpp_options)
 
   if (os_is_wsl()) {
@@ -41,11 +46,25 @@ test_that("sample_mpi() works", {
   }
 
   utils::capture.output(
-    f <- mod_mpi$sample_mpi(chains = 1, mpi_args = list("n" = 1))
+    f <- mod_mpi$sample_mpi(
+      chains = 2,
+      parallel_chains = 2,
+      threads = 2,
+      mpi_args = list("n" = 1)
+    )
   )
+  expect_equal(f$num_chains(), 2L)
+  expect_equal(f$num_procs(), 1L)
+  expect_length(f$return_codes(), 1L)
+  expect_length(f$output_files(), 2L)
   expect_equal(f$metadata()$mpi_enable, 1)
+  expect_equal(f$metadata()$num_threads, 2L)
   expect_equal(
-    as.numeric(posterior::subset_draws(f$draws("c"), iteration = 1)),
+    as.numeric(posterior::subset_draws(
+      f$draws("c"),
+      iteration = 1,
+      chain = 1
+    )),
     c(1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4)
   )
 })

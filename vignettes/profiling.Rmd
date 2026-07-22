@@ -212,6 +212,9 @@ print(per_gradient_timing) # two elements for the two profile statements in the 
 After sampling (or optimization or variational inference) finishes, CmdStan stores
 the profiling data in CSV files in a temporary location.
 The paths of the profiling CSV files can be retrieved using `$profile_files()`.
+Profiling files are scoped to physical CmdStan invocations. In particular, a
+threaded executable running several logical chains internally produces one
+aggregate profile file for that invocation.
 
 ```{r profile_files}
 fit$profile_files()

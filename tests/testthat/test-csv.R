@@ -160,6 +160,33 @@ test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", 
                c(0.909635, 0.066384))
 })
 
+test_that("read_cmdstan_csv() expands repeated internal-chain base IDs", {
+  source_files <- c(
+    test_path("resources", "csv", "model1-1-warmup.csv"),
+    test_path("resources", "csv", "model1-2-warmup.csv")
+  )
+  internal_files <- tempfile(fileext = ".csv")
+  internal_files <- c(internal_files, tempfile(fileext = ".csv"))
+  for (i in seq_along(source_files)) {
+    lines <- readLines(source_files[[i]])
+    id_line <- grep("^# id = ", lines)
+    lines[[id_line]] <- "# id = 1"
+    lines <- append(lines, "# num_chains = 2", after = id_line)
+    writeLines(lines, internal_files[[i]])
+  }
+
+  csv_output <- read_cmdstan_csv(internal_files)
+  expect_named(csv_output$inv_metric, c("1", "2"))
+  expect_equal(
+    as.vector(csv_output$inv_metric[["1"]]),
+    c(1.00098, 0.00068748)
+  )
+  expect_equal(
+    as.vector(csv_output$inv_metric[["2"]]),
+    c(0.909635, 0.066384)
+  )
+})
+
 test_that("read_cmdstan_csv() returns correct dense inverse mass matrix", {
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
@@ -793,6 +820,22 @@ test_that("read_cmdstan_csv works with diagnose results", {
   expect_equal(diagnose_results$gradients$model, c(8.83081, 4.07931, -25.7167, -4.11423))
   expect_equal(diagnose_results$gradients$finite_diff, c(8.83081, 4.07931, -25.7167, -4.11423))
   expect_equal(diagnose_results$gradients$error, c(9.919e-09, 3.13568e-08, -5.31186e-09, 5.87693e-09))
+})
+
+test_that("CSV metadata preserves CmdStan num_threads", {
+  metadata <- read_csv_metadata(
+    test_path("resources", "csv", "bernoulli-1-laplace.csv")
+  )
+
+  expect_equal(metadata$num_threads, 1L)
+  expect_equal(metadata$threads, 1L)
+
+  sample_metadata <- read_csv_metadata(
+    fit_bernoulli_thin_1$output_files()[[1]]
+  )
+  expect_equal(sample_metadata$num_threads, 1L)
+  expect_null(sample_metadata$threads_per_chain)
+  expect_null(sample_metadata$parallel_chains)
 })
 
 test_that("variable_dims() works", {

@@ -180,13 +180,17 @@ test_that("print() method works after mcmc", {
 })
 
 test_that("output() method works after mcmc", {
+  raw_output <- fit_mcmc$output()
   checkmate::expect_list(
-    fit_mcmc$output(),
+    raw_output,
     types = "character",
     any.missing = FALSE,
     len = fit_mcmc$runset$num_procs()
   )
-  expect_output(fit_mcmc$output(id = 1), "Gradient evaluation took")
+  expect_true(any(grepl("Gradient evaluation took", unlist(raw_output))))
+  filtered_output <- capture.output(fit_mcmc$output(id = 1))
+  expected_prefix <- paste0("Chain [", fit_mcmc$runset$chain_ids()[[1]], "]")
+  expect_true(all(startsWith(filtered_output, expected_prefix)))
 })
 
 test_that("time() method works after mcmc", {
@@ -198,7 +202,7 @@ test_that("time() method works after mcmc", {
     run_times$chains,
     any.missing = FALSE,
     types = c("integer", "numeric"),
-    nrows = fit_mcmc$runset$num_procs(),
+    nrows = fit_mcmc$num_chains(),
     ncols = 4
   )
 
@@ -207,7 +211,7 @@ test_that("time() method works after mcmc", {
   checkmate::expect_data_frame(run_times_0$chains,
                                any.missing = TRUE,
                                types = c("integer", "numeric"),
-                               nrows = fit_mcmc_0$runset$num_procs(),
+                               nrows = fit_mcmc_0$num_chains(),
                                ncols = 4)
   for (j in 1:nrow(run_times_0$chains)) {
     checkmate::expect_number(run_times_0$chains$warmup[j])
@@ -280,16 +284,21 @@ test_that("inc_warmup in draws() works", {
 })
 
 test_that("output() shows informational messages depening on show_messages", {
+  info_message <- "Informational Message: The current Metropolis proposal is about to be rejected"
   fit_info_msg <- testing_fit("info_message")
-  expect_output(
-    fit_info_msg$output(1),
-    "Informational Message: The current Metropolis proposal is about to be rejected"
-  )
+  expect_true(any(grepl(info_message, unlist(fit_info_msg$output()), fixed = TRUE)))
+  expect_false(any(grepl(
+    info_message,
+    capture.output(fit_info_msg$output(1)),
+    fixed = TRUE
+  )))
   fit_info_msg <- testing_fit("info_message", show_messages = FALSE)
-  expect_output(
-    fit_info_msg$output(1),
-    "Informational Message: The current Metropolis proposal is about to be rejected"
-  )
+  expect_true(any(grepl(info_message, unlist(fit_info_msg$output()), fixed = TRUE)))
+  expect_false(any(grepl(
+    info_message,
+    capture.output(fit_info_msg$output(1)),
+    fixed = TRUE
+  )))
 })
 
 test_that("loo method works if log_lik is available", {

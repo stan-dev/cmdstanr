@@ -99,6 +99,26 @@ CmdStanFit <- R6::R6Class(
   )
 )
 
+#' Extract the number of physical CmdStan invocations
+#'
+#' @name fit-method-num_procs
+#' @aliases num_procs
+#' @description The `$num_procs()` method returns the number of physical
+#'   CmdStan invocations owned by a live fit. For sampling and standalone
+#'   generated quantities this may differ from `$num_chains()`: a threaded
+#'   executable runs all logical chains in one invocation.
+#' @return An integer.
+#'
+#' @seealso [`CmdStanMCMC`], [`CmdStanGQ`]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example(chains = 4)
+#' fit$num_chains()
+#' fit$num_procs()
+#' }
+NULL
+
 #' Materialize model object
 #'
 #' @name fit-method-materialize
@@ -934,6 +954,11 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'   The versions without the `save_` prefix (e.g., `$output_files()`) return
 #'   the current file paths without moving any files.
 #'
+#'   Output, latent-dynamics, and adapted-metric files are chain-scoped. Profile
+#'   and saved-configuration files are CmdStan-invocation-scoped. A threaded
+#'   multi-chain run therefore has one output/diagnostic/metric file per logical
+#'   chain but one profile/configuration file per physical CmdStan invocation.
+#'
 #' @param dir (string) Path to directory where the files should be saved.
 #' @param basename (string) Base filename to use. See __Details__.
 #' @param timestamp (logical) Should a timestamp be added to the file name(s)?
@@ -955,7 +980,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' For `$save_profile_files()` everything is the same as for
 #' `$save_output_files()` except `"-profile-"` is included in the new
-#' file name after `basename`.
+#' file name after `basename` and the `id` identifies the physical CmdStan
+#' invocation rather than a logical chain.
 #'
 #' For `$save_metric_files()` everything is the same as for
 #' `$save_output_files()` except `"-metric-"` is included in the new
@@ -963,7 +989,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' For `$save_config_files()` everything is the same as for
 #' `$save_output_files()` except `"-config-"` is included in the new
-#' file name after `basename`.
+#' file name after `basename` and the `id` identifies the physical CmdStan
+#' invocation rather than a logical chain.
 #'
 #' For `$save_data_file()` no `id` is included in the file name because even
 #' with multiple MCMC chains the data file is the same.
@@ -1131,16 +1158,18 @@ CmdStanFit$set("public", name = "time", value = time)
 #'
 #' @name fit-method-output
 #' @aliases output
-#' @description For MCMC, the `$output()` method returns the stdout and stderr
-#'   of all chains as a list of character vectors if `id=NULL`. If the `id`
-#'   argument is specified it instead pretty prints the console output for a
-#'   single chain.
+#' @description For MCMC and standalone generated quantities, the `$output()`
+#'   method returns raw stdout and stderr as a list with one character vector per
+#'   physical CmdStan invocation if `id=NULL`. If `id` is specified it instead
+#'   prints only lines attributed to that logical chain by CmdStan's
+#'   `Chain [id]` prefix. Unprefixed shared lines remain available only from the
+#'   raw invocation output.
 #'
 #'   For optimization and variational inference `$output()` just pretty prints
 #'   the console output.
 #'
-#' @param id (integer) The chain id. Ignored if the model was not fit using
-#'   MCMC.
+#' @param id (integer) The positional logical-chain index. Ignored if the model
+#'   was not fit using MCMC or standalone generated quantities.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -1204,8 +1233,9 @@ CmdStanFit$set("public", name = "metadata", value = metadata)
 #' @aliases return_codes
 #' @description The `$return_codes()` method returns a vector of return codes
 #'   from the CmdStan run(s). A return code of 0 indicates a successful run.
-#' @return An integer vector of return codes with length equal to the number of
-#'   CmdStan runs (number of chains for MCMC and one otherwise).
+#' @return An integer vector with one return code per physical CmdStan
+#'   invocation. For a threaded multi-chain sampling or generated-quantities run
+#'   this has length one even though the fit has several logical chains.
 #'
 #' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
@@ -1232,6 +1262,9 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #' @description The `$profiles()` method returns a list of data frames with
 #'   profiling data if any profiling data was written to the profile CSV files.
 #'   See [save_profile_files()] to control where the files are saved.
+#'   Profiles are physical-invocation-scoped, so internal multi-chain execution
+#'   produces one aggregate profile for the invocation rather than one per
+#'   logical chain.
 #'
 #'   Profiling requires adding profiling statements to the Stan program. See
 #'   **Examples** for a demonstration.
@@ -1338,6 +1371,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
 #'  [`$num_chains()`][fit-method-num_chains] | Return the number of MCMC chains. |
+#'  [`$num_procs()`][fit-method-num_procs] | Return the number of physical CmdStan invocations. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences and diagnostics
@@ -1364,7 +1398,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  [`$output()`][fit-method-output]  |  Return the stdout and stderr of all chains or pretty print the output for a single chain. |
+#'  [`$output()`][fit-method-output]  |  Return raw invocation output or print chain-attributed lines. |
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
@@ -1410,7 +1444,7 @@ CmdStanMCMC <- R6::R6Class(
       if (is.null(id)) {
         self$runset$procs$proc_output()
       } else {
-        cat(paste(self$runset$procs$proc_output(id), collapse = "\n"))
+        cat(paste(self$runset$chain_output(id), collapse = "\n"))
       }
     },
 
@@ -1467,7 +1501,7 @@ CmdStanMCMC <- R6::R6Class(
         format = format
       )
       private$inv_metric_ <- csv_contents$inv_metric
-      private$metadata_ <- csv_contents$metadata
+      private$metadata_ <- self$runset$add_live_run_metadata(csv_contents$metadata)
 
       if (!is.null(csv_contents$post_warmup_draws)) {
         if (is.null(private$draws_)) {
@@ -1838,10 +1872,12 @@ CmdStanMCMC$set("public", name = "inv_metric", value = inv_metric)
 #'
 #' @name fit-method-num_chains
 #' @aliases num_chains
-#' @description The `$num_chains()` method returns the number of MCMC chains.
+#' @description The `$num_chains()` method returns the number of logical chains
+#'   represented by a `CmdStanMCMC` or `CmdStanGQ` fit, independently of how
+#'   many physical CmdStan invocations produced them.
 #' @return An integer.
 #'
-#' @seealso [`CmdStanMCMC`]
+#' @seealso [`CmdStanMCMC`], [`CmdStanGQ`], [`fit-method-num_procs`]
 #'
 #' @examples
 #' \dontrun{
@@ -1850,7 +1886,7 @@ CmdStanMCMC$set("public", name = "inv_metric", value = inv_metric)
 #' }
 #'
 num_chains <- function() {
-  super$num_procs()
+  self$runset$num_chains()
 }
 CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 
@@ -2229,6 +2265,8 @@ CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws] | Return the generated quantities as a [`draws_array`][posterior::draws_array]. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$num_chains()`][fit-method-num_chains] | Return the number of logical chains. |
+#'  [`$num_procs()`][fit-method-num_procs] | Return the number of physical CmdStan invocations. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
@@ -2250,7 +2288,7 @@ CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$time()`][fit-method-time] | Report the total run time. |
-#'  [`$output()`][fit-method-output] | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
+#'  [`$output()`][fit-method-output] | Return raw invocation output or print chain-attributed lines. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
 #' @inherit model-method-generate-quantities examples
@@ -2263,7 +2301,7 @@ CmdStanGQ <- R6::R6Class(
       self$runset$args$method_args$fitted_params
     },
     num_chains = function() {
-      super$num_procs()
+      self$runset$num_chains()
     },
     # override CmdStanFit draws method
     draws = function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
@@ -2301,7 +2339,7 @@ CmdStanGQ <- R6::R6Class(
       if (is.null(id)) {
         self$runset$procs$proc_output()
       } else {
-        cat(paste(self$runset$procs$proc_output(id), collapse = "\n"))
+        cat(paste(self$runset$chain_output(id), collapse = "\n"))
       }
     }
   ),
@@ -2317,7 +2355,7 @@ CmdStanGQ <- R6::R6Class(
         sampler_diagnostics = "",
         format = format
       )
-      private$metadata_ <- csv_contents$metadata
+      private$metadata_ <- self$runset$add_live_run_metadata(csv_contents$metadata)
       if (!is.null(csv_contents$generated_quantities)) {
         missing_variables <- posterior::variables(csv_contents$generated_quantities)[!(posterior::variables(csv_contents$generated_quantities) %in% posterior::variables(private$draws_))]
         private$draws_ <-

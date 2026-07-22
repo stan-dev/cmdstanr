@@ -21,6 +21,26 @@ test_that("parse_exe_info_string works", {
   )
 })
 
+test_that("read_exe_info fails loudly when threading capability is unavailable", {
+  local_mocked_bindings(
+    run_info_cli = function(exe_file) list(status = 1L, stdout = "", stderr = "boom")
+  )
+  expect_error(
+    read_exe_info("model"),
+    "Unable to inspect CmdStan executable.*boom"
+  )
+
+  local_mocked_bindings(
+    run_info_cli = function(exe_file) {
+      list(status = 0L, stdout = "stan_version_major=2\nstan_version_minor=38\nstan_version_patch=0")
+    }
+  )
+  expect_error(
+    read_exe_info("model"),
+    "does not report 'stan_threads'"
+  )
+})
+
 test_that("validate_cpp_options works", {
   expect_equal_ignore_order(
     validate_cpp_options(list(

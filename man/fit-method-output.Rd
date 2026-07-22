@@ -8,14 +8,16 @@
 output(id = NULL)
 }
 \arguments{
-\item{id}{(integer) The chain id. Ignored if the model was not fit using
-MCMC.}
+\item{id}{(integer) The positional logical-chain index. Ignored if the model
+was not fit using MCMC or standalone generated quantities.}
 }
 \description{
-For MCMC, the \verb{$output()} method returns the stdout and stderr
-of all chains as a list of character vectors if \code{id=NULL}. If the \code{id}
-argument is specified it instead pretty prints the console output for a
-single chain.
+For MCMC and standalone generated quantities, the \verb{$output()}
+method returns raw stdout and stderr as a list with one character vector per
+physical CmdStan invocation if \code{id=NULL}. If \code{id} is specified it instead
+prints only lines attributed to that logical chain by CmdStan's
+\code{Chain [id]} prefix. Unprefixed shared lines remain available only from the
+raw invocation output.
 
 For optimization and variational inference \verb{$output()} just pretty prints
 the console output.

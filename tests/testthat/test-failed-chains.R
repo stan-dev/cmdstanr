@@ -2,7 +2,12 @@ set_cmdstan_path()
 stan_program <- testing_stan_file("chain_fails")
 stan_program_init_warnings <- testing_stan_file("init_warnings")
 
-mod <- cmdstan_model(stan_file = stan_program)
+mod <- cmdstan_model(
+  stan_file = stan_program,
+  cpp_options = list(stan_threads = NULL),
+  force_recompile = TRUE
+)
+mod_is_threaded <- isTRUE(mod$exe_info()$stan_threads)
 mod_init_warnings <- cmdstan_model(stan_file = stan_program_init_warnings)
 
 make_all_fail <- function(x) {
@@ -18,6 +23,9 @@ make_some_fail <- function(x, seed = 0) {
   attempt <- 1
   set.seed(seed)
   while (num_files == 0 || num_files == 4) {
+    if (attempt > 50L) {
+      stop("Unable to produce a partial per-invocation failure after 50 attempts.")
+    }
     utils::capture.output(
       check_some_fail <- x$sample(
         data = list(pr_fail = 0.5),
@@ -35,7 +43,7 @@ make_some_fail <- function(x, seed = 0) {
 suppressWarnings(
   utils::capture.output(
     fit_all_fail <- make_all_fail(mod),
-    fit_some_fail <- make_some_fail(mod)
+    fit_some_fail <- if (mod_is_threaded) NULL else make_some_fail(mod)
   )
 )
 
@@ -44,12 +52,49 @@ test_that("correct warnings are thrown when all chains fail", {
     make_all_fail(mod),
     "All chains finished unexpectedly!"
   )
-  for (i in 1:4) {
-    expect_output(fit_all_fail$output(i), "Location parameter is inf")
+  expect_true(any(grepl(
+    "Location parameter is inf",
+    unlist(fit_all_fail$output())
+  )))
+})
+
+test_that("threaded invocation failures are atomic across logical chains", {
+  withr::local_envvar(c(STAN_NUM_THREADS = "17", WSLENV = "EXISTING/u"))
+  parent_env <- Sys.getenv(c("STAN_NUM_THREADS", "WSLENV"), unset = NA_character_)
+  threaded_mod <- mod
+  if (!mod_is_threaded) {
+    threaded_stan <- tempfile(fileext = ".stan")
+    expect_true(file.copy(stan_program, threaded_stan))
+    threaded_mod <- cmdstan_model(
+      stan_file = threaded_stan,
+      cpp_options = list(stan_threads = TRUE),
+      force_recompile = TRUE
+    )
   }
+  expect_true(isTRUE(threaded_mod$exe_info()$stan_threads))
+
+  expect_warning(
+    utils::capture.output(fit <- make_all_fail(threaded_mod)),
+    "All chains finished unexpectedly"
+  )
+  expect_equal(fit$num_chains(), 4L)
+  expect_equal(fit$num_procs(), 1L)
+  expect_length(fit$return_codes(), 1L)
+  expect_false(fit$return_codes()[[1]] == 0L)
+  expect_length(fit$output_files(include_failed = FALSE), 0L)
+  expect_length(fit$output_files(include_failed = TRUE), 4L)
+  expect_true(any(grepl(
+    "Location parameter is inf",
+    unlist(fit$output())
+  )))
+  expect_equal(
+    Sys.getenv(c("STAN_NUM_THREADS", "WSLENV"), unset = NA_character_),
+    parent_env
+  )
 })
 
 test_that("correct warnings are thrown when some chains fail", {
+  skip_if(mod_is_threaded, "Partial chain success is impossible in one threaded invocation.")
   fit_tmp <- suppressWarnings(make_some_fail(mod, seed = 2022))
   expect_warning(
      make_some_fail(mod, seed = 2022),
@@ -57,10 +102,10 @@ test_that("correct warnings are thrown when some chains fail", {
      fixed = TRUE
   )
 
-  failed <- !fit_some_fail$runset$procs$is_finished()
-  for (i in which(failed)) {
-    expect_output(fit_some_fail$output(i), "Location parameter is inf")
-  }
+  expect_true(any(grepl(
+    "Location parameter is inf",
+    unlist(fit_some_fail$output())
+  )))
 })
 
 test_that("$output_files() and latent_dynamic_files() returns path to all files regardless of chain failure", {
@@ -73,10 +118,6 @@ test_that("$output_files() and latent_dynamic_files() returns path to all files 
     0
   )
   expect_equal(
-    length(fit_some_fail$output_files(include_failed = TRUE)),
-    4
-  )
-  expect_equal(
     length(fit_all_fail$latent_dynamics_files(include_failed = TRUE)),
     4
   )
@@ -84,10 +125,16 @@ test_that("$output_files() and latent_dynamic_files() returns path to all files 
     length(fit_all_fail$latent_dynamics_files(include_failed = FALSE)),
     0
   )
-  expect_equal(
-    length(fit_some_fail$latent_dynamics_files(include_failed = TRUE)),
-    4
-  )
+  if (!mod_is_threaded) {
+    expect_equal(
+      length(fit_some_fail$output_files(include_failed = TRUE)),
+      4
+    )
+    expect_equal(
+      length(fit_some_fail$latent_dynamics_files(include_failed = TRUE)),
+      4
+    )
+  }
   expect_equal(
     length(fit_all_fail$output_files()),
     0
@@ -103,19 +150,21 @@ test_that("$save_* methods save all files regardless of chain failure", {
     fit_all_fail$save_output_files(dir = tempdir()),
     "Moved 4 files"
   )
-  expect_message(
-    fit_some_fail$save_output_files(dir = tempdir()),
-    "Moved 4 files"
-  )
 
   expect_message(
     fit_all_fail$save_latent_dynamics_files(dir = tempdir()),
     "Moved 4 files"
   )
-  expect_message(
-    fit_some_fail$save_latent_dynamics_files(dir = tempdir()),
-    "Moved 4 files"
-  )
+  if (!mod_is_threaded) {
+    expect_message(
+      fit_some_fail$save_output_files(dir = tempdir()),
+      "Moved 4 files"
+    )
+    expect_message(
+      fit_some_fail$save_latent_dynamics_files(dir = tempdir()),
+      "Moved 4 files"
+    )
+  }
 })
 
 test_that("errors when using draws after all chains fail", {
@@ -131,6 +180,7 @@ test_that("errors when using draws after all chains fail", {
 })
 
 test_that("can use draws after some chains fail", {
+  skip_if(mod_is_threaded, "Partial chain success is impossible in one threaded invocation.")
   expect_s3_class(fit_some_fail$summary(), "draws_summary")
   expect_s3_class(fit_some_fail$draws(), "draws_array")
   expect_output(fit_some_fail$cmdstan_summary(), "Inference for Stan model")
@@ -176,6 +226,7 @@ test_that("gq chains error on wrong input CSV", {
   fit_bernoulli <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2)
   fit_logistic <- testing_fit("logistic", method = "sample", seed = 123, chains = 4)
   mod <- testing_model("bernoulli_ppc")
+  mod_is_threaded <- isTRUE(mod$exe_info()$stan_threads)
   data_list <- testing_data("bernoulli_ppc")
   suppressWarnings(
     expect_output(
@@ -209,7 +260,16 @@ test_that("gq chains error on wrong input CSV", {
     utils::capture.output(
       fit <- mod$generate_quantities(data = data_list, fitted_params = c(fit_bernoulli$output_files(), fit_logistic$output_files()))
     ),
-    "4 chain(s) finished unexpectedly",
+    if (mod_is_threaded) {
+      "All chains finished unexpectedly"
+    } else {
+      "4 chain(s) finished unexpectedly"
+    },
     fixed = TRUE
   )
+  if (mod_is_threaded) {
+    expect_equal(fit$num_chains(), 6L)
+    expect_equal(fit$num_procs(), 1L)
+    expect_length(fit$output_files(include_failed = FALSE), 0L)
+  }
 })

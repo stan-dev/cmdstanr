@@ -17,6 +17,7 @@ sample(
   chains = 4,
   parallel_chains = getOption("mc.cores", 1),
   chain_ids = seq_len(chains),
+  threads = NULL,
   threads_per_chain = NULL,
   opencl_ids = NULL,
   iter_warmup = NULL,
@@ -62,7 +63,11 @@ seed. The exception is the transformed data block, which defaults to using
 same seed for all chains so that the same data is generated for all chains
 if RNG functions are used. The only time \code{seed} should be specified as a
 vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate \emph{different} data for each chain.}
+data and the goal is to generate \emph{different} data for each chain. Vector
+seeds retain this behavior when the method uses one CmdStan invocation per
+chain. In threaded multi-chain sampling or standalone generated quantities,
+all chains belong to one invocation, so CmdStanR uses the first value for
+every chain and warns about the effective seed.}
 
 \item{refresh}{(non-negative integer) The number of iterations between
 printed screen updates. If \code{refresh = 0}, only error messages will be
@@ -125,8 +130,9 @@ temporary files created when \code{save_latent_dynamics=TRUE} see the
 method.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
-its output CSV files. For MCMC there will be one file per chain; for other
-methods there will be a single file. For interactive use this can typically
+its output CSV files. For MCMC and standalone generated quantities there
+will be one file per logical chain; for other methods there will be a
+single file. For interactive use this can typically
 be left at \code{NULL} (temporary directory) since CmdStanR makes the CmdStan
 output (posterior draws and diagnostics) available in \R via methods of the
 fitted model objects. This can be set for an entire \R session using
@@ -155,23 +161,33 @@ increased usage of disk space.}
 \item{chains}{(positive integer) The number of Markov chains to run. The
 default is 4.}
 
-\item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
-to run in parallel. If \code{parallel_chains} is not specified then the default
-is to look for the option \code{"mc.cores"}, which can be set for an entire \R
-session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
-been set then the default is \code{1}.}
+\item{parallel_chains}{(positive integer) For an executable without threading
+support, the \emph{maximum} number of MCMC chain processes to run in parallel.
+For a threaded executable all chains run in one CmdStan invocation and this
+value contributes only to the default thread-pool size; it is not a hard
+chain-concurrency limit. If \code{parallel_chains} is not specified then the
+default is to look for the option \code{"mc.cores"}, which can be set for an
+entire \R session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option
+has not been set then the default is \code{1}.}
 
 \item{chain_ids}{(integer vector) A vector of chain IDs. Must contain as many
 unique positive integers as the number of chains. If not set, the default
-chain IDs are used (integers starting from \code{1}).}
+chain IDs are used (integers starting from \code{1}). For a threaded executable,
+CmdStan runs all chains in one invocation and therefore requires consecutive
+IDs; nonconsecutive IDs are replaced by a consecutive sequence starting at
+the first supplied ID, with a warning.}
 
-\item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
-contrast with \code{parallel_chains}, which specifies the number of chains to
-run in parallel. The actual number of CPU cores used is
-\code{parallel_chains*threads_per_chain}. For an example of using threading see
+\item{threads}{(positive integer) For a model
+\link[=model-method-compile]{compiled} with threading support, the total size of
+the thread pool shared by all chains in the CmdStan invocation. This is the
+canonical thread control for sampling and standalone generated quantities.
+It cannot be supplied together with \code{threads_per_chain}.}
+
+\item{threads_per_chain}{(positive integer) A compatibility heuristic used
+only when \code{threads} is not supplied. For a threaded executable, CmdStanR
+calculates the shared thread-pool size as
+\code{min(chains, parallel_chains) * (threads_per_chain \%||\% 1)}. It does not
+reserve or allocate a fixed number of threads to each chain. For an example see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
@@ -209,7 +225,9 @@ statistic.}
 
 \item{step_size}{(positive real) The \emph{initial} step size for the discrete
 approximation to continuous Hamiltonian dynamics. This is further tuned
-during warmup.}
+during warmup. A vector remains supported for an unthreaded executable.
+For a threaded executable a vector is reduced to its first value with a
+warning because all chains belong to one CmdStan invocation.}
 
 \item{metric}{(string) One of \code{"diag_e"}, \code{"dense_e"}, or \code{"unit_e"},
 specifying the geometry of the base manifold. See the \emph{Euclidean Metric}
@@ -247,8 +265,7 @@ sampler generates a new sample without changing the current state of the
 Markov chain; only generated quantities may change. This can be useful
 when, for example, trying to generate pseudo-data using the generated
 quantities block. If the parameters block is empty then using
-\code{fixed_param=TRUE} is mandatory. When \code{fixed_param=TRUE} the \code{chains} and
-\code{parallel_chains} arguments will be set to \code{1}.}
+\code{fixed_param=TRUE} is mandatory.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
 during the execution process, such as iteration numbers and elapsed times.
@@ -299,6 +316,12 @@ A \code{\link{CmdStanMCMC}} object.
 \description{
 The \verb{$sample()} method of a \code{\link{CmdStanModel}} object runs Stan's
 main Markov chain Monte Carlo algorithm.
+
+CmdStanR derives the execution topology from the compiled executable. With
+\code{STAN_THREADS=TRUE}, all logical chains run in one CmdStan invocation using
+a shared thread pool. Otherwise CmdStanR launches one invocation per chain
+and limits their concurrency with \code{parallel_chains}. This rule also applies
+when \code{fixed_param=TRUE} and when OpenCL is enabled.
 
 Any argument left as \code{NULL} will default to the default value used by the
 installed version of CmdStan. See the

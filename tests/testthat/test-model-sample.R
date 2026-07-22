@@ -165,7 +165,7 @@ test_that("sample works for warmup-only run", {
 test_that("sampling in parallel works", {
   expect_output(
     mod$sample(data = data_list, chains = 2, parallel_chains = 2),
-    "Running MCMC with 2 parallel chains",
+    "Running 2 chains in",
     fixed = TRUE
   )
 
@@ -180,14 +180,14 @@ test_that("mc.cores option detected", {
   withr::local_options(list(mc.cores = 3))
   expect_output(
     mod$sample(data = data_list, chains = 3),
-    "Running MCMC with 3 parallel chains",
+    "Running 3 chains in",
     fixed = TRUE
   )
 
   withr::local_options(list(mc.cores = NULL))
   expect_output(
     mod$sample(data = data_list, chains = 2),
-    "Running MCMC with 2 sequential chains",
+    "Running 2 chains in",
     fixed = TRUE
   )
 })
@@ -218,13 +218,39 @@ test_that("sample() method runs when adapt_engaged = FALSE", {
 
 test_that("chain_ids work with sample()", {
   mod$compile()
-  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
-  expect_s3_class(fit12, "CmdStanMCMC")
-  expect_equal(fit12$metadata()$id, c(10,12))
+  stan_threads <- isTRUE(mod$exe_info()$stan_threads)
 
-  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100,7)))
+  if (stan_threads) {
+    expect_warning(
+      expect_sample_output(
+        fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10, 12))
+      ),
+      "effective chain IDs are 10, 11",
+      fixed = TRUE
+    )
+  } else {
+    expect_sample_output(
+      fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10, 12))
+    )
+  }
   expect_s3_class(fit12, "CmdStanMCMC")
-  expect_equal(fit12$metadata()$id, c(100,7))
+  expect_equal(fit12$metadata()$id, if (stan_threads) 10:11 else c(10, 12))
+
+  if (stan_threads) {
+    expect_warning(
+      expect_sample_output(
+        fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100, 7))
+      ),
+      "effective chain IDs are 100, 101",
+      fixed = TRUE
+    )
+  } else {
+    expect_sample_output(
+      fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100, 7))
+    )
+  }
+  expect_s3_class(fit12, "CmdStanMCMC")
+  expect_equal(fit12$metadata()$id, if (stan_threads) 100:101 else c(100, 7))
 
   expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 1, chain_ids = c(6)))
   expect_s3_class(fit12, "CmdStanMCMC")
@@ -286,23 +312,61 @@ test_that("seed works for multi chain sampling", {
   utils::capture.output(
     fit_sample <- mod$sample(chains = 2, iter_sampling = 5, iter_warmup = 100, seed = 2)
   )
-  chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
-  chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
-  expect_equal(chain_tdata_1, chain_tdata_2)
-  chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 1)
-  chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 2)
-  expect_false(all(chain_tdata_1 == chain_tdata_2))
+  if (isTRUE(mod$exe_info()$stan_threads)) {
+    utils::capture.output(
+      fit_repeated <- mod$sample(
+        chains = 2,
+        iter_sampling = 5,
+        iter_warmup = 100,
+        seed = 2
+      )
+    )
+    expect_equal(fit_repeated$draws(), fit_sample$draws())
 
-  utils::capture.output(
-    fit_sample <- mod$sample(chains = 2, iter_sampling = 5, iter_warmup = 100,
-                             seed = c(1, 2))
-  )
-  chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
-  chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
-  expect_false(all(chain_tdata_1 == chain_tdata_2))
-  chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 1)
-  chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 2)
-  expect_false(all(chain_tdata_1 == chain_tdata_2))
+    utils::capture.output(
+      fit_scalar <- mod$sample(
+        chains = 2,
+        iter_sampling = 5,
+        iter_warmup = 100,
+        seed = 1
+      )
+    )
+    expect_warning(
+      utils::capture.output(
+        fit_vector <- mod$sample(
+          chains = 2,
+          iter_sampling = 5,
+          iter_warmup = 100,
+          seed = c(1, 2)
+        )
+      ),
+      "seed=1 for all chains; the remaining values were ignored",
+      fixed = TRUE
+    )
+    expect_equal(fit_vector$draws(), fit_scalar$draws())
+  } else {
+    chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
+    chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
+    expect_equal(chain_tdata_1, chain_tdata_2)
+    chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 1)
+    chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("gq"), chain = 2)
+    expect_false(all(chain_tdata_1 == chain_tdata_2))
+
+    utils::capture.output(
+      fit_vector <- mod$sample(
+        chains = 2,
+        iter_sampling = 5,
+        iter_warmup = 100,
+        seed = c(1, 2)
+      )
+    )
+    chain_tdata_1 <- posterior::subset_draws(fit_vector$draws("tdata"), chain = 1)
+    chain_tdata_2 <- posterior::subset_draws(fit_vector$draws("tdata"), chain = 2)
+    expect_false(all(chain_tdata_1 == chain_tdata_2))
+    chain_tdata_1 <- posterior::subset_draws(fit_vector$draws("gq"), chain = 1)
+    chain_tdata_2 <- posterior::subset_draws(fit_vector$draws("gq"), chain = 2)
+    expect_false(all(chain_tdata_1 == chain_tdata_2))
+  }
 })
 
 test_that("Correct behavior if fixed_param not set when the model has no parameters", {

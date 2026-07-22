@@ -156,7 +156,22 @@ read_cmdstan_csv <- function(files,
   if (file_idx > 1) {
     check_csv_metadata_matches(csv_metadata)
   }
-  id <- csv_metadata[[1]]$id
+  csv_ids <- vapply(csv_metadata, function(x) as.integer(x$id), integer(1))
+  if (length(csv_ids) > 1L &&
+      anyDuplicated(csv_ids) &&
+      !is.null(csv_metadata[[1]]$num_chains) &&
+      csv_metadata[[1]]$num_chains == length(csv_ids)) {
+    # CmdStan's internal-chain output repeats the invocation's base ID in each
+    # CSV header. The files are emitted in logical-chain order.
+    csv_ids <- seq.int(csv_ids[[1]], length.out = length(csv_ids))
+  }
+  for (file_id in seq_along(csv_metadata)) {
+    csv_metadata[[file_id]]$id <- csv_ids[[file_id]]
+    if (!is.null(csv_metadata[[file_id]]$time)) {
+      csv_metadata[[file_id]]$time$chain_id <- csv_ids[[file_id]]
+    }
+  }
+  id <- csv_ids[[1]]
   if (!is.null(csv_metadata[[1]]$inv_metric)) {
     inv_metric[[as.character(id)]] <- csv_metadata[[1]]$inv_metric
   }
@@ -169,7 +184,7 @@ read_cmdstan_csv <- function(files,
   if (length(csv_metadata) > 1) {
     for (file_id in 2:length(csv_metadata)) {
       file_metadata <- csv_metadata[[file_id]]
-      id <- file_metadata$id
+      id <- csv_ids[[file_id]]
       csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id)
       csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
       csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init)
@@ -817,8 +832,6 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$iter_sampling <- csv_file_info$num_samples
   if (csv_file_info$method %in% c("variational", "optimize", "laplace", "pathfinder")) {
     csv_file_info$threads <- csv_file_info$num_threads
-  } else {
-    csv_file_info$threads_per_chain <- csv_file_info$num_threads
   }
   if (csv_file_info$method == "sample") {
     csv_file_info$time <- data.frame(
@@ -838,7 +851,6 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$file <- NULL
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
-  csv_file_info$num_threads <- NULL
   if (length(gradients) > 0) {
     csv_file_info$gradients <- gradients
   }

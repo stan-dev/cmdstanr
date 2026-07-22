@@ -56,7 +56,7 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   )
   expect_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
-    "2 thread(s) per chain",
+    "with 2 total threads",
     fixed = TRUE
   )
 })
@@ -75,7 +75,12 @@ test_that("generate_quantities works with draws_array", {
 })
 
 test_that("generate_quantities works with VB and draws_matrix", {
-  fit <- testing_fit("bernoulli", method = "variational", seed = 123)
+  fit <- suppressWarnings(testing_fit(
+    "bernoulli",
+    method = "variational",
+    seed = 123,
+    threads = 1
+  ))
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit)
   )
@@ -85,9 +90,17 @@ test_that("generate_quantities works with VB and draws_matrix", {
 })
 
 test_that("generate_quantities() warns if threads specified but not enabled", {
+  mod_gq <- cmdstan_model(
+    testing_stan_file("bernoulli_ppc"),
+    cpp_options = list(stan_threads = NULL),
+    force_recompile = TRUE
+  )
+  if (isTRUE(mod_gq$exe_info()$stan_threads)) {
+    skip("The local CmdStan make configuration forces STAN_THREADS=true.")
+  }
   expect_warning(
     expect_gq_output(fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit, threads_per_chain = 4)),
-    "'threads_per_chain' will have no effect"
+    "unthreaded executable and has no effect"
   )
 })
 

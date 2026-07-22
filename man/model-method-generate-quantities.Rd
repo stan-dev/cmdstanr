@@ -13,6 +13,7 @@ generate_quantities(
   output_basename = NULL,
   sig_figs = NULL,
   parallel_chains = getOption("mc.cores", 1),
+  threads = NULL,
   threads_per_chain = NULL,
   opencl_ids = NULL,
   show_messages = TRUE,
@@ -56,11 +57,16 @@ seed. The exception is the transformed data block, which defaults to using
 same seed for all chains so that the same data is generated for all chains
 if RNG functions are used. The only time \code{seed} should be specified as a
 vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate \emph{different} data for each chain.}
+data and the goal is to generate \emph{different} data for each chain. Vector
+seeds retain this behavior when the method uses one CmdStan invocation per
+chain. In threaded multi-chain sampling or standalone generated quantities,
+all chains belong to one invocation, so CmdStanR uses the first value for
+every chain and warns about the effective seed.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
-its output CSV files. For MCMC there will be one file per chain; for other
-methods there will be a single file. For interactive use this can typically
+its output CSV files. For MCMC and standalone generated quantities there
+will be one file per logical chain; for other methods there will be a
+single file. For interactive use this can typically
 be left at \code{NULL} (temporary directory) since CmdStanR makes the CmdStan
 output (posterior draws and diagnostics) available in \R via methods of the
 fitted model objects. This can be set for an entire \R session using
@@ -86,19 +92,26 @@ values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
 Increasing this value will result in larger output CSV files and thus an
 increased usage of disk space.}
 
-\item{parallel_chains}{(positive integer) The \emph{maximum} number of MCMC chains
-to run in parallel. If \code{parallel_chains} is not specified then the default
-is to look for the option \code{"mc.cores"}, which can be set for an entire \R
-session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has not
-been set then the default is \code{1}.}
+\item{parallel_chains}{(positive integer) For an executable without threading
+support, the \emph{maximum} number of MCMC chain processes to run in parallel.
+For a threaded executable all chains run in one CmdStan invocation and this
+value contributes only to the default thread-pool size; it is not a hard
+chain-concurrency limit. If \code{parallel_chains} is not specified then the
+default is to look for the option \code{"mc.cores"}, which can be set for an
+entire \R session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option
+has not been set then the default is \code{1}.}
 
-\item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
-threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
-using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
-contrast with \code{parallel_chains}, which specifies the number of chains to
-run in parallel. The actual number of CPU cores used is
-\code{parallel_chains*threads_per_chain}. For an example of using threading see
+\item{threads}{(positive integer) For a model
+\link[=model-method-compile]{compiled} with threading support, the total size of
+the thread pool shared by all chains in the CmdStan invocation. This is the
+canonical thread control for sampling and standalone generated quantities.
+It cannot be supplied together with \code{threads_per_chain}.}
+
+\item{threads_per_chain}{(positive integer) A compatibility heuristic used
+only when \code{threads} is not supplied. For a threaded executable, CmdStanR
+calculates the shared thread-pool size as
+\code{min(chains, parallel_chains) * (threads_per_chain \%||\% 1)}. It does not
+reserve or allocate a fixed number of threads to each chain. For an example see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
@@ -126,6 +139,11 @@ A \code{\link{CmdStanGQ}} object.
 The \verb{$generate_quantities()} method of a \code{\link{CmdStanModel}} object
 runs Stan's standalone generated quantities to obtain generated quantities
 based on previously fitted parameters.
+
+A threaded executable processes every fitted-parameter chain in one
+CmdStan invocation and still writes one generated-quantities CSV per
+logical chain. An unthreaded executable retains one invocation per chain,
+scheduled up to \code{parallel_chains} at a time.
 }
 \examples{
 \dontrun{

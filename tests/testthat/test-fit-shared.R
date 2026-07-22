@@ -13,10 +13,23 @@ all_methods <- c("sample", "optimize", "laplace", "variational", "generate_quant
 
 test_that("*_files() methods return the right number of paths", {
   for (method in all_methods) {
-    expect_length(fits[[method]]$output_files(), fits[[method]]$num_procs())
+    expected_outputs <- if (method %in% c("sample", "generate_quantities")) {
+      fits[[method]]$num_chains()
+    } else {
+      fits[[method]]$num_procs()
+    }
+    expect_length(fits[[method]]$output_files(), expected_outputs)
     expect_length(fits[[method]]$data_file(), 1)
     if (method %in% c("sample", "variational")) {
-      expect_length(fits[[method]]$latent_dynamics_files(), fits[[method]]$num_procs())
+      expected_diagnostics <- if (method == "sample") {
+        fits[[method]]$num_chains()
+      } else {
+        fits[[method]]$num_procs()
+      }
+      expect_length(
+        fits[[method]]$latent_dynamics_files(),
+        expected_diagnostics
+      )
     }
   }
 })
@@ -29,7 +42,7 @@ test_that("saving csv output files works", {
 
     expect_message(
       paths <- fit$save_output_files(tempdir(), basename = "testing-output"),
-      paste("Moved", fit$num_procs(), "files and set internal paths")
+      paste("Moved", length(old_paths), "files and set internal paths")
     )
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
@@ -37,7 +50,7 @@ test_that("saving csv output files works", {
     should_match <- paste0("testing-output-",
                            base::format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
-                           seq_len(fit$num_procs()))
+                           seq_along(paths))
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
     }
@@ -64,7 +77,7 @@ test_that("saving diagnostic csv output works", {
 
     expect_message(
       paths <- fit$save_latent_dynamics_files(tempdir(), basename = "testing-output"),
-      paste("Moved", fit$num_procs(), "files and set internal paths")
+      paste("Moved", length(old_paths), "files and set internal paths")
     )
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
@@ -72,7 +85,7 @@ test_that("saving diagnostic csv output works", {
     should_match <- paste0("testing-output-diagnostic-",
                            base::format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
-                           seq_len(fit$num_procs()))
+                           seq_along(paths))
 
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
@@ -241,8 +254,14 @@ test_that("return_codes method works properly", {
   expect_equal(fits[["variational"]]$return_codes(), 0)
   expect_equal(fits[["optimize"]]$return_codes(), 0)
   expect_equal(fits[["laplace"]]$return_codes(), 0)
-  expect_equal(fits[["sample"]]$return_codes(), c(0,0,0,0))
-  expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
+  expect_equal(
+    fits[["sample"]]$return_codes(),
+    rep(0L, fits[["sample"]]$num_procs())
+  )
+  expect_equal(
+    fits[["generate_quantities"]]$return_codes(),
+    rep(0L, fits[["generate_quantities"]]$num_procs())
+  )
 
   # non-zero
   expect_warning(

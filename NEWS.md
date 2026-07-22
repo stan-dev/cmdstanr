@@ -1,5 +1,20 @@
 # cmdstanr (development version)
 
+* With CmdStan 2.38 or newer, models compiled with `STAN_THREADS=TRUE` now run
+  all sampling or standalone generated-quantities chains in one CmdStan
+  invocation. The new `threads` argument sets the shared thread-pool size;
+  `threads_per_chain` remains as a compatibility heuristic. Chain-scoped files
+  remain one per logical chain, while return codes, console transcripts,
+  profiles, and configuration files are reported per physical invocation.
+  Threaded vector seeds and step sizes now warn and use their first value, and
+  nonconsecutive chain IDs warn and become consecutive from the first supplied
+  ID. CSV metadata preserves CmdStan's canonical `num_threads`; CSV-only fits do
+  not invent `threads_per_chain` or `parallel_chains` values.
+* Threaded fixed-parameter, OpenCL, and MPI sampling use the same internal-chain
+  topology. Under MPI, `threads` is the TBB pool size per rank and is independent
+  of the rank count in `mpi_args`.
+* The minimum supported CmdStan version is now 2.38.0.
+
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),

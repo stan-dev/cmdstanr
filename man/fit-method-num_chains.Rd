@@ -11,7 +11,9 @@ num_chains()
 An integer.
 }
 \description{
-The \verb{$num_chains()} method returns the number of MCMC chains.
+The \verb{$num_chains()} method returns the number of logical chains
+represented by a \code{CmdStanMCMC} or \code{CmdStanGQ} fit, independently of how
+many physical CmdStan invocations produced them.
 }
 \examples{
 \dontrun{
@@ -21,5 +23,5 @@ fit_mcmc$num_chains()
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}
+\code{\link{CmdStanMCMC}}, \code{\link{CmdStanGQ}}, \code{\link{fit-method-num_procs}}
 }

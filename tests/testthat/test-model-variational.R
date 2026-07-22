@@ -52,6 +52,9 @@ test_that("variational() method runs when all arguments specified validly", {
 })
 
 test_that("variational() warns if threads specified but not enabled", {
+  if (isTRUE(mod$exe_info()$stan_threads)) {
+    skip("The local CmdStan make configuration forces STAN_THREADS=true.")
+  }
   expect_warning(
     expect_vb_output(fit <- mod$variational(data = data_list, threads = 2, seed = 123)),
     "'threads' will have no effect"

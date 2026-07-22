@@ -16,7 +16,11 @@
 #'   same seed for all chains so that the same data is generated for all chains
 #'   if RNG functions are used. The only time `seed` should be specified as a
 #'   vector (one element per chain) is if RNG functions are used in transformed
-#'   data and the goal is to generate *different* data for each chain.
+#'   data and the goal is to generate *different* data for each chain. Vector
+#'   seeds retain this behavior when the method uses one CmdStan invocation per
+#'   chain. In threaded multi-chain sampling or standalone generated quantities,
+#'   all chains belong to one invocation, so CmdStanR uses the first value for
+#'   every chain and warns about the effective seed.
 #'
 #' @param refresh (non-negative integer) The number of iterations between
 #'   printed screen updates. If `refresh = 0`, only error messages will be
@@ -77,8 +81,9 @@
 #'   method.
 #'
 #' @param output_dir (string) A path to a directory where CmdStan should write
-#'   its output CSV files. For MCMC there will be one file per chain; for other
-#'   methods there will be a single file. For interactive use this can typically
+#'   its output CSV files. For MCMC and standalone generated quantities there
+#'   will be one file per logical chain; for other methods there will be a
+#'   single file. For interactive use this can typically
 #'   be left at `NULL` (temporary directory) since CmdStanR makes the CmdStan
 #'   output (posterior draws and diagnostics) available in \R via methods of the
 #'   fitted model objects. This can be set for an entire \R session using

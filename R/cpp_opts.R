@@ -49,6 +49,49 @@ parse_exe_info_string <- function(ret_stdout) {
   info
 }
 
+# Read executable metadata required to plan process topology.
+#' @noRd
+read_exe_info <- function(exe_file) {
+  ret <- run_info_cli(exe_file)
+  if (is.null(ret$status) || is.na(ret$status) || ret$status != 0) {
+    detail <- trimws(ret$stderr %||% "")
+    if (nzchar(detail)) {
+      detail <- paste0(": ", detail)
+    }
+    stop(
+      "Unable to inspect CmdStan executable '", exe_file, "'", detail, ".",
+      call. = FALSE
+    )
+  }
+  info <- tryCatch(
+    parse_exe_info_string(ret$stdout),
+    error = function(error) {
+      stop(
+        "Unable to parse CmdStan executable metadata for '", exe_file,
+        "': ", conditionMessage(error),
+        call. = FALSE
+      )
+    }
+  )
+  if (!is.logical(info$stan_threads) || length(info$stan_threads) != 1L ||
+      is.na(info$stan_threads)) {
+    stop(
+      "CmdStan executable metadata for '", exe_file,
+      "' does not report 'stan_threads'; recompile the model with CmdStan 2.38 or newer.",
+      call. = FALSE
+    )
+  }
+  if (!is.character(info$stan_version) || length(info$stan_version) != 1L ||
+      !nzchar(info$stan_version)) {
+    stop(
+      "CmdStan executable metadata for '", exe_file,
+      "' does not report a Stan version.",
+      call. = FALSE
+    )
+  }
+  info
+}
+
 # old (current) parser
 model_compile_info <- function(exe_file, version) {
   info <- NULL
@@ -134,6 +177,7 @@ validate_cpp_options <- function(cpp_options) {
 # cpp_options must be a list
 # opencl_ids returned unchanged
 assert_valid_opencl <- function(opencl_ids, cpp_options) {
+  names(cpp_options) <- tolower(names(cpp_options))
   if (is.null(cpp_options[["stan_opencl"]])
       && !is.null(opencl_ids)) {
     stop("'opencl_ids' is set but the model was not compiled for use with OpenCL.",
@@ -145,6 +189,7 @@ assert_valid_opencl <- function(opencl_ids, cpp_options) {
 
 # cpp_options must be a list
 assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
+  names(cpp_options) <- tolower(names(cpp_options))
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)
@@ -158,12 +203,8 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
       )
       threads <- NULL
     }
-  } else if (isTRUE(cpp_options[["stan_threads"]]) && is.null(threads)) {
-    stop(
-      "The model was compiled with 'cpp_options = list(stan_threads = TRUE)' ",
-      "but '", threads_arg, "' was not set!",
-      call. = FALSE
-    )
+  } else if (is.null(threads)) {
+    threads <- 1L
   }
   invisible(threads)
 }

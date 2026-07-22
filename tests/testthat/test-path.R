@@ -162,13 +162,13 @@ test_that("Setting path rejects unsupported CmdStan versions", {
     .cmdstanr$WSL <- old_wsl
   })
 
-  path <- file.path(withr::local_tempdir(pattern = "cmdstan-unsupported"), "cmdstan-2.34.0")
+  path <- file.path(withr::local_tempdir(pattern = "cmdstan-unsupported"), "cmdstan-2.37.0")
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
-  writeLines("CMDSTAN_VERSION := 2.34.0", con = file.path(path, "makefile"))
+  writeLines("CMDSTAN_VERSION := 2.37.0", con = file.path(path, "makefile"))
 
   expect_warning(
     set_cmdstan_path(path),
-    "cmdstanr now requires CmdStan v2.35.0 or newer",
+    "cmdstanr now requires CmdStan v2.38.0 or newer",
     fixed = TRUE
   )
   expect_null(.cmdstanr$PATH)
@@ -203,24 +203,24 @@ test_that("unset_cmdstan_path() also resets WSL state", {
 
 test_that("cmdstan_default_path() respects custom install directories", {
   installs <- withr::local_tempdir(pattern = "cmdstan-custom-installs")
-  dir.create(file.path(installs, "cmdstan-2.35.0"), recursive = TRUE, showWarnings = FALSE)
-  dir.create(file.path(installs, "cmdstan-2.36.0"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(installs, "cmdstan-2.38.0"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(installs, "cmdstan-2.39.0"), recursive = TRUE, showWarnings = FALSE)
 
   expect_equal(
     cmdstan_default_path(dir = installs),
-    file.path(installs, "cmdstan-2.36.0")
+    file.path(installs, "cmdstan-2.39.0")
   )
 })
 
 test_that("cmdstan_default_path() orders install directories by CmdStan version", {
   installs <- withr::local_tempdir(pattern = "cmdstan-version-installs")
   dir.create(file.path(installs, "cmdstan-2.9.0"), recursive = TRUE, showWarnings = FALSE)
-  dir.create(file.path(installs, "cmdstan-2.35.0"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(installs, "cmdstan-2.38.0"), recursive = TRUE, showWarnings = FALSE)
 
-  expect_equal(latest_cmdstan_installed(installs), "cmdstan-2.35.0")
+  expect_equal(latest_cmdstan_installed(installs), "cmdstan-2.38.0")
   expect_equal(
     cmdstan_default_path(dir = installs),
-    file.path(installs, "cmdstan-2.35.0")
+    file.path(installs, "cmdstan-2.38.0")
   )
 })
 
@@ -253,7 +253,7 @@ test_that("cmdstan_default_path() returns NULL for legacy-only cmdstan directory
 })
 
 test_that("CmdStan version helpers handle invalid inputs", {
-  expect_identical(cmdstan_min_version(), "2.35.0")
+  expect_identical(cmdstan_min_version(), "2.38.0")
   expect_false(is_supported_cmdstan_version(NULL))
   expect_false(is_supported_cmdstan_version("not-a-version"))
 })

@@ -366,6 +366,30 @@ test_that("get_cmdstan_flags() preserves empty non-STANCFLAGS values", {
   )
 })
 
+test_that("get_cmdstan_flags() preserves absolute include paths", {
+  absolute_include <- normalizePath(withr::local_tempdir(), winslash = "/")
+  with_mocked_bindings(
+    {
+      flags <- get_cmdstan_flags("CPPFLAGS")
+      expect_match(
+        flags,
+        paste0("-I", shQuote(file.path(cmdstan_path(), "stan/src"))),
+        fixed = TRUE
+      )
+      expect_match(
+        flags,
+        paste0("-I", shQuote(absolute_include)),
+        fixed = TRUE
+      )
+    },
+    wsl_compatible_run = function(...) {
+      list(stdout = paste0(
+        "CPPFLAGS = -I stan/src -I ", absolute_include, "\n"
+      ))
+    }
+  )
+})
+
 test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/local", {
   tmpdir <- withr::local_tempdir()
   # Build a minimal make setup so we can exercise real make line continuations.

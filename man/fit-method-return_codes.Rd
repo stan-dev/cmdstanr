@@ -8,8 +8,9 @@
 return_codes()
 }
 \value{
-An integer vector of return codes with length equal to the number of
-CmdStan runs (number of chains for MCMC and one otherwise).
+An integer vector with one return code per physical CmdStan
+invocation. For a threaded multi-chain sampling or generated-quantities run
+this has length one even though the fit has several logical chains.
 }
 \description{
 The \verb{$return_codes()} method returns a vector of return codes
