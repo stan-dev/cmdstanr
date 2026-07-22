@@ -1,6 +1,14 @@
-# Extract inverse metric (mass matrix) after MCMC
+# Extract inverse metric (inverse mass matrix) after MCMC
 
-Extract the inverse metric (mass matrix) for each MCMC chain.
+Extract the inverse metric (inverse mass matrix) for each MCMC chain.
+
+The inverse metric is defined over the unconstrained parameter space, so
+its entries do not necessarily correspond one-to-one with the
+constrained parameters declared in the `parameters` block (some
+transformations from constrained to unconstrained change dimensions).
+See **Examples** for a way to add names to the entries of the inverse
+metric when the model has parameters that change dimensions when
+unconstrained.
 
 ## Usage
 
@@ -30,79 +38,67 @@ argument for details.
 
 ``` r
 # \dontrun{
-fit <- cmdstanr_example("logistic")
-fit$inv_metric()
+stan_file <- write_stan_file("
+  parameters {
+    simplex[3] theta;
+  }
+  model {
+    theta ~ dirichlet(rep_vector(1, 3));
+  }
+")
+mod <- cmdstan_model(stan_file)
+
+# use higher output precision so the simplex remains valid after CSV rounding
+fit <- mod$sample(chains = 1, sig_figs = 10)
+#> Running MCMC with 1 chain...
+#> 
+#> Chain 1 Iteration:    1 / 2000 [  0%]  (Warmup) 
+#> Chain 1 Iteration:  100 / 2000 [  5%]  (Warmup) 
+#> Chain 1 Iteration:  200 / 2000 [ 10%]  (Warmup) 
+#> Chain 1 Iteration:  300 / 2000 [ 15%]  (Warmup) 
+#> Chain 1 Iteration:  400 / 2000 [ 20%]  (Warmup) 
+#> Chain 1 Iteration:  500 / 2000 [ 25%]  (Warmup) 
+#> Chain 1 Iteration:  600 / 2000 [ 30%]  (Warmup) 
+#> Chain 1 Iteration:  700 / 2000 [ 35%]  (Warmup) 
+#> Chain 1 Iteration:  800 / 2000 [ 40%]  (Warmup) 
+#> Chain 1 Iteration:  900 / 2000 [ 45%]  (Warmup) 
+#> Chain 1 Iteration: 1000 / 2000 [ 50%]  (Warmup) 
+#> Chain 1 Iteration: 1001 / 2000 [ 50%]  (Sampling) 
+#> Chain 1 Iteration: 1100 / 2000 [ 55%]  (Sampling) 
+#> Chain 1 Iteration: 1200 / 2000 [ 60%]  (Sampling) 
+#> Chain 1 Iteration: 1300 / 2000 [ 65%]  (Sampling) 
+#> Chain 1 Iteration: 1400 / 2000 [ 70%]  (Sampling) 
+#> Chain 1 Iteration: 1500 / 2000 [ 75%]  (Sampling) 
+#> Chain 1 Iteration: 1600 / 2000 [ 80%]  (Sampling) 
+#> Chain 1 Iteration: 1700 / 2000 [ 85%]  (Sampling) 
+#> Chain 1 Iteration: 1800 / 2000 [ 90%]  (Sampling) 
+#> Chain 1 Iteration: 1900 / 2000 [ 95%]  (Sampling) 
+#> Chain 1 Iteration: 2000 / 2000 [100%]  (Sampling) 
+#> Chain 1 finished in 0.0 seconds.
+
+# even though theta has 3 elements, the inverse metric is 2x2 because the
+# simplex constraint reduces the dimension. we set `matrix = FALSE` in this case
+# because we estimated a diagonal matrix (we didn't set `metric = "dense_e"`
+# when fitting the model), so we can just look at the diagonal elements
+inv_metric <- fit$inv_metric(matrix = FALSE)
+
+# the list has 1 element since we only ran 1 chain for simplicity
+print(inv_metric)
 #> $`1`
-#>           [,1]      [,2]     [,3]      [,4]
-#> [1,] 0.0465167 0.0000000 0.000000 0.0000000
-#> [2,] 0.0000000 0.0620914 0.000000 0.0000000
-#> [3,] 0.0000000 0.0000000 0.050783 0.0000000
-#> [4,] 0.0000000 0.0000000 0.000000 0.0729152
-#> 
-#> $`2`
-#>           [,1]      [,2]      [,3]      [,4]
-#> [1,] 0.0441307 0.0000000 0.0000000 0.0000000
-#> [2,] 0.0000000 0.0636629 0.0000000 0.0000000
-#> [3,] 0.0000000 0.0000000 0.0466777 0.0000000
-#> [4,] 0.0000000 0.0000000 0.0000000 0.0671717
-#> 
-#> $`3`
-#>           [,1]    [,2]      [,3]      [,4]
-#> [1,] 0.0435155 0.00000 0.0000000 0.0000000
-#> [2,] 0.0000000 0.06023 0.0000000 0.0000000
-#> [3,] 0.0000000 0.00000 0.0461039 0.0000000
-#> [4,] 0.0000000 0.00000 0.0000000 0.0683583
-#> 
-#> $`4`
-#>           [,1]      [,2]      [,3]      [,4]
-#> [1,] 0.0473502 0.0000000 0.0000000 0.0000000
-#> [2,] 0.0000000 0.0626683 0.0000000 0.0000000
-#> [3,] 0.0000000 0.0000000 0.0489999 0.0000000
-#> [4,] 0.0000000 0.0000000 0.0000000 0.0843854
-#> 
-fit$inv_metric(matrix=FALSE)
-#> $`1`
-#> [1] 0.0465167 0.0620914 0.0507830 0.0729152
-#> 
-#> $`2`
-#> [1] 0.0441307 0.0636629 0.0466777 0.0671717
-#> 
-#> $`3`
-#> [1] 0.0435155 0.0602300 0.0461039 0.0683583
-#> 
-#> $`4`
-#> [1] 0.0473502 0.0626683 0.0489999 0.0843854
+#> [1] 1.40627 1.80322
 #> 
 
-fit <- cmdstanr_example("logistic", metric = "dense_e")
-fit$inv_metric()
+# get names of unconstrained parameters and add them to the inverse metric
+# (unconstrain_draws() requires compiling additional methods)
+inv_metric_names <- posterior::variables(fit$unconstrain_draws())
+inv_metric <- lapply(inv_metric, stats::setNames, nm = inv_metric_names)
+
+# the names will be theta[1] and theta[2], but these are not the same as
+# the first two elements of the constrained theta in the Stan program
+inv_metric
 #> $`1`
-#>             [,1]        [,2]        [,3]        [,4]
-#> [1,]  0.04672720  0.00167042 -0.00114755  0.00811720
-#> [2,]  0.00167042  0.06716350 -0.00613677  0.00100108
-#> [3,] -0.00114755 -0.00613677  0.06399690 -0.00787439
-#> [4,]  0.00811720  0.00100108 -0.00787439  0.07539580
-#> 
-#> $`2`
-#>             [,1]        [,2]        [,3]        [,4]
-#> [1,]  0.04772890 -0.00189944 -0.00147119  0.00308748
-#> [2,] -0.00189944  0.06492360 -0.00283877 -0.00746201
-#> [3,] -0.00147119 -0.00283877  0.05286320 -0.00843557
-#> [4,]  0.00308748 -0.00746201 -0.00843557  0.06810290
-#> 
-#> $`3`
-#>             [,1]         [,2]         [,3]        [,4]
-#> [1,]  0.04272210 -0.004145890  0.000913590  0.00262301
-#> [2,] -0.00414589  0.055612700  0.000284277 -0.00761463
-#> [3,]  0.00091359  0.000284277  0.047423300 -0.01277940
-#> [4,]  0.00262301 -0.007614630 -0.012779400  0.06443380
-#> 
-#> $`4`
-#>              [,1]        [,2]         [,3]        [,4]
-#> [1,]  0.046579900 -0.00284613  0.000977285  0.00202717
-#> [2,] -0.002846130  0.05566120 -0.009374590 -0.00543387
-#> [3,]  0.000977285 -0.00937459  0.051704000 -0.01207620
-#> [4,]  0.002027170 -0.00543387 -0.012076200  0.07242500
+#> theta[1] theta[2] 
+#>  1.40627  1.80322 
 #> 
 # }
 ```

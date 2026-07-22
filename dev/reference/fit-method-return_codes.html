@@ -89,7 +89,12 @@ CmdStan runs (number of chains for MCMC and one otherwise).</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co"># example with return codes all zero</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"schools"</span>, method <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning: 145 of 4000 (4.0%) transitions ended with a divergence.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Chain 3 Exception: normal_lpdf: Scale parameter is 0, but must be positive! (in '/tmp/RtmpILyGYQ/model-1bd739103e6e.stan', line 14, column 2 to column 41)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Chain 3 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Chain 3 </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning: 214 of 4000 (5.0%) transitions ended with a divergence.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> See https://mc-stan.org/misc/warnings for details.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Warning: 1 of 4 chains had an E-BFMI less than 0.3.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> See https://mc-stan.org/misc/warnings for details.</span>

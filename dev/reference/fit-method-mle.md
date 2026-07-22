@@ -46,12 +46,12 @@ A numeric vector. See **Examples**.
 fit <- cmdstanr_example("logistic", method = "optimize")
 fit$mle("alpha")
 #>     alpha 
-#> 0.3644665 
+#> 0.3644674 
 fit$mle("beta")
 #>    beta[1]    beta[2]    beta[3] 
-#> -0.6315625 -0.2589803  0.6484943 
+#> -0.6315813 -0.2589377  0.6484929 
 fit$mle("beta[2]")
 #>    beta[2] 
-#> -0.2589803 
+#> -0.2589377 
 # }
 ```

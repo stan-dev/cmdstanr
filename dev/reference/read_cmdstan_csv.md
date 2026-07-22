@@ -167,10 +167,10 @@ the returned list also includes the following components:
 fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
-#> [1] "/tmp/RtmpplDaIE/logistic-202607212041-1-3d730c.csv"
-#> [2] "/tmp/RtmpplDaIE/logistic-202607212041-2-3d730c.csv"
-#> [3] "/tmp/RtmpplDaIE/logistic-202607212041-3-3d730c.csv"
-#> [4] "/tmp/RtmpplDaIE/logistic-202607212041-4-3d730c.csv"
+#> [1] "/tmp/RtmpILyGYQ/logistic-202607220041-1-2d8347.csv"
+#> [2] "/tmp/RtmpILyGYQ/logistic-202607220041-2-2d8347.csv"
+#> [3] "/tmp/RtmpILyGYQ/logistic-202607220041-3-2d8347.csv"
+#> [4] "/tmp/RtmpILyGYQ/logistic-202607220041-4-2d8347.csv"
 
 # Creating fitting model objects
 
@@ -178,9 +178,9 @@ print(csv_files)
 fit2 <- as_cmdstan_fit(csv_files)
 fit2$print("beta")
 #>  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail
-#>   beta[1] -0.66  -0.65 0.25 0.25 -1.09 -0.27 1.00     4276     3053
-#>   beta[2] -0.28  -0.28 0.22 0.22 -0.65  0.09 1.00     4109     3014
-#>   beta[3]  0.68   0.68 0.27 0.27  0.25  1.12 1.00     4188     3186
+#>   beta[1] -0.66  -0.66 0.25 0.26 -1.07 -0.27 1.00     3856     2887
+#>   beta[2] -0.28  -0.28 0.23 0.22 -0.66  0.08 1.00     4057     3082
+#>   beta[3]  0.68   0.67 0.27 0.27  0.24  1.12 1.00     4184     3314
 
 # Using read_cmdstan_csv
 #
@@ -192,7 +192,7 @@ str(x)
 #>   ..$ stan_version_major  : num 2
 #>   ..$ stan_version_minor  : num 39
 #>   ..$ stan_version_patch  : num 0
-#>   ..$ start_datetime      : chr "2026-07-21 20:41:13 UTC"
+#>   ..$ start_datetime      : chr "2026-07-22 00:41:35 UTC"
 #>   ..$ method              : chr "sample"
 #>   ..$ save_warmup         : int 1
 #>   ..$ thin                : num 1
@@ -210,15 +210,15 @@ str(x)
 #>   ..$ num_chains          : int 4
 #>   ..$ id                  : num [1:4] 1 2 3 4
 #>   ..$ init                : num [1:4] 2 2 2 2
-#>   ..$ seed                : num 1.12e+09
+#>   ..$ seed                : num 1.13e+09
 #>   ..$ refresh             : num 100
 #>   ..$ sig_figs            : num 8
-#>   ..$ profile_file        : chr "/tmp/RtmpplDaIE/logistic-profile-202607212041-1-09203a.csv"
+#>   ..$ profile_file        : chr "/tmp/RtmpILyGYQ/logistic-profile-202607220041-1-0e8c0a.csv"
 #>   ..$ save_cmdstan_config : int 0
 #>   ..$ stanc_version       : chr "stanc3 v2.39.0"
 #>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
 #>   ..$ variables           : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
-#>   ..$ step_size_adaptation: num [1:4] 0.739 0.791 0.725 0.664
+#>   ..$ step_size_adaptation: num [1:4] 0.719 0.707 0.744 0.765
 #>   ..$ model_name          : chr "logistic_model"
 #>   ..$ adapt_engaged       : int 1
 #>   ..$ adapt_delta         : num 0.8
@@ -229,9 +229,9 @@ str(x)
 #>   ..$ threads_per_chain   : num 1
 #>   ..$ time                :'data.frame': 4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.055 0.056 0.055 0.055
-#>   .. ..$ sampling: num [1:4] 0.056 0.056 0.056 0.057
-#>   .. ..$ total   : num [1:4] 0.111 0.112 0.111 0.112
+#>   .. ..$ warmup  : num [1:4] 0.053 0.053 0.053 0.054
+#>   .. ..$ sampling: num [1:4] 0.054 0.056 0.055 0.054
+#>   .. ..$ total   : num [1:4] 0.107 0.109 0.108 0.108
 #>   ..$ stan_variable_sizes :List of 4
 #>   .. ..$ lp__   : num 1
 #>   .. ..$ alpha  : num 1
@@ -243,35 +243,35 @@ str(x)
 #>   ..$ total : int NA
 #>   ..$ chains:'data.frame':   4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.055 0.056 0.055 0.055
-#>   .. ..$ sampling: num [1:4] 0.056 0.056 0.056 0.057
-#>   .. ..$ total   : num [1:4] 0.111 0.112 0.111 0.112
+#>   .. ..$ warmup  : num [1:4] 0.053 0.053 0.053 0.054
+#>   .. ..$ sampling: num [1:4] 0.054 0.056 0.055 0.054
+#>   .. ..$ total   : num [1:4] 0.107 0.109 0.108 0.108
 #>  $ inv_metric                     :List of 4
-#>   ..$ 1: num [1:4] 0.0458 0.0628 0.0518 0.075
-#>   ..$ 2: num [1:4] 0.0397 0.0649 0.0511 0.0699
-#>   ..$ 3: num [1:4] 0.048 0.0699 0.0535 0.0802
-#>   ..$ 4: num [1:4] 0.052 0.0771 0.0511 0.0773
+#>   ..$ 1: num [1:4] 0.0493 0.0644 0.0579 0.0815
+#>   ..$ 2: num [1:4] 0.049 0.0753 0.0527 0.0737
+#>   ..$ 3: num [1:4] 0.0458 0.0542 0.0484 0.0712
+#>   ..$ 4: num [1:4] 0.0538 0.0607 0.0473 0.0771
 #>  $ step_size                      :List of 4
-#>   ..$ 1: num 0.739
-#>   ..$ 2: num 0.791
-#>   ..$ 3: num 0.725
-#>   ..$ 4: num 0.664
-#>  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:105] -87.9 -87.9 -87.9 -72.2 -65.1 ...
+#>   ..$ 1: num 0.719
+#>   ..$ 2: num 0.707
+#>   ..$ 3: num 0.744
+#>   ..$ 4: num 0.765
+#>  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:105] -69.3 -69.3 -69.3 -68.8 -68.8 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #>   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
-#>  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -64.7 -65.7 -64 -65.1 -65.8 ...
+#>  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -66 -64.8 -64.8 -65.4 -66.1 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #>   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
-#>  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 1 0 0 1 0.757 ...
+#>  $ warmup_sampler_diagnostics     : 'draws_array' num [1:1000, 1:4, 1:6] 0.933 0 0 0.964 0.492 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #>   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#>  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 1 0.805 0.925 0.841 0.975 ...
+#>  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.864 1 0.733 0.951 0.921 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"

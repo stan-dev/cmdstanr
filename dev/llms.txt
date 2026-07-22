@@ -209,7 +209,7 @@ Run CmdStan from R.
   function and parameter constraining and unconstraining.
 
 - [`inv_metric()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-inv_metric.md)
-  : Extract inverse metric (mass matrix) after MCMC
+  : Extract inverse metric (inverse mass matrix) after MCMC
 
 - [`log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md)
   : Calculate the log-probability given a provided vector of

@@ -344,9 +344,9 @@ mod$print()
 
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit_mode <- mod$optimize(data = stan_data, jacobian = TRUE)
-#> Initial log joint probability = -7.12639 
+#> Initial log joint probability = -7.29048 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        4      -6.74802    0.00348588   7.79186e-05           1           1        7    
+#>        5      -6.74802   0.000375213    5.2166e-07           1           1        8    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -369,15 +369,15 @@ fit_laplace$summary()
 #> # A tibble: 3 × 7
 #>   variable      mean median    sd   mad     q5      q95
 #>   <chr>        <dbl>  <dbl> <dbl> <dbl>  <dbl>    <dbl>
-#> 1 lp__        -7.22  -6.96  0.679 0.287 -8.46  -6.75   
-#> 2 lp_approx__ -0.477 -0.219 0.666 0.300 -1.79  -0.00196
-#> 3 theta        0.267  0.247 0.121 0.113  0.101  0.500  
+#> 1 lp__        -7.21  -6.97  0.661 0.299 -8.43  -6.75   
+#> 2 lp_approx__ -0.475 -0.216 0.679 0.300 -1.81  -0.00226
+#> 3 theta        0.265  0.248 0.119 0.119  0.102  0.490  
 
 # if mode isn't specified optimize is run internally first
 fit_laplace <- mod$laplace(data = stan_data)
-#> Initial log joint probability = -6.74804 
+#> Initial log joint probability = -7.57147 
 #>     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
-#>        2      -6.74802     0.0031365   7.14072e-06           1           1        5    
+#>        5      -6.74802   0.000128922   5.69153e-07           1           1        8    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
 #> Finished in  0.1 seconds.
@@ -399,9 +399,9 @@ fit_laplace$summary()
 #> # A tibble: 3 × 7
 #>   variable      mean median    sd   mad      q5      q95
 #>   <chr>        <dbl>  <dbl> <dbl> <dbl>   <dbl>    <dbl>
-#> 1 lp__        -7.25  -6.97  0.721 0.297 -8.70   -6.75   
-#> 2 lp_approx__ -0.515 -0.223 0.724 0.300 -2.00   -0.00218
-#> 3 theta        0.265  0.240 0.125 0.120  0.0978  0.500  
+#> 1 lp__        -7.28  -7.00  0.776 0.342 -8.67   -6.75   
+#> 2 lp_approx__ -0.542 -0.259 0.768 0.345 -2.10   -0.00282
+#> 3 theta        0.271  0.254 0.129 0.129  0.0967  0.507  
 
 # plot approximate posterior
 bayesplot::mcmc_hist(fit_laplace$draws("theta"))

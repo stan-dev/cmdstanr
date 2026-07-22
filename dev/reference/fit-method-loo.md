@@ -103,8 +103,8 @@ print(loo_result)
 #> 
 #>          Estimate  SE
 #> elpd_loo    -63.6 4.1
-#> p_loo         3.8 0.5
-#> looic       127.1 8.2
+#> p_loo         3.9 0.5
+#> looic       127.3 8.2
 #> ------
 #> MCSE of elpd_loo is 0.0.
 #> MCSE and ESS estimates assume independent draws (r_eff=1).
