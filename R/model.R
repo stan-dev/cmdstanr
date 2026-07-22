@@ -834,6 +834,13 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'   as a list with information on its scalar type (`real` or `int`) and
 #'   number of dimensions.
 #'
+#'   The number of dimensions reported is the number of indexing dimensions in
+#'   the declared Stan variable, equivalently the number of indices needed to
+#'   access one scalar element. This means a scalar has 0 dimensions, a vector
+#'   or one-dimensional array has 1, and a matrix or two-dimensional array has
+#'   2. Array dimensions are added to any vector or matrix dimensions, so
+#'   `array[J] matrix[N, K]` has 3 dimensions. See **Examples**.
+#'
 #'   `transformed data` is not included, as variables in that block are not
 #'   part of the model's input or output.
 #'
@@ -844,13 +851,23 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'
 #' @examples
 #' \dontrun{
-#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' stan_file <- write_stan_file("
+#' data {
+#'   int N;
+#'   array[2, 3] int y;
+#' }
+#' parameters {
+#'   real alpha;
+#'   vector[N] beta;
+#'   array[2] matrix[3, 4] theta;
+#' }
+#' ")
 #'
-#' # create a `CmdStanModel` object, compiling the model is not required
-#' mod <- cmdstan_model(file, compile = FALSE)
+#' # create a CmdStanModel object, compiling the model is not required
+#' mod <- cmdstan_model(stan_file, compile = FALSE)
 #'
-#' mod$variables()
-#'
+#' vars <- mod$variables()
+#' str(vars)
 #' }
 #'
 variables <- function() {
