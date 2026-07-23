@@ -57,20 +57,24 @@
 #'   specifying the geometry of the base manifold. See the _Euclidean Metric_
 #'   section of the CmdStan User's Guide for more details. To specify a
 #'   precomputed (inverse) metric, see the `inv_metric` argument below.
-#' @param metric_file (character vector) The paths to JSON or Rdump files (one
-#'   per chain) compatible with CmdStan that contain precomputed inverse
-#'   metrics. The `metric_file` argument is inherited from CmdStan but is
-#'   confusing in that the entry in JSON or Rdump file(s) must be named
-#'   `inv_metric`, referring to the _inverse_ metric. We recommend instead using
-#'   CmdStanR's `inv_metric` argument (see below) to specify an inverse metric
-#'   directly using a vector or matrix from your \R session.
-#' @param inv_metric (vector, matrix) A vector (if `metric='diag_e'`) or a
-#'   matrix (if `metric='dense_e'`) for initializing the inverse metric. This
-#'   can be used as an alternative to the `metric_file` argument. A vector is
-#'   interpreted as a diagonal metric. The inverse metric is usually set to an
-#'   estimate of the posterior covariance. See the `adapt_engaged` argument
-#'   above for details about (and control over) how specifying a precomputed
-#'   inverse metric interacts with adaptation.
+#' @param metric_file (character vector) One path, used for all chains, or one
+#'   path per chain to JSON or Rdump files compatible with CmdStan that contain
+#'   precomputed inverse metrics. The `metric_file` argument is inherited from
+#'   CmdStan but is confusing in that the entry in JSON or Rdump file(s) must be
+#'   named `inv_metric`, referring to the _inverse_ metric. An alternative to
+#'   `metric_file` is the `inv_metric` argument (see below), which allows
+#'   specifying an inverse metric directly using a vector or matrix from your \R
+#'   session.
+#' @param inv_metric (vector, matrix, or list) A vector (if `metric =
+#'   "diag_e"`) or a matrix (if `metric = "dense_e"`) for initializing the
+#'   inverse metric. A single vector or matrix is used for all chains. To
+#'   initialize the chains with different inverse metrics, provide a list
+#'   containing one vector or matrix per chain. A length-one list is also used
+#'   for all chains. This can be used as an alternative to the `metric_file`
+#'   argument. The inverse metric is usually set to an estimate of the posterior
+#'   covariance. See the `adapt_engaged` argument above for details about (and
+#'   control over) how specifying a precomputed inverse metric interacts with
+#'   adaptation.
 #' @param init_buffer (nonnegative integer) Width of initial fast timestep
 #'   adaptation interval during warmup.
 #' @param term_buffer (nonnegative integer) Width of final fast timestep
@@ -82,8 +86,8 @@
 #'   sampler generates a new sample without changing the current state of the
 #'   Markov chain; only generated quantities may change. This can be useful
 #'   when, for example, trying to generate pseudo-data using the generated
-#'   quantities block. If the parameters block is empty then using
-#'   `fixed_param=TRUE` is mandatory.
+#'   quantities block. For CmdStan versions before 2.36, `fixed_param = TRUE`
+#'   is mandatory if the parameters block is empty.
 #' @param diagnostics (character vector) The diagnostics to automatically check
 #'   and warn about after sampling. Setting this to an empty string `""` or
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the
@@ -94,7 +98,7 @@
 #'
 #'   These diagnostics are also available after fitting. The
 #'   [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] method provides
-#'   access the diagnostic values for each iteration and the
+#'   access to the diagnostic values for each iteration and the
 #'   [`$diagnostic_summary()`][fit-method-diagnostic_summary] method provides
 #'   summaries of the diagnostics and can regenerate the warning messages.
 #'
@@ -103,7 +107,7 @@
 #'   using the [`$summary()`][fit-method-summary] method.
 #' @param save_metric (logical) When `TRUE`, call CmdStan with
 #'   argument `"adaptation save_metric=1"` to save the adapted metric in
-#'   separate JSON file with elements `"stepsize"`, `"metric_type"` and
+#'   a separate JSON file with elements `"stepsize"`, `"metric_type"` and
 #'   `"inv_metric"`. The default is `FALSE` but can be set to `TRUE` for an
 #'   entire \R session by `options(cmdstanr_save_metric = TRUE)`.
 #'

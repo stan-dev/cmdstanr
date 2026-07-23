@@ -3,7 +3,7 @@
 \name{fit-method-num_chains}
 \alias{fit-method-num_chains}
 \alias{num_chains}
-\title{Extract number of chains after MCMC}
+\title{Extract the number of chains}
 \usage{
 num_chains()
 }

@@ -12,8 +12,8 @@ diagnostic_summary(
 }
 \arguments{
 \item{diagnostics}{(character vector) One or more diagnostics to check. The
-currently supported diagnostics are \verb{"divergences}, \code{"treedepth"}, and
-\verb{"ebfmi}. The default is to check all of them.}
+currently supported diagnostics are \code{"divergences"}, \code{"treedepth"}, and
+\code{"ebfmi"}. The default is to check all of them.}
 
 \item{quiet}{(logical) Should warning messages about the diagnostics be
 suppressed? The default is \code{FALSE}, in which case warning messages are
@@ -37,7 +37,7 @@ method.
 Currently parameter-specific diagnostics like R-hat and effective sample
 size are \emph{not} handled by this method. Those diagnostics are provided via
 the \code{\link[=fit-method-summary]{$summary()}} method (using
-\code{\link[posterior:draws_summary]{posterior::summarize_draws()}}).
+\code{\link[posterior:draws_summary]{posterior::summarise_draws()}}).
 }
 \examples{
 \dontrun{

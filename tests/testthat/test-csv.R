@@ -419,6 +419,29 @@ test_that("read_cmdstan_csv() works for laplace", {
   expect_equal(posterior::variables(csv_output_5$draws), c("alpha", "beta[2]"))
 })
 
+test_that("read_cmdstan_csv() works for pathfinder", {
+  csv_output <- read_cmdstan_csv(fit_logistic_pathfinder$output_files())
+  expected_variables <- c(
+    "lp__", "lp_approx__", "path__", "alpha",
+    "beta[1]", "beta[2]", "beta[3]"
+  )
+  if (cmdstan_version() < "2.37.0") {
+    # the path__ column was added to pathfinder output in CmdStan 2.37
+    expected_variables <- setdiff(expected_variables, "path__")
+  }
+  expect_equal(posterior::variables(csv_output$draws), expected_variables)
+  expect_equal(csv_output$metadata$variables, expected_variables)
+
+  filtered_output <- read_cmdstan_csv(
+    fit_logistic_pathfinder$output_files(),
+    variables = c("lp_approx__", "lp__")
+  )
+  expect_equal(
+    posterior::variables(filtered_output$draws),
+    c("lp_approx__", "lp__")
+  )
+})
+
 
 test_that("read_cmdstan_csv() works for generate_quantities", {
   csv_output_1 <- read_cmdstan_csv(fit_gq$output_files())
@@ -549,6 +572,66 @@ test_that("time from read_cmdstan_csv matches time from fit$time()", {
     fit$time()$chains,
     ignore_attr = TRUE
   )
+})
+
+test_that("returning time works for gq read_cmdstan_csv from static CSV", {
+  csv_files <- test_path("resources", "csv", "bernoulli_ppc-1-gq-with-timing.csv")
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = 1,
+    total = 0.123
+  ))
+
+  csv_files <- c(
+    test_path("resources", "csv", "bernoulli_ppc-1-gq-with-timing.csv"),
+    test_path("resources", "csv", "bernoulli_ppc-2-gq-with-timing.csv")
+  )
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = c(1, 2),
+    total = c(0.123, 0.456)
+  ))
+})
+
+test_that("returning time works for gq read_cmdstan_csv from fit object", {
+  gq_csv <- read_cmdstan_csv(fit_gq$output_files())
+  expect_equal(gq_csv$time$total, NA_integer_)
+  checkmate::expect_data_frame(
+    gq_csv$time$chains,
+    any.missing = FALSE,
+    types = c("numeric", "numeric"),
+    nrows = fit_gq$num_chains(),
+    ncols = 2
+  )
+  expect_named(gq_csv$time$chains, c("chain_id", "total"))
+  if (cmdstan_version() >= "2.39.0") {
+    # per-chain times should be non-zero (parsed from CmdStan timing output)
+    expect_gt(min(gq_csv$time$chains$total), 0)
+  } else {
+    # Older releases may omit timing (reported as 0), while development builds
+    # based on those releases may already emit it.
+    expect_gte(min(gq_csv$time$chains$total), 0)
+  }
+})
+
+test_that("gq time from read_cmdstan_csv matches time from fit_gq$time()", {
+  expect_equal(
+    read_cmdstan_csv(fit_gq$output_files())$time$chains,
+    fit_gq$time()$chains,
+    ignore_attr = TRUE
+  )
+})
+
+test_that("gq CSV without timing returns zero chain time", {
+  csv_files <- test_path("resources", "csv", "bernoulli_ppc-1-gq.csv")
+  csv_data <- read_cmdstan_csv(csv_files)
+  expect_equal(csv_data$time$total, NA_integer_)
+  expect_equal(csv_data$time$chains, data.frame(
+    chain_id = 1,
+    total = 0
+  ))
 })
 
 test_that("read_cmdstan_csv reads seed correctly", {
@@ -930,6 +1013,11 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
       }
     }
   }
+
+  expect_snapshot(
+    error = TRUE,
+    fits$laplace$mode()
+  )
 })
 
 test_that("as_cmdstan_fit can check MCMC diagnostics", {

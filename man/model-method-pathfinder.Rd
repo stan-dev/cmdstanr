@@ -10,7 +10,6 @@ pathfinder(
   seed = NULL,
   refresh = NULL,
   init = NULL,
-  save_latent_dynamics = FALSE,
   output_dir = getOption("cmdstanr_output_dir"),
   output_basename = NULL,
   sig_figs = NULL,
@@ -51,18 +50,18 @@ appendices in the CmdStan guide for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
-\item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-In the case of multi-chain sampling the single \code{seed} will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to using
-same seed for all chains so that the same data is generated for all chains
-if RNG functions are used. The only time \code{seed} should be specified as a
-vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate \emph{different} data for each chain. Vector
-seeds retain this behavior when the method uses one CmdStan invocation per
-chain. In threaded multi-chain sampling or standalone generated quantities,
-all chains belong to one invocation, so CmdStanR uses the first value for
-every chain and warns about the effective seed.}
+\item{seed}{(non-negative integer(s)) A seed for the (P)RNG to pass to
+CmdStan. In the case of multi-chain sampling the single \code{seed} will
+automatically be augmented by the run (chain) ID so that each chain uses a
+different seed. The exception is the transformed data block, which defaults
+to using the same seed for all chains so that the same data is generated for
+all chains if RNG functions are used. The only time \code{seed} should be
+specified as a vector (one element per chain) is if RNG functions are used
+in transformed data and the goal is to generate \emph{different} data for each
+chain. Vector seeds retain this behavior when the method uses one CmdStan
+invocation per chain. In threaded multi-chain sampling or standalone
+generated quantities, all chains belong to one invocation, so CmdStanR uses
+the first value for every chain and warns about the effective seed.}
 
 \item{refresh}{(non-negative integer) The number of iterations between
 printed screen updates. If \code{refresh = 0}, only error messages will be
@@ -72,57 +71,58 @@ printed.}
 variables declared in the parameters block of the Stan program. One of the
 following:
 \itemize{
-\item A real number \code{x>0}. This initializes \emph{all} parameters randomly between
-\verb{[-x,x]} on the \emph{unconstrained} parameter space.
-\item The number \code{0}. This initializes \emph{all} parameters to \code{0}.
-\item A character vector of paths (one per chain) to JSON or Rdump files
-containing initial values for all or some parameters. See
+\item A real number \code{x > 0}. This initializes \emph{all} parameters randomly between
+\verb{[-x, x]} on the \emph{unconstrained} parameter space.
+\item The number \code{0}. This initializes \emph{all} parameters to \code{0} on the
+\emph{unconstrained} parameter space.
+\item A character vector of paths to JSON or Rdump files containing initial
+values for all or some parameters. For MCMC and Pathfinder, if only a single
+file is provided it will be reused for all chains and paths. See
 \code{\link[=write_stan_json]{write_stan_json()}} to write \R objects to JSON files compatible with
 CmdStan.
 \item A list of lists containing initial values for all or some parameters. For
-MCMC the list should contain a sublist for each chain. For other model
-fitting methods there should be just one sublist. The sublists should have
-named elements corresponding to the parameters for which you are specifying
-initial values. See \strong{Examples}.
+MCMC the list should contain a sublist for each chain, and for Pathfinder it
+should contain a sublist for each path. For other model fitting methods
+there should be just one sublist. The sublists should have named elements
+corresponding to the parameters for which you are specifying initial
+values. See \strong{Examples}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
-take no arguments or a single argument \code{chain_id}. For MCMC, if the function
-has argument \code{chain_id} it will be supplied with the chain id (from 1 to
-number of chains) when called to generate the initial values. See
-\strong{Examples}.
+take no arguments or a single argument \code{chain_id}. For MCMC and Pathfinder,
+the function is called once for each chain or path. If the function has the
+\code{chain_id} argument, it receives the chain or path number, starting at 1.
+See \strong{Examples}.
 \item A \code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanPathfinder}},
 or \code{\link{CmdStanLaplace}} fit object. If the fit object's parameters are only a
 subset of the model parameters then the other parameters will be drawn by
 Stan's default initialization. The fit object must have at least some
 parameters that are the same name and dimensions as the current Stan model.
-For the \code{sample} and \code{pathfinder} method, if the fit object has fewer draws
-than the requested number of chains/paths then the inits will be drawn using
-sampling with replacement. Otherwise sampling without replacement will be
-used. When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
-\code{psis_resample} was set to \code{FALSE} and \code{calculate_lp} was set to \code{TRUE}
-(default), then resampling without replacement with Pareto smoothed weights
-will be used. If \code{psis_resample} was set to \code{TRUE} or \code{calculate_lp} was set
-to \code{FALSE} then sampling without replacement with uniform weights will be
-used to select the draws. PSIS resampling is used to select the draws for
-\code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
+For the \code{sample} and \code{pathfinder} methods, which need one initialization per
+chain or path, the inits are drawn from the fit object without replacement,
+so it must contain at least as many draws as the number of chains/paths. For
+\code{\link{CmdStanVB}}, \code{\link{CmdStanLaplace}}, and \code{\link{CmdStanPathfinder}} fit objects the
+draws must additionally be \emph{distinct}. A \code{\link{CmdStanMLE}} fit object is the
+exception: its single draw (the mode) is used to initialize every chain or
+path. When a \code{\link{CmdStanPathfinder}} fit object is used as the init, if
+CmdStan actually performed PSIS resampling (which requires \code{num_paths > 1},
+\code{psis_resample = TRUE}, and \code{calculate_lp = TRUE}), CmdStanR selects from
+the returned draws using uniform weights to avoid applying importance
+weights again. If CmdStan did not PSIS-resample the output and
+\code{calculate_lp = TRUE}, CmdStanR selects draws using Pareto-smoothed
+importance weights. This includes single-path fits with
+\code{psis_resample = TRUE}, because CmdStan does not PSIS-resample single-path
+output. If \code{calculate_lp = FALSE}, uniform weights are used because
+importance weights cannot be calculated. PSIS resampling is used to select
+the draws for \code{\link{CmdStanVB}}, and \code{\link{CmdStanLaplace}} fit objects.
 \item A type inheriting from \code{posterior::draws}. If the draws object has fewer
-draws than the number of requested chains/paths then the inits will be
-drawn using sampling with replacement. Otherwise sampling without
-replacement will be used. If the draws object's parameters are only a subset
-of the model parameters then the other parameters will be drawn by Stan's
-default initialization. The fit object must have at least some parameters
+draws than the number of requested chains/paths, the draws are reused in
+their existing order until each chain/path has an initialization. If there
+are more draws than requested chains/paths, draws are selected uniformly
+without replacement. If the draws object's parameters are only a subset of
+the model parameters then the other parameters will be drawn by Stan's
+default initialization. The draws object must have at least some parameters
 that are the same name and dimensions as the current Stan model.
 }}
-
-\item{save_latent_dynamics}{(logical) Should auxiliary diagnostic information
-about the latent dynamics be written to temporary diagnostic CSV files?
-This argument replaces CmdStan's \code{diagnostic_file} argument and the content
-written to CSV is controlled by the user's CmdStan installation and not
-CmdStanR (for some algorithms no content may be written). The default is
-\code{FALSE}, which is appropriate for almost every use case. To save the
-temporary files created when \code{save_latent_dynamics=TRUE} see the
-\code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}}
-method.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC and standalone generated quantities there
@@ -144,14 +144,15 @@ corresponding to the defaults used by \verb{$save_output_files()}.
 
 \item{output_basename}{(string) A string to use as a prefix for the names of
 the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
-the output CSV files will be comprised from the model name, timestamp, and
-5 random characters.}
+the output CSV files is composed of the model name, timestamp, and a
+six-character random hexadecimal suffix.}
 
-\item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
-values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
-Increasing this value will result in larger output CSV files and thus an
-increased usage of disk space.}
+\item{sig_figs}{(positive integer) The number of significant figures (up to a
+maximum of 18) to use when storing the output values. If \code{NULL} (the
+default), the default from the installed CmdStan version is used. Use
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} to check that
+default. Increasing this value will result in larger output CSV files and
+thus an increased usage of disk space.}
 
 \item{threads}{(positive integer) If the model was
 \link[=model-method-compile]{compiled} with threading support, the number of
@@ -163,7 +164,8 @@ the OpenCL device to use for fitting. The model must be compiled with
 \code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
 effect.}
 
-\item{num_threads}{Deprecated. Please use \code{threads} instead.}
+\item{num_threads}{Deprecated and will be removed in a future release. Use
+\code{threads} instead.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 
@@ -185,11 +187,11 @@ pathfinder should return. The number of draws PSIS sampling samples from
 will be equal to \code{single_path_draws * num_paths}.}
 
 \item{draws}{(positive integer) Number of draws to return after performing
-pareto smooted importance sampling (PSIS). This should be smaller than
-\code{single_path_draws * num_paths} (future versions of CmdStan will throw a
-warning).}
+Pareto smoothed importance sampling (PSIS). This should be smaller than
+\code{single_path_draws * num_paths}.}
 
-\item{num_paths}{(positive integer) Number of single pathfinders to run.}
+\item{num_paths}{(positive integer) Number of single pathfinders to run. The
+default is \code{4}.}
 
 \item{max_lbfgs_iters}{(positive integer) The maximum number of iterations
 for LBFGS.}
@@ -197,8 +199,15 @@ for LBFGS.}
 \item{num_elbo_draws}{(positive integer) Number of draws to make when
 calculating the ELBO of the approximation at each iteration of LBFGS.}
 
-\item{save_single_paths}{(logical) Whether to save the results of single
-pathfinder runs in multi-pathfinder.}
+\item{save_single_paths}{(logical) Whether to save the output from each
+single-Pathfinder run. For a multi-path run, CmdStan writes one Stan CSV
+file containing draws and one JSON file containing the L-BFGS and ELBO
+iterations for each path. For a single-path run, the main output CSV
+contains the draws and CmdStan writes an additional JSON file. The
+auxiliary files are written to \code{output_dir}, or to a temporary directory
+if \code{output_dir = NULL}. They are not included in the paths returned by the
+fitted object's \verb{$output_files()} method. See the \href{https://mc-stan.org/docs/cmdstan-guide/pathfinder_config.html#single-path-pathfinder-outputs}{CmdStan User's Guide}
+for details.}
 
 \item{psis_resample}{(logical) Whether to perform pareto smoothed importance sampling.
 If \code{TRUE}, the number of draws returned will be equal to \code{draws}.
@@ -250,7 +259,9 @@ constrained scale. See the
 for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+default arguments. These values are also available via the
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
 \examples{
 \dontrun{
@@ -319,7 +330,7 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 fit_vb$summary()
 mcmc_hist(fit_vb$draws("theta"))
 
-# Run 'pathfinder' method, a new alternative to the variational method
+# Run the Pathfinder variational inference method
 fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 fit_pf$summary()
 mcmc_hist(fit_pf$draws("theta"))
@@ -394,6 +405,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-sample}},
 \code{\link{model-method-sample_mpi}},

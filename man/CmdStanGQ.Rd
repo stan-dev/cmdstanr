@@ -14,9 +14,11 @@ all of which have their own (linked) documentation pages.
 \subsection{Extract contents of generated quantities object}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return the generated quantities as a \code{\link[posterior:draws_array]{draws_array}}. \cr
+   \code{\link[=fit-method-fitted_params_files]{$fitted_params_files()}} \tab Return paths to the fitted-parameter CSV files. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
    \code{\link[=fit-method-num_chains]{$num_chains()}} \tab Return the number of logical chains. \cr
    \code{\link[=fit-method-num_procs]{$num_procs()}} \tab Return the number of physical CmdStan invocations. \cr
+   \code{\link[=fit-method-profiles]{$profiles()}} \tab Return profiling data. \cr
    \code{\link[=fit-method-code]{$code()}} \tab Return Stan code as a character vector. \cr
 }
 
@@ -24,6 +26,7 @@ all of which have their own (linked) documentation pages.
 
 \subsection{Summarize inferences}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-print]{$print()}} \tab Print a summary of the generated quantities. \cr
    \code{\link[=fit-method-summary]{$summary()}} \tab Run \code{\link[posterior:draws_summary]{posterior::summarise_draws()}}. \cr
 }
 
@@ -31,18 +34,38 @@ all of which have their own (linked) documentation pages.
 
 \subsection{Save fitted model object and temporary files}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-materialize]{$materialize()}} \tab Read all generated quantities into memory. \cr
    \code{\link[=fit-method-save_object]{$save_object()}} \tab Save fitted model object to a file. \cr
+   \code{\link[=fit-method-output_files]{$output_files()}} \tab Return paths to output CSV files. \cr
    \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
+   \code{\link[=fit-method-data_file]{$data_file()}} \tab Return the path to the JSON data file. \cr
    \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file to a specified location. \cr
+   \code{\link[=fit-method-profile_files]{$profile_files()}} \tab Return paths to profiling CSV files. \cr
+   \code{\link[=fit-method-save_profile_files]{$save_profile_files()}} \tab Save profiling CSV files to a specified location. \cr
 }
 
 }
 
 \subsection{Report run times, console output, return codes}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
-   \code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
+   \code{\link[=fit-method-time]{$time()}} \tab Report total and logical-chain run times. \cr
    \code{\link[=fit-method-output]{$output()}} \tab Return raw invocation output or print chain-attributed lines. \cr
    \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
+}
+
+}
+
+\subsection{Expose Stan functions and additional methods to R}{\tabular{ll}{
+   \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-expose_functions]{$expose_functions()}} \tab Expose Stan functions for use in R. \cr
+   \code{\link[=fit-method-init_model_methods]{$init_model_methods()}} \tab Expose methods for log-probability, gradients, parameter constraining and unconstraining. \cr
+   \code{\link[=fit-method-log_prob]{$log_prob()}} \tab Calculate log-prob. \cr
+   \code{\link[=fit-method-grad_log_prob]{$grad_log_prob()}} \tab Calculate log-prob and gradient. \cr
+   \code{\link[=fit-method-hessian]{$hessian()}} \tab Calculate log-prob, gradient, and Hessian. \cr
+   \code{\link[=fit-method-constrain_variables]{$constrain_variables()}} \tab Transform a set of unconstrained parameter values to the constrained scale. \cr
+   \code{\link[=fit-method-unconstrain_variables]{$unconstrain_variables()}} \tab Transform a set of parameter values to the unconstrained scale. \cr
+   \code{\link[=fit-method-unconstrain_draws]{$unconstrain_draws()}} \tab Transform all parameter draws to the unconstrained scale. \cr
+   \code{\link[=fit-method-variable_skeleton]{$variable_skeleton()}} \tab Helper function to re-structure a vector of constrained parameter values. \cr
 }
 
 }

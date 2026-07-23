@@ -24,18 +24,25 @@ generate_quantities(
 \item{fitted_params}{(multiple options) The parameter draws to use. One of
 the following:
 \itemize{
-\item A \link{CmdStanMCMC} or \link{CmdStanVB} fitted model object.
-\item A \link[posterior:draws_array]{posterior::draws_array} (for MCMC) or \link[posterior:draws_matrix]{posterior::draws_matrix} (for
-VB) object returned by CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
+\item A \link{CmdStanMCMC}, \link{CmdStanMLE}, \link{CmdStanLaplace}, \link{CmdStanVB}, or
+\link{CmdStanPathfinder} fitted model object.
+\item A \link[posterior:draws_array]{posterior::draws_array} or \link[posterior:draws_matrix]{posterior::draws_matrix} object returned by
+CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
 \item A character vector of paths to CmdStan CSV output files.
 }
 
-NOTE: if you plan on making many calls to \verb{$generate_quantities()} then the
-most efficient option is to pass the paths of the CmdStan CSV output files
-(this avoids CmdStanR having to rewrite the draws contained in the fitted
-model object to CSV each time). If you no longer have the CSV files you can
-use \code{\link[=draws_to_csv]{draws_to_csv()}} once to write them and then pass the resulting file
-paths to \verb{$generate_quantities()} as many times as needed.}
+For a \link{CmdStanMLE} object, optimization supplies one point estimate, so
+generated quantities that use RNG functions produce only one simulation.
+For \link{CmdStanLaplace}, \link{CmdStanVB}, and \link{CmdStanPathfinder} objects, generated
+quantities are evaluated once per approximate draw.
+
+NOTE: CmdStan CSV paths are used directly. A \link{CmdStanMCMC} object also reuses
+its original output files when they are available. If any of those files are
+unavailable, CmdStanR writes the in-memory draws to temporary CSV files.
+Other fitted model objects and posterior draws objects are converted to
+temporary CSV files on each call. For repeated calls that require this
+conversion, we recommend using \code{\link[=draws_to_csv]{draws_to_csv()}} once and passing the
+resulting paths to \verb{$generate_quantities()}.}
 
 \item{data}{(multiple options) The data to use for the variables specified in
 the data block of the Stan program. One of the following:
@@ -50,18 +57,18 @@ appendices in the CmdStan guide for details on using these formats.
 \item \code{NULL} or an empty list if the Stan program has no data block.
 }}
 
-\item{seed}{(positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-In the case of multi-chain sampling the single \code{seed} will automatically be
-augmented by the the run (chain) ID so that each chain uses a different
-seed. The exception is the transformed data block, which defaults to using
-same seed for all chains so that the same data is generated for all chains
-if RNG functions are used. The only time \code{seed} should be specified as a
-vector (one element per chain) is if RNG functions are used in transformed
-data and the goal is to generate \emph{different} data for each chain. Vector
-seeds retain this behavior when the method uses one CmdStan invocation per
-chain. In threaded multi-chain sampling or standalone generated quantities,
-all chains belong to one invocation, so CmdStanR uses the first value for
-every chain and warns about the effective seed.}
+\item{seed}{(non-negative integer(s)) A seed for the (P)RNG to pass to
+CmdStan. In the case of multi-chain sampling the single \code{seed} will
+automatically be augmented by the run (chain) ID so that each chain uses a
+different seed. The exception is the transformed data block, which defaults
+to using the same seed for all chains so that the same data is generated for
+all chains if RNG functions are used. The only time \code{seed} should be
+specified as a vector (one element per chain) is if RNG functions are used
+in transformed data and the goal is to generate \emph{different} data for each
+chain. Vector seeds retain this behavior when the method uses one CmdStan
+invocation per chain. In threaded multi-chain sampling or standalone
+generated quantities, all chains belong to one invocation, so CmdStanR uses
+the first value for every chain and warns about the effective seed.}
 
 \item{output_dir}{(string) A path to a directory where CmdStan should write
 its output CSV files. For MCMC and standalone generated quantities there
@@ -83,14 +90,15 @@ corresponding to the defaults used by \verb{$save_output_files()}.
 
 \item{output_basename}{(string) A string to use as a prefix for the names of
 the output CSV files of CmdStan. If \code{NULL} (the default), the basename of
-the output CSV files will be comprised from the model name, timestamp, and
-5 random characters.}
+the output CSV files is composed of the model name, timestamp, and a
+six-character random hexadecimal suffix.}
 
-\item{sig_figs}{(positive integer) The number of significant figures used
-when storing the output values. By default, CmdStan represent the output
-values with 6 significant figures. The upper limit for \code{sig_figs} is 18.
-Increasing this value will result in larger output CSV files and thus an
-increased usage of disk space.}
+\item{sig_figs}{(positive integer) The number of significant figures (up to a
+maximum of 18) to use when storing the output values. If \code{NULL} (the
+default), the default from the installed CmdStan version is used. Use
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} to check that
+default. Increasing this value will result in larger output CSV files and
+thus an increased usage of disk space.}
 
 \item{parallel_chains}{(positive integer) For an executable without threading
 support, the \emph{maximum} number of MCMC chain processes to run in parallel.
@@ -144,6 +152,11 @@ A threaded executable processes every fitted-parameter chain in one
 CmdStan invocation and still writes one generated-quantities CSV per
 logical chain. An unthreaded executable retains one invocation per chain,
 scheduled up to \code{parallel_chains} at a time.
+
+Any argument left as \code{NULL} will default to the default value used by the
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+default arguments. These values are also available via the
+\code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
 \examples{
 \dontrun{
@@ -208,6 +221,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

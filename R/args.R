@@ -155,7 +155,14 @@ CmdStanArgs <- R6::R6Class(
       }
 
       if (!is.null(self$init)) {
-        args$init <- paste0("init=", wsl_safe_path(self$init[idx]))
+        # CmdStan runs all Pathfinder paths in one process. When there is one
+        # init file per path, CmdStan expects one comma-separated argument.
+        init <- if (inherits(self$method_args, "PathfinderArgs")) {
+          self$init
+        } else {
+          self$init[idx]
+        }
+        args$init <- paste0("init=", paste(wsl_safe_path(init), collapse = ","))
       }
 
       if (!is.null(self$data_file)) {
@@ -1289,9 +1296,21 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
   return(init_draws_lst)
 }
 
-#' Performs PSIS resampling on the draws from an approxmation method for inits.
+#' Resample draws from an approximation fit to use as initial values.
+#'
+#' Selects `num_procs` distinct candidates by resampling the draws without
+#' replacement. Weights are the (optionally Pareto-smoothed) importance weights,
+#' or uniform if CmdStan already PSIS-resampled the draws.
+#'
+#' Two kinds of uniqueness are used here and should not be conflated. Distinct
+#' parameter vectors (`num_candidates`, via `vec_group_id()`) identify the
+#' initialization candidates: they set how many distinct inits are available and
+#' which draws are duplicates to collapse. Distinct log weights
+#' (`num_unique_log_weights`) are used only to decide whether to Pareto-smooth
+#' the importance weights.
 #' @noRd
-#' @param init A set of draws with `lp__` and `lp_approx__` columns.
+#' @param init A fitted `CmdStanVB`, `CmdStanLaplace`, or `CmdStanPathfinder`
+#'   object, whose draws include `lp__` and `lp_approx__` columns.
 #' @param num_procs Number of inits requested
 #' @param model_variables  A list of all parameters with their types and
 #'   number of dimensions. Typically the output of `model$variables()$parameters`.
@@ -1299,51 +1318,87 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
-#' @importFrom stats aggregate
 process_init_approx <- function(init, num_procs, model_variables = NULL,
                                 warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                 ...) {
   validate_fit_init(init, model_variables)
-  # Convert from data.table to data.frame
   draws_df <- init$draws(format = "df")
-  draws_df$lw <- draws_df$lp__ - draws_df$lp_approx__
-  # Replace NaN and Inf with -Inf
-  draws_df$lw[!is.finite(draws_df$lw)] <- -Inf
-  # Calculate unique draws based on 'lw' using base R functions
-  unique_draws <- length(unique(draws_df$lw))
-  if (num_procs > unique_draws) {
+  if (is.null(model_variables)) {
+    model_variables <- model_variables_from_draws(draws_df)
+  }
+  init_variables <- matching_variables(
+    names(model_variables$parameters),
+    posterior::variables(draws_df)
+  )$matching
+
+  # Assign each draw a candidate id, grouping draws with identical parameter
+  # values (vec_group_id() stays efficient even with many parameter columns). We
+  # need to know the number of distinct candidates to check that we can resample
+  # enough for num_procs. We also use this later to collapse duplicates and sum
+  # their weights.
+  candidate_id <- vctrs::vec_group_id(
+    as.data.frame(draws_df)[, init_variables, drop = FALSE]
+  )
+  num_candidates <- attr(candidate_id, "n")
+
+  # resample_draws() needs num_procs distinct candidates
+  if (num_procs > num_candidates) {
     if (inherits(init, "CmdStanPathfinder")) {
       algo_name <- " Pathfinder "
       extra_msg <- " Try running Pathfinder with psis_resample=FALSE."
     } else if (inherits(init, "CmdStanVB")) {
-      algo_name <- " CmdStanVB "
+      algo_name <- " VB "
       extra_msg <- ""
     } else if (inherits(init, "CmdStanLaplace")) {
-      algo_name <- " CmdStanLaplace "
+      algo_name <- " Laplace "
       extra_msg <- ""
     } else {
       algo_name <- ""
       extra_msg <- ""
     }
     stop(paste0("Not enough distinct draws (", num_procs, ") in", algo_name ,
-      "fit to create inits.", extra_msg))
+                "fit to create inits.", extra_msg))
   }
-  if (unique_draws < (0.95 * nrow(draws_df))) {
-    temp_df <- stats::aggregate(.draw ~ lw, data = draws_df, FUN = min)
-    draws_df <- posterior::as_draws_df(merge(temp_df, draws_df, by = 'lw'))
-    draws_df$weight <- exp(draws_df$lw - max(draws_df$lw))
+
+  # CmdStan PSIS-resamples Pathfinder draws only with multiple paths and lp weights
+  pathfinder_resampled <- FALSE
+  if (inherits(init, "CmdStanPathfinder")) {
+    metadata <- init$metadata()
+    pathfinder_resampled <- metadata$num_paths > 1 &&
+      metadata$psis_resample &&
+      metadata$calculate_lp
+  }
+  log_weights <- draws_df$lp__ - draws_df$lp_approx__
+  log_weights[!is.finite(log_weights)] <- -Inf   # non-finite -> zero selection weight
+  num_unique_log_weights <- length(unique(log_weights))
+
+  # Selection weights for resampling.
+  # The Pareto-smoothing test keys off distinct log weights, not num_candidates
+  if (pathfinder_resampled) {
+    # already PSIS-resampled by CmdStan, so use equal weights here
+    weights <- rep(1.0, nrow(draws_df))
+  } else if (num_unique_log_weights < (0.95 * nrow(draws_df))) {
+    # weights already degenerate (many ties), so skip smoothing
+    weights <- exp(log_weights - max(log_weights))
   } else {
-      draws_df$weight <- posterior::pareto_smooth(
-        exp(draws_df$lw - max(draws_df$lw)), tail = "right", r_eff=1, return_k=FALSE)
+    weights <- posterior::pareto_smooth(
+      exp(log_weights - max(log_weights)), tail = "right", r_eff=1, return_k=FALSE)
   }
-    init_draws_df <- posterior::resample_draws(draws_df, ndraws = num_procs,
-                                              weights = draws_df$weight, method = "simple_no_replace")
-    init_draws_df <- posterior::subset_draws(init_draws_df,
-      variable = setdiff(posterior::variables(init_draws_df), c("lw", "weight")))
-    init_draws_lst <- process_init(init_draws_df,
-                                  num_procs = num_procs, model_variables = model_variables, warn_partial)
-    return(init_draws_lst)
+  if (num_candidates < nrow(draws_df)) {
+    # Collapse duplicate candidates to one row, summing their weights so a vector
+    # seen k times keeps k times the selection mass.
+    draws_df <- draws_df[!duplicated(candidate_id), , drop = FALSE]
+    weights <- unname(drop(rowsum(weights, candidate_id, reorder = FALSE)))
   }
+  init_draws_df <- posterior::resample_draws(draws_df, ndraws = num_procs,
+                                             weights = weights, method = "simple_no_replace")
+  process_init(
+    init_draws_df,
+    num_procs = num_procs,
+    model_variables = model_variables,
+    warn_partial
+  )
+}
 
 #' Write initial values to files if provided as a `CmdStanPathfinder` class
 #' @noRd
@@ -1473,8 +1528,8 @@ validate_init <- function(init, num_procs) {
          call. = FALSE)
   } else if (is.character(init)) {
     if (length(init) != 1 && length(init) != num_procs) {
-      stop("If 'init' is specified as a character vector it must have ",
-           "length 1 or number of chains.",
+      stop("If 'init' is specified as a character vector, its length must be ",
+           "1 or equal to the number of chains or Pathfinder paths.",
            call. = FALSE)
     }
     assert_file_exists(init, access = "r")

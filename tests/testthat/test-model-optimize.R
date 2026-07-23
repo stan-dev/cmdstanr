@@ -11,7 +11,6 @@ ok_arg_values <- list(
   algorithm = "lbfgs",
   iter = 100,
   init_alpha = 0.002,
-  save_latent_dynamics = FALSE,
   jacobian = TRUE
 )
 
@@ -24,7 +23,6 @@ bad_arg_values <- list(
   algorithm = "NOT_AN_ALGORITHM",
   iter = -20,
   init_alpha = -20,
-  save_latent_dynamics = "NOT_LOGICAL",
   jacobian = 30
 )
 
@@ -35,8 +33,7 @@ ok_arg_sci_nota_values <- list(
   seed = 12345,
   algorithm = "lbfgs",
   iter = 100000,
-  init_alpha = 0.002,
-  save_latent_dynamics = FALSE
+  init_alpha = 0.002
 )
 
 

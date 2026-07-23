@@ -13,8 +13,9 @@
 #'   To print the Stan code for a given `example` use
 #'   `print_example_program(example)`.
 #'
-#' @param method (string) Which fitting method should be used? The default is
-#'   the `"sample"` method (MCMC).
+#' @param method (string) The fitting method to use. One of `"sample"`,
+#'   `"optimize"`, `"laplace"`, `"variational"`, `"pathfinder"`, or
+#'   `"diagnose"`. The default is `"sample"` (MCMC).
 #' @param ... Arguments passed to the chosen `method`. See the help pages for
 #'   the individual methods for details.
 #' @param quiet (logical) If `TRUE` (the default) then fitting the model is
@@ -22,7 +23,12 @@
 #' @param force_recompile Passed to the [$compile()][model-method-compile] method.
 #'
 #' @return
-#' The fitted model object returned by the selected `method`.
+#' `cmdstanr_example()` returns the fitted model object from the selected
+#' `method`. `print_example_program()` invisibly returns `NULL` after printing
+#' the Stan code.
+#'
+#' @seealso [cmdstan_model()] for fitting your own Stan programs and
+#'   [print_stan_file()] for displaying Stan source files
 #'
 #' @examples
 #' \dontrun{

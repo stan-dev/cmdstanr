@@ -9,18 +9,18 @@
 #'   appendices in the CmdStan guide for details on using these formats.
 #'  * `NULL` or an empty list if the Stan program has no data block.
 #'
-#' @param seed (positive integer(s)) A seed for the (P)RNG to pass to CmdStan.
-#'   In the case of multi-chain sampling the single `seed` will automatically be
-#'   augmented by the the run (chain) ID so that each chain uses a different
-#'   seed. The exception is the transformed data block, which defaults to using
-#'   same seed for all chains so that the same data is generated for all chains
-#'   if RNG functions are used. The only time `seed` should be specified as a
-#'   vector (one element per chain) is if RNG functions are used in transformed
-#'   data and the goal is to generate *different* data for each chain. Vector
-#'   seeds retain this behavior when the method uses one CmdStan invocation per
-#'   chain. In threaded multi-chain sampling or standalone generated quantities,
-#'   all chains belong to one invocation, so CmdStanR uses the first value for
-#'   every chain and warns about the effective seed.
+#' @param seed (non-negative integer(s)) A seed for the (P)RNG to pass to
+#'   CmdStan. In the case of multi-chain sampling the single `seed` will
+#'   automatically be augmented by the run (chain) ID so that each chain uses a
+#'   different seed. The exception is the transformed data block, which defaults
+#'   to using the same seed for all chains so that the same data is generated for
+#'   all chains if RNG functions are used. The only time `seed` should be
+#'   specified as a vector (one element per chain) is if RNG functions are used
+#'   in transformed data and the goal is to generate *different* data for each
+#'   chain. Vector seeds retain this behavior when the method uses one CmdStan
+#'   invocation per chain. In threaded multi-chain sampling or standalone
+#'   generated quantities, all chains belong to one invocation, so CmdStanR uses
+#'   the first value for every chain and warns about the effective seed.
 #'
 #' @param refresh (non-negative integer) The number of iterations between
 #'   printed screen updates. If `refresh = 0`, only error messages will be
@@ -29,56 +29,57 @@
 #' @param init (multiple options) The initialization method to use for the
 #'   variables declared in the parameters block of the Stan program. One of the
 #'   following:
-#'  * A real number `x>0`. This initializes _all_ parameters randomly between
-#'  `[-x,x]` on the _unconstrained_ parameter space.
-#'  * The number `0`. This initializes _all_ parameters to `0`.
-#'  * A character vector of paths (one per chain) to JSON or Rdump files
-#'  containing initial values for all or some parameters. See
+#'  * A real number `x > 0`. This initializes _all_ parameters randomly between
+#'  `[-x, x]` on the _unconstrained_ parameter space.
+#'  * The number `0`. This initializes _all_ parameters to `0` on the
+#'  _unconstrained_ parameter space.
+#'  * A character vector of paths to JSON or Rdump files containing initial
+#'  values for all or some parameters. For MCMC and Pathfinder, if only a single
+#'  file is provided it will be reused for all chains and paths. See
 #'  [write_stan_json()] to write \R objects to JSON files compatible with
 #'  CmdStan.
 #'  * A list of lists containing initial values for all or some parameters. For
-#'  MCMC the list should contain a sublist for each chain. For other model
-#'  fitting methods there should be just one sublist. The sublists should have
-#'  named elements corresponding to the parameters for which you are specifying
-#'  initial values. See **Examples**.
+#'  MCMC the list should contain a sublist for each chain, and for Pathfinder it
+#'  should contain a sublist for each path. For other model fitting methods
+#'  there should be just one sublist. The sublists should have named elements
+#'  corresponding to the parameters for which you are specifying initial
+#'  values. See **Examples**.
 #'  * A function that returns a single list with names corresponding to the
 #'  parameters for which you are specifying initial values. The function can
-#'  take no arguments or a single argument `chain_id`. For MCMC, if the function
-#'  has argument `chain_id` it will be supplied with the chain id (from 1 to
-#'  number of chains) when called to generate the initial values. See
-#'  **Examples**.
+#'  take no arguments or a single argument `chain_id`. For MCMC and Pathfinder,
+#'  the function is called once for each chain or path. If the function has the
+#'  `chain_id` argument, it receives the chain or path number, starting at 1.
+#'  See **Examples**.
 #'  * A [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanPathfinder`],
 #'  or [`CmdStanLaplace`] fit object. If the fit object's parameters are only a
 #'  subset of the model parameters then the other parameters will be drawn by
 #'  Stan's default initialization. The fit object must have at least some
 #'  parameters that are the same name and dimensions as the current Stan model.
-#'  For the `sample` and `pathfinder` method, if the fit object has fewer draws
-#'  than the requested number of chains/paths then the inits will be drawn using
-#'  sampling with replacement. Otherwise sampling without replacement will be
-#'  used. When a [`CmdStanPathfinder`] fit object is used as the init, if
-#'  `psis_resample` was set to `FALSE` and `calculate_lp` was set to `TRUE`
-#'  (default), then resampling without replacement with Pareto smoothed weights
-#'  will be used. If `psis_resample` was set to `TRUE` or `calculate_lp` was set
-#'  to `FALSE` then sampling without replacement with uniform weights will be
-#'  used to select the draws. PSIS resampling is used to select the draws for
-#'  [`CmdStanVB`], and [`CmdStanLaplace`] fit objects.
+#'  For the `sample` and `pathfinder` methods, which need one initialization per
+#'  chain or path, the inits are drawn from the fit object without replacement,
+#'  so it must contain at least as many draws as the number of chains/paths. For
+#'  [`CmdStanVB`], [`CmdStanLaplace`], and [`CmdStanPathfinder`] fit objects the
+#'  draws must additionally be _distinct_. A [`CmdStanMLE`] fit object is the
+#'  exception: its single draw (the mode) is used to initialize every chain or
+#'  path. When a [`CmdStanPathfinder`] fit object is used as the init, if
+#'  CmdStan actually performed PSIS resampling (which requires `num_paths > 1`,
+#'  `psis_resample = TRUE`, and `calculate_lp = TRUE`), CmdStanR selects from
+#'  the returned draws using uniform weights to avoid applying importance
+#'  weights again. If CmdStan did not PSIS-resample the output and
+#'  `calculate_lp = TRUE`, CmdStanR selects draws using Pareto-smoothed
+#'  importance weights. This includes single-path fits with
+#'  `psis_resample = TRUE`, because CmdStan does not PSIS-resample single-path
+#'  output. If `calculate_lp = FALSE`, uniform weights are used because
+#'  importance weights cannot be calculated. PSIS resampling is used to select
+#'  the draws for [`CmdStanVB`], and [`CmdStanLaplace`] fit objects.
 #'  * A type inheriting from `posterior::draws`. If the draws object has fewer
-#'  draws than the number of requested chains/paths then the inits will be
-#'  drawn using sampling with replacement. Otherwise sampling without
-#'  replacement will be used. If the draws object's parameters are only a subset
-#'  of the model parameters then the other parameters will be drawn by Stan's
-#'  default initialization. The fit object must have at least some parameters
+#'  draws than the number of requested chains/paths, the draws are reused in
+#'  their existing order until each chain/path has an initialization. If there
+#'  are more draws than requested chains/paths, draws are selected uniformly
+#'  without replacement. If the draws object's parameters are only a subset of
+#'  the model parameters then the other parameters will be drawn by Stan's
+#'  default initialization. The draws object must have at least some parameters
 #'  that are the same name and dimensions as the current Stan model.
-#'
-#' @param save_latent_dynamics (logical) Should auxiliary diagnostic information
-#'   about the latent dynamics be written to temporary diagnostic CSV files?
-#'   This argument replaces CmdStan's `diagnostic_file` argument and the content
-#'   written to CSV is controlled by the user's CmdStan installation and not
-#'   CmdStanR (for some algorithms no content may be written). The default is
-#'   `FALSE`, which is appropriate for almost every use case. To save the
-#'   temporary files created when `save_latent_dynamics=TRUE` see the
-#'   [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files]
-#'   method.
 #'
 #' @param output_dir (string) A path to a directory where CmdStan should write
 #'   its output CSV files. For MCMC and standalone generated quantities there
@@ -99,14 +100,15 @@
 #'
 #' @param output_basename (string) A string to use as a prefix for the names of
 #'   the output CSV files of CmdStan. If `NULL` (the default), the basename of
-#'   the output CSV files will be comprised from the model name, timestamp, and
-#'   5 random characters.
+#'   the output CSV files is composed of the model name, timestamp, and a
+#'   six-character random hexadecimal suffix.
 #'
-#' @param sig_figs (positive integer) The number of significant figures used
-#'   when storing the output values. By default, CmdStan represent the output
-#'   values with 6 significant figures. The upper limit for `sig_figs` is 18.
-#'   Increasing this value will result in larger output CSV files and thus an
-#'   increased usage of disk space.
+#' @param sig_figs (positive integer) The number of significant figures (up to a
+#'   maximum of 18) to use when storing the output values. If `NULL` (the
+#'   default), the default from the installed CmdStan version is used. Use
+#'   [`$cmdstan_defaults()`][model-method-cmdstan_defaults] to check that
+#'   default. Increasing this value will result in larger output CSV files and
+#'   thus an increased usage of disk space.
 #'
 #' @param opencl_ids (integer vector of length 2) The platform and device IDs of
 #'   the OpenCL device to use for fitting. The model must be compiled with

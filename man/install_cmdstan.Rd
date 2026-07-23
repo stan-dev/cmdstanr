@@ -35,7 +35,7 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 \arguments{
 \item{dir}{(string) The path to the directory in which to install CmdStan.
 The default is to install it in a directory called \code{.cmdstan} within the
-user's home directory (i.e, \code{file.path(Sys.getenv("HOME"), ".cmdstan")}).}
+user's home directory (i.e., \code{file.path(Sys.getenv("HOME"), ".cmdstan")}).}
 
 \item{cores}{(integer) The number of CPU cores to use to parallelize building
 CmdStan and speed up installation. If \code{cores} is not specified then the
@@ -55,7 +55,8 @@ is \code{FALSE}, in which case an informative error is thrown instead of
 overwriting the user's installation.}
 
 \item{timeout}{(positive real) Timeout (in seconds) for the build stage of
-the installation.}
+the installation. The default is 1200 seconds for \code{install_cmdstan()} and
+600 seconds for \code{rebuild_cmdstan()}.}
 
 \item{version}{(string) The CmdStan release version to install. The default
 is \code{NULL}, which downloads the latest stable release from
@@ -63,13 +64,13 @@ is \code{NULL}, which downloads the latest stable release from
 
 \item{release_url}{(string) The URL for the specific CmdStan release or
 release candidate to install. See \url{https://github.com/stan-dev/cmdstan/releases}.
-The URL should point to the tarball (\code{.tar.gz.} file) itself, e.g.,
+The URL should point to the tarball (\code{.tar.gz} file) itself, e.g.,
 \code{release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.38.0/cmdstan-2.38.0.tar.gz"}.
 If both \code{version} and \code{release_url} are specified then \code{version} will be used.}
 
 \item{release_file}{(string) A file path to a CmdStan release tar.gz file
 downloaded from the releases page: \url{https://github.com/stan-dev/cmdstan/releases}.
-For example: \verb{release_file=""./cmdstan-2.38.0.tar.gz"}. If \code{release_file} is
+For example: \code{release_file="./cmdstan-2.38.0.tar.gz"}. If \code{release_file} is
 specified then both \code{release_url} and \code{version} will be ignored.}
 
 \item{cpp_options}{(list) Any makefile flags/variables to be written to
@@ -77,7 +78,7 @@ the \code{make/local} file. For example, \code{list("CXX" = "clang++")} will for
 the use of clang for compilation.}
 
 \item{check_toolchain}{(logical) Should \code{install_cmdstan()} attempt to check
-that the required toolchain is installed and properly configured. The
+that the required toolchain is installed and properly configured? The
 default is \code{TRUE}.}
 
 \item{wsl}{(logical) Should CmdStan be installed and run through the Windows
@@ -87,12 +88,15 @@ Subsystem for Linux (WSL). The default is \code{FALSE}.}
 makefile flags be appended to the end of the existing \code{make/local} file?
 The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
 
-\item{fix}{As of v1.0 this argument is deprecated and ignored and only
-retained for compatibility.}
+\item{fix}{Deprecated and will be removed in a future release. This argument
+is ignored and retained only for compatibility.}
 }
 \value{
-For \code{cmdstan_make_local()}, if \code{cpp_options=NULL} then the existing
-contents of \code{make/local} are returned without writing anything, otherwise
+If a build fails or times out, \code{install_cmdstan()} issues a warning and
+invisibly returns the process result.
+
+For \code{cmdstan_make_local()}, if \code{cpp_options = NULL} then the existing
+contents of \code{make/local} are returned without writing anything; otherwise,
 the updated contents are returned.
 }
 \description{
@@ -137,4 +141,8 @@ cpp_options <- list(
 # rebuild_cmdstan()
 }
 
+}
+\seealso{
+\code{\link[=set_cmdstan_path]{set_cmdstan_path()}}, \code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}, and
+\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}
 }

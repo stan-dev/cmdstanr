@@ -2,9 +2,9 @@
 #' CmdStanFit superclass
 #'
 #' @noRd
-#' @description CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, CmdStanGQ
-#'   all share the methods of the superclass CmdStanFit and also have their own
-#'   unique methods.
+#' @description CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB,
+#'   CmdStanPathfinder, and CmdStanGQ all share the methods of the superclass
+#'   CmdStanFit and also have their own unique methods.
 #'
 CmdStanFit <- R6::R6Class(
   classname = "CmdStanFit",
@@ -123,20 +123,18 @@ NULL
 #'
 #' @name fit-method-materialize
 #' @aliases materialize
-#' @description This method collects all posterior draws and diagnostics of a fitted
-#'   model object into R, since the contents of the CmdStan output CSV files are only
-#'   read into R lazily (i.e., as needed).
+#' @description This method collects all posterior draws and diagnostics of a
+#'   fitted model object into \R, since the contents of the CmdStan output CSV
+#'   files are only read into \R lazily (i.e., as needed).
 #'
+#' @return The fitted model object, invisibly.
 #'
 #' @seealso [`save_object`]
 #'
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic")
-#' object.size(fit)
-#'
 #' fit$materialize()
-#' object.size(fit)
 #' }
 #'
 materialize <- function() {
@@ -148,41 +146,52 @@ materialize <- function() {
 }
 CmdStanFit$set("public", name = "materialize", value = materialize)
 
+
 #' Save fitted model object to a file
 #'
 #' @name fit-method-save_object
 #' @aliases save_object
-#' @description This method is a wrapper around [base::saveRDS()] that ensures
-#'   that all posterior draws and diagnostics are saved when saving a fitted
-#'   model object. Because the contents of the CmdStan output CSV files are only
-#'   read into R lazily (i.e., as needed), the `$save_object()` method is the
-#'   safest way to guarantee that everything has been read in before saving.
+#' @description This method calls [`$materialize()`][fit-method-materialize]
+#'   internally to ensure that all posterior draws and diagnostics are saved
+#'   when saving a fitted model object. Because the contents of the CmdStan
+#'   output CSV files are only read into R lazily (i.e., as needed), the
+#'   `$save_object()` method is the safest way to guarantee that everything has
+#'   been read in before saving.
 #'
-#'   If you have a big object to save, use `format = "qs2"` to save using the
-#'   **qs2** package.
-#'
-#'   See the "Saving fitted model objects" section of the
-#'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
-#'   vignette for some suggestions on faster model saving for large models.
+#'   By default objects are saved using [base::saveRDS()]. If you have a big
+#'   object to save, we recommend setting `format = "qs2"`, which is faster and
+#'   more memory efficient. Internally this will use `qs2::qs_save()` to save
+#'   the object and you can read it back into \R later with `qs2::qs_read()`.
 #'
 #' @param file (string) Path where the file should be saved.
 #' @param format (string) Serialization format for the object. The default is
-#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the **qs2**
-#'   package.
+#'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the
+#'   \pkg{qs2} package.
 #' @param ... Other arguments to pass to [base::saveRDS()] (for `format = "rds"`)
 #'   or `qs2::qs_save()` (for `format = "qs2"`).
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`], [`materialize`]
+#' @return The fitted model object, invisibly.
+#'
+#' @seealso [`materialize`]
 #'
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic")
 #'
-#' temp_rds_file <- tempfile(fileext = ".RDS")
+#' # using default format = "rds"
+#' temp_rds_file <- tempfile(fileext = ".rds")
 #' fit$save_object(file = temp_rds_file)
 #' rm(fit)
 #'
 #' fit <- readRDS(temp_rds_file)
+#' fit$summary()
+#'
+#' # using format = "qs2"
+#' temp_qs2_file <- tempfile(fileext = ".qs2")
+#' fit$save_object(file = temp_qs2_file, format = "qs2")
+#' rm(fit)
+#'
+#' fit <- qs2::qs_read(temp_qs2_file)
 #' fit$summary()
 #' }
 #'
@@ -205,13 +214,16 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'
 #' @name fit-method-draws
 #' @aliases draws
-#' @description Extract posterior draws after MCMC or approximate posterior
-#'   draws after variational approximation using formats provided by the
-#'   \pkg{posterior} package.
+#' @description Extract draws or point estimates from fitted model objects using
+#'   formats provided by the \pkg{posterior} package. Depending on the fitting
+#'   method, these are posterior draws from MCMC, approximate posterior draws
+#'   from variational inference, Laplace approximation, or Pathfinder,
+#'   standalone generated quantities, or a point estimate from optimization.
 #'
 #'   The variables include the parameters, transformed parameters, and
-#'   generated quantities from the Stan program as well as `lp__`, the total
-#'   log probability (`target`) accumulated in the model block.
+#'   generated quantities from the Stan program as well as `lp__`, the
+#'   target log density evaluated by Stan, up to an additive constant. See
+#'   [`$lp()`][fit-method-lp] for details.
 #'
 #' @inheritParams read_cmdstan_csv
 #' @param inc_warmup (logical) Should warmup draws be included? Defaults to
@@ -226,8 +238,8 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   `"draws_matrix"`).
 #'
 #'   * For point estimates from optimization and approximate draws from
-#'   variational inference the default is
-#'   [`"draws_matrix"`][posterior::draws_array].
+#'   variational inference, Laplace approximation, and Pathfinder the default is
+#'   [`"draws_matrix"`][posterior::draws_matrix].
 #'
 #'   To use a different format it can be specified as the full name of the
 #'   format from the \pkg{posterior} package (e.g. `format = "draws_df"`) or
@@ -253,18 +265,20 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' * For standalone [generated quantities][model-method-generate-quantities], a
 #' 3-D [`draws_array`][posterior::draws_array] object (iteration x chain x
 #' variable).
-#' * For [variational inference][model-method-variational], a 2-D
-#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable) because
-#' there are no chains. An additional variable `lp_approx__` is also included,
-#' which is the log density of the variational approximation to the posterior
-#' evaluated at each of the draws.
+#' * For [variational inference][model-method-variational] and
+#' [Laplace approximation][model-method-laplace], a 2-D
+#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable). An
+#' additional variable `lp_approx__` containing the log density of the
+#' corresponding approximation is also included.
+#' * For [Pathfinder][model-method-pathfinder], a 2-D
+#' [`draws_matrix`][posterior::draws_matrix] object (draw x variable).
+#' Additional variables `lp_approx__` and `path__` are also included, with
+#' `path__` identifying the path associated with each draw.
 #' * For [optimization][model-method-optimize], a 1-row
 #' [`draws_matrix`][posterior::draws_matrix] with one column per variable. These
 #' are *not* actually draws, just point estimates stored in the `draws_matrix`
 #' format. See [`$mle()`][fit-method-mle] to extract them as a numeric vector.
 #'
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -338,8 +352,6 @@ CmdStanFit$set("public", name = "draws", value = draws)
 #'
 #' @return A list of lists. See **Examples**.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`]
-#'
 #' @examples
 #' \dontrun{
 #' init_fun <- function() list(alpha = rnorm(1), beta = rnorm(3))
@@ -391,6 +403,8 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
 #'
+#' @return `NULL`, invisibly.
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
@@ -430,8 +444,10 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'   `log_prob` function.
 #'
 #' @param unconstrained_variables (numeric) A vector of unconstrained parameters.
-#' @param jacobian (logical) Whether to include the log-density adjustments from
-#'   un/constraining variables.
+#' @param jacobian (logical) Whether to include the log-density adjustments
+#'   from constraining or unconstraining variables.
+#'
+#' @return A numeric scalar containing the log probability.
 #'
 #' @examples
 #' \dontrun{
@@ -439,7 +455,7 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' fit_mcmc$log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
 #'
-#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#' @seealso [grad_log_prob()], [constrain_variables()],
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
@@ -463,13 +479,16 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'   model's `log_prob` function and its derivative.
 #' @inheritParams fit-method-log_prob
 #'
+#' @return A numeric vector containing the gradient, with the log probability
+#'   stored in the `"log_prob"` attribute.
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$grad_log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
 #'
-#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
+#' @seealso [log_prob()], [constrain_variables()],
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
@@ -484,14 +503,17 @@ grad_log_prob <- function(unconstrained_variables, jacobian = TRUE) {
 }
 CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 
-#' Calculate the log-probability , the gradient w.r.t. each input, and the hessian
-#' for a given vector of unconstrained parameters
+#' Calculate the log-probability, the gradient w.r.t. each input, and the
+#' Hessian for a given vector of unconstrained parameters
 #'
 #' @name fit-method-hessian
 #' @aliases hessian
 #' @description The `$hessian()` method provides access to the Stan model's
-#'   `log_prob`, its derivative, and its hessian.
+#'   `log_prob`, its derivative, and its Hessian.
 #' @inheritParams fit-method-log_prob
+#'
+#' @return A named list with elements `log_prob`, `grad_log_prob`, and
+#'   `hessian`.
 #'
 #' @examples
 #' \dontrun{
@@ -501,8 +523,7 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
-#'   [hessian()]
+#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()]
 #'
 hessian <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
@@ -525,6 +546,8 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #' @param variables (list) A list of parameter values to transform, in the same
 #'   format as provided to the `init` argument of the `$sample()` method.
 #'
+#' @return A numeric vector of unconstrained parameter values.
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
@@ -532,8 +555,7 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
-#'   [hessian()]
+#'   [unconstrain_draws()], [variable_skeleton()], [hessian()]
 #'
 unconstrain_variables <- function(variables) {
   self$init_model_methods()
@@ -565,19 +587,21 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #' @name fit-method-unconstrain_draws
 #' @aliases unconstrain_draws
 #' @description The `$unconstrain_draws()` method transforms all parameter draws
-#'   to the unconstrained scale. The method returns a list for each chain,
-#'   containing the parameter values from each iteration on the unconstrained
-#'   scale. If called with no arguments, then the draws within the fit object
-#'   are unconstrained. Alternatively, either an existing draws object or a
-#'   character vector of paths to CSV files can be passed.
+#'   to the unconstrained scale. If called with no arguments, then the draws
+#'   within the fit object are unconstrained. Alternatively, either an existing
+#'   draws object or a character vector of paths to CSV files can be passed.
 #'
 #' @param files (character vector) The paths to the CmdStan CSV files. These can
 #'   be files generated by running CmdStanR or running CmdStan directly.
 #' @param draws A `posterior::draws_*` object.
 #' @param format (string) The format of the returned draws. Must be a valid
-#'   format from the \pkg{posterior} package.
-#' @param inc_warmup (logical) Should warmup draws be included? Defaults to
-#'  `FALSE`.
+#'   format from the \pkg{posterior} package. Defaults to
+#'   `getOption("cmdstanr_draws_format", "draws_array")`.
+#' @param inc_warmup (logical) Should warmup draws be included when using draws
+#'   from the fit object or CSV files? Defaults to `FALSE`. If `draws` is
+#'   supplied, `inc_warmup` is ignored with a message.
+#'
+#' @return A `posterior::draws_*` object in the format specified by `format`.
 #'
 #' @examples
 #' \dontrun{
@@ -594,8 +618,7 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
-#'   [hessian()]
+#'   [unconstrain_variables()], [variable_skeleton()], [hessian()]
 #'
 unconstrain_draws <- function(files = NULL, draws = NULL,
                               format = getOption("cmdstanr_draws_format", "draws_array"),
@@ -664,6 +687,9 @@ CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 #' @param generated_quantities (logical) Whether to include generated quantities
 #'   in the skeleton (defaults to `TRUE`).
 #'
+#' @return A named list suitable for use as the `skeleton` argument to
+#'   [utils::relist()].
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
@@ -671,8 +697,7 @@ CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
-#'   [hessian()]
+#'   [unconstrain_variables()], [unconstrain_draws()], [hessian()]
 #'
 variable_skeleton <- function(transformed_parameters = TRUE, generated_quantities = TRUE) {
   self$init_model_methods()
@@ -697,15 +722,17 @@ CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 #' @param generated_quantities (logical) Whether to return generated quantities
 #'   implied by newly-constrained parameters (defaults to TRUE).
 #'
+#' @return A named list of constrained parameter values and, if requested,
+#'   transformed parameters and generated quantities.
+#'
 #' @examples
 #' \dontrun{
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
 #' fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 #' }
 #'
-#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
-#'   [hessian()]
+#' @seealso [log_prob()], [grad_log_prob()], [unconstrain_variables()],
+#'   [unconstrain_draws()], [variable_skeleton()], [hessian()]
 #'
 constrain_variables <- function(unconstrained_variables, transformed_parameters = TRUE,
                                 generated_quantities = TRUE) {
@@ -728,12 +755,10 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'
 #' @name fit-method-lp
 #' @aliases lp lp_approx
-#' @description The `$lp()` method extracts `lp__`, the total log probability
-#'   (`target`) accumulated in the model block of the Stan program. For
-#'   variational inference the log density of the variational approximation to
-#'   the posterior is available via the `$lp_approx()` method. For
-#'   Laplace approximation the unnormalized density of the approximation to
-#'   the posterior is available via the `$lp_approx()` method.
+#' @description The `$lp()` method extracts `lp__`, the target log density
+#'   evaluated by Stan, up to an additive constant. For variational inference,
+#'   Laplace approximation, and Pathfinder, the log density of the corresponding
+#'   approximating distribution is available via `$lp_approx()`.
 #'
 #'   See the [Increment log density and Distribution
 #'   Statements](https://mc-stan.org/docs/reference-manual/statements.html)
@@ -741,20 +766,33 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'   constants are dropped from log probability calculations.
 #'
 #' @section Details:
-#' `lp__` is the unnormalized log density on Stan's [unconstrained
-#' space](https://mc-stan.org/docs/2_23/reference-manual/variable-transforms-chapter.html).
-#' This will in general be different than the unnormalized model log density
-#' evaluated at a posterior draw (which is on the constrained space). `lp__` is
-#' intended to diagnose sampling efficiency and evaluate approximations.
+#' The target includes all contributions to the log probability, which can come
+#' from the transformed parameters and model blocks, including certain
+#' user-defined functions. The exact target represented by `lp__` depends on the
+#' inference method:
+#'
+#' * For MCMC sampling, variational inference, Pathfinder, and diagnostic mode,
+#'   `lp__` is the log density on Stan's [unconstrained
+#'   space](https://mc-stan.org/docs/reference-manual/transforms.html)
+#'   and includes the Jacobian adjustments for constrained parameters.
+#' * For optimization and Laplace approximation, whether the Jacobian adjustments
+#'   are included depends on the `jacobian` argument.
+#'
+#' For MCMC, `lp__` can be used to diagnose sampling efficiency; for
+#' approximation methods, it can be used to evaluate the approximation.
 #'
 #' For variational inference `lp_approx__` is the log density of the variational
 #' approximation to `lp__` (also on the unconstrained space). It is exposed in
 #' the variational method for performing the checks described in Yao et al.
 #' (2018) and implemented in the \pkg{loo} package.
 #'
-#' For Laplace approximation `lp_approx__` is the unnormalized density of the
-#' Laplace approximation. It can be used to perform the same checks as in the
-#' case of the variational method described in Yao et al. (2018).
+#' For Laplace approximation `lp_approx__` is CmdStan's `log_q__`: the
+#' unnormalized log density of the normal approximation on the unconstrained
+#' space. It can be used to perform the same checks as in the case of the
+#' variational method described in Yao et al. (2018).
+#'
+#' For Pathfinder `lp_approx__` is the log density of the approximating
+#' distribution on the unconstrained space.
 #'
 #' @return A numeric vector with length equal to the number of (post-warmup)
 #'   draws or length equal to `1` for optimization.
@@ -763,8 +801,6 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #' Yao, Y., Vehtari, A., Simpson, D., and Gelman, A. (2018). Yes, but did it
 #' work?: Evaluating variational inference. *Proceedings of the 35th
 #' International Conference on Machine Learning*, PMLR 80:5581–5590.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`]
 #'
 #' @examples
 #' \dontrun{
@@ -776,6 +812,9 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' plot(fit_vb$lp(), fit_vb$lp_approx())
+#'
+#' fit_pathfinder <- cmdstanr_example("logistic", method = "pathfinder")
+#' plot(fit_pathfinder$lp(), fit_pathfinder$lp_approx())
 #' }
 #'
 lp <- function() {
@@ -796,7 +835,9 @@ lp_approx <- function() {
 #' Compute a summary table of estimates and diagnostics
 #'
 #' @name fit-method-summary
-#' @aliases summary fit-method-print print.CmdStanMCMC print.CmdStanMLE print.CmdStanVB
+#' @aliases summary fit-method-print print.CmdStanMCMC print.CmdStanMLE
+#' @aliases print.CmdStanLaplace print.CmdStanVB print.CmdStanPathfinder
+#' @aliases print.CmdStanGQ
 #' @description The `$summary()` method runs
 #'   [`summarise_draws()`][posterior::draws_summary] from the \pkg{posterior}
 #'   package and returns the output. For MCMC, only post-warmup draws are
@@ -808,7 +849,11 @@ lp_approx <- function() {
 #'   `$summary()` because it is designed to only compute the summary statistics
 #'   for the variables that will actually fit in the printed output whereas
 #'   `$summary()` will compute them for all of the specified variables in order
-#'   to be able to return them to the user. See **Examples**.
+#'   to be able to return them to the user. The `$print()` method accepts the
+#'   same `variables` and `...` arguments as `$summary()`. It also has a `digits`
+#'   argument for the number of digits to display after the decimal point
+#'   (default `2`) and a `max_rows` argument for the maximum number of rows to
+#'   print (default `getOption("cmdstanr_max_rows", 10)`). See **Examples**.
 #'
 #' @param variables (character vector) The variables to include.
 #' @param ... Optional arguments to pass to [`posterior::summarise_draws()`][posterior::draws_summary].
@@ -828,8 +873,6 @@ lp_approx <- function() {
 #' * Vehtari, A. (2021). Comparison of MCMC effective sample size estimators.
 #'   https://avehtari.github.io/rhat_ess/ess_comparison.html
 #'   (for ESS diagnostics such as `ess_bulk` and `ess_tail`).
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanLaplace`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -898,21 +941,27 @@ CmdStanFit$set("public", name = "summary", value = summary)
 #' @aliases fit-method-cmdstan_diagnose cmdstan_summary cmdstan_diagnose
 #' @description Run CmdStan's `stansummary` and `diagnose` utilities. These are
 #'   documented in the CmdStan Guide:
-#'   * https://mc-stan.org/docs/cmdstan-guide/stansummary.html
-#'   * https://mc-stan.org/docs/cmdstan-guide/diagnose.html
+#'   * [`stansummary`](https://mc-stan.org/docs/cmdstan-guide/stansummary.html)
+#'   * [`diagnose`](https://mc-stan.org/docs/cmdstan-guide/diagnose.html)
 #'
-#'   Although these methods can be used for models fit using the
-#'   [`$variational()`][model-method-variational] method, much of the output is
-#'   currently only relevant for models fit using the
-#'   [`$sample()`][model-method-sample] method.
+#'   These methods can be used for models fit using
+#'   [`$sample()`][model-method-sample],
+#'   [`$variational()`][model-method-variational], or
+#'   [`$pathfinder()`][model-method-pathfinder]. Much of the output is currently
+#'   only relevant for models fit using `$sample()`. These methods are not
+#'   available for optimization, Laplace approximation, or standalone generated
+#'   quantities.
 #'
 #'   See the [$summary()][fit-method-summary] for computing similar summaries in
-#'   R rather than calling CmdStan's utilites.
+#'   R rather than calling CmdStan's utilities.
 #'
 #' @param flags An optional character vector of flags (e.g.
 #'   `flags = c("--sig_figs=1")`).
 #'
-#' @seealso [`CmdStanMCMC`], [fit-method-summary]
+#' @return Both methods invisibly return a list containing the command's exit
+#'   status, standard output, and standard error.
+#'
+#' @seealso [fit-method-summary]
 #'
 #' @examples
 #' \dontrun{
@@ -944,12 +993,13 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' @aliases output_files data_file latent_dynamics_files profile_files
 #' @aliases config_files metric_files
 #'
-#' @description All fitted model objects have methods for saving (moving to a
-#'   specified location) the files created by CmdStanR to hold CmdStan output
-#'   csv files and input data files. These methods move the files from their
-#'   current location (possibly the temporary directory) to a user-specified
-#'   location. __The paths stored in the fitted model object will also be
-#'   updated to point to the new file locations.__
+#' @description Fitted model objects returned directly by a [`CmdStanModel`]
+#'   method have methods for saving (moving to a specified location) files
+#'   created by CmdStanR, including CmdStan output CSV files and input data
+#'   files. These methods move the files from their current location (possibly
+#'   the temporary directory) to a user-specified location. **The paths stored
+#'   in the fitted model object will also be updated to point to the new file
+#'   locations.**
 #'
 #'   The versions without the `save_` prefix (e.g., `$output_files()`) return
 #'   the current file paths without moving any files.
@@ -959,52 +1009,60 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'   multi-chain run therefore has one output/diagnostic/metric file per logical
 #'   chain but one profile/configuration file per physical CmdStan invocation.
 #'
+#'   Objects created by [as_cmdstan_fit()] support `$output_files()` but not the
+#'   other methods documented on this page because the original CmdStan run is
+#'   unavailable. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
 #' @param dir (string) Path to directory where the files should be saved.
-#' @param basename (string) Base filename to use. See __Details__.
+#' @param basename (string) Base filename to use. If `NULL` (the default), the
+#'   model name is used. See **Details**.
 #' @param timestamp (logical) Should a timestamp be added to the file name(s)?
-#'   Defaults to `TRUE`. See __Details__.
-#' @param random (logical) Should random alphanumeric characters be added to the
-#'   end of the file name(s)? Defaults to `TRUE`. See __Details__.
+#'   Defaults to `TRUE`. See **Details**.
+#' @param random (logical) Should a six-character random hexadecimal suffix be
+#'   added to the file name(s)? Defaults to `TRUE`. See **Details**.
 #'
 #' @section Details:
 #' For `$save_output_files()` the files moved to `dir` will have names of
-#' the form `basename-timestamp-id-random`, where
-#' * `basename` is the user's provided `basename` argument;
+#' the form `basename-timestamp-id-random.csv`, where
+#' * `basename` is the user's provided `basename` argument or, if `NULL`, the
+#'   model name;
 #' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
 #' * `id` is the MCMC chain id (or `1` for non MCMC);
-#' * `random` contains six random alphanumeric characters;
+#' * `random` contains six random hexadecimal characters.
 #'
-#' For `$save_latent_dynamics_files()` everything is the same as for
-#' `$save_output_files()` except `"-diagnostic-"` is included in the new
-#' file name after `basename`.
+#' `$save_latent_dynamics_files()` uses the pattern
+#' `basename-diagnostic-timestamp-id-random.csv`. The
+#' `$latent_dynamics_files()` and
+#' `$save_latent_dynamics_files()` methods apply only to [`CmdStanMCMC`] and
+#' [`CmdStanVB`] objects created with `save_latent_dynamics = TRUE`.
 #'
-#' For `$save_profile_files()` everything is the same as for
-#' `$save_output_files()` except `"-profile-"` is included in the new
-#' file name after `basename` and the `id` identifies the physical CmdStan
-#' invocation rather than a logical chain.
+#' `$save_profile_files()` uses the pattern
+#' `basename-profile-timestamp-id-random.csv`, where `id` identifies the
+#' physical CmdStan invocation rather than a logical chain.
 #'
-#' For `$save_metric_files()` everything is the same as for
-#' `$save_output_files()` except `"-metric-"` is included in the new
-#' file name after `basename`.
+#' `$save_metric_files()` uses the pattern
+#' `basename-metric-timestamp-id-random.json`. Make sure to set
+#' `save_metric = TRUE` when fitting the model.
 #'
-#' For `$save_config_files()` everything is the same as for
-#' `$save_output_files()` except `"-config-"` is included in the new
-#' file name after `basename` and the `id` identifies the physical CmdStan
-#' invocation rather than a logical chain.
+#' `$save_config_files()` uses the pattern
+#' `basename-config-timestamp-id-random.json`, where `id` identifies the
+#' physical CmdStan invocation rather than a logical chain. Make sure to set
+#' `save_cmdstan_config = TRUE` when fitting the model.
 #'
-#' For `$save_data_file()` no `id` is included in the file name because even
+#' `$save_data_file()` uses the pattern `basename-timestamp-random.ext`, where
+#' `.ext` is the original data file extension. No `id` is included because even
 #' with multiple MCMC chains the data file is the same.
 #'
 #' @return
 #' The `$save_*` methods print a message with the new file paths and (invisibly)
-#' return a character vector of the new paths (or `NA` for any that couldn't be
-#' copied). They also have the side effect of setting the internal paths in the
-#' fitted model object to the new paths.
+#' return a character vector of the new paths. If any file cannot be copied then
+#' the method errors and no original files are removed. The methods also have
+#' the side effect of setting the internal paths in the fitted model object to
+#' the new paths.
 #'
 #' The methods _without_ the `save_` prefix return character vectors of file
 #' paths without moving any files.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
 #' @examples
 #' \dontrun{
@@ -1076,7 +1134,7 @@ CmdStanFit$set("public", name = "save_metric_files", value = save_metric_files)
 
 #' @rdname fit-method-save_output_files
 #' @param include_failed (logical) Should CmdStan runs that failed also be
-#'   included? The default is `FALSE.`
+#'   included? The default is `FALSE`.
 output_files <- function(include_failed = FALSE) {
   self$runset$output_files(include_failed)
 }
@@ -1116,21 +1174,26 @@ CmdStanFit$set("public", name = "metric_files", value = metric_files)
 #'
 #' @name fit-method-time
 #' @aliases time
-#' @description Report the run time in seconds. For MCMC additional information
-#'   is provided about the run times of individual chains and the warmup and
-#'   sampling phases. For Laplace approximation the time only include the time
-#'   for drawing the approximate sample and does not include the time
-#'   taken to run the `$optimize()` method.
+#' @description Report the run time in seconds. For MCMC and standalone
+#'   generated quantities additional information is provided about the run
+#'   times of individual chains or processes. For MCMC, timing information is
+#'   also provided for the warmup and sampling phases. For Laplace approximation
+#'   the reported time includes only the time for drawing the approximate sample
+#'   and does not include the time taken to run the `$optimize()` method.
 #'
 #' @return
 #' A list with elements
-#' * `total`: (scalar) The total run time. For MCMC this may be different than
-#' the sum of the chain run times if parallelization was used.
-#' * `chains`: (data frame) For MCMC only, timing info for the individual
-#' chains. The data frame has columns `"chain_id"`, `"warmup"`, `"sampling"`,
-#' and `"total"`.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' * `total`: (scalar) The total run time. For MCMC and standalone generated
+#' quantities this may differ from the sum of the individual run times if
+#' parallelization was used.
+#' * `chains`: (data frame) For MCMC and standalone generated quantities,
+#' timing information for the individual chains. For MCMC the data frame has
+#' columns `"chain_id"`, `"warmup"`, `"sampling"`, and `"total"`. For standalone
+#' generated quantities, each row corresponds to one fitted-parameter CSV file
+#' and one CmdStan process, and the data frame has columns `"chain_id"` and
+#' `"total"`. Variational or optimization input therefore produces one row.
+#' With CmdStan versions before 2.39, standalone generated quantities process
+#' times are reported as zero.
 #'
 #' @examples
 #' \dontrun{
@@ -1165,13 +1228,15 @@ CmdStanFit$set("public", name = "time", value = time)
 #'   `Chain [id]` prefix. Unprefixed shared lines remain available only from the
 #'   raw invocation output.
 #'
-#'   For optimization and variational inference `$output()` just pretty prints
-#'   the console output.
+#'   For optimization, Laplace approximation, variational inference, and
+#'   Pathfinder, `$output()` just pretty prints the console output.
 #'
 #' @param id (integer) The positional logical-chain index. Ignored if the model
 #'   was not fit using MCMC or standalone generated quantities.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @return For MCMC and standalone generated quantities with `id=NULL`, a list
+#'   of character vectors containing the console output for each chain. In all
+#'   other cases, `NULL` invisibly.
 #'
 #' @examples
 #' \dontrun{
@@ -1202,7 +1267,7 @@ CmdStanFit$set("public", name = "output", value = output)
 #'   from the CSV output files, including the CmdStan configuration used when
 #'   fitting the model. See **Examples** and [read_cmdstan_csv()].
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
+#' @return A named list of metadata.
 #'
 #' @examples
 #' \dontrun{
@@ -1237,8 +1302,6 @@ CmdStanFit$set("public", name = "metadata", value = metadata)
 #'   invocation. For a threaded multi-chain sampling or generated-quantities run
 #'   this has length one even though the fit has several logical chains.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
-#'
 #' @examples
 #' \dontrun{
 #' # example with return codes all zero
@@ -1271,8 +1334,6 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #'
 #' @return A list of data frames with profiling data if the profiling CSV files
 #'   were created.
-#'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
 #'
 #' @examples
 #'
@@ -1326,8 +1387,6 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 #' @aliases code
 #' @return A character vector with one element per line of code.
 #'
-#' @seealso [`CmdStanMCMC`], [`CmdStanMLE`], [`CmdStanVB`], [`CmdStanGQ`]
-#'
 #' @examples
 #'
 #' \dontrun{
@@ -1357,6 +1416,10 @@ CmdStanFit$set("public", name = "code", value = code)
 #'   Like `CmdStanModel` objects, `CmdStanMCMC` objects are [R6][R6::R6Class]
 #'   objects.
 #'
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
 #' @section Methods: `CmdStanMCMC` objects have the following associated
 #'   methods, all of which have their own (linked) documentation pages.
 #'
@@ -1366,10 +1429,11 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws] |  Return posterior draws using formats from the \pkg{posterior} package. |
 #'  [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] |  Return sampler diagnostics as a [`draws_array`][posterior::draws_array]. |
-#'  [`$lp()`][fit-method-lp] |  Return the total log probability density (`target`). |
+#'  [`$lp()`][fit-method-lp] |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$inv_metric()`][fit-method-inv_metric] |  Return the inverse metric for each chain. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$profiles()`][fit-method-profiles] | Return profiling data. |
 #'  [`$num_chains()`][fit-method-num_chains] | Return the number of MCMC chains. |
 #'  [`$num_procs()`][fit-method-num_procs] | Return the number of physical CmdStan invocations. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
@@ -1389,10 +1453,20 @@ CmdStanFit$set("public", name = "code", value = code)
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$materialize()`][fit-method-materialize] | Read all draws and diagnostics into memory. |
 #'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$output_files()`][fit-method-output_files] |  Return paths to output CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
+#'  [`$latent_dynamics_files()`][fit-method-latent_dynamics_files] |  Return paths to diagnostic CSV files. |
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
+#'  [`$profile_files()`][fit-method-profile_files] |  Return paths to profiling CSV files. |
+#'  [`$save_profile_files()`][fit-method-save_profile_files] |  Save profiling CSV files to a specified location. |
+#'  [`$config_files()`][fit-method-save_config_files] |  Return paths to CmdStan configuration JSON files. |
+#'  [`$save_config_files()`][fit-method-save_config_files] |  Save CmdStan configuration JSON files to a specified location. |
+#'  [`$metric_files()`][fit-method-save_metric_files] |  Return paths to metric JSON files. |
+#'  [`$save_metric_files()`][fit-method-save_metric_files] |  Save metric JSON files to a specified location. |
 #'
 #'  ## Report run times, console output, return codes
 #'
@@ -1410,7 +1484,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
 #'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
 #'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
-#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and Hessian. |
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
@@ -1758,11 +1832,11 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #'   Currently parameter-specific diagnostics like R-hat and effective sample
 #'   size are _not_ handled by this method. Those diagnostics are provided via
 #'   the [`$summary()`][fit-method-summary] method (using
-#'   [posterior::summarize_draws()]).
+#'   [posterior::summarise_draws()]).
 #'
 #' @param diagnostics (character vector) One or more diagnostics to check. The
-#'   currently supported diagnostics are `"divergences`, `"treedepth"`, and
-#'   `"ebfmi`. The default is to check all of them.
+#'   currently supported diagnostics are `"divergences"`, `"treedepth"`, and
+#'   `"ebfmi"`. The default is to check all of them.
 #' @param quiet (logical) Should warning messages about the diagnostics be
 #'   suppressed? The default is `FALSE`, in which case warning messages are
 #'   printed in addition to returning the values of the diagnostics.
@@ -1823,11 +1897,19 @@ diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfm
 CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summary)
 
 
-#' Extract inverse metric (mass matrix) after MCMC
+#' Extract inverse metric (inverse mass matrix) after MCMC
 #'
 #' @name fit-method-inv_metric
 #' @aliases inv_metric
-#' @description Extract the inverse metric (mass matrix) for each MCMC chain.
+#' @description Extract the inverse metric (inverse mass matrix) for each MCMC
+#'   chain.
+#'
+#'   The inverse metric is defined over the unconstrained parameter space, so
+#'   its entries do not necessarily correspond one-to-one with the constrained
+#'   parameters declared in the `parameters` block (some transformations from
+#'   constrained to unconstrained change dimensions). See **Examples** for a
+#'   way to add names to the entries of the inverse metric when the model
+#'   has parameters that change dimensions when unconstrained.
 #'
 #' @param matrix (logical) If a diagonal metric was used, setting `matrix =
 #'   FALSE` returns a list containing just the diagonals of the matrices instead
@@ -1841,12 +1923,36 @@ CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summar
 #'
 #' @examples
 #' \dontrun{
-#' fit <- cmdstanr_example("logistic")
-#' fit$inv_metric()
-#' fit$inv_metric(matrix=FALSE)
+#' stan_file <- write_stan_file("
+#'   parameters {
+#'     simplex[3] theta;
+#'   }
+#'   model {
+#'     theta ~ dirichlet(rep_vector(1, 3));
+#'   }
+#' ")
+#' mod <- cmdstan_model(stan_file)
 #'
-#' fit <- cmdstanr_example("logistic", metric = "dense_e")
-#' fit$inv_metric()
+#' # use higher output precision so the simplex remains valid after CSV rounding
+#' fit <- mod$sample(chains = 1, sig_figs = 10)
+#'
+#' # even though theta has 3 elements, the inverse metric is 2x2 because the
+#' # simplex constraint reduces the dimension. we set `matrix = FALSE` in this case
+#' # because we estimated a diagonal matrix (we didn't set `metric = "dense_e"`
+#' # when fitting the model), so we can just look at the diagonal elements
+#' inv_metric <- fit$inv_metric(matrix = FALSE)
+#'
+#' # the list has 1 element since we only ran 1 chain for simplicity
+#' print(inv_metric)
+#'
+#' # get names of unconstrained parameters and add them to the inverse metric
+#' # (unconstrain_draws() requires compiling additional methods)
+#' inv_metric_names <- posterior::variables(fit$unconstrain_draws())
+#' inv_metric <- lapply(inv_metric, stats::setNames, nm = inv_metric_names)
+#'
+#' # the names will be theta[1] and theta[2], but these are not the same as
+#' # the first two elements of the constrained theta in the Stan program
+#' inv_metric
 #' }
 #'
 inv_metric <- function(matrix = TRUE) {
@@ -1868,7 +1974,7 @@ inv_metric <- function(matrix = TRUE) {
 }
 CmdStanMCMC$set("public", name = "inv_metric", value = inv_metric)
 
-#' Extract number of chains after MCMC
+#' Extract the number of chains
 #'
 #' @name fit-method-num_chains
 #' @aliases num_chains
@@ -1900,13 +2006,20 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
-#'   The name "MLE" (used for historical reasons) is a bit misleading since this
-#'   object will contain parameter estimates corresponding to either a mode in
-#'   the constrained parameter space _or_ the unconstrained parameter space,
-#'   depending on the value of the `jacobian` argument when the model is fit
-#'   (and whether the model has constrained parameters). See
-#'   [`$optimize()`][model-method-optimize] and the CmdStan User's Guide for
-#'   more details.
+#'   Following CmdStan's terminology, the object contains an MLE if optimization
+#'   was run with `jacobian=FALSE` and a MAP estimate if it was run with
+#'   `jacobian=TRUE`. The name "MLE" is retained for historical reasons. More
+#'   precisely, the estimates correspond to a mode in either the constrained
+#'   parameter space or the unconstrained parameter space, depending on the
+#'   value of `jacobian` (and whether the model has constrained parameters).
+#'   The `jacobian` argument does not control whether prior terms are included;
+#'   all contributions to the Stan program's target are included under either
+#'   setting. See [`$optimize()`][model-method-optimize] and the CmdStan User's
+#'   Guide for more details.
+#'
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
 #'
 #' @section Methods: `CmdStanMLE` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.
@@ -1915,26 +2028,35 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  [`draws()`][fit-method-draws]  |  Return the point estimate as a 1-row [`draws_matrix`][posterior::draws_matrix]. |
+#'  [`$draws()`][fit-method-draws]  |  Return the point estimate as a 1-row [`draws_matrix`][posterior::draws_matrix]. |
 #'  [`$mle()`][fit-method-mle]  |  Return the point estimate as a numeric vector. |
-#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`). |
+#'  [`$lp()`][fit-method-lp]  |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$init()`][fit-method-init]  |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$profiles()`][fit-method-profiles] | Return profiling data. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$print()`][fit-method-print] |  Print a summary of the point estimate. |
 #'  [`$summary()`][fit-method-summary]  |  Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'
 #'  ## Save fitted model object and temporary files
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$materialize()`][fit-method-materialize] | Read all draws and diagnostics into memory. |
 #'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$output_files()`][fit-method-output_files] |  Return paths to output CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files]  |  Save output CSV files to a specified location. |
+#'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file]  |  Save JSON data file to a specified location. |
+#'  [`$profile_files()`][fit-method-profile_files] |  Return paths to profiling CSV files. |
+#'  [`$save_profile_files()`][fit-method-save_profile_files] |  Save profiling CSV files to a specified location. |
+#'  [`$config_files()`][fit-method-save_config_files] |  Return paths to CmdStan configuration JSON files. |
+#'  [`$save_config_files()`][fit-method-save_config_files] |  Save CmdStan configuration JSON files to a specified location. |
 #'
 #'  ## Report run times, console output, return codes
 #'
@@ -1952,7 +2074,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
 #'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
 #'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
-#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and Hessian. |
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
@@ -1982,16 +2104,18 @@ CmdStanMLE <- R6::R6Class(
 #' @aliases mle
 #' @description The `$mle()` method is only available for [`CmdStanMLE`]
 #'   objects. It returns the point estimate as a numeric vector with one element
-#'   per variable. The returned vector does *not* include `lp__`, the total log
-#'   probability (`target`) accumulated in the model block of the Stan program,
-#'   which is available via the [`$lp()`][fit-method-lp] method and also
-#'   included in the [`$draws()`][fit-method-draws] method.
+#'   per variable. The returned vector does *not* include `lp__`, the
+#'   target log density evaluated by Stan, up to an additive constant. `lp__` is
+#'   available via the [`$lp()`][fit-method-lp] method and also included in the
+#'   [`$draws()`][fit-method-draws] method.
 #'
-#'   For models with constrained parameters that are fit with `jacobian=TRUE`,
-#'   the `$mle()` method actually returns the maximum a posteriori (MAP)
-#'   estimate (posterior mode) rather than the MLE. See
-#'   [`$optimize()`][model-method-optimize] and the CmdStan User's Guide for
-#'   more details.
+#'   Following CmdStan's terminology, for models with constrained parameters
+#'   that are fit with `jacobian=TRUE`, this point estimate is called a maximum
+#'   a posteriori (MAP) estimate rather than an MLE. More precisely,
+#'   `jacobian=FALSE` finds a mode of the target in the constrained parameter
+#'   space and `jacobian=TRUE` finds a mode in the unconstrained parameter
+#'   space. See [`$optimize()`][model-method-optimize] and the CmdStan User's
+#'   Guide for more details.
 #'
 #' @param variables (character vector) The variables (parameters, transformed
 #'   parameters, and generated quantities) to include. If NULL (the default)
@@ -2024,39 +2148,51 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #' @family fitted model objects
 #' @template seealso-docs
 #'
-#' @description A `CmdStanLaplace` object is the fitted model object returned by the
-#'   [`$laplace()`][model-method-laplace] method of a
-#'   [`CmdStanModel`] object.
+#' @description A `CmdStanLaplace` object is the fitted model object returned by
+#'   the [`$laplace()`][model-method-laplace] method of a [`CmdStanModel`]
+#'   object.
 #'
-#' @section Methods: `CmdStanLaplace` objects have the following associated methods,
-#'   all of which have their own (linked) documentation pages.
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
+#' @section Methods: `CmdStanLaplace` objects have the following associated
+#'   methods, all of which have their own (linked) documentation pages.
 #'
 #'  ## Extract contents of fitted model object
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
-#'  `$mode()` | Return the mode as a [`CmdStanMLE`] object. |
-#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$mode()`][fit-method-mode] | Return the mode as a [`CmdStanMLE`] object. |
+#'  [`$lp()`][fit-method-lp]  |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$profiles()`][fit-method-profiles] | Return profiling data. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$print()`][fit-method-print] | Print a summary of the approximate posterior draws. |
 #'  [`$summary()`][fit-method-summary]  | Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'
 #'  ## Save fitted model object and temporary files
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$materialize()`][fit-method-materialize] | Read all draws and diagnostics into memory. |
 #'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$output_files()`][fit-method-output_files] |  Return paths to output CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
-#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
+#'  [`$profile_files()`][fit-method-profile_files] |  Return paths to profiling CSV files. |
+#'  [`$save_profile_files()`][fit-method-save_profile_files] |  Save profiling CSV files to a specified location. |
+#'  [`$config_files()`][fit-method-save_config_files] |  Return paths to CmdStan configuration JSON files. |
+#'  [`$save_config_files()`][fit-method-save_config_files] |  Save CmdStan configuration JSON files to a specified location. |
 #'
 #'  ## Report run times, console output, return codes
 #'
@@ -2066,12 +2202,23 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
 #'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and Hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
+#'
 CmdStanLaplace <- R6::R6Class(
   classname = "CmdStanLaplace",
   inherit = CmdStanFit,
-  public = list(
-    mode = function() self$runset$args$method_args$mode_object
-  ),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
@@ -2087,6 +2234,25 @@ CmdStanLaplace <- R6::R6Class(
 )
 CmdStanLaplace$set("public", name = "lp_approx", value = lp_approx)
 
+#' Extract the mode used for a Laplace approximation
+#'
+#' @name fit-method-mode
+#' @aliases mode
+#' @description The `$mode()` method returns the mode used to center the
+#'   Laplace approximation. This method is only available for
+#'   [`CmdStanLaplace`] objects returned by
+#'   [`$laplace()`][model-method-laplace], not objects reconstructed using
+#'   [as_cmdstan_fit()].
+#'
+#' @return A [`CmdStanMLE`] object.
+#'
+#' @seealso [`CmdStanLaplace`], [`$laplace()`][model-method-laplace]
+#'
+mode <- function() {
+  self$runset$args$method_args$mode_object
+}
+CmdStanLaplace$set("public", name = "mode", value = mode)
+
 
 # CmdStanVB ---------------------------------------------------------------
 #' CmdStanVB objects
@@ -2099,6 +2265,10 @@ CmdStanLaplace$set("public", name = "lp_approx", value = lp_approx)
 #'   [`$variational()`][model-method-variational] method of a
 #'   [`CmdStanModel`] object.
 #'
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
 #' @section Methods: `CmdStanVB` objects have the following associated methods,
 #'   all of which have their own (linked) documentation pages.
 #'
@@ -2107,27 +2277,38 @@ CmdStanLaplace$set("public", name = "lp_approx", value = lp_approx)
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
-#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$lp()`][fit-method-lp]  |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the variational approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$profiles()`][fit-method-profiles] | Return profiling data. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$print()`][fit-method-print] | Print a summary of the approximate posterior draws. |
 #'  [`$summary()`][fit-method-summary]  | Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
+#'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
 #'
 #'  ## Save fitted model object and temporary files
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$materialize()`][fit-method-materialize] | Read all draws and diagnostics into memory. |
 #'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$output_files()`][fit-method-output_files] |  Return paths to output CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
+#'  [`$latent_dynamics_files()`][fit-method-latent_dynamics_files] |  Return paths to diagnostic CSV files. |
 #'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
+#'  [`$profile_files()`][fit-method-profile_files] |  Return paths to profiling CSV files. |
+#'  [`$save_profile_files()`][fit-method-save_profile_files] |  Save profiling CSV files to a specified location. |
+#'  [`$config_files()`][fit-method-save_config_files] |  Return paths to CmdStan configuration JSON files. |
+#'  [`$save_config_files()`][fit-method-save_config_files] |  Save CmdStan configuration JSON files to a specified location. |
 #'
 #'  ## Report run times, console output, return codes
 #'
@@ -2145,7 +2326,7 @@ CmdStanLaplace$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
 #'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
 #'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
-#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and hessian. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and Hessian. |
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
@@ -2177,39 +2358,52 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #' @family fitted model objects
 #' @template seealso-docs
 #'
-#' @description A `CmdStanPathfinder` object is the fitted model object returned by the
-#'   [`$pathfinder()`][model-method-pathfinder] method of a
+#' @description A `CmdStanPathfinder` object is the fitted model object returned
+#'   by the [`$pathfinder()`][model-method-pathfinder] method of a
 #'   [`CmdStanModel`] object.
 #'
-#' @section Methods: `CmdStanPathfinder` objects have the following associated methods,
-#'   all of which have their own (linked) documentation pages.
+#'   Objects created from CSV files using [as_cmdstan_fit()] have a reduced set
+#'   of available methods. See **Reconstructed fitted model objects** in the
+#'   [as_cmdstan_fit()] documentation for details.
+#'
+#' @section Methods: `CmdStanPathfinder` objects have the following associated
+#'   methods, all of which have their own (linked) documentation pages.
 #'
 #'  ## Extract contents of fitted model object
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws]  |  Return approximate posterior draws as a [`draws_matrix`][posterior::draws_matrix]. |
-#'  [`$lp()`][fit-method-lp]  |  Return the total log probability density (`target`) computed in the model block of the Stan program. |
+#'  [`$lp()`][fit-method-lp]  |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$lp_approx()`][fit-method-lp]  |  Return the log density of the approximation to the posterior. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$profiles()`][fit-method-profiles] | Return profiling data. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$print()`][fit-method-print] | Print a summary of the approximate posterior draws. |
 #'  [`$summary()`][fit-method-summary]  | Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'  [`$cmdstan_summary()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/stansummary`. |
+#'  [`$cmdstan_diagnose()`][fit-method-cmdstan_summary] |  Run and print CmdStan's `bin/diagnose`. |
 #'
 #'  ## Save fitted model object and temporary files
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$materialize()`][fit-method-materialize] | Read all draws and diagnostics into memory. |
 #'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
+#'  [`$output_files()`][fit-method-output_files] |  Return paths to output CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
-#'  [`$save_latent_dynamics_files()`][fit-method-save_latent_dynamics_files] |  Save diagnostic CSV files to a specified location. |
+#'  [`$profile_files()`][fit-method-profile_files] |  Return paths to profiling CSV files. |
+#'  [`$save_profile_files()`][fit-method-save_profile_files] |  Save profiling CSV files to a specified location. |
+#'  [`$config_files()`][fit-method-save_config_files] |  Return paths to CmdStan configuration JSON files. |
+#'  [`$save_config_files()`][fit-method-save_config_files] |  Save CmdStan configuration JSON files to a specified location. |
 #'
 #'  ## Report run times, console output, return codes
 #'
@@ -2218,6 +2412,20 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and Hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 CmdStanPathfinder <- R6::R6Class(
   classname = "CmdStanPathfinder",
@@ -2237,10 +2445,6 @@ CmdStanPathfinder <- R6::R6Class(
   )
 )
 
-#' @rdname fit-method-lp
-lp_approx <- function() {
-  as.numeric(self$draws()[, "lp_approx__"])
-}
 CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 
 
@@ -2264,32 +2468,54 @@ CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$draws()`][fit-method-draws] | Return the generated quantities as a [`draws_array`][posterior::draws_array]. |
+#'  [`$fitted_params_files()`][fit-method-fitted_params_files] | Return paths to the fitted-parameter CSV files. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
 #'  [`$num_chains()`][fit-method-num_chains] | Return the number of logical chains. |
 #'  [`$num_procs()`][fit-method-num_procs] | Return the number of physical CmdStan invocations. |
+#'  [`$profiles()`][fit-method-profiles] | Return profiling data. |
 #'  [`$code()`][fit-method-code] | Return Stan code as a character vector. |
 #'
 #'  ## Summarize inferences
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$print()`][fit-method-print] | Print a summary of the generated quantities. |
 #'  [`$summary()`][fit-method-summary] | Run [`posterior::summarise_draws()`][posterior::draws_summary]. |
 #'
 #'  ## Save fitted model object and temporary files
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
+#'  [`$materialize()`][fit-method-materialize] | Read all generated quantities into memory. |
 #'  [`$save_object()`][fit-method-save_object] | Save fitted model object to a file. |
+#'  [`$output_files()`][fit-method-output_files] | Return paths to output CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files] | Save output CSV files to a specified location. |
+#'  [`$data_file()`][fit-method-data_file] | Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file] | Save JSON data file to a specified location. |
+#'  [`$profile_files()`][fit-method-profile_files] | Return paths to profiling CSV files. |
+#'  [`$save_profile_files()`][fit-method-save_profile_files] | Save profiling CSV files to a specified location. |
 #'
 #'  ## Report run times, console output, return codes
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  [`$time()`][fit-method-time] | Report the total run time. |
+#'  [`$time()`][fit-method-time] | Report total and logical-chain run times. |
 #'  [`$output()`][fit-method-output] | Return raw invocation output or print chain-attributed lines. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'
+#'  ## Expose Stan functions and additional methods to R
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$expose_functions()`][fit-method-expose_functions] |  Expose Stan functions for use in R. |
+#'  [`$init_model_methods()`][fit-method-init_model_methods] | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+#'  [`$log_prob()`][fit-method-log_prob] | Calculate log-prob. |
+#'  [`$grad_log_prob()`][fit-method-grad_log_prob] | Calculate log-prob and gradient. |
+#'  [`$hessian()`][fit-method-hessian] | Calculate log-prob, gradient, and Hessian. |
+#'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
+#'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
+#'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
+#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 #' @inherit model-method-generate-quantities examples
 #'
@@ -2297,9 +2523,6 @@ CmdStanGQ <- R6::R6Class(
   classname = "CmdStanGQ",
   inherit = CmdStanFit,
   public = list(
-    fitted_params_files = function() {
-      self$runset$args$method_args$fitted_params
-    },
     num_chains = function() {
       self$runset$num_chains()
     },
@@ -2370,6 +2593,28 @@ CmdStanGQ <- R6::R6Class(
   )
 )
 
+#' Extract the fitted-parameter CSV files used for generated quantities
+#'
+#' @name fit-method-fitted_params_files
+#' @aliases fitted_params_files
+#' @description The `$fitted_params_files()` method returns the paths to the
+#'   CmdStan CSV files used as the `fitted_params` input to standalone
+#'   generated quantities.
+#'
+#' @return A character vector of file paths.
+#'
+#' @seealso [`CmdStanGQ`],
+#'   [`$generate_quantities()`][model-method-generate-quantities]
+#'
+fitted_params_files <- function() {
+  self$runset$args$method_args$fitted_params
+}
+CmdStanGQ$set(
+  "public",
+  name = "fitted_params_files",
+  value = fitted_params_files
+)
+
 
 # CmdStan Diagnose --------------------------------------------------------
 #' CmdStanDiagnose objects
@@ -2387,10 +2632,12 @@ CmdStanGQ <- R6::R6Class(
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$gradients()`][fit-method-gradients] |  Return gradients from diagnostic mode. |
-#'  [`$lp()`][fit-method-lp] |  Return the total log probability density (`target`). |
+#'  [`$lp()`][fit-method-lp] |  Return the target log density (`lp__`) evaluated by Stan. |
 #'  [`$init()`][fit-method-init] |  Return user-specified initial values. |
 #'  [`$metadata()`][fit-method-metadata] | Return a list of metadata gathered from the CmdStan CSV files. |
+#'  [`$output_files()`][fit-method-output_files] |  Return paths to output CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
+#'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
 #'  [`$save_data_file()`][fit-method-save_data_file] |  Save JSON data file to a specified location. |
 #'
 #' @examples
@@ -2433,7 +2680,7 @@ CmdStanDiagnose <- R6::R6Class(
 #' @description Return the data frame containing the gradients for all
 #'   parameters.
 #'
-#' @return A list of lists. See **Examples**.
+#' @return A data frame containing the gradients for all parameters.
 #'
 #' @seealso [`CmdStanDiagnose`]
 #' @inherit CmdStanDiagnose examples
@@ -2474,6 +2721,11 @@ CmdStanDiagnose$set("public", name = "data_file", value = data_file)
 #'
 #' @details To subset iterations, chains, or draws, use the
 #'   [posterior::subset_draws()] method after creating the `draws` object.
+#'
+#' @return A `posterior::draws_*` object. The default format depends on the
+#'   fitted model class and can be changed using arguments passed through `...`.
+#'
+#' @seealso [`$draws()`][fit-method-draws] and [posterior::as_draws()]
 #'
 #' @examples
 #' \dontrun{

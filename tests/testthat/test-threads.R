@@ -222,9 +222,8 @@ test_that("threading works with pathfinder()", {
   )
   pathfinder_args$threads <- NULL
   pathfinder_args$show_messages <- FALSE
-  expect_warning(
-    do.call(mod$pathfinder, pathfinder_args),
-    "'num_threads' is deprecated. Please use 'threads' instead"
+  expect_snapshot(
+    invisible(do.call(mod$pathfinder, pathfinder_args))
   )
 })
 
@@ -302,4 +301,30 @@ test_that("correct output when stan_threads not TRUE", {
     "Running 4 chains in 4 CmdStan invocations with 1 total thread",
     fixed = TRUE
   )
+})
+
+test_that("executable metadata takes precedence over compile options", {
+  mod <- cmdstan_model(
+    stan_program,
+    cpp_options = list(stan_threads = FALSE),
+    force_recompile = TRUE
+  )
+  if (!isTRUE(mod$exe_info()$stan_threads)) {
+    skip("The local CmdStan make configuration does not force STAN_THREADS=true.")
+  }
+  expect_output(
+    fit <- mod$sample(
+      data = data_file_json,
+      chains = 1,
+      threads_per_chain = 2,
+      iter_warmup = 2,
+      iter_sampling = 2,
+      refresh = 0,
+      diagnostics = ""
+    ),
+    "Running 1 chain in 1 CmdStan invocation with 2 total threads",
+    fixed = TRUE
+  )
+  expect_equal(fit$metadata()$num_threads, 2)
+  expect_equal(fit$metadata()$threads_per_chain, 2)
 })

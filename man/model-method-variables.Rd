@@ -8,34 +8,53 @@
 variables()
 }
 \value{
-The \verb{$variables()} returns a list with information on input and
-output variables for each of the Stan model blocks.
+The method returns a list with information on input and output
+variables for each of the Stan model blocks.
 }
 \description{
 The \verb{$variables()} method of a \code{\link{CmdStanModel}} object returns
 a list, each element representing a Stan model block: \code{data}, \code{parameters},
 \code{transformed_parameters} and \code{generated_quantities}.
 
-Each element contains a list of variables, with each variables represented
-as a list with infromation on its scalar type (\code{real} or \code{int}) and
+Each element contains a list of variables, with each variable represented
+as a list with information on its scalar type (\code{real} or \code{int}) and
 number of dimensions.
+
+The number of dimensions reported is the number of indexing dimensions in
+the declared Stan variable, equivalently the number of indices needed to
+access one scalar element. This means a scalar has 0 dimensions, a vector
+or one-dimensional array has 1, and a matrix or two-dimensional array has
+2. Array dimensions are added to any vector or matrix dimensions, so
+\verb{array[J] matrix[N, K]} has 3 dimensions. See \strong{Examples}.
 
 \verb{transformed data} is not included, as variables in that block are not
 part of the model's input or output.
 }
 \examples{
 \dontrun{
-file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+stan_file <- write_stan_file("
+data {
+  int N;
+  array[2, 3] int y;
+}
+parameters {
+  real alpha;
+  vector[N] beta;
+  array[2] matrix[3, 4] theta;
+}
+")
 
-# create a `CmdStanModel` object, compiling the model is not required
-mod <- cmdstan_model(file, compile = FALSE)
+# create a CmdStanModel object, compiling the model is not required
+mod <- cmdstan_model(stan_file, compile = FALSE)
 
-mod$variables()
-
+vars <- mod$variables()
+str(vars)
 }
 
 }
 \seealso{
+\code{\link[=write_stan_json]{write_stan_json()}} for writing data for CmdStan.
+
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
@@ -45,6 +64,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

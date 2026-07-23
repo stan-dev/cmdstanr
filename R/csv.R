@@ -1,10 +1,7 @@
 #' Read CmdStan CSV files into R
 #'
-#' @description `read_cmdstan_csv()` is used internally by CmdStanR to read
-#'   CmdStan's output CSV files into \R. It can also be used by CmdStan users as
-#'   a more flexible and efficient alternative to `rstan::read_stan_csv()`. See
-#'   the **Value** section for details on the structure of the returned list.
-#'
+#' @description `read_cmdstan_csv()` reads CmdStan's output CSV files into \R
+#'   and returns the contents as a list (see the **Value** section for details).
 #'   It is also possible to create CmdStanR's fitted model objects directly from
 #'   CmdStan CSV files using the `as_cmdstan_fit()` function.
 #'
@@ -27,10 +24,10 @@
 #'   and memory for models with many parameters.
 #'
 #' @return
-#' `as_cmdstan_fit()` returns a [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace] or
-#' [CmdStanVB] object. Some methods typically defined for those objects will not
-#' work (e.g. `save_data_file()`) but the important methods like `$summary()`,
-#' `$draws()`, `$sampler_diagnostics()` and others will work fine.
+#' `as_cmdstan_fit()` returns a fitted model object ([CmdStanMCMC], [CmdStanVB],
+#' etc.). A fitted model object created this way has some limitations compared
+#' to fitted model objects created directly by a model fitting method. See the
+#' **Reconstructed fitted model objects** section below for details.
 #'
 #' `read_cmdstan_csv()` returns a named list with the following components:
 #'
@@ -40,8 +37,8 @@
 #' The other components in the returned list depend on the method that produced
 #' the CSV file(s).
 #'
-#' For [sampling][model-method-sample] the returned list also includes the
-#' following components:
+#' For [MCMC][model-method-sample] the returned list also includes the following
+#' components:
 #'
 #' * `time`: Run time information for the individual chains. The returned object
 #' is the same as for the [$time()][fit-method-time] method except the total run
@@ -67,8 +64,8 @@
 #'
 #' * `point_estimates`: Point estimates for the model parameters.
 #'
-#' For [laplace][model-method-laplace] and
-#' [variational inference][model-method-variational] the returned list also
+#' For the [laplace][model-method-laplace], [pathfinder][model-method-pathfinder]
+#' and [variational][model-method-variational] methods, the returned list also
 #' includes the following components:
 #'
 #' * `draws`: A [`draws_matrix`][posterior::draws_matrix] (or different format
@@ -78,8 +75,42 @@
 #' For [standalone generated quantities][model-method-generate-quantities] the
 #' returned list also includes the following components:
 #'
+#' * `time`: Run time information for the individual processes, with one row in
+#' the `chains` data frame per CSV file. The returned object is the same as for
+#' the [$time()][fit-method-time] method except the total run time can't be
+#' inferred directly from the CSV files (they may have been generated in
+#' parallel) and is therefore `NA`. For CmdStan versions before 2.39 the
+#' individual process times are reported as zero.
 #' * `generated_quantities`: A [`draws_array`][posterior::draws_array] of
 #' the generated quantities.
+#'
+#' @section Reconstructed fitted model objects:
+#' `as_cmdstan_fit()` reconstructs a fitted model object from CmdStan CSV files.
+#' The CSV files do not contain all of the information available to the model
+#' fitting methods, the Stan source, the console output, or the paths to most
+#' input and auxiliary files, so the reconstructed object has a reduced set of
+#' methods.
+#'
+#' Only the following methods are available for every reconstructed object:
+#' `$draws()`, `$lp()`, `$materialize()`, `$metadata()`, `$output_files()`,
+#' `$print()`, `$save_object()`, and `$summary()`. Additional methods are
+#' available according to the inference method:
+#'
+#' * For MCMC, `$diagnostic_summary()`, `$inv_metric()`, `$loo()`,
+#'   `$num_chains()`, `$sampler_diagnostics()`, and `$time()` are available.
+#'   However, the total time reported by `$time()` will be `NA` because the CSV
+#'   files do not record whether the chains ran in parallel.
+#' * For optimization, `$mle()` is available.
+#' * For variational inference, Laplace approximation, and Pathfinder,
+#'   `$lp_approx()` is available.
+#'
+#' All other fitted-model methods are unavailable because they require
+#' information not contained in the CSV files. Calling an unavailable method
+#' produces an informative error.
+#'
+#' @seealso [draws_to_csv()] for creating compatible CSV files and
+#'   [`$output_files()`][fit-method-output_files] for locating files created by
+#'   CmdStanR
 #'
 #' @examples
 #' \dontrun{
@@ -88,13 +119,15 @@
 #' csv_files <- fit1$output_files()
 #' print(csv_files)
 #'
-#' # Creating fitting model objects
+#' # Creating fitting model objects with as_cmdstan_fit()
 #'
 #' # Create a CmdStanMCMC object from the CSV files
 #' fit2 <- as_cmdstan_fit(csv_files)
 #' fit2$print("beta")
+#' str(fit2$draws())
 #'
-#' # Using read_cmdstan_csv
+#'
+#' # Using read_cmdstan_csv()
 #' #
 #' # Read in everything
 #' x <- read_cmdstan_csv(csv_files)
@@ -222,7 +255,13 @@ read_cmdstan_csv <- function(files,
       lp = lp
     ))
   }
-  user_variables_subset <- FALSE
+  if (metadata$method == "pathfinder") {
+    pathfinder_variables <- c("lp__", "lp_approx__", "path__")
+    metadata$variables <- c(
+      intersect(pathfinder_variables, metadata$variables),
+      setdiff(metadata$variables, pathfinder_variables)
+    )
+  }
   if (is.null(variables)) { # variables = NULL returns all
     variables <- metadata$variables
   } else if (!any(nzchar(variables))) { # if variables = "" returns none
@@ -234,7 +273,6 @@ read_cmdstan_csv <- function(files,
             paste(res$not_found, collapse = ", "), call. = FALSE)
     }
     variables <- unrepair_variable_names(res$matching)
-    user_variables_subset <- TRUE
   }
   if (is.null(sampler_diagnostics)) {
     sampler_diagnostics <- metadata$sampler_diagnostics
@@ -300,15 +338,6 @@ read_cmdstan_csv <- function(files,
     if (length(variables) > 0) {
       draws_list_id <- length(draws) + 1
       warmup_draws_list_id <- length(warmup_draws) + 1
-      if (metadata$method == "pathfinder") {
-        metadata$variables <- union(metadata$sampler_diagnostics, metadata$variables)
-        if (!user_variables_subset) {
-          # because for pathfinder variables and diagnostics are read in together,
-          # if user hasn't selected a custom subset of variables we need to include
-          # all diagnostics
-          variables <- union(metadata$sampler_diagnostics, variables)
-        }
-      }
       suppressWarnings(
         draws[[draws_list_id]] <- data.table::fread(
           cmd = fread_cmd,
@@ -471,6 +500,7 @@ read_cmdstan_csv <- function(files,
     }
     list(
       metadata = metadata,
+      time = list(total = NA_integer_, chains = metadata$time),
       generated_quantities = draws
     )
   } else if (metadata$method == "pathfinder") {
@@ -639,18 +669,25 @@ CmdStanPathfinder_CSV <- R6::R6Class(
 
 # these methods are unavailable because there's no CmdStanRun object
 unavailable_methods_CmdStanFit_CSV <- c(
-    "cmdstan_diagnose", "cmdstan_summary",
-    "save_data_file", "data_file",
-    "save_latent_dynamics_files", "latent_dynamics_files",
-    "save_output_files",
-    "init",
-    "output",
-    "return_codes",
-    "code",
-    "num_procs",
-    "save_profile_files", "profile_files", "profiles",
-    "time" # available for MCMC not others
-  )
+  "cmdstan_diagnose", "cmdstan_summary",
+  "code",
+  "save_data_file", "data_file",
+  "save_latent_dynamics_files", "latent_dynamics_files",
+  "save_profile_files", "profile_files", "profiles",
+  "save_config_files", "config_files",
+  "save_metric_files", "metric_files",
+  "save_output_files",
+  "init",
+  "output",
+  "return_codes",
+  "num_procs",
+  "time", # available for MCMC, not other methods
+  "expose_functions",
+  "init_model_methods",
+  "log_prob", "grad_log_prob", "hessian",
+  "constrain_variables", "unconstrain_variables", "unconstrain_draws",
+  "variable_skeleton"
+)
 error_unavailable_CmdStanFit_CSV <- function(...) {
   stop("This method is not available for objects created using as_cmdstan_fit().",
        call. = FALSE)
@@ -664,9 +701,25 @@ for (method in unavailable_methods_CmdStanFit_CSV) {
   CmdStanLaplace_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
   CmdStanPathfinder_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
 }
+CmdStanLaplace_CSV$set("public", name = "mode", value = error_unavailable_CmdStanFit_CSV)
 
 
 # csv reading internals ---------------------------------------------------
+
+parse_generated_quantities_time <- function(line) {
+  suffix <- "seconds (Generated Quantities)"
+  line <- trimws(line)
+  if (!startsWith(line, "Elapsed Time:") || !endsWith(line, suffix)) {
+    return(NULL)
+  }
+  time <- trimws(sub(suffix, "", line, fixed = TRUE))
+  time <- trimws(sub("Elapsed Time:", "", time, fixed = TRUE))
+  time <- suppressWarnings(as.double(time))
+  if (is.na(time)) {
+    return(NULL)
+  }
+  time
+}
 
 #' Reads the sampling arguments and the diagonal of the
 #' inverse mass matrix from the comments in a CSV file.
@@ -724,8 +777,12 @@ read_csv_metadata <- function(csv_file) {
       # if no # at the start of line, the line is the CSV header
       all_names <- strsplit(line, ",")[[1]]
       if (all(csv_file_info$algorithm != "fixed_param")) {
+        non_sampler_diagnostics <- c("lp__", "log_p__", "log_g__", "log_q__")
+        if (csv_file_info$method == "pathfinder") {
+          non_sampler_diagnostics <- c(non_sampler_diagnostics, "lp_approx__", "path__")
+        }
         csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
-        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% c("lp__", "log_p__", "log_g__", "log_q__"))]
+        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% non_sampler_diagnostics)]
         csv_file_info[["variables"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
       } else {
         csv_file_info[["variables"]] <- all_names[!endsWith(all_names, "__")]
@@ -801,6 +858,11 @@ read_csv_metadata <- function(csv_file) {
           tmp <- gsub("seconds (Total)", "", tmp, fixed = TRUE)
           tmp <- trimws(gsub(" Elapsed Time: ", "", tmp, fixed = TRUE))
           total_time <- as.numeric(tmp)
+        } else {
+          generated_quantities_time <- parse_generated_quantities_time(tmp)
+          if (!is.null(generated_quantities_time)) {
+            total_time <- generated_quantities_time
+          }
         }
         if (!is.null(csv_file_info$method) &&
             csv_file_info$method == "diagnose" &&
@@ -840,6 +902,11 @@ read_csv_metadata <- function(csv_file) {
       sampling = sampling_time,
       total = total_time
     )
+  } else if (csv_file_info$method == "generate_quantities") {
+    csv_file_info$time <- data.frame(
+      chain_id = csv_file_info$id,
+      total = total_time
+    )
   }
   csv_file_info$model <- NULL
   csv_file_info$engaged <- NULL
@@ -851,11 +918,18 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$file <- NULL
   csv_file_info$diagnostic_file <- NULL
   csv_file_info$metric_file <- NULL
+  # cmdstan records multi-path Pathfinder inits as one comma-separated value,
+  # so we split it so metadata and fit$init() have one file per path
+  if (identical(csv_file_info$method, "pathfinder") &&
+      is.character(csv_file_info$init) &&
+      isTRUE(csv_file_info$num_paths > 1)) {
+    csv_file_info$init <- strsplit(csv_file_info$init, ",", fixed = TRUE)[[1]]
+  }
   if (length(gradients) > 0) {
     csv_file_info$gradients <- gradients
   }
 
-  # Revert any WSL-updated paths before returning the metadata
+  # revert any WSL-updated paths before returning the metadata
   if (os_is_wsl()) {
     csv_file_info$init <- wsl_safe_path(csv_file_info$init, revert = TRUE)
     csv_file_info$profile_file <- wsl_safe_path(csv_file_info$profile_file,

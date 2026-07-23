@@ -18,7 +18,7 @@ vignette: >
 
 ## Introduction
 
-This vignette is intended to be read after the [_Getting started with CmdStanR_](http://mc-stan.org/cmdstanr/articles/cmdstanr.html)
+This vignette is intended to be read after the [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 vignette. Please read that first for important background. In this document we
 provide additional details about compiling models, passing in data, and how
 CmdStan output is saved and read back into R.
@@ -39,13 +39,13 @@ The `cmdstan_model()` function creates a new `CmdStanModel` object. The
 `CmdStanModel` object stores the path to a Stan program as well as the
 path to a compiled executable.
 
-```{r start-clean, include=FALSE}
-exe <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli")
-unlink(exe)
-```
-
 ```{r compile}
-stan_file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+# Copy the example so the vignette does not modify the CmdStan installation.
+example_stan_file <- file.path(
+  cmdstan_path(), "examples", "bernoulli", "bernoulli.stan"
+)
+stan_file <- tempfile(pattern = "bernoulli-", fileext = ".stan")
+invisible(file.copy(example_stan_file, stan_file))
 mod <- cmdstan_model(stan_file)
 mod$print()
 mod$stan_file()
@@ -60,7 +60,7 @@ mod <- cmdstan_model(stan_file)
 ```
 
 Internally, `cmdstan_model()` first creates the `CmdStanModel` object from
-just the Stan file and then calls its [`$compile()`](http://mc-stan.org/cmdstanr/reference/model-method-compile.html)
+just the Stan file and then calls its [`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)
 method. Optional arguments to the `$compile()` method can be passed via `...`.
 
 ```{r compile-options, eval=FALSE}
@@ -68,7 +68,7 @@ mod <- cmdstan_model(
   stan_file,
   force_recompile = TRUE,
   include_paths = "paths/to/directories/with/included/files",
-  cpp_options = list(stan_threads = TRUE, STANC2 = TRUE)
+  cpp_options = list(stan_threads = TRUE)
 )
 ```
 
@@ -94,7 +94,7 @@ CmdStanR will always check that your Stan program does not contain any invalid
 syntax but with `pedantic` mode enabled the check will also warn you about other
 potential issues in your model, for example:
 
-- Distribution usages issues: distribution arguments do not match the
+- Distribution usage issues: distribution arguments do not match the
 distribution specification, or some specific distribution is used in an
 inadvisable way.
 - Unused parameter: a parameter is defined but does not contribute to target.
@@ -102,18 +102,20 @@ inadvisable way.
 are used as distribution arguments.
 - Control flow depends on a parameter: branching control flow (like if/else)
 depends on a parameter value.
-- Parameter has multiple twiddles: a parameter is on the left-hand side of
-multiple twiddles (i.e., multiple `~` symbols).
+- Parameter has multiple tildes: a parameter is on the left-hand side of
+multiple tildes (i.e., multiple `~` symbols).
 - Parameter has zero or multiple priors: a parameter has zero or more than one
 prior distribution.
 - Variable is used before assignment: a variable is used before being assigned a
 value.
 - Strict or nonsensical parameter bounds: a parameter is given questionable
 bounds.
+- Nonlinear transformations: a nonlinear transformation on the left-hand side
+of a sampling statement may require a Jacobian adjustment.
 
 For the latest information on the checks performed in pedantic mode see the
-[Pedantic mode chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html)
-in the Stan Reference Manual.
+[Pedantic mode section](https://mc-stan.org/docs/stan-users-guide/using-stanc.html#pedantic-mode)
+in the Stan User's Guide.
 
 Pedantic mode is available when compiling the model or when using the separate
 `$check_syntax()` method of a `CmdStanModel` object. Internally this corresponds
@@ -169,7 +171,9 @@ mod_pedantic$check_syntax(pedantic = TRUE)
 
 You can obtain the names, types and dimensions of the data, parameters,
 transformed parameters and generated quantities variables of a Stan model using
-the `$variables()` method of the `CmdStanModel` object.
+the `$variables()` method of the `CmdStanModel` object. This method works whether
+or not the model has been compiled. Here we use `compile = FALSE` because
+compilation is not required.
 
 ```{r stan_file_variables}
 stan_file_variables <- write_stan_file("
@@ -193,7 +197,7 @@ model {
   target += normal_lpdf(y | theta, sigma);
 }
 ")
-mod_v <- cmdstan_model(stan_file_variables)
+mod_v <- cmdstan_model(stan_file_variables, compile = FALSE)
 variables <- mod_v$variables()
 ```
 
@@ -235,7 +239,7 @@ mod <- cmdstan_model(stan_file, dir = "path/to/directory/for/executable")
 
 There are three data formats that CmdStanR allows when fitting a model:
 
-* named list of R objects
+* Named list of R objects
 * JSON file
 * R dump file
 
@@ -277,19 +281,11 @@ pass in the JSON file we created above using `write_stan_json()`:
 fit <- mod$sample(data = json_file)
 ```
 
-
 ### R dump file
 
-Finally, it is also possible to use the R dump file format. This is *not*
-recommended because CmdStan can process JSON faster than R dump, but CmdStanR
-allows it because CmdStan will accept files created by `rstan::stan_rdump()`:
-
-```{r data-rdump, eval=FALSE}
-rdump_file <- tempfile(fileext = ".data.R")
-rstan::stan_rdump(names(data_list), file = rdump_file, envir = list2env(data_list))
-cat(readLines(rdump_file), sep = "\n")
-fit <- mod$sample(data = rdump_file)
-```
+CmdStanR also accepts data in the R dump format because CmdStan supports it.
+However, JSON is faster for CmdStan to process and is the recommended file
+format.
 
 
 ## Writing CmdStan output to CSV
@@ -396,7 +392,7 @@ fit2 <- as_cmdstan_fit(fit$output_files())
 
 This is pointless in our case since we have the original `fit` object, but this
 function can be used to create fitted model objects (`CmdStanMCMC`,
-`CmdStanMLE`, etc.) from any CmdStan CSV files.
+`CmdStanMLE`, etc.) from CmdStan CSV files.
 
 ### Saving and accessing advanced algorithm info (latent dynamics)
 
@@ -432,32 +428,33 @@ head(x[, c("theta", "p_theta", "g_theta")])
 Our model has a single parameter `theta` and the three columns above correspond
 to `theta` in the _unconstrained_ space (`theta` on the constrained space is
 accessed via `fit$draws()`), the auxiliary momentum `p_theta`, and the gradient
-`g_theta`. In general, each of these three columns will exist for _every_
-parameter in the model.
+`g_theta`. In general, these three quantities are recorded for every parameter
+in the model. Container parameters are organized into columns for each scalar
+element in the unconstrained parameterization. CmdStan uses period-separated
+indices for these elements, for example `theta.1`, `p_theta.1`, and `g_theta.1`.
+See the [diagnostic CSV output documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#diagnostic-csv-output-file) for more details.
 
 
 ## Developing using CmdStanR
 
-CmdStanR can of course be used for developing other packages that require compiling
-and running Stan models as well as using new or custom Stan features available
-through CmdStan.
+CmdStanR can of course be used for developing other packages that require
+compiling and running Stan models as well as using new or custom Stan features
+available through CmdStan. Even though CmdStanR is not itself on CRAN, it
+can still be used by packages that are on CRAN.
 
-### Pre-compiled Stan models in R packages
+### Compiling Stan models during package installation
 
-You may compile a Stan model at runtime (e.g. just before sampling),
-or you may compile all the models inside the package file system in advance at installation time.
-The latter avoids compilations at runtime, which matters in centrally managed R installations
-where users should not compile their own software.
+Stan models used by an R package can be compiled at runtime or during
+installation from source. Installation-time compilation builds executables on
+the installing system so they can be reused without recompilation at runtime.
+This is different from including compiled executables in the source package:
+compiled artifacts are generally not portable across platforms, and
+[CRAN source packages may not contain binary executable code](https://cran.r-project.org/web/packages/policies.html#Source-packages).
 
-To pre-compile all the models in a package,
-you may create top-level scripts `configure` and `configure.win`
-which run `cmdstan_model()` with `compile = TRUE` and save the compiled executables
-somewhere inside the `inst/` folder of the package source.
-The [`instantiate`](https://wlandau.github.io/instantiate/) package helps developers
-configure packages this way,
-and it documents other topics such as submitting to CRAN and administering CmdStan.
-Kevin Ushey's [`configure`](https://github.com/kevinushey/configure) package helps
-create and manage package configuration files in general.
+The [`instantiate`](https://wlandau.github.io/instantiate/) package provides a
+current workflow for installation-time compilation. See the `instantiate`
+documentation for requirements, limitations, and advice on preparing for CRAN
+submission.
 
 
 ### Troubleshooting and debugging
@@ -467,8 +464,11 @@ information on how CmdStan is called internally and to see more information
 printed when compiling or running models. This can be enabled for an entire R
 session by setting the option `"cmdstanr_verbose"` to `TRUE`.
 
+```{r include=FALSE}
+old_options <- options("cmdstanr_verbose")
+```
 ```{r verbose-mode}
-options("cmdstanr_verbose"=TRUE)
+options(cmdstanr_verbose = TRUE)
 
 mod <- cmdstan_model(stan_file, force_recompile = TRUE)
 fit <- mod$sample(
@@ -478,7 +478,6 @@ fit <- mod$sample(
   iter_sampling = 100
 )
 ```
-
 ```{r include=FALSE}
-options("cmdstanr_verbose" = FALSE)
+options(old_options)
 ```

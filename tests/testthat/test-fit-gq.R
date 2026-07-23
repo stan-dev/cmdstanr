@@ -122,9 +122,13 @@ test_that("output() method works after gq", {
     len = fit_gq$runset$num_procs()
   )
   expect_true(any(grepl("method = generate_quantities", unlist(raw_output))))
-  filtered_output <- capture.output(fit_gq$output(id = 1))
-  expected_prefix <- paste0("Chain [", fit_gq$runset$chain_ids()[[1]], "]")
-  expect_true(all(startsWith(filtered_output, expected_prefix)))
+  if (fit_gq$num_procs() == fit_gq$num_chains()) {
+    expect_output(fit_gq$output(id = 1), "method = generate_quantities")
+  } else {
+    filtered_output <- capture.output(fit_gq$output(id = 1))
+    expected_prefix <- paste0("Chain [", fit_gq$runset$chain_ids()[[1]], "]")
+    expect_true(all(startsWith(filtered_output, expected_prefix)))
+  }
 })
 
 test_that("time() works after gq", {
@@ -136,8 +140,48 @@ test_that("time() works after gq", {
     run_times$chains,
     any.missing = FALSE,
     types = c("integer", "numeric"),
-    nrows = 0L,
     ncols = 2
+  )
+  expect_true(nrow(run_times$chains) %in% c(0L, fit_gq$num_chains()))
+  expect_named(run_times$chains, c("chain_id", "total"))
+  # CmdStanR measures total wall-clock time for every CmdStan version.
+  expect_gt(run_times$total, 0)
+  if (!length(run_times$chains$total)) {
+    expect_length(run_times$chains$total, 0L)
+  } else if (any(run_times$chains$total > 0)) {
+    # Some CmdStan 2.38 development builds and CmdStan >= 2.39 report
+    # generated-quantities timing.
+    expect_gt(min(run_times$chains$total), 0)
+  } else {
+    # Earlier CmdStan builds do not report generated-quantities timing.
+    expect_equal(run_times$chains$total, rep(0, fit_gq$num_chains()))
+  }
+})
+
+test_that("time() aligns successful gq process ids and times", {
+  # Reproduce a partial failure without running noisy CmdStan subprocesses.
+  # The first process fails so the successful process ids and times can be
+  # checked for the misalignment caused by filtering the times twice.
+  MockGQProcs <- R6::R6Class(
+    classname = "MockGQProcs",
+    inherit = CmdStanGQProcs,
+    public = list(
+      initialize = function() {
+        super$initialize(num_procs = 3)
+        private$proc_state_[] <- c(7, 6, 6)
+        private$proc_total_time_[] <- c(0, 0.1, 0.2)
+        private$total_time_ <- 0.3
+      }
+    )
+  )
+  runset <- CmdStanRun$new(fit_gq$runset$args, MockGQProcs$new())
+
+  expect_equal(
+    runset$time(),
+    list(
+      total = 0.3,
+      chains = data.frame(chain_id = c(2L, 3L), total = c(0.1, 0.2))
+    )
   )
 })
 

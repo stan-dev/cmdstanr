@@ -173,12 +173,22 @@ validate_cpp_options <- function(cpp_options) {
 }
 
 # check specific options for validity ---------------------------------
+cpp_option_value <- function(cpp_options, option) {
+  # CmdStanR input and executable metadata can use different casing. Prefer
+  # the final match, even when it is NULL, because later executable metadata
+  # best describes the binary.
+  matches <- which(tolower(names(cpp_options)) == tolower(option))
+  if (length(matches) == 0) {
+    return(NULL)
+  }
+  cpp_options[[matches[[length(matches)]]]]
+}
+
 # no type checking for opencl_ids
 # cpp_options must be a list
 # opencl_ids returned unchanged
 assert_valid_opencl <- function(opencl_ids, cpp_options) {
-  names(cpp_options) <- tolower(names(cpp_options))
-  if (is.null(cpp_options[["stan_opencl"]])
+  if (is.null(cpp_option_value(cpp_options, "stan_opencl"))
       && !is.null(opencl_ids)) {
     stop("'opencl_ids' is set but the model was not compiled for use with OpenCL.",
          "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
@@ -193,7 +203,8 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)
-  if (is.null(cpp_options[["stan_threads"]]) || !isTRUE(cpp_options[["stan_threads"]])) {
+  stan_threads <- cpp_option_value(cpp_options, "stan_threads")
+  if (is.null(stan_threads) || !isTRUE(stan_threads)) {
     if (!is.null(threads)) {
       warning(
         "'", threads_arg, "' is set but the model was not compiled with ",

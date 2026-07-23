@@ -11,6 +11,9 @@ unconstrain_variables(variables)
 \item{variables}{(list) A list of parameter values to transform, in the same
 format as provided to the \code{init} argument of the \verb{$sample()} method.}
 }
+\value{
+A numeric vector of unconstrained parameter values.
+}
 \description{
 The \verb{$unconstrain_variables()} method transforms input
 parameters to the unconstrained scale.
@@ -24,6 +27,5 @@ fit_mcmc$unconstrain_variables(list(alpha = 0.5, beta = c(0.7, 1.1, 0.2)))
 }
 \seealso{
 \code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
-\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}},
-\code{\link[=hessian]{hessian()}}
+\code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}}, \code{\link[=hessian]{hessian()}}
 }

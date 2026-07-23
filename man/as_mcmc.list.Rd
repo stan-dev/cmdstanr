@@ -28,3 +28,7 @@ x <- as_mcmc.list(fit)
 }
 
 }
+\seealso{
+\code{\link[=fit-method-draws]{$draws()}}, \link{CmdStanMCMC}, and
+\code{\link[posterior:draws]{posterior::as_draws()}}
+}

@@ -200,8 +200,7 @@ absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 #' @param ids Unique identifiers (e.g., `chain_ids`).
 #' @param timestamp Add a timestamp to the file names?
 #' @param ext Extension to use for all saved files (default is `ext=".csv"`).
-#' @return The paths to the new files or `NA` for any that couldn't be
-#'   copied.
+#' @return The paths to the new files. Errors if any file cannot be copied.
 copy_temp_files <-
   function(current_paths,
            new_dir,
@@ -228,7 +227,11 @@ copy_temp_files <-
       overwrite = TRUE
     )
     if (!all(copied)) {
-      destinations[!copied] <- NA_character_
+      stop(
+        "Failed to move files: one or more files could not be copied. ",
+        "No original files were removed.",
+        call. = FALSE
+      )
     }
     absolute_path(destinations)
   }
@@ -460,6 +463,8 @@ create_draws_format <- function(format, ...) {
 #' @export
 #' @param x A [CmdStanMCMC] object.
 #' @return An `mcmc.list` object compatible with the \pkg{coda} package.
+#' @seealso [`$draws()`][fit-method-draws], [CmdStanMCMC], and
+#'   [posterior::as_draws()]
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example()
@@ -495,6 +500,16 @@ as_mcmc.list <- function(x) {
 wsl_safe_path <- function(path = NULL, revert = FALSE) {
   if (!is.character(path) || is.null(path) || !os_is_wsl()) {
     return(path)
+  }
+  # Apply the existing scalar conversion to each path, forwarding `revert`.
+  if (length(path) != 1L) {
+    return(vapply(
+      path,
+      wsl_safe_path,
+      character(1),
+      revert = revert,
+      USE.NAMES = FALSE
+    ))
   }
   if (revert) {
     if (!grepl("^/mnt/", path)) {

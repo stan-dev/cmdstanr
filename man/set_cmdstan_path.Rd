@@ -23,15 +23,20 @@ found. The default is \code{TRUE}. If \code{FALSE}, \code{cmdstan_version()} ret
 \code{NULL}.}
 }
 \value{
-A string. Either the file path to the CmdStan installation or the
-CmdStan version number.
+\code{set_cmdstan_path()} invisibly returns the supplied or automatically resolved
+path. If \code{path = NULL} and no installation is found, it invisibly returns
+\code{NULL}.
 
-CmdStan version string if available. If CmdStan is not found and
-\code{error_on_NA} is \code{FALSE}, \code{cmdstan_version()} returns \code{NULL}.
+\code{cmdstan_path()} returns the current CmdStan path as a string or it errors if
+no path has been set.
+
+\code{cmdstan_version()} returns the CmdStan version as a string. If CmdStan is not
+found, it errors when \code{error_on_NA = TRUE} and returns \code{NULL} when
+\code{error_on_NA = FALSE}.
 }
 \description{
 Use the \code{set_cmdstan_path()} function to tell CmdStanR where the
-CmdStan installation in located. Once the path has been set,
+CmdStan installation is located. Once the path has been set,
 \code{cmdstan_path()} will return the full path to the CmdStan installation and
 \code{cmdstan_version()} will return the CmdStan version number. See \strong{Details}
 for how to avoid manually setting the path in each \R session.
@@ -41,13 +46,11 @@ Before the package can be used it needs to know where the CmdStan
 installation is located. When the package is loaded it tries to help automate
 this to avoid having to manually set the path every session:
 \itemize{
-\item If the \link[=Sys.setenv]{environment variable} \code{"CMDSTAN"} exists at load time
-then its value will be automatically set as the default path to CmdStan for
-the \R session. If the environment variable \code{"CMDSTAN"} is set, but a valid
-CmdStan is not found in the supplied path, the path is treated as a top
-folder that contains CmdStan installations. In that case, the CmdStan
-installation with the largest version number will be set as the path to
-CmdStan for the \R session.
+\item If the \link[=Sys.setenv]{environment variable} \code{"CMDSTAN"} points directly to
+a valid CmdStan installation at load time, that path is used for the \R
+session. If it instead points to an existing parent directory containing
+versioned CmdStan installations, the installation with the largest version
+number is used.
 \item If no environment variable is found when loaded but any directory in the
 form \code{".cmdstan/cmdstan-[version]"} (e.g., \code{".cmdstan/cmdstan-2.38.0"}),
 exists in the user's home directory (\code{Sys.getenv("HOME")}, \emph{not} the current
@@ -59,4 +62,8 @@ the latest version of CmdStan.
 
 It is always possible to change the path after loading the package using
 \code{set_cmdstan_path(path)}.
+}
+\seealso{
+\code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}, and
+\code{\link[=cmdstan_default_path]{cmdstan_default_path()}}
 }

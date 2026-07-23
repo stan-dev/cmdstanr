@@ -294,11 +294,13 @@ compose_invocation_args <- function(cmdstan_args,
   }
 
   method_args <- cmdstan_args$method_args$compose(chain_indices[[1]])
-  method_args <- append(
-    method_args,
-    paste0("num_chains=", invocation$num_chains),
-    after = 1L
-  )
+  if (invocation$num_chains > 1L) {
+    method_args <- append(
+      method_args,
+      paste0("num_chains=", invocation$num_chains),
+      after = 1L
+    )
+  }
   if (inherits(cmdstan_args$method_args, "SampleArgs")) {
     metric_files <- input_files$metric_file
     if (is.null(metric_files)) {
@@ -407,35 +409,35 @@ build_cmdstan_run_plan <- function(cmdstan_args,
   }
 
   output_public <- cmdstan_args$new_files(type = "output")
-  output_stage <- stage_cmdstan_file_list(
+  output_stage <- new_cmdstan_file_stage(
     output_public,
     direction = "output",
     staging_dir = staging_dir
   )
-  output_cmdstan <- output_stage$cmdstan_paths()
+  output_cmdstan <- output_stage$cmdstan_paths
 
   diagnostic_public <- NULL
   diagnostic_cmdstan <- NULL
   diagnostic_stage <- NULL
   if (isTRUE(cmdstan_args$save_latent_dynamics)) {
     diagnostic_public <- cmdstan_args$new_files(type = "diagnostic")
-    diagnostic_stage <- stage_cmdstan_file_list(
+    diagnostic_stage <- new_cmdstan_file_stage(
       diagnostic_public,
       direction = "output",
       staging_dir = staging_dir
     )
-    diagnostic_cmdstan <- diagnostic_stage$cmdstan_paths()
+    diagnostic_cmdstan <- diagnostic_stage$cmdstan_paths
   }
 
   profile_candidates <- cmdstan_args$new_files(type = "profile")
   first_chain_indices <- vapply(chain_groups, `[[`, integer(1), 1L)
   profile_public <- profile_candidates[first_chain_indices]
-  profile_stage <- stage_cmdstan_file_list(
+  profile_stage <- new_cmdstan_file_stage(
     profile_public,
     direction = "output",
     staging_dir = staging_dir
   )
-  profile_cmdstan <- profile_stage$cmdstan_paths()
+  profile_cmdstan <- profile_stage$cmdstan_paths
 
   metric_public <- NULL
   metric_stage <- NULL
@@ -449,11 +451,11 @@ build_cmdstan_run_plan <- function(cmdstan_args,
       tools::file_path_sans_ext(output_cmdstan),
       "_metric.json"
     )
-    metric_stage <- new_cmdstan_file_stage_mapping(
+    metric_stage <- new_cmdstan_file_stage(
       metric_public,
-      metric_cmdstan,
       direction = "output",
-      staging_dir = staging_dir
+      staging_dir = staging_dir,
+      cmdstan_paths = metric_cmdstan
     )
   }
 
@@ -469,40 +471,32 @@ build_cmdstan_run_plan <- function(cmdstan_args,
       tools::file_path_sans_ext(output_cmdstan[first_chain_indices]),
       "_config.json"
     )
-    config_stage <- new_cmdstan_file_stage_mapping(
+    config_stage <- new_cmdstan_file_stage(
       config_public,
-      config_cmdstan,
       direction = "output",
-      staging_dir = staging_dir
+      staging_dir = staging_dir,
+      cmdstan_paths = config_cmdstan
     )
   }
 
-  input_files <- list()
-  input_stages <- list()
-  add_input_stage <- function(name, paths) {
-    if (is.null(paths)) {
-      return(NULL)
-    }
-    stage <- stage_cmdstan_file_list(
+  input_paths <- list()
+  if (is.character(cmdstan_args$init)) {
+    input_paths$init <- cmdstan_args$init
+  }
+  if (inherits(cmdstan_args$method_args, "SampleArgs")) {
+    input_paths$metric_file <- cmdstan_args$method_args$metric_file
+  } else if (inherits(cmdstan_args$method_args, "GenerateQuantitiesArgs")) {
+    input_paths$fitted_params <- cmdstan_args$method_args$fitted_params
+  }
+  input_paths <- input_paths[!vapply(input_paths, is.null, logical(1))]
+  input_stages <- lapply(input_paths, function(paths) {
+    new_cmdstan_file_stage(
       paths,
       direction = "input",
       staging_dir = staging_dir
     )
-    input_stages[[name]] <<- stage
-    input_files[[name]] <<- stage$cmdstan_paths()
-    invisible(NULL)
-  }
-  if (is.character(cmdstan_args$init)) {
-    add_input_stage("init", cmdstan_args$init)
-  }
-  if (inherits(cmdstan_args$method_args, "SampleArgs")) {
-    add_input_stage("metric_file", cmdstan_args$method_args$metric_file)
-  } else if (inherits(cmdstan_args$method_args, "GenerateQuantitiesArgs")) {
-    add_input_stage(
-      "fitted_params",
-      cmdstan_args$method_args$fitted_params
-    )
-  }
+  })
+  input_files <- lapply(input_stages, `[[`, "cmdstan_paths")
 
   child_env <- if (stan_threads) {
     cmdstan_thread_env(num_threads)
@@ -549,7 +543,18 @@ build_cmdstan_run_plan <- function(cmdstan_args,
     )
   })
 
-  plan <- CmdStanRunPlan$new(
+  stages <- c(
+    list(
+      output = output_stage,
+      diagnostic = diagnostic_stage,
+      profile = profile_stage,
+      metric = metric_stage,
+      config = config_stage
+    ),
+    input_stages
+  )
+  stages <- stages[!vapply(stages, is.null, logical(1))]
+  new_cmdstan_run_plan(
     method = cmdstan_args$method,
     chain_ids = chain_ids,
     invocations = invocations,
@@ -564,20 +569,9 @@ build_cmdstan_run_plan <- function(cmdstan_args,
     ),
     requested_parallel_chains = requested_parallel_chains,
     requested_threads = requested_threads,
-    requested_threads_per_chain = requested_threads_per_chain
+    requested_threads_per_chain = requested_threads_per_chain,
+    stages = stages
   )
-  stages <- c(
-    list(
-      output = output_stage,
-      diagnostic = diagnostic_stage,
-      profile = profile_stage,
-      metric = metric_stage,
-      config = config_stage
-    ),
-    input_stages
-  )
-  stages <- stages[!vapply(stages, is.null, logical(1))]
-  list(plan = plan, stages = stages)
 }
 
 #' Validate one physical CmdStan invocation
@@ -592,53 +586,12 @@ new_cmdstan_invocation_plan <- function(invocation_id,
                                         env = character(),
                                         mpi_cmd = NULL,
                                         mpi_args = NULL) {
-  checkmate::assert_integerish(
-    invocation_id,
-    lower = 1,
-    len = 1,
-    any.missing = FALSE
-  )
-  checkmate::assert_integerish(
-    chain_indices,
-    lower = 1,
-    min.len = 1,
-    unique = TRUE,
-    any.missing = FALSE
-  )
-  checkmate::assert_integerish(
-    chain_ids,
-    lower = 1,
-    len = length(chain_indices),
-    unique = TRUE,
-    any.missing = FALSE
-  )
-  checkmate::assert_integerish(
-    num_threads,
-    lower = 1,
-    len = 1,
-    any.missing = FALSE
-  )
-  checkmate::assert_string(command)
-  checkmate::assert_character(command_args, any.missing = FALSE)
-  checkmate::assert_character(env, any.missing = FALSE)
-  checkmate::assert_string(mpi_cmd, null.ok = TRUE)
-  checkmate::assert_list(mpi_args, null.ok = TRUE)
-
-  invocation_id <- as.integer(invocation_id)
-  chain_indices <- as.integer(chain_indices)
-  chain_ids <- as.integer(chain_ids)
-  num_threads <- as.integer(num_threads)
-  num_chains <- length(chain_indices)
-
-  if (num_chains > 1L && !identical(chain_ids, seq.int(chain_ids[[1]], length.out = num_chains))) {
-    stop("Chain IDs in a multi-chain invocation must be consecutive.", call. = FALSE)
-  }
-  list(
+  invocation <- list(
     invocation_id = invocation_id,
     chain_indices = chain_indices,
     chain_ids = chain_ids,
-    base_chain_id = chain_ids[[1]],
-    num_chains = as.integer(num_chains),
+    base_chain_id = if (length(chain_ids)) chain_ids[[1]] else NA_integer_,
+    num_chains = as.integer(length(chain_indices)),
     num_threads = num_threads,
     command = command,
     command_args = command_args,
@@ -646,150 +599,295 @@ new_cmdstan_invocation_plan <- function(invocation_id,
     mpi_cmd = mpi_cmd,
     mpi_args = mpi_args
   )
+  validate_cmdstan_invocation_plan(invocation)
+  invocation$invocation_id <- as.integer(invocation$invocation_id)
+  invocation$chain_indices <- as.integer(invocation$chain_indices)
+  invocation$chain_ids <- as.integer(invocation$chain_ids)
+  invocation$base_chain_id <- as.integer(invocation$base_chain_id)
+  invocation$num_threads <- as.integer(invocation$num_threads)
+  invocation
 }
 
-#' Logical-chain to physical-invocation mapping
+#' Validate one physical CmdStan invocation
 #'
 #' @noRd
-CmdStanRunPlan <- R6::R6Class(
-  classname = "CmdStanRunPlan",
-  public = list(
-    method = NULL,
-    chain_ids = NULL,
-    invocations = NULL,
-    chain_artifacts = NULL,
-    invocation_artifacts = NULL,
-    requested_parallel_chains = NULL,
-    requested_threads = NULL,
-    requested_threads_per_chain = NULL,
+validate_cmdstan_invocation_plan <- function(invocation) {
+  checkmate::assert_list(invocation)
+  expected_names <- c(
+    "invocation_id",
+    "chain_indices",
+    "chain_ids",
+    "base_chain_id",
+    "num_chains",
+    "num_threads",
+    "command",
+    "command_args",
+    "env",
+    "mpi_cmd",
+    "mpi_args"
+  )
+  if (!identical(names(invocation), expected_names)) {
+    stop(
+      "A CmdStan invocation plan must contain: ",
+      paste(expected_names, collapse = ", "),
+      ".",
+      call. = FALSE
+    )
+  }
+  checkmate::assert_integerish(
+    invocation$invocation_id,
+    lower = 1,
+    len = 1,
+    any.missing = FALSE
+  )
+  checkmate::assert_integerish(
+    invocation$chain_indices,
+    lower = 1,
+    min.len = 1,
+    unique = TRUE,
+    any.missing = FALSE
+  )
+  checkmate::assert_integerish(
+    invocation$chain_ids,
+    lower = 1,
+    len = length(invocation$chain_indices),
+    unique = TRUE,
+    any.missing = FALSE
+  )
+  checkmate::assert_integerish(
+    invocation$base_chain_id,
+    lower = 1,
+    len = 1,
+    any.missing = FALSE
+  )
+  checkmate::assert_integerish(
+    invocation$num_chains,
+    lower = 1,
+    len = 1,
+    any.missing = FALSE
+  )
+  checkmate::assert_integerish(
+    invocation$num_threads,
+    lower = 1,
+    len = 1,
+    any.missing = FALSE
+  )
+  checkmate::assert_string(invocation$command)
+  checkmate::assert_character(invocation$command_args, any.missing = FALSE)
+  checkmate::assert_character(invocation$env, any.missing = FALSE)
+  checkmate::assert_string(invocation$mpi_cmd, null.ok = TRUE)
+  checkmate::assert_list(invocation$mpi_args, null.ok = TRUE)
 
-    initialize = function(method,
-                          chain_ids,
-                          invocations,
-                          chain_artifacts = list(),
-                          invocation_artifacts = list(),
-                          requested_parallel_chains = NULL,
-                          requested_threads = NULL,
-                          requested_threads_per_chain = NULL) {
-      checkmate::assert_string(method)
-      checkmate::assert_integerish(
-        chain_ids,
-        lower = 1,
-        min.len = 1,
-        unique = TRUE,
-        any.missing = FALSE
-      )
-      checkmate::assert_list(invocations, min.len = 1)
-      checkmate::assert_list(chain_artifacts, names = "unique")
-      checkmate::assert_list(invocation_artifacts, names = "unique")
-      checkmate::assert_integerish(
-        requested_parallel_chains,
-        lower = 1,
-        len = 1,
-        null.ok = TRUE,
-        any.missing = FALSE
-      )
-      checkmate::assert_integerish(
-        requested_threads,
-        lower = 1,
-        len = 1,
-        null.ok = TRUE,
-        any.missing = FALSE
-      )
-      checkmate::assert_integerish(
-        requested_threads_per_chain,
-        lower = 1,
-        len = 1,
-        null.ok = TRUE,
-        any.missing = FALSE
-      )
+  if (invocation$base_chain_id != invocation$chain_ids[[1]]) {
+    stop(
+      "An invocation's base chain ID must equal its first chain ID.",
+      call. = FALSE
+    )
+  }
+  if (invocation$num_chains != length(invocation$chain_indices) ||
+      invocation$num_chains != length(invocation$chain_ids)) {
+    stop("Invocation chain cardinality is inconsistent.", call. = FALSE)
+  }
+  if (invocation$num_chains > 1L &&
+      !identical(
+        as.integer(invocation$chain_ids),
+        seq.int(
+          as.integer(invocation$chain_ids[[1]]),
+          length.out = invocation$num_chains
+        )
+      )) {
+    stop("Chain IDs in a multi-chain invocation must be consecutive.", call. = FALSE)
+  }
+  invisible(invocation)
+}
 
-      chain_ids <- as.integer(chain_ids)
-      num_chains <- length(chain_ids)
-      num_invocations <- length(invocations)
-      invocation_ids <- vapply(
-        invocations,
-        function(invocation) invocation$invocation_id,
-        integer(1)
-      )
-      if (!identical(invocation_ids, seq_len(num_invocations))) {
-        stop("Invocation IDs must be sequential from 1.", call. = FALSE)
-      }
+#' Construct a validated logical-chain to physical-invocation plan
+#'
+#' @noRd
+new_cmdstan_run_plan <- function(method,
+                                 chain_ids,
+                                 invocations,
+                                 chain_artifacts = list(),
+                                 invocation_artifacts = list(),
+                                 requested_parallel_chains = NULL,
+                                 requested_threads = NULL,
+                                 requested_threads_per_chain = NULL,
+                                 stages = list()) {
+  plan <- list(
+    method = method,
+    chains = list(ids = chain_ids),
+    invocations = invocations,
+    artifacts = list(
+      chain = chain_artifacts,
+      invocation = invocation_artifacts
+    ),
+    requested = list(
+      parallel_chains = requested_parallel_chains,
+      threads = requested_threads,
+      threads_per_chain = requested_threads_per_chain
+    ),
+    stages = stages
+  )
+  validate_cmdstan_run_plan(plan)
+  plan$chains$ids <- as.integer(plan$chains$ids)
+  for (name in names(plan$requested)) {
+    if (!is.null(plan$requested[[name]])) {
+      plan$requested[[name]] <- as.integer(plan$requested[[name]])
+    }
+  }
+  plan
+}
 
-      mapped_indices <- unlist(
-        lapply(invocations, function(invocation) invocation$chain_indices),
-        use.names = FALSE
-      )
-      if (!identical(sort(mapped_indices), seq_len(num_chains))) {
-        stop("Every logical chain index must occur exactly once across invocations.", call. = FALSE)
-      }
-      for (invocation in invocations) {
-        expected_chain_ids <- chain_ids[invocation$chain_indices]
-        if (!identical(invocation$chain_ids, expected_chain_ids)) {
-          stop("Invocation chain IDs must match the run plan's logical chain registry.", call. = FALSE)
-        }
-        if (invocation$num_chains != length(invocation$chain_indices) ||
-            invocation$num_chains != length(invocation$chain_ids)) {
-          stop("Invocation chain cardinality is inconsistent.", call. = FALSE)
-        }
-      }
+#' Validate a logical-chain to physical-invocation plan
+#'
+#' @noRd
+validate_cmdstan_run_plan <- function(plan) {
+  checkmate::assert_list(plan)
+  expected_names <- c(
+    "method",
+    "chains",
+    "invocations",
+    "artifacts",
+    "requested",
+    "stages"
+  )
+  if (!identical(names(plan), expected_names)) {
+    stop(
+      "A CmdStan run plan must contain: ",
+      paste(expected_names, collapse = ", "),
+      ".",
+      call. = FALSE
+    )
+  }
+  checkmate::assert_string(plan$method)
+  checkmate::assert_list(plan$chains)
+  if (!identical(names(plan$chains), "ids")) {
+    stop("A CmdStan run plan must contain logical chain IDs.", call. = FALSE)
+  }
+  checkmate::assert_integerish(
+    plan$chains$ids,
+    lower = 1,
+    min.len = 1,
+    unique = TRUE,
+    any.missing = FALSE
+  )
+  checkmate::assert_list(plan$invocations, min.len = 1)
+  lapply(plan$invocations, validate_cmdstan_invocation_plan)
+  checkmate::assert_list(plan$artifacts)
+  if (!identical(names(plan$artifacts), c("chain", "invocation"))) {
+    stop(
+      "Run plan artifacts must be divided into chain and invocation scopes.",
+      call. = FALSE
+    )
+  }
+  checkmate::assert_list(plan$artifacts$chain, names = "unique")
+  checkmate::assert_list(plan$artifacts$invocation, names = "unique")
+  checkmate::assert_list(plan$requested)
+  if (!identical(
+    names(plan$requested),
+    c("parallel_chains", "threads", "threads_per_chain")
+  )) {
+    stop("Run plan request metadata is malformed.", call. = FALSE)
+  }
+  checkmate::assert_integerish(
+    plan$requested$parallel_chains,
+    lower = 1,
+    len = 1,
+    null.ok = TRUE,
+    any.missing = FALSE
+  )
+  checkmate::assert_integerish(
+    plan$requested$threads,
+    lower = 1,
+    len = 1,
+    null.ok = TRUE,
+    any.missing = FALSE
+  )
+  checkmate::assert_integerish(
+    plan$requested$threads_per_chain,
+    lower = 1,
+    len = 1,
+    null.ok = TRUE,
+    any.missing = FALSE
+  )
+  checkmate::assert_list(plan$stages, names = "unique")
+  lapply(plan$stages, validate_cmdstan_file_stage)
 
-      validate_artifacts <- function(artifacts, expected_length, scope) {
-        for (artifact_name in names(artifacts)) {
-          artifact <- artifacts[[artifact_name]]
-          if (!is.null(artifact)) {
-            checkmate::assert_character(artifact, any.missing = FALSE)
-            if (length(artifact) != expected_length) {
-              stop(
-                scope,
-                " artifact '", artifact_name, "' must have length ",
-                expected_length, ".",
-                call. = FALSE
-              )
-            }
-          }
-        }
-      }
-      validate_artifacts(chain_artifacts, num_chains, "chain")
-      validate_artifacts(invocation_artifacts, num_invocations, "invocation")
+  chain_ids <- as.integer(plan$chains$ids)
+  num_chains <- length(chain_ids)
+  num_invocations <- length(plan$invocations)
+  invocation_ids <- vapply(
+    plan$invocations,
+    function(invocation) as.integer(invocation$invocation_id),
+    integer(1)
+  )
+  if (!identical(invocation_ids, seq_len(num_invocations))) {
+    stop("Invocation IDs must be sequential from 1.", call. = FALSE)
+  }
 
-      self$method <- method
-      self$chain_ids <- chain_ids
-      self$invocations <- invocations
-      self$chain_artifacts <- chain_artifacts
-      self$invocation_artifacts <- invocation_artifacts
-      self$requested_parallel_chains <- if (is.null(requested_parallel_chains)) {
-        NULL
-      } else {
-        as.integer(requested_parallel_chains)
-      }
-      self$requested_threads <- if (is.null(requested_threads)) {
-        NULL
-      } else {
-        as.integer(requested_threads)
-      }
-      self$requested_threads_per_chain <- if (is.null(requested_threads_per_chain)) {
-        NULL
-      } else {
-        as.integer(requested_threads_per_chain)
-      }
-      invisible(self)
-    },
-
-    num_chains = function() {
-      length(self$chain_ids)
-    },
-
-    num_invocations = function() {
-      length(self$invocations)
-    },
-
-    invocation_ids = function() {
-      vapply(
-        self$invocations,
-        function(invocation) invocation$invocation_id,
-        integer(1)
+  mapped_indices <- unlist(
+    lapply(plan$invocations, function(invocation) invocation$chain_indices),
+    use.names = FALSE
+  )
+  mapped_indices <- as.integer(mapped_indices)
+  if (!identical(sort(mapped_indices), seq_len(num_chains))) {
+    stop(
+      "Every logical chain index must occur exactly once across invocations.",
+      call. = FALSE
+    )
+  }
+  for (invocation in plan$invocations) {
+    expected_chain_ids <- chain_ids[as.integer(invocation$chain_indices)]
+    if (!identical(
+      as.integer(invocation$chain_ids),
+      as.integer(expected_chain_ids)
+    )) {
+      stop(
+        "Invocation chain IDs must match the run plan's logical chain registry.",
+        call. = FALSE
       )
     }
+    if (invocation$num_chains != length(invocation$chain_indices) ||
+        invocation$num_chains != length(invocation$chain_ids)) {
+      stop("Invocation chain cardinality is inconsistent.", call. = FALSE)
+    }
+  }
+
+  validate_artifacts <- function(artifacts, expected_length, scope) {
+    for (artifact_name in names(artifacts)) {
+      artifact <- artifacts[[artifact_name]]
+      if (!is.null(artifact)) {
+        checkmate::assert_character(artifact, any.missing = FALSE)
+        if (length(artifact) != expected_length) {
+          stop(
+            scope,
+            " artifact '", artifact_name, "' must have length ",
+            expected_length, ".",
+            call. = FALSE
+          )
+        }
+      }
+    }
+  }
+  validate_artifacts(plan$artifacts$chain, num_chains, "chain")
+  validate_artifacts(
+    plan$artifacts$invocation,
+    num_invocations,
+    "invocation"
   )
-)
+  invisible(plan)
+}
+
+#' Count logical chains in a validated run plan
+#'
+#' @noRd
+run_plan_num_chains <- function(plan) {
+  length(plan$chains$ids)
+}
+
+#' Count physical invocations in a validated run plan
+#'
+#' @noRd
+run_plan_num_invocations <- function(plan) {
+  length(plan$invocations)
+}

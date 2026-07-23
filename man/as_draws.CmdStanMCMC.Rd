@@ -28,6 +28,10 @@
 \item{...}{Optional arguments passed to the \code{\link[=fit-method-draws]{$draws()}}
 method (e.g., \code{variables}, \code{inc_warmup}, etc.).}
 }
+\value{
+A \verb{posterior::draws_*} object. The default format depends on the
+fitted model class and can be changed using arguments passed through \code{...}.
+}
 \description{
 Create a \code{draws} object supported by the \pkg{posterior} package. These
 methods are just wrappers around CmdStanR's \code{\link[=fit-method-draws]{$draws()}}
@@ -47,4 +51,7 @@ posterior::as_draws_rvars(fit)
 posterior::as_draws_list(fit)
 }
 
+}
+\seealso{
+\code{\link[=fit-method-draws]{$draws()}} and \code{\link[posterior:draws]{posterior::as_draws()}}
 }

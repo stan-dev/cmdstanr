@@ -18,51 +18,62 @@
 CmdStanR (\pkg{cmdstanr} package) is an interface to Stan
 (\href{https://mc-stan.org}{mc-stan.org}) for \R users. It provides the
 necessary objects and functions to compile a Stan program and run Stan's
-algorithms from \R via CmdStan, the shell interface to Stan
+algorithms from \R via CmdStan, the command line interface to Stan
 (\href{https://mc-stan.org/users/interfaces/cmdstan}{mc-stan.org/users/interfaces/cmdstan}).
 
 \subsection{Different ways of interfacing with Stan’s C++}{
 
-The RStan interface (\href{https://mc-stan.org/rstan/}{\strong{rstan}} package) is
-an in-memory interface to Stan and relies on R packages like \strong{Rcpp}
-and \strong{inline} to call C++ code from R. On the other hand, the CmdStanR
-interface does not directly call any C++ code from R, instead relying on
-the CmdStan interface behind the scenes for compilation, running
-algorithms, and writing results to output files.
+The RStan interface (\href{https://mc-stan.org/rstan/}{\strong{rstan}} package)
+provides its core functionality through an in-memory interface to Stan
+and relies on R packages such as \strong{Rcpp} to call C++ code from R.
+CmdStanR’s core model compilation and inference workflow instead runs
+CmdStan in external processes and reads the resulting output files. Only
+optional CmdStanR features, such as \verb{$expose_functions()} and the
+additional model methods, use \strong{Rcpp} to call compiled C++ code
+directly from R.
 }
 
 \subsection{Advantages of RStan}{
 \itemize{
-\item Allows other developers to distribute R packages with \emph{pre-compiled}
-Stan programs (like \strong{rstanarm}) on CRAN. (Note: As of 2023, this
-can mostly be achieved with CmdStanR as well. See \href{https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html#developing-using-cmdstanr}{Developing using CmdStanR}.)
+\item CRAN provides binary versions of RStan for Windows and macOS.
+RStan-based packages can also include precompiled Stan models in
+their binary packages, which allows users to run the models without
+a local C++ toolchain.
+
+CmdStanR-based packages can use
+\href{https://wlandau.github.io/instantiate/}{\code{instantiate}} to compile
+models once during package installation. Because CRAN’s build
+machines do not provide CmdStan, packages using this workflow
+currently need to be installed from source with CmdStan and a C++
+toolchain available.
 \item Avoids use of R6 classes, which may result in more familiar syntax
 for many R users.
-\item CRAN binaries available for Mac and Windows.
 }
 }
 
 \subsection{Advantages of CmdStanR}{
 \itemize{
-\item Compatible with latest versions of Stan. Keeping up with Stan
-releases is complicated for RStan, often requiring non-trivial
-changes to the \strong{rstan} package and new CRAN releases of both
-\strong{rstan} and \strong{StanHeaders}. With CmdStanR the latest improvements
-in Stan will be available from R immediately after updating CmdStan
-using \code{cmdstanr::install_cmdstan()}.
-\item Running Stan via external processes results in fewer unexpected
-crashes, especially in RStudio.
-\item Less memory overhead.
-\item More permissive license. RStan uses the GPL-3 license while the
-license for CmdStanR is BSD-3, which is a bit more permissive and is
-the same license used for CmdStan and the Stan C++ source code.
+\item CmdStan is installed separately from CmdStanR, so users can often
+update to a new Stan release by updating CmdStan without waiting for
+a new CmdStanR release.
+\item Running CmdStan in external processes isolates inference from the R
+process, reducing the risk that a failure during inference
+terminates the R session.
+\item Potentially lower memory use in the R session. CmdStan writes
+results to CSV files, and CmdStanR loads draws into R only when
+requested. This can avoid retaining all output in memory during
+fitting.
+\item More permissive license. RStan uses the GPL (>= 3) license while
+the license for CmdStanR is BSD 3-clause, which is a bit more
+permissive and is the same license used for CmdStan and the Stan C++
+source code.
 }
 }
 }
 \section{Getting started}{
- CmdStanR requires a working version of CmdStan. If
-you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get started,
-otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} to install CmdStan. The vignette
+ CmdStanR requires a working version of CmdStan >=
+2.35. If you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
+started, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} to install CmdStan. The vignette
 \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
 demonstrates the basic functionality of the package.
 
@@ -137,7 +148,7 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 fit_vb$summary()
 mcmc_hist(fit_vb$draws("theta"))
 
-# Run 'pathfinder' method, a new alternative to the variational method
+# Run the Pathfinder variational inference method
 fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 fit_pf$summary()
 mcmc_hist(fit_pf$draws("theta"))

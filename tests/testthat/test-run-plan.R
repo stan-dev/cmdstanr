@@ -1,4 +1,4 @@
-test_that("CmdStanRunPlan separates logical chains from invocations", {
+test_that("run plan lists separate logical chains from invocations", {
   threaded_invocation <- new_cmdstan_invocation_plan(
     invocation_id = 1,
     chain_indices = 1:4,
@@ -8,7 +8,7 @@ test_that("CmdStanRunPlan separates logical chains from invocations", {
     command_args = c("sample", "num_chains=4"),
     env = c(STAN_NUM_THREADS = "8")
   )
-  threaded_plan <- CmdStanRunPlan$new(
+  threaded_plan <- new_cmdstan_run_plan(
     method = "sample",
     chain_ids = 10:13,
     invocations = list(threaded_invocation),
@@ -25,13 +25,22 @@ test_that("CmdStanRunPlan separates logical chains from invocations", {
     requested_threads_per_chain = 2
   )
 
-  expect_equal(threaded_plan$num_chains(), 4L)
-  expect_equal(threaded_plan$num_invocations(), 1L)
-  expect_equal(threaded_plan$invocation_ids(), 1L)
-  expect_equal(threaded_plan$chain_ids, 10:13)
+  expect_type(threaded_plan, "list")
+  expect_named(
+    threaded_plan,
+    c("method", "chains", "invocations", "artifacts", "requested", "stages")
+  )
+  expect_equal(run_plan_num_chains(threaded_plan), 4L)
+  expect_equal(run_plan_num_invocations(threaded_plan), 1L)
+  expect_equal(threaded_plan$chains$ids, 10:13)
   expect_equal(threaded_plan$invocations[[1]]$base_chain_id, 10L)
   expect_equal(threaded_plan$invocations[[1]]$num_chains, 4L)
   expect_equal(threaded_plan$invocations[[1]]$chain_indices, 1:4)
+  expect_equal(
+    threaded_plan$artifacts$chain$output,
+    paste0("output-", 10:13, ".csv")
+  )
+  expect_equal(threaded_plan$requested$threads_per_chain, 2L)
 
   unthreaded_invocations <- lapply(seq_len(4), function(i) {
     new_cmdstan_invocation_plan(
@@ -43,7 +52,7 @@ test_that("CmdStanRunPlan separates logical chains from invocations", {
       command_args = "sample"
     )
   })
-  unthreaded_plan <- CmdStanRunPlan$new(
+  unthreaded_plan <- new_cmdstan_run_plan(
     method = "sample",
     chain_ids = c(9L, 2L, 20L, 7L),
     invocations = unthreaded_invocations,
@@ -52,16 +61,15 @@ test_that("CmdStanRunPlan separates logical chains from invocations", {
     requested_parallel_chains = 2
   )
 
-  expect_equal(unthreaded_plan$num_chains(), 4L)
-  expect_equal(unthreaded_plan$num_invocations(), 4L)
-  expect_equal(unthreaded_plan$invocation_ids(), 1:4)
+  expect_equal(run_plan_num_chains(unthreaded_plan), 4L)
+  expect_equal(run_plan_num_invocations(unthreaded_plan), 4L)
   expect_equal(
     vapply(unthreaded_plan$invocations, `[[`, integer(1), "chain_indices"),
     1:4
   )
 })
 
-test_that("CmdStanRunPlan rejects invalid mappings and artifact cardinality", {
+test_that("run plan validation rejects invalid mappings and artifacts", {
   invocation <- new_cmdstan_invocation_plan(
     invocation_id = 1,
     chain_indices = 1:2,
@@ -71,7 +79,7 @@ test_that("CmdStanRunPlan rejects invalid mappings and artifact cardinality", {
   )
 
   expect_error(
-    CmdStanRunPlan$new(
+    new_cmdstan_run_plan(
       method = "sample",
       chain_ids = 1:3,
       invocations = list(invocation),
@@ -81,7 +89,7 @@ test_that("CmdStanRunPlan rejects invalid mappings and artifact cardinality", {
     "exactly once"
   )
   expect_error(
-    CmdStanRunPlan$new(
+    new_cmdstan_run_plan(
       method = "sample",
       chain_ids = 1:2,
       invocations = list(invocation),
@@ -91,7 +99,7 @@ test_that("CmdStanRunPlan rejects invalid mappings and artifact cardinality", {
     "chain artifact 'output'"
   )
   expect_error(
-    CmdStanRunPlan$new(
+    new_cmdstan_run_plan(
       method = "sample",
       chain_ids = 1:2,
       invocations = list(invocation),
@@ -120,6 +128,26 @@ test_that("CmdStanRunPlan rejects invalid mappings and artifact cardinality", {
       command = "model"
     ),
     "num_threads"
+  )
+  expect_error(
+    new_cmdstan_invocation_plan(
+      invocation_id = 1,
+      chain_indices = c(1, 2.5),
+      chain_ids = 1:2,
+      num_threads = 2,
+      command = "model"
+    ),
+    "integerish"
+  )
+  expect_error(
+    new_cmdstan_run_plan(
+      method = "sample",
+      chain_ids = c(1, 2.5),
+      invocations = list(invocation),
+      chain_artifacts = list(output = paste0("output-", 1:2, ".csv")),
+      invocation_artifacts = list(profile = "profile.csv")
+    ),
+    "integerish"
   )
 })
 
@@ -248,33 +276,39 @@ test_that("normalize_chain_scalar_args scalarizes only threaded invocations", {
   expect_equal(unthreaded$chain_ids, c(10L, 20L, 30L))
 })
 
-test_that("CmdStan file lists stage comma paths and finalize idempotently", {
+test_that("CmdStan file planning is pure and finalization is idempotent", {
   staging_dir <- file.path(tempdir(), paste0("cmdstan-stage-", Sys.getpid()))
   dir.create(staging_dir, recursive = TRUE, showWarnings = FALSE)
   input_path <- file.path(staging_dir, "input,one.json")
   writeLines("input", input_path)
 
-  input_stage <- stage_cmdstan_file_list(
+  input_stage <- new_cmdstan_file_stage(
     input_path,
     direction = "input",
     staging_dir = staging_dir
   )
-  expect_equal(input_stage$public_paths(), input_path)
-  expect_false(any(grepl(",", basename(input_stage$cmdstan_paths()), fixed = TRUE)))
-  expect_true(file.exists(input_stage$cmdstan_paths()))
-  expect_equal(readLines(input_stage$cmdstan_paths()), "input")
+  expect_type(input_stage, "list")
+  expect_equal(input_stage$public_paths, input_path)
+  expect_false(any(grepl(",", basename(input_stage$cmdstan_paths), fixed = TRUE)))
+  expect_false(file.exists(input_stage$cmdstan_paths))
+  expect_true(prepare_cmdstan_file_stage(input_stage))
+  expect_true(file.exists(input_stage$cmdstan_paths))
+  expect_equal(readLines(input_stage$cmdstan_paths), "input")
 
   output_path <- file.path(staging_dir, "output,one.csv")
-  output_stage <- stage_cmdstan_file_list(
+  output_stage <- new_cmdstan_file_stage(
     output_path,
     direction = "output",
     staging_dir = staging_dir
   )
-  expect_false(file.exists(output_stage$cmdstan_paths()))
-  writeLines("partial output", output_stage$cmdstan_paths())
-  expect_true(output_stage$restore_outputs())
-  expect_false(output_stage$restore_outputs())
+  expect_false(file.exists(output_stage$cmdstan_paths))
+  writeLines("partial output", output_stage$cmdstan_paths)
+  expect_true(restore_cmdstan_file_stage(output_stage))
+  expect_false(restore_cmdstan_file_stage(output_stage))
   expect_equal(readLines(output_path), "partial output")
+
+  cleanup_cmdstan_file_stage(input_stage)
+  expect_false(file.exists(input_stage$cmdstan_paths))
 })
 
 test_that("compose_cmdstan_file_list converts elements before joining", {
@@ -397,14 +431,16 @@ test_that("build_cmdstan_run_plan derives threaded and unthreaded cardinality", 
     requested_parallel_chains = 4,
     requested_threads_per_chain = 2
   )
-  expect_equal(threaded$plan$num_chains(), 4L)
-  expect_equal(threaded$plan$num_invocations(), 1L)
-  expect_length(threaded$plan$chain_artifacts$output, 4)
-  expect_length(threaded$plan$chain_artifacts$diagnostic, 4)
-  expect_length(threaded$plan$invocation_artifacts$profile, 1)
-  expect_length(threaded$plan$invocation_artifacts$config, 1)
-  expect_equal(threaded$plan$invocations[[1]]$num_threads, 8L)
-  expect_equal(threaded$plan$invocations[[1]]$env[["STAN_NUM_THREADS"]], "8")
+  expect_equal(run_plan_num_chains(threaded), 4L)
+  expect_equal(run_plan_num_invocations(threaded), 1L)
+  expect_length(threaded$artifacts$chain$output, 4)
+  expect_length(threaded$artifacts$chain$diagnostic, 4)
+  expect_length(threaded$artifacts$invocation$profile, 1)
+  expect_length(threaded$artifacts$invocation$config, 1)
+  expect_equal(threaded$invocations[[1]]$num_threads, 8L)
+  expect_equal(threaded$invocations[[1]]$env[["STAN_NUM_THREADS"]], "8")
+  expect_true(all(vapply(threaded$stages, is.list, logical(1))))
+  expect_false(any(vapply(threaded$stages, is.environment, logical(1))))
 
   unthreaded_args <- CmdStanArgs$new(
     model_name = "model",
@@ -420,20 +456,20 @@ test_that("build_cmdstan_run_plan derives threaded and unthreaded cardinality", 
     num_threads = 1,
     requested_parallel_chains = 2
   )
-  expect_equal(unthreaded$plan$num_chains(), 4L)
-  expect_equal(unthreaded$plan$num_invocations(), 4L)
+  expect_equal(run_plan_num_chains(unthreaded), 4L)
+  expect_equal(run_plan_num_invocations(unthreaded), 4L)
   expect_equal(
-    vapply(unthreaded$plan$invocations, `[[`, integer(1), "chain_ids"),
+    vapply(unthreaded$invocations, `[[`, integer(1), "chain_ids"),
     c(9L, 2L, 20L, 7L)
   )
   expect_true(all(vapply(
-    unthreaded$plan$invocations,
+    unthreaded$invocations,
     function(invocation) length(invocation$env) == 0L,
     logical(1)
   )))
 })
 
-test_that("CmdStanRun exposes logical chains and physical invocations separately", {
+test_that("CmdStanRun owns the plan and process registry", {
   exe_file <- tempfile("cmdstan-model-")
   file.create(exe_file)
   Sys.chmod(exe_file, mode = "0755")
@@ -452,34 +488,125 @@ test_that("CmdStanRun exposes logical chains and physical invocations separately
     requested_parallel_chains = 4,
     requested_threads_per_chain = 2
   )
-  procs <- CmdStanMCMCProcs$new(
-    num_procs = planned$plan$num_invocations(),
-    invocation_chain_ids = lapply(
-      planned$plan$invocations,
-      function(invocation) invocation$chain_ids
-    ),
-    parallel_procs = 1,
-    show_stderr_messages = FALSE,
-    show_stdout_messages = FALSE
-  )
   runset <- CmdStanRun$new(
     args,
-    procs,
-    run_plan = planned$plan,
-    file_stages = planned$stages
+    run_plan = planned,
+    show_stderr_messages = FALSE,
+    show_stdout_messages = FALSE
   )
 
   expect_equal(runset$num_chains(), 4L)
   expect_equal(runset$chain_ids(), 10:13)
   expect_equal(runset$num_procs(), 1L)
   expect_equal(runset$proc_ids(), 1L)
-  expect_equal(runset$output_files(include_failed = TRUE), planned$plan$chain_artifacts$output)
-  expect_equal(runset$profile_files(include_failed = TRUE), planned$plan$invocation_artifacts$profile)
-  expect_equal(runset$command_args(), list(planned$plan$invocations[[1]]$command_args))
+  expect_equal(
+    runset$output_files(include_failed = TRUE),
+    planned$artifacts$chain$output
+  )
+  expect_equal(
+    runset$profile_files(include_failed = TRUE),
+    planned$artifacts$invocation$profile
+  )
+  expect_equal(
+    runset$command_args(),
+    list(planned$invocations[[1]]$command_args)
+  )
   expect_equal(runset$invocation_env(1), c(STAN_NUM_THREADS = "8"))
-  procs$record_chain_output("shared invocation metadata")
-  procs$record_chain_output("Chain [11] Iteration: 1 / 2")
+  runset$procs$record_chain_output("shared invocation metadata")
+  runset$procs$record_chain_output("Chain [11] Iteration: 1 / 2")
   expect_equal(runset$chain_output(2), "Chain [11] Iteration: 1 / 2")
+})
+
+test_that("planned unthreaded runs retain process-per-chain behavior", {
+  exe_file <- tempfile("cmdstan-model-")
+  file.create(exe_file)
+  Sys.chmod(exe_file, mode = "0755")
+  args <- CmdStanArgs$new(
+    model_name = "model",
+    exe_file = exe_file,
+    proc_ids = c(9L, 2L, 20L, 7L),
+    method_args = SampleArgs$new(step_size = 1:4),
+    seed = 1:4,
+    output_dir = tempdir()
+  )
+  planned <- build_cmdstan_run_plan(
+    cmdstan_args = args,
+    stan_threads = FALSE,
+    num_threads = 1,
+    requested_parallel_chains = 2
+  )
+  runset <- CmdStanRun$new(
+    args,
+    run_plan = planned,
+    show_stderr_messages = FALSE,
+    show_stdout_messages = FALSE
+  )
+
+  expect_equal(runset$num_chains(), 4L)
+  expect_equal(runset$chain_ids(), c(9L, 2L, 20L, 7L))
+  expect_equal(runset$num_procs(), 4L)
+  expect_equal(runset$procs$parallel_procs(), 2L)
+  expect_equal(
+    runset$procs$invocation_chain_ids(),
+    list(9L, 2L, 20L, 7L)
+  )
+  expect_false(any(vapply(runset$command_args(), function(args) {
+    any(startsWith(args, "num_chains="))
+  }, logical(1))))
+
+  output <- c(
+    "Gradient evaluation took 0.001 seconds",
+    "Chain [9] Iteration: 1 / 2 (Warmup)"
+  )
+  local_mocked_bindings(
+    toolchain_PATH_env_var = function() character(),
+    tbb_path = function() character(),
+    wsl_compatible_process_new = function(...) {
+      list(read_output_lines = function() {
+        current <- output
+        output <<- character()
+        current
+      })
+    }
+  )
+  runset$procs$new_proc(
+    id = 1,
+    command = "model",
+    args = "sample",
+    wd = tempdir()
+  )
+  runset$procs$mark_proc_start(1)
+  runset$procs$process_output(1)
+  expect_true(any(grepl(
+    "Gradient evaluation took",
+    runset$chain_output(1),
+    fixed = TRUE
+  )))
+})
+
+test_that("CmdStanRun retains its legacy process-registry constructor", {
+  exe_file <- tempfile("cmdstan-model-")
+  file.create(exe_file)
+  Sys.chmod(exe_file, mode = "0755")
+  args <- CmdStanArgs$new(
+    model_name = "model",
+    exe_file = exe_file,
+    proc_ids = 1:2,
+    method_args = SampleArgs$new(),
+    seed = 123,
+    output_dir = tempdir()
+  )
+  procs <- CmdStanMCMCProcs$new(
+    num_procs = 2,
+    parallel_procs = 1
+  )
+  runset <- CmdStanRun$new(args, procs)
+
+  expect_identical(runset$procs, procs)
+  expect_equal(runset$num_chains(), 2L)
+  expect_equal(runset$num_procs(), 2L)
+  expect_equal(runset$chain_ids(), 1:2)
+  expect_equal(runset$procs$parallel_procs(), 1L)
 })
 
 test_that("CmdStanProcs preserves PATH in the invocation environment", {
@@ -587,14 +714,14 @@ test_that("fixed parameter, OpenCL, and MPI use the same topology plan", {
     mpi_args = list(n = 3)
   )
 
-  expect_equal(threaded$plan$num_chains(), 3L)
-  expect_equal(threaded$plan$num_invocations(), 1L)
-  expect_true("algorithm=fixed_param" %in% threaded$plan$invocations[[1]]$command_args)
-  expect_true("num_chains=3" %in% threaded$plan$invocations[[1]]$command_args)
-  expect_true("platform=0" %in% threaded$plan$invocations[[1]]$command_args)
-  expect_true("device=1" %in% threaded$plan$invocations[[1]]$command_args)
-  expect_equal(threaded$plan$invocations[[1]]$mpi_cmd, "mpiexec")
-  expect_equal(threaded$plan$invocations[[1]]$mpi_args, list(n = 3))
+  expect_equal(run_plan_num_chains(threaded), 3L)
+  expect_equal(run_plan_num_invocations(threaded), 1L)
+  expect_true("algorithm=fixed_param" %in% threaded$invocations[[1]]$command_args)
+  expect_true("num_chains=3" %in% threaded$invocations[[1]]$command_args)
+  expect_true("platform=0" %in% threaded$invocations[[1]]$command_args)
+  expect_true("device=1" %in% threaded$invocations[[1]]$command_args)
+  expect_equal(threaded$invocations[[1]]$mpi_cmd, "mpiexec")
+  expect_equal(threaded$invocations[[1]]$mpi_args, list(n = 3))
 
   unthreaded <- build_cmdstan_run_plan(
     cmdstan_args = args,
@@ -603,9 +730,9 @@ test_that("fixed parameter, OpenCL, and MPI use the same topology plan", {
     mpi_cmd = "mpiexec",
     mpi_args = list(n = 3)
   )
-  expect_equal(unthreaded$plan$num_invocations(), 3L)
+  expect_equal(run_plan_num_invocations(unthreaded), 3L)
   expect_true(all(vapply(
-    unthreaded$plan$invocations,
+    unthreaded$invocations,
     function(invocation) identical(invocation$mpi_cmd, "mpiexec"),
     logical(1)
   )))

@@ -22,7 +22,9 @@
 #' printing a Stan program? The default is `FALSE`.
 #'
 #' * `cmdstanr_no_ver_check`: Should the check for a more recent version of
-#' CmdStan be disabled? The default is `FALSE`.
+#' CmdStan be disabled? The default is `FALSE`. Alternatively, set the
+#' `cmdstanr_no_ver_check` environment variable to `"true"` (case-insensitive).
+#' Configure the option or environment variable before attaching the package.
 #'
 #' * `cmdstanr_output_dir`: The directory where CmdStan should write its output
 #' CSV files when fitting models. The default is a temporary directory. Files in
@@ -50,5 +52,7 @@
 #'
 #' * `cmdstanr_save_config`: Should a JSON file be saved containing the argument
 #' tree and extra information when running CmdStan? The default is `FALSE`.
+#'
+#' @seealso [cmdstan_model()], [install_cmdstan()], and [write_stan_file()]
 #'
 NULL

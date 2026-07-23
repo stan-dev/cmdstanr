@@ -16,6 +16,9 @@ available via the \code{functions} field of the R6 object.}
 \item{verbose}{(logical) Should detailed information about generated code be
 printed to the console? Defaults to \code{FALSE}.}
 }
+\value{
+\code{NULL}, invisibly.
+}
 \description{
 The \verb{$expose_functions()} method of a \code{\link{CmdStanModel}} object
 will compile the functions in the Stan program's \code{functions} block and
@@ -23,8 +26,8 @@ expose them for use in \R. This can also be specified via the
 \code{compile_standalone} argument to the \code{\link[=model-method-compile]{$compile()}}
 method.
 
-This method is also available for fitted model objects (\code{\link{CmdStanMCMC}}, \code{\link{CmdStanVB}}, etc.).
-See \strong{Examples}.
+This method is also available for all fitted model objects. See
+\strong{Examples}.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.
@@ -76,6 +79,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

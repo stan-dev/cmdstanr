@@ -25,6 +25,11 @@ test_that("generate_quantities() method runs when all arguments specified validl
   expect_gq_output(fit1 <- do.call(mod_gq$generate_quantities, ok_arg_values))
   expect_s3_class(fit1, "CmdStanGQ")
 
+  # check run times are recorded and valid
+  run_times <- fit1$time()
+  expect_equal(run_times$chains$chain_id, seq_along(fit1$output_files()))
+  expect_gte(min(run_times$chains$total), 0)
+
   # leaving all at default (except 'data')
   expect_gq_output(fit2 <- mod_gq$generate_quantities(fitted_params = fit, data = data_list))
   expect_s3_class(fit2, "CmdStanGQ")
@@ -51,14 +56,31 @@ test_that("generate_quantities work for different chains and parallel_chains", {
     mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
   )
   mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE))
-  expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2)
-  )
-  expect_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
-    "with 2 total threads",
-    fixed = TRUE
-  )
+  if (isTRUE(mod_gq$exe_info()$stan_threads)) {
+    expect_output(
+      mod_gq$generate_quantities(
+        data = data_list,
+        fitted_params = fit_1_chain,
+        threads_per_chain = 2
+      ),
+      "with 2 total threads",
+      fixed = TRUE
+    )
+  } else {
+    expect_warning(
+      expect_output(
+        mod_gq$generate_quantities(
+          data = data_list,
+          fitted_params = fit_1_chain,
+          threads_per_chain = 2
+        ),
+        "with 1 total thread",
+        fixed = TRUE
+      ),
+      "supplied for an unthreaded executable and has no effect",
+      fixed = TRUE
+    )
+  }
 })
 
 test_that("generate_quantities works with draws_array", {
@@ -74,18 +96,87 @@ test_that("generate_quantities works with draws_array", {
   )
 })
 
-test_that("generate_quantities works with VB and draws_matrix", {
-  fit <- suppressWarnings(testing_fit(
+test_that("generate_quantities works with CmdStanMLE", {
+  fit_mle <- testing_fit(
     "bernoulli",
-    method = "variational",
+    method = "optimize",
     seed = 123,
-    threads = 1
-  ))
-  expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit)
+    refresh = 0
   )
   expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit$draws())
+    fit_gq_mle <- mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit_mle,
+      seed = 123
+    )
+  )
+  expect_s3_class(fit_gq_mle, "CmdStanGQ")
+  expect_equal(posterior::ndraws(fit_gq_mle$draws()), 1)
+})
+
+test_that("generate_quantities works with CmdStanLaplace", {
+  fit_laplace <- testing_fit(
+    "bernoulli",
+    method = "laplace",
+    seed = 123,
+    refresh = 0,
+    draws = 10
+  )
+  expect_gq_output(
+    fit_gq_laplace <- mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit_laplace,
+      seed = 123
+    )
+  )
+  expect_s3_class(fit_gq_laplace, "CmdStanGQ")
+  expect_equal(
+    posterior::ndraws(fit_gq_laplace$draws()),
+    posterior::ndraws(fit_laplace$draws())
+  )
+})
+
+test_that("generate_quantities works with CmdStanVB and draws_matrix", {
+  fit_vb <- testing_fit("bernoulli", method = "variational", seed = 123)
+  expect_gq_output(
+    fit_gq_vb <- mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit_vb,
+      seed = 123
+    )
+  )
+  expect_s3_class(fit_gq_vb, "CmdStanGQ")
+  expect_equal(
+    posterior::ndraws(fit_gq_vb$draws()),
+    posterior::ndraws(fit_vb$draws())
+  )
+  expect_gq_output(
+    mod_gq$generate_quantities(data = data_list, fitted_params = fit_vb$draws())
+  )
+})
+
+test_that("generate_quantities works with CmdStanPathfinder", {
+  fit_pathfinder <- testing_fit(
+    "bernoulli",
+    method = "pathfinder",
+    seed = 123,
+    refresh = 0,
+    num_paths = 1,
+    single_path_draws = 20,
+    draws = 10,
+    num_elbo_draws = 10
+  )
+  expect_gq_output(
+    fit_gq_pathfinder <- mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit_pathfinder,
+      seed = 123
+    )
+  )
+  expect_s3_class(fit_gq_pathfinder, "CmdStanGQ")
+  expect_equal(
+    posterior::ndraws(fit_gq_pathfinder$draws()),
+    posterior::ndraws(fit_pathfinder$draws())
   )
 })
 
@@ -99,8 +190,14 @@ test_that("generate_quantities() warns if threads specified but not enabled", {
     skip("The local CmdStan make configuration forces STAN_THREADS=true.")
   }
   expect_warning(
-    expect_gq_output(fit_gq <- mod_gq$generate_quantities(data = data_list, fitted_params = fit, threads_per_chain = 4)),
-    "unthreaded executable and has no effect"
+    expect_gq_output(
+      fit_gq <- mod_gq$generate_quantities(
+        data = data_list,
+        fitted_params = fit,
+        threads_per_chain = 4
+      )
+    ),
+    "supplied for an unthreaded executable and has no effect"
   )
 })
 

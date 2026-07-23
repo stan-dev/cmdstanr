@@ -11,6 +11,11 @@ output(id = NULL)
 \item{id}{(integer) The positional logical-chain index. Ignored if the model
 was not fit using MCMC or standalone generated quantities.}
 }
+\value{
+For MCMC and standalone generated quantities with \code{id=NULL}, a list
+of character vectors containing the console output for each chain. In all
+other cases, \code{NULL} invisibly.
+}
 \description{
 For MCMC and standalone generated quantities, the \verb{$output()}
 method returns raw stdout and stderr as a list with one character vector per
@@ -19,8 +24,8 @@ prints only lines attributed to that logical chain by CmdStan's
 \code{Chain [id]} prefix. Unprefixed shared lines remain available only from the
 raw invocation output.
 
-For optimization and variational inference \verb{$output()} just pretty prints
-the console output.
+For optimization, Laplace approximation, variational inference, and
+Pathfinder, \verb{$output()} just pretty prints the console output.
 }
 \examples{
 \dontrun{
@@ -36,7 +41,4 @@ fit_vb <- cmdstanr_example("logistic", method = "variational")
 fit_vb$output()
 }
 
-}
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }
