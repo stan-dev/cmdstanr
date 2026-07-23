@@ -715,7 +715,8 @@ toolchain_PATH_env_var <- function() {
   if (current_r_version() < "4.2.0") {
     rtools40_home <- repair_path(Sys.getenv("RTOOLS40_HOME", "C:\\rtools40"))
     rtools_bin_dir <- file.path(rtools40_home, "usr", "bin")
-    rtools_dir <- file.path(rtools40_home, "ucrt64", "bin")
+    r_arch <- ifelse(Sys.getenv("R_ARCH") == "/i386", "mingw32", "mingw64")
+    rtools_dir <- file.path(rtools40_home, r_arch, "bin")
     if (file.exists(file.path(rtools_bin_dir, "make.exe")) &&
           file.exists(file.path(rtools_dir, "c++.exe"))) {
       return(paste0(rtools_bin_dir, ";", rtools_dir))
