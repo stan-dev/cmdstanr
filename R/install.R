@@ -709,36 +709,34 @@ toolchain_PATH_env_var <- function() {
     return(NULL)
   }
 
-  # R 4.0 did not include the toolchain in the PATH by default
-  # or set the R_TOOLS_SOFT or LOCAL_SOFT config variables, so
+  # Lookup the configured toolchain location for the installation
+  # This variable is set at installation since R 4.2
+  #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
+  rtools_soft <- ""
+
+  # R 4.0 did not set the R_TOOLS_SOFT config variable, so
   # we use the RTOOLS40_HOME environment variable instead
   if (current_r_version() < "4.2.0") {
     rtools40_home <- repair_path(Sys.getenv("RTOOLS40_HOME", "C:\\rtools40"))
-    rtools_bin_dir <- file.path(rtools40_home, "usr", "bin")
-    rtools_dir <- file.path(rtools40_home, "ucrt64", "bin")
-    if (file.exists(file.path(rtools_bin_dir, "make.exe")) &&
-          file.exists(file.path(rtools_dir, "c++.exe"))) {
-      return(paste0(rtools_bin_dir, ";", rtools_dir))
-    }
+    r_arch <- ifelse(Sys.getenv("R_ARCH") == "/i386", "mingw32", "mingw64")
+    rtools_soft <- file.path(rtools40_home, r_arch)
   } else {
-    # Lookup the configured toolchain location for the installation
-    # This variable is set at installation since R 4.2
-    #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
     rtools_soft <- repair_path(tools::Rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE))
-    rtools_dir <- file.path(rtools_soft, "bin")
-    rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
-
-    if (file.exists(file.path(rtools_bin_dir, "make.exe")) &&
-          file.exists(file.path(rtools_dir, "c++.exe"))) {
-      return(paste0(rtools_bin_dir, ";", rtools_dir))
-    }
   }
 
-  # If the configured toolchain location is empty, search the PATH
-  bin_path <- repair_path(dirname(Sys.which("make")))
-  cxx_path <- repair_path(dirname(Sys.which("c++")))
+  rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
+  rtools_cpp_dir <- file.path(rtools_soft, "bin")
+
+  if (!file.exists(file.path(rtools_bin_dir, "make.exe")) ||
+        !file.exists(file.path(rtools_cpp_dir, "c++.exe"))) {
+
+    # If the configured toolchain location is empty, search the PATH
+    rtools_bin_dir <- repair_path(dirname(Sys.which("make")))
+    rtools_cpp_dir <- repair_path(dirname(Sys.which("c++")))
+  }
+
   if (bin_path != "" && cxx_path != "") {
-    return(paste0(bin_path, ";", cxx_path))
+    return(paste0(rtools_bin_dir, ";", rtools_cpp_dir))
   }
 
   NULL
