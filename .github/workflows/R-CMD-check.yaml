@@ -33,7 +33,12 @@ jobs:
       fail-fast: false
       matrix:
         config:
+          - {os: windows-latest, r: 'devel' }
+          - {os: windows-latest, r: '4.4' }
+          - {os: windows-latest, r: '4.3' }
+          - {os: windows-latest, r: '4.2'}
           - {os: windows-2022, r: '4.1'}
+          - {os: windows-11-arm, r: 'release'}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
