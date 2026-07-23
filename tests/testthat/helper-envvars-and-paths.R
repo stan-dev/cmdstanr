@@ -23,3 +23,26 @@ delete_extensions <- function() {
     c("", ".o",".hpp")
   }
 }
+
+# Write cpp_options to the make/local of the current CmdStan installation and
+# restore its original contents (or absence) when `envir` exits. Called at the
+# top level of a test file, the restore runs after all tests in that file.
+local_cmdstan_make_local <- function(cpp_options, envir = parent.frame()) {
+  make_local_path <- file.path(cmdstan_path(), "make", "local")
+  make_local_orig <- if (file.exists(make_local_path)) {
+    readLines(make_local_path, warn = FALSE)
+  } else {
+    NULL
+  }
+  withr::defer(
+    {
+      if (is.null(make_local_orig)) {
+        unlink(make_local_path)
+      } else {
+        writeLines(make_local_orig, make_local_path)
+      }
+    },
+    envir = envir
+  )
+  cmdstan_make_local(cpp_options = cpp_options)
+}

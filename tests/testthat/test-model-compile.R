@@ -1,7 +1,7 @@
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
-cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
+local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
