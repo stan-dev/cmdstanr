@@ -919,6 +919,50 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
   expect_output(print(out), out_w_flags)
 })
 
+test_that("compile() detects stan_opencl without case or partial matching", {
+  stan_file <- testing_stan_file("bernoulli")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  model$compile(
+    cpp_options = list(STAN_OPENCL = TRUE),
+    force_recompile = TRUE,
+    dry_run = TRUE
+  )
+  expect_length(received_stancflags, 2)
+  expect_equal(
+    vapply(
+      received_stancflags,
+      function(x) "--use-opencl" %in% x,
+      logical(1)
+    ),
+    rep(TRUE, length(received_stancflags))
+  )
+
+  received_stancflags <- list()
+  model$compile(
+    cpp_options = list(stan_opencl_x = TRUE),
+    force_recompile = TRUE,
+    dry_run = TRUE
+  )
+  expect_length(received_stancflags, 2)
+  expect_equal(
+    vapply(
+      received_stancflags,
+      function(x) "--use-opencl" %in% x,
+      logical(1)
+    ),
+    rep(FALSE, length(received_stancflags))
+  )
+})
+
 test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {
   withr::local_envvar(MAKEFLAGS = "-w -j 4")
   expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
