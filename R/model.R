@@ -1982,7 +1982,10 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   Pareto smoothed importance sampling (PSIS). This should be smaller than
 #'   `single_path_draws * num_paths`.
 #' @param num_paths (positive integer) Number of single pathfinders to run. The
-#'   default is `4`.
+#'   default is `4`. The paths are run sequentially unless the model was
+#'   [compiled][model-method-compile] with `cpp_options = list(stan_threads =
+#'   TRUE)` and `threads` is set, so running multiple paths in parallel requires
+#'   both.
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations
 #'   for LBFGS.
 #' @param num_elbo_draws (positive integer) Number of draws to make when

@@ -18,6 +18,9 @@ instead of using only the first path's initial values. (#1206)
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
 to be consistent with other methods.
+* The `num_paths` documentation for `pathfinder()` now notes that running
+multiple paths in parallel requires compiling with
+`cpp_options = list(stan_threads = TRUE)` and setting `threads`. (#896)
 * The `save_latent_dynamics` argument is now limited to `$sample()`, 
 `$sample_mpi()`, and `$variational()`, matching the CmdStan algorithms 
 that support diagnostic CSV output.
