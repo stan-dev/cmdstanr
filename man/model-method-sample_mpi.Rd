@@ -304,14 +304,14 @@ MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 
 An example of compiling with MPI:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+\if{html}{\out{<div class="sourceCode">}}\preformatted{mpi_options = list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 }\if{html}{\out{</div>}}
 
 The C++ options that must be supplied to the
 \link[=model-method-compile]{compile} call are:
 \itemize{
-\item \code{STAN_MPI}: Enables the use of MPI with Stan if \code{TRUE}.
+\item \code{stan_mpi}: Enables the use of MPI with Stan if \code{TRUE}.
 \item \code{CXX}: The name of the MPI C++ compiler wrapper. Typically \code{"mpicxx"}.
 \item \code{TBB_CXX_TYPE}: The C++ compiler the MPI wrapper wraps. Typically \code{"gcc"}
 on Linux and \code{"clang"} on macOS.
@@ -325,7 +325,7 @@ only define the number of processes. To use \code{n_procs} processes specify
 }
 \examples{
 \dontrun{
-# mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+# mpi_options <- list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 # mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
 # fit <- mod$sample_mpi(..., mpi_args = list("n" = 4))
 }
