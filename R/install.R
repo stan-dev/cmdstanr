@@ -735,7 +735,7 @@ toolchain_PATH_env_var <- function() {
     rtools_cpp_dir <- repair_path(dirname(Sys.which("c++")))
   }
 
-  if (bin_path != "" && cxx_path != "") {
+  if (rtools_bin_dir != "" && rtools_cpp_dir != "") {
     return(paste0(rtools_bin_dir, ";", rtools_cpp_dir))
   }
 
