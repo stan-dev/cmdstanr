@@ -39,6 +39,11 @@ jobs:
       - name: Install
         uses: posit-dev/setup-air@v1
 
+      - name: Jarl format
+        uses: etiennebacher/setup-jarl@v0.1.1
+        with:
+          args: "check --fix"
+
       - name: Format
         run: air format .
 
@@ -47,4 +52,4 @@ jobs:
         with:
           level: error
           fail_level: error
-          tool_name: air
+          tool_name: air+jarl
