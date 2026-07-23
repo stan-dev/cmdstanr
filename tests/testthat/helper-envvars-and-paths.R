@@ -30,7 +30,7 @@ delete_extensions <- function() {
 local_cmdstan_make_local <- function(cpp_options, envir = parent.frame()) {
   make_local_path <- file.path(cmdstan_path(), "make", "local")
   make_local_orig <- if (file.exists(make_local_path)) {
-    readLines(make_local_path, warn = FALSE)
+    readBin(make_local_path, "raw", file.size(make_local_path))
   } else {
     NULL
   }
@@ -39,7 +39,7 @@ local_cmdstan_make_local <- function(cpp_options, envir = parent.frame()) {
       if (is.null(make_local_orig)) {
         unlink(make_local_path)
       } else {
-        writeLines(make_local_orig, make_local_path)
+        writeBin(make_local_orig, make_local_path)
       }
     },
     envir = envir
