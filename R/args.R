@@ -1134,7 +1134,7 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
     bad_names <- unlist(lapply(variable_names, function(var_name) {
       x <- drop(posterior::draws_of(drop(
         posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
-      if (any(is.infinite(x)) || any(is.na(x))) {
+      if (any(is.infinite(x)) || anyNA(x)) {
         return(var_name)
       }
       return("")

@@ -315,7 +315,7 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
       warning("E-BFMI not computed because it is undefined for posterior chains of length less than 3.", call. = FALSE)
     } else {
       energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
-      if (any(is.na(energy))) {
+      if (anyNA(energy)) {
         warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
       } else {
         efbmi_per_chain <- apply(energy, 2, function(x) {
