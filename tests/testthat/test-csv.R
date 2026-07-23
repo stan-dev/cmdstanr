@@ -1024,3 +1024,28 @@ test_that("as_cmdstan_fit filters variables across methods", {
   expect_equal(pathfinder$summary()$variable, pathfinder_vars)
   expect_equal(pathfinder$metadata()$variables, pathfinder_vars)
 })
+
+compress_csv <- function(src, ext) {
+  dest <- tempfile(fileext = paste0(".", ext))
+  con <- if (identical(ext, "csv.gz")) gzfile(dest, "wt") else bzfile(dest, "wt")
+  writeLines(readLines(src), con)
+  close(con)
+  dest
+}
+
+test_that("read_cmdstan_csv() reads compressed CSV files", {
+  csv_files <- c(
+    test_path("resources", "csv", "model1-1-warmup.csv"),
+    test_path("resources", "csv", "model1-2-warmup.csv")
+  )
+  expected <- read_cmdstan_csv(csv_files)
+  compressed_files <- lapply(
+    c("csv.gz", "csv.bz2"),
+    function(ext) unname(vapply(csv_files, compress_csv, ext = ext, character(1)))
+  )
+  on.exit(unlink(unlist(compressed_files)), add = TRUE)
+
+  for (files in compressed_files) {
+    expect_equal(read_cmdstan_csv(files), expected)
+  }
+})
