@@ -123,8 +123,13 @@ mod$compile()
 mod$exe_file()
 
 # turn on threading support (for using functions that support within-chain parallelization)
-mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-mod$exe_file()
+# compile a copy of the model in a temporary directory so that the
+# executable compiled without threading above is not overwritten
+file_threads <- file.path(tempdir(), "bernoulli.stan")
+file.copy(file, file_threads)
+mod_threads <- cmdstan_model(file_threads, compile = FALSE)
+mod_threads$compile(cpp_options = list(stan_threads = TRUE))
+mod_threads$exe_file()
 
 # turn on pedantic mode
 file_pedantic <- write_stan_file("
