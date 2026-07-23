@@ -2,6 +2,8 @@
 
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
+* `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 
+executable's metadata. It was never a C++ option; use `$cmdstan_version()` instead. (#1215)
 * CmdStanModel methods now use executable metadata regardless of the 
 capitalization of C++ option names. Any executable reporting threading enabled 
 requires the corresponding `threads` or `threads_per_chain` argument. (#765, #1100)
@@ -21,11 +23,11 @@ to be consistent with other methods.
 that support diagnostic CSV output.
 * Informative error when exposing functions using names that are reserved 
 keywords (@VisruthSK, #1154)
-* `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
+* `save_cmdstan_config` and `save_metric` default to `FALSE` but can be
 set to `TRUE` for an entire R session via new global options. (#1159)
 * `save_metric_files()` now gives an informative error when metric files were
 not created and keeps saved metric files after the fitted model is garbage-collected. (#1021)
-* `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing 
+* `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing
 output while reading `STANCFLAGS` from `make`. (#1163)
 * `cmdstan_model()` now retains include paths when initialized with both a Stan file
 and a precompiled executable (#1094).
@@ -41,7 +43,7 @@ optimizer CSV now uses the filename `<output_basename>-mode-1.csv`.
 * CmdStanModel objects created using `compile_model_methods = TRUE` that are
 then saved and reloaded no longer error in model fitting methods. Model methods
 are recompiled lazily if needed. (#1158)
-  
+
 * CmdStan versions older than 2.35.0 are no longer supported. (#1144)
 * Minimum R version increased to 4.0.0. (#1144)
 * Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
@@ -65,7 +67,7 @@ are recompiled lazily if needed. (#1158)
     - `save_extra_diagnostics` (`save_latent_dynamics`)
     - `max_depth` (`max_treedepth`)
     - `stepsize` (`step_size`)
-  
+
 
 # cmdstanr 0.9.0
 

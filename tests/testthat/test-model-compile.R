@@ -572,6 +572,12 @@ test_that("cpp_options work with settings in make/local", {
   cmdstan_make_local(cpp_options = backup, append = FALSE)
 })
 
+test_that("cpp_options() excludes the Stan version reported by the executable", {
+  mod <- cmdstan_model(stan_file = stan_program)
+  expect_null(mod$cpp_options()$STAN_VERSION)
+  expect_equal(mod$cmdstan_version(), cmdstan_version())
+})
+
 test_that("cmdstan_model works with exe_file", {
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file, dry_run = TRUE)
