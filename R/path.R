@@ -37,11 +37,12 @@
 #' number is used.
 #' * If no environment variable is found when loaded but any directory in the
 #' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.35.0"`),
-#' exists in the user's home directory (`Sys.getenv("HOME")`, *not* the current
-#' working directory) then the path to the cmdstan with the largest version
-#' number will be set as the path to CmdStan for the \R session. This is the
-#' same as the default directory that [install_cmdstan()] would use to install
-#' the latest version of CmdStan.
+#' exists in the user's home directory (*not* the current working directory),
+#' then the path to the CmdStan installation with the largest version number is
+#' used for the \R session. On Windows the home directory is determined from
+#' `USERPROFILE`, falling back to `HOMEDRIVE` and `HOMEPATH`. On other platforms
+#' it is determined from `HOME`. This is the same default directory that
+#' [install_cmdstan()] uses.
 #'
 #' It is always possible to change the path after loading the package using
 #' `set_cmdstan_path(path)`.
