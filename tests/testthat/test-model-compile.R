@@ -443,20 +443,12 @@ test_that("check_syntax() works with pedantic=TRUE", {
 })
 
 test_that("check_syntax() works with include_paths", {
-  model_dir <- withr::local_tempdir(pattern = "include path")
-  file.copy(
-    c(
-      testing_stan_file("bernoulli_include"),
-      testing_stan_file("divide_real_by_two")
-    ),
-    model_dir
-  )
-  stan_program_w_include <- file.path(model_dir, "bernoulli_include.stan")
+  include_model <- local_include_model_with_spaces()
 
   mod_w_include <- cmdstan_model(
-    stan_file = stan_program_w_include,
+    stan_file = include_model$stan_file,
     compile = FALSE,
-    include_paths = model_dir
+    include_paths = include_model$include_paths
   )
   expect_true(mod_w_include$check_syntax())
 
@@ -561,7 +553,7 @@ test_that("include_paths_stanc3_args() works", {
   expect_equal(
     include_paths_stanc3_args(
       c(path_1, path_2),
-      standalone_call = TRUE
+      direct_call = TRUE
     ),
     c("--include-paths", paste0(path_1_compare, ",", path_2_compare))
   )
@@ -815,20 +807,12 @@ test_that("format() works", {
 })
 
 test_that("format() works with include_paths", {
-  model_dir <- withr::local_tempdir(pattern = "include path")
-  file.copy(
-    c(
-      testing_stan_file("bernoulli_include"),
-      testing_stan_file("divide_real_by_two")
-    ),
-    model_dir
-  )
-  stan_program_w_include <- file.path(model_dir, "bernoulli_include.stan")
+  include_model <- local_include_model_with_spaces()
 
   mod_w_include <- cmdstan_model(
-    stan_file = stan_program_w_include,
+    stan_file = include_model$stan_file,
     compile = FALSE,
-    include_paths = model_dir
+    include_paths = include_model$include_paths
   )
   expect_output(
     mod_w_include$format(),

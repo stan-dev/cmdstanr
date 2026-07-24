@@ -125,10 +125,20 @@ test_that("$variables() works with #includes, both pre and post compilation.", {
 
   vars_pre <- mod_explicit$variables()
   mod_explicit$compile()
-  vars_post <- mod_explicit$variables()
+  mod_explicit_post <- cmdstan_model(
+    stan_file = model_file,
+    exe_file = mod_explicit$exe_file(),
+    include_paths = model_dir,
+    compile = FALSE
+  )
+  vars_post <- mod_explicit_post$variables()
 
   expect_equal(vars_pre, vars_post)
 
-  mod_automatic <- cmdstan_model(stan_file = model_file, compile = FALSE)
+  mod_automatic <- cmdstan_model(
+    stan_file = model_file,
+    exe_file = mod_explicit$exe_file(),
+    compile = FALSE
+  )
   expect_equal(mod_automatic$variables(), vars_pre)
 })

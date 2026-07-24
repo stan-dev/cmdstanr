@@ -724,7 +724,7 @@ compile <- function(quiet = TRUE,
   if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
   }
-  stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
+  stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
   stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
@@ -982,7 +982,7 @@ check_syntax <- function(pedantic = FALSE,
 
   stancflags_val <- include_paths_stanc3_args(
     include_paths,
-    standalone_call = TRUE
+    direct_call = TRUE
   )
 
   if (is.null(stanc_options[["name"]])) {
@@ -1111,7 +1111,7 @@ format <- function(overwrite_file = FALSE,
   stanc_options <- private$precompile_stanc_options_
   stancflags_val <- include_paths_stanc3_args(
     self$include_paths(),
-    standalone_call = TRUE
+    direct_call = TRUE
   )
   stanc_options["auto-format"] <- TRUE
   if (!is.null(max_line_length)) {
@@ -2468,19 +2468,34 @@ assert_stan_file_exists <- function(stan_file) {
   }
 }
 
-include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
+#' Build stanc include-path arguments
+#'
+#' Make receives include paths through `STANCFLAGS` and needs paths containing
+#' spaces to be shell-quoted within a single `--include-paths=` flag. Direct
+#' calls through processx instead need the flag and comma-separated paths as
+#' separate, unquoted arguments.
+#'
+#' @param include_paths A character vector of directories containing files used
+#'   in Stan `#include` directives, or `NULL`.
+#' @param direct_call A logical indicating whether the arguments will be passed
+#'   directly to stanc through processx instead of through Make.
+#'
+#' @return `NULL` if `include_paths` is `NULL`; otherwise, a single
+#'   `--include-paths=` argument for Make or two arguments for a direct call.
+#' @noRd
+include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
     assert_dir_exists(include_paths, access = "r")
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
     # Calling stanc3 directly through processx::run does not need quoting
-    if (!isTRUE(standalone_call)) {
+    if (!isTRUE(direct_call)) {
       paths_w_space <- grep(" ", include_paths)
       include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     }
     include_paths <- paste0(include_paths, collapse = ",")
     include_paths_flag <- "--include-paths="
-    if (isTRUE(standalone_call)) {
+    if (isTRUE(direct_call)) {
       stancflags <- c(stancflags, "--include-paths", include_paths)
     } else {
       stancflags <- paste0(stancflags, include_paths_flag, include_paths)
@@ -2502,7 +2517,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
               "--info",
               include_paths_stanc3_args(
                 include_paths,
-                standalone_call = TRUE
+                direct_call = TRUE
               ),
               allow_undefined_arg),
     wd = cmdstan_path(),
