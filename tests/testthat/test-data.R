@@ -546,9 +546,10 @@ test_that("factors work for length-1 arrays", {
   model_variables <- mod$variables()
   data <- list(a = 1L, b = 2.5)
 
+  # read without simplification, which would make [1] indistinguishable from 1
   test_file <- process_data(modifyList(data, list(a = factor("x"))),
                             model_variables = model_variables)
-  expect_equal(jsonlite::read_json(test_file, simplifyVector = TRUE)$a, 1L)
+  expect_equal(jsonlite::read_json(test_file)$a, list(1L))
 
   expect_error(
     process_data(modifyList(data, list(b = factor("x"))), model_variables = model_variables),
@@ -557,7 +558,7 @@ test_that("factors work for length-1 arrays", {
 
   # the length-1 reshaping still works for non-factors
   test_file <- process_data(modifyList(data, list(a = 5)), model_variables = model_variables)
-  expect_equal(jsonlite::read_json(test_file, simplifyVector = TRUE)$a, 5L)
+  expect_equal(jsonlite::read_json(test_file)$a, list(5L))
 })
 
 test_that("Floating-point differences do not cause truncation towards 0", {

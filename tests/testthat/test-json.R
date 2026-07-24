@@ -91,6 +91,16 @@ test_that("write_stan_json errors if NAs", {
     write_stan_json(list(x = list(1, NA)), tempfile()),
     "Variable 'x' has NA values"
   )
+  # NAs nested inside list elements are found too, rather than being written
+  # to the JSON as the string "NA"
+  expect_error(
+    write_stan_json(list(x = list(c(1, NA), c(3, 4))), tempfile()),
+    "Variable 'x' has NA values"
+  )
+  expect_error(
+    write_stan_json(list(x = list(matrix(c(1, NA, 3, 4), 2), matrix(1:4, 2))), tempfile()),
+    "Variable 'x' has NA values"
+  )
 })
 
 test_that("write_stan_json errors if NULL variables", {

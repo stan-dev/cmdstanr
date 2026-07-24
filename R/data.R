@@ -117,10 +117,12 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
       stop("Variable '", var_name, "' is NULL.", call. = FALSE)
     }
     validate_data_type(var, var_name)
+    var <- convert_to_array(var, var_name)
+    # after the conversion, so that NAs nested inside a list are also found
     if (anyNA(var)) {
       stop("Variable '", var_name, "' has NA values.", call. = FALSE)
     }
-    data[[var_name]] <- convert_to_array(var, var_name)
+    data[[var_name]] <- var
   }
 
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
