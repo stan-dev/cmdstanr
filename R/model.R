@@ -980,7 +980,10 @@ check_syntax <- function(pedantic = FALSE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  stancflags_val <- include_paths_stanc3_args(include_paths)
+  stancflags_val <- include_paths_stanc3_args(
+    include_paths,
+    standalone_call = TRUE
+  )
 
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
@@ -1106,7 +1109,10 @@ format <- function(overwrite_file = FALSE,
     lower = 1, len = 1, null.ok = TRUE
   )
   stanc_options <- private$precompile_stanc_options_
-  stancflags_val <- include_paths_stanc3_args(self$include_paths())
+  stancflags_val <- include_paths_stanc3_args(
+    self$include_paths(),
+    standalone_call = TRUE
+  )
   stanc_options["auto-format"] <- TRUE
   if (!is.null(max_line_length)) {
     stanc_options["max-line-length"] <- max_line_length
@@ -2494,7 +2500,10 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     command = stanc_cmd(),
     args = c(wsl_safe_path(stan_file),
               "--info",
-              include_paths_stanc3_args(include_paths),
+              include_paths_stanc3_args(
+                include_paths,
+                standalone_call = TRUE
+              ),
               allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,

@@ -480,15 +480,19 @@ test_that("draws are returned for model with spaces", {
   expect_equal(dim(fit$draws()), c(1000, 1, 1))
 })
 
-test_that("sampling with inits works with include_paths", {
-  stan_program_w_include <- testing_stan_file("bernoulli_include")
-  exe <- cmdstan_ext(strip_ext(stan_program_w_include))
-  if (file.exists(exe)) {
-    file.remove(exe)
-  }
+test_that("sampling works with inferred include paths containing spaces", {
+  model_dir <- withr::local_tempdir(pattern = "include path")
+  file.copy(
+    c(
+      testing_stan_file("bernoulli_include"),
+      testing_stan_file("divide_real_by_two")
+    ),
+    model_dir
+  )
+  stan_program_w_include <- file.path(model_dir, "bernoulli_include.stan")
 
-  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include,
-                                 include_paths = test_path("resources", "stan"))
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include)
+  expect_equal(mod_w_include$include_paths(), model_dir)
 
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
   expect_no_error(utils::capture.output(

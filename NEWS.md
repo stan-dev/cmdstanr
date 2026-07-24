@@ -2,6 +2,7 @@
 
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
+* CmdStanModel's `$check_syntax()`, `$format()`, `$sample()`, and `$variables()` methods now work with `#include` directories whose paths contain spaces. (#820)
 * `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 
 executable's metadata. It was never a C++ option; use `$cmdstan_version()` instead. (#1215)
 * CmdStanModel methods now use executable metadata regardless of the 
