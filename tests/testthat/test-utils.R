@@ -326,6 +326,24 @@ test_that("require_suggested_package() works", {
   )
 })
 
+test_that("use_spinner() respects the cmdstanr_spinner option", {
+  # rlang::is_interactive() is FALSE while testing, so simulate both cases
+  withr::local_options(rlang_interactive = TRUE)
+  expect_true(use_spinner())
+  withr::with_options(list(cmdstanr_spinner = FALSE), expect_false(use_spinner()))
+  withr::with_options(list(cmdstanr_spinner = TRUE), expect_true(use_spinner()))
+})
+
+test_that("use_spinner() is FALSE unless interactive", {
+  withr::local_options(rlang_interactive = FALSE)
+  expect_false(use_spinner())
+  withr::with_options(list(cmdstanr_spinner = TRUE), expect_false(use_spinner()))
+
+  withr::local_options(rlang_interactive = TRUE)
+  withr::local_envvar(IN_PKGDOWN = "true")
+  expect_false(use_spinner())
+})
+
 test_that("as_mcmc.list() works", {
   x <- as_mcmc.list(fit_mcmc)
   expect_length(x, fit_mcmc$num_chains())

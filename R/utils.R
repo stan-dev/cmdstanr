@@ -11,6 +11,15 @@ is_verbose_mode <- function() {
   getOption("cmdstanr_verbose", default = FALSE)
 }
 
+# Should a spinner be shown while an external process runs? Only in genuinely
+# interactive use, so that the spinner characters don't end up in knitr/pkgdown
+# output or in redirected output (#486).
+use_spinner <- function() {
+  getOption("cmdstanr_spinner", default = TRUE) &&
+    rlang::is_interactive() &&
+    !identical(Sys.getenv("IN_PKGDOWN"), "true")
+}
+
 # Famous helper for switching on `NULL` or zero length
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0) y else x
