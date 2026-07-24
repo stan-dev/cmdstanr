@@ -487,6 +487,38 @@ test_that("process_data errors on invalid types", {
   )
 })
 
+test_that("process_data errors on a factor for a non-int variable", {
+  stan_file <- write_stan_file("
+  data {
+    int a;
+    array[2] int b;
+    real c;
+    vector[2] d;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+  data <- list(a = 1L, b = c(1L, 2L), c = 2.5, d = c(1, 2))
+
+  expect_error(
+    process_data(modifyList(data, list(c = factor("x"))), model_variables = model_variables),
+    "A factor was supplied for 'c', which is declared as 'real'."
+  )
+  # vectors and matrices are also reported as 'real'
+  expect_error(
+    process_data(modifyList(data, list(d = factor(c("x", "y")))), model_variables = model_variables),
+    "A factor was supplied for 'd', which is declared as 'real'."
+  )
+
+  # factors are still allowed for int variables
+  expect_no_error(
+    process_data(modifyList(data, list(a = factor("x"))), model_variables = model_variables)
+  )
+  expect_no_error(
+    process_data(modifyList(data, list(b = factor(c("x", "y")))), model_variables = model_variables)
+  )
+})
+
 test_that("Floating-point differences do not cause truncation towards 0", {
   stan_file <- write_stan_file("
   data {

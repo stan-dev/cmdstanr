@@ -26,7 +26,10 @@
 #' themselves. For example, `factor(c(10, 9, 8))` is written as `[3, 2, 1]`, and
 #' an unused level shifts the indices of the levels after it. If the original
 #' values are what you want, convert them first, e.g. with
-#' `as.numeric(as.character(x))`.
+#' `as.numeric(as.character(x))`. The fitting methods of a model compiled from a
+#' Stan file error if a factor is supplied for a variable that is not declared
+#' as `int`, but `write_stan_json()` has no declarations to check against and so
+#' always converts.
 #'
 #' The `list` to `array` conversion is intended to make it easier to prepare
 #' the data for certain Stan declarations involving arrays:
@@ -151,8 +154,6 @@ validate_data_type <- function(var, var_name) {
 convert_to_array <- function(var, var_name = NULL) {
   if (is.table(var)) {
     var <- unclass(var)
-  } else if (is.logical(var)) {
-    mode(var) <- "integer"
   } else if (is.data.frame(var)) {
     # data.matrix() silently coerces character columns to factor codes and
     # date/time columns to their numeric representation, so apply the same
@@ -165,6 +166,10 @@ convert_to_array <- function(var, var_name = NULL) {
     var <- data.matrix(var)
   } else if (is.list(var)) {
     var <- list_to_array(var, var_name)
+  }
+  # after the conversions above so that lists of logicals are also converted
+  if (is.logical(var)) {
+    mode(var) <- "integer"
   }
   var
 }
@@ -182,7 +187,7 @@ list_to_array <- function(x, name = NULL) {
   if (!all_equal_dim) {
     stop("All matrices/vectors in list '", name, "' must be the same size!", call. = FALSE)
   }
-  all_numeric <- all(sapply(x, function(a) is.numeric(a)))
+  all_numeric <- all(sapply(x, function(a) is.numeric(a) || is.logical(a)))
   if (!all_numeric) {
     stop("All elements in list '", name, "' must be numeric!", call. = FALSE)
   }
@@ -234,6 +239,13 @@ process_data <- function(data, model_variables = NULL) {
         if (length(data[[var_name]]) == 1
             && data_variables[[var_name]]$dimensions == 1) {
             data[[var_name]] <- array(data[[var_name]], dim = 1)
+        }
+        # Factors are written as level indices, which are only meaningful for
+        # variables declared as int
+        if (data_variables[[var_name]]$type != "int"
+            && is.factor(data[[var_name]])) {
+          stop("A factor was supplied for '", var_name, "', which is declared as '",
+               data_variables[[var_name]]$type, "'.", call. = FALSE)
         }
         # Make sure integer inputs are of integer type to avoid
         # generating a decimal point in write_stan_json

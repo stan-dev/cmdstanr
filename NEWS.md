@@ -7,6 +7,9 @@ variables and errored for `int` ones. (#817)
 factor are now an error. Previously `data.matrix()` silently coerced them, so a 
 character column reached Stan as alphabetically ordered integer codes. Use 
 `factor()` explicitly if integer codes are what you want. (#817)
+* Lists of logical vectors/matrices are now converted to integers like logical 
+variables are, instead of erroring. (#817)
+* Supplying a factor for a variable not declared as `int` is now an error. (#817)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 

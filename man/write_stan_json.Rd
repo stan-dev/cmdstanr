@@ -39,7 +39,10 @@ factor's levels (alphabetical by default) rather than on the values
 themselves. For example, \code{factor(c(10, 9, 8))} is written as \verb{[3, 2, 1]}, and
 an unused level shifts the indices of the levels after it. If the original
 values are what you want, convert them first, e.g. with
-\code{as.numeric(as.character(x))}.
+\code{as.numeric(as.character(x))}. The fitting methods of a model compiled from a
+Stan file error if a factor is supplied for a variable that is not declared
+as \code{int}, but \code{write_stan_json()} has no declarations to check against and so
+always converts.
 
 The \code{list} to \code{array} conversion is intended to make it easier to prepare
 the data for certain Stan declarations involving arrays:

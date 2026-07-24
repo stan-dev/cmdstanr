@@ -162,6 +162,27 @@ test_that("a list contributes one leading dimension", {
   )
 })
 
+test_that("logical elements of a list are converted to integers", {
+  temp_file_list <- tempfile()
+  temp_file_arr <- tempfile()
+  matrices <- list(
+    matrix(c(TRUE, FALSE, TRUE, FALSE), nrow = 2),
+    matrix(c(FALSE, TRUE, FALSE, TRUE), nrow = 2)
+  )
+  write_stan_json(list(x = matrices), temp_file_list)
+  write_stan_json(list(x = list_to_array(matrices)), temp_file_arr)
+
+  # 0/1 rather than JSON true/false, matching a plain logical variable
+  expect_identical(readLines(temp_file_list), readLines(temp_file_arr))
+  expect_false(any(grepl("true|false", readLines(temp_file_list))))
+
+  # factors are still not allowed as list elements
+  expect_error(
+    write_stan_json(list(x = list(factor("a"), factor("b"))), tempfile()),
+    "All elements in list 'x' must be numeric!"
+  )
+})
+
 test_that("factors are written as level indices", {
   temp_file <- tempfile()
   read_x <- function(file) jsonlite::read_json(file, simplifyVector = TRUE)$x
