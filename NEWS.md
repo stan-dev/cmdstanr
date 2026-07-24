@@ -28,6 +28,10 @@ that support diagnostic CSV output.
 keywords (@VisruthSK, #1154)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be
 set to `TRUE` for an entire R session via new global options. (#1159)
+* The compilation spinner can now be disabled for an entire R session by setting
+the new `cmdstanr_spinner` global option to `FALSE`. The spinner shown while
+installing or rebuilding CmdStan and while checking syntax also respects this
+option, and is no longer shown when knitting. (#486)
 * `save_metric_files()` now gives an informative error when metric files were
 not created and keeps saved metric files after the fitted model is garbage-collected. (#1021)
 * `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing

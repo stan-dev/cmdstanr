@@ -755,7 +755,7 @@ compile <- function(quiet = TRUE,
           wd = cmdstan_path(),
           echo = !quiet || is_verbose_mode(),
           echo_cmd = is_verbose_mode(),
-          spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
+          spinner = quiet && use_spinner(),
           stderr_callback = function(x, p) {
             if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
               message(x)
@@ -1008,7 +1008,7 @@ check_syntax <- function(pedantic = FALSE,
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
-      spinner = quiet && rlang::is_interactive(),
+      spinner = quiet && use_spinner(),
       stderr_callback = function(x, p) {
         message(x)
       },
