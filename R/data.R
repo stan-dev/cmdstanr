@@ -21,16 +21,19 @@
 #' * `list` -> `array`
 #' * `table` -> `vector`, `matrix`, or `array` (depending on dimensions of table)
 #'
-#' Factors are written as their level indices, which depend on the order of the
-#' factor's levels (alphabetical by default) rather than on the values
-#' themselves. For example, `factor(c(10, 9, 8))` is written as `[3, 2, 1]`, and
-#' an unused level shifts the indices of the levels after it. If the original
-#' values are what you want, convert them first, e.g. with
-#' `as.numeric(as.character(x))`. The fitting methods of a model compiled from a
-#' Stan file error if a factor is supplied for a variable that is not declared
-#' as `int`, but `write_stan_json()` has no declarations to check against and so
-#' always converts.
+#' ### Factor conversion
+#' Factors are written as their level indices: the position of each value in
+#' `levels(x)` rather than the value itself. The default levels are the sorted
+#' unique values, so `factor(c(10, 9, 8))` has levels `8`, `9`, `10` and is
+#' written as `[3, 2, 1]`, and an unused level shifts the indices of the levels
+#' after it. If the original values are what you want, convert them first, e.g.
+#' with `as.numeric(as.character(x))`. The fitting methods of a model compiled
+#' from a Stan file error if a factor is supplied for a variable that is not
+#' declared as `int`, but `write_stan_json()` has no declarations to check
+#' against and so always converts.
 #'
+#'
+#' ### List to array conversion
 #' The `list` to `array` conversion is intended to make it easier to prepare
 #' the data for certain Stan declarations involving arrays:
 #'
@@ -48,6 +51,7 @@
 #' dimensions `KxLxJ`. Nested lists are not supported: every element of the list
 #' must be a vector, matrix, or array.
 #'
+#' ### Scalar vs. length-1 vector
 #' Because \R does not distinguish between a scalar and a vector of length 1, a
 #' length-1 vector like `c(42)` is written to JSON as a scalar (`42`) rather
 #' than an array (`[42]`). If a Stan variable is declared as a vector or array
@@ -138,6 +142,12 @@ is_valid_data_type <- function(x) {
 }
 
 
+# TRUE for a factor, or a data frame with any factor column
+has_factor <- function(x) {
+  is.factor(x) || (is.data.frame(x) && any(vapply(x, is.factor, logical(1))))
+}
+
+
 # Error if a variable is not one of the types accepted in a data list. Data
 # frames and lists are accepted here and converted by convert_to_array().
 validate_data_type <- function(var, var_name) {
@@ -189,7 +199,7 @@ list_to_array <- function(x, name = NULL) {
   }
   all_numeric <- all(sapply(x, function(a) is.numeric(a) || is.logical(a)))
   if (!all_numeric) {
-    stop("All elements in list '", name, "' must be numeric!", call. = FALSE)
+    stop("All elements in list '", name, "' must be numeric or logical!", call. = FALSE)
   }
   element_num_of_dim <- length(all_dims[[1]])
   x <- unlist(x)
@@ -232,6 +242,17 @@ process_data <- function(data, model_variables = NULL) {
           stop("Variable '", var_name, "' is NULL.", call. = FALSE)
         }
         validate_data_type(data[[var_name]], var_name)
+        # Factors are written as level indices, which are only meaningful for
+        # variables declared as int. Handle them before the conversions below,
+        # which replace factors with their codes and drop the factor class.
+        if (data_variables[[var_name]]$type == "int") {
+          if (is.factor(data[[var_name]])) {
+            data[[var_name]] <- as.integer(data[[var_name]])
+          }
+        } else if (has_factor(data[[var_name]])) {
+          stop("A factor was supplied for '", var_name, "', which is declared as '",
+               data_variables[[var_name]]$type, "'.", call. = FALSE)
+        }
         # Convert lists and data frames to arrays before the checks below,
         # which require an atomic object (#817)
         data[[var_name]] <- convert_to_array(data[[var_name]], var_name)
@@ -240,28 +261,19 @@ process_data <- function(data, model_variables = NULL) {
             && data_variables[[var_name]]$dimensions == 1) {
             data[[var_name]] <- array(data[[var_name]], dim = 1)
         }
-        # Factors are written as level indices, which are only meaningful for
-        # variables declared as int
-        if (data_variables[[var_name]]$type != "int"
-            && is.factor(data[[var_name]])) {
-          stop("A factor was supplied for '", var_name, "', which is declared as '",
-               data_variables[[var_name]]$type, "'.", call. = FALSE)
-        }
         # Make sure integer inputs are of integer type to avoid
         # generating a decimal point in write_stan_json
         if (data_variables[[var_name]]$type == "int"
             && !is.integer(data[[var_name]])) {
-          if (!is.factor(data[[var_name]])) {
-            if (!isTRUE(all(is_wholenumber(data[[var_name]])))) {
-              # Don't warn for NULL/NA, as different warnings are used for those
-              if (!isTRUE(anyNA(data[[var_name]]))) {
-                warning("A non-integer value was supplied for '", var_name, "'!",
-                        " It will be truncated to an integer.", call. = FALSE)
-              }
-            } else {
-              # Round before setting mode to integer to avoid floating point errors
-              data[[var_name]] <- round(data[[var_name]])
+          if (!isTRUE(all(is_wholenumber(data[[var_name]])))) {
+            # Don't warn for NULL/NA, as different warnings are used for those
+            if (!isTRUE(anyNA(data[[var_name]]))) {
+              warning("A non-integer value was supplied for '", var_name, "'!",
+                      " It will be truncated to an integer.", call. = FALSE)
             }
+          } else {
+            # Round before setting mode to integer to avoid floating point errors
+            data[[var_name]] <- round(data[[var_name]])
           }
           mode(data[[var_name]]) <- "integer"
         }

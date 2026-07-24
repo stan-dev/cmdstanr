@@ -33,16 +33,20 @@ numeric, integer, logical, or factor
 \item \code{list} -> \code{array}
 \item \code{table} -> \code{vector}, \code{matrix}, or \code{array} (depending on dimensions of table)
 }
+\subsection{Factor conversion}{
 
-Factors are written as their level indices, which depend on the order of the
-factor's levels (alphabetical by default) rather than on the values
-themselves. For example, \code{factor(c(10, 9, 8))} is written as \verb{[3, 2, 1]}, and
-an unused level shifts the indices of the levels after it. If the original
-values are what you want, convert them first, e.g. with
-\code{as.numeric(as.character(x))}. The fitting methods of a model compiled from a
-Stan file error if a factor is supplied for a variable that is not declared
-as \code{int}, but \code{write_stan_json()} has no declarations to check against and so
-always converts.
+Factors are written as their level indices: the position of each value in
+\code{levels(x)} rather than the value itself. The default levels are the sorted
+unique values, so \code{factor(c(10, 9, 8))} has levels \code{8}, \code{9}, \code{10} and is
+written as \verb{[3, 2, 1]}, and an unused level shifts the indices of the levels
+after it. If the original values are what you want, convert them first, e.g.
+with \code{as.numeric(as.character(x))}. The fitting methods of a model compiled
+from a Stan file error if a factor is supplied for a variable that is not
+declared as \code{int}, but \code{write_stan_json()} has no declarations to check
+against and so always converts.
+}
+
+\subsection{List to array conversion}{
 
 The \code{list} to \code{array} conversion is intended to make it easier to prepare
 the data for certain Stan declarations involving arrays:
@@ -61,6 +65,9 @@ leading dimension, so \verb{array[K,L] vector[J] v } can be supplied either as a
 list of \code{K} matrices each with dimensions \code{LxJ} or as a single \R array with
 dimensions \code{KxLxJ}. Nested lists are not supported: every element of the list
 must be a vector, matrix, or array.
+}
+
+\subsection{Scalar vs. length-1 vector}{
 
 Because \R does not distinguish between a scalar and a vector of length 1, a
 length-1 vector like \code{c(42)} is written to JSON as a scalar (\code{42}) rather
@@ -77,6 +84,7 @@ This is only necessary when calling \code{write_stan_json()} directly. When
 passing a data list to the fitting methods of a model compiled from a Stan
 file (e.g., \verb{$sample()}), CmdStanR uses the model's variable declarations to
 make this correction automatically.
+}
 }
 \examples{
 x <- matrix(rnorm(10), 5, 2)

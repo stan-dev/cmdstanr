@@ -158,7 +158,7 @@ test_that("a list contributes one leading dimension", {
   # nested lists are not supported
   expect_error(
     write_stan_json(list(v = list(list(1:4, 5:8), list(9:12, 13:16))), tempfile()),
-    "All elements in list 'v' must be numeric!"
+    "All elements in list 'v' must be numeric or logical!"
   )
 })
 
@@ -179,7 +179,7 @@ test_that("logical elements of a list are converted to integers", {
   # factors are still not allowed as list elements
   expect_error(
     write_stan_json(list(x = list(factor("a"), factor("b"))), tempfile()),
-    "All elements in list 'x' must be numeric!"
+    "All elements in list 'x' must be numeric or logical!"
   )
 })
 
@@ -210,7 +210,7 @@ test_that("factors are written as level indices", {
 test_that("write_stan_json() errors if invalid types", {
   expect_error(
     write_stan_json(list(N = list("abc", "def")), file = "abc.txt"),
-    "All elements in list 'N' must be numeric!"
+    "All elements in list 'N' must be numeric or logical!"
   )
 
   expect_error(

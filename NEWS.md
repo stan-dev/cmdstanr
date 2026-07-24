@@ -10,6 +10,8 @@ character column reached Stan as alphabetically ordered integer codes. Use
 * Lists of logical vectors/matrices are now converted to integers like logical 
 variables are, instead of erroring. (#1225)
 * Supplying a factor for a variable not declared as `int` is now an error. (#1225)
+* Factors are now accepted for length-1 `int` arrays (e.g. `array[1] int x`), 
+which previously errored. (#1225)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 

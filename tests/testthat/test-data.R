@@ -510,6 +510,20 @@ test_that("process_data errors on a factor for a non-int variable", {
     "A factor was supplied for 'd', which is declared as 'real'."
   )
 
+  # a factor column of a data frame is caught too, before data.matrix()
+  # converts it to codes
+  stan_file <- write_stan_file("
+  data {
+    matrix[2,1] x;
+  }
+  ")
+  mod_matrix <- cmdstan_model(stan_file, compile = FALSE)
+  expect_error(
+    process_data(list(x = data.frame(a = factor(c("b", "a")))),
+                 model_variables = mod_matrix$variables()),
+    "A factor was supplied for 'x', which is declared as 'real'."
+  )
+
   # factors are still allowed for int variables
   expect_no_error(
     process_data(modifyList(data, list(a = factor("x"))), model_variables = model_variables)
@@ -517,6 +531,33 @@ test_that("process_data errors on a factor for a non-int variable", {
   expect_no_error(
     process_data(modifyList(data, list(b = factor(c("x", "y")))), model_variables = model_variables)
   )
+})
+
+test_that("factors work for length-1 arrays", {
+  # array() drops the factor class, so the length-1 reshaping used to leave a
+  # character array behind for these
+  stan_file <- write_stan_file("
+  data {
+    array[1] int a;
+    array[1] real b;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+  data <- list(a = 1L, b = 2.5)
+
+  test_file <- process_data(modifyList(data, list(a = factor("x"))),
+                            model_variables = model_variables)
+  expect_equal(jsonlite::read_json(test_file, simplifyVector = TRUE)$a, 1L)
+
+  expect_error(
+    process_data(modifyList(data, list(b = factor("x"))), model_variables = model_variables),
+    "A factor was supplied for 'b', which is declared as 'real'."
+  )
+
+  # the length-1 reshaping still works for non-factors
+  test_file <- process_data(modifyList(data, list(a = 5)), model_variables = model_variables)
+  expect_equal(jsonlite::read_json(test_file, simplifyVector = TRUE)$a, 5L)
 })
 
 test_that("Floating-point differences do not cause truncation towards 0", {
