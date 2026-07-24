@@ -46,6 +46,22 @@ option is provided for convenience. Unfortunately for arrays with more than
 one dimension (e.g. \verb{array[K,L] vector[J] v }) it is not possible to use an
 \R list and an array must be used instead. For this example the array in \R
 should have dimensions \code{KxLxJ}.
+
+Because \R does not distinguish between a scalar and a vector of length 1, a
+length-1 vector like \code{c(42)} is written to JSON as a scalar (\code{42}) rather
+than an array (\verb{[42]}). If a Stan variable is declared as a vector or array
+that may have length 1, wrap the value in \code{\link[=array]{array()}} to force array output.
+Because \code{array()} uses the length of its input as the default dimension, this
+works regardless of length:
+\itemize{
+\item \code{write_stan_json(list(x = array(42)), file)} writes \verb{"x": [42]}
+\item \code{write_stan_json(list(x = array(c(42, 43))), file)} writes \verb{"x": [42, 43]}
+}
+
+This is only necessary when calling \code{write_stan_json()} directly. When
+passing a data list to the fitting methods of a model compiled from a Stan
+file (e.g., \verb{$sample()}), CmdStanR uses the model's variable declarations to
+make this correction automatically.
 }
 \examples{
 x <- matrix(rnorm(10), 5, 2)
