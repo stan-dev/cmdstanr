@@ -57,10 +57,6 @@ jobs:
       - name: cmdstan env vars
         run: |
           echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
-          # GHA Windows ARM containers configured with RTOOLS45_HOME instead of RTOOLS45_AARCH64_HOME
-          if [[ "${{ matrix.config.os }}" == "windows-11-arm" ]]; then
-            echo "RTOOLS45_AARCH64_HOME=C:/rtools45-aarch64" >> $GITHUB_ENV
-          fi
         shell: bash
 
       - uses: actions/checkout@v7
@@ -81,28 +77,6 @@ jobs:
         with:
           cache: "always"
           extra-packages: any::rcmdcheck, local::., ${{ matrix.config.os == 'windows-11-arm' && 'RcppCore/RcppParallel' || '' }}
-
-      - name: Debug Windows toolchain resolution
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          rtools_home <- cmdstanr:::rtools4x_home_path()
-          candidates <- cmdstanr:::rtools4x_toolchain_candidates()
-          selected <- cmdstanr:::rtools4x_toolchain_path()
-          cat("R version: ", as.character(getRversion()), "\n", sep = "")
-          cat("Rtools home: ", rtools_home, "\n", sep = "")
-          cat("Toolchain candidates:\n")
-          if (length(candidates) == 0) {
-            cat("  - <none>\n")
-          } else {
-            cat(paste0("  - ", candidates), sep = "\n")
-            cat("\n")
-          }
-          cat("Selected toolchain: ", selected, "\n", sep = "")
-          selected_ok <- cmdstanr:::is_rtools4x_toolchain_usable(selected)
-          if (!selected_ok) {
-            stop("Resolved Windows toolchain path is not usable.")
-          }
-        shell: Rscript {0}
 
       - name: Install POCL on Ubuntu Runners
         if: ${{ matrix.config.os == 'ubuntu-latest' }}

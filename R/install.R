@@ -616,54 +616,11 @@ check_wsl_toolchain <- function() {
 }
 
 check_rtools4x_windows_toolchain <- function(quiet = FALSE) {
-  rtools_path <- rtools4x_home_path()
-  rtools_version <- paste0("Rtools", rtools4x_version())
-  # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
-  # we assume that RTools 40 is not installed.
-  if (!nzchar(rtools_path)) {
+  toolchain_path <- toolchain_PATH_env_var()
+  if (is.null(toolchain_path)) {
     stop(
-      "\n", rtools_version, " was not found but is required to run CmdStan with R version ",
-      R.version$major, ".", R.version$minor, ".",
-      "\nPlease install or reinstall the appropriate Rtools version for this R installation,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  # If RTools is installed in a path with spaces or brackets
-  # we error as this path is not valid
-  if (grepl("\\(|)| ", rtools_path)) {
-    stop(
-      "\n", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall the appropriate Rtools version for this R installation to a valid path,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  usr_bin <- repair_path(file.path(rtools_path, "usr", "bin"))
-  # Fail early with a clear message if the base make tool is missing
-  make_found <- any(file.exists(file.path(usr_bin, c("make.exe", "mingw32-make.exe"))))
-  if (!make_found) {
-    stop(
-      "\n", rtools_version, " is missing the required 'make' executable in ", usr_bin, ".",
-      "\nPlease reinstall the appropriate Rtools version for this R installation,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  candidates <- rtools4x_toolchain_candidates()
-  # Validate candidate toolchains here so build errors later are not opaque
-  has_usable_toolchain <- any(vapply(candidates, is_rtools4x_toolchain_usable, logical(1)))
-  if (!has_usable_toolchain) {
-    if (length(candidates) == 0) {
-      candidates_message <- "\n- <none>"
-    } else {
-      candidates_message <- paste0("\n- ", paste(candidates, collapse = "\n- "))
-    }
-    stop(
-      "\n", rtools_version, " does not contain a supported C++ toolchain.",
-      "\nChecked the following paths:",
-      candidates_message,
-      "\nPlease reinstall the appropriate Rtools version for this R installation,",
+      "\nNo C++ toolchain was found for your current installation.",
+      "\nPlease install or reinstall the appropriate Rtools version for this R installation or add it to your PATH",
       "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
@@ -753,104 +710,38 @@ toolchain_PATH_env_var <- function() {
   if (!os_is_windows()) {
     return(NULL)
   }
-  rtools_home <- rtools4x_home_path()
-  if (!nzchar(rtools_home)) {
-    return(NULL)
-  }
-  paste0(
-    repair_path(file.path(rtools_home, "usr", "bin")), ";",
-    rtools4x_toolchain_path()
-  )
-}
 
-#' Ordered candidate RTools toolchain bin paths
-#'
-#' On x86_64, candidate order is ABI-aware so legacy fallback paths are tried
-#' in an order compatible with the current R toolchain.
-#'
-#' @noRd
-#' @return A character vector of normalized candidate toolchain bin paths
-rtools4x_toolchain_candidates <- function() {
-  rtools_home <- rtools4x_home_path()
-  if (!nzchar(rtools_home)) {
-    return(character())
-  }
-  # Prefer the modern static toolchain first, then ABI-compatible legacy
-  # fallbacks for older Rtools layouts
-  toolchains <- if (arch_is_aarch64()) {
-    "aarch64-w64-mingw32.static.posix"
-  } else if (is_ucrt_toolchain()) {
-    c("x86_64-w64-mingw32.static.posix", "ucrt64", "mingw64")
+  # Lookup the configured toolchain location for the installation
+  # This variable is set at installation since R 4.2
+  #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
+  rtools_soft <- ""
+
+  # R 4.0 did not set the R_TOOLS_SOFT config variable, so
+  # we use the RTOOLS40_HOME environment variable instead
+  if (current_r_version() < "4.2.0") {
+    rtools40_home <- repair_path(Sys.getenv("RTOOLS40_HOME", "C:\\rtools40"))
+    r_arch <- ifelse(Sys.getenv("R_ARCH") == "/i386", "mingw32", "mingw64")
+    rtools_soft <- file.path(rtools40_home, r_arch)
   } else {
-    c("x86_64-w64-mingw32.static.posix", "mingw64", "ucrt64")
-  }
-  repair_path(file.path(rtools_home, toolchains, "bin"))
-}
-
-# A candidate is usable if the directory exists and contains a g++ executable
-is_rtools4x_toolchain_usable <- function(path) {
-  if (!nzchar(path) || !dir.exists(path)) {
-    return(FALSE)
-  }
-  any(file.exists(file.path(path, c("g++.exe", "g++"))))
-}
-
-#' Resolve the preferred RTools toolchain bin path
-#'
-#' Returns the first usable path from `rtools4x_toolchain_candidates()`. If no
-#' candidate is usable, returns the first candidate for deterministic diagnostics.
-#'
-#' @noRd
-#' @return A single path string, or `""` if no candidates are available.
-rtools4x_toolchain_path <- function() {
-  candidates <- rtools4x_toolchain_candidates()
-  if (length(candidates) == 0) {
-    return("")
-  }
-  # Return the first usable candidate (ordered by preference above).
-  usable <- vapply(candidates, is_rtools4x_toolchain_usable, logical(1))
-  if (any(usable)) {
-    return(candidates[which(usable)[1]])
-  }
-  candidates[1]
-}
-
-rtools4x_version <- function() {
-  rtools_ver <- NULL
-  r_version <- current_r_version()
-
-  if (r_version < "4.2.0") {
-    rtools_ver <- "40"
-  } else if (r_version < "4.3.0") {
-    rtools_ver <- "42"
-  } else if (r_version < "4.4.0") {
-    rtools_ver <- "43"
-  } else if (r_version < "4.5.0") {
-    rtools_ver <- "44"
-  } else {
-    rtools_ver <- "45"
-  }
-  rtools_ver
-}
-
-rtools4x_home_path <- function() {
-  rtools_ver <- rtools4x_version()
-  if (arch_is_aarch64()) {
-    rtools_ver <- paste0(rtools_ver, "_AARCH64")
-  }
-  path <- Sys.getenv(paste0("RTOOLS", rtools_ver, "_HOME"))
-
-  if (!nzchar(path)) {
-    default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
-    if (arch_is_aarch64()) {
-      default_path <- paste0(default_path, "-aarch64")
-    }
-    if (dir.exists(default_path)) {
-      path <- default_path
-    }
+    rtools_soft <- repair_path(tools::Rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE))
   }
 
-  path
+  rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
+  rtools_cpp_dir <- file.path(rtools_soft, "bin")
+
+  if (!file.exists(file.path(rtools_bin_dir, "make.exe")) ||
+        !file.exists(file.path(rtools_cpp_dir, "c++.exe"))) {
+
+    # If the configured toolchain location is empty, search the PATH
+    rtools_bin_dir <- repair_path(dirname(Sys.which("make")))
+    rtools_cpp_dir <- repair_path(dirname(Sys.which("c++")))
+  }
+
+  if (rtools_bin_dir != "" && rtools_cpp_dir != "") {
+    return(paste0(rtools_bin_dir, ";", rtools_cpp_dir))
+  }
+
+  NULL
 }
 
 assert_supported_requested_cmdstan_version <- function(version, source = "version") {
