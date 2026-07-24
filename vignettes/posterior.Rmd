@@ -7,7 +7,7 @@ output:
 params:
   EVAL: !r identical(Sys.getenv("NOT_CRAN"), "true")
 vignette: >
-  %\VignetteIndexEntry{Working with Posteriors}
+  %\VignetteIndexEntry{Working with posteriors}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
