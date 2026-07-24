@@ -15,9 +15,17 @@
 #' file:
 #'
 #' * `logical` -> `integer` (`TRUE` -> `1`, `FALSE` -> `0`)
+#' * `factor` -> `integer` (the index of each value's level)
 #' * `data.frame` -> `matrix` (via [data.matrix()])
 #' * `list` -> `array`
 #' * `table` -> `vector`, `matrix`, or `array` (depending on dimensions of table)
+#'
+#' Factors are written as their level indices, which depend on the order of the
+#' factor's levels (alphabetical by default) rather than on the values
+#' themselves. For example, `factor(c(10, 9, 8))` is written as `[3, 2, 1]`, and
+#' an unused level shifts the indices of the levels after it. If the original
+#' values are what you want, convert them first, e.g. with
+#' `as.numeric(as.character(x))`.
 #'
 #' The `list` to `array` conversion is intended to make it easier to prepare
 #' the data for certain Stan declarations involving arrays:
@@ -26,12 +34,15 @@
 #' elements where each element is a vector of length `J`
 #' * `array[K] matrix[I,J] m ` can be constructed in \R as a list with `K`
 #' elements where each element is an `IxJ` matrix
+#' * `array[K,I,J] int n ` can be constructed in \R as a list with `K`
+#' elements where each element is an `IxJ` matrix of integers
 #'
 #' These can also be passed in from \R as arrays instead of lists but the list
-#' option is provided for convenience. Unfortunately for arrays with more than
-#' one dimension (e.g. `array[K,L] vector[J] v `) it is not possible to use an
-#' \R list and an array must be used instead. For this example the array in \R
-#' should have dimensions `KxLxJ`.
+#' option is provided for convenience. A list always contributes exactly one
+#' leading dimension, so `array[K,L] vector[J] v ` can be supplied either as a
+#' list of `K` matrices each with dimensions `LxJ` or as a single \R array with
+#' dimensions `KxLxJ`. Nested lists are not supported: every element of the list
+#' must be a vector, matrix, or array.
 #'
 #' Because \R does not distinguish between a scalar and a vector of length 1, a
 #' length-1 vector like `c(42)` is written to JSON as a scalar (`42`) rather
@@ -97,24 +108,11 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
     if (is.null(var)) {
       stop("Variable '", var_name, "' is NULL.", call. = FALSE)
     }
-    if (!(is.numeric(var) || is.factor(var) || is.logical(var) ||
-          is.data.frame(var) || is.list(var))) {
-      stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
-    }
+    validate_data_type(var, var_name)
     if (anyNA(var)) {
       stop("Variable '", var_name, "' has NA values.", call. = FALSE)
     }
-
-    if (is.table(var)) {
-      var <- unclass(var)
-    } else if (is.logical(var)) {
-      mode(var) <- "integer"
-    } else if (is.data.frame(var)) {
-      var <- data.matrix(var)
-    } else if (is.list(var)) {
-      var <- list_to_array(var, var_name)
-    }
-    data[[var_name]] <- var
+    data[[var_name]] <- convert_to_array(var, var_name)
   }
 
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
@@ -127,6 +125,39 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
     digits = NA,
     pretty = TRUE
   )
+}
+
+
+# Types accepted for a data variable and for each column of a data frame
+is_valid_data_type <- function(x) {
+  is.numeric(x) || is.factor(x) || is.logical(x)
+}
+
+
+# Error if a variable is not one of the types accepted in a data list. Data
+# frames and lists are accepted here and converted by convert_to_array().
+validate_data_type <- function(var, var_name) {
+  if (!is_valid_data_type(var) && !is.data.frame(var) && !is.list(var)) {
+    stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+
+# Convert the R container types accepted in a data list to the atomic arrays
+# CmdStan's JSON reader expects. Used by both write_stan_json() and
+# process_data() so that the two paths agree.
+convert_to_array <- function(var, var_name = NULL) {
+  if (is.table(var)) {
+    var <- unclass(var)
+  } else if (is.logical(var)) {
+    mode(var) <- "integer"
+  } else if (is.data.frame(var)) {
+    var <- data.matrix(var)
+  } else if (is.list(var)) {
+    var <- list_to_array(var, var_name)
+  }
+  var
 }
 
 
@@ -158,12 +189,6 @@ list_to_array <- function(x, name = NULL) {
 #' @noRd
 #' @param data If not `NULL`, then either a path to a data file compatible with
 #'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
-#' @param stan_file If not `NULL`, the path to the Stan model for which to
-#'   process the named list suppiled to the `data` argument. The Stan model
-#'   is used for checking whether the supplied named list has all the
-#'   required elements/Stan variables and to help differentiate between a
-#'   vector of length 1 and a scalar when genereting the JSON file. This
-#'   argument is ignored when a path to a data file is supplied for `data`.
 #' @param model_variables A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
 #' @return Path to data file.
@@ -192,6 +217,10 @@ process_data <- function(data, model_variables = NULL) {
         if (is.null(data[[var_name]])) {
           stop("Variable '", var_name, "' is NULL.", call. = FALSE)
         }
+        validate_data_type(data[[var_name]], var_name)
+        # Convert lists and data frames to arrays before the checks below,
+        # which require an atomic object (#817)
+        data[[var_name]] <- convert_to_array(data[[var_name]], var_name)
         # distinguish between scalars and arrays/vectors of length 1
         if (length(data[[var_name]]) == 1
             && data_variables[[var_name]]$dimensions == 1) {

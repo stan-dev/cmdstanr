@@ -409,6 +409,80 @@ test_that("process_data warns on int coercion", {
   )
 })
 
+test_that("process_data accepts lists of matrices/vectors for int variables", {
+  stan_file <- write_stan_file("
+  data {
+    array[4,3,2] int x;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+
+  a <- matrix(1:6, nrow = 3, ncol = 2)
+  arr <- array(dim = c(4, 3, 2))
+  for (i in 1:4) arr[i, , ] <- a
+
+  from_array <- readLines(process_data(list(x = arr), model_variables = model_variables))
+  from_int_list <- readLines(process_data(list(x = list(a, a, a, a)), model_variables = model_variables))
+  expect_identical(from_int_list, from_array)
+
+  # a list of doubles must give the same result as a list of integers (#817)
+  storage.mode(a) <- "double"
+  from_dbl_list <- readLines(process_data(list(x = list(a, a, a, a)), model_variables = model_variables))
+  expect_identical(from_dbl_list, from_array)
+
+  # values are written as integers, not as decimals
+  expect_false(any(grepl(".", from_dbl_list, fixed = TRUE)))
+
+  stan_file <- write_stan_file("
+  data {
+    array[2,3] int x;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  test_file <- process_data(list(x = list(c(1, 2, 3), c(4, 5, 6))), model_variables = mod$variables())
+  expect_equal(
+    jsonlite::read_json(test_file, simplifyVector = TRUE),
+    list(x = matrix(1:6, nrow = 2, ncol = 3, byrow = TRUE))
+  )
+})
+
+test_that("process_data accepts data frames for int variables", {
+  stan_file <- write_stan_file("
+  data {
+    array[2,2] int x;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+
+  df <- data.frame(a = c(1, 2), b = c(3, 4))
+  from_df <- readLines(process_data(list(x = df), model_variables = model_variables))
+  from_matrix <- readLines(process_data(list(x = data.matrix(df)), model_variables = model_variables))
+  expect_identical(from_df, from_matrix)
+  expect_false(any(grepl(".", from_df, fixed = TRUE)))
+})
+
+test_that("process_data errors on invalid types", {
+  stan_file <- write_stan_file("
+  data {
+    array[2,2] int x;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+
+  expect_error(
+    process_data(list(x = c("v", "w")), model_variables = model_variables),
+    "Variable 'x' is of invalid type."
+  )
+  # NAs inside a list are reported as NAs rather than as a coercion failure
+  expect_error(
+    process_data(list(x = list(c(1, NA), c(3, 4))), model_variables = model_variables),
+    "Variable 'x' has NA values"
+  )
+})
+
 test_that("Floating-point differences do not cause truncation towards 0", {
   stan_file <- write_stan_file("
   data {

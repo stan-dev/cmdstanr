@@ -143,6 +143,49 @@ test_that("write_stan_json() errors if vectors/matrices in same list are differe
   )
 })
 
+test_that("a list contributes one leading dimension", {
+  # e.g. `array[K,L] vector[J] v` as a list of K matrices with dimensions LxJ
+  K <- 2; L <- 3; J <- 4
+  arr <- array(1:(K * L * J), dim = c(K, L, J))
+  lst <- lapply(seq_len(K), function(k) arr[k, , ])
+
+  temp_file_list <- tempfile()
+  temp_file_arr <- tempfile()
+  write_stan_json(list(v = lst), temp_file_list)
+  write_stan_json(list(v = arr), temp_file_arr)
+  expect_identical(readLines(temp_file_list), readLines(temp_file_arr))
+
+  # nested lists are not supported
+  expect_error(
+    write_stan_json(list(v = list(list(1:4, 5:8), list(9:12, 13:16))), tempfile()),
+    "All elements in list 'v' must be numeric!"
+  )
+})
+
+test_that("factors are written as level indices", {
+  temp_file <- tempfile()
+  read_x <- function(file) jsonlite::read_json(file, simplifyVector = TRUE)$x
+
+  # the level indices are written, not the values themselves
+  write_stan_json(list(x = factor(c(10, 9, 8))), temp_file)
+  expect_equal(read_x(temp_file), c(3L, 2L, 1L))
+
+  # the order of the levels determines the indices
+  write_stan_json(list(x = factor(c("foo", "bar"))), temp_file)
+  expect_equal(read_x(temp_file), c(2L, 1L))
+
+  write_stan_json(list(x = factor(c("foo", "bar"), levels = c("foo", "bar"))), temp_file)
+  expect_equal(read_x(temp_file), c(1L, 2L))
+
+  # an unused level shifts the indices of the levels after it
+  write_stan_json(list(x = factor(c("b", "c"), levels = c("a", "b", "c"))), temp_file)
+  expect_equal(read_x(temp_file), c(2L, 3L))
+
+  # factor columns of a data frame are converted the same way
+  write_stan_json(list(x = data.frame(a = factor(c(10, 9, 8)))), temp_file)
+  expect_equal(read_x(temp_file), matrix(c(3L, 2L, 1L), ncol = 1))
+})
+
 test_that("write_stan_json() errors if invalid types", {
   expect_error(
     write_stan_json(list(N = list("abc", "def")), file = "abc.txt"),

@@ -1,5 +1,8 @@
 # cmdstanr (development version)
 
+* Lists of matrices/vectors and data frames can now be supplied for variables 
+declared as `int` in the Stan program. Previously these worked only for `real` 
+variables and errored for `int` ones. (#817)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 
