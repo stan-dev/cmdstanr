@@ -198,6 +198,40 @@ test_that("write_stan_json() errors if invalid types", {
   )
 })
 
+test_that("write_stan_json() errors if data frame has columns of invalid type", {
+  # data.matrix() would silently coerce these instead of erroring
+  expect_error(
+    write_stan_json(list(N = data.frame(a = 1:2, b = c("x", "y"))), tempfile()),
+    "Variable 'N' has columns of invalid type: b."
+  )
+  expect_error(
+    write_stan_json(list(N = data.frame(a = as.Date(c("2020-01-01", "2020-01-02")))), tempfile()),
+    "Variable 'N' has columns of invalid type: a."
+  )
+  expect_error(
+    write_stan_json(list(N = data.frame(a = as.POSIXct("2020-01-01", tz = "UTC"))), tempfile()),
+    "Variable 'N' has columns of invalid type: a."
+  )
+  expect_error(
+    write_stan_json(list(N = data.frame(a = c(1 + 2i, 3 + 4i))), tempfile()),
+    "Variable 'N' has columns of invalid type: a."
+  )
+
+  # all invalid columns are reported, not just the first
+  expect_error(
+    write_stan_json(list(N = data.frame(a = 1:2, b = c("x", "y"), c = c("v", "w"))), tempfile()),
+    "Variable 'N' has columns of invalid type: b, c."
+  )
+
+  # numeric, integer, logical and factor columns are still allowed
+  expect_no_error(
+    write_stan_json(
+      list(N = data.frame(a = c(1.5, 2.5), b = 1:2, c = c(TRUE, FALSE), d = factor(c("x", "y")))),
+      tempfile()
+    )
+  )
+})
+
 test_that("write_stan_json() errors if bad names", {
   expect_error(
     write_stan_json(list(x = 1, y = 2, x = 3), file = tempfile()),

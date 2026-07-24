@@ -473,6 +473,10 @@ test_that("process_data errors on invalid types", {
   model_variables <- mod$variables()
 
   expect_error(
+    process_data(list(x = data.frame(a = c(1, 2), b = c("v", "w"))), model_variables = model_variables),
+    "Variable 'x' has columns of invalid type: b."
+  )
+  expect_error(
     process_data(list(x = c("v", "w")), model_variables = model_variables),
     "Variable 'x' is of invalid type."
   )

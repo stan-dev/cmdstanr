@@ -28,7 +28,8 @@ file:
 \itemize{
 \item \code{logical} -> \code{integer} (\code{TRUE} -> \code{1}, \code{FALSE} -> \code{0})
 \item \code{factor} -> \code{integer} (the index of each value's level)
-\item \code{data.frame} -> \code{matrix} (via \code{\link[=data.matrix]{data.matrix()}})
+\item \code{data.frame} -> \code{matrix} (via \code{\link[=data.matrix]{data.matrix()}}); every column must be
+numeric, integer, logical, or factor
 \item \code{list} -> \code{array}
 \item \code{table} -> \code{vector}, \code{matrix}, or \code{array} (depending on dimensions of table)
 }

@@ -16,7 +16,8 @@
 #'
 #' * `logical` -> `integer` (`TRUE` -> `1`, `FALSE` -> `0`)
 #' * `factor` -> `integer` (the index of each value's level)
-#' * `data.frame` -> `matrix` (via [data.matrix()])
+#' * `data.frame` -> `matrix` (via [data.matrix()]); every column must be
+#' numeric, integer, logical, or factor
 #' * `list` -> `array`
 #' * `table` -> `vector`, `matrix`, or `array` (depending on dimensions of table)
 #'
@@ -153,6 +154,14 @@ convert_to_array <- function(var, var_name = NULL) {
   } else if (is.logical(var)) {
     mode(var) <- "integer"
   } else if (is.data.frame(var)) {
+    # data.matrix() silently coerces character columns to factor codes and
+    # date/time columns to their numeric representation, so apply the same
+    # type check used for the variables themselves (#817)
+    invalid <- !vapply(var, is_valid_data_type, logical(1))
+    if (any(invalid)) {
+      stop("Variable '", var_name, "' has columns of invalid type: ",
+           paste(names(var)[invalid], collapse = ", "), ".", call. = FALSE)
+    }
     var <- data.matrix(var)
   } else if (is.list(var)) {
     var <- list_to_array(var, var_name)
