@@ -327,14 +327,20 @@ test_that("require_suggested_package() works", {
 })
 
 test_that("use_spinner() respects the cmdstanr_spinner option", {
-  # rlang::is_interactive() is FALSE while testing, so simulate both cases
-  withr::local_options(rlang_interactive = TRUE)
+  # rlang::is_interactive() is FALSE while testing, so simulate an interactive
+  # session. The option and env var are cleared so that the tests don't inherit
+  # them from the session running the tests.
+  withr::local_options(list(rlang_interactive = TRUE, cmdstanr_spinner = NULL))
+  withr::local_envvar(IN_PKGDOWN = NA)
   expect_true(use_spinner())
   withr::with_options(list(cmdstanr_spinner = FALSE), expect_false(use_spinner()))
   withr::with_options(list(cmdstanr_spinner = TRUE), expect_true(use_spinner()))
 })
 
 test_that("use_spinner() is FALSE unless interactive", {
+  withr::local_options(list(cmdstanr_spinner = NULL))
+  withr::local_envvar(IN_PKGDOWN = NA)
+
   withr::local_options(rlang_interactive = FALSE)
   expect_false(use_spinner())
   withr::with_options(list(cmdstanr_spinner = TRUE), expect_false(use_spinner()))
