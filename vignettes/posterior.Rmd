@@ -27,8 +27,7 @@ We can easily customize the summary statistics reported by `$summary()` and
 `$print()`.
 
 ```{r}
-# this model produces convergence warnings that we'll ignore 
-fit <- cmdstanr_example("schools", method = "sample")
+fit <- cmdstanr_example("schools_ncp", method = "sample")
 fit$summary()
 ```
 
@@ -39,7 +38,7 @@ posterior::default_summary_measures()
 
 To change the variables summarized, use the `variables` argument:
 ```{r}
-fit$summary(variables = c("mu", "tau"))
+fit$summary(variables = c("mu", "tau", "theta"))
 ```
 
 We can also change which functions are used:
@@ -78,7 +77,7 @@ fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, .05, .95, .9
 Each summary function is applied separately to each variable and receives a
 matrix whose rows are saved iterations and whose columns are chains.
 ```{r}
-fit$summary(variables = NULL, dim, colMeans)
+fit$summary(variables = "theta", dim, colMeans)
 ```
 
 
@@ -94,7 +93,7 @@ to the requested number of digits.
 
 ```{r}
 strict_pos <- function(x) if (all(x > 0)) "yes" else "no"
-fit$summary(variables = NULL, "Strictly Positive" = strict_pos)
+fit$summary(variables = c("mu", "tau", "theta"), "Strictly Positive" = strict_pos)
 # fit$print(variables = NULL, "Strictly Positive" = strict_pos)
 ```
 
