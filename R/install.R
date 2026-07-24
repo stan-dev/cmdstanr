@@ -490,7 +490,7 @@ build_cmdstan <- function(dir,
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) },
         timeout = timeout
@@ -515,7 +515,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) }
       )
@@ -538,7 +538,7 @@ build_example <- function(dir, cores, quiet, timeout) {
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) },
         timeout = timeout
