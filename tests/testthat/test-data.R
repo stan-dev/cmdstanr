@@ -409,6 +409,157 @@ test_that("process_data warns on int coercion", {
   )
 })
 
+test_that("process_data accepts lists of matrices/vectors for int variables", {
+  stan_file <- write_stan_file("
+  data {
+    array[4,3,2] int x;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+
+  a <- matrix(1:6, nrow = 3, ncol = 2)
+  arr <- array(dim = c(4, 3, 2))
+  for (i in 1:4) arr[i, , ] <- a
+
+  from_array <- readLines(process_data(list(x = arr), model_variables = model_variables))
+  from_int_list <- readLines(process_data(list(x = list(a, a, a, a)), model_variables = model_variables))
+  expect_identical(from_int_list, from_array)
+
+  # a list of doubles must give the same result as a list of integers (#817)
+  storage.mode(a) <- "double"
+  from_dbl_list <- readLines(process_data(list(x = list(a, a, a, a)), model_variables = model_variables))
+  expect_identical(from_dbl_list, from_array)
+
+  # values are written as integers, not as decimals
+  expect_false(any(grepl(".", from_dbl_list, fixed = TRUE)))
+
+  stan_file <- write_stan_file("
+  data {
+    array[2,3] int x;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  test_file <- process_data(list(x = list(c(1, 2, 3), c(4, 5, 6))), model_variables = mod$variables())
+  expect_equal(
+    jsonlite::read_json(test_file, simplifyVector = TRUE),
+    list(x = matrix(1:6, nrow = 2, ncol = 3, byrow = TRUE))
+  )
+})
+
+test_that("process_data accepts data frames for int variables", {
+  stan_file <- write_stan_file("
+  data {
+    array[2,2] int x;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+
+  df <- data.frame(a = c(1, 2), b = c(3, 4))
+  from_df <- readLines(process_data(list(x = df), model_variables = model_variables))
+  from_matrix <- readLines(process_data(list(x = data.matrix(df)), model_variables = model_variables))
+  expect_identical(from_df, from_matrix)
+  expect_false(any(grepl(".", from_df, fixed = TRUE)))
+})
+
+test_that("process_data errors on invalid types", {
+  stan_file <- write_stan_file("
+  data {
+    array[2,2] int x;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+
+  expect_error(
+    process_data(list(x = data.frame(a = c(1, 2), b = c("v", "w"))), model_variables = model_variables),
+    "Variable 'x' has columns of invalid type: b."
+  )
+  expect_error(
+    process_data(list(x = c("v", "w")), model_variables = model_variables),
+    "Variable 'x' is of invalid type."
+  )
+  # NAs inside a list are reported as NAs rather than as a coercion failure
+  expect_error(
+    process_data(list(x = list(c(1, NA), c(3, 4))), model_variables = model_variables),
+    "Variable 'x' has NA values"
+  )
+})
+
+test_that("process_data errors on a factor for a non-int variable", {
+  stan_file <- write_stan_file("
+  data {
+    int a;
+    array[2] int b;
+    real c;
+    vector[2] d;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+  data <- list(a = 1L, b = c(1L, 2L), c = 2.5, d = c(1, 2))
+
+  expect_error(
+    process_data(modifyList(data, list(c = factor("x"))), model_variables = model_variables),
+    "A factor was supplied for 'c', which is declared as 'real'."
+  )
+  # vectors and matrices are also reported as 'real'
+  expect_error(
+    process_data(modifyList(data, list(d = factor(c("x", "y")))), model_variables = model_variables),
+    "A factor was supplied for 'd', which is declared as 'real'."
+  )
+
+  # a factor column of a data frame is caught too, before data.matrix()
+  # converts it to codes
+  stan_file <- write_stan_file("
+  data {
+    matrix[2,1] x;
+  }
+  ")
+  mod_matrix <- cmdstan_model(stan_file, compile = FALSE)
+  expect_error(
+    process_data(list(x = data.frame(a = factor(c("b", "a")))),
+                 model_variables = mod_matrix$variables()),
+    "A factor was supplied for 'x', which is declared as 'real'."
+  )
+
+  # factors are still allowed for int variables
+  expect_no_error(
+    process_data(modifyList(data, list(a = factor("x"))), model_variables = model_variables)
+  )
+  expect_no_error(
+    process_data(modifyList(data, list(b = factor(c("x", "y")))), model_variables = model_variables)
+  )
+})
+
+test_that("factors work for length-1 arrays", {
+  # array() drops the factor class, so the length-1 reshaping used to leave a
+  # character array behind for these
+  stan_file <- write_stan_file("
+  data {
+    array[1] int a;
+    array[1] real b;
+  }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  model_variables <- mod$variables()
+  data <- list(a = 1L, b = 2.5)
+
+  test_file <- process_data(modifyList(data, list(a = factor("x"))),
+                            model_variables = model_variables)
+  expect_equal(jsonlite::read_json(test_file, simplifyVector = TRUE)$a, 1L)
+
+  expect_error(
+    process_data(modifyList(data, list(b = factor("x"))), model_variables = model_variables),
+    "A factor was supplied for 'b', which is declared as 'real'."
+  )
+
+  # the length-1 reshaping still works for non-factors
+  test_file <- process_data(modifyList(data, list(a = 5)), model_variables = model_variables)
+  expect_equal(jsonlite::read_json(test_file, simplifyVector = TRUE)$a, 5L)
+})
+
 test_that("Floating-point differences do not cause truncation towards 0", {
   stan_file <- write_stan_file("
   data {
