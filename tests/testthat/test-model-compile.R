@@ -181,6 +181,40 @@ test_that("include paths are resolved when the model is created", {
   expect_true(mod$check_syntax(quiet = TRUE))
 })
 
+test_that("relative include_paths are resolved when the model is created", {
+  model_dir <- withr::local_tempdir()
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir)
+  file.copy(testing_stan_file("bernoulli_include"), model_dir)
+  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
+
+  mod <- withr::with_dir(
+    model_dir,
+    cmdstan_model(
+      "bernoulli_include.stan",
+      include_paths = "includes",
+      compile = FALSE
+    )
+  )
+  # "includes" no longer resolves relative to the working directory
+  expect_true(mod$check_syntax(quiet = TRUE))
+})
+
+test_that("relative include_paths given to $compile() are resolved when it is called", {
+  model_dir <- withr::local_tempdir()
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir)
+  file.copy(testing_stan_file("bernoulli_include"), model_dir)
+  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
+
+  mod <- withr::with_dir(model_dir, {
+    mod <- cmdstan_model("bernoulli_include.stan", compile = FALSE)
+    mod$compile(include_paths = "includes", quiet = TRUE)
+    mod
+  })
+  expect_true(mod$check_syntax(quiet = TRUE))
+})
+
 test_that("name in STANCFLAGS is set correctly", {
   local_reproducible_output()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
