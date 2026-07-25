@@ -484,7 +484,10 @@ test_that("sampling works with explicit and inferred include paths containing sp
   include_model <- local_include_model_with_spaces()
 
   mod_inferred <- cmdstan_model(stan_file = include_model$stan_file)
-  expect_equal(mod_inferred$include_paths(), include_model$include_paths)
+  expect_equal(
+    repair_path(mod_inferred$include_paths()),
+    repair_path(include_model$include_paths)
+  )
 
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
   expect_no_error(utils::capture.output(
@@ -507,7 +510,10 @@ test_that("sampling works with explicit and inferred include paths containing sp
     include_paths = include_model$include_paths,
     compile = FALSE
   )
-  expect_equal(mod_explicit$include_paths(), include_model$include_paths)
+  expect_equal(
+    repair_path(mod_explicit$include_paths()),
+    repair_path(include_model$include_paths)
+  )
   expect_no_error(utils::capture.output(
     mod_explicit$sample(
       data = data_list,
