@@ -88,7 +88,12 @@ test_that("compilation works with include_paths", {
   expect_error(
     cmdstan_model(stan_file = stan_program_w_include, include_paths = "NOT_A_DIR",
                   quiet = TRUE),
-    "Directory 'NOT_A_DIR' does not exist"
+    paste0(
+      "Directory '",
+      repair_path(absolute_path("NOT_A_DIR")),
+      "' does not exist"
+    ),
+    fixed = TRUE
   )
 
   expect_error(

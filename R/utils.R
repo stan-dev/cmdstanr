@@ -945,20 +945,23 @@ get_standalone_hpp <- function(stan_file, stancflags) {
         error_on_status = FALSE
       )
     )
-  if (is.null(status$status) || is.na(status$status) || status$status != 0) {
+  if (is.na(status$status) || status$status != 0) {
     if (length(status$stderr) > 0 && nzchar(status$stderr)) {
       message(status$stderr)
     }
-    status_code <- if (is.null(status$status) || is.na(status$status)) {
-      "missing"
-    } else {
-      status$status
-    }
-    stop(
-      "stanc exited with status ", status_code, ".\n",
-      "Failed to generate the model C++ header.",
-      call. = FALSE
+    err_msg <- paste0(
+      "stanc exited with status ", status$status, ".\n",
+      "Failed to generate the model C++ header."
     )
+    if (length(status$stderr) > 0 &&
+        grepl("auto-format flag to stanc", status$stderr)) {
+      err_msg <- paste0(
+        err_msg,
+        "\nTo fix deprecated or removed syntax please see ",
+        "?cmdstanr::format for an example."
+      )
+    }
+    stop(err_msg, call. = FALSE)
   }
   suppressWarnings(readLines(hpp_path, warn = FALSE))
 }

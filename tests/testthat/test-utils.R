@@ -161,6 +161,25 @@ test_that("get_standalone_hpp() reports stanc failures", {
   expect_false(file.exists(hpp_file))
 })
 
+test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
+  stan_file <- withr::local_tempfile(fileext = ".stan")
+  writeLines("real x; transformed parameters { x <- 1; }", stan_file)
+  local_mocked_bindings(
+    wsl_compatible_run = function(...) {
+      list(
+        status = 1L,
+        stdout = "",
+        stderr = "Syntax error: Use the auto-format flag to stanc"
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    get_standalone_hpp(stan_file, character())
+  )
+})
+
 
 # misc --------------------------------------------------------------------
 

@@ -598,6 +598,7 @@ compile <- function(quiet = TRUE,
     include_paths <- private$precompile_include_paths_
   }
   private$include_paths_ <- resolve_path(include_paths)
+  include_paths <- private$include_paths_
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
@@ -806,10 +807,6 @@ compile <- function(quiet = TRUE,
     )
     if (is.na(run_log$status) || run_log$status != 0) {
       err_msg <- "An error occured during compilation! See the message above for more information."
-      if (grepl("auto-format flag to stanc", run_log$stderr)) {
-        format_msg <- "\nTo fix deprecated or removed syntax please see ?cmdstanr::format for an example."
-        err_msg <- paste(err_msg, format_msg)
-      }
       stop(err_msg, call. = FALSE)
     }
     if (file.exists(exe)) {
