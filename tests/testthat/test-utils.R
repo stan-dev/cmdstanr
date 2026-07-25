@@ -220,7 +220,7 @@ test_that("list_to_array works with empty list", {
 
 test_that("list_to_array fails for non-numeric values", {
   expect_error(list_to_array(list(k = "test"), name = "test-list"),
-               "All elements in list 'test-list' must be numeric!")
+               "All elements in list 'test-list' must be numeric or logical!")
 })
 
 test_that("cmdstan_make_local() works", {
