@@ -631,7 +631,6 @@ compile <- function(quiet = TRUE,
     }
 
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
-    stanc_options[["allow-undefined"]] <- TRUE
     private$using_user_header_ <- TRUE
   } else if (!is.null(cpp_options[["USER_HEADER"]])) {
     if (!is.null(cpp_options[["user_header"]])) {
@@ -649,6 +648,7 @@ compile <- function(quiet = TRUE,
 
 
   if (!is.null(user_header)) {
+    stanc_options[["allow-undefined"]] <- TRUE
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
     if (!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
