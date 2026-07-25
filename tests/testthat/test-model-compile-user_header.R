@@ -23,7 +23,7 @@ test_that("cpp_options user headers allow undefined functions", {
   expect_equal(
     vapply(
       received_stancflags,
-      \(x) "--allow-undefined" %in% x,
+      function(x) "--allow-undefined" %in% x,
       logical(1)
     ),
     rep(TRUE, 4)

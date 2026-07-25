@@ -289,28 +289,18 @@ test_that("compile errors are shown", {
   stan_file <- testing_stan_file("fail")
   expect_error(
     cmdstan_model(stan_file),
-    "stanc exited with status 1.\nFailed to generate the model C++ header.",
+    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
     fixed = TRUE
   )
 })
 
 test_that("compile() performs stanc checks during dry runs", {
-  stan_file <- testing_stan_file("bernoulli")
+  stan_file <- testing_stan_file("fail")
   model <- cmdstan_model(stan_file, compile = FALSE)
-  local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
-    get_standalone_hpp = function(...) {
-      stop(
-        "stanc exited with status 1.\n",
-        "Failed to generate the model C++ header.",
-        call. = FALSE
-      )
-    }
-  )
-
-  expect_snapshot(
-    error = TRUE,
-    model$compile(force_recompile = TRUE, dry_run = TRUE)
+  expect_error(
+    model$compile(force_recompile = TRUE, dry_run = TRUE),
+    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
+    fixed = TRUE
   )
 })
 
@@ -537,7 +527,7 @@ test_that("check_syntax() works with include_paths on compiled model", {
 
 })
 
-test_that("check_syntax() works with pedantic=TRUE", {
+test_that("compile() and check_syntax() error on removed syntax", {
   model_code <- "
   transformed data {
     real a;
@@ -548,7 +538,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
   mod_dep_warning <- cmdstan_model(stan_file, compile = FALSE)
   expect_error(
     mod_dep_warning$compile(),
-    "stanc exited with status 1.\nFailed to generate the model C++ header.",
+    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
     fixed = TRUE
   )
   expect_error(
@@ -558,7 +548,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
   )
 })
 
-test_that("compiliation errors if folder with the model name exists", {
+test_that("compilation errors if folder with the model name exists", {
   skip_if(os_is_windows() && !os_is_wsl())
   model_code <- "
   parameters {

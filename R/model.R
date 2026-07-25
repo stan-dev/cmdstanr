@@ -806,8 +806,8 @@ compile <- function(quiet = TRUE,
       )
     )
     if (is.na(run_log$status) || run_log$status != 0) {
-      err_msg <- "An error occured during compilation! See the message above for more information."
-      stop(err_msg, call. = FALSE)
+      stop("An error occurred during compilation! See the message above for more information.",
+           call. = FALSE)
     }
     if (file.exists(exe)) {
       file.remove(exe)

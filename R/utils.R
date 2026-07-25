@@ -950,8 +950,8 @@ get_standalone_hpp <- function(stan_file, stancflags) {
       message(status$stderr)
     }
     err_msg <- paste0(
-      "stanc exited with status ", status$status, ".\n",
-      "Failed to generate the model C++ header."
+      "An error occurred during compilation! See the message above for more ",
+      "information. (stanc exited with status ", status$status, ")"
     )
     if (length(status$stderr) > 0 &&
         grepl("auto-format flag to stanc", status$stderr)) {
