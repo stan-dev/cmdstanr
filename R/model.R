@@ -259,7 +259,7 @@ CmdStanModel <- R6::R6Class(
       if (!is.null(stan_file)) {
         assert_file_exists(stan_file, access = "r", extension = c("stan", "stanfunctions"))
         checkmate::assert_flag(compile)
-        private$stan_file_ <- absolute_path(stan_file)
+        private$stan_file_ <- resolve_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_cpp_options_ <- args$cpp_options %||% list()
@@ -269,20 +269,20 @@ CmdStanModel <- R6::R6Class(
           private$using_user_header_ <- TRUE
         }
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
-          private$precompile_include_paths_ <- dirname(stan_file)
+          private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
-          private$precompile_include_paths_ <- args$include_paths
+          private$precompile_include_paths_ <- resolve_path(args$include_paths)
         }
       }
       if (!is.null(exe_file)) {
         ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
-        private$exe_file_ <- repair_path(absolute_path(exe_file))
+        private$exe_file_ <- resolve_path(exe_file)
         if (is.null(stan_file)) {
           assert_file_exists(private$exe_file_, access = "r", extension = ext)
           private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
         private$include_paths_ <-
-          private$precompile_include_paths_ %||% args$include_paths
+          private$precompile_include_paths_ %||% resolve_path(args$include_paths)
       }
       if (!is.null(stan_file) && compile) {
         self$compile(...)
@@ -422,7 +422,7 @@ CmdStanModel <- R6::R6Class(
 #' * `$model_name()` returns the model name as a string.
 #' * `$exe_file()` returns a path as a string, or `character(0)` if no
 #'   executable path is set.
-#' * `$include_paths()` returns a character vector of paths or `NULL`.
+#' * `$include_paths()` returns a character vector of absolute paths or `NULL`.
 #' * `$cmdstan_version()` returns a CmdStan version as a string.
 #' * `$cpp_options()` returns a named list of C++ options.
 #' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
@@ -480,7 +480,10 @@ NULL
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
-#'   program.
+#'   program. Relative paths are resolved against the working directory when
+#'   the model object is created (or when `$compile()` is called) and stored as
+#'   absolute paths, so subsequent changes to the working directory do not
+#'   affect them.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
@@ -594,7 +597,7 @@ compile <- function(quiet = TRUE,
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
-  private$include_paths_ <- include_paths
+  private$include_paths_ <- resolve_path(include_paths)
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
@@ -724,7 +727,7 @@ compile <- function(quiet = TRUE,
   if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
   }
-  stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
+  stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
   stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
@@ -980,7 +983,10 @@ check_syntax <- function(pedantic = FALSE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  stancflags_val <- include_paths_stanc3_args(include_paths)
+  stancflags_val <- include_paths_stanc3_args(
+    include_paths,
+    direct_call = TRUE
+  )
 
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
@@ -1106,7 +1112,10 @@ format <- function(overwrite_file = FALSE,
     lower = 1, len = 1, null.ok = TRUE
   )
   stanc_options <- private$precompile_stanc_options_
-  stancflags_val <- include_paths_stanc3_args(self$include_paths())
+  stancflags_val <- include_paths_stanc3_args(
+    self$include_paths(),
+    direct_call = TRUE
+  )
   stanc_options["auto-format"] <- TRUE
   if (!is.null(max_line_length)) {
     stanc_options["max-line-length"] <- max_line_length
@@ -2462,19 +2471,34 @@ assert_stan_file_exists <- function(stan_file) {
   }
 }
 
-include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
+#' Build stanc include-path arguments
+#'
+#' Make receives include paths through `STANCFLAGS` and needs paths containing
+#' spaces to be shell-quoted within a single `--include-paths=` flag. Direct
+#' calls through processx instead need the flag and comma-separated paths as
+#' separate, unquoted arguments.
+#'
+#' @param include_paths A character vector of directories containing files used
+#'   in Stan `#include` directives, or `NULL`.
+#' @param direct_call A logical indicating whether the arguments will be passed
+#'   directly to stanc through processx instead of through Make.
+#'
+#' @return `NULL` if `include_paths` is `NULL`; otherwise, a single
+#'   `--include-paths=` argument for Make or two arguments for a direct call.
+#' @noRd
+include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
     assert_dir_exists(include_paths, access = "r")
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
     # Calling stanc3 directly through processx::run does not need quoting
-    if (!isTRUE(standalone_call)) {
+    if (!isTRUE(direct_call)) {
       paths_w_space <- grep(" ", include_paths)
       include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     }
     include_paths <- paste0(include_paths, collapse = ",")
     include_paths_flag <- "--include-paths="
-    if (isTRUE(standalone_call)) {
+    if (isTRUE(direct_call)) {
       stancflags <- c(stancflags, "--include-paths", include_paths)
     } else {
       stancflags <- paste0(stancflags, include_paths_flag, include_paths)
@@ -2494,7 +2518,10 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     command = stanc_cmd(),
     args = c(wsl_safe_path(stan_file),
               "--info",
-              include_paths_stanc3_args(include_paths),
+              include_paths_stanc3_args(
+                include_paths,
+                direct_call = TRUE
+              ),
               allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,
