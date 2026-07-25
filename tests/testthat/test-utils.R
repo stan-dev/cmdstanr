@@ -220,7 +220,7 @@ test_that("list_to_array works with empty list", {
 
 test_that("list_to_array fails for non-numeric values", {
   expect_error(list_to_array(list(k = "test"), name = "test-list"),
-               "All elements in list 'test-list' must be numeric!")
+               "All elements in list 'test-list' must be numeric or logical!")
 })
 
 test_that("cmdstan_make_local() works", {
@@ -324,6 +324,30 @@ test_that("require_suggested_package() works", {
     require_suggested_package("not_a_real_package"),
     "Please install the 'not_a_real_package' package to use this function."
   )
+})
+
+test_that("use_spinner() respects the cmdstanr_spinner option", {
+  # rlang::is_interactive() is FALSE while testing, so simulate an interactive
+  # session. The option and env var are cleared so that the tests don't inherit
+  # them from the session running the tests.
+  withr::local_options(list(rlang_interactive = TRUE, cmdstanr_spinner = NULL))
+  withr::local_envvar(IN_PKGDOWN = NA)
+  expect_true(use_spinner())
+  withr::with_options(list(cmdstanr_spinner = FALSE), expect_false(use_spinner()))
+  withr::with_options(list(cmdstanr_spinner = TRUE), expect_true(use_spinner()))
+})
+
+test_that("use_spinner() is FALSE unless interactive", {
+  withr::local_options(list(cmdstanr_spinner = NULL))
+  withr::local_envvar(IN_PKGDOWN = NA)
+
+  withr::local_options(rlang_interactive = FALSE)
+  expect_false(use_spinner())
+  withr::with_options(list(cmdstanr_spinner = TRUE), expect_false(use_spinner()))
+
+  withr::local_options(rlang_interactive = TRUE)
+  withr::local_envvar(IN_PKGDOWN = "true")
+  expect_false(use_spinner())
 })
 
 test_that("as_mcmc.list() works", {

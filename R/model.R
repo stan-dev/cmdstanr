@@ -296,7 +296,7 @@ CmdStanModel <- R6::R6Class(
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
         cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
         for (cpp_option_name in names(cpp_options)) {
-          if (cpp_option_name != "stan_version" &&
+          if (tolower(cpp_option_name) != "stan_version" &&
               (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
             private$cpp_options_[[cpp_option_name]] <- cpp_options[[cpp_option_name]]
           }
@@ -484,10 +484,15 @@ NULL
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
-#'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
+#'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
 #'   otherwise write in the `make/local` file. For an example of using threading
-#'   see the Stan case study
-#'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'   see the Stan case study [Reduce Sum: A Minimal
+#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'   **Note:** For historical reasons, CmdStan treats some options as enabled
+#'   whenever their `Make` variable is non-empty. In particular, setting
+#'   `stan_threads` to `FALSE` passes `STAN_THREADS=FALSE` to `Make`, which
+#'   still enables threading! To leave threading disabled, simply omit
+#'   `stan_threads` entirely or set it to `NULL`.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   [`stanc` chapter of the CmdStan User's
@@ -528,17 +533,23 @@ NULL
 #'
 #' @examples
 #' \dontrun{
-#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' stan_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #'
 #' # by default compilation happens when cmdstan_model() is called.
 #' # to delay compilation until calling the $compile() method set compile=FALSE
-#' mod <- cmdstan_model(file, compile = FALSE)
+#' mod <- cmdstan_model(stan_file, compile = FALSE)
 #' mod$compile()
 #' mod$exe_file()
 #'
-#' # turn on threading support (for using functions that support within-chain parallelization)
-#' mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-#' mod$exe_file()
+#' # turn on threading support for using functions that support within-chain
+#' # parallelization or running multiple pathfinder paths in parallel
+#' # (here we compile a copy of the model in a temporary directory so that the
+#' # executable compiled without threading above is not overwritten)
+#' stan_file_threads <- file.path(tempdir(), "bernoulli.stan")
+#' file.copy(stan_file, stan_file_threads)
+#' mod_threads <- cmdstan_model(stan_file_threads, compile = FALSE)
+#' mod_threads$compile(cpp_options = list(stan_threads = TRUE))
+#' mod_threads$cpp_options()
 #'
 #' # turn on pedantic mode
 #' file_pedantic <- write_stan_file("
@@ -549,8 +560,9 @@ NULL
 #'   sigma ~ exponential(1);
 #' }
 #' ")
-#' mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#'
+#' mod <- cmdstan_model(file_pedantic, compile = FALSE)
+#' mod$compile(pedantic = TRUE)
+#' # same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 #' }
 #'
 compile <- function(quiet = TRUE,
@@ -603,7 +615,7 @@ compile <- function(quiet = TRUE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  if (isTRUE(cpp_options$stan_opencl)) {
+  if (isTRUE(cpp_option_value(cpp_options, "stan_opencl"))) {
     stanc_options[["use-opencl"]] <- TRUE
   }
 
@@ -743,7 +755,7 @@ compile <- function(quiet = TRUE,
           wd = cmdstan_path(),
           echo = !quiet || is_verbose_mode(),
           echo_cmd = is_verbose_mode(),
-          spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
+          spinner = quiet && use_spinner(),
           stderr_callback = function(x, p) {
             if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
               message(x)
@@ -834,6 +846,13 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'   as a list with information on its scalar type (`real` or `int`) and
 #'   number of dimensions.
 #'
+#'   The number of dimensions reported is the number of indexing dimensions in
+#'   the declared Stan variable, equivalently the number of indices needed to
+#'   access one scalar element. This means a scalar has 0 dimensions, a vector
+#'   or one-dimensional array has 1, and a matrix or two-dimensional array has
+#'   2. Array dimensions are added to any vector or matrix dimensions, so
+#'   `array[J] matrix[N, K]` has 3 dimensions. See **Examples**.
+#'
 #'   `transformed data` is not included, as variables in that block are not
 #'   part of the model's input or output.
 #'
@@ -844,13 +863,23 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'
 #' @examples
 #' \dontrun{
-#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' stan_file <- write_stan_file("
+#' data {
+#'   int N;
+#'   array[2, 3] int y;
+#' }
+#' parameters {
+#'   real alpha;
+#'   vector[N] beta;
+#'   array[2] matrix[3, 4] theta;
+#' }
+#' ")
 #'
-#' # create a `CmdStanModel` object, compiling the model is not required
-#' mod <- cmdstan_model(file, compile = FALSE)
+#' # create a CmdStanModel object, compiling the model is not required
+#' mod <- cmdstan_model(stan_file, compile = FALSE)
 #'
-#' mod$variables()
-#'
+#' vars <- mod$variables()
+#' str(vars)
 #' }
 #'
 variables <- function() {
@@ -979,7 +1008,7 @@ check_syntax <- function(pedantic = FALSE,
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
-      spinner = quiet && rlang::is_interactive(),
+      spinner = quiet && use_spinner(),
       stderr_callback = function(x, p) {
         message(x)
       },
@@ -1312,12 +1341,12 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'
 #'   An example of compiling with MPI:
 #'   ```
-#'   mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+#'   mpi_options = list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 #'   mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 #'   ```
 #'   The C++ options that must be supplied to the
 #'   [compile][model-method-compile] call are:
-#'   - `STAN_MPI`: Enables the use of MPI with Stan if `TRUE`.
+#'   - `stan_mpi`: Enables the use of MPI with Stan if `TRUE`.
 #'   - `CXX`: The name of the MPI C++ compiler wrapper. Typically `"mpicxx"`.
 #'   - `TBB_CXX_TYPE`: The C++ compiler the MPI wrapper wraps. Typically `"gcc"`
 #'   on Linux and `"clang"` on macOS.
@@ -1357,7 +1386,7 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'
 #' @examples
 #' \dontrun{
-#' # mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+#' # mpi_options <- list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 #' # mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
 #' # fit <- mod$sample_mpi(..., mpi_args = list("n" = 4))
 #' }
@@ -1960,7 +1989,10 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   Pareto smoothed importance sampling (PSIS). This should be smaller than
 #'   `single_path_draws * num_paths`.
 #' @param num_paths (positive integer) Number of single pathfinders to run. The
-#'   default is `4`.
+#'   default is `4`. The paths are run sequentially unless the model was
+#'   [compiled][model-method-compile] with `cpp_options = list(stan_threads =
+#'   TRUE)` and `threads` is set, so running multiple paths in parallel requires
+#'   both.
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations
 #'   for LBFGS.
 #' @param num_elbo_draws (positive integer) Number of draws to make when

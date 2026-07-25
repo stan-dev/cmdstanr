@@ -187,7 +187,9 @@ Pareto smoothed importance sampling (PSIS). This should be smaller than
 \code{single_path_draws * num_paths}.}
 
 \item{num_paths}{(positive integer) Number of single pathfinders to run. The
-default is \code{4}.}
+default is \code{4}. The paths are run sequentially unless the model was
+\link[=model-method-compile]{compiled} with \code{cpp_options = list(stan_threads = TRUE)} and \code{threads} is set, so running multiple paths in parallel requires
+both.}
 
 \item{max_lbfgs_iters}{(positive integer) The maximum number of iterations
 for LBFGS.}

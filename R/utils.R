@@ -11,6 +11,15 @@ is_verbose_mode <- function() {
   getOption("cmdstanr_verbose", default = FALSE)
 }
 
+# Should a spinner be shown while an external process runs? Only in genuinely
+# interactive use, so that the spinner characters don't end up in knitr/pkgdown
+# output or in redirected output (#486).
+use_spinner <- function() {
+  getOption("cmdstanr_spinner", default = TRUE) &&
+    rlang::is_interactive() &&
+    !identical(Sys.getenv("IN_PKGDOWN"), "true")
+}
+
 # Famous helper for switching on `NULL` or zero length
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0) y else x
@@ -315,7 +324,7 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
       warning("E-BFMI not computed because it is undefined for posterior chains of length less than 3.", call. = FALSE)
     } else {
       energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
-      if (any(is.na(energy))) {
+      if (anyNA(energy)) {
         warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
       } else {
         efbmi_per_chain <- apply(energy, 2, function(x) {

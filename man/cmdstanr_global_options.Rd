@@ -27,6 +27,10 @@ Configure the option or environment variable before attaching the package.
 CSV files when fitting models. The default is a temporary directory. Files in
 a temporary directory are removed as part of \R garbage collection, while
 files in an explicitly defined directory are not automatically deleted.
+\item \code{cmdstanr_spinner}: Should a spinner be shown while CmdStan compiles a
+model, checks syntax, or is installed or rebuilt? The default is \code{TRUE}. The
+spinner is only ever shown in interactive sessions, so setting this to
+\code{FALSE} is only necessary to suppress it in an interactive session.
 \item \code{cmdstanr_verbose}: Should more information be printed
 when compiling or running models, including showing how CmdStan was called
 internally? The default is \code{FALSE}.
