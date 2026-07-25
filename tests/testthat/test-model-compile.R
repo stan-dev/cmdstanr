@@ -284,7 +284,8 @@ test_that("compile errors are shown", {
   stan_file <- testing_stan_file("fail")
   expect_error(
     cmdstan_model(stan_file),
-    "An error occured during compilation! See the message above for more information."
+    "stanc exited with status 1.\nFailed to generate the model C++ header.",
+    fixed = TRUE
   )
 })
 
@@ -522,7 +523,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
   mod_dep_warning <- cmdstan_model(stan_file, compile = FALSE)
   expect_error(
     mod_dep_warning$compile(),
-    "An error occured during compilation! See the message above for more information.",
+    "stanc exited with status 1.\nFailed to generate the model C++ header.",
     fixed = TRUE
   )
   expect_error(
@@ -982,6 +983,72 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
     out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
+})
+
+test_that("compile() passes unquoted named stanc options to direct calls", {
+  stan_file <- testing_stan_file("bernoulli")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  model$compile(
+    stanc_options = list(
+      canonicalize = "deprecations",
+      "filename-in-msg" = "model filename with spaces.stan"
+    ),
+    force_recompile = TRUE,
+    dry_run = TRUE
+  )
+
+  expected <- c(
+    "--canonicalize=deprecations",
+    "--filename-in-msg=model filename with spaces.stan"
+  )
+  direct_options <- lapply(received_stancflags, function(x) {
+    grep("^--(canonicalize|filename-in-msg)=", x, value = TRUE)
+  })
+  expect_length(received_stancflags, 2)
+  expect_equal(direct_options, rep(list(expected), 2))
+  expect_equal(
+    grep("'", unlist(received_stancflags), fixed = TRUE, value = TRUE),
+    character()
+  )
+})
+
+test_that("compile() works with named stanc option values", {
+  stan_file <- write_stan_file(
+    "
+    functions {
+      real half(real x) {
+        return x / 2;
+      }
+    }
+    parameters {
+      real y;
+    }
+    model {
+      y ~ std_normal();
+    }
+    ",
+    dir = withr::local_tempdir(),
+    basename = "issue1227.stan"
+  )
+
+  expect_call_compilation(
+    model <- cmdstan_model(
+      stan_file,
+      stanc_options = list(
+        canonicalize = "deprecations",
+        "filename-in-msg" = "model filename with spaces.stan"
+      )
+    )
+  )
 })
 
 test_that("compile() detects stan_opencl without case or partial matching", {

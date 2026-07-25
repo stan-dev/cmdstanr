@@ -931,6 +931,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
   name <- strip_ext(basename(stan_file))
   path <- dirname(stan_file)
   hpp_path <- file.path(path, paste0(name, ".hpp"))
+  on.exit(unlink(hpp_path), add = TRUE)
 
   status <- withr::with_path(
       c(
@@ -944,13 +945,22 @@ get_standalone_hpp <- function(stan_file, stancflags) {
         error_on_status = FALSE
       )
     )
-  if (status$status == 0) {
-    hpp <- suppressWarnings(readLines(hpp_path, warn = FALSE))
-    unlink(hpp_path)
-    hpp
-  } else {
-    invisible(NULL)
+  if (is.null(status$status) || is.na(status$status) || status$status != 0) {
+    if (length(status$stderr) > 0 && nzchar(status$stderr)) {
+      message(status$stderr)
+    }
+    status_code <- if (is.null(status$status) || is.na(status$status)) {
+      "missing"
+    } else {
+      status$status
+    }
+    stop(
+      "stanc exited with status ", status_code, ".\n",
+      "Failed to generate the model C++ header.",
+      call. = FALSE
+    )
   }
+  suppressWarnings(readLines(hpp_path, warn = FALSE))
 }
 
 get_function_name <- function(fun_start, fun_end, model_lines) {

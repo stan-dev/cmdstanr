@@ -135,6 +135,32 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
   expect_output(delete_and_run(), "Checking sampler transitions treedepth")
 })
 
+test_that("get_standalone_hpp() reports stanc failures", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "model.stan")
+  hpp_file <- file.path(model_dir, "model.hpp")
+  writeLines("parameters { real y; } model { y ~ std_normal(); }", stan_file)
+  writeLines("// partial output", hpp_file)
+  local_mocked_bindings(
+    wsl_compatible_run = function(...) {
+      list(
+        status = 124L,
+        stdout = "",
+        stderr = "stanc: invalid canonicalize value"
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    get_standalone_hpp(
+      stan_file,
+      "--canonicalize='deprecations'"
+    )
+  )
+  expect_false(file.exists(hpp_file))
+})
+
 
 # misc --------------------------------------------------------------------
 

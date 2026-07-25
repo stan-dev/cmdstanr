@@ -710,28 +710,37 @@ compile <- function(quiet = TRUE,
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
   stanc_built_options <- c()
+  stanc_direct_options <- c()
   for (i in seq_len(length(stanc_options))) {
     option_name <- names(stanc_options)[i]
     if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
+      stanc_direct_option <- paste0("--", option_name)
+      stanc_built_option <- stanc_direct_option
     } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
+      stanc_direct_option <- paste0("--", stanc_options[[i]])
+      stanc_built_option <- stanc_direct_option
     } else if (option_name == "name") { # Quoting model name mangles generated namespace
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
-    }  else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
+      stanc_direct_option <- paste0("--", option_name, "=", stanc_options[[i]])
+      stanc_built_option <- stanc_direct_option
+    } else {
+      stanc_direct_option <- paste0("--", option_name, "=", stanc_options[[i]])
+      stanc_built_option <- paste0("--", option_name, "=", "'", stanc_options[[i]], "'")
     }
+    stanc_direct_options <- c(stanc_direct_options, stanc_direct_option)
+    stanc_built_options <- c(stanc_built_options, stanc_built_option)
   }
   stancflags_combined <- stanc_built_options
+  stancflags_direct <- stanc_direct_options
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
   if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
+    stancflags_direct <- c(stancflags_direct, stancflags_local)
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
-  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
+  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_direct)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined))
+  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 

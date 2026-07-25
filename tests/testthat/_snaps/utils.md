@@ -1,3 +1,14 @@
+# get_standalone_hpp() reports stanc failures
+
+    Code
+      get_standalone_hpp(stan_file, "--canonicalize='deprecations'")
+    Message
+      stanc: invalid canonicalize value
+    Condition
+      Error:
+      ! stanc exited with status 124.
+      Failed to generate the model C++ header.
+
 # copy_temp_files retains sources if any copy fails
 
     Code
