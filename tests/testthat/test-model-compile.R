@@ -155,7 +155,7 @@ test_that("precompiled models retain include paths", {
     compile = FALSE,
     include_paths = model_dir
   )
-  expect_equal(model_with_explicit_path$include_paths(), model_dir)
+  expect_equal(model_with_explicit_path$include_paths(), repair_path(model_dir))
   expect_no_error(model_with_explicit_path$variables())
 
   model_with_automatic_path <- cmdstan_model(
@@ -163,8 +163,22 @@ test_that("precompiled models retain include paths", {
     exe_file = compiled_model$exe_file(),
     compile = FALSE
   )
-  expect_equal(model_with_automatic_path$include_paths(), dirname(stan_file))
+  expect_equal(model_with_automatic_path$include_paths(), repair_path(dirname(stan_file)))
   expect_no_error(model_with_automatic_path$variables())
+})
+
+test_that("include paths are resolved when the model is created", {
+  model_dir <- withr::local_tempdir()
+  file.copy(
+    c(testing_stan_file("bernoulli_include"), testing_stan_file("divide_real_by_two")),
+    model_dir
+  )
+  mod <- withr::with_dir(
+    model_dir,
+    cmdstan_model("bernoulli_include.stan", compile = FALSE)
+  )
+  # the working directory no longer contains the included file
+  expect_true(mod$check_syntax(quiet = TRUE))
 })
 
 test_that("name in STANCFLAGS is set correctly", {

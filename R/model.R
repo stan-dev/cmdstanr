@@ -259,7 +259,7 @@ CmdStanModel <- R6::R6Class(
       if (!is.null(stan_file)) {
         assert_file_exists(stan_file, access = "r", extension = c("stan", "stanfunctions"))
         checkmate::assert_flag(compile)
-        private$stan_file_ <- absolute_path(stan_file)
+        private$stan_file_ <- resolve_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_cpp_options_ <- args$cpp_options %||% list()
@@ -269,20 +269,20 @@ CmdStanModel <- R6::R6Class(
           private$using_user_header_ <- TRUE
         }
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
-          private$precompile_include_paths_ <- dirname(stan_file)
+          private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
-          private$precompile_include_paths_ <- args$include_paths
+          private$precompile_include_paths_ <- resolve_path(args$include_paths)
         }
       }
       if (!is.null(exe_file)) {
         ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
-        private$exe_file_ <- repair_path(absolute_path(exe_file))
+        private$exe_file_ <- resolve_path(exe_file)
         if (is.null(stan_file)) {
           assert_file_exists(private$exe_file_, access = "r", extension = ext)
           private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
         private$include_paths_ <-
-          private$precompile_include_paths_ %||% args$include_paths
+          private$precompile_include_paths_ %||% resolve_path(args$include_paths)
       }
       if (!is.null(stan_file) && compile) {
         self$compile(...)
@@ -422,7 +422,7 @@ CmdStanModel <- R6::R6Class(
 #' * `$model_name()` returns the model name as a string.
 #' * `$exe_file()` returns a path as a string, or `character(0)` if no
 #'   executable path is set.
-#' * `$include_paths()` returns a character vector of paths or `NULL`.
+#' * `$include_paths()` returns a character vector of absolute paths or `NULL`.
 #' * `$cmdstan_version()` returns a CmdStan version as a string.
 #' * `$cpp_options()` returns a named list of C++ options.
 #' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
@@ -480,7 +480,10 @@ NULL
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
-#'   program.
+#'   program. Relative paths are resolved against the working directory when
+#'   the model object is created (or when `$compile()` is called) and stored as
+#'   absolute paths, so subsequent changes to the working directory do not
+#'   affect them.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
@@ -594,7 +597,7 @@ compile <- function(quiet = TRUE,
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
-  private$include_paths_ <- include_paths
+  private$include_paths_ <- resolve_path(include_paths)
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
