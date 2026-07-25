@@ -259,6 +259,19 @@ test_that("wsl_safe_path() works with multiple paths", {
   )
 })
 
+test_that("wsl_compatible_run() preserves arguments containing spaces", {
+  skip_if_not(os_is_wsl())
+  arg <- "--filename-in-msg=model filename with spaces.stan"
+  result <- wsl_compatible_run(
+    command = "printf",
+    args = c("%s", arg),
+    wd = cmdstan_path()
+  )
+
+  expect_equal(result$status, 0L)
+  expect_equal(result$stdout, arg)
+})
+
 test_that("list_to_array works with empty list", {
   expect_equal(list_to_array(list()), NULL)
 })

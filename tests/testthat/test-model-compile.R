@@ -294,6 +294,26 @@ test_that("compile errors are shown", {
   )
 })
 
+test_that("compile() performs stanc checks during dry runs", {
+  stan_file <- testing_stan_file("bernoulli")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(...) {
+      stop(
+        "stanc exited with status 1.\n",
+        "Failed to generate the model C++ header.",
+        call. = FALSE
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    model$compile(force_recompile = TRUE, dry_run = TRUE)
+  )
+})
+
 test_that("dir arg works for cmdstan_model and $compile()", {
   tmp_dir <- tempdir()
   tmp_dir_2 <- tempdir()
