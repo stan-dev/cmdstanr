@@ -13,7 +13,7 @@ variables are, instead of erroring. (#1225)
 * Supplying a factor for a variable not declared as `int` is now an error. (#1225)
 * Factors are now accepted for length-1 `int` arrays (e.g. `array[1] int x`),
 which previously errored. (#1225)
-* The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
+* The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `$compile()` now works with named `stanc_options` values such as
 `canonicalize`. The values were shell-quoted for Make and the same quoted
@@ -47,17 +47,17 @@ resolved when the model object is created or `$compile()` is called rather than
 on each `stanc` call. Previously a model created from a relative path could
 resolve `#include` directives against the wrong directory if the working
 directory changed. (#1229)
-* `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 
+* `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model
 executable's metadata. It was never a C++ option; use `$cmdstan_version()` instead. (#1215)
-* CmdStanModel methods now use executable metadata regardless of the 
-capitalization of C++ option names. Any executable reporting threading enabled 
+* CmdStanModel methods now use executable metadata regardless of the
+capitalization of C++ option names. Any executable reporting threading enabled
 requires the corresponding `threads` or `threads_per_chain` argument. (#765, #1100)
-* Pathfinder fits used as initial values now use uniform weights when CmdStan 
+* Pathfinder fits used as initial values now use uniform weights when CmdStan
 already PSIS-resampled their draws, avoiding a second application of importance weights. (#1206)
-* Pathfinder fits used as initial values now correctly treat draws with different 
-initialization parameter values as distinct even when their log weights are equal, 
+* Pathfinder fits used as initial values now correctly treat draws with different
+initialization parameter values as distinct even when their log weights are equal,
 and collapse duplicate resampled draws while retaining their selection frequency. (#1207)
-* `pathfinder()` now passes separately supplied initial values to every path 
+* `pathfinder()` now passes separately supplied initial values to every path
 instead of using only the first path's initial values. (#1206)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
@@ -66,10 +66,10 @@ to be consistent with other methods.
 * The `num_paths` documentation for `pathfinder()` now notes that running
 multiple paths in parallel requires compiling with
 `cpp_options = list(stan_threads = TRUE)` and setting `threads`. (#896)
-* The `save_latent_dynamics` argument is now limited to `$sample()`, 
-`$sample_mpi()`, and `$variational()`, matching the CmdStan algorithms 
+* The `save_latent_dynamics` argument is now limited to `$sample()`,
+`$sample_mpi()`, and `$variational()`, matching the CmdStan algorithms
 that support diagnostic CSV output.
-* Informative error when exposing functions using names that are reserved 
+* Informative error when exposing functions using names that are reserved
 keywords (@VisruthSK, #1154)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be
 set to `TRUE` for an entire R session via new global options. (#1159)
