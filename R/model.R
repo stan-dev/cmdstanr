@@ -1087,9 +1087,6 @@ format <- function(overwrite_file = FALSE,
     max_line_length,
     lower = 1, len = 1, null.ok = TRUE
   )
-  # Assign with [[ into a list so values keep their types. Using [ on a NULL or
-  # atomic vector coerces every element to a common type, which turned the
-  # logical TRUE for auto-format into the string "TRUE".
   stanc_options <- as.list(private$precompile_stanc_options_)
   stancflags_val <- include_paths_stanc3_args(
     self$include_paths(),
