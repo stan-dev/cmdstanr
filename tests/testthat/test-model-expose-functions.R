@@ -311,6 +311,55 @@ test_that("Functions can be compiled with model", {
   )
 })
 
+test_that("recompiling drops previously exposed functions", {
+  model_dir <- withr::local_tempdir()
+  write_model <- function(code) {
+    write_stan_file(code, dir = model_dir, basename = "issue1228.stan")
+  }
+  code_two_functions <- "
+    functions {
+      real times_two(real x) { return 2 * x; }
+      real times_three(real x) { return 3 * x; }
+    }
+    parameters {
+      real y;
+    }
+    model {
+      y ~ std_normal();
+    }
+  "
+  stan_file <- write_model(code_two_functions)
+  mod <- cmdstan_model(stan_file)
+  mod$expose_functions()
+  expect_equal(mod$functions$times_two(1), 2)
+  expect_equal(mod$functions$times_three(1), 3)
+
+  # change one function and remove the other, then recompile
+  write_model("
+    functions {
+      real times_two(real x) { return 20 * x; }
+    }
+    parameters {
+      real y;
+    }
+    model {
+      y ~ std_normal();
+    }
+  ")
+  mod$compile()
+  expect_false(mod$functions$compiled)
+  expect_false("times_three" %in% ls(mod$functions))
+  mod$expose_functions()
+  expect_equal(mod$functions$times_two(1), 20)
+  expect_false("times_three" %in% ls(mod$functions))
+
+  # compile_standalone exposes the functions of the recompiled model
+  write_model(code_two_functions)
+  mod$compile(compile_standalone = TRUE)
+  expect_equal(mod$functions$times_two(1), 2)
+  expect_equal(mod$functions$times_three(1), 3)
+})
+
 test_that("compile_standalone warns but doesn't error if no functions", {
   stan_no_funs_block <- write_stan_file("
     parameters {

@@ -26,6 +26,11 @@ strings were also passed to `stanc` directly, which rejected them. (#1227)
 path. (#1227)
 * Numeric `stanc_options` values such as `list("max-line-length" = 78)` are no
 longer dropped. (#1233)
+* `$compile()` now refreshes `$code()` and `$variables()` after a successful
+compilation. (#1228)
+* `$compile()` now discards standalone functions exposed from an earlier
+version of the Stan program. They must be exposed again with
+`$expose_functions()` after a recompilation. (#1228)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are

@@ -33,6 +33,36 @@ test_that("cpp_options user headers allow undefined functions", {
   )
 })
 
+# Also above the file-level skip_if() below: the compiler is mocked, so this
+# needs no toolchain either.
+test_that("compile() commits the user header setting after compiling", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli_external.stan")
+  file.copy(testing_stan_file("bernoulli_external"), stan_file)
+  user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) ""
+  )
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  expect_false(model$.__enclos_env__$private$using_user_header_)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0),
+    code = model$compile(user_header = user_header, force_recompile = TRUE)
+  )
+  expect_true(model$.__enclos_env__$private$using_user_header_)
+
+  # a bare recompile doesn't carry the user header over, so the setting is
+  # committed as FALSE, matching what was actually compiled
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0),
+    code = model$compile(force_recompile = TRUE)
+  )
+  expect_false(model$.__enclos_env__$private$using_user_header_)
+})
+
 skip_if(os_is_macos())
 
 w_path <- function(f) {

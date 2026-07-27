@@ -631,7 +631,6 @@ compile <- function(quiet = TRUE,
     }
 
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
-    private$using_user_header_ <- TRUE
   } else if (!is.null(cpp_options[["USER_HEADER"]])) {
     if (!is.null(cpp_options[["user_header"]])) {
       warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
@@ -639,15 +638,14 @@ compile <- function(quiet = TRUE,
 
     user_header <- cpp_options[["USER_HEADER"]]
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
-    private$using_user_header_ <- TRUE
   } else if (!is.null(cpp_options[["user_header"]])) {
     user_header <- cpp_options[["user_header"]]
     cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
-    private$using_user_header_ <- TRUE
   }
 
 
-  if (!is.null(user_header)) {
+  using_user_header <- !is.null(user_header)
+  if (using_user_header) {
     stanc_options[["allow-undefined"]] <- TRUE
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
     if (!file.exists(user_header)) {
@@ -719,19 +717,13 @@ compile <- function(quiet = TRUE,
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
   stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_direct)
-  self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  standalone_hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
   private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
-  self$functions$external <- !is.null(user_header)
-  self$functions$existing_exe <- FALSE
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
   if (!dry_run) {
-
-    if (compile_standalone) {
-      expose_stan_functions(self$functions, verbose = !quiet)
-    }
 
     withr::with_envvar(
       c("HOME" = short_path(Sys.getenv("HOME"))),
@@ -799,6 +791,22 @@ compile <- function(quiet = TRUE,
         args = c("chmod", "+x", wsl_safe_path(exe)),
         error_on_status = FALSE
       )
+    }
+
+    # The new executable is in place, so everything derived from the Stan
+    # program that was just compiled can be committed. A dry run or a failed
+    # compilation leaves the previously compiled state untouched. (#1228)
+    rm(list = ls(self$functions, all.names = TRUE), envir = self$functions)
+    self$functions$compiled <- FALSE
+    self$functions$hpp_code <- standalone_hpp_code
+    self$functions$external <- using_user_header
+    self$functions$existing_exe <- FALSE
+    private$stan_code_ <- readLines(temp_stan_file)
+    private$variables_ <- NULL
+    private$using_user_header_ <- using_user_header
+
+    if (compile_standalone) {
+      expose_stan_functions(self$functions, verbose = !quiet)
     }
 
     writeLines(private$model_methods_env_$hpp_code_,

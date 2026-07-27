@@ -304,6 +304,58 @@ test_that("compile() performs stanc checks during dry runs", {
   )
 })
 
+test_that("compile() with dry_run = TRUE doesn't refresh cached model state", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- write_stan_file(
+    "parameters { real alpha; } model { alpha ~ std_normal(); }",
+    dir = model_dir,
+    basename = "issue1228-dry-run.stan"
+  )
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  code_before <- model$code()
+  variables_before <- model$variables()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) ""
+  )
+
+  write_stan_file(
+    "parameters { real beta; } model { beta ~ std_normal(); }",
+    dir = model_dir,
+    basename = "issue1228-dry-run.stan"
+  )
+  model$compile(force_recompile = TRUE, dry_run = TRUE)
+
+  expect_identical(model$code(), code_before)
+  expect_identical(model$variables(), variables_before)
+  expect_equal(ls(model$functions), "compiled")
+  expect_false(model$functions$compiled)
+})
+
+test_that("a failed compile() doesn't refresh cached model state", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- write_stan_file(
+    "parameters { real alpha; } model { alpha ~ std_normal(); }",
+    dir = model_dir,
+    basename = "issue1228-failed-compile.stan"
+  )
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  code_before <- model$code()
+  variables_before <- model$variables()
+
+  file.copy(testing_stan_file("fail"), stan_file, overwrite = TRUE)
+  expect_error(
+    model$compile(force_recompile = TRUE),
+    "An error occurred during compilation!",
+    fixed = TRUE
+  )
+
+  expect_identical(model$code(), code_before)
+  expect_identical(model$variables(), variables_before)
+  expect_equal(ls(model$functions), "compiled")
+  expect_false(model$functions$compiled)
+})
+
 test_that("dir arg works for cmdstan_model and $compile()", {
   tmp_dir <- tempdir()
   tmp_dir_2 <- tempdir()

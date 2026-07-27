@@ -23,7 +23,7 @@ test_that("code() and print() still work if file is removed", {
   expect_identical(mod_removed_stan_file$code(), code_answer)
 })
 
-test_that("code() doesn't change when file changes (unless model is recreated)", {
+test_that("code() doesn't change when file changes (unless recompiled or recreated)", {
   code_1 <- "
   parameters {
     real y;
@@ -52,11 +52,20 @@ test_that("code() doesn't change when file changes (unless model is recreated)",
   # overwrite with new code, but mod$code() shouldn't change
   file.copy(stan_file_2, stan_file_1, overwrite = TRUE)
   expect_identical(mod$code(), code_1_answer)
+  expect_identical(utils::capture.output(mod$print()), code_1_answer)
 
   # recreate CmdStanModel object, now mod$code() should change
   mod <- cmdstan_model(stan_file_1, compile = FALSE)
   expect_identical(mod$code(), code_2_answer)
   expect_identical(utils::capture.output(mod$print()), code_2_answer)
+
+  # overwrite with the original code, mod$code() shouldn't change until the
+  # model is successfully recompiled (#1228)
+  writeLines(code_1_answer, stan_file_1)
+  expect_identical(mod$code(), code_2_answer)
+  mod$compile()
+  expect_identical(mod$code(), code_1_answer)
+  expect_identical(utils::capture.output(mod$print()), code_1_answer)
 })
 
 test_that("code() warns and print() errors if only exe and no Stan file", {
