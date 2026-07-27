@@ -19,7 +19,9 @@ as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 `canonicalize`. The values were shell-quoted for Make and the same quoted
 strings were also passed to `stanc` directly, which rejected them. (#1227)
 * `$compile()` now enables `allow-undefined` for user headers supplied through
-`cpp_options`, not just through the `user_header` argument. (#1227)
+`cpp_options`, not just through the `user_header` argument. `$check_syntax()`
+and `$format()` also now correctly enable `allow-undefined` for models that use
+a user header. (#1227, #1234)
 * `stanc` failures during `$compile()` are now reported immediately, with the
 `stanc` error message. Previously they surfaced several steps later. (#1227)
 * Errors for include paths that do not exist now report the resolved absolute
@@ -38,10 +40,6 @@ failed because those inputs were dropped. (#1234)
 * A `user_header` supplied to `cmdstan_model()` is now used by a later
 `$compile()`. Previously it was only honored when the model was compiled
 immediately. (#1234)
-* `$compile(dry_run = TRUE)` no longer discards the `cpp_options`,
-`stanc_options` and `include_paths` supplied to `cmdstan_model()`. (#1234)
-* `$include_paths()` no longer returns `NULL` for a model whose executable does
-not exist, such as after `$compile(dry_run = TRUE)`. (#1234)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are

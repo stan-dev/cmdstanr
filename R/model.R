@@ -975,6 +975,9 @@ check_syntax <- function(pedantic = FALSE,
   if (is.null(include_paths) && !is.null(self$include_paths())) {
     include_paths <- self$include_paths()
   }
+  if (private$using_user_header_) {
+    stanc_options[["allow-undefined"]] <- TRUE
+  }
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- wsl_safe_path(temp_hpp_file)
@@ -1106,6 +1109,9 @@ format <- function(overwrite_file = FALSE,
     self$include_paths(),
     direct_call = TRUE
   )
+  if (private$using_user_header_) {
+    stanc_options[["allow-undefined"]] <- TRUE
+  }
   stanc_options[["auto-format"]] <- TRUE
   if (!is.null(max_line_length)) {
     stanc_options[["max-line-length"]] <- max_line_length
