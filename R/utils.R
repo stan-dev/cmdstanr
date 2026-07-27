@@ -194,6 +194,17 @@ strip_ext <- function(file) {
 }
 absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 
+# Resolve paths when they are stored on a model object rather than when they are
+# used, so that later use doesn't depend on the working directory. Empty input
+# becomes NULL, the value callers treat as "not set" (absolute_path() would
+# otherwise return list()).
+resolve_path <- function(path) {
+  if (!length(path)) {
+    return(NULL)
+  }
+  repair_path(absolute_path(path))
+}
+
 # read, write, and copy files --------------------------------------------
 
 #' Copy temporary files (e.g., output, data) to a different location

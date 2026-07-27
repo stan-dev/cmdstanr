@@ -37,7 +37,10 @@ without compiling it or for a model that is already compiled the
 
 \item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
-program.}
+program. Relative paths are resolved against the working directory when
+the model object is created (or when \verb{$compile()} is called) and stored as
+absolute paths, so subsequent changes to the working directory do not
+affect them.}
 
 \item{user_header}{(string) The path to a C++ file (with a .hpp extension)
 to compile with the Stan model.}

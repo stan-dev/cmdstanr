@@ -155,7 +155,7 @@ test_that("precompiled models retain include paths", {
     compile = FALSE,
     include_paths = model_dir
   )
-  expect_equal(model_with_explicit_path$include_paths(), model_dir)
+  expect_equal(model_with_explicit_path$include_paths(), repair_path(model_dir))
   expect_no_error(model_with_explicit_path$variables())
 
   model_with_automatic_path <- cmdstan_model(
@@ -163,8 +163,56 @@ test_that("precompiled models retain include paths", {
     exe_file = compiled_model$exe_file(),
     compile = FALSE
   )
-  expect_equal(model_with_automatic_path$include_paths(), dirname(stan_file))
+  expect_equal(model_with_automatic_path$include_paths(), repair_path(dirname(stan_file)))
   expect_no_error(model_with_automatic_path$variables())
+})
+
+test_that("include paths are resolved when the model is created", {
+  model_dir <- withr::local_tempdir()
+  file.copy(
+    c(testing_stan_file("bernoulli_include"), testing_stan_file("divide_real_by_two")),
+    model_dir
+  )
+  mod <- withr::with_dir(
+    model_dir,
+    cmdstan_model("bernoulli_include.stan", compile = FALSE)
+  )
+  # the working directory no longer contains the included file
+  expect_true(mod$check_syntax(quiet = TRUE))
+})
+
+test_that("relative include_paths are resolved when the model is created", {
+  model_dir <- withr::local_tempdir()
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir)
+  file.copy(testing_stan_file("bernoulli_include"), model_dir)
+  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
+
+  mod <- withr::with_dir(
+    model_dir,
+    cmdstan_model(
+      "bernoulli_include.stan",
+      include_paths = "includes",
+      compile = FALSE
+    )
+  )
+  # "includes" no longer resolves relative to the working directory
+  expect_true(mod$check_syntax(quiet = TRUE))
+})
+
+test_that("relative include_paths given to $compile() are resolved when it is called", {
+  model_dir <- withr::local_tempdir()
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir)
+  file.copy(testing_stan_file("bernoulli_include"), model_dir)
+  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
+
+  mod <- withr::with_dir(model_dir, {
+    mod <- cmdstan_model("bernoulli_include.stan", compile = FALSE)
+    mod$compile(include_paths = "includes", quiet = TRUE)
+    mod
+  })
+  expect_true(mod$check_syntax(quiet = TRUE))
 })
 
 test_that("name in STANCFLAGS is set correctly", {
@@ -443,10 +491,13 @@ test_that("check_syntax() works with pedantic=TRUE", {
 })
 
 test_that("check_syntax() works with include_paths", {
-  stan_program_w_include <- testing_stan_file("bernoulli_include")
+  include_model <- local_include_model_with_spaces()
 
-  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=FALSE,
-                                   include_paths = test_path("resources", "stan"))
+  mod_w_include <- cmdstan_model(
+    stan_file = include_model$stan_file,
+    compile = FALSE,
+    include_paths = include_model$include_paths
+  )
   expect_true(mod_w_include$check_syntax())
 
 })
@@ -528,20 +579,31 @@ test_that("include_paths_stanc3_args() works", {
   }
   path_1 <- repair_path(path_1)
   path_1_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_1), path_1)
+  path_1_make <- if (grepl(" ", path_1_compare, fixed = TRUE)) {
+    paste0("'", path_1_compare, "'")
+  } else {
+    path_1_compare
+  }
   expect_equal(
     include_paths_stanc3_args(path_1),
-    paste0("--include-paths=", path_1_compare))
-  path_2 <- file.path(tempdir(), "folder2")
+    paste0("--include-paths=", path_1_make))
+  path_2 <- file.path(tempdir(), "folder 2")
   if (!dir.exists(path_2)) {
     dir.create(path_2)
   }
   path_2 <- repair_path(path_2)
   path_2_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_2), path_2)
+  path_2_make <- paste0("'", path_2_compare, "'")
   expect_equal(
     include_paths_stanc3_args(c(path_1, path_2)),
-    c(
-      paste0("--include-paths=", path_1_compare, ",", path_2_compare)
-    )
+    paste0("--include-paths=", path_1_make, ",", path_2_make)
+  )
+  expect_equal(
+    include_paths_stanc3_args(
+      c(path_1, path_2),
+      direct_call = TRUE
+    ),
+    c("--include-paths", paste0(path_1_compare, ",", path_2_compare))
   )
 })
 
@@ -793,10 +855,13 @@ test_that("format() works", {
 })
 
 test_that("format() works with include_paths", {
-  stan_program_w_include <- testing_stan_file("bernoulli_include")
+  include_model <- local_include_model_with_spaces()
 
-  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=FALSE,
-                                   include_paths = test_path("resources", "stan"))
+  mod_w_include <- cmdstan_model(
+    stan_file = include_model$stan_file,
+    compile = FALSE,
+    include_paths = include_model$include_paths
+  )
   expect_output(
     mod_w_include$format(),
     "#include ",
@@ -888,7 +953,7 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
     y ~ std_normal();
   }
   "
-  tmpdir <- tempdir()
+  tmpdir <- withr::local_tempdir(pattern = "include path")
   stan_data_file <- write_stan_file(data_code, basename = "separate_file.stan", dir = tmpdir)
   stan_file <- write_stan_file(model_code, dir = tmpdir)
 

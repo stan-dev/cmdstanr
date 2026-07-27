@@ -26,7 +26,7 @@ code, or \code{NULL} if the model was created without a Stan file.
 \item \verb{$model_name()} returns the model name as a string.
 \item \verb{$exe_file()} returns a path as a string, or \code{character(0)} if no
 executable path is set.
-\item \verb{$include_paths()} returns a character vector of paths or \code{NULL}.
+\item \verb{$include_paths()} returns a character vector of absolute paths or \code{NULL}.
 \item \verb{$cmdstan_version()} returns a CmdStan version as a string.
 \item \verb{$cpp_options()} returns a named list of C++ options.
 \item \verb{$hpp_file()} returns the path to the \code{.hpp} file as a string when C++ code

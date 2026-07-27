@@ -18,6 +18,13 @@ variables are, instead of erroring. (#1225)
 which previously errored. (#1225)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
+* CmdStanModel methods now correctly handle `#include` directories with spaces
+in their paths. (#820)
+* `$include_paths()` now returns absolute paths, and relative include paths are
+resolved when the model object is created or `$compile()` is called rather than
+on each `stanc` call. Previously a model created from a relative path could
+resolve `#include` directives against the wrong directory if the working
+directory changed. (#1229)
 * `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 
 executable's metadata. It was never a C++ option; use `$cmdstan_version()` instead. (#1215)
 * CmdStanModel methods now use executable metadata regardless of the 

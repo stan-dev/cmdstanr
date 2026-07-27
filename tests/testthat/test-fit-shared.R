@@ -480,19 +480,18 @@ test_that("draws are returned for model with spaces", {
   expect_equal(dim(fit$draws()), c(1000, 1, 1))
 })
 
-test_that("sampling with inits works with include_paths", {
-  stan_program_w_include <- testing_stan_file("bernoulli_include")
-  exe <- cmdstan_ext(strip_ext(stan_program_w_include))
-  if (file.exists(exe)) {
-    file.remove(exe)
-  }
+test_that("sampling works with explicit and inferred include paths containing spaces", {
+  include_model <- local_include_model_with_spaces()
 
-  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include,
-                                 include_paths = test_path("resources", "stan"))
+  mod_inferred <- cmdstan_model(stan_file = include_model$stan_file)
+  expect_equal(
+    repair_path(mod_inferred$include_paths()),
+    repair_path(include_model$include_paths)
+  )
 
   data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
   expect_no_error(utils::capture.output(
-    fit <- mod_w_include$sample(
+    fit <- mod_inferred$sample(
       data = data_list,
       seed = 123,
       chains = 4,
@@ -502,6 +501,26 @@ test_that("sampling with inits works with include_paths", {
                   list(theta = 0.25),
                   list(theta = 0.25),
                   list(theta = 0.25))
+    )
+  ))
+
+  mod_explicit <- cmdstan_model(
+    stan_file = include_model$stan_file,
+    exe_file = mod_inferred$exe_file(),
+    include_paths = include_model$include_paths,
+    compile = FALSE
+  )
+  expect_equal(
+    repair_path(mod_explicit$include_paths()),
+    repair_path(include_model$include_paths)
+  )
+  expect_no_error(utils::capture.output(
+    mod_explicit$sample(
+      data = data_list,
+      seed = 123,
+      chains = 1,
+      refresh = 500,
+      init = list(list(theta = 0.25))
     )
   ))
 })
