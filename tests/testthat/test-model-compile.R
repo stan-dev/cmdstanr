@@ -626,6 +626,18 @@ test_that("check_syntax() works with include_paths on compiled model", {
 
 })
 
+test_that("check_syntax() and format() allow undefined functions with a user header", {
+  stan_file <- testing_stan_file("bernoulli_external")
+  # both methods only run stanc, which never reads the user header, so an empty
+  # one is enough here. Compiling against a real header is tested in
+  # test-model-compile-user_header.R
+  user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  mod <- cmdstan_model(stan_file, user_header = user_header, compile = FALSE)
+
+  expect_true(mod$check_syntax(quiet = TRUE))
+  expect_output(mod$format(), "make_odds", fixed = TRUE)
+})
+
 test_that("compile() and check_syntax() error on removed syntax", {
   model_code <- "
   transformed data {
