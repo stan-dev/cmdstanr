@@ -74,6 +74,45 @@ test_that("compile() reuses the user header from the previous compilation", {
   )
 })
 
+test_that("a no-op compile preserves a header supplied via cpp_options", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli_external.stan")
+  file.copy(testing_stan_file("bernoulli_external"), stan_file)
+  user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) ""
+  )
+  model <- cmdstan_model(stan_file, compile = FALSE)
+
+  # The lowercase spelling is the telling one: a bare recompile re-derives the
+  # header under the USER_HEADER spelling, so only this one shows whether the
+  # no-op path rebuilt the recorded options or left them alone.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(
+      cpp_options = list(user_header = user_header),
+      force_recompile = TRUE
+    )
+  )
+  expect_equal(
+    model$cpp_options()[["user_header"]],
+    wsl_safe_path(absolute_path(user_header))
+  )
+
+  # The executable is up to date, so this call compiles nothing and must leave
+  # the options describing it alone.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(model$compile())
+  )
+  expect_equal(
+    model$cpp_options()[["user_header"]],
+    wsl_safe_path(absolute_path(user_header))
+  )
+})
+
 test_that("compile() uses a user header supplied to cmdstan_model()", {
   stan_file <- testing_stan_file("bernoulli_external")
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")

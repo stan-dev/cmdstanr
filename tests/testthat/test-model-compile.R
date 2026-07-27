@@ -403,6 +403,81 @@ test_that("a failed compile() doesn't refresh cached model state", {
   expect_false(model$functions$compiled)
 })
 
+# A compiled model whose compiler is mocked, so that stanc runs for real and
+# only the C++ stage can be made to fail. That is the case the tests above miss:
+# the generated C++ for the new program is already in hand, so any state derived
+# from it that is recorded before the executable is replaced would outlive a
+# failure and describe a program the executable was never built from.
+#
+# The copy is temporary because a mocked compile installs a real (empty)
+# executable, and the model here is the CmdStan installation's own example.
+local_mocked_bernoulli_model <- function(.local_envir = parent.frame()) {
+  stan_file <- file.path(
+    withr::local_tempdir(.local_envir = .local_envir),
+    "bernoulli.stan"
+  )
+  file.copy(cmdstan_example_file(), stan_file)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file)
+  )
+}
+
+test_that("a failed C++ compile doesn't refresh generated-code state", {
+  model <- local_mocked_bernoulli_model()
+  private <- model$.__enclos_env__$private
+
+  code_before <- model$code()
+  variables_before <- model$variables()
+  functions_before <- as.list(model$functions)
+  hpp_file_before <- model$hpp_file()
+  hpp_code_before <- private$model_methods_env_$hpp_code_
+  expect_true(any(nzchar(hpp_code_before)))
+
+  # The model-method environment is handed to every fit, so a stale pairing here
+  # means fit$init_model_methods() compiles log_prob() from a program the draws
+  # did not come from.
+  writeLines(
+    "parameters { real beta; } model { beta ~ std_normal(); }",
+    model$stan_file()
+  )
+  with_mocked_cli(
+    compile_ret = list(status = 1),
+    info_ret = list(status = 1),
+    code = expect_error(
+      model$compile(force_recompile = TRUE),
+      "An error occurred during compilation!",
+      fixed = TRUE
+    )
+  )
+
+  expect_identical(model$code(), code_before)
+  expect_identical(model$variables(), variables_before)
+  expect_identical(as.list(model$functions), functions_before)
+  expect_identical(model$hpp_file(), hpp_file_before)
+  expect_identical(private$model_methods_env_$hpp_code_, hpp_code_before)
+})
+
+test_that("a failed C++ compile doesn't move the executable path", {
+  model <- local_mocked_bernoulli_model()
+  exe_before <- model$exe_file()
+  other_dir <- withr::local_tempdir()
+
+  with_mocked_cli(
+    compile_ret = list(status = 1),
+    info_ret = list(status = 1),
+    code = expect_error(
+      model$compile(dir = other_dir, force_recompile = TRUE),
+      "An error occurred during compilation!",
+      fixed = TRUE
+    )
+  )
+
+  expect_identical(model$exe_file(), exe_before)
+  expect_true(file.exists(exe_before))
+})
+
 test_that("dir arg works for cmdstan_model and $compile()", {
   tmp_dir <- tempdir()
   tmp_dir_2 <- tempdir()

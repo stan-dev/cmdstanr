@@ -205,6 +205,25 @@ resolve_path <- function(path) {
   repair_path(absolute_path(path))
 }
 
+# Do two paths name the same file? Compared canonically rather than as strings,
+# so that symlink aliases, ".." components, separator differences and (on
+# Windows) casing don't make one file look like two.
+#
+# mustWork = FALSE is deliberate: neither path is guaranteed to exist, and the
+# default mustWork = NA warns when a path cannot be normalized, which
+# options(warn = 2) would turn into an error. A path that cannot be normalized
+# is compared as given, which for a missing path against an existing one means
+# "different" -- the safe answer for both callers.
+same_path <- function(x, y) {
+  if (length(x) == 0 || length(y) == 0) {
+    return(length(x) == length(y))
+  }
+  identical(
+    normalizePath(x, winslash = "/", mustWork = FALSE),
+    normalizePath(y, winslash = "/", mustWork = FALSE)
+  )
+}
+
 # read, write, and copy files --------------------------------------------
 
 #' Copy temporary files (e.g., output, data) to a different location

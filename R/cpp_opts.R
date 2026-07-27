@@ -73,6 +73,22 @@ model_compile_info <- function(exe_file, version) {
   info
 }
 
+# Merge the options an executable reports about itself into the options already
+# recorded for it. STAN_VERSION describes the toolchain rather than a make
+# option, and a flag the executable reports as FALSE was never set at all, so
+# recording it would pass "FLAG=FALSE" to make, which CmdStan reads as enabling
+# the flag.
+merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
+  for (option_name in names(exe_info)) {
+    value <- exe_info[[option_name]]
+    if (tolower(option_name) != "stan_version" &&
+        (!is.logical(value) || isTRUE(value))) {
+      cpp_options[[option_name]] <- value
+    }
+  }
+  cpp_options
+}
+
 # convert to compile flags --------------------
 # from list(flag1=TRUE, flag2=FALSE) to "FLAG1=TRUE\nFLAG2=FALSE"
 cpp_options_to_compile_flags <- function(cpp_options) {

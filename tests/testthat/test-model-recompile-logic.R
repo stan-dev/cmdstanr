@@ -60,6 +60,113 @@ test_that("a mocked successful compile installs an executable", {
   expect_true(file.exists(exe))
 })
 
+test_that("a no-op compile preserves what the previous compilation recorded", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod$compile(
+      cpp_options = list(stan_threads = TRUE),
+      force_recompile = TRUE
+    )
+  )
+  expect_true(mod$cpp_options()$stan_threads)
+  expect_false(mod$functions$existing_exe)
+
+  # The second call finds the executable up to date and compiles nothing, so it
+  # must not discard the options the executable was actually built with: an
+  # erased stan_threads makes assert_valid_threads() drop 'threads' and run a
+  # threaded executable single-threaded. It must not claim the executable is
+  # pre-compiled either, or $expose_functions() fails on a model that built
+  # itself.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(mod$compile())
+  )
+  expect_true(mod$cpp_options()$stan_threads)
+  expect_false(mod$functions$existing_exe)
+  expect_warning(mod$expose_functions(), "No standalone functions found")
+})
+
+test_that("a no-op compile adopts an executable the object did not build", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+  exe <- cmdstan_ext(strip_ext(stan_file))
+
+  # Build the executable through one object, then let a second, freshly
+  # constructed object find it up to date.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  expect_length(mod$exe_file(), 0)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(
+      status = 0,
+      stdout = "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\nSTAN_THREADS=true\nSTAN_OPENCL=false"
+    ),
+    code = expect_no_mock_compile(mod$compile())
+  )
+
+  expect_equal(mod$exe_file(), exe)
+  expect_true(mod$functions$existing_exe)
+  # Hydrated from the executable itself: STAN_THREADS is reported, STAN_OPENCL
+  # is reported as FALSE (i.e. never set) and STAN_VERSION is not a make option.
+  expect_true(mod$cpp_options()$STAN_THREADS)
+  expect_null(mod$cpp_options()$STAN_OPENCL)
+  expect_null(mod$cpp_options()$STAN_VERSION)
+})
+
+test_that("a no-op compile tolerates an executable it cannot query", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+
+  # The mocked executable is empty, so running it errors rather than returning
+  # a non-zero status. Adopting it is best-effort and must still succeed.
+  expect_no_error(mod$compile())
+  expect_true(mod$functions$existing_exe)
+})
+
+test_that("compiling into a directory with a different executable recompiles", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod <- cmdstan_model(stan_file)
+  )
+
+  # A current executable already sits in the target directory. Adopting it would
+  # leave the object describing this program's C++ while running that binary, so
+  # the model is rebuilt there instead.
+  other_dir <- withr::local_tempdir()
+  other_exe <- cmdstan_ext(file.path(other_dir, "bernoulli"))
+  file.create(other_exe)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_mock_compile(mod$compile(dir = other_dir))
+  )
+  expect_equal(mod$exe_file(), other_exe)
+})
+
 test_that("a mocked failed compile installs no executable", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)

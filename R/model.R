@@ -296,13 +296,10 @@ CmdStanModel <- R6::R6Class(
       # as the version the model was compiled with
       private$cmdstan_version_ <- cmdstan_version()
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
-        for (cpp_option_name in names(cpp_options)) {
-          if (tolower(cpp_option_name) != "stan_version" &&
-              (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
-            private$cpp_options_[[cpp_option_name]] <- cpp_options[[cpp_option_name]]
-          }
-        }
+        private$cpp_options_ <- merge_exe_info_cpp_options(
+          private$cpp_options_,
+          model_compile_info(self$exe_file(), self$cmdstan_version())
+        )
       }
       invisible(self)
     },
@@ -607,9 +604,6 @@ compile <- function(quiet = TRUE,
   if (!is.null(dir)) {
     dir <- repair_path(dir)
     assert_dir_exists(dir, access = "rw")
-    if (length(self$exe_file()) != 0) {
-      private$exe_file_ <- file.path(dir, basename(self$exe_file()))
-    }
   }
 
   exe <- resolve_exe_path(dir, private$dir_, self$exe_file(), self$stan_file())
@@ -658,13 +652,21 @@ compile <- function(quiet = TRUE,
     }
   }
 
+  # The resolved destination need not be the executable this object describes,
+  # e.g. $compile(dir = ) aimed at a directory that already holds a current
+  # executable. Adopting that binary while keeping this object's generated C++
+  # and metadata would produce a hybrid, so build the model there instead.
+  exe_changed <- length(private$exe_file_) > 0 && !same_path(exe, private$exe_file_)
+
   # compile if:
   # - the user forced compilation,
   # - the executable does not exist
+  # - the destination is not the executable this object already describes
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
-  self$exe_file(exe)
   if (!file.exists(exe)) {
+    force_recompile <- TRUE
+  } else if (exe_changed) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
              && file.mtime(exe) < file.mtime(self$stan_file())) {
@@ -679,11 +681,28 @@ compile <- function(quiet = TRUE,
     if (rlang::is_interactive()) {
       message("Model executable is up to date!")
     }
-    private$cpp_options_ <- cpp_options
-    private$precompile_cpp_options_ <- NULL
-    private$precompile_stanc_options_ <- NULL
-    private$precompile_include_paths_ <- NULL
-    self$functions$existing_exe <- TRUE
+    # Nothing was compiled, so nothing describing the current executable may be
+    # consumed or overwritten by configuration this call merely proposed.
+    if (length(private$exe_file_) == 0) {
+      # This object is adopting an executable it did not build: it holds no
+      # generated C++ for it, and the only available description of it is what
+      # the binary reports about itself. Best effort, because
+      # model_compile_info() runs the executable and errors outright rather than
+      # returning a status when the file is not runnable.
+      self$functions$existing_exe <- TRUE
+      private$cpp_options_ <- tryCatch(
+        merge_exe_info_cpp_options(
+          private$cpp_options_,
+          model_compile_info(exe, self$cmdstan_version())
+        ),
+        error = function(e) private$cpp_options_
+      )
+    } else {
+      # The flag means "we don't hold the generated C++ for this executable",
+      # which is not the same as "this call compiled nothing".
+      self$functions$existing_exe <- is.null(self$functions$hpp_code)
+    }
+    private$exe_file_ <- exe
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
@@ -706,7 +725,7 @@ compile <- function(quiet = TRUE,
   if (os_is_windows() && !os_is_wsl()) {
     tmp_exe <- utils::shortPathName(tmp_exe)
   }
-  private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
+  hpp_file <- paste0(temp_file_no_ext, ".hpp")
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
@@ -723,8 +742,10 @@ compile <- function(quiet = TRUE,
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
   stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_direct)
   standalone_hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
-  private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
+  # Staged in a local: this describes the program being compiled now, so it may
+  # not reach the object unless that program's executable is installed. (#1228)
+  model_methods_env <- new.env()
+  model_methods_env$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
@@ -786,6 +807,14 @@ compile <- function(quiet = TRUE,
       stop("An error occurred during compilation! See the message above for more information.",
            call. = FALSE)
     }
+    # Everything that can still fail happens before the executable is replaced,
+    # so that the commit block below is only assignments. Writing the
+    # model-method header is fallible and has to come after make, which
+    # generates its own .hpp at the same path.
+    stan_code <- readLines(temp_stan_file)
+    writeLines(model_methods_env$hpp_code_,
+               con = wsl_safe_path(hpp_file, revert = TRUE))
+
     if (file.exists(exe)) {
       file.remove(exe)
     }
@@ -806,10 +835,12 @@ compile <- function(quiet = TRUE,
     self$functions$hpp_code <- standalone_hpp_code
     self$functions$external <- using_user_header
     self$functions$existing_exe <- FALSE
-    private$stan_code_ <- readLines(temp_stan_file)
+    private$stan_code_ <- stan_code
     private$variables_ <- NULL
     private$using_user_header_ <- using_user_header
     private$user_header_ <- user_header
+    private$hpp_file_ <- hpp_file
+    private$model_methods_env_ <- model_methods_env
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
@@ -817,9 +848,6 @@ compile <- function(quiet = TRUE,
     if (compile_standalone) {
       expose_stan_functions(self$functions, verbose = !quiet)
     }
-
-    writeLines(private$model_methods_env_$hpp_code_,
-               con = wsl_safe_path(private$hpp_file_, revert = TRUE))
   } # End - if(!dry_run)
 
   private$cmdstan_version_ <- cmdstan_version()
