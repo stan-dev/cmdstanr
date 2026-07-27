@@ -15,6 +15,17 @@ variables are, instead of erroring. (#1225)
 which previously errored. (#1225)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
+* `$compile()` now works with named `stanc_options` values such as
+`canonicalize`. The values were shell-quoted for Make and the same quoted
+strings were also passed to `stanc` directly, which rejected them. (#1227)
+* `$compile()` now enables `allow-undefined` for user headers supplied through
+`cpp_options`, not just through the `user_header` argument. (#1227)
+* `stanc` failures during `$compile()` are now reported immediately, with the
+`stanc` error message. Previously they surfaced several steps later. (#1227)
+* Errors for include paths that do not exist now report the resolved absolute
+path. (#1227)
+* Numeric `stanc_options` values such as `list("max-line-length" = 78)` are no
+longer dropped. (#1233)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are

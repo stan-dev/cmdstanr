@@ -39,7 +39,7 @@ test_that("$variables() work correctly with example models", {
   expect_equal(mod$variables()$parameters$beta$dimensions, 1)
 })
 
-test_that("$variables() work correctly with example models", {
+test_that("$variables() work correctly with multidimensional variables", {
   code <- "
   data {
     array[1,2,3,4,5,6,7,8] int y;
