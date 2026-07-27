@@ -244,6 +244,10 @@ CmdStanModel <- R6::R6Class(
     include_paths_ = NULL,
     user_header_ = NULL,
     using_user_header_ = FALSE,
+    # Neither configuration nor a description of the executable: a record that
+    # the two have drifted apart. Set by a change of header, cleared only by a
+    # successful executable replacement.
+    user_header_dirty_ = FALSE,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -263,13 +267,26 @@ CmdStanModel <- R6::R6Class(
         private$stan_file_ <- resolve_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
-        private$precompile_cpp_options_ <- args$cpp_options %||% list()
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
-        if (!is.null(args$user_header) || !is.null(args$cpp_options[["USER_HEADER"]]) ||
-            !is.null(args$cpp_options[["user_header"]])) {
-          private$using_user_header_ <- TRUE
+        # The same precedence $compile() applies, run here too: a model created
+        # with compile = FALSE never enters $compile(), so resolving the paths
+        # alone would let an explicit user_header = NULL be ignored. `...`
+        # preserves NULL entries, so names() is the missing() equivalent here.
+        resolved_header <- resolve_user_header(
+          user_header = args$user_header,
+          supplied = "user_header" %in% names(args),
+          cpp_options = args$cpp_options %||% list()
+        )
+        if (!compile) {
+          # Otherwise $compile() receives the original arguments below and warns
+          # once; warning here as well would double up.
+          warn_user_header_conflict(resolved_header$conflict)
         }
-        private$user_header_ <- args$user_header
+        private$precompile_cpp_options_ <- resolved_header$cpp_options
+        # Prepopulating this also keeps the first $compile() from seeing a
+        # change of header and rebuilding an already-current executable.
+        private$user_header_ <- resolve_path(resolved_header$user_header)
+        private$using_user_header_ <- !is.null(resolved_header$user_header)
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
@@ -584,6 +601,11 @@ compile <- function(quiet = TRUE,
     )
   }
   assert_stan_file_exists(self$stan_file())
+  # Captured before either is reassigned below: an explicit user_header = NULL
+  # is indistinguishable from an omitted argument by value alone, and a header
+  # inherited from an earlier call is not a conflict worth warning about.
+  user_header_supplied <- !missing(user_header)
+  cpp_options_supplied <- length(cpp_options) > 0
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
@@ -617,40 +639,43 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
 
-  # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
-  # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
-  if (!is.null(user_header)) {
-    if (!is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])) {
-      warning("User header specified both via user_header argument and via cpp_options arguments")
-    }
-
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
-  } else if (!is.null(cpp_options[["USER_HEADER"]])) {
-    if (!is.null(cpp_options[["user_header"]])) {
-      warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
-    }
-
-    user_header <- cpp_options[["USER_HEADER"]]
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
-  } else if (!is.null(cpp_options[["user_header"]])) {
-    user_header <- cpp_options[["user_header"]]
-    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
-  } else if (!is.null(private$user_header_)) {
+  resolved_header <- resolve_user_header(
+    user_header = user_header,
+    supplied = user_header_supplied,
+    cpp_options = cpp_options,
+    cpp_options_supplied = cpp_options_supplied,
     # the header the model was last compiled with, or the one supplied to
     # cmdstan_model() if it has not been compiled yet
-    user_header <- private$user_header_
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
-  }
-
+    previous = private$user_header_
+  )
+  warn_user_header_conflict(resolved_header$conflict)
+  user_header <- resolved_header$user_header
+  cpp_options <- resolved_header$cpp_options
 
   using_user_header <- !is.null(user_header)
   if (using_user_header) {
     stanc_options[["allow-undefined"]] <- TRUE
-    user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
+    # Note that unlike cpp_options["USER_HEADER"], the user_header variable is
+    # deliberately not transformed with wsl_safe_path() as that breaks the check
+    # below on WSLv1
+    user_header <- resolve_path(user_header)
     if (!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
     }
+    cpp_options[[resolved_header$spelling]] <- wsl_safe_path(user_header)
   }
+
+  # Source configuration, so assigned eagerly: it says what the next stanc or
+  # make invocation should use, and a failed compile must not revert it. The
+  # usual route to a failed compile with a new header is a bug in that header,
+  # and a bare retry after fixing it has to build the header the user supplied.
+  #
+  # The divergence marker is latched rather than assigned, because on that retry
+  # the reuse branch resolves back to the same header and nothing looks changed.
+  private$user_header_dirty_ <- isTRUE(private$user_header_dirty_) ||
+    !same_path(user_header, private$user_header_)
+  private$user_header_ <- user_header
+  private$using_user_header_ <- using_user_header
 
   # The resolved destination need not be the executable this object describes,
   # e.g. $compile(dir = ) aimed at a directory that already holds a current
@@ -662,11 +687,14 @@ compile <- function(quiet = TRUE,
   # - the user forced compilation,
   # - the executable does not exist
   # - the destination is not the executable this object already describes
+  # - the user header in use is not the one the executable was built against
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
   if (!file.exists(exe)) {
     force_recompile <- TRUE
   } else if (exe_changed) {
+    force_recompile <- TRUE
+  } else if (isTRUE(private$user_header_dirty_)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
              && file.mtime(exe) < file.mtime(self$stan_file())) {
@@ -831,8 +859,7 @@ compile <- function(quiet = TRUE,
     self$functions$existing_exe <- FALSE
     private$stan_code_ <- stan_code
     private$variables_ <- NULL
-    private$using_user_header_ <- using_user_header
-    private$user_header_ <- user_header
+    private$user_header_dirty_ <- FALSE
     private$hpp_file_ <- hpp_file
     private$model_methods_env_ <- model_methods_env
     private$precompile_cpp_options_ <- NULL

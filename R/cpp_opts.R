@@ -144,6 +144,80 @@ validate_cpp_options <- function(cpp_options) {
   cpp_options
 }
 
+# user headers ---------------------------------------------------------
+# Decide which user header a compilation should use and reduce cpp_options to a
+# single, unambiguous source for it.
+#
+# Precedence:
+#   1. an explicit non-NULL `user_header` argument;
+#   2. an explicit `user_header = NULL`, which clears any header carried in
+#      cpp_options as well;
+#   3. only when the argument is omitted, cpp_options -- USER_HEADER ahead of
+#      user_header whichever order they appear in -- and then `previous`, the
+#      header the model already holds.
+#
+# `supplied` is what makes (2) expressible at all: `user_header = NULL` is also
+# the default, so the value alone cannot separate "cleared" from "not
+# mentioned". `cpp_options_supplied` separates a header passed in the same call,
+# a conflict worth warning about, from one inherited from an earlier call.
+#
+# Both spellings are always dropped from cpp_options; callers reinsert the
+# selected header under `spelling`, in whatever form they store. The header is
+# returned as supplied, neither made absolute nor WSL-safe, because callers
+# differ on which they need.
+resolve_user_header <- function(user_header,
+                                supplied,
+                                cpp_options,
+                                cpp_options_supplied = TRUE,
+                                previous = NULL) {
+  from_upper <- cpp_options[["USER_HEADER"]]
+  from_lower <- cpp_options[["user_header"]]
+  conflict <- NULL
+  spelling <- "USER_HEADER"
+
+  if (supplied) {
+    if (cpp_options_supplied && (!is.null(from_upper) || !is.null(from_lower))) {
+      conflict <- "argument"
+    }
+    header <- user_header
+  } else if (!is.null(from_upper)) {
+    if (!is.null(from_lower)) {
+      conflict <- "cpp_options"
+    }
+    header <- from_upper
+  } else if (!is.null(from_lower)) {
+    header <- from_lower
+    spelling <- "user_header"
+  } else {
+    header <- previous
+  }
+
+  # Shape is checked wherever a header is accepted; whether it exists is checked
+  # only when compiling, so that a header created between construction and
+  # $compile() still works.
+  if (!is.null(header)) {
+    checkmate::assert_string(header, .var.name = "user_header")
+  }
+  cpp_options[["USER_HEADER"]] <- NULL
+  cpp_options[["user_header"]] <- NULL
+
+  list(
+    user_header = header,
+    spelling = spelling,
+    cpp_options = cpp_options,
+    conflict = conflict
+  )
+}
+
+warn_user_header_conflict <- function(conflict) {
+  if (identical(conflict, "argument")) {
+    warning("User header specified both via user_header argument and via cpp_options arguments")
+  } else if (identical(conflict, "cpp_options")) {
+    warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 # check specific options for validity ---------------------------------
 cpp_option_value <- function(cpp_options, option) {
   # CmdStanR input and executable metadata can use different casing. Prefer
