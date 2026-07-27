@@ -209,6 +209,150 @@ test_that("copy_temp_files retains sources if any copy fails", {
   expect_identical(file.exists(source_paths), c(TRUE, TRUE))
 })
 
+local_exe_fixture <- function(destination_exists = TRUE,
+                              .local_envir = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = .local_envir)
+  fixture <- list(
+    dir = dir,
+    from = file.path(dir, "compiled-exe"),
+    to = file.path(dir, "model-exe")
+  )
+  writeLines("new executable", fixture$from)
+  if (destination_exists) {
+    writeLines("old executable", fixture$to)
+  }
+  fixture
+}
+
+# Normalize the random staging and backup names out of a snapshot, keeping the
+# structure of the paths the diagnostics name.
+exe_path_transform <- function(fixture) {
+  function(lines) {
+    lines <- gsub(fixture$dir, "<dir>", lines, fixed = TRUE)
+    gsub("exe-(new|old)-[0-9a-f]+", "exe-\\1-<random>", lines)
+  }
+}
+
+# Make the n-th file.rename() call fail, optionally warning first, as base does.
+local_failing_file_rename <- function(fail_on,
+                                      warn = FALSE,
+                                      .local_envir = parent.frame()) {
+  real_file_rename <- base::file.rename
+  calls <- 0
+  local_mocked_bindings(
+    file.rename = function(from, to) {
+      calls <<- calls + 1
+      if (calls %in% fail_on) {
+        if (warn) warning("cannot rename file")
+        return(FALSE)
+      }
+      real_file_rename(from, to)
+    },
+    .package = "base",
+    .env = .local_envir
+  )
+}
+
+test_that("install_executable() installs when there is no existing executable", {
+  fixture <- local_exe_fixture(destination_exists = FALSE)
+
+  expect_null(install_executable(fixture$from, fixture$to))
+  expect_identical(readLines(fixture$to), "new executable")
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() replaces an executable and removes the backup", {
+  fixture <- local_exe_fixture()
+
+  expect_null(install_executable(fixture$from, fixture$to))
+  expect_identical(readLines(fixture$to), "new executable")
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() leaves the destination alone if staging fails", {
+  fixture <- local_exe_fixture()
+  local_mocked_bindings(file.copy = function(...) FALSE, .package = "base")
+
+  expect_snapshot(
+    error = TRUE,
+    install_executable(fixture$from, fixture$to),
+    transform = exe_path_transform(fixture)
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() leaves the destination alone if the backup fails", {
+  fixture <- local_exe_fixture()
+  local_failing_file_rename(fail_on = 1)
+
+  expect_snapshot(
+    error = TRUE,
+    install_executable(fixture$from, fixture$to),
+    transform = exe_path_transform(fixture)
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() restores the backup if the install fails", {
+  fixture <- local_exe_fixture()
+  local_failing_file_rename(fail_on = 2)
+
+  expect_snapshot(
+    error = TRUE,
+    install_executable(fixture$from, fixture$to),
+    transform = exe_path_transform(fixture)
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() keeps the backup if it cannot be restored", {
+  fixture <- local_exe_fixture()
+  local_failing_file_rename(fail_on = c(2, 3))
+
+  expect_snapshot(
+    error = TRUE,
+    install_executable(fixture$from, fixture$to),
+    transform = exe_path_transform(fixture)
+  )
+  # The destination is gone, so the error has to name a real recovery path.
+  expect_false(file.exists(fixture$to))
+  leftover <- setdiff(list.files(fixture$dir), basename(fixture$from))
+  expect_match(leftover, "^exe-old-")
+  expect_identical(readLines(file.path(fixture$dir, leftover)), "old executable")
+})
+
+test_that("install_executable() rolls back when warnings are errors", {
+  fixture <- local_exe_fixture()
+  # base warns and returns FALSE; under warn = 2 the warning alone would throw
+  # from inside file.rename(), skipping the rollback and stranding the only good
+  # executable at the backup path.
+  local_failing_file_rename(fail_on = 2, warn = TRUE)
+  withr::local_options(warn = 2)
+
+  expect_error(
+    install_executable(fixture$from, fixture$to),
+    "previously compiled executable has been restored",
+    fixed = TRUE
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+})
+
+test_that("install_executable() reports a backup it could not remove", {
+  fixture <- local_exe_fixture()
+  local_mocked_bindings(unlink = function(...) 1L, .package = "base")
+
+  # Reporting rather than signalling is the whole point: a warning here would,
+  # under options(warn = 2), unwind before the caller could record the state
+  # describing the executable that was just installed.
+  expect_no_warning(leftover <- install_executable(fixture$from, fixture$to))
+  expect_identical(readLines(fixture$to), "new executable")
+  expect_true(file.exists(leftover))
+  expect_identical(readLines(leftover), "old executable")
+})
+
 test_that("repair_path() fixes slashes", {
   # all slashes should be single "/", and no trailing slash
   expect_equal(repair_path("a//b\\c/"), "a/b/c")

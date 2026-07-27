@@ -478,6 +478,116 @@ test_that("a failed C++ compile doesn't move the executable path", {
   expect_true(file.exists(exe_before))
 })
 
+test_that("compile() errors if the executable cannot be replaced", {
+  model <- local_mocked_bernoulli_model()
+  exe <- model$exe_file()
+  writeLines("old executable", exe)
+
+  # Fail the first attempt to put a file at the destination. A replacement that
+  # fails unnoticed leaves the model with no executable at all.
+  real_file_copy <- base::file.copy
+  real_file_rename <- base::file.rename
+  installs <- 0
+  local_mocked_bindings(
+    file.copy = function(from, to, ...) {
+      if (identical(to, exe)) {
+        installs <<- installs + 1
+        if (installs == 1L) return(FALSE)
+      }
+      real_file_copy(from, to, ...)
+    },
+    file.rename = function(from, to) {
+      if (identical(to, exe)) {
+        installs <<- installs + 1
+        if (installs == 1L) return(FALSE)
+      }
+      real_file_rename(from, to)
+    },
+    .package = "base"
+  )
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_error(model$compile(force_recompile = TRUE))
+  )
+  expect_true(file.exists(exe))
+  expect_identical(readLines(exe), "old executable")
+})
+
+# Set up a model whose executable is about to be replaced by a program that can
+# be told apart from it, with removal of the old executable's backup failing.
+local_leftover_backup_model <- function(.local_envir = parent.frame()) {
+  model <- local_mocked_bernoulli_model(.local_envir = .local_envir)
+  writeLines("old executable", model$exe_file())
+  writeLines(
+    "parameters { real beta; } model { beta ~ std_normal(); }",
+    model$stan_file()
+  )
+  local_mocked_bindings(
+    unlink = function(...) 1L,
+    .package = "base",
+    .env = .local_envir
+  )
+  model
+}
+
+expect_describes_new_program <- function(model) {
+  private <- model$.__enclos_env__$private
+  expect_identical(
+    model$code(),
+    "parameters { real beta; } model { beta ~ std_normal(); }"
+  )
+  expect_equal(model$variables()$parameters$beta$dimensions, 0)
+  expect_match(paste(private$model_methods_env_$hpp_code_, collapse = "\n"), "beta")
+  expect_match(paste(readLines(model$hpp_file()), collapse = "\n"), "beta")
+  expect_true(model$cpp_options()$stan_threads)
+  # The mocked replacement is empty, the executable it replaced was not.
+  expect_equal(file.size(model$exe_file()), 0)
+}
+
+test_that("a leftover backup warns without discarding a successful compile", {
+  model <- local_leftover_backup_model()
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_warning(
+      model$compile(cpp_options = list(stan_threads = TRUE), force_recompile = TRUE),
+      "could not be removed"
+    )
+  )
+
+  expect_describes_new_program(model)
+})
+
+test_that("a leftover backup doesn't unwind a compile when warnings are errors", {
+  model <- local_leftover_backup_model()
+  model_dir <- dirname(model$exe_file())
+
+  # Signalling the cleanup failure before the state is committed would install
+  # the new executable while the object still described the old program -- the
+  # exact hybrid this all exists to prevent. The option is scoped to the call so
+  # that testthat's own snapshot warnings stay warnings.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_snapshot(
+      error = TRUE,
+      withr::with_options(
+        list(warn = 2),
+        model$compile(cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
+      ),
+      transform = function(lines) {
+        lines <- gsub(model_dir, "<dir>", lines, fixed = TRUE)
+        gsub("exe-old-[0-9a-f]+", "exe-old-<random>", lines)
+      }
+    )
+  )
+
+  expect_describes_new_program(model)
+})
+
 test_that("dir arg works for cmdstan_model and $compile()", {
   tmp_dir <- tempdir()
   tmp_dir_2 <- tempdir()

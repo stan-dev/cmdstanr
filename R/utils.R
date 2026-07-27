@@ -275,6 +275,99 @@ copy_temp_files <-
     absolute_path(destinations)
   }
 
+#' Replace a model executable with a newly compiled one
+#'
+#' Stages the new executable beside the destination, moves any existing
+#' executable aside, and only then renames the staged copy into place. Every step
+#' that fails before the final rename leaves the destination exactly as it was;
+#' a failed final rename restores the previous executable.
+#'
+#' Staged and rollback-capable rather than transactional: a crash between the two
+#' renames can still leave the previous executable at the backup path only.
+#'
+#' Every filesystem call is wrapped in `suppressWarnings()` and checked by value.
+#' `file.copy()` and `file.rename()` warn on failure, so under
+#' `options(warn = 2)` base would throw before returning `FALSE` -- and if that
+#' happened on the final rename, the rollback below would never run and the only
+#' good executable would be stranded at the backup path. `unlink()` reports a
+#' status without signalling, so it needs no such treatment, but it returns
+#' `0L` for success rather than `TRUE`.
+#'
+#' @noRd
+#' @param from Path to the newly compiled executable.
+#' @param to Path the executable should be installed at.
+#' @return `NULL` on a clean install, or the path to a backup of the previous
+#'   executable that could not be removed afterwards. Callers must not treat a
+#'   returned path as a failure: the new executable is installed either way, and
+#'   signalling from here would unwind before the caller could record the state
+#'   describing it.
+install_executable <- function(from, to) {
+  candidate <- tempfile(pattern = "exe-new-", tmpdir = dirname(to))
+  if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
+    stop(
+      "Could not stage the compiled executable at '", candidate, "'. ",
+      "The model executable at '", to, "' was not modified.",
+      call. = FALSE
+    )
+  }
+  if (os_is_wsl()) {
+    chmod <- processx::run(
+      command = "wsl",
+      args = c("chmod", "+x", wsl_safe_path(candidate)),
+      error_on_status = FALSE
+    )
+    if (is.na(chmod$status) || chmod$status != 0) {
+      unlink(candidate)
+      stop(
+        "Could not make the compiled executable executable. ",
+        "The model executable at '", to, "' was not modified.",
+        call. = FALSE
+      )
+    }
+  }
+
+  backup <- NULL
+  if (file.exists(to)) {
+    backup <- tempfile(pattern = "exe-old-", tmpdir = dirname(to))
+    if (!isTRUE(suppressWarnings(file.rename(to, backup)))) {
+      unlink(candidate)
+      stop(
+        "Could not move the existing executable '", to, "' aside. ",
+        "It was not modified.",
+        call. = FALSE
+      )
+    }
+  }
+
+  if (!isTRUE(suppressWarnings(file.rename(candidate, to)))) {
+    unlink(candidate)
+    if (is.null(backup)) {
+      stop(
+        "Could not install the compiled executable at '", to, "'.",
+        call. = FALSE
+      )
+    }
+    if (!isTRUE(suppressWarnings(file.rename(backup, to)))) {
+      stop(
+        "Could not install the compiled executable at '", to, "' and the ",
+        "previously compiled executable could not be restored. It has been ",
+        "kept at '", backup, "'.",
+        call. = FALSE
+      )
+    }
+    stop(
+      "Could not install the compiled executable at '", to, "'. ",
+      "The previously compiled executable has been restored.",
+      call. = FALSE
+    )
+  }
+
+  if (!is.null(backup) && unlink(backup) != 0L) {
+    return(backup)
+  }
+  NULL
+}
+
 # generate new file names
 # see doc above for copy_temp_files
 generate_file_names <-

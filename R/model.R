@@ -815,17 +815,11 @@ compile <- function(quiet = TRUE,
     writeLines(model_methods_env$hpp_code_,
                con = wsl_safe_path(hpp_file, revert = TRUE))
 
-    if (file.exists(exe)) {
-      file.remove(exe)
-    }
-    file.copy(tmp_exe, exe, overwrite = TRUE)
-    if (os_is_wsl()) {
-      res <- processx::run(
-        command = "wsl",
-        args = c("chmod", "+x", wsl_safe_path(exe)),
-        error_on_status = FALSE
-      )
-    }
+    # Errors if the executable could not be replaced, so a failure here can
+    # never leave the model with no executable at all. A backup that could not
+    # be cleaned up afterwards is reported rather than signalled, and warned
+    # about only once all the optional work below has had its chance to run.
+    leftover_backup <- install_executable(tmp_exe, exe)
 
     # The new executable is in place, so everything derived from the Stan
     # program that was just compiled can be committed. A dry run or a failed
@@ -857,6 +851,16 @@ compile <- function(quiet = TRUE,
   if (!dry_run) {
     if (compile_model_methods) {
       expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
+    }
+    if (!is.null(leftover_backup)) {
+      # Deliberately last: under options(warn = 2) this is an error, and raising
+      # it any earlier would abort exposure the user asked for -- or worse, roll
+      # back before the state describing the installed executable was recorded.
+      warning(
+        "The previously compiled executable could not be removed. ",
+        "It has been left at '", leftover_backup, "'.",
+        call. = FALSE
+      )
     }
   }
   invisible(self)
