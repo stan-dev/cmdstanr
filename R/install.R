@@ -29,7 +29,9 @@
 #' @export
 #' @param dir (string) The path to the directory in which to install CmdStan.
 #'   The default is to install it in a directory called `.cmdstan` within the
-#'   user's home directory (i.e., `file.path(Sys.getenv("HOME"), ".cmdstan")`).
+#'   user's home directory. On Windows the home directory is determined from
+#'   `USERPROFILE`, falling back to `HOMEDRIVE` and `HOMEPATH`. On other
+#'   platforms it is determined from `HOME`.
 #' @param cores (integer) The number of CPU cores to use to parallelize building
 #'   CmdStan and speed up installation. If `cores` is not specified then the
 #'   default is to look for the option `"mc.cores"`, which can be set for an
@@ -488,7 +490,7 @@ build_cmdstan <- function(dir,
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) },
         timeout = timeout
@@ -513,7 +515,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) }
       )
@@ -536,7 +538,7 @@ build_example <- function(dir, cores, quiet, timeout) {
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) },
         timeout = timeout

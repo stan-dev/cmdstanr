@@ -102,7 +102,7 @@ test_that("$variables() works with #includes, both pre and post compilation.", {
     }
   "
   model_code <- "
-    #include data.stan
+    #include includes/data.stan
     parameters {
       vector[N] y;
     }
@@ -111,18 +111,30 @@ test_that("$variables() works with #includes, both pre and post compilation.", {
     }
   "
 
-  model_file <- write_stan_file(code = model_code)
-  data_file <- write_stan_file(code = data_code, basename = "data.stan")
+  model_dir <- withr::local_tempdir(pattern = "include path")
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir, recursive = TRUE)
+  model_file <- write_stan_file(code = model_code, dir = model_dir)
+  write_stan_file(code = data_code, basename = "data.stan", dir = include_dir)
 
-  mod <- cmdstan_model(
+  mod_explicit <- cmdstan_model(
     stan_file = model_file,
-    include_paths = dirname(data_file),
+    include_paths = model_dir,
     compile = FALSE
   )
 
-  vars_pre <- mod$variables()
-  mod$compile()
-  vars_post <- mod$variables()
+  vars_pre <- mod_explicit$variables()
+  mod_explicit$compile()
+  mod_explicit_post <- cmdstan_model(
+    stan_file = model_file,
+    exe_file = mod_explicit$exe_file(),
+    include_paths = model_dir,
+    compile = FALSE
+  )
+  vars_post <- mod_explicit_post$variables()
 
   expect_equal(vars_pre, vars_post)
+
+  mod_automatic <- cmdstan_model(stan_file = model_file, compile = FALSE)
+  expect_equal(mod_automatic$variables(), vars_pre)
 })

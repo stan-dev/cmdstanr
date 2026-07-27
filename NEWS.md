@@ -1,7 +1,27 @@
 # cmdstanr (development version)
 
+* Lists of matrices/vectors and data frames can now be supplied for variables
+declared as `int` in the Stan program. Previously these worked only for `real`
+variables and errored for `int` ones. (#817)
+* Data frame columns that are not numeric, integer, logical, or
+factor are now an error. Previously `data.matrix()` silently coerced them, so a
+character column reached Stan as alphabetically ordered integer codes. Convert
+the column explicitly, e.g. with `as.integer()`, if integer codes are what you
+want. (#1225)
+* Lists of logical vectors/matrices are now converted to integers like logical
+variables are, instead of erroring. (#1225)
+* Supplying a factor for a variable not declared as `int` is now an error. (#1225)
+* Factors are now accepted for length-1 `int` arrays (e.g. `array[1] int x`),
+which previously errored. (#1225)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
+* CmdStanModel methods now correctly handle `#include` directories with spaces
+in their paths. (#820)
+* `$include_paths()` now returns absolute paths, and relative include paths are
+resolved when the model object is created or `$compile()` is called rather than
+on each `stanc` call. Previously a model created from a relative path could
+resolve `#include` directives against the wrong directory if the working
+directory changed. (#1229)
 * `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 
 executable's metadata. It was never a C++ option; use `$cmdstan_version()` instead. (#1215)
 * CmdStanModel methods now use executable metadata regardless of the 
@@ -28,6 +48,10 @@ that support diagnostic CSV output.
 keywords (@VisruthSK, #1154)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be
 set to `TRUE` for an entire R session via new global options. (#1159)
+* The compilation spinner can now be disabled for an entire R session by setting
+the new `cmdstanr_spinner` global option to `FALSE`. The spinner shown while
+installing or rebuilding CmdStan and while checking syntax also respects this
+option, and is no longer shown when knitting. (#486)
 * `save_metric_files()` now gives an informative error when metric files were
 not created and keeps saved metric files after the fitted model is garbage-collected. (#1021)
 * `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing

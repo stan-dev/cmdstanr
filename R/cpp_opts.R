@@ -10,14 +10,13 @@ run_info_cli <- function(exe_file) {
       toolchain_PATH_env_var(),
       tbb_path()
     ),
-    ret <- wsl_compatible_run(
+    wsl_compatible_run(
       command = wsl_safe_path(exe_file),
       args = "info",
       echo = is_verbose_mode(),
       error_on_status = FALSE
     )
   )
-  ret
 }
 
 # new (future) parser

@@ -6,12 +6,7 @@ w_path <- function(f) {
   x
 }
 
-make_local_orig <- cmdstan_make_local()
-cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS" = "false"))
-
-withr::defer(
-  cmdstan_make_local(cpp_options = make_local_orig, append = FALSE)
-)
+local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS" = "false"))
 
 hpp <- "
 #include <stan/math.hpp>
