@@ -303,6 +303,17 @@ copy_temp_files <-
 #'   describing it.
 install_executable <- function(from, to) {
   candidate <- tempfile(pattern = "exe-new-", tmpdir = dirname(to))
+  # Discarding the staged copy can fail too, so the diagnostics say where it was
+  # left rather than implying it is gone and sending the user looking for a file
+  # that is still there.
+  discard_candidate <- function() {
+    if (unlink(candidate) == 0L) {
+      ""
+    } else {
+      paste0(" The staged copy has been left at '", candidate, "'.")
+    }
+  }
+
   if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
     stop(
       "Could not stage the compiled executable at '", candidate, "'. ",
@@ -317,10 +328,10 @@ install_executable <- function(from, to) {
       error_on_status = FALSE
     )
     if (is.na(chmod$status) || chmod$status != 0) {
-      unlink(candidate)
       stop(
         "Could not make the compiled executable executable. ",
         "The model executable at '", to, "' was not modified.",
+        discard_candidate(),
         call. = FALSE
       )
     }
@@ -330,20 +341,21 @@ install_executable <- function(from, to) {
   if (file.exists(to)) {
     backup <- tempfile(pattern = "exe-old-", tmpdir = dirname(to))
     if (!isTRUE(suppressWarnings(file.rename(to, backup)))) {
-      unlink(candidate)
       stop(
         "Could not move the existing executable '", to, "' aside. ",
         "It was not modified.",
+        discard_candidate(),
         call. = FALSE
       )
     }
   }
 
   if (!isTRUE(suppressWarnings(file.rename(candidate, to)))) {
-    unlink(candidate)
+    leftover_candidate <- discard_candidate()
     if (is.null(backup)) {
       stop(
         "Could not install the compiled executable at '", to, "'.",
+        leftover_candidate,
         call. = FALSE
       )
     }
@@ -352,12 +364,14 @@ install_executable <- function(from, to) {
         "Could not install the compiled executable at '", to, "' and the ",
         "previously compiled executable could not be restored. It has been ",
         "kept at '", backup, "'.",
+        leftover_candidate,
         call. = FALSE
       )
     }
     stop(
       "Could not install the compiled executable at '", to, "'. ",
       "The previously compiled executable has been restored.",
+      leftover_candidate,
       call. = FALSE
     )
   }

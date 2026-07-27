@@ -496,10 +496,13 @@ NULL
 #'   the model object is created (or when `$compile()` is called) and stored as
 #'   absolute paths, so subsequent changes to the working directory do not
 #'   affect them. If `$compile()` is called again without `include_paths`, the
-#'   paths used for the previous compilation are reused.
+#'   most recently supplied paths are reused.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
 #'   to compile with the Stan model. If `$compile()` is called again without
-#'   `user_header`, the header used for the previous compilation is reused.
+#'   `user_header`, the most recently supplied header is reused, and changing
+#'   it forces recompilation. Pass `user_header = NULL` to compile without one.
+#'   A header can also be supplied via `cpp_options` as `USER_HEADER` or
+#'   `user_header`; the `user_header` argument takes precedence over both.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
 #'   otherwise write in the `make/local` file. For an example of using threading
@@ -738,6 +741,14 @@ compile <- function(quiet = TRUE,
     }
   }
 
+  # Evaluated here rather than in the tail: cmdstan_version() is not infallible
+  # despite being an accessor, because set_cmdstan_path() can leave PATH set
+  # while VERSION stays NULL, and in that state stanc and make both run but this
+  # errors. Staging it removes a failure point after the executable is already
+  # installed. It cannot be hoisted above the no-op return, which today never
+  # reaches this call at all.
+  compiled_cmdstan_version <- cmdstan_version()
+
   if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
     warning("Additional model methods and standalone functions are not ",
             "currently available with WSLv1 CmdStan and will not be compiled.",
@@ -862,6 +873,7 @@ compile <- function(quiet = TRUE,
     private$user_header_dirty_ <- FALSE
     private$hpp_file_ <- hpp_file
     private$model_methods_env_ <- model_methods_env
+    private$cpp_options_ <- cpp_options
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
@@ -871,9 +883,12 @@ compile <- function(quiet = TRUE,
     }
   } # End - if(!dry_run)
 
-  private$cmdstan_version_ <- cmdstan_version()
+  # Both are exceptions to the rule that state describing the compiled artifact
+  # is committed only above: during a dry run they are also the configured
+  # destination and the toolchain version, so they are assigned on a dry run and
+  # on success -- and, for exe_file_, on a no-op -- but never on a failure.
+  private$cmdstan_version_ <- compiled_cmdstan_version
   private$exe_file_ <- exe
-  private$cpp_options_ <- cpp_options
 
   if (!dry_run) {
     if (compile_model_methods) {

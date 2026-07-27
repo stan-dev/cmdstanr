@@ -41,11 +41,14 @@ program. Relative paths are resolved against the working directory when
 the model object is created (or when \verb{$compile()} is called) and stored as
 absolute paths, so subsequent changes to the working directory do not
 affect them. If \verb{$compile()} is called again without \code{include_paths}, the
-paths used for the previous compilation are reused.}
+most recently supplied paths are reused.}
 
 \item{user_header}{(string) The path to a C++ file (with a .hpp extension)
 to compile with the Stan model. If \verb{$compile()} is called again without
-\code{user_header}, the header used for the previous compilation is reused.}
+\code{user_header}, the most recently supplied header is reused, and changing
+it forces recompilation. Pass \code{user_header = NULL} to compile without one.
+A header can also be supplied via \code{cpp_options} as \code{USER_HEADER} or
+\code{user_header}; the \code{user_header} argument takes precedence over both.}
 
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
 model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would

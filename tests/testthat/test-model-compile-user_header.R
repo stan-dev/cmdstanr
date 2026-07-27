@@ -142,7 +142,6 @@ test_that("a no-op compile preserves a header supplied via cpp_options", {
 })
 
 test_that("compile() uses a user header supplied to cmdstan_model()", {
-  stan_file <- testing_stan_file("bernoulli_external")
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   received_stancflags <- list()
   local_mocked_bindings(
@@ -153,8 +152,18 @@ test_that("compile() uses a user header supplied to cmdstan_model()", {
     }
   )
 
-  model <- cmdstan_model(stan_file, user_header = user_header, compile = FALSE)
-  model$compile(force_recompile = TRUE, dry_run = TRUE)
+  model <- cmdstan_model(
+    local_external_model(),
+    user_header = user_header,
+    compile = FALSE
+  )
+  # A mocked compile rather than a dry run: a dry run builds nothing, so it
+  # records nothing about a compiled artifact.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(force_recompile = TRUE)
+  )
 
   expect_equal(
     model$cpp_options()[["USER_HEADER"]],
@@ -482,15 +491,18 @@ test_that("cmdstan_model works with user_header with mock", {
 
 test_that("wsl path conversion is done as expected", {
   tmp_file <- withr::local_tempfile(lines = hpp, fileext = ".hpp")
+  local_mocked_stanc()
+  # Mocked successful compiles rather than dry runs: only a compilation that
+  # produced an executable records the options describing it.
+
  # Case 1: arg
   with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
     code = {
       mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
-        user_header = tmp_file,
-        dry_run = TRUE
+        stan_file = local_external_model(),
+        user_header = tmp_file
       )
     }
   )
@@ -502,15 +514,14 @@ test_that("wsl path conversion is done as expected", {
 
   # Case 2: cpp opt USER_HEADER
   with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
     code = {
       mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
+        stan_file = local_external_model(),
         cpp_options = list(
           USER_HEADER = tmp_file
-        ),
-        dry_run = TRUE
+        )
       )
     }
   )
@@ -522,15 +533,14 @@ test_that("wsl path conversion is done as expected", {
 
   # Case # 3: only user_header opt
   with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
     code = {
       mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
+        stan_file = local_external_model(),
         cpp_options = list(
           user_header = tmp_file
-        ),
-        dry_run = TRUE
+        )
       )
     }
   )

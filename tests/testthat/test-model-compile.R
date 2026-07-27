@@ -692,9 +692,15 @@ test_that("*hpp_file() functions work", {
   expect_equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))
   mod$save_hpp_file(tmp_dir)
   expect_equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))
+  # A dry run generates no C++, so it leaves the saved location alone rather
+  # than pointing $hpp_file() at a temporary file that was never written.
   mod$compile(force_recompile = TRUE, dry_run = TRUE)
+  expect_equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))
+  # A real recompilation does write it, to a fresh temporary location.
+  expect_call_compilation(mod$compile(force_recompile = TRUE))
   expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))))
   expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))))
+  checkmate::expect_file_exists(mod$hpp_file())
 })
 
 test_that("check_syntax() works", {

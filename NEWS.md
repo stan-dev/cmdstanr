@@ -40,6 +40,30 @@ failed because those inputs were dropped. (#1234)
 * A `user_header` supplied to `cmdstan_model()` is now used by a later
 `$compile()`. Previously it was only honored when the model was compiled
 immediately. (#1234)
+* `$compile()` now accepts `user_header = NULL` to compile without a user
+header. Previously a header, once supplied, could not be removed. (#1235)
+* `$compile()` now recompiles when the user header changes. Previously a
+different header was ignored if the executable was otherwise up to date. (#1235)
+* `$compile()` now reduces duplicate `USER_HEADER`/`user_header` entries in
+`cpp_options` to the one actually used, so `$cpp_options()` no longer reports
+the ignored spelling after a successful compilation. (#1235)
+* A `$compile()` call that finds the executable up to date no longer erases
+`$cpp_options()`. Previously the recorded options were replaced with whatever
+the call supplied, so a bare `$compile()` on a model built with
+`cpp_options = list(stan_threads = TRUE)` dropped `stan_threads` and the
+executable then ran single-threaded. (#1235)
+* `$expose_functions()` now works after a `$compile()` call that found the
+executable up to date. It previously failed with "not possible with a
+pre-compiled Stan model" on a model that had compiled itself. (#1235)
+* A failed compilation no longer moves `$exe_file()` or replaces the generated
+C++ used by `$hpp_file()` and `fit$init_model_methods()`. Previously a failure
+at the C++ stage left the old executable paired with model methods generated
+from the new program. A `dry_run = TRUE` compilation likewise no longer moves
+`$hpp_file()`, which previously pointed at a temporary file it never wrote.
+(#1235)
+* `$compile()` now errors if the newly compiled executable cannot be installed,
+restoring the previous executable. Previously the replacement was unchecked, so
+a failure could silently leave the model with no executable at all. (#1235)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are
