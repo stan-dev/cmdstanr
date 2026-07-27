@@ -163,7 +163,6 @@ test_that("get_standalone_hpp() reports stanc failures", {
 
 test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
   stan_file <- withr::local_tempfile(fileext = ".stan")
-  writeLines("real x; transformed parameters { x <- 1; }", stan_file)
   local_mocked_bindings(
     wsl_compatible_run = function(...) {
       list(

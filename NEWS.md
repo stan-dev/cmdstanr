@@ -22,8 +22,10 @@ strings were also passed to `stanc` directly, which rejected them. (#1227)
 `cpp_options`, not just through the `user_header` argument. (#1227)
 * `stanc` failures during `$compile()` are now reported immediately, with the
 `stanc` error message. Previously they surfaced several steps later. (#1227)
-* Errors for include paths that do not exist now report the resolved absolute 
+* Errors for include paths that do not exist now report the resolved absolute
 path. (#1227)
+* Numeric `stanc_options` values such as `list("max-line-length" = 78)` are no
+longer dropped. (#1233)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are

@@ -742,11 +742,12 @@ test_that("cmdstan_model works with user_header", {
   ))
   file.remove(mod$exe_file())
 
+  # No stanc_options here: a user header supplied via cpp_options must enable
+  # allow-undefined on its own (#1227)
   expect_call_compilation(
     mod_2 <- cmdstan_model(
       stan_file = testing_stan_file("bernoulli_external"),
-      cpp_options=list(USER_HEADER=tmpfile),
-      stanc_options = list("allow-undefined")
+      cpp_options=list(USER_HEADER=tmpfile)
     )
   )
 
@@ -998,6 +999,44 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
     out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
+})
+
+test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
+  # Unnamed options are already flag names and are never quoted
+  expect_equal(stanc_options_to_args(list("allow-undefined")), "--allow-undefined")
+  expect_equal(
+    stanc_options_to_args(list("allow-undefined"), quote_values = TRUE),
+    "--allow-undefined"
+  )
+
+  # Logical values mark boolean flags
+  expect_equal(stanc_options_to_args(list("warn-pedantic" = TRUE)), "--warn-pedantic")
+  expect_equal(stanc_options_to_args(list("warn-pedantic" = FALSE)), NULL)
+
+  # Values are quoted only for Make (#1227)
+  expect_equal(
+    stanc_options_to_args(list(canonicalize = "deprecations")),
+    "--canonicalize=deprecations"
+  )
+  expect_equal(
+    stanc_options_to_args(list(canonicalize = "deprecations"), quote_values = TRUE),
+    "--canonicalize='deprecations'"
+  )
+
+  # Quoting the model name mangles the generated namespace
+  expect_equal(
+    stanc_options_to_args(list(name = "m_model"), quote_values = TRUE),
+    "--name=m_model"
+  )
+
+  # Numeric values are kept rather than collapsed to a bare flag (#1233)
+  expect_equal(
+    stanc_options_to_args(list("max-line-length" = 78)),
+    "--max-line-length=78"
+  )
+
+  expect_equal(stanc_options_to_args(list()), NULL)
+  expect_equal(stanc_options_to_args(NULL), NULL)
 })
 
 test_that("compile() passes unquoted named stanc options to direct calls", {

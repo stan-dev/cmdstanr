@@ -1,3 +1,6 @@
+# This test is deliberately placed above the file-level skip_if(os_is_macos())
+# below: it mocks the stanc call and never compiles, so it needs no toolchain
+# and should run on every platform.
 test_that("cpp_options user headers allow undefined functions", {
   stan_file <- testing_stan_file("bernoulli_external")
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
