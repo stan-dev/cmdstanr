@@ -242,6 +242,7 @@ CmdStanModel <- R6::R6Class(
     cpp_options_ = list(),
     stanc_options_ = list(),
     include_paths_ = NULL,
+    user_header_ = NULL,
     using_user_header_ = FALSE,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
@@ -268,6 +269,7 @@ CmdStanModel <- R6::R6Class(
             !is.null(args$cpp_options[["user_header"]])) {
           private$using_user_header_ <- TRUE
         }
+        private$user_header_ <- args$user_header
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
@@ -305,11 +307,7 @@ CmdStanModel <- R6::R6Class(
       invisible(self)
     },
     include_paths = function() {
-      if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        return(private$include_paths_)
-      } else {
-        return(private$precompile_include_paths_)
-      }
+      private$include_paths_ %||% private$precompile_include_paths_
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
@@ -483,9 +481,11 @@ NULL
 #'   program. Relative paths are resolved against the working directory when
 #'   the model object is created (or when `$compile()` is called) and stored as
 #'   absolute paths, so subsequent changes to the working directory do not
-#'   affect them.
+#'   affect them. If `$compile()` is called again without `include_paths`, the
+#'   paths used for the previous compilation are reused.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
-#'   to compile with the Stan model.
+#'   to compile with the Stan model. If `$compile()` is called again without
+#'   `user_header`, the header used for the previous compilation is reused.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
 #'   otherwise write in the `make/local` file. For an example of using threading
@@ -594,8 +594,8 @@ compile <- function(quiet = TRUE,
     stanc_options <- private$precompile_stanc_options_
   }
   stanc_options <- assert_valid_stanc_options(stanc_options)
-  if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
-    include_paths <- private$precompile_include_paths_
+  if (is.null(include_paths)) {
+    include_paths <- private$include_paths_ %||% private$precompile_include_paths_
   }
   private$include_paths_ <- resolve_path(include_paths)
   include_paths <- private$include_paths_
@@ -641,6 +641,11 @@ compile <- function(quiet = TRUE,
   } else if (!is.null(cpp_options[["user_header"]])) {
     user_header <- cpp_options[["user_header"]]
     cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
+  } else if (!is.null(private$user_header_)) {
+    # the header the model was last compiled with, or the one supplied to
+    # cmdstan_model() if it has not been compiled yet
+    user_header <- private$user_header_
+    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
   }
 
 
@@ -804,6 +809,10 @@ compile <- function(quiet = TRUE,
     private$stan_code_ <- readLines(temp_stan_file)
     private$variables_ <- NULL
     private$using_user_header_ <- using_user_header
+    private$user_header_ <- user_header
+    private$precompile_cpp_options_ <- NULL
+    private$precompile_stanc_options_ <- NULL
+    private$precompile_include_paths_ <- NULL
 
     if (compile_standalone) {
       expose_stan_functions(self$functions, verbose = !quiet)
@@ -816,9 +825,6 @@ compile <- function(quiet = TRUE,
   private$cmdstan_version_ <- cmdstan_version()
   private$exe_file_ <- exe
   private$cpp_options_ <- cpp_options
-  private$precompile_cpp_options_ <- NULL
-  private$precompile_stanc_options_ <- NULL
-  private$precompile_include_paths_ <- NULL
 
   if (!dry_run) {
     if (compile_model_methods) {

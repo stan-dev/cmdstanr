@@ -220,6 +220,53 @@ test_that("relative include_paths given to $compile() are resolved when it is ca
   expect_true(mod$check_syntax(quiet = TRUE))
 })
 
+test_that("$compile() reuses include paths from the previous compilation", {
+  model_dir <- withr::local_tempdir()
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir)
+  file.copy(testing_stan_file("bernoulli_include"), model_dir)
+  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
+
+  mod <- cmdstan_model(
+    file.path(model_dir, "bernoulli_include.stan"),
+    include_paths = include_dir,
+    compile = FALSE
+  )
+  mod$compile(dry_run = TRUE, quiet = TRUE)
+
+  # the include path isn't supplied again, but the included file is still found
+  expect_no_error(mod$compile(force_recompile = TRUE, dry_run = TRUE, quiet = TRUE))
+  expect_equal(mod$include_paths(), resolve_path(include_dir))
+})
+
+test_that("$compile() doesn't reuse cpp and stanc options from the previous compilation", {
+  stan_file <- testing_stan_file("bernoulli")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  model$compile(
+    cpp_options = list(stan_threads = TRUE),
+    stanc_options = list("warn-pedantic" = TRUE),
+    force_recompile = TRUE,
+    dry_run = TRUE
+  )
+  received_stancflags <- list()
+  model$compile(force_recompile = TRUE, dry_run = TRUE)
+
+  expect_null(model$cpp_options()[["stan_threads"]])
+  expect_equal(
+    vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
+    rep(FALSE, 2)
+  )
+})
+
 test_that("name in STANCFLAGS is set correctly", {
   local_reproducible_output()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))

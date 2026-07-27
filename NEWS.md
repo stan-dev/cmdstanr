@@ -31,6 +31,17 @@ compilation. (#1228)
 * `$compile()` now discards standalone functions exposed from an earlier
 version of the Stan program. They must be exposed again with
 `$expose_functions()` after a recompilation. (#1228)
+* `$compile()` now reuses the include paths and the user header of the previous
+compilation when they are not supplied again. Recompiling a model that uses
+`#include` directives or a user header through the same object previously
+failed because those inputs were dropped. (#1234)
+* A `user_header` supplied to `cmdstan_model()` is now used by a later
+`$compile()`. Previously it was only honored when the model was compiled
+immediately. (#1234)
+* `$compile(dry_run = TRUE)` no longer discards the `cpp_options`,
+`stanc_options` and `include_paths` supplied to `cmdstan_model()`. (#1234)
+* `$include_paths()` no longer returns `NULL` for a model whose executable does
+not exist, such as after `$compile(dry_run = TRUE)`. (#1234)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are

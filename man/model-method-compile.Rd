@@ -40,10 +40,12 @@ should look for files specified in \verb{#include} directives in the Stan
 program. Relative paths are resolved against the working directory when
 the model object is created (or when \verb{$compile()} is called) and stored as
 absolute paths, so subsequent changes to the working directory do not
-affect them.}
+affect them. If \verb{$compile()} is called again without \code{include_paths}, the
+paths used for the previous compilation are reused.}
 
 \item{user_header}{(string) The path to a C++ file (with a .hpp extension)
-to compile with the Stan model.}
+to compile with the Stan model. If \verb{$compile()} is called again without
+\code{user_header}, the header used for the previous compilation is reused.}
 
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
 model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would
