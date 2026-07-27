@@ -282,6 +282,12 @@ CmdStanModel <- R6::R6Class(
           # once; warning here as well would double up.
           warn_user_header_conflict(resolved_header$conflict)
         }
+        # Deliberately without the header: the resolver strips both spellings
+        # and only $compile() reinserts the selected one. Storing it here would
+        # mean storing a WSL-safe path, which the next $compile() would pick up
+        # as its host-path `user_header` and fail to find on WSLv1 -- the hazard
+        # the comment at the resolver call in $compile() describes. user_header_
+        # below is the single source instead.
         private$precompile_cpp_options_ <- resolved_header$cpp_options
         # Prepopulating this also keeps the first $compile() from seeing a
         # change of header and rebuilding an already-current executable.

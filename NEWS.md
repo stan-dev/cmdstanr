@@ -58,9 +58,9 @@ pre-compiled Stan model" on a model that had compiled itself. (#1235)
 * A failed compilation no longer moves `$exe_file()` or replaces the generated
 C++ used by `$hpp_file()` and `fit$init_model_methods()`. Previously a failure
 at the C++ stage left the old executable paired with model methods generated
-from the new program. A `dry_run = TRUE` compilation likewise no longer moves
-`$hpp_file()`, which previously pointed at a temporary file it never wrote.
-(#1235)
+from the new program. A `dry_run = TRUE` compilation likewise no longer records
+`$cpp_options()` or moves `$hpp_file()`, which previously pointed at a temporary
+file it never wrote. (#1235)
 * `$compile()` now errors if the newly compiled executable cannot be installed,
 restoring the previous executable. Previously the replacement was unchecked, so
 a failure could silently leave the model with no executable at all. (#1235)
