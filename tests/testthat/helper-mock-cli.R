@@ -12,6 +12,13 @@ with_mocked_cli <- function(code, compile_ret, info_ret) {
         && startsWith(basename(args[1]), "model-")
       ) {
         message("mock-compile-was-called")
+        # Real `make` writes the executable named by args[1] when it succeeds and
+        # writes nothing when it fails. Without this, code that installs the
+        # compiled artifact silently has nothing to install. `isTRUE()` because
+        # callers may pass a `compile_ret` with no status at all.
+        if (isTRUE(compile_ret$status == 0)) {
+          file.create(wsl_safe_path(args[1], revert = TRUE))
+        }
         compile_ret
       } else if (!is.null(args) && args[1] == "info") {
         info_ret
