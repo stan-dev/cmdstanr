@@ -552,11 +552,19 @@ test_that("a leftover backup warns without discarding a successful compile", {
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
-    code = expect_warning(
+    code = condition <- expect_warning(
       model$compile(cpp_options = list(stan_threads = TRUE), force_recompile = TRUE),
       "could not be removed"
     )
   )
+
+  # Reporting the backup instead of deleting it is only worth anything if the
+  # path named is real and still holds the previous executable, so check the
+  # path out of the message rather than trusting that one was mentioned.
+  leftover <- sub(".*left at '([^']*)'.*", "\\1", conditionMessage(condition))
+  expect_true(file.exists(leftover))
+  expect_identical(readLines(leftover), "old executable")
+  expect_false(same_path(leftover, model$exe_file()))
 
   expect_describes_new_program(model)
 })
