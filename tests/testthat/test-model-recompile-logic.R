@@ -89,7 +89,11 @@ test_that("a no-op compile preserves what the previous compilation recorded", {
   )
   expect_true(mod$cpp_options()$stan_threads)
   expect_false(mod$functions$existing_exe)
-  expect_warning(mod$expose_functions(), "No standalone functions found")
+  # Standalone functions are rejected outright on WSL, before existing_exe is
+  # consulted, so only there can this consequence not be observed.
+  if (!os_is_wsl()) {
+    expect_warning(mod$expose_functions(), "No standalone functions found")
+  }
 })
 
 test_that("a no-op compile adopts an executable the object did not build", {
