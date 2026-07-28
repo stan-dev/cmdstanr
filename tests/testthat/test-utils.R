@@ -226,9 +226,16 @@ local_exe_fixture <- function(destination_exists = TRUE,
 
 # Normalize the random staging and backup names out of a snapshot, keeping the
 # structure of the paths the diagnostics name.
+#
+# Separators are normalized first because on Windows these paths arrive with a
+# mixture: dirname() converts to forward slashes, while withr::local_tempdir()
+# and tempfile() use backslashes, so tempfile(tmpdir = dirname(to)) yields
+# "C:/a/b\exe-new-1234".
 exe_path_transform <- function(fixture) {
+  dir <- gsub("\\\\", "/", fixture$dir)
   function(lines) {
-    lines <- gsub(fixture$dir, "<dir>", lines, fixed = TRUE)
+    lines <- gsub("\\\\", "/", lines)
+    lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
     gsub("exe-(new|old)-[0-9a-f]+", "exe-\\1-<random>", lines)
   }
 }
