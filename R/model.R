@@ -721,28 +721,53 @@ compile <- function(quiet = TRUE,
     # Nothing was compiled, so nothing describing the current executable may be
     # consumed or overwritten by configuration this call merely proposed.
     # Options supplied to this call are the caller's declared intent, so they
-    # are recorded even though nothing was compiled: cmdstanr does not yet
-    # rebuild when they disagree with the executable (see the skipped tests in
-    # test-model-recompile-logic.R), and dropping them would disable a feature
-    # that was explicitly asked for. A bare $compile() supplies none, and must
-    # not erase what is already recorded -- an erased stan_threads makes
-    # assert_valid_threads() run a threaded executable single-threaded.
+    # are recorded even though nothing was compiled. A bare $compile() supplies
+    # none, and must not erase what is already recorded -- an erased
+    # stan_threads makes assert_valid_threads() run a threaded executable
+    # single-threaded.
     recorded_cpp_options <-
       if (cpp_options_supplied) cpp_options else private$cpp_options_
+
+    # Asking the executable about itself. Best effort, because
+    # model_compile_info() runs it and errors outright rather than returning a
+    # status when the file is not runnable.
+    exe_info <- NULL
+    if (cpp_options_supplied || length(private$exe_file_) == 0) {
+      exe_info <- tryCatch(
+        model_compile_info(exe, self$cmdstan_version()),
+        error = function(e) NULL
+      )
+    }
+
+    # Recording options the executable does not have would otherwise be a quiet
+    # lie: nothing was rebuilt, so a requested stan_threads produces the
+    # "N thread(s) per chain" message while the binary, compiled without
+    # STAN_THREADS, runs single-threaded. Rebuilding on a mismatch is the real
+    # fix and is still outstanding (see the skipped tests in
+    # test-model-recompile-logic.R); until then, say so.
+    if (cpp_options_supplied && length(exe_info) > 0) {
+      # model_compile_info() reports upper-case names while
+      # exe_info_reflects_cpp_options() compares lower-case ones, so without
+      # aligning them the comparison finds no overlap and always agrees.
+      reported <- exe_info
+      names(reported) <- tolower(names(reported))
+      if (!isTRUE(exe_info_reflects_cpp_options(reported, cpp_options))) {
+        warning(
+          "The existing executable was not built with the requested ",
+          "'cpp_options' and was not rebuilt, so they will have no effect. ",
+          "Use 'force_recompile = TRUE' to rebuild the model.",
+          call. = FALSE
+        )
+      }
+    }
+
     if (length(private$exe_file_) == 0) {
       # This object is adopting an executable it did not build: it holds no
       # generated C++ for it, and the only description of it beyond the request
-      # is what the binary reports about itself. Best effort, because
-      # model_compile_info() runs the executable and errors outright rather than
-      # returning a status when the file is not runnable.
+      # is what the binary reports about itself.
       self$functions$existing_exe <- TRUE
-      recorded_cpp_options <- tryCatch(
-        merge_exe_info_cpp_options(
-          recorded_cpp_options,
-          model_compile_info(exe, self$cmdstan_version())
-        ),
-        error = function(e) recorded_cpp_options
-      )
+      recorded_cpp_options <-
+        merge_exe_info_cpp_options(recorded_cpp_options, exe_info)
     } else {
       # The flag means "we don't hold the generated C++ for this executable",
       # which is not the same as "this call compiled nothing".

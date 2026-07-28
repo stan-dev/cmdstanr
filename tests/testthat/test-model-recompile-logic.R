@@ -139,13 +139,16 @@ test_that("adopting an executable keeps the options the call asked for", {
   # cmdstanr rebuilds on a cpp_options mismatch, dropping the request would
   # make assert_valid_threads() discard 'threads' and run single-threaded
   # without the caller ever asking for that.
-  mod <- with_mocked_cli(
+  with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(
       status = 0,
       stdout = "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\nSTAN_THREADS=false"
     ),
-    code = cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE))
+    code = expect_warning(
+      mod <- cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE)),
+      "was not built with the requested"
+    )
   )
 
   expect_true(mod$cpp_options()$stan_threads)
@@ -168,12 +171,42 @@ test_that("a no-op compile records options supplied to that same call", {
   # options the caller just supplied is not.
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(status = 1),
+    info_ret = list(
+      status = 0,
+      stdout = "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\nSTAN_THREADS=false"
+    ),
     code = expect_no_mock_compile(
-      mod$compile(cpp_options = list(stan_threads = TRUE))
+      expect_warning(
+        mod$compile(cpp_options = list(stan_threads = TRUE)),
+        "was not built with the requested"
+      )
     )
   )
   expect_true(mod$cpp_options()$stan_threads)
+})
+
+test_that("no mismatch warning when the executable already has the options", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+
+  # The executable reports exactly what is being asked for, so re-stating it
+  # must stay quiet -- otherwise the warning fires on ordinary reuse.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(
+      status = 0,
+      stdout = "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\nSTAN_THREADS=true"
+    ),
+    code = expect_no_warning(
+      mod$compile(cpp_options = list(stan_threads = TRUE))
+    )
+  )
 })
 
 test_that("a no-op compile tolerates an executable it cannot query", {

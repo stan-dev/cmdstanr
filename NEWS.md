@@ -61,6 +61,11 @@ at the C++ stage left the old executable paired with model methods generated
 from the new program. A `dry_run = TRUE` compilation likewise no longer records
 `$cpp_options()` or moves `$hpp_file()`, which previously pointed at a temporary
 file it never wrote. (#1235)
+* `$compile()` now warns when `cpp_options` are supplied but the existing
+executable is up to date and was not built with them, so nothing is rebuilt and
+the options have no effect. Previously they were recorded and reported as if
+they applied, so a model could print "2 thread(s) per chain" while running
+single-threaded. Use `force_recompile = TRUE` to rebuild. (#1235)
 * `$compile()` now errors if the newly compiled executable cannot be installed,
 restoring the previous executable. Previously the replacement was unchecked, so
 a failure could silently leave the model with no executable at all. (#1235)
