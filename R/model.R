@@ -618,6 +618,10 @@ compile <- function(quiet = TRUE,
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
+  # Distinct from cpp_options_supplied, which is only about whether this call
+  # carried a conflicting header: options held from cmdstan_model(compile =
+  # FALSE) did not arrive with this call but are still the caller's intent.
+  cpp_options_available <- length(cpp_options) > 0
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
@@ -726,13 +730,13 @@ compile <- function(quiet = TRUE,
     # stan_threads makes assert_valid_threads() run a threaded executable
     # single-threaded.
     recorded_cpp_options <-
-      if (cpp_options_supplied) cpp_options else private$cpp_options_
+      if (cpp_options_available) cpp_options else private$cpp_options_
 
     # Asking the executable about itself. Best effort, because
     # model_compile_info() runs it and errors outright rather than returning a
     # status when the file is not runnable.
     exe_info <- NULL
-    if (cpp_options_supplied || length(private$exe_file_) == 0) {
+    if (cpp_options_available || length(private$exe_file_) == 0) {
       exe_info <- tryCatch(
         model_compile_info(exe, self$cmdstan_version()),
         error = function(e) NULL
@@ -745,20 +749,15 @@ compile <- function(quiet = TRUE,
     # STAN_THREADS, runs single-threaded. Rebuilding on a mismatch is the real
     # fix and is still outstanding (see the skipped tests in
     # test-model-recompile-logic.R); until then, say so.
-    if (cpp_options_supplied && length(exe_info) > 0) {
+    options_mismatch <- FALSE
+    if (cpp_options_available && length(exe_info) > 0) {
       # model_compile_info() reports upper-case names while
       # exe_info_reflects_cpp_options() compares lower-case ones, so without
       # aligning them the comparison finds no overlap and always agrees.
       reported <- exe_info
       names(reported) <- tolower(names(reported))
-      if (!isTRUE(exe_info_reflects_cpp_options(reported, cpp_options))) {
-        warning(
-          "The existing executable was not built with the requested ",
-          "'cpp_options' and was not rebuilt, so they will have no effect. ",
-          "Use 'force_recompile = TRUE' to rebuild the model.",
-          call. = FALSE
-        )
-      }
+      options_mismatch <-
+        !isTRUE(exe_info_reflects_cpp_options(reported, cpp_options))
     }
 
     if (length(private$exe_file_) == 0) {
@@ -775,6 +774,17 @@ compile <- function(quiet = TRUE,
     }
     private$cpp_options_ <- recorded_cpp_options
     private$exe_file_ <- exe
+    # Warned about only once the state above is recorded: under
+    # options(warn = 2) this is an error, and raising it earlier would unwind
+    # with the object half-updated.
+    if (options_mismatch) {
+      warning(
+        "The existing executable was not built with the requested ",
+        "'cpp_options' and was not rebuilt, so they will have no effect. ",
+        "Use 'force_recompile = TRUE' to rebuild the model.",
+        call. = FALSE
+      )
+    }
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
@@ -918,10 +928,6 @@ compile <- function(quiet = TRUE,
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
-
-    if (compile_standalone) {
-      expose_stan_functions(self$functions, verbose = !quiet)
-    }
   } # End - if(!dry_run)
 
   # Both are exceptions to the rule that state describing the compiled artifact
@@ -932,6 +938,13 @@ compile <- function(quiet = TRUE,
   private$exe_file_ <- exe
 
   if (!dry_run) {
+    # Both exposures are optional and fallible, and both run only once every
+    # field describing the installed executable has been committed -- including
+    # exe_file_ above. Failing here must not leave the object unable to find an
+    # executable that is sitting on disk.
+    if (compile_standalone) {
+      expose_stan_functions(self$functions, verbose = !quiet)
+    }
     if (compile_model_methods) {
       expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
     }

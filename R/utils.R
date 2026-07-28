@@ -307,7 +307,7 @@ install_executable <- function(from, to) {
   # left rather than implying it is gone and sending the user looking for a file
   # that is still there.
   discard_candidate <- function() {
-    if (unlink(candidate) == 0L) {
+    if (unlink(candidate, expand = FALSE) == 0L) {
       ""
     } else {
       paste0(" The staged copy has been left at '", candidate, "'.")
@@ -376,7 +376,7 @@ install_executable <- function(from, to) {
     )
   }
 
-  if (!is.null(backup) && unlink(backup) != 0L) {
+  if (!is.null(backup) && unlink(backup, expand = FALSE) != 0L) {
     return(backup)
   }
   NULL
