@@ -240,8 +240,10 @@ exe_path_transform <- function(fixture) {
     repair_path(fixture$dir),
     gsub("\\\\", "/", fixture$dir)
   ))
+  # Deliberately not normalizing separators in the message itself:
+  # install_executable() repairs the paths it builds, so a backslash reaching a
+  # diagnostic is a regression these snapshots should catch, not hide.
   function(lines) {
-    lines <- gsub("\\\\", "/", lines)
     for (dir in dirs) {
       lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
     }

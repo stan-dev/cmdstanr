@@ -581,7 +581,6 @@ test_that("a leftover backup doesn't unwind a compile when warnings are errors",
       # Separators are normalized first: on Windows the backup path arrives as
       # "<dir>\exe-old-1234", since tempfile() joins with a backslash.
       transform = function(lines) {
-        lines <- gsub("\\\\", "/", lines)
         for (dir in unique(c(model_dir, repair_path(model_dir)))) {
           lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
         }
