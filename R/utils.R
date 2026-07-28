@@ -302,7 +302,11 @@ copy_temp_files <-
 #'   signalling from here would unwind before the caller could record the state
 #'   describing it.
 install_executable <- function(from, to) {
-  candidate <- tempfile(pattern = "exe-new-", tmpdir = dirname(to))
+  # repair_path() because tempfile() joins with a backslash on Windows, giving
+  # "//wsl$/distro/path/to/dir\\exe-new-1234". The Win32 calls below tolerate the
+  # mixed separators, but wsl_safe_path() only rewrites the prefix, so the POSIX
+  # chmod inside WSL would be handed a path that does not exist.
+  candidate <- repair_path(tempfile(pattern = "exe-new-", tmpdir = dirname(to)))
   # Discarding the staged copy can fail too, so the diagnostics say where it was
   # left rather than implying it is gone and sending the user looking for a file
   # that is still there.
@@ -339,7 +343,7 @@ install_executable <- function(from, to) {
 
   backup <- NULL
   if (file.exists(to)) {
-    backup <- tempfile(pattern = "exe-old-", tmpdir = dirname(to))
+    backup <- repair_path(tempfile(pattern = "exe-old-", tmpdir = dirname(to)))
     if (!isTRUE(suppressWarnings(file.rename(to, backup)))) {
       stop(
         "Could not move the existing executable '", to, "' aside. ",

@@ -232,10 +232,19 @@ local_exe_fixture <- function(destination_exists = TRUE,
 # and tempfile() use backslashes, so tempfile(tmpdir = dirname(to)) yields
 # "C:/a/b\exe-new-1234".
 exe_path_transform <- function(fixture) {
-  dir <- gsub("\\\\", "/", fixture$dir)
+  # Every spelling the directory can appear in: withr::local_tempdir() can
+  # return "/tmp//Rtmpx", file.path() keeps that, and install_executable()
+  # passes its own paths through repair_path(), which collapses it.
+  dirs <- unique(c(
+    fixture$dir,
+    repair_path(fixture$dir),
+    gsub("\\\\", "/", fixture$dir)
+  ))
   function(lines) {
     lines <- gsub("\\\\", "/", lines)
-    lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
+    for (dir in dirs) {
+      lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
+    }
     gsub("exe-(new|old)-[0-9a-f]+", "exe-\\1-<random>", lines)
   }
 }

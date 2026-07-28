@@ -1291,6 +1291,11 @@ format <- function(overwrite_file = FALSE,
   cat(run_log$stdout, file = out_file, sep = "\n")
   if (isTRUE(overwrite_file)) {
     private$stan_code_ <- readLines(self$stan_file())
+    # The program on disk has been rewritten, so anything parsed from it is
+    # stale. $variables() reparses when this is NULL; leaving it would let
+    # $code() and $variables() describe different programs, and the fitting
+    # methods validate data and inits against $variables(). (#1228)
+    private$variables_ <- NULL
   }
 
   invisible(TRUE)

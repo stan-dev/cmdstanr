@@ -582,7 +582,9 @@ test_that("a leftover backup doesn't unwind a compile when warnings are errors",
       # "<dir>\exe-old-1234", since tempfile() joins with a backslash.
       transform = function(lines) {
         lines <- gsub("\\\\", "/", lines)
-        lines <- gsub(gsub("\\\\", "/", model_dir), "<dir>", lines, fixed = TRUE)
+        for (dir in unique(c(model_dir, repair_path(model_dir)))) {
+          lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
+        }
         gsub("exe-old-[0-9a-f]+", "exe-old-<random>", lines)
       }
     )
@@ -1106,6 +1108,31 @@ test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
   )
   expect_output(print(out), "-Dsomething_not_used")
 })
+
+test_that("format(overwrite_file = TRUE) refreshes cached variables", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- write_stan_file(
+    "parameters { real alpha; } model { alpha ~ std_normal(); }",
+    dir = model_dir,
+    basename = "reformat.stan"
+  )
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  expect_equal(names(model$variables()$parameters), "alpha")
+
+  # The program is edited behind the object's back, then formatted in place.
+  # $format() reloads $code() from disk, so a cached $variables() would go on
+  # describing a different program than $code() does -- and the fitting methods
+  # validate data and initial values against $variables(). (#1228)
+  writeLines(
+    "parameters { real beta; } model { beta ~ std_normal(); }",
+    stan_file
+  )
+  model$format(overwrite_file = TRUE, quiet = TRUE)
+
+  expect_equal(names(model$variables()$parameters), "beta")
+  expect_match(paste(model$code(), collapse = " "), "beta")
+})
+
 
 test_that("format() works", {
   code <- "
