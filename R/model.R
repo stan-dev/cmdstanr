@@ -720,32 +720,35 @@ compile <- function(quiet = TRUE,
     }
     # Nothing was compiled, so nothing describing the current executable may be
     # consumed or overwritten by configuration this call merely proposed.
+    # Options supplied to this call are the caller's declared intent, so they
+    # are recorded even though nothing was compiled: cmdstanr does not yet
+    # rebuild when they disagree with the executable (see the skipped tests in
+    # test-model-recompile-logic.R), and dropping them would disable a feature
+    # that was explicitly asked for. A bare $compile() supplies none, and must
+    # not erase what is already recorded -- an erased stan_threads makes
+    # assert_valid_threads() run a threaded executable single-threaded.
+    recorded_cpp_options <-
+      if (cpp_options_supplied) cpp_options else private$cpp_options_
     if (length(private$exe_file_) == 0) {
       # This object is adopting an executable it did not build: it holds no
-      # generated C++ for it, and the only available description of it is what
-      # the binary reports about itself. Best effort, because
+      # generated C++ for it, and the only description of it beyond the request
+      # is what the binary reports about itself. Best effort, because
       # model_compile_info() runs the executable and errors outright rather than
       # returning a status when the file is not runnable.
       self$functions$existing_exe <- TRUE
-      # Seeded with the options this call asked for, then filled in from the
-      # binary. Nothing is overwritten, because there is nothing here yet, and
-      # dropping the request would silently disable a feature the caller asked
-      # for: cmdstanr does not yet rebuild when the requested options disagree
-      # with the executable (see the skipped tests in
-      # test-model-recompile-logic.R), so an adopted executable is described by
-      # the request plus whatever it reports about itself.
-      private$cpp_options_ <- tryCatch(
+      recorded_cpp_options <- tryCatch(
         merge_exe_info_cpp_options(
-          cpp_options,
+          recorded_cpp_options,
           model_compile_info(exe, self$cmdstan_version())
         ),
-        error = function(e) cpp_options
+        error = function(e) recorded_cpp_options
       )
     } else {
       # The flag means "we don't hold the generated C++ for this executable",
       # which is not the same as "this call compiled nothing".
       self$functions$existing_exe <- is.null(self$functions$hpp_code)
     }
+    private$cpp_options_ <- recorded_cpp_options
     private$exe_file_ <- exe
     return(invisible(self))
   } else {

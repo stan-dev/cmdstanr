@@ -152,6 +152,30 @@ test_that("adopting an executable keeps the options the call asked for", {
   expect_true(mod$functions$existing_exe)
 })
 
+test_that("a no-op compile records options supplied to that same call", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file)
+  )
+  expect_null(mod$cpp_options()$stan_threads)
+
+  # Same object, same executable, but this call explicitly asks for threading.
+  # Preserving the recorded options is right for a bare $compile(); ignoring
+  # options the caller just supplied is not.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      mod$compile(cpp_options = list(stan_threads = TRUE))
+    )
+  )
+  expect_true(mod$cpp_options()$stan_threads)
+})
+
 test_that("a no-op compile tolerates an executable it cannot query", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
