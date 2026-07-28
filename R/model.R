@@ -727,12 +727,19 @@ compile <- function(quiet = TRUE,
       # model_compile_info() runs the executable and errors outright rather than
       # returning a status when the file is not runnable.
       self$functions$existing_exe <- TRUE
+      # Seeded with the options this call asked for, then filled in from the
+      # binary. Nothing is overwritten, because there is nothing here yet, and
+      # dropping the request would silently disable a feature the caller asked
+      # for: cmdstanr does not yet rebuild when the requested options disagree
+      # with the executable (see the skipped tests in
+      # test-model-recompile-logic.R), so an adopted executable is described by
+      # the request plus whatever it reports about itself.
       private$cpp_options_ <- tryCatch(
         merge_exe_info_cpp_options(
-          private$cpp_options_,
+          cpp_options,
           model_compile_info(exe, self$cmdstan_version())
         ),
-        error = function(e) private$cpp_options_
+        error = function(e) cpp_options
       )
     } else {
       # The flag means "we don't hold the generated C++ for this executable",

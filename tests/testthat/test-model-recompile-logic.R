@@ -125,6 +125,33 @@ test_that("a no-op compile adopts an executable the object did not build", {
   expect_null(mod$cpp_options()$STAN_VERSION)
 })
 
+test_that("adopting an executable keeps the options the call asked for", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+
+  # The executable is up to date but was not built with threading. Until
+  # cmdstanr rebuilds on a cpp_options mismatch, dropping the request would
+  # make assert_valid_threads() discard 'threads' and run single-threaded
+  # without the caller ever asking for that.
+  mod <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(
+      status = 0,
+      stdout = "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\nSTAN_THREADS=false"
+    ),
+    code = cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE))
+  )
+
+  expect_true(mod$cpp_options()$stan_threads)
+  expect_true(mod$functions$existing_exe)
+})
+
 test_that("a no-op compile tolerates an executable it cannot query", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
