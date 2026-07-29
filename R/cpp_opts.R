@@ -105,7 +105,7 @@ merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
 # arguments, though not its position among the assignments. Header entries are
 # dropped: header identity is tracked separately and forces a rebuild on its
 # own.
-normalized_cpp_options <- function(cpp_options) {
+parsed_cpp_options <- function(cpp_options) {
   assignments <- list()
   opaque <- character()
   for (flag in cpp_options_to_compile_flags(cpp_options)) {
@@ -119,13 +119,19 @@ normalized_cpp_options <- function(cpp_options) {
     }
     assignments[[option_name]] <- sub("^[^=]*=", "", flag)
   }
+  list(assignments = assignments, opaque = opaque)
+}
+
+normalized_cpp_options <- function(cpp_options) {
+  parsed <- parsed_cpp_options(cpp_options)
   reduced <- character()
-  if (length(assignments) > 0) {
+  if (length(parsed$assignments) > 0) {
     reduced <- paste0(
-      names(assignments), "=", unlist(assignments, use.names = FALSE)
+      names(parsed$assignments), "=",
+      unlist(parsed$assignments, use.names = FALSE)
     )
   }
-  c(sort(reduced), opaque)
+  c(sort(reduced), parsed$opaque)
 }
 
 # Whether an executable built with `recorded` would differ from one built with
@@ -345,11 +351,21 @@ exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
   }
   if (is.null(cpp_options)) return(TRUE)
 
-  cpp_options <- exe_info_style_cpp_options(cpp_options)[tolower(names(cpp_options))]
-  overlap <- names(cpp_options)[names(cpp_options) %in% names(exe_info)]
+  # Only the assignments the binary can speak to. Anything else is left alone
+  # rather than reported as a mismatch: an adopted executable carries no record
+  # of what produced it, so an unreportable option is unverifiable, not wrong.
+  # Read through parsed_cpp_options() so that unnamed raw assignments, duplicate
+  # names and vector values mean here what they mean to make.
+  assignments <- parsed_cpp_options(cpp_options)$assignments
+  reported <- intersect(names(assignments), tolower(names(exe_info)))
 
-  if (length(overlap) == 0) TRUE else all.equal(
-    exe_info[overlap],
-    cpp_options[overlap]
-  )
+  for (option_name in reported) {
+    # CmdStan enables these whenever the make variable is non-empty, so an empty
+    # assignment is the only way to ask for one to be off.
+    requested <- nzchar(assignments[[option_name]])
+    if (requested != isTRUE(cpp_option_value(exe_info, option_name))) {
+      return(FALSE)
+    }
+  }
+  TRUE
 }

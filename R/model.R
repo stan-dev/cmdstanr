@@ -833,9 +833,11 @@ compile <- function(quiet = TRUE,
         # the symmetric comparison.
         built_options <- private$built_cpp_options_
         inherited <- merge_exe_info_cpp_options(list(), exe_info)
-        inherited <- inherited[
-          !tolower(names(inherited)) %in% tolower(names(built_options))
-        ]
+        # Which options were passed explicitly is a question about what make was
+        # given, not about the shape of the list: an unnamed "STAN_THREADS=TRUE"
+        # is as explicit as a named entry, and names() cannot see it.
+        explicit <- names(parsed_cpp_options(built_options)$assignments)
+        inherited <- inherited[!tolower(names(inherited)) %in% explicit]
         # Explicit options are appended last because cpp_options reach make on
         # the command line, which overrides make/local.
         options_mismatch <- cpp_options_disagree(
@@ -849,14 +851,8 @@ compile <- function(quiet = TRUE,
         # as wrong, and warning whenever provenance is unknown would fire on
         # ordinary reuse. Recording provenance beside the executable is the
         # fix (#1238).
-        #
-        # model_compile_info() reports upper-case names while
-        # exe_info_reflects_cpp_options() compares lower-case ones, so without
-        # aligning them the comparison finds no overlap and always agrees.
-        reported <- exe_info
-        names(reported) <- tolower(names(reported))
         options_mismatch <-
-          !isTRUE(exe_info_reflects_cpp_options(reported, cpp_options))
+          !isTRUE(exe_info_reflects_cpp_options(exe_info, cpp_options))
       }
     }
 

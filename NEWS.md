@@ -66,7 +66,11 @@ compares the options passed to `Make` against those requested, and treats
 anything the binary reports but was never passed as inherited from `make/local`
 and so unchanged by a rebuild. For one adopted from an earlier session only the
 few `STAN_*` flags the binary reports can be checked, and anything else passes
-unremarked. Use `force_recompile = TRUE` when a supplied option has to take
+unremarked. It can also warn when nothing would in fact change: an option
+inherited from `make/local` that the binary does not report looks like a request
+the executable lacks, and one that was both passed explicitly and set in
+`make/local` looks like something a rebuild would drop when it would be
+inherited again. Use `force_recompile = TRUE` when a supplied option has to take
 effect. (#1235)
 * `$cpp_options()` now also reports options the executable was built with that
 were never passed to `$compile()`, such as those inherited from `make/local`,

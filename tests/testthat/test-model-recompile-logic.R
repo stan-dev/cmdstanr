@@ -549,14 +549,59 @@ test_that("options inherited from make/local are learned, not warned about", {
   )
 })
 
-test_that("an executable built with an explicit NULL accepts NULL again", {
+test_that("an explicitly passed raw assignment is not taken for make/local", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
+  threaded <- paste0(
+    "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\n",
+    "STAN_THREADS=true"
+  )
 
   mod <- cmdstan_model(stan_file, compile = FALSE)
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(status = 1),
+    info_ret = list(status = 0, stdout = threaded),
+    code = mod$compile(
+      cpp_options = structure(
+        list("STAN_THREADS=TRUE", TRUE),
+        names = c("", "stan_cpp_optims")
+      ),
+      force_recompile = TRUE
+    )
+  )
+
+  # The binary reports threading and this call did not name stan_threads, but it
+  # did pass STAN_THREADS=TRUE as a raw assignment, so the flag is not inherited
+  # from make/local and omitting it would drop it. Reading names() rather than
+  # what make was given missed that and stayed quiet.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = threaded),
+    code = expect_no_mock_compile(
+      expect_warning(
+        mod$compile(cpp_options = list(stan_cpp_optims = TRUE)),
+        "do not match the ones requested"
+      )
+    )
+  )
+})
+
+test_that("an executable built with an explicit NULL accepts NULL again", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  # Metadata reporting threading off, rather than no metadata at all, so the
+  # merge is exercised: a reported FALSE is skipped, leaving the explicit NULL
+  # to stand as the empty assignment it is.
+  disabled <- paste0(
+    "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\n",
+    "STAN_THREADS=false"
+  )
+
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = disabled),
     code = mod$compile(
       cpp_options = list(stan_threads = NULL),
       force_recompile = TRUE
@@ -566,7 +611,7 @@ test_that("an executable built with an explicit NULL accepts NULL again", {
   # An empty STAN_THREADS= is what was built with, so re-stating it matches.
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(status = 1),
+    info_ret = list(status = 0, stdout = disabled),
     code = expect_no_mock_compile(
       expect_no_warning(mod$compile(cpp_options = list(stan_threads = NULL)))
     )
