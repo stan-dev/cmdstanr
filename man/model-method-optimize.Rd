@@ -162,13 +162,12 @@ running \code{cmdstanr_example(method="optimize")$metadata()}.}
 
 \item{jacobian}{(logical) Whether or not to use the Jacobian adjustment for
 constrained variables. For historical reasons, the default is \code{FALSE}.
-CmdStan refers to the estimates obtained with \code{FALSE} and \code{TRUE} as MLE and
-MAP estimates, respectively. More precisely, \code{FALSE} finds a mode of the
-target in the constrained parameter space and \code{TRUE} finds a mode in the
-unconstrained space. This argument does not control whether prior terms are
-included. See the \strong{Description} section and the CmdStan User's Guide for
-more details. For use later with \code{\link[=model-method-laplace]{$laplace()}}, the
-\code{jacobian} argument should typically be set to \code{TRUE}.}
+\code{FALSE} finds a mode of the target in the constrained parameter space and
+\code{TRUE} finds a mode in the unconstrained space. This argument does not
+control whether prior terms are included. See the \strong{Description} section
+and the CmdStan User's Guide for more details. For use later with
+\code{\link[=model-method-laplace]{$laplace()}}, the \code{jacobian} argument should
+typically be set to \code{TRUE}.}
 
 \item{init_alpha}{(positive real) The initial step size parameter.}
 
@@ -211,25 +210,18 @@ A \code{\link{CmdStanMLE}} object.
 }
 \description{
 The \verb{$optimize()} method of a \code{\link{CmdStanModel}} object runs
-Stan's optimizer. Following CmdStan's terminology, optimization without
-the Jacobian adjustment (the default) returns a maximum likelihood estimate
-(MLE), whereas optimization with the adjustment returns a maximum a
-posteriori (MAP) estimate. More precisely, without the adjustment the
+Stan's optimizer. Without the Jacobian adjustment (the default),
 optimization finds a mode of the target in the original constrained
-parameter space (if the mode exists), whereas with the adjustment it
-finds a mode of the corresponding density in the unconstrained parameter
-space.
+parameter space (if the mode exists). With the adjustment, it finds a mode
+of the corresponding density in the unconstrained parameter space.
 
 The \code{jacobian} argument does not determine whether prior terms are
 included. Every contribution to the Stan program's \code{target}, including
-prior terms, is included under either setting. The MLE or MAP
-interpretation therefore depends on both the contents of the target and the
-parameterization. The Jacobian adjustment is particularly useful when
-making a distributional approximation in the unconstrained space (see
-\link[=model-method-laplace]{Laplace sampling}). If the model has only
-unconstrained parameters, including the Jacobian has no effect. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/index.html}{CmdStan User's Guide}
-for more details.
+prior terms, is included under either setting. The Jacobian adjustment is
+particularly useful when making a distributional approximation in the
+unconstrained space (see \link[=model-method-laplace]{Laplace sampling}). If the
+model has only unconstrained parameters, including the Jacobian has no
+effect. See the \href{https://mc-stan.org/docs/cmdstan-guide/index.html}{CmdStan User's Guide} for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
 installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
