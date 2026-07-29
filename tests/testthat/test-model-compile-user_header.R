@@ -175,6 +175,47 @@ test_that("compile() uses a user header supplied to cmdstan_model()", {
   )
 })
 
+test_that("a header configured over a current executable does not rebuild", {
+  stan_file <- local_external_model()
+  header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_stanc()
+
+  # An executable that already exists and is newer than both the program and
+  # the header, built through a different object.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+  exe <- cmdstan_ext(strip_ext(stan_file))
+  Sys.setFileTime(stan_file, Sys.time() - 60)
+  Sys.setFileTime(header, Sys.time() - 60)
+  Sys.setFileTime(exe, Sys.time())
+
+  # Nothing records which header an executable was built with -- the binary
+  # cannot report it and nothing is written alongside it -- so a fresh object
+  # cannot tell a header it was configured with from the one already compiled
+  # in. Rebuilding on the possibility would recompile in every new R session,
+  # so the up-to-date executable is kept and $cpp_options() does not claim a
+  # header it cannot vouch for. Documented under `force_recompile`.
+  for (route in user_header_routes(header)) {
+    model <- do.call(
+      cmdstan_model,
+      c(list(stan_file, compile = FALSE), route)
+    )
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = expect_no_mock_compile(model$compile())
+    )
+    expect_null(model$cpp_options()[["USER_HEADER"]])
+    expect_null(model$cpp_options()[["user_header"]])
+    # Source configuration is a separate axis and still reflects the request:
+    # it is what makes stanc accept the undefined functions the header defines.
+    expect_true(model$.__enclos_env__$private$using_user_header_)
+  }
+})
+
 test_that("cmdstan_model() records a user header from every supply route", {
   header <- withr::local_tempfile(lines = "", fileext = ".hpp")
 
