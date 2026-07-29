@@ -240,7 +240,11 @@ test_that("$compile() reuses include paths from the previous compilation", {
 })
 
 test_that("$compile() doesn't reuse cpp and stanc options from the previous compilation", {
-  stan_file <- testing_stan_file("bernoulli")
+  # A mocked compile installs a real (empty) executable, so this has to build a
+  # temporary copy rather than the shared test model.
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
   model <- cmdstan_model(stan_file, compile = FALSE)
   received_stancflags <- list()
   local_mocked_bindings(
@@ -251,14 +255,79 @@ test_that("$compile() doesn't reuse cpp and stanc options from the previous comp
     }
   )
 
-  model$compile(
+  # Successful compiles rather than dry runs: the precompile state these options
+  # travel in is cleared only once an executable has been installed, so a pair
+  # of dry runs never reaches the transition this test is named for and passes
+  # merely because arguments to one call are absent from another.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(
+      cpp_options = list(stan_threads = TRUE),
+      stanc_options = list("warn-pedantic" = TRUE),
+      force_recompile = TRUE
+    )
+  )
+  expect_true(model$cpp_options()[["stan_threads"]])
+  expect_equal(
+    vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
+    rep(TRUE, 2)
+  )
+
+  received_stancflags <- list()
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(force_recompile = TRUE)
+  )
+
+  expect_null(model$cpp_options()[["stan_threads"]])
+  expect_equal(
+    vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
+    rep(FALSE, 2)
+  )
+})
+
+test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_model()", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  # Options given to the constructor are held until the first compilation
+  # consumes them, unlike the include paths and user header, which persist.
+  model <- cmdstan_model(
+    stan_file,
+    compile = FALSE,
     cpp_options = list(stan_threads = TRUE),
-    stanc_options = list("warn-pedantic" = TRUE),
-    force_recompile = TRUE,
-    dry_run = TRUE
+    stanc_options = list("warn-pedantic" = TRUE)
   )
   received_stancflags <- list()
-  model$compile(force_recompile = TRUE, dry_run = TRUE)
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(force_recompile = TRUE)
+  )
+  expect_true(model$cpp_options()[["stan_threads"]])
+  expect_equal(
+    vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
+    rep(TRUE, 2)
+  )
+
+  # The held options are released only by a successful compilation, so this is
+  # the transition that a pair of dry runs cannot reach.
+  received_stancflags <- list()
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(force_recompile = TRUE)
+  )
 
   expect_null(model$cpp_options()[["stan_threads"]])
   expect_equal(
