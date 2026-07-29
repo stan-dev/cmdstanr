@@ -37,6 +37,10 @@ version of the Stan program. They must be exposed again with
 compilation when they are not supplied again. Recompiling a model that uses
 `#include` directives or a user header through the same object previously
 failed because those inputs were dropped. (#1234)
+* `$compile()` now recompiles when `include_paths` change. Previously the model
+went on using the executable built against the old paths while `$variables()`
+and `$include_paths()` described the new ones, so data and initial values were
+validated against a program that was not running. (#1235)
 * A `user_header` supplied to `cmdstan_model()` is now used by a later
 `$compile()`. Previously it was only honored when the model was compiled
 immediately. (#1234)

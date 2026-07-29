@@ -248,6 +248,8 @@ CmdStanModel <- R6::R6Class(
     # the two have drifted apart. Set by a change of header, cleared only by a
     # successful executable replacement.
     user_header_dirty_ = FALSE,
+    # The same, for a change of include paths.
+    include_paths_dirty_ = FALSE,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -629,7 +631,21 @@ compile <- function(quiet = TRUE,
   if (is.null(include_paths)) {
     include_paths <- private$include_paths_ %||% private$precompile_include_paths_
   }
-  private$include_paths_ <- resolve_path(include_paths)
+  resolved_include_paths <- resolve_path(include_paths)
+  # Compared before the assignment below, and latched for the same reason the
+  # header's marker is: a failed compile must keep the new paths, so on the
+  # retry they resolve back to themselves and nothing looks changed. Order is
+  # significant -- it decides which directory a directive resolves from -- so
+  # this is an ordered comparison, which same_path() already does.
+  #
+  # Only a change counts, never the first configuration: a fresh object holds no
+  # paths, so comparing against nothing would force a rebuild in every new R
+  # session. That leaves an executable adopted from an earlier session unproven,
+  # which is documented under `force_recompile`.
+  private$include_paths_dirty_ <- isTRUE(private$include_paths_dirty_) ||
+    (length(private$include_paths_) > 0 &&
+       !same_path(resolved_include_paths, private$include_paths_))
+  private$include_paths_ <- resolved_include_paths
   include_paths <- private$include_paths_
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
@@ -701,6 +717,7 @@ compile <- function(quiet = TRUE,
   # - the executable does not exist
   # - the destination is not the executable this object already describes
   # - the user header in use is not the one the executable was built against
+  # - the include paths in use are not the ones the executable was built against
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
   if (!file.exists(exe)) {
@@ -708,6 +725,8 @@ compile <- function(quiet = TRUE,
   } else if (exe_changed) {
     force_recompile <- TRUE
   } else if (isTRUE(private$user_header_dirty_)) {
+    force_recompile <- TRUE
+  } else if (isTRUE(private$include_paths_dirty_)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
              && file.mtime(exe) < file.mtime(self$stan_file())) {
@@ -923,6 +942,7 @@ compile <- function(quiet = TRUE,
     private$stan_code_ <- stan_code
     private$variables_ <- NULL
     private$user_header_dirty_ <- FALSE
+    private$include_paths_dirty_ <- FALSE
     private$hpp_file_ <- hpp_file
     private$model_methods_env_ <- model_methods_env
     private$cpp_options_ <- cpp_options

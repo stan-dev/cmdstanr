@@ -126,6 +126,52 @@ test_that("a no-op compile does not record cpp_options the executable lacks", {
   )
 })
 
+test_that("changing include_paths forces recompilation", {
+  model_dir <- withr::local_tempdir()
+  dir_a <- file.path(model_dir, "a")
+  dir_b <- file.path(model_dir, "b")
+  dir.create(dir_a)
+  dir.create(dir_b)
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+  Sys.setFileTime(stan_file, Sys.time() - 60)
+
+  mod <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, include_paths = dir_a, force_recompile = TRUE)
+  )
+
+  # The same #include directive can resolve to a different file under a
+  # different include directory, so an executable built against one does not
+  # describe the program the other produces. Without this the object reported
+  # the new paths and the new $variables() while still running the old binary,
+  # which is the stale-validation failure #1228 is about.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_mock_compile(mod$compile(include_paths = dir_b))
+  )
+  expect_equal(mod$include_paths(), resolve_path(dir_b))
+
+  # The recorded paths are now the ones just built against, so a bare call has
+  # nothing new to build.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(mod$compile())
+  )
+
+  # Same directory, different spelling: not a change.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      mod$compile(include_paths = file.path(dir_b, "."))
+    )
+  )
+})
+
 test_that("a no-op compile adopts an executable the object did not build", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
