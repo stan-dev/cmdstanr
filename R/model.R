@@ -523,8 +523,10 @@ NULL
 #'   **Note:** For historical reasons, CmdStan treats some options as enabled
 #'   whenever their `Make` variable is non-empty. In particular, setting
 #'   `stan_threads` to `FALSE` passes `STAN_THREADS=FALSE` to `Make`, which
-#'   still enables threading! To leave threading disabled, simply omit
-#'   `stan_threads` entirely or set it to `NULL`.
+#'   still enables threading! To leave threading disabled, either omit
+#'   `stan_threads` entirely, which leaves any setting in `make/local` in
+#'   place, or set it to `NULL`, which passes an empty `STAN_THREADS=` and so
+#'   overrides `make/local` too.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   [`stanc` chapter of the CmdStan User's

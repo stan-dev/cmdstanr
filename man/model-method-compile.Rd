@@ -61,8 +61,10 @@ see the Stan case study \href{https://mc-stan.org/users/documentation/case-studi
 \strong{Note:} For historical reasons, CmdStan treats some options as enabled
 whenever their \code{Make} variable is non-empty. In particular, setting
 \code{stan_threads} to \code{FALSE} passes \code{STAN_THREADS=FALSE} to \code{Make}, which
-still enables threading! To leave threading disabled, simply omit
-\code{stan_threads} entirely or set it to \code{NULL}.}
+still enables threading! To leave threading disabled, either omit
+\code{stan_threads} entirely, which leaves any setting in \code{make/local} in
+place, or set it to \code{NULL}, which passes an empty \verb{STAN_THREADS=} and so
+overrides \code{make/local} too.}
 
 \item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
 when compiling the model. See the \strong{Examples} section below as well as the
