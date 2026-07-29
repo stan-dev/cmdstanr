@@ -62,6 +62,9 @@ the options have no effect. Use `force_recompile = TRUE` to rebuild. (#1235)
 Previously a request that did not rebuild the model was recorded as though it
 had, so `$sample()` could fail with "the model executable was built with
 threading enabled" for a binary that had no threading. (#1019, #1235)
+* `$format(overwrite_file = TRUE)` now refreshes `$variables()` along with
+`$code()`, which previously kept describing the program as it was before
+formatting. (#1235)
 * `$compile()` now errors if the newly compiled executable cannot be installed,
 restoring the previous executable. Previously the replacement was unchecked, so
 a failure could silently leave the model with no executable at all. (#1235)
