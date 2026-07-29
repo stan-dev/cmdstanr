@@ -324,33 +324,32 @@ are called in a similar way to the `$sample()` method demonstrated above.
 
 ### Optimization
 
-Following CmdStan's terminology, we can find the (penalized) maximum likelihood
-estimate (MLE) using [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
+We can find a mode of the target using
+[`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
 
 ```{r optimize}
-fit_mle <- mod$optimize(data = data_list, seed = 123)
-fit_mle$print() # includes lp__ (log prob calculated by Stan program)
-fit_mle$mle("theta")
+fit_optim <- mod$optimize(data = data_list, seed = 123)
+fit_optim$print() # includes lp__ (log prob calculated by Stan program)
+fit_optim$mle("theta")
 ```
 
-Here's a plot comparing the penalized MLE to the posterior distribution of
+Here's a plot comparing the optimized point estimate to the posterior of
 `theta`.
 
-```{r plot-mle, message = FALSE}
+```{r plot-optim, message = FALSE}
 mcmc_hist(fit$draws("theta")) +
-  vline_at(fit_mle$mle("theta"), size = 1.5)
+  vline_at(fit_optim$mle("theta"), size = 1.5)
 ```
 
 For optimization, by default the mode is calculated without the Jacobian
-adjustment for constrained variables. Including the Jacobian adjustment by setting `jacobian=TRUE` produces a maximum a posteriori (MAP) estimate. More precisely, the default
-finds a mode of the target in the constrained parameter space, whereas
-`jacobian=TRUE` finds a mode of the corresponding density in the unconstrained
-space. See the
-[Maximum Likelihood Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
+adjustment for constrained variables. The default finds a mode of the target in
+the constrained parameter space, whereas `jacobian = TRUE` finds a mode of the
+corresponding density in the unconstrained space. See the
+[Jacobian adjustments](https://mc-stan.org/docs/cmdstan-guide/optimize_config.html#jacobian-adjustments)
 section of the CmdStan User's Guide for more details.
 
-```{r optimize-map}
-fit_map <- mod$optimize(
+```{r optimize-jacobian}
+fit_optim_jacobian <- mod$optimize(
   data = data_list,
   jacobian = TRUE,
   seed = 123
@@ -361,23 +360,19 @@ fit_map <- mod$optimize(
 
 The [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 method produces a sample from a normal approximation centered at the mode of a
-distribution in the unconstrained space. Following CmdStan's terminology, if
-the mode is a MAP estimate, the draws provide an estimate of the mean and
-standard deviation of the posterior distribution. If the mode is an MLE, the
-draws provide an estimate of the standard error of the likelihood. Whether
-the mode is called MAP or MLE depends on the value of the `jacobian` argument
-when running optimization. The Laplace `jacobian` setting must match the setting
-used for optimization so that both use the same target density. See the
+distribution in the unconstrained space. The Laplace `jacobian` setting must
+match the setting used for optimization so that both use the same target
+density. See the
 [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
 chapter of the CmdStan User's Guide for more details.
 
-Here we pass in the `fit_map` object from above as the `mode` argument. If
-`mode` is omitted then optimization will be run internally before taking draws
-from the normal approximation.
+Here we pass in the `fit_optim_jacobian` object from above as the `mode`
+argument. If `mode` is omitted then optimization will be run internally before
+taking draws from the normal approximation.
 
 ```{r laplace}
 fit_laplace <- mod$laplace(
-    mode = fit_map,
+    mode = fit_optim_jacobian,
     draws = 4000,
     data = data_list,
     seed = 123,
