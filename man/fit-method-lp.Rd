@@ -60,8 +60,8 @@ distribution on the unconstrained space.
 fit_mcmc <- cmdstanr_example("logistic")
 head(fit_mcmc$lp())
 
-fit_mle <- cmdstanr_example("logistic", method = "optimize")
-fit_mle$lp()
+fit_optim <- cmdstanr_example("logistic", method = "optimize")
+fit_optim$lp()
 
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 plot(fit_vb$lp(), fit_vb$lp_approx())

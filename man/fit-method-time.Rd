@@ -39,13 +39,13 @@ fit_mcmc$time()
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 fit_vb$time()
 
-fit_mle <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
-fit_mle$time()
+fit_optim <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
+fit_optim$time()
 
-# use fit_mle to draw samples from laplace approximation
-fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_mle)
+# use fit_optim to draw samples from laplace approximation
+fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_optim)
 fit_laplace$time() # just time for drawing sample not for running optimize
-fit_laplace$time()$total + fit_mle$time()$total # total time
+fit_laplace$time()$total + fit_optim$time()$total # total time
 }
 
 }

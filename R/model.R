@@ -1457,25 +1457,19 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer. Following CmdStan's terminology, optimization without
-#'   the Jacobian adjustment (the default) returns a maximum likelihood estimate
-#'   (MLE), whereas optimization with the adjustment returns a maximum a
-#'   posteriori (MAP) estimate. More precisely, without the adjustment the
+#'   Stan's optimizer. Without the Jacobian adjustment (the default),
 #'   optimization finds a mode of the target in the original constrained
-#'   parameter space (if the mode exists), whereas with the adjustment it
-#'   finds a mode of the corresponding density in the unconstrained parameter
-#'   space.
+#'   parameter space (if the mode exists). With the adjustment, it finds a mode
+#'   of the corresponding density in the unconstrained parameter space.
 #'
 #'   The `jacobian` argument does not determine whether prior terms are
 #'   included. Every contribution to the Stan program's `target`, including
-#'   prior terms, is included under either setting. The MLE or MAP
-#'   interpretation therefore depends on both the contents of the target and the
-#'   parameterization. The Jacobian adjustment is particularly useful when
-#'   making a distributional approximation in the unconstrained space (see
-#'   [Laplace sampling][model-method-laplace]). If the model has only
-#'   unconstrained parameters, including the Jacobian has no effect. See the
-#'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/index.html)
-#'   for more details.
+#'   prior terms, is included under either setting. The Jacobian adjustment is
+#'   particularly useful when making a distributional approximation in the
+#'   unconstrained space (see [Laplace sampling][model-method-laplace]). If the
+#'   model has only unconstrained parameters, including the Jacobian has no
+#'   effect. See the [CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/index.html) for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the [CmdStan User’s
@@ -1496,13 +1490,12 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
 #' @param jacobian (logical) Whether or not to use the Jacobian adjustment for
 #'   constrained variables. For historical reasons, the default is `FALSE`.
-#'   CmdStan refers to the estimates obtained with `FALSE` and `TRUE` as MLE and
-#'   MAP estimates, respectively. More precisely, `FALSE` finds a mode of the
-#'   target in the constrained parameter space and `TRUE` finds a mode in the
-#'   unconstrained space. This argument does not control whether prior terms are
-#'   included. See the **Description** section and the CmdStan User's Guide for
-#'   more details. For use later with [`$laplace()`][model-method-laplace], the
-#'   `jacobian` argument should typically be set to `TRUE`.
+#'   `FALSE` finds a mode of the target in the constrained parameter space and
+#'   `TRUE` finds a mode in the unconstrained space. This argument does not
+#'   control whether prior terms are included. See the **Description** section
+#'   and the CmdStan User's Guide for more details. For use later with
+#'   [`$laplace()`][model-method-laplace], the `jacobian` argument should
+#'   typically be set to `TRUE`.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1604,16 +1597,11 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @description The `$laplace()` method of a [`CmdStanModel`] object produces a
 #'   sample from a normal approximation centered at the mode of a distribution
-#'   in the unconstrained space. Following CmdStan's terminology, if the mode is
-#'   a maximum a posteriori (MAP) estimate, the samples provide an estimate of
-#'   the mean and standard deviation of the posterior distribution. If the mode
-#'   is a maximum likelihood estimate (MLE), the sample provides an estimate of
-#'   the standard error of the likelihood. Whether the mode is called MAP or MLE
-#'   depends on the value of the `jacobian` argument when running optimization.
-#'   This terminology does not imply that `jacobian` controls whether prior
-#'   terms are included; it controls the parameterization of the density, while
-#'   the Stan program determines the contents of the target. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   in the unconstrained space. When the mode was found with the Jacobian
+#'   adjustment, the draws provide an estimate of the mean and standard
+#'   deviation of the posterior distribution. See the `jacobian` argument below
+#'   for how this setting relates to the value used when running optimization,
+#'   and the [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
@@ -1639,7 +1627,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' @param draws (positive integer) The number of draws to take.
 #' @param jacobian (logical) Whether or not to enable the Jacobian adjustment
 #'   for constrained parameters. The default is `TRUE`. See the
-#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace_sample_config.html)
 #'   section of the CmdStan User's Guide for more details. If `mode` is not
 #'   `NULL` then the value of `jacobian` must match the value used when
 #'   optimization was originally run so the mode and the Laplace approximation
