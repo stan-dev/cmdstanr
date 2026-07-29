@@ -89,6 +89,41 @@ merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
   cpp_options
 }
 
+# The options a compilation would actually be run with, normalized so that a
+# request can be compared against what an executable was built with. Names are
+# lower-cased because CmdStanR input and executable metadata disagree on case;
+# header entries are dropped because header identity is tracked separately and
+# forces a rebuild on its own; NULL and FALSE are dropped because neither asks
+# make for anything; and values are compared as strings so that TRUE and "TRUE"
+# are not read as different requests.
+normalized_cpp_options <- function(cpp_options) {
+  normalized <- list()
+  for (option_name in names(cpp_options)) {
+    value <- cpp_options[[option_name]]
+    if (tolower(option_name) %in% c("user_header", "stan_version")) {
+      next
+    }
+    if (is.null(value) || isFALSE(value)) {
+      next
+    }
+    normalized[[tolower(option_name)]] <- as.character(value)
+  }
+  if (length(normalized) == 0) {
+    return(normalized)
+  }
+  normalized[order(names(normalized))]
+}
+
+# Whether an executable built with `recorded` would differ from one built with
+# `requested`. Symmetric, because cpp_options are one-shot: a recompilation
+# carrying `requested` would drop anything `recorded` holds that it does not.
+cpp_options_disagree <- function(requested, recorded) {
+  !identical(
+    normalized_cpp_options(requested),
+    normalized_cpp_options(recorded)
+  )
+}
+
 # convert to compile flags --------------------
 # from list(flag1=TRUE, flag2=FALSE) to "FLAG1=TRUE\nFLAG2=FALSE"
 cpp_options_to_compile_flags <- function(cpp_options) {

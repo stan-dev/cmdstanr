@@ -132,8 +132,11 @@ test_that("changing include_paths forces recompilation", {
   dir_b <- file.path(model_dir, "b")
   dir.create(dir_a)
   dir.create(dir_b)
-  stan_file <- file.path(model_dir, "bernoulli.stan")
-  file.copy(stan_program, stan_file)
+  # One directive, two directories, two different programs.
+  writeLines("parameters { real alpha; }", file.path(dir_a, "params.stan"))
+  writeLines("parameters { real beta; }", file.path(dir_b, "params.stan"))
+  stan_file <- file.path(model_dir, "included.stan")
+  writeLines(c("#include params.stan", "model { target += 0; }"), stan_file)
   Sys.setFileTime(stan_file, Sys.time() - 60)
 
   mod <- with_mocked_cli(
@@ -141,18 +144,20 @@ test_that("changing include_paths forces recompilation", {
     info_ret = list(status = 1),
     code = cmdstan_model(stan_file, include_paths = dir_a, force_recompile = TRUE)
   )
+  expect_equal(names(mod$variables()$parameters), "alpha")
 
-  # The same #include directive can resolve to a different file under a
-  # different include directory, so an executable built against one does not
-  # describe the program the other produces. Without this the object reported
-  # the new paths and the new $variables() while still running the old binary,
-  # which is the stale-validation failure #1228 is about.
+  # The same #include directive resolves to a different file under the other
+  # directory, so an executable built against one does not describe the program
+  # the other produces. Without this the object reported the new paths and the
+  # new $variables() while still running the old binary, which is the
+  # stale-validation failure #1228 is about.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
     code = expect_mock_compile(mod$compile(include_paths = dir_b))
   )
   expect_equal(mod$include_paths(), resolve_path(dir_b))
+  expect_equal(names(mod$variables()$parameters), "beta")
 
   # The recorded paths are now the ones just built against, so a bare call has
   # nothing new to build.
@@ -265,6 +270,148 @@ test_that("a no-op compile does not adopt options the executable lacks", {
   expect_null(mod$cpp_options()$stan_threads)
 })
 
+test_that("a no-op compile warns about options the executable cannot report", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+
+  # CmdStan 2.39 reports no STAN_CPP_OPTIMS, and reports nothing at all about
+  # arbitrary make variables, so the binary's own metadata can neither confirm
+  # nor deny either request. This object compiled this executable, though, so
+  # what it was built with is known exactly and both requests plainly disagree
+  # with it. Detecting these through the metadata alone silently ignored them.
+  info <- paste0(
+    "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\n",
+    "STAN_THREADS=false"
+  )
+  for (requested in list(
+    list(stan_cpp_optims = TRUE),
+    list(my_custom_make_flag = "1")
+  )) {
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 0, stdout = info),
+      code = expect_no_mock_compile(
+        expect_warning(
+          mod$compile(cpp_options = requested),
+          "was not built with the requested"
+        )
+      )
+    )
+    expect_null(cpp_option_value(mod$cpp_options(), names(requested)))
+  }
+})
+
+test_that("a no-op compile stays quiet about options it was built with", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(
+      stan_file,
+      cpp_options = list(stan_cpp_optims = TRUE, my_custom_make_flag = "1"),
+      force_recompile = TRUE
+    )
+  )
+
+  # Same unreportable options, but this executable really was built with them,
+  # so re-supplying them is ordinary reuse and must not warn.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      expect_no_warning(
+        mod$compile(
+          cpp_options = list(stan_cpp_optims = TRUE, my_custom_make_flag = "1")
+        )
+      )
+    )
+  )
+})
+
+test_that("option comparison ignores spelling, NULL and omission", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(
+      stan_file,
+      cpp_options = list(STAN_CPP_OPTIMS = TRUE),
+      force_recompile = TRUE
+    )
+  )
+
+  quietly <- function(requested) {
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = expect_no_mock_compile(
+        expect_no_warning(mod$compile(cpp_options = requested))
+      )
+    )
+  }
+  # Same option, other spelling, and the string a makefile would carry.
+  quietly(list(stan_cpp_optims = TRUE))
+  quietly(list(stan_cpp_optims = "TRUE"))
+  # NULL asks make for nothing, so it is omission, not a request to unset.
+  quietly(list(stan_cpp_optims = TRUE, stan_threads = NULL))
+
+  # Dropping a recorded option is still a change: cpp_options are one-shot, so
+  # recompiling with this list would build without STAN_CPP_OPTIMS.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      expect_warning(
+        mod$compile(cpp_options = list(stan_threads = TRUE)),
+        "was not built with the requested"
+      )
+    )
+  )
+})
+
+test_that("an adopted executable stays silent about options it cannot report", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+
+  # A second object adopts that executable and holds no generated C++ for it,
+  # so the binary's own metadata is the only description available and it
+  # reports nothing about STAN_CPP_OPTIMS. Unverifiable is not a mismatch, so
+  # this neither warns nor records the request. (#1238)
+  info <- paste0(
+    "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\n",
+    "STAN_THREADS=false"
+  )
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = info),
+    code = expect_no_mock_compile(
+      expect_no_warning(
+        mod <- cmdstan_model(
+          stan_file,
+          cpp_options = list(stan_cpp_optims = TRUE)
+        )
+      )
+    )
+  )
+  expect_null(mod$cpp_options()$stan_cpp_optims)
+})
+
 test_that("no mismatch warning when the executable already has the options", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
@@ -272,11 +419,18 @@ test_that("no mismatch warning when the executable already has the options", {
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
-    code = mod <- cmdstan_model(stan_file, force_recompile = TRUE)
+    code = cmdstan_model(
+      stan_file,
+      cpp_options = list(stan_threads = TRUE),
+      force_recompile = TRUE
+    )
   )
 
-  # The executable reports exactly what is being asked for, so re-stating it
-  # must stay quiet -- otherwise the warning fires on ordinary reuse.
+  # Adopted by a second object, so the binary's metadata is the only account of
+  # it available -- an object that compiled the executable is answered from what
+  # it recorded instead. The metadata reports exactly what is being asked for,
+  # so re-stating it must stay quiet, otherwise the warning fires on ordinary
+  # reuse.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(
@@ -284,9 +438,12 @@ test_that("no mismatch warning when the executable already has the options", {
       stdout = "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\nSTAN_THREADS=true"
     ),
     code = expect_no_warning(
-      mod$compile(cpp_options = list(stan_threads = TRUE))
+      mod <- cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE))
     )
   )
+  # Hydrated from metadata, so it carries the metadata's spelling; the accessor
+  # the fitting methods use is case-insensitive.
+  expect_true(cpp_option_value(mod$cpp_options(), "stan_threads"))
 })
 
 test_that("a no-op compile tolerates an executable it cannot query", {

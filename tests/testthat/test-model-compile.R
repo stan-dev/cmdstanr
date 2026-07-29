@@ -227,16 +227,44 @@ test_that("$compile() reuses include paths from the previous compilation", {
   file.copy(testing_stan_file("bernoulli_include"), model_dir)
   file.copy(testing_stan_file("divide_real_by_two"), include_dir)
 
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
   mod <- cmdstan_model(
     file.path(model_dir, "bernoulli_include.stan"),
     include_paths = include_dir,
     compile = FALSE
   )
-  mod$compile(dry_run = TRUE, quiet = TRUE)
+  # A successful compile rather than a dry run: a dry run leaves
+  # precompile_include_paths_ in place, so the call after it can find the paths
+  # there and the reuse through the compiled state is never exercised.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod$compile(force_recompile = TRUE, quiet = TRUE)
+  )
+  expect_null(mod$.__enclos_env__$private$precompile_include_paths_)
 
-  # the include path isn't supplied again, but the included file is still found
-  expect_no_error(mod$compile(force_recompile = TRUE, dry_run = TRUE, quiet = TRUE))
+  # The include path isn't supplied again, but the included file is still found
+  # and the path still reaches stanc.
+  received_stancflags <- list()
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_error(mod$compile(force_recompile = TRUE, quiet = TRUE))
+  )
   expect_equal(mod$include_paths(), resolve_path(include_dir))
+  expect_true(all(vapply(
+    received_stancflags,
+    function(x) any(grepl(mod$include_paths(), x, fixed = TRUE)),
+    logical(1)
+  )))
 })
 
 test_that("$compile() doesn't reuse cpp and stanc options from the previous compilation", {

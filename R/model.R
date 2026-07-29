@@ -786,8 +786,16 @@ compile <- function(quiet = TRUE,
     # Asking the executable about itself. Best effort, because
     # model_compile_info() runs it and errors outright rather than returning a
     # status when the file is not runnable.
+    # This object holds the generated C++ for an executable only if it compiled
+    # it, and in that case what make was run with is recorded exactly. No
+    # metadata query can improve on that, and metadata cannot speak to options
+    # like STAN_CPP_OPTIMS -- absent from CmdStan 2.39's output -- or to
+    # arbitrary make variables at all.
+    built_here <- !is.null(self$functions$hpp_code)
+
     exe_info <- NULL
-    if (cpp_options_available || length(private$exe_file_) == 0) {
+    if (length(private$exe_file_) == 0 ||
+        (cpp_options_available && !built_here)) {
       exe_info <- tryCatch(
         model_compile_info(exe, self$cmdstan_version()),
         error = function(e) NULL
@@ -801,14 +809,26 @@ compile <- function(quiet = TRUE,
     # fix and is still outstanding (see the skipped tests in
     # test-model-recompile-logic.R); until then, say so.
     options_mismatch <- FALSE
-    if (cpp_options_available && length(exe_info) > 0) {
-      # model_compile_info() reports upper-case names while
-      # exe_info_reflects_cpp_options() compares lower-case ones, so without
-      # aligning them the comparison finds no overlap and always agrees.
-      reported <- exe_info
-      names(reported) <- tolower(names(reported))
-      options_mismatch <-
-        !isTRUE(exe_info_reflects_cpp_options(reported, cpp_options))
+    if (cpp_options_available) {
+      if (built_here) {
+        options_mismatch <-
+          cpp_options_disagree(cpp_options, private$cpp_options_)
+      } else if (length(exe_info) > 0) {
+        # An adopted executable can only be asked about itself, and it answers
+        # about a handful of STAN_* flags. Options outside that set are left
+        # alone rather than reported as a mismatch: unverifiable is not the same
+        # as wrong, and warning whenever provenance is unknown would fire on
+        # ordinary reuse. Recording provenance beside the executable is the
+        # fix (#1238).
+        #
+        # model_compile_info() reports upper-case names while
+        # exe_info_reflects_cpp_options() compares lower-case ones, so without
+        # aligning them the comparison finds no overlap and always agrees.
+        reported <- exe_info
+        names(reported) <- tolower(names(reported))
+        options_mismatch <-
+          !isTRUE(exe_info_reflects_cpp_options(reported, cpp_options))
+      }
     }
 
     if (length(private$exe_file_) == 0) {

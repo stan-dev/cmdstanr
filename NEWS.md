@@ -61,7 +61,12 @@ at the C++ stage left the old executable paired with model methods generated
 from the new program. (#1235)
 * `$compile()` now warns when `cpp_options` are supplied but the existing
 executable is up to date and was not built with them, so nothing is rebuilt and
-the options have no effect. Use `force_recompile = TRUE` to rebuild. (#1235)
+the options have no effect. The check is best effort: for an executable the
+model object compiled itself the options are known exactly and any difference is
+reported, but for one adopted from an earlier session only the few `STAN_*`
+flags the binary reports about itself can be checked, and anything else passes
+unremarked. Use `force_recompile = TRUE` when a supplied option has to take
+effect. (#1235)
 * `$cpp_options()` no longer reports options the executable was not built with.
 Previously a request that did not rebuild the model was recorded as though it
 had, so `$sample()` could fail with "the model executable was built with
