@@ -41,14 +41,18 @@ program. Relative paths are resolved against the working directory when
 the model object is created (or when \verb{$compile()} is called) and stored as
 absolute paths, so subsequent changes to the working directory do not
 affect them. If \verb{$compile()} is called again without \code{include_paths}, the
-most recently supplied paths are reused.}
+most recently supplied paths are reused, and changing them forces
+recompilation. Edits to the included files themselves do not; see
+\code{force_recompile}.}
 
 \item{user_header}{(string) The path to a C++ file (with a .hpp extension)
 to compile with the Stan model. If \verb{$compile()} is called again without
 \code{user_header}, the most recently supplied header is reused, and changing
 it forces recompilation. Pass \code{user_header = NULL} to compile without one.
 A header can also be supplied via \code{cpp_options} as \code{USER_HEADER} or
-\code{user_header}; the \code{user_header} argument takes precedence over both.}
+\code{user_header}; the \code{user_header} argument takes precedence over both.
+See \code{force_recompile} for the case of a header supplied for a program
+whose executable is already up to date.}
 
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
 model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would
@@ -67,7 +71,16 @@ on available options.}
 
 \item{force_recompile}{(logical) Should the model be recompiled even if it
 has not been modified since it was last compiled? The default is \code{FALSE}.
-Can also be set via a global \code{cmdstanr_force_recompile} option.}
+Can also be set via a global \code{cmdstanr_force_recompile} option.
+
+Only the Stan program itself and the user header (if any) are checked for
+modification. Files pulled in by \verb{#include} directives are not, at any
+depth, so editing an included file does not on its own trigger
+recompilation. Use \code{force_recompile = TRUE} after changing one. Similarly,
+when a model object is created for a Stan program whose executable already
+exists and is up to date, CmdStanR cannot tell which \code{user_header} or
+\code{include_paths} that executable was built with, so supplying different
+ones does not force a rebuild.}
 
 \item{compile_model_methods}{(logical) Compile additional model methods
 (\code{log_prob()}, \code{grad_log_prob()}, \code{hessian()}, \code{constrain_variables()},

@@ -504,13 +504,17 @@ NULL
 #'   the model object is created (or when `$compile()` is called) and stored as
 #'   absolute paths, so subsequent changes to the working directory do not
 #'   affect them. If `$compile()` is called again without `include_paths`, the
-#'   most recently supplied paths are reused.
+#'   most recently supplied paths are reused, and changing them forces
+#'   recompilation. Edits to the included files themselves do not; see
+#'   `force_recompile`.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
 #'   to compile with the Stan model. If `$compile()` is called again without
 #'   `user_header`, the most recently supplied header is reused, and changing
 #'   it forces recompilation. Pass `user_header = NULL` to compile without one.
 #'   A header can also be supplied via `cpp_options` as `USER_HEADER` or
 #'   `user_header`; the `user_header` argument takes precedence over both.
+#'   See `force_recompile` for the case of a header supplied for a program
+#'   whose executable is already up to date.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
 #'   otherwise write in the `make/local` file. For an example of using threading
@@ -529,6 +533,15 @@ NULL
 #' @param force_recompile (logical) Should the model be recompiled even if it
 #'   has not been modified since it was last compiled? The default is `FALSE`.
 #'   Can also be set via a global `cmdstanr_force_recompile` option.
+#'
+#'   Only the Stan program itself and the user header (if any) are checked for
+#'   modification. Files pulled in by `#include` directives are not, at any
+#'   depth, so editing an included file does not on its own trigger
+#'   recompilation. Use `force_recompile = TRUE` after changing one. Similarly,
+#'   when a model object is created for a Stan program whose executable already
+#'   exists and is up to date, CmdStanR cannot tell which `user_header` or
+#'   `include_paths` that executable was built with, so supplying different
+#'   ones does not force a rebuild.
 #' @param compile_model_methods (logical) Compile additional model methods
 #'   (`log_prob()`, `grad_log_prob()`, `hessian()`, `constrain_variables()`,
 #'   `unconstrain_variables()`, `unconstrain_draws()`, and
