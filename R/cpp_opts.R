@@ -96,13 +96,15 @@ merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
 # than reading the list itself: what make is handed is what decides whether two
 # builds differ, and any second reading of these lists drifts from the first.
 # Named and unnamed entries, duplicate names, vector values that expand into
-# several assignments and NULLs that expand into none are all already resolved
-# by the time the flags exist.
+# several assignments and NULLs that expand into an empty NAME= are all already
+# resolved by the time the flags exist.
 #
 # Assignments are reduced last-wins, as a makefile does, and compared by
 # lower-cased name so that spelling is not a difference. Anything that is not an
-# assignment is opaque, so it keeps its position. Header entries are dropped:
-# header identity is tracked separately and forces a rebuild on its own.
+# assignment is opaque and keeps its order relative to the other opaque
+# arguments, though not its position among the assignments. Header entries are
+# dropped: header identity is tracked separately and forces a rebuild on its
+# own.
 normalized_cpp_options <- function(cpp_options) {
   assignments <- list()
   opaque <- character()
