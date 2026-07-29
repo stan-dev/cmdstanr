@@ -37,7 +37,10 @@ without compiling it or for a model that is already compiled the
 
 \item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
-program.}
+program. Relative paths are resolved against the working directory when
+the model object is created (or when \verb{$compile()} is called) and stored as
+absolute paths, so subsequent changes to the working directory do not
+affect them.}
 
 \item{user_header}{(string) The path to a C++ file (with a .hpp extension)
 to compile with the Stan model.}
@@ -114,17 +117,23 @@ location use
 }
 \examples{
 \dontrun{
-file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+stan_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 
 # by default compilation happens when cmdstan_model() is called.
 # to delay compilation until calling the $compile() method set compile=FALSE
-mod <- cmdstan_model(file, compile = FALSE)
+mod <- cmdstan_model(stan_file, compile = FALSE)
 mod$compile()
 mod$exe_file()
 
-# turn on threading support (for using functions that support within-chain parallelization)
-mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-mod$exe_file()
+# turn on threading support for using functions that support within-chain
+# parallelization or running multiple pathfinder paths in parallel
+# (here we compile a copy of the model in a temporary directory so that the
+# executable compiled without threading above is not overwritten)
+stan_file_threads <- file.path(tempdir(), "bernoulli.stan")
+file.copy(stan_file, stan_file_threads)
+mod_threads <- cmdstan_model(stan_file_threads, compile = FALSE)
+mod_threads$compile(cpp_options = list(stan_threads = TRUE))
+mod_threads$cpp_options()
 
 # turn on pedantic mode
 file_pedantic <- write_stan_file("
@@ -135,8 +144,9 @@ model {
   sigma ~ exponential(1);
 }
 ")
-mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-
+mod <- cmdstan_model(file_pedantic, compile = FALSE)
+mod$compile(pedantic = TRUE)
+# same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 }
 
 }

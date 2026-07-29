@@ -260,7 +260,7 @@ CmdStanModel <- R6::R6Class(
       if (!is.null(stan_file)) {
         assert_file_exists(stan_file, access = "r", extension = c("stan", "stanfunctions"))
         checkmate::assert_flag(compile)
-        private$stan_file_ <- absolute_path(stan_file)
+        private$stan_file_ <- resolve_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_cpp_options_ <- args$cpp_options %||% list()
@@ -270,20 +270,20 @@ CmdStanModel <- R6::R6Class(
           private$using_user_header_ <- TRUE
         }
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
-          private$precompile_include_paths_ <- dirname(stan_file)
+          private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
-          private$precompile_include_paths_ <- args$include_paths
+          private$precompile_include_paths_ <- resolve_path(args$include_paths)
         }
       }
       if (!is.null(exe_file)) {
         ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
-        private$exe_file_ <- repair_path(absolute_path(exe_file))
+        private$exe_file_ <- resolve_path(exe_file)
         if (is.null(stan_file)) {
           assert_file_exists(private$exe_file_, access = "r", extension = ext)
           private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
         private$include_paths_ <-
-          private$precompile_include_paths_ %||% args$include_paths
+          private$precompile_include_paths_ %||% resolve_path(args$include_paths)
       }
       if (!is.null(stan_file) && compile) {
         self$compile(...)
@@ -451,7 +451,7 @@ CmdStanModel <- R6::R6Class(
 #' * `$model_name()` returns the model name as a string.
 #' * `$exe_file()` returns a path as a string, or `character(0)` if no
 #'   executable path is set.
-#' * `$include_paths()` returns a character vector of paths or `NULL`.
+#' * `$include_paths()` returns a character vector of absolute paths or `NULL`.
 #' * `$cmdstan_version()` returns a CmdStan version as a string.
 #' * `$cpp_options()` returns a named list of C++ options.
 #' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
@@ -509,7 +509,10 @@ NULL
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
-#'   program.
+#'   program. Relative paths are resolved against the working directory when
+#'   the model object is created (or when `$compile()` is called) and stored as
+#'   absolute paths, so subsequent changes to the working directory do not
+#'   affect them.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
@@ -562,17 +565,23 @@ NULL
 #'
 #' @examples
 #' \dontrun{
-#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' stan_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #'
 #' # by default compilation happens when cmdstan_model() is called.
 #' # to delay compilation until calling the $compile() method set compile=FALSE
-#' mod <- cmdstan_model(file, compile = FALSE)
+#' mod <- cmdstan_model(stan_file, compile = FALSE)
 #' mod$compile()
 #' mod$exe_file()
 #'
-#' # turn on threading support (for using functions that support within-chain parallelization)
-#' mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-#' mod$exe_file()
+#' # turn on threading support for using functions that support within-chain
+#' # parallelization or running multiple pathfinder paths in parallel
+#' # (here we compile a copy of the model in a temporary directory so that the
+#' # executable compiled without threading above is not overwritten)
+#' stan_file_threads <- file.path(tempdir(), "bernoulli.stan")
+#' file.copy(stan_file, stan_file_threads)
+#' mod_threads <- cmdstan_model(stan_file_threads, compile = FALSE)
+#' mod_threads$compile(cpp_options = list(stan_threads = TRUE))
+#' mod_threads$cpp_options()
 #'
 #' # turn on pedantic mode
 #' file_pedantic <- write_stan_file("
@@ -583,8 +592,9 @@ NULL
 #'   sigma ~ exponential(1);
 #' }
 #' ")
-#' mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#'
+#' mod <- cmdstan_model(file_pedantic, compile = FALSE)
+#' mod$compile(pedantic = TRUE)
+#' # same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 #' }
 #'
 compile <- function(quiet = TRUE,
@@ -616,7 +626,8 @@ compile <- function(quiet = TRUE,
   if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
     include_paths <- private$precompile_include_paths_
   }
-  private$include_paths_ <- include_paths
+  private$include_paths_ <- resolve_path(include_paths)
+  include_paths <- private$include_paths_
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
@@ -649,7 +660,6 @@ compile <- function(quiet = TRUE,
     }
 
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
-    stanc_options[["allow-undefined"]] <- TRUE
     private$using_user_header_ <- TRUE
   } else if (!is.null(cpp_options[["USER_HEADER"]])) {
     if (!is.null(cpp_options[["user_header"]])) {
@@ -667,6 +677,7 @@ compile <- function(quiet = TRUE,
 
 
   if (!is.null(user_header)) {
+    stanc_options[["allow-undefined"]] <- TRUE
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
     if (!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
@@ -728,29 +739,18 @@ compile <- function(quiet = TRUE,
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
-    } else if (option_name == "name") { # Quoting model name mangles generated namespace
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
-    }  else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
-    }
-  }
-  stancflags_combined <- stanc_built_options
+  stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
+  stancflags_direct <- stanc_options_to_args(stanc_options)
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
   if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
+    stancflags_direct <- c(stancflags_direct, stancflags_local)
   }
-  stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
-  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
+  stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
+  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_direct)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined))
+  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 
@@ -777,7 +777,7 @@ compile <- function(quiet = TRUE,
           wd = cmdstan_path(),
           echo = !quiet || is_verbose_mode(),
           echo_cmd = is_verbose_mode(),
-          spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
+          spinner = quiet && use_spinner(),
           stderr_callback = function(x, p) {
             if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
               message(x)
@@ -815,12 +815,8 @@ compile <- function(quiet = TRUE,
       )
     )
     if (is.na(run_log$status) || run_log$status != 0) {
-      err_msg <- "An error occured during compilation! See the message above for more information."
-      if (grepl("auto-format flag to stanc", run_log$stderr)) {
-        format_msg <- "\nTo fix deprecated or removed syntax please see ?cmdstanr::format for an example."
-        err_msg <- paste(err_msg, format_msg)
-      }
-      stop(err_msg, call. = FALSE)
+      stop("An error occurred during compilation! See the message above for more information.",
+           call. = FALSE)
     }
     if (file.exists(exe)) {
       file.remove(exe)
@@ -1003,22 +999,15 @@ check_syntax <- function(pedantic = FALSE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  stancflags_val <- include_paths_stanc3_args(include_paths)
+  stancflags_val <- include_paths_stanc3_args(
+    include_paths,
+    direct_call = TRUE
+  )
 
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
-    } else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
-    }
-  }
+  stanc_built_options <- stanc_options_to_args(stanc_options)
 
   withr::with_path(
     c(
@@ -1031,7 +1020,7 @@ check_syntax <- function(pedantic = FALSE,
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
-      spinner = quiet && rlang::is_interactive(),
+      spinner = quiet && use_spinner(),
       stderr_callback = function(x, p) {
         message(x)
       },
@@ -1128,34 +1117,21 @@ format <- function(overwrite_file = FALSE,
     max_line_length,
     lower = 1, len = 1, null.ok = TRUE
   )
-  stanc_options <- private$precompile_stanc_options_
-  stancflags_val <- include_paths_stanc3_args(self$include_paths())
-  stanc_options["auto-format"] <- TRUE
+  stanc_options <- as.list(private$precompile_stanc_options_)
+  stancflags_val <- include_paths_stanc3_args(
+    self$include_paths(),
+    direct_call = TRUE
+  )
+  stanc_options[["auto-format"]] <- TRUE
   if (!is.null(max_line_length)) {
-    stanc_options["max-line-length"] <- max_line_length
+    stanc_options[["max-line-length"]] <- max_line_length
   }
   if (isTRUE(canonicalize)) {
-    stanc_options["print-canonical"] <- TRUE
+    stanc_options[["print-canonical"]] <- TRUE
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
-    stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
+    stanc_options[["canonicalize"]] <- paste0(canonicalize, collapse = ",")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]])) && !is.numeric(stanc_options[[i]])) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(
-        stanc_built_options,
-        paste0("--", stanc_options[[i]])
-      )
-    } else {
-      stanc_built_options <- c(
-        stanc_built_options,
-        paste0("--", option_name, "=", stanc_options[[i]])
-      )
-    }
-  }
+  stanc_built_options <- stanc_options_to_args(stanc_options)
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -2107,7 +2083,10 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   Pareto smoothed importance sampling (PSIS). This should be smaller than
 #'   `single_path_draws * num_paths`.
 #' @param num_paths (positive integer) Number of single pathfinders to run. The
-#'   default is `4`.
+#'   default is `4`. The paths are run sequentially unless the model was
+#'   [compiled][model-method-compile] with `cpp_options = list(stan_threads =
+#'   TRUE)` and `threads` is set, so running multiple paths in parallel requires
+#'   both.
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations
 #'   for LBFGS.
 #' @param num_elbo_draws (positive integer) Number of draws to make when
@@ -2614,19 +2593,67 @@ assert_stan_file_exists <- function(stan_file) {
   }
 }
 
-include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
+#' Turn a `stanc_options` list into `stanc` command line arguments
+#'
+#' @param stanc_options (list) Named or unnamed stanc options. Logical values
+#'   mark boolean flags and any other value is passed as `--name=value`.
+#' @param quote_values (logical) Single-quote option values? Only the
+#'   `STANCFLAGS` string handed to Make needs quoting, because Make expands it
+#'   through a shell. Arguments for direct `stanc` calls are passed to processx
+#'   as separate elements and must be left unquoted (#1227).
+#' @return A character vector of arguments, one per element.
+#' @noRd
+stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
+  args <- c()
+  for (i in seq_len(length(stanc_options))) {
+    option_name <- names(stanc_options)[i]
+    option_value <- stanc_options[[i]]
+    if (is.null(option_name) || !nzchar(option_name)) {
+      # Unnamed options are already flag names, e.g. list("allow-undefined")
+      args <- c(args, paste0("--", option_value))
+    } else if (is.logical(option_value)) {
+      # TRUE emits a bare flag, FALSE leaves the flag out entirely
+      if (isTRUE(option_value)) {
+        args <- c(args, paste0("--", option_name))
+      }
+    } else if (isTRUE(quote_values) && option_name != "name") {
+      # Quoting the model name mangles the generated namespace
+      args <- c(args, paste0("--", option_name, "=", "'", option_value, "'"))
+    } else {
+      args <- c(args, paste0("--", option_name, "=", option_value))
+    }
+  }
+  args
+}
+
+#' Build stanc include-path arguments
+#'
+#' Make receives include paths through `STANCFLAGS` and needs paths containing
+#' spaces to be shell-quoted within a single `--include-paths=` flag. Direct
+#' calls through processx instead need the flag and comma-separated paths as
+#' separate, unquoted arguments.
+#'
+#' @param include_paths A character vector of directories containing files used
+#'   in Stan `#include` directives, or `NULL`.
+#' @param direct_call A logical indicating whether the arguments will be passed
+#'   directly to stanc through processx instead of through Make.
+#'
+#' @return `NULL` if `include_paths` is `NULL`; otherwise, a single
+#'   `--include-paths=` argument for Make or two arguments for a direct call.
+#' @noRd
+include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
     assert_dir_exists(include_paths, access = "r")
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
     # Calling stanc3 directly through processx::run does not need quoting
-    if (!isTRUE(standalone_call)) {
+    if (!isTRUE(direct_call)) {
       paths_w_space <- grep(" ", include_paths)
       include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     }
     include_paths <- paste0(include_paths, collapse = ",")
     include_paths_flag <- "--include-paths="
-    if (isTRUE(standalone_call)) {
+    if (isTRUE(direct_call)) {
       stancflags <- c(stancflags, "--include-paths", include_paths)
     } else {
       stancflags <- paste0(stancflags, include_paths_flag, include_paths)
@@ -2646,7 +2673,10 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     command = stanc_cmd(),
     args = c(wsl_safe_path(stan_file),
               "--info",
-              include_paths_stanc3_args(include_paths),
+              include_paths_stanc3_args(
+                include_paths,
+                direct_call = TRUE
+              ),
               allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,

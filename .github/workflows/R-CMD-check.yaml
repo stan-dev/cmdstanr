@@ -42,7 +42,7 @@ jobs:
           - {os: windows-2022, r: '4.1'}
           - {os: windows-latest, r: 'oldrel'}
           - {os: ubuntu-latest, r: 'devel', opencl: true}
-          - {os: ubuntu-latest, r: 'release', opencl: true}
+          - {os: ubuntu-latest, r: 'release', opencl: true, cmdstan: '2.38.0'}
           - {os: ubuntu-latest, r: 'oldrel', opencl: true}
           - {os: windows-11-arm, r: 'release'}
     env:
@@ -51,6 +51,7 @@ jobs:
       NOT_CRAN: true
       CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
       CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
+      CMDSTAN_TEST_VERSION: ${{ matrix.config.cmdstan }}
       PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
 
     steps:
@@ -130,7 +131,11 @@ jobs:
               release_url = tarball_url
             )
           } else {
-            cmdstanr::install_cmdstan(cores = 2)
+            version <- Sys.getenv("CMDSTAN_TEST_VERSION")
+            cmdstanr::install_cmdstan(
+              cores = 2,
+              version = if (nzchar(version)) version else NULL
+            )
           }
         shell: Rscript {0}
 

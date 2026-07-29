@@ -11,6 +11,15 @@ is_verbose_mode <- function() {
   getOption("cmdstanr_verbose", default = FALSE)
 }
 
+# Should a spinner be shown while an external process runs? Only in genuinely
+# interactive use, so that the spinner characters don't end up in knitr/pkgdown
+# output or in redirected output (#486).
+use_spinner <- function() {
+  getOption("cmdstanr_spinner", default = TRUE) &&
+    rlang::is_interactive() &&
+    !identical(Sys.getenv("IN_PKGDOWN"), "true")
+}
+
 # Famous helper for switching on `NULL` or zero length
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0) y else x
@@ -185,6 +194,17 @@ strip_ext <- function(file) {
 }
 absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 
+# Resolve paths when they are stored on a model object rather than when they are
+# used, so that later use doesn't depend on the working directory. Empty input
+# becomes NULL, the value callers treat as "not set" (absolute_path() would
+# otherwise return list()).
+resolve_path <- function(path) {
+  if (!length(path)) {
+    return(NULL)
+  }
+  repair_path(absolute_path(path))
+}
+
 # read, write, and copy files --------------------------------------------
 
 #' Copy temporary files (e.g., output, data) to a different location
@@ -315,7 +335,7 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
       warning("E-BFMI not computed because it is undefined for posterior chains of length less than 3.", call. = FALSE)
     } else {
       energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
-      if (any(is.na(energy))) {
+      if (anyNA(energy)) {
         warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
       } else {
         efbmi_per_chain <- apply(energy, 2, function(x) {
@@ -916,6 +936,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
   name <- strip_ext(basename(stan_file))
   path <- dirname(stan_file)
   hpp_path <- file.path(path, paste0(name, ".hpp"))
+  on.exit(unlink(hpp_path), add = TRUE)
 
   status <- withr::with_path(
       c(
@@ -929,13 +950,25 @@ get_standalone_hpp <- function(stan_file, stancflags) {
         error_on_status = FALSE
       )
     )
-  if (status$status == 0) {
-    hpp <- suppressWarnings(readLines(hpp_path, warn = FALSE))
-    unlink(hpp_path)
-    hpp
-  } else {
-    invisible(NULL)
+  if (is.na(status$status) || status$status != 0) {
+    if (length(status$stderr) > 0 && nzchar(status$stderr)) {
+      message(status$stderr)
+    }
+    err_msg <- paste0(
+      "An error occurred during compilation! See the message above for more ",
+      "information. (stanc exited with status ", status$status, ")"
+    )
+    if (length(status$stderr) > 0 &&
+        grepl("auto-format flag to stanc", status$stderr)) {
+      err_msg <- paste0(
+        err_msg,
+        "\nTo fix deprecated or removed syntax please see ",
+        "?cmdstanr::format for an example."
+      )
+    }
+    stop(err_msg, call. = FALSE)
   }
+  suppressWarnings(readLines(hpp_path, warn = FALSE))
 }
 
 get_function_name <- function(fun_start, fun_end, model_lines) {

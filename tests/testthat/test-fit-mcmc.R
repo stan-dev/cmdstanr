@@ -278,7 +278,7 @@ test_that("inc_warmup in draws() works", {
   expect_equal(dim(y4), NULL)
 })
 
-test_that("inc_warmup in draws() works", {
+test_that("inc_warmup in draws() works with a single chain", {
   x3 <- fit_mcmc_2$draws(inc_warmup = FALSE)
   expect_equal(dim(x3), c(10000, 1, 5))
   expect_error(fit_mcmc_2$draws(inc_warmup = TRUE),

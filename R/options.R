@@ -31,6 +31,11 @@
 #' a temporary directory are removed as part of \R garbage collection, while
 #' files in an explicitly defined directory are not automatically deleted.
 #'
+#' * `cmdstanr_spinner`: Should a spinner be shown while CmdStan compiles a
+#' model, checks syntax, or is installed or rebuilt? The default is `TRUE`. The
+#' spinner is only ever shown in interactive sessions, so setting this to
+#' `FALSE` is only necessary to suppress it in an interactive session.
+#'
 #' * `cmdstanr_verbose`: Should more information be printed
 #' when compiling or running models, including showing how CmdStan was called
 #' internally? The default is `FALSE`.

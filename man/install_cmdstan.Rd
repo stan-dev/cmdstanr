@@ -35,7 +35,9 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 \arguments{
 \item{dir}{(string) The path to the directory in which to install CmdStan.
 The default is to install it in a directory called \code{.cmdstan} within the
-user's home directory (i.e., \code{file.path(Sys.getenv("HOME"), ".cmdstan")}).}
+user's home directory. On Windows the home directory is determined from
+\code{USERPROFILE}, falling back to \code{HOMEDRIVE} and \code{HOMEPATH}. On other
+platforms it is determined from \code{HOME}.}
 
 \item{cores}{(integer) The number of CPU cores to use to parallelize building
 CmdStan and speed up installation. If \code{cores} is not specified then the
