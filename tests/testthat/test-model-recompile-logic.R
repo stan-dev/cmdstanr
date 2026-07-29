@@ -15,7 +15,7 @@ file_that_doesnt_exist <- withr::local_tempfile(pattern = "placeholder_doesnt_ex
 file_that_exists <- withr::local_tempfile(pattern = "placeholder_exists")
 file.create(file_that_exists)
 
-skip_message <- "To be fixed in a later version."
+skip_message <- "To be fixed in a later version. See #1019."
 
 test_that("warning when no recompile and no info", {
   skip(skip_message)
@@ -96,6 +96,36 @@ test_that("a no-op compile preserves what the previous compilation recorded", {
   }
 })
 
+test_that("a no-op compile does not record cpp_options the executable lacks", {
+  # A real executable, up to date and built without threading.
+  testing_model("bernoulli")
+
+  expect_warning(
+    mod <- cmdstan_model(
+      testing_stan_file("bernoulli"),
+      cpp_options = list(stan_threads = TRUE)
+    ),
+    "was not built with the requested"
+  )
+
+  # Nothing was rebuilt, so the request describes no executable that exists.
+  # Recording it anyway left assert_valid_threads() trusting it, and a plain
+  # $sample() then failed with "The model executable was built with threading
+  # enabled but 'threads_per_chain' was not set!" -- an error that is both
+  # false and inescapable without recompiling. (#1019)
+  expect_false(isTRUE(mod$cpp_options()$stan_threads))
+  expect_no_error(
+    mod$sample(
+      data = testing_data("bernoulli"),
+      chains = 1,
+      iter_warmup = 100,
+      iter_sampling = 100,
+      refresh = 0,
+      show_messages = FALSE
+    )
+  )
+})
+
 test_that("a no-op compile adopts an executable the object did not build", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
@@ -129,7 +159,7 @@ test_that("a no-op compile adopts an executable the object did not build", {
   expect_null(mod$cpp_options()$STAN_VERSION)
 })
 
-test_that("adopting an executable keeps the options the call asked for", {
+test_that("adopting an executable describes the binary, not the request", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
 
@@ -140,9 +170,9 @@ test_that("adopting an executable keeps the options the call asked for", {
   )
 
   # The executable is up to date but was not built with threading. Until
-  # cmdstanr rebuilds on a cpp_options mismatch, dropping the request would
-  # make assert_valid_threads() discard 'threads' and run single-threaded
-  # without the caller ever asking for that.
+  # cmdstanr rebuilds on a cpp_options mismatch (#1019), the request describes
+  # an executable that does not exist, so it is reported as a warning rather
+  # than recorded as fact.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(
@@ -155,11 +185,11 @@ test_that("adopting an executable keeps the options the call asked for", {
     )
   )
 
-  expect_true(mod$cpp_options()$stan_threads)
+  expect_null(mod$cpp_options()$stan_threads)
   expect_true(mod$functions$existing_exe)
 })
 
-test_that("a no-op compile records options supplied to that same call", {
+test_that("a no-op compile does not adopt options the executable lacks", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
 
@@ -171,8 +201,8 @@ test_that("a no-op compile records options supplied to that same call", {
   expect_null(mod$cpp_options()$stan_threads)
 
   # Same object, same executable, but this call explicitly asks for threading.
-  # Preserving the recorded options is right for a bare $compile(); ignoring
-  # options the caller just supplied is not.
+  # Nothing was rebuilt, so what is recorded still has to describe the binary
+  # on disk; the caller learns their request had no effect from the warning.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(
@@ -186,7 +216,7 @@ test_that("a no-op compile records options supplied to that same call", {
       )
     )
   )
-  expect_true(mod$cpp_options()$stan_threads)
+  expect_null(mod$cpp_options()$stan_threads)
 })
 
 test_that("no mismatch warning when the executable already has the options", {

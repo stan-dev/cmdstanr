@@ -58,6 +58,10 @@ from the new program. (#1235)
 * `$compile()` now warns when `cpp_options` are supplied but the existing
 executable is up to date and was not built with them, so nothing is rebuilt and
 the options have no effect. Use `force_recompile = TRUE` to rebuild. (#1235)
+* `$cpp_options()` no longer reports options the executable was not built with.
+Previously a request that did not rebuild the model was recorded as though it
+had, so `$sample()` could fail with "the model executable was built with
+threading enabled" for a binary that had no threading. (#1019, #1235)
 * `$compile()` now errors if the newly compiled executable cannot be installed,
 restoring the previous executable. Previously the replacement was unchecked, so
 a failure could silently leave the model with no executable at all. (#1235)

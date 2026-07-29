@@ -724,13 +724,14 @@ compile <- function(quiet = TRUE,
     }
     # Nothing was compiled, so nothing describing the current executable may be
     # consumed or overwritten by configuration this call merely proposed.
-    # Options supplied to this call are the caller's declared intent, so they
-    # are recorded even though nothing was compiled. A bare $compile() supplies
-    # none, and must not erase what is already recorded -- an erased
-    # stan_threads makes assert_valid_threads() run a threaded executable
-    # single-threaded.
-    recorded_cpp_options <-
-      if (cpp_options_available) cpp_options else private$cpp_options_
+    # Options supplied to this call describe an executable that was not built,
+    # so they are deliberately not recorded: assert_valid_threads() and the
+    # OpenCL checks read these back as fact, and a stan_threads the binary
+    # lacks makes a plain $sample() fail with "the model executable was built
+    # with threading enabled", which is false and cannot be worked around
+    # without recompiling. What is already recorded still describes the
+    # executable that exists, so it is carried forward untouched. (#1019)
+    recorded_cpp_options <- private$cpp_options_
 
     # Asking the executable about itself. Best effort, because
     # model_compile_info() runs it and errors outright rather than returning a
