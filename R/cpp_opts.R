@@ -90,44 +90,40 @@ merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
 }
 
 # The options a compilation would actually be run with, normalized so that a
-# request can be compared against what an executable was built with. This has to
-# follow cpp_options_to_compile_flags(), because what make is given is what
-# decides whether two builds differ:
+# request can be compared against what an executable was built with.
 #
-#   - names are lower-cased, since CmdStanR input and executable metadata
-#     disagree on case, and values compared as strings so TRUE and "TRUE" are
-#     not read as two different requests;
-#   - an unnamed entry is a raw make argument and is compared as written;
-#   - a later entry with the same name wins, because every duplicate reaches
-#     make and a makefile takes the last;
-#   - only NULL is omission. FALSE is *not*: it reaches make as
-#     STAN_THREADS=FALSE, and CmdStan enables some options whenever their make
-#     variable is non-empty, so requesting FALSE can change the executable;
-#   - header entries are dropped, header identity being tracked separately and
-#     forcing a rebuild on its own.
+# Deliberately canonicalizes the output of cpp_options_to_compile_flags() rather
+# than reading the list itself: what make is handed is what decides whether two
+# builds differ, and any second reading of these lists drifts from the first.
+# Named and unnamed entries, duplicate names, vector values that expand into
+# several assignments and NULLs that expand into none are all already resolved
+# by the time the flags exist.
+#
+# Assignments are reduced last-wins, as a makefile does, and compared by
+# lower-cased name so that spelling is not a difference. Anything that is not an
+# assignment is opaque, so it keeps its position. Header entries are dropped:
+# header identity is tracked separately and forces a rebuild on its own.
 normalized_cpp_options <- function(cpp_options) {
-  named <- list()
-  raw <- character()
-  for (i in seq_along(cpp_options)) {
-    option_name <- names(cpp_options)[i]
-    value <- cpp_options[[i]]
-    if (is.null(option_name) || is.na(option_name) || !nzchar(option_name)) {
-      raw <- c(raw, as.character(value))
+  assignments <- list()
+  opaque <- character()
+  for (flag in cpp_options_to_compile_flags(cpp_options)) {
+    if (!grepl("^[A-Za-z_][A-Za-z0-9_]*=", flag)) {
+      opaque <- c(opaque, flag)
       next
     }
-    if (tolower(option_name) %in% c("user_header", "stan_version")) {
+    option_name <- tolower(sub("=.*$", "", flag))
+    if (option_name %in% c("user_header", "stan_version")) {
       next
     }
-    if (is.null(value)) {
-      next
-    }
-    named[[tolower(option_name)]] <- paste(as.character(value), collapse = ",")
+    assignments[[option_name]] <- sub("^[^=]*=", "", flag)
   }
-  entries <- character()
-  if (length(named) > 0) {
-    entries <- paste0(names(named), "=", unlist(named, use.names = FALSE))
+  reduced <- character()
+  if (length(assignments) > 0) {
+    reduced <- paste0(
+      names(assignments), "=", unlist(assignments, use.names = FALSE)
+    )
   }
-  sort(c(raw, entries))
+  c(sort(reduced), opaque)
 }
 
 # Whether an executable built with `recorded` would differ from one built with

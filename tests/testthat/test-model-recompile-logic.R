@@ -336,7 +336,7 @@ test_that("a no-op compile stays quiet about options it was built with", {
   )
 })
 
-test_that("option comparison ignores spelling, NULL and omission", {
+test_that("option comparison ignores spelling but not an empty assignment", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
 
@@ -362,8 +362,19 @@ test_that("option comparison ignores spelling, NULL and omission", {
   # Same option, other spelling, and the string a makefile would carry.
   quietly(list(stan_cpp_optims = TRUE))
   quietly(list(stan_cpp_optims = "TRUE"))
-  # NULL asks make for nothing, so it is omission, not a request to unset.
-  quietly(list(stan_cpp_optims = TRUE, stan_threads = NULL))
+
+  # NULL is not omission either: it reaches make as an empty STAN_THREADS=,
+  # which overrides whatever make/local sets rather than leaving it alone.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      expect_warning(
+        mod$compile(cpp_options = list(stan_cpp_optims = TRUE, stan_threads = NULL)),
+        "was not built with the requested"
+      )
+    )
+  )
 
   # Dropping a recorded option is still a change: cpp_options are one-shot, so
   # recompiling with this list would build without STAN_CPP_OPTIMS.
@@ -418,6 +429,26 @@ test_that("option comparison follows what make is actually given", {
 
   # An unnamed entry is a raw make argument rather than something to skip.
   warns(list("STAN_THREADS=TRUE"))
+
+  # Order survives normalization: these reach make as the same two assignments
+  # in opposite orders, so exactly one of them matches the recorded TRUE.
+  quietly(list("STAN_CPP_OPTIMS=FALSE", "STAN_CPP_OPTIMS=TRUE"))
+  warns(list("STAN_CPP_OPTIMS=TRUE", "STAN_CPP_OPTIMS=FALSE"))
+
+  # The same, across the boundary between a named entry and a raw one.
+  quietly(structure(
+    list(FALSE, "STAN_CPP_OPTIMS=TRUE"),
+    names = c("stan_cpp_optims", "")
+  ))
+  warns(structure(
+    list("STAN_CPP_OPTIMS=TRUE", FALSE),
+    names = c("", "stan_cpp_optims")
+  ))
+
+  # A vector value expands into one assignment per element, so it is the last
+  # element that decides, not the vector as a whole.
+  quietly(list(stan_cpp_optims = c(FALSE, TRUE)))
+  warns(list(stan_cpp_optims = c(TRUE, FALSE)))
 })
 
 test_that("a raw make argument round-trips through the option comparison", {
