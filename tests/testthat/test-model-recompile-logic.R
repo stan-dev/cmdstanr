@@ -105,7 +105,7 @@ test_that("a no-op compile does not record cpp_options the executable lacks", {
       testing_stan_file("bernoulli"),
       cpp_options = list(stan_threads = TRUE)
     ),
-    "was not built with the requested"
+    "do not match the ones requested"
   )
 
   # Nothing was rebuilt, so the request describes no executable that exists.
@@ -232,7 +232,7 @@ test_that("adopting an executable describes the binary, not the request", {
     ),
     code = expect_warning(
       mod <- cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE)),
-      "was not built with the requested"
+      "do not match the ones requested"
     )
   )
 
@@ -263,7 +263,7 @@ test_that("a no-op compile does not adopt options the executable lacks", {
     code = expect_no_mock_compile(
       expect_warning(
         mod$compile(cpp_options = list(stan_threads = TRUE)),
-        "was not built with the requested"
+        "do not match the ones requested"
       )
     )
   )
@@ -299,7 +299,7 @@ test_that("a no-op compile warns about options the executable cannot report", {
       code = expect_no_mock_compile(
         expect_warning(
           mod$compile(cpp_options = requested),
-          "was not built with the requested"
+          "do not match the ones requested"
         )
       )
     )
@@ -371,7 +371,7 @@ test_that("option comparison ignores spelling but not an empty assignment", {
     code = expect_no_mock_compile(
       expect_warning(
         mod$compile(cpp_options = list(stan_cpp_optims = TRUE, stan_threads = NULL)),
-        "was not built with the requested"
+        "do not match the ones requested"
       )
     )
   )
@@ -384,7 +384,7 @@ test_that("option comparison ignores spelling but not an empty assignment", {
     code = expect_no_mock_compile(
       expect_warning(
         mod$compile(cpp_options = list(stan_threads = TRUE)),
-        "was not built with the requested"
+        "do not match the ones requested"
       )
     )
   )
@@ -412,7 +412,7 @@ test_that("option comparison follows what make is actually given", {
   }
   warns <- function(requested) {
     no_op(requested, function(code) {
-      expect_warning(code, "was not built with the requested")
+      expect_warning(code, "do not match the ones requested")
     })
   }
   quietly <- function(requested) no_op(requested, expect_no_warning)
@@ -472,6 +472,122 @@ test_that("a raw make argument round-trips through the option comparison", {
     info_ret = list(status = 1),
     code = expect_no_mock_compile(
       expect_no_warning(mod$compile(cpp_options = list("STAN_CPP_OPTIMS=TRUE")))
+    )
+  )
+})
+
+test_that("options inherited from make/local are learned, not warned about", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+  # make/local supplies STAN_THREADS=true, so the executable is threaded even
+  # though nothing was passed to $compile() and nothing could be recorded.
+  threaded <- paste0(
+    "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\n",
+    "STAN_THREADS=true"
+  )
+
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = threaded),
+    code = mod$compile(force_recompile = TRUE)
+  )
+  expect_null(mod$cpp_options()$stan_threads)
+
+  # Comparing against the record alone reported a mismatch for a binary that
+  # does have threading. The binary's own account fills the gap, and is kept:
+  # suppressing the warning without recording what it revealed would leave
+  # assert_valid_threads() still dropping 'threads_per_chain'.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = threaded),
+    code = expect_no_mock_compile(
+      expect_no_warning(mod$compile(cpp_options = list(stan_threads = TRUE)))
+    )
+  )
+  expect_true(cpp_option_value(mod$cpp_options(), "stan_threads"))
+
+  # An option only the record knows about still combines with one only the
+  # metadata knows about.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = threaded),
+    code = mod$compile(
+      cpp_options = list(stan_cpp_optims = TRUE),
+      force_recompile = TRUE
+    )
+  )
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = threaded),
+    code = expect_no_mock_compile(
+      expect_no_warning(
+        mod$compile(cpp_options = list(stan_cpp_optims = TRUE, stan_threads = TRUE))
+      )
+    )
+  )
+  # ...and changing the unreportable one is still caught.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = threaded),
+    code = expect_no_mock_compile(
+      expect_warning(
+        mod$compile(cpp_options = list(stan_cpp_optims = FALSE, stan_threads = TRUE)),
+        "do not match the ones requested"
+      )
+    )
+  )
+
+  # With no metadata to be had, the record is all there is and still answers
+  # for the option it holds.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      expect_no_warning(mod$compile(cpp_options = list(stan_cpp_optims = TRUE)))
+    )
+  )
+})
+
+test_that("an executable built with an explicit NULL accepts NULL again", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod$compile(
+      cpp_options = list(stan_threads = NULL),
+      force_recompile = TRUE
+    )
+  )
+
+  # An empty STAN_THREADS= is what was built with, so re-stating it matches.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      expect_no_warning(mod$compile(cpp_options = list(stan_threads = NULL)))
+    )
+  )
+
+  # Omission is a different request: it would leave make/local in force rather
+  # than overriding it, so it does not match a build that overrode it.
+  mod_omitted <- cmdstan_model(stan_file, compile = FALSE)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod_omitted$compile(force_recompile = TRUE)
+  )
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      expect_warning(
+        mod_omitted$compile(cpp_options = list(stan_threads = NULL)),
+        "do not match the ones requested"
+      )
     )
   )
 })

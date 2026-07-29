@@ -60,13 +60,18 @@ C++ used by `$hpp_file()` and `fit$init_model_methods()`. Previously a failure
 at the C++ stage left the old executable paired with model methods generated
 from the new program. (#1235)
 * `$compile()` now warns when `cpp_options` are supplied but the existing
-executable is up to date and was not built with them, so nothing is rebuilt and
-the options have no effect. The check is best effort: for an executable the
-model object compiled itself the options are known exactly and any difference is
-reported, but for one adopted from an earlier session only the few `STAN_*`
-flags the binary reports about itself can be checked, and anything else passes
+executable is up to date, so nothing is rebuilt and the options are not applied.
+The check is best effort. For an executable the model object compiled itself it
+compares the options passed to `Make` against those requested, and treats
+anything the binary reports but was never passed as inherited from `make/local`
+and so unchanged by a rebuild. For one adopted from an earlier session only the
+few `STAN_*` flags the binary reports can be checked, and anything else passes
 unremarked. Use `force_recompile = TRUE` when a supplied option has to take
 effect. (#1235)
+* `$cpp_options()` now also reports options the executable was built with that
+were never passed to `$compile()`, such as those inherited from `make/local`,
+when the binary reports them. `$sample()` and friends previously refused
+`threads_per_chain` for an executable that did have threading. (#1019, #1235)
 * `$cpp_options()` no longer reports options the executable was not built with.
 Previously a request that did not rebuild the model was recorded as though it
 had, so `$sample()` could fail with "the model executable was built with

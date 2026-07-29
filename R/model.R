@@ -250,6 +250,12 @@ CmdStanModel <- R6::R6Class(
     user_header_dirty_ = FALSE,
     # The same, for a change of include paths.
     include_paths_dirty_ = FALSE,
+    # The cpp_options actually passed to make for the current executable, as
+    # distinct from cpp_options_, which also carries what the binary reports
+    # about itself. Only these would be dropped by a recompilation that omitted
+    # them; anything else the binary has came from make/local and would be
+    # inherited again.
+    built_cpp_options_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -783,26 +789,31 @@ compile <- function(quiet = TRUE,
     # with threading enabled", which is false and cannot be worked around
     # without recompiling. What is already recorded still describes the
     # executable that exists, so it is carried forward untouched. (#1019)
-    recorded_cpp_options <- private$cpp_options_
+    # This object holds the generated C++ for an executable only if it compiled
+    # it. Even then the record is only what was passed to make: options
+    # inherited from make/local never reach $compile() and so were never
+    # recorded, which is why the record alone is not the artifact.
+    built_here <- !is.null(self$functions$hpp_code)
 
     # Asking the executable about itself. Best effort, because
     # model_compile_info() runs it and errors outright rather than returning a
     # status when the file is not runnable.
-    # This object holds the generated C++ for an executable only if it compiled
-    # it, and in that case what make was run with is recorded exactly. No
-    # metadata query can improve on that, and metadata cannot speak to options
-    # like STAN_CPP_OPTIMS -- absent from CmdStan 2.39's output -- or to
-    # arbitrary make variables at all.
-    built_here <- !is.null(self$functions$hpp_code)
-
     exe_info <- NULL
-    if (length(private$exe_file_) == 0 ||
-        (cpp_options_available && !built_here)) {
+    if (cpp_options_available || length(private$exe_file_) == 0) {
       exe_info <- tryCatch(
         model_compile_info(exe, self$cmdstan_version()),
         error = function(e) NULL
       )
     }
+
+    # The two accounts of the executable, combined: metadata reports the
+    # STAN_* flags actually compiled in, including any inherited from
+    # make/local, and the record holds the options metadata cannot report.
+    # Metadata wins where both speak, since it describes the binary; a metadata
+    # FALSE is skipped by the merge, so an explicit NULL survives as an empty
+    # assignment. A failed query leaves the record untouched.
+    recorded_cpp_options <-
+      merge_exe_info_cpp_options(private$cpp_options_, exe_info)
 
     # Recording options the executable does not have would otherwise be a quiet
     # lie: nothing was rebuilt, so a requested stan_threads produces the
@@ -813,8 +824,24 @@ compile <- function(quiet = TRUE,
     options_mismatch <- FALSE
     if (cpp_options_available) {
       if (built_here) {
-        options_mismatch <-
-          cpp_options_disagree(cpp_options, private$cpp_options_)
+        # Options the binary reports but the record never held cannot have come
+        # from $compile(), so they came from make/local -- and a rebuild would
+        # inherit them again. Applying them to both sides keeps an option the
+        # request never mentioned, and never had to, from reading as a change.
+        # Anything the record does hold was passed on the command line and
+        # would be dropped by a rebuild that omits it, so it stays subject to
+        # the symmetric comparison.
+        built_options <- private$built_cpp_options_
+        inherited <- merge_exe_info_cpp_options(list(), exe_info)
+        inherited <- inherited[
+          !tolower(names(inherited)) %in% tolower(names(built_options))
+        ]
+        # Explicit options are appended last because cpp_options reach make on
+        # the command line, which overrides make/local.
+        options_mismatch <- cpp_options_disagree(
+          c(inherited, cpp_options),
+          c(inherited, built_options)
+        )
       } else if (length(exe_info) > 0) {
         # An adopted executable can only be asked about itself, and it answers
         # about a handful of STAN_* flags. Options outside that set are left
@@ -838,8 +865,6 @@ compile <- function(quiet = TRUE,
       # generated C++ for it, and the only description of it beyond the request
       # is what the binary reports about itself.
       self$functions$existing_exe <- TRUE
-      recorded_cpp_options <-
-        merge_exe_info_cpp_options(recorded_cpp_options, exe_info)
     } else {
       # The flag means "we don't hold the generated C++ for this executable",
       # which is not the same as "this call compiled nothing".
@@ -851,10 +876,15 @@ compile <- function(quiet = TRUE,
     # options(warn = 2) this is an error, and raising it earlier would unwind
     # with the object half-updated.
     if (options_mismatch) {
+      # Deliberately not phrased as a claim about how the executable was built:
+      # options inherited from make/local are invisible here unless the binary
+      # reports them, so what is actually known is that the two descriptions
+      # disagree. (#1238)
       warning(
-        "The existing executable was not built with the requested ",
-        "'cpp_options' and was not rebuilt, so they will have no effect. ",
-        "Use 'force_recompile = TRUE' to rebuild the model.",
+        "The 'cpp_options' recorded or reported for the existing executable ",
+        "do not match the ones requested. The executable was not rebuilt, so ",
+        "this call did not apply them. Use 'force_recompile = TRUE' to ",
+        "rebuild the model.",
         call. = FALSE
       )
     }
@@ -999,6 +1029,7 @@ compile <- function(quiet = TRUE,
     private$hpp_file_ <- hpp_file
     private$model_methods_env_ <- model_methods_env
     private$cpp_options_ <- cpp_options
+    private$built_cpp_options_ <- cpp_options
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL

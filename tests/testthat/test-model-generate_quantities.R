@@ -61,7 +61,7 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   # than reported back as though it had taken effect. (#1019)
   expect_warning(
     mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE)),
-    "was not built with the requested"
+    "do not match the ones requested"
   )
   expect_warning(
     expect_gq_output(
