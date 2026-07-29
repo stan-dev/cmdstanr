@@ -606,6 +606,24 @@ NULL
 #' # same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 #' }
 #'
+# The object holds three kinds of state, committed at different moments. The
+# comments through this function explain individual assignments; the rule they
+# are all instances of is:
+#
+#   Source configuration -- what the next build should use. Assigned eagerly and
+#     kept through a failure, because a bare retry after fixing a bad header or
+#     a wrong path has to build what the user last asked for.
+#   Artifact description -- what the executable on disk actually is. Committed
+#     only after that executable has been successfully replaced, so a dry run, a
+#     failed compile, or a failed install can never leave the object describing
+#     a program that was never built. (#1228)
+#   Divergence markers -- a record that the two have drifted apart, which is
+#     neither of the above. Latched rather than assigned, because on a retry the
+#     configuration resolves back to itself and nothing looks changed.
+#
+# exe_file_ and cmdstan_version_ are deliberate exceptions: they are also the
+# configured destination and the toolchain version, so they are assigned on a
+# dry run and on a no-op, but never on a failure.
 compile <- function(quiet = TRUE,
                     dir = NULL,
                     pedantic = FALSE,
