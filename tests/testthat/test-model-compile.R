@@ -260,9 +260,13 @@ test_that("$compile() reuses include paths from the previous compilation", {
     code = expect_no_error(mod$compile(force_recompile = TRUE, quiet = TRUE))
   )
   expect_equal(mod$include_paths(), resolve_path(include_dir))
+  # Compared against the arguments stanc is actually handed, not the stored
+  # path: under WSL the model holds a Windows host path while the stanc
+  # argument is converted to /mnt/<drive>/..., so the two do not match.
+  include_args <- include_paths_stanc3_args(mod$include_paths(), direct_call = TRUE)
   expect_true(all(vapply(
     received_stancflags,
-    function(x) any(grepl(mod$include_paths(), x, fixed = TRUE)),
+    function(x) all(include_args %in% x),
     logical(1)
   )))
 })

@@ -90,28 +90,44 @@ merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
 }
 
 # The options a compilation would actually be run with, normalized so that a
-# request can be compared against what an executable was built with. Names are
-# lower-cased because CmdStanR input and executable metadata disagree on case;
-# header entries are dropped because header identity is tracked separately and
-# forces a rebuild on its own; NULL and FALSE are dropped because neither asks
-# make for anything; and values are compared as strings so that TRUE and "TRUE"
-# are not read as different requests.
+# request can be compared against what an executable was built with. This has to
+# follow cpp_options_to_compile_flags(), because what make is given is what
+# decides whether two builds differ:
+#
+#   - names are lower-cased, since CmdStanR input and executable metadata
+#     disagree on case, and values compared as strings so TRUE and "TRUE" are
+#     not read as two different requests;
+#   - an unnamed entry is a raw make argument and is compared as written;
+#   - a later entry with the same name wins, because every duplicate reaches
+#     make and a makefile takes the last;
+#   - only NULL is omission. FALSE is *not*: it reaches make as
+#     STAN_THREADS=FALSE, and CmdStan enables some options whenever their make
+#     variable is non-empty, so requesting FALSE can change the executable;
+#   - header entries are dropped, header identity being tracked separately and
+#     forcing a rebuild on its own.
 normalized_cpp_options <- function(cpp_options) {
-  normalized <- list()
-  for (option_name in names(cpp_options)) {
-    value <- cpp_options[[option_name]]
+  named <- list()
+  raw <- character()
+  for (i in seq_along(cpp_options)) {
+    option_name <- names(cpp_options)[i]
+    value <- cpp_options[[i]]
+    if (is.null(option_name) || is.na(option_name) || !nzchar(option_name)) {
+      raw <- c(raw, as.character(value))
+      next
+    }
     if (tolower(option_name) %in% c("user_header", "stan_version")) {
       next
     }
-    if (is.null(value) || isFALSE(value)) {
+    if (is.null(value)) {
       next
     }
-    normalized[[tolower(option_name)]] <- as.character(value)
+    named[[tolower(option_name)]] <- paste(as.character(value), collapse = ",")
   }
-  if (length(normalized) == 0) {
-    return(normalized)
+  entries <- character()
+  if (length(named) > 0) {
+    entries <- paste0(names(named), "=", unlist(named, use.names = FALSE))
   }
-  normalized[order(names(normalized))]
+  sort(c(raw, entries))
 }
 
 # Whether an executable built with `recorded` would differ from one built with

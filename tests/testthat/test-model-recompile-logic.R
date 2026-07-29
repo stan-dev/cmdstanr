@@ -379,6 +379,72 @@ test_that("option comparison ignores spelling, NULL and omission", {
   )
 })
 
+test_that("option comparison follows what make is actually given", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(
+      stan_file,
+      cpp_options = list(stan_cpp_optims = TRUE),
+      force_recompile = TRUE
+    )
+  )
+  no_op <- function(requested, expectation) {
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = expect_no_mock_compile(expectation(mod$compile(cpp_options = requested)))
+    )
+  }
+  warns <- function(requested) {
+    no_op(requested, function(code) {
+      expect_warning(code, "was not built with the requested")
+    })
+  }
+  quietly <- function(requested) no_op(requested, expect_no_warning)
+
+  # FALSE is not omission. It reaches make as STAN_CPP_OPTIMS=FALSE, and CmdStan
+  # enables some options whenever their make variable is non-empty, so asking
+  # for it would build a different executable than the recorded TRUE did.
+  warns(list(stan_cpp_optims = FALSE))
+  warns(list(stan_cpp_optims = TRUE, stan_threads = FALSE))
+
+  # Every duplicate reaches make, and a makefile takes the last.
+  quietly(list(stan_cpp_optims = FALSE, stan_cpp_optims = TRUE))
+  warns(list(stan_cpp_optims = TRUE, stan_cpp_optims = FALSE))
+
+  # An unnamed entry is a raw make argument rather than something to skip.
+  warns(list("STAN_THREADS=TRUE"))
+})
+
+test_that("a raw make argument round-trips through the option comparison", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(
+      stan_file,
+      cpp_options = list("STAN_CPP_OPTIMS=TRUE"),
+      force_recompile = TRUE
+    )
+  )
+
+  # Re-supplying exactly what the executable was built with is ordinary reuse,
+  # even when the option never had a name to compare by.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      expect_no_warning(mod$compile(cpp_options = list("STAN_CPP_OPTIMS=TRUE")))
+    )
+  )
+})
+
 test_that("an adopted executable stays silent about options it cannot report", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
