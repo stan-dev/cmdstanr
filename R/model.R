@@ -1597,11 +1597,12 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @description The `$laplace()` method of a [`CmdStanModel`] object produces a
 #'   sample from a normal approximation centered at the mode of a distribution
-#'   in the unconstrained space. The `jacobian` setting must match the value used
-#'   when running optimization so that both use the same target density. This
-#'   setting controls the parameterization of the density, while the Stan
-#'   program determines the contents of the target. See the [CmdStan User’s
-#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details.
+#'   in the unconstrained space. When the mode was found with the Jacobian
+#'   adjustment, the draws provide an estimate of the mean and standard
+#'   deviation of the posterior distribution. See the `jacobian` argument below
+#'   for how this setting relates to the value used when running optimization,
+#'   and the [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the [CmdStan User’s
@@ -1626,7 +1627,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' @param draws (positive integer) The number of draws to take.
 #' @param jacobian (logical) Whether or not to enable the Jacobian adjustment
 #'   for constrained parameters. The default is `TRUE`. See the
-#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace_sample_config.html)
 #'   section of the CmdStan User's Guide for more details. If `mode` is not
 #'   `NULL` then the value of `jacobian` must match the value used when
 #'   optimization was originally run so the mode and the Laplace approximation

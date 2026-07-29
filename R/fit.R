@@ -787,8 +787,8 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #' fit_mcmc <- cmdstanr_example("logistic")
 #' head(fit_mcmc$lp())
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
-#' fit_mle$lp()
+#' fit_optim <- cmdstanr_example("logistic", method = "optimize")
+#' fit_optim$lp()
 #'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' plot(fit_vb$lp(), fit_vb$lp_approx())
@@ -1176,13 +1176,13 @@ CmdStanFit$set("public", name = "metric_files", value = metric_files)
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' fit_vb$time()
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
-#' fit_mle$time()
+#' fit_optim <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
+#' fit_optim$time()
 #'
-#' # use fit_mle to draw samples from laplace approximation
-#' fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_mle)
+#' # use fit_optim to draw samples from laplace approximation
+#' fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_optim)
 #' fit_laplace$time() # just time for drawing sample not for running optimize
-#' fit_laplace$time()$total + fit_mle$time()$total # total time
+#' fit_laplace$time()$total + fit_optim$time()$total # total time
 #' }
 #'
 time <- function() {
@@ -1216,8 +1216,8 @@ CmdStanFit$set("public", name = "time", value = time)
 #' out <- fit_mcmc$output()
 #' str(out)
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
-#' fit_mle$output()
+#' fit_optim <- cmdstanr_example("logistic", method = "optimize")
+#' fit_optim$output()
 #'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' fit_vb$output()
@@ -1245,8 +1245,8 @@ CmdStanFit$set("public", name = "output", value = output)
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 #' str(fit_mcmc$metadata())
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
-#' str(fit_mle$metadata())
+#' fit_optim <- cmdstanr_example("logistic", method = "optimize")
+#' str(fit_optim$metadata())
 #'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' str(fit_vb$metadata())

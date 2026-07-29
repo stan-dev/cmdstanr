@@ -326,6 +326,8 @@ are called in a similar way to the `$sample()` method demonstrated above.
 
 We can find a mode of the target using
 [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
+The point estimate is extracted with the `$mle()` method (the method name is
+retained for historical reasons).
 
 ```{r optimize}
 fit_optim <- mod$optimize(data = data_list, seed = 123)
@@ -342,8 +344,8 @@ mcmc_hist(fit$draws("theta")) +
 ```
 
 For optimization, by default the mode is calculated without the Jacobian
-adjustment for constrained variables. The default finds a mode of the target in
-the constrained parameter space, whereas `jacobian = TRUE` finds a mode of the
+adjustment for constrained variables, which finds a mode of the target in the
+constrained parameter space, whereas `jacobian = TRUE` finds a mode of the
 corresponding density in the unconstrained space. See the
 [Jacobian adjustments](https://mc-stan.org/docs/cmdstan-guide/optimize_config.html#jacobian-adjustments)
 section of the CmdStan User's Guide for more details.
@@ -360,10 +362,12 @@ fit_optim_jacobian <- mod$optimize(
 
 The [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 method produces a sample from a normal approximation centered at the mode of a
-distribution in the unconstrained space. The Laplace `jacobian` setting must
+distribution in the unconstrained space. When the mode was found with the
+Jacobian adjustment, the draws provide an estimate of the mean and standard
+deviation of the posterior distribution. The Laplace `jacobian` setting must
 match the setting used for optimization so that both use the same target
 density. See the
-[Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+[Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace_sample_config.html)
 chapter of the CmdStan User's Guide for more details.
 
 Here we pass in the `fit_optim_jacobian` object from above as the `mode`
