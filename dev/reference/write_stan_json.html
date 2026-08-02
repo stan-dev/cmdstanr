@@ -11,7 +11,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -58,7 +58,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Write data to a JSON file readable by CmdStan</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/data.R" class="external-link"><code>R/data.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/data.R" class="external-link"><code>R/data.R</code></a></small>
       <div class="d-none name"><code>write_stan_json.Rd</code></div>
     </div>
 
@@ -98,19 +98,62 @@ type.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>write_stan_json()</code> performs several conversions before writing the JSON
 file:</p><ul><li><p><code>logical</code> -&gt; <code>integer</code> (<code>TRUE</code> -&gt; <code>1</code>, <code>FALSE</code> -&gt; <code>0</code>)</p></li>
-<li><p><code>data.frame</code> -&gt; <code>matrix</code> (via <code><a href="https://rdrr.io/r/base/data.matrix.html" class="external-link">data.matrix()</a></code>)</p></li>
+<li><p><code>factor</code> -&gt; <code>integer</code> (the index of each value's level)</p></li>
+<li><p><code>data.frame</code> -&gt; <code>matrix</code> (via <code><a href="https://rdrr.io/r/base/data.matrix.html" class="external-link">data.matrix()</a></code>); every column must be
+numeric, integer, logical, or factor</p></li>
 <li><p><code>list</code> -&gt; <code>array</code></p></li>
 <li><p><code>table</code> -&gt; <code>vector</code>, <code>matrix</code>, or <code>array</code> (depending on dimensions of table)</p></li>
-</ul><p>The <code>list</code> to <code>array</code> conversion is intended to make it easier to prepare
+</ul><div class="section">
+<h3 id="factor-conversion">Factor conversion<a class="anchor" aria-label="anchor" href="#factor-conversion"></a></h3>
+
+
+<p>Factors are written as their level indices: the position of each value in
+<code>levels(x)</code> rather than the value itself. The default levels are the sorted
+unique values, so <code>factor(c(10, 9, 8))</code> has levels <code>8</code>, <code>9</code>, <code>10</code> and is
+written as <code>[3, 2, 1]</code>, and an unused level shifts the indices of the levels
+after it. If the original values are what you want, convert them first, e.g.
+with <code>as.numeric(as.character(x))</code>. The fitting methods of a model compiled
+from a Stan file error if a factor is supplied for a variable that is not
+declared as <code>int</code>, but <code>write_stan_json()</code> has no declarations to check
+against and so always converts.</p>
+</div>
+
+<div class="section">
+<h3 id="list-to-array-conversion">List to array conversion<a class="anchor" aria-label="anchor" href="#list-to-array-conversion"></a></h3>
+
+
+<p>The <code>list</code> to <code>array</code> conversion is intended to make it easier to prepare
 the data for certain Stan declarations involving arrays:</p><ul><li><p><code>array[K] vector[J] v </code> can be constructed in <span style="R">R</span> as a list with <code>K</code>
 elements where each element is a vector of length <code>J</code></p></li>
 <li><p><code>array[K] matrix[I,J] m </code> can be constructed in <span style="R">R</span> as a list with <code>K</code>
 elements where each element is an <code>IxJ</code> matrix</p></li>
+<li><p><code>array[K,I,J] int n </code> can be constructed in <span style="R">R</span> as a list with <code>K</code>
+elements where each element is an <code>IxJ</code> matrix of integers</p></li>
 </ul><p>These can also be passed in from <span style="R">R</span> as arrays instead of lists but the list
-option is provided for convenience. Unfortunately for arrays with more than
-one dimension (e.g. <code>array[K,L] vector[J] v </code>) it is not possible to use an
-<span style="R">R</span> list and an array must be used instead. For this example the array in <span style="R">R</span>
-should have dimensions <code>KxLxJ</code>.</p>
+option is provided for convenience. A list always contributes exactly one
+leading dimension, so <code>array[K,L] vector[J] v </code> can be supplied either as a
+list of <code>K</code> matrices each with dimensions <code>LxJ</code> or as a single <span style="R">R</span> array with
+dimensions <code>KxLxJ</code>. Nested lists are not supported: every element of the list
+must be a vector, matrix, or array.</p>
+</div>
+
+<div class="section">
+<h3 id="scalar-vs-length-vector">Scalar vs. length-1 vector<a class="anchor" aria-label="anchor" href="#scalar-vs-length-vector"></a></h3>
+
+
+<p>Because <span style="R">R</span> does not distinguish between a scalar and a vector of length 1, a
+length-1 vector like <code>c(42)</code> is written to JSON as a scalar (<code>42</code>) rather
+than an array (<code>[42]</code>). If a Stan variable is declared as a vector or array
+that may have length 1, wrap the value in <code><a href="https://rdrr.io/r/base/array.html" class="external-link">array()</a></code> to force array output.
+Because <code><a href="https://rdrr.io/r/base/array.html" class="external-link">array()</a></code> uses the length of its input as the default dimension, this
+works regardless of length:</p><ul><li><p><code>write_stan_json(list(x = array(42)), file)</code> writes <code>"x": [42]</code></p></li>
+<li><p><code>write_stan_json(list(x = array(c(42, 43))), file)</code> writes <code>"x": [42, 43]</code></p></li>
+</ul><p>This is only necessary when calling <code>write_stan_json()</code> directly. When
+passing a data list to the fitting methods of a model compiled from a Stan
+file (e.g., <code>$sample()</code>), CmdStanR uses the model's variable declarations to
+make this correction automatically.</p>
+</div>
+
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

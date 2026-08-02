@@ -45,7 +45,7 @@ $cmdstan_defaults method."><meta property="og:image" content="https://mc-stan.or
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -92,7 +92,7 @@ $cmdstan_defaults method."><meta property="og:image" content="https://mc-stan.or
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Run Stan's Pathfinder Variational Inference Algorithm</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/model.R" class="external-link"><code>R/model.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/model.R" class="external-link"><code>R/model.R</code></a></small>
       <div class="d-none name"><code>model-method-pathfinder.Rd</code></div>
     </div>
 
@@ -338,7 +338,9 @@ Pareto smoothed importance sampling (PSIS). This should be smaller than
 
 <dt id="arg-num-paths">num_paths<a class="anchor" aria-label="anchor" href="#arg-num-paths"></a></dt>
 <dd><p>(positive integer) Number of single pathfinders to run. The
-default is <code>4</code>.</p></dd>
+default is <code>4</code>. The paths are run sequentially unless the model was
+<a href="model-method-compile.html">compiled</a> with <code>cpp_options = list(stan_threads = TRUE)</code> and <code>threads</code> is set, so running multiple paths in parallel requires
+both.</p></dd>
 
 
 <dt id="arg-max-lbfgs-iters">max_lbfgs_iters<a class="anchor" aria-label="anchor" href="#arg-max-lbfgs-iters"></a></dt>
@@ -684,8 +686,8 @@ https://mc-stan.org/docs/cmdstan-guide/</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   This procedure has not been thoroughly tested and may be unstable </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   or buggy. The interface is subject to change. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------------------------------------------ </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 3e-06 seconds </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 2e-06 seconds </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Adjust your expectations accordingly! </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Begin eta adaptation. </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration:   1 / 250 [  0%]  (Adaptation) </span>

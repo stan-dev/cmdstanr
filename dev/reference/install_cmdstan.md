@@ -63,8 +63,9 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
   (string) The path to the directory in which to install CmdStan. The
   default is to install it in a directory called `.cmdstan` within the
-  user's home directory (i.e.,
-  `file.path(Sys.getenv("HOME"), ".cmdstan")`).
+  user's home directory. On Windows the home directory is determined
+  from `USERPROFILE`, falling back to `HOMEDRIVE` and `HOMEPATH`. On
+  other platforms it is determined from `HOME`.
 
 - cores:
 

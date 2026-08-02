@@ -285,7 +285,10 @@ pathfinder(
 - num_paths:
 
   (positive integer) Number of single pathfinders to run. The default is
-  `4`.
+  `4`. The paths are run sequentially unless the model was
+  [compiled](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
+  with `cpp_options = list(stan_threads = TRUE)` and `threads` is set,
+  so running multiple paths in parallel requires both.
 
 - max_lbfgs_iters:
 
@@ -639,8 +642,8 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 #>   This procedure has not been thoroughly tested and may be unstable 
 #>   or buggy. The interface is subject to change. 
 #> ------------------------------------------------------------ 
-#> Gradient evaluation took 3e-06 seconds 
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+#> Gradient evaluation took 2e-06 seconds 
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
 #> Adjust your expectations accordingly! 
 #> Begin eta adaptation. 
 #> Iteration:   1 / 250 [  0%]  (Adaptation) 

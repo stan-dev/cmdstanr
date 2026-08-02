@@ -540,13 +540,14 @@ These are run via the `$optimize()`, `$laplace()`, `$variational()`, and
 
 ### Optimization
 
-Following CmdStan’s terminology, we can find the (penalized) maximum
-likelihood estimate (MLE) using
+We can find a mode of the target using
 [`$optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.html).
+The point estimate is extracted with the `$mle()` method (the method
+name is retained for historical reasons).
 
 ``` r
 
-fit_mle <- mod$optimize(data = data_list, seed = 123)
+fit_optim <- mod$optimize(data = data_list, seed = 123)
 ```
 
     Initial log joint probability = -16.144 
@@ -558,7 +559,7 @@ fit_mle <- mod$optimize(data = data_list, seed = 123)
 
 ``` r
 
-fit_mle$print() # includes lp__ (log prob calculated by Stan program)
+fit_optim$print() # includes lp__ (log prob calculated by Stan program)
 ```
 
      variable estimate
@@ -567,19 +568,19 @@ fit_mle$print() # includes lp__ (log prob calculated by Stan program)
 
 ``` r
 
-fit_mle$mle("theta")
+fit_optim$mle("theta")
 ```
 
         theta 
     0.2000001 
 
-Here’s a plot comparing the penalized MLE to the posterior distribution
-of `theta`.
+Here’s a plot comparing the optimized point estimate to the posterior of
+`theta`.
 
 ``` r
 
 mcmc_hist(fit$draws("theta")) +
-  vline_at(fit_mle$mle("theta"), size = 1.5)
+  vline_at(fit_optim$mle("theta"), size = 1.5)
 ```
 
     Warning:  [1m [22mUsing `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
@@ -590,21 +591,19 @@ mcmc_hist(fit$draws("theta")) +
      [90mCall `lifecycle::last_lifecycle_warnings()` to see where this warning was [39m
      [90mgenerated. [39m
 
-![](cmdstanr_files/figure-html/plot-mle-1.png)
+![](cmdstanr_files/figure-html/plot-optim-1.png)
 
 For optimization, by default the mode is calculated without the Jacobian
-adjustment for constrained variables. Including the Jacobian adjustment
-by setting `jacobian=TRUE` produces a maximum a posteriori (MAP)
-estimate. More precisely, the default finds a mode of the target in the
-constrained parameter space, whereas `jacobian=TRUE` finds a mode of the
-corresponding density in the unconstrained space. See the [Maximum
-Likelihood
-Estimation](https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html)
+adjustment for constrained variables, which finds a mode of the target
+in the constrained parameter space, whereas `jacobian = TRUE` finds a
+mode of the corresponding density in the unconstrained space. See the
+[Jacobian
+adjustments](https://mc-stan.org/docs/cmdstan-guide/optimize_config.html#jacobian-adjustments)
 section of the CmdStan User’s Guide for more details.
 
 ``` r
 
-fit_map <- mod$optimize(
+fit_optim_jacobian <- mod$optimize(
   data = data_list,
   jacobian = TRUE,
   seed = 123
@@ -623,26 +622,22 @@ fit_map <- mod$optimize(
 The
 [`$laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.html)
 method produces a sample from a normal approximation centered at the
-mode of a distribution in the unconstrained space. Following CmdStan’s
-terminology, if the mode is a MAP estimate, the draws provide an
-estimate of the mean and standard deviation of the posterior
-distribution. If the mode is an MLE, the draws provide an estimate of
-the standard error of the likelihood. Whether the mode is called MAP or
-MLE depends on the value of the `jacobian` argument when running
-optimization. The Laplace `jacobian` setting must match the setting used
-for optimization so that both use the same target density. See the
-[Laplace
-Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+mode of a distribution in the unconstrained space. When the mode was
+found with the Jacobian adjustment, the draws provide an estimate of the
+mean and standard deviation of the posterior distribution. The Laplace
+`jacobian` setting must match the setting used for optimization so that
+both use the same target density. See the [Laplace
+Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace_sample_config.html)
 chapter of the CmdStan User’s Guide for more details.
 
-Here we pass in the `fit_map` object from above as the `mode` argument.
-If `mode` is omitted then optimization will be run internally before
-taking draws from the normal approximation.
+Here we pass in the `fit_optim_jacobian` object from above as the `mode`
+argument. If `mode` is omitted then optimization will be run internally
+before taking draws from the normal approximation.
 
 ``` r
 
 fit_laplace <- mod$laplace(
-    mode = fit_map,
+    mode = fit_optim_jacobian,
     draws = 4000,
     data = data_list,
     seed = 123,
@@ -696,8 +691,8 @@ fit_vb <- mod$variational(
       This procedure has not been thoroughly tested and may be unstable 
       or buggy. The interface is subject to change. 
     ------------------------------------------------------------ 
-    Gradient evaluation took 3e-06 seconds 
-    1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+    Gradient evaluation took 2e-06 seconds 
+    1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
     Adjust your expectations accordingly! 
     Begin eta adaptation. 
     Iteration:   1 / 250 [  0%]  (Adaptation) 

@@ -51,7 +51,7 @@ CmdStanR release from GitHub."><meta property="og:image" content="https://mc-sta
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -98,7 +98,7 @@ CmdStanR release from GitHub."><meta property="og:image" content="https://mc-sta
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Install CmdStan or clean and rebuild an existing installation</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/install.R" class="external-link"><code>R/install.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/install.R" class="external-link"><code>R/install.R</code></a></small>
       <div class="d-none name"><code>install_cmdstan.Rd</code></div>
     </div>
 
@@ -161,7 +161,9 @@ CmdStanR release from GitHub.</p>
 <dl><dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
 <dd><p>(string) The path to the directory in which to install CmdStan.
 The default is to install it in a directory called <code>.cmdstan</code> within the
-user's home directory (i.e., <code>file.path(Sys.getenv("HOME"), ".cmdstan")</code>).</p></dd>
+user's home directory. On Windows the home directory is determined from
+<code>USERPROFILE</code>, falling back to <code>HOMEDRIVE</code> and <code>HOMEPATH</code>. On other
+platforms it is determined from <code>HOME</code>.</p></dd>
 
 
 <dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>

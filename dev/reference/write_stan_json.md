@@ -35,13 +35,30 @@ file:
 
 - `logical` -\> `integer` (`TRUE` -\> `1`, `FALSE` -\> `0`)
 
+- `factor` -\> `integer` (the index of each value's level)
+
 - `data.frame` -\> `matrix` (via
-  [`data.matrix()`](https://rdrr.io/r/base/data.matrix.html))
+  [`data.matrix()`](https://rdrr.io/r/base/data.matrix.html)); every
+  column must be numeric, integer, logical, or factor
 
 - `list` -\> `array`
 
 - `table` -\> `vector`, `matrix`, or `array` (depending on dimensions of
   table)
+
+### Factor conversion
+
+Factors are written as their level indices: the position of each value
+in `levels(x)` rather than the value itself. The default levels are the
+sorted unique values, so `factor(c(10, 9, 8))` has levels `8`, `9`, `10`
+and is written as `[3, 2, 1]`, and an unused level shifts the indices of
+the levels after it. If the original values are what you want, convert
+them first, e.g. with `as.numeric(as.character(x))`. The fitting methods
+of a model compiled from a Stan file error if a factor is supplied for a
+variable that is not declared as `int`, but `write_stan_json()` has no
+declarations to check against and so always converts.
+
+### List to array conversion
 
 The `list` to `array` conversion is intended to make it easier to
 prepare the data for certain Stan declarations involving arrays:
@@ -52,11 +69,35 @@ prepare the data for certain Stan declarations involving arrays:
 - `array[K] matrix[I,J] m ` can be constructed in R as a list with `K`
   elements where each element is an `IxJ` matrix
 
+- `array[K,I,J] int n ` can be constructed in R as a list with `K`
+  elements where each element is an `IxJ` matrix of integers
+
 These can also be passed in from R as arrays instead of lists but the
-list option is provided for convenience. Unfortunately for arrays with
-more than one dimension (e.g. `array[K,L] vector[J] v `) it is not
-possible to use an R list and an array must be used instead. For this
-example the array in R should have dimensions `KxLxJ`.
+list option is provided for convenience. A list always contributes
+exactly one leading dimension, so `array[K,L] vector[J] v ` can be
+supplied either as a list of `K` matrices each with dimensions `LxJ` or
+as a single R array with dimensions `KxLxJ`. Nested lists are not
+supported: every element of the list must be a vector, matrix, or array.
+
+### Scalar vs. length-1 vector
+
+Because R does not distinguish between a scalar and a vector of length
+1, a length-1 vector like `c(42)` is written to JSON as a scalar (`42`)
+rather than an array (`[42]`). If a Stan variable is declared as a
+vector or array that may have length 1, wrap the value in
+[`array()`](https://rdrr.io/r/base/array.html) to force array output.
+Because [`array()`](https://rdrr.io/r/base/array.html) uses the length
+of its input as the default dimension, this works regardless of length:
+
+- `write_stan_json(list(x = array(42)), file)` writes `"x": [42]`
+
+- `write_stan_json(list(x = array(c(42, 43))), file)` writes
+  `"x": [42, 43]`
+
+This is only necessary when calling `write_stan_json()` directly. When
+passing a data list to the fitting methods of a model compiled from a
+Stan file (e.g., `$sample()`), CmdStanR uses the model's variable
+declarations to make this correction automatically.
 
 ## See also
 

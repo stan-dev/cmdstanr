@@ -104,7 +104,7 @@ To build the model with OpenCL support, add
 
 ``` r
 
-# Compile the model with STAN_OPENCL=TRUE
+# Compile the model with stan_opencl = TRUE
 mod_cl <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan",
                         cpp_options = list(stan_opencl = TRUE),
                         force_recompile = TRUE)

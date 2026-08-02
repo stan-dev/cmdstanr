@@ -11,7 +11,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -58,7 +58,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>CmdStanR global options</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/options.R" class="external-link"><code>R/options.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/options.R" class="external-link"><code>R/options.R</code></a></small>
       <div class="d-none name"><code>cmdstanr_global_options.Rd</code></div>
     </div>
 
@@ -89,6 +89,10 @@ Configure the option or environment variable before attaching the package.</p></
 CSV files when fitting models. The default is a temporary directory. Files in
 a temporary directory are removed as part of <span style="R">R</span> garbage collection, while
 files in an explicitly defined directory are not automatically deleted.</p></li>
+<li><p><code>cmdstanr_spinner</code>: Should a spinner be shown while CmdStan compiles a
+model, checks syntax, or is installed or rebuilt? The default is <code>TRUE</code>. The
+spinner is only ever shown in interactive sessions, so setting this to
+<code>FALSE</code> is only necessary to suppress it in an interactive session.</p></li>
 <li><p><code>cmdstanr_verbose</code>: Should more information be printed
 when compiling or running models, including showing how CmdStan was called
 internally? The default is <code>FALSE</code>.</p></li>

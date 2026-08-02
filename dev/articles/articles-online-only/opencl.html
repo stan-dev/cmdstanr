@@ -33,7 +33,7 @@
 
     <a class="navbar-brand me-2" href="../../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../../logo.svg"><img src="../../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -97,7 +97,7 @@
 and Jonah Gabry</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/vignettes/articles-online-only/opencl.Rmd" class="external-link"><code>vignettes/articles-online-only/opencl.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/vignettes/articles-online-only/opencl.Rmd" class="external-link"><code>vignettes/articles-online-only/opencl.Rmd</code></a></small>
       <div class="d-none name"><code>opencl.Rmd</code></div>
     </div>
 
@@ -196,7 +196,7 @@ for a list of functions with OpenCL support.</p>
 <code>cpp_options = list(stan_opencl = TRUE)</code> at the compilation
 step.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Compile the model with STAN_OPENCL=TRUE</span></span>
+<code class="sourceCode R"><span><span class="co"># Compile the model with stan_opencl = TRUE</span></span>
 <span><span class="va">mod_cl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="st">"opencl-files/bernoulli_logit_glm.stan"</span>,</span>
 <span>                        cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>stan_opencl <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>                        force_recompile <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>

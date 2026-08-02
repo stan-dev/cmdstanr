@@ -11,12 +11,12 @@ installed. For Unix systems the most commonly used implementations are
 MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 (for example mpicxx), which is required to compile the model.
 An example of compiling with MPI:
-mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+mpi_options = list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 
 The C++ options that must be supplied to the
 compile call are:
-STAN_MPI: Enables the use of MPI with Stan if TRUE.
+stan_mpi: Enables the use of MPI with Stan if TRUE.
 CXX: The name of the MPI C++ compiler wrapper. Typically "mpicxx".
 TBB_CXX_TYPE: The C++ compiler the MPI wrapper wraps. Typically "gcc"
 on Linux and "clang" on macOS.
@@ -37,12 +37,12 @@ installed. For Unix systems the most commonly used implementations are
 MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 (for example mpicxx), which is required to compile the model.
 An example of compiling with MPI:
-mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+mpi_options = list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 
 The C++ options that must be supplied to the
 compile call are:
-STAN_MPI: Enables the use of MPI with Stan if TRUE.
+stan_mpi: Enables the use of MPI with Stan if TRUE.
 CXX: The name of the MPI C++ compiler wrapper. Typically "mpicxx".
 TBB_CXX_TYPE: The C++ compiler the MPI wrapper wraps. Typically "gcc"
 on Linux and "clang" on macOS.
@@ -63,7 +63,7 @@ mpi_args = list("n" = n_procs).'><meta property="og:image" content="https://mc-s
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -110,7 +110,7 @@ mpi_args = list("n" = n_procs).'><meta property="og:image" content="https://mc-s
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Run Stan's MCMC algorithms with MPI</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/model.R" class="external-link"><code>R/model.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/model.R" class="external-link"><code>R/model.R</code></a></small>
       <div class="d-none name"><code>model-method-sample_mpi.Rd</code></div>
     </div>
 
@@ -126,10 +126,10 @@ installed. For Unix systems the most commonly used implementations are
 MPICH and OpenMPI. The implementations provide an MPI C++ compiler wrapper
 (for example mpicxx), which is required to compile the model.</p>
 <p>An example of compiling with MPI:</p>
-<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>mpi_options <span class="ot">=</span> <span class="fu">list</span>(<span class="at">STAN_MPI=</span><span class="cn">TRUE</span>, <span class="at">CXX=</span><span class="st">"mpicxx"</span>, <span class="at">TBB_CXX_TYPE=</span><span class="st">"gcc"</span>)</span>
+<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>mpi_options <span class="ot">=</span> <span class="fu">list</span>(<span class="at">stan_mpi =</span> <span class="cn">TRUE</span>, <span class="at">CXX =</span> <span class="st">"mpicxx"</span>, <span class="at">TBB_CXX_TYPE =</span> <span class="st">"gcc"</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>mod <span class="ot">=</span> <span class="fu">cmdstan_model</span>(<span class="st">"model.stan"</span>, <span class="at">cpp_options =</span> mpi_options)</span></code></pre><p></p></div>
 <p>The C++ options that must be supplied to the
-<a href="model-method-compile.html">compile</a> call are:</p><ul><li><p><code>STAN_MPI</code>: Enables the use of MPI with Stan if <code>TRUE</code>.</p></li>
+<a href="model-method-compile.html">compile</a> call are:</p><ul><li><p><code>stan_mpi</code>: Enables the use of MPI with Stan if <code>TRUE</code>.</p></li>
 <li><p><code>CXX</code>: The name of the MPI C++ compiler wrapper. Typically <code>"mpicxx"</code>.</p></li>
 <li><p><code>TBB_CXX_TYPE</code>: The C++ compiler the MPI wrapper wraps. Typically <code>"gcc"</code>
 on Linux and <code>"clang"</code> on macOS.</p></li>
@@ -525,7 +525,7 @@ details on MPI support in Stan.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># mpi_options &lt;- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")</span></span></span>
+<span class="r-in"><span><span class="co"># mpi_options &lt;- list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")</span></span></span>
 <span class="r-in"><span><span class="co"># mod &lt;- cmdstan_model("model.stan", cpp_options = mpi_options)</span></span></span>
 <span class="r-in"><span><span class="co"># fit &lt;- mod$sample_mpi(..., mpi_args = list("n" = 4))</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

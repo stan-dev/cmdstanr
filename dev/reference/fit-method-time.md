@@ -38,35 +38,35 @@ A list with elements
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 fit_mcmc$time()
 #> $total
-#> [1] 0.4857559
+#> [1] 0.4899728
 #> 
 #> $chains
 #>   chain_id warmup sampling total
 #> 1        1  0.019    0.056 0.075
-#> 2        2  0.018    0.055 0.073
-#> 3        3  0.020    0.059 0.079
-#> 4        4  0.019    0.054 0.073
+#> 2        2  0.019    0.055 0.074
+#> 3        3  0.020    0.055 0.075
+#> 4        4  0.019    0.055 0.074
 #> 
 
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 fit_vb$time()
 #> $total
-#> [1] 0.1125631
+#> [1] 0.112992
 #> 
 
-fit_mle <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
-fit_mle$time()
+fit_optim <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
+fit_optim$time()
 #> $total
-#> [1] 0.1115389
+#> [1] 0.1112962
 #> 
 
-# use fit_mle to draw samples from laplace approximation
-fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_mle)
+# use fit_optim to draw samples from laplace approximation
+fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_optim)
 fit_laplace$time() # just time for drawing sample not for running optimize
 #> $total
-#> [1] 0.1112032
+#> [1] 0.1112807
 #> 
-fit_laplace$time()$total + fit_mle$time()$total # total time
-#> [1] 0.2227421
+fit_laplace$time()$total + fit_optim$time()$total # total time
+#> [1] 0.2225769
 # }
 ```

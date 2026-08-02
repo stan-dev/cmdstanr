@@ -19,7 +19,7 @@ for how to avoid manually setting the path in each R session."><meta property="o
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -66,7 +66,7 @@ for how to avoid manually setting the path in each R session."><meta property="o
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Get or set the file path to the CmdStan installation</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/path.R" class="external-link"><code>R/path.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/path.R" class="external-link"><code>R/path.R</code></a></small>
       <div class="d-none name"><code>set_cmdstan_path.Rd</code></div>
     </div>
 
@@ -126,11 +126,12 @@ versioned CmdStan installations, the installation with the largest version
 number is used.</p></li>
 <li><p>If no environment variable is found when loaded but any directory in the
 form <code>".cmdstan/cmdstan-[version]"</code> (e.g., <code>".cmdstan/cmdstan-2.35.0"</code>),
-exists in the user's home directory (<code>Sys.getenv("HOME")</code>, <em>not</em> the current
-working directory) then the path to the cmdstan with the largest version
-number will be set as the path to CmdStan for the <span style="R">R</span> session. This is the
-same as the default directory that <code><a href="install_cmdstan.html">install_cmdstan()</a></code> would use to install
-the latest version of CmdStan.</p></li>
+exists in the user's home directory (<em>not</em> the current working directory),
+then the path to the CmdStan installation with the largest version number is
+used for the <span style="R">R</span> session. On Windows the home directory is determined from
+<code>USERPROFILE</code>, falling back to <code>HOMEDRIVE</code> and <code>HOMEPATH</code>. On other platforms
+it is determined from <code>HOME</code>. This is the same default directory that
+<code><a href="install_cmdstan.html">install_cmdstan()</a></code> uses.</p></li>
 </ul><p>It is always possible to change the path after loading the package using
 <code>set_cmdstan_path(path)</code>.</p>
     </div>

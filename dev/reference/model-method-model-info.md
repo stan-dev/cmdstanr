@@ -55,7 +55,8 @@ generated C++ file.
 - `$exe_file()` returns a path as a string, or `character(0)` if no
   executable path is set.
 
-- `$include_paths()` returns a character vector of paths or `NULL`.
+- `$include_paths()` returns a character vector of absolute paths or
+  `NULL`.
 
 - `$cmdstan_version()` returns a CmdStan version as a string.
 

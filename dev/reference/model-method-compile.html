@@ -45,7 +45,7 @@ $save_hpp_file(dir)."><meta property="og:image" content="https://mc-stan.org/cmd
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -92,7 +92,7 @@ $save_hpp_file(dir)."><meta property="og:image" content="https://mc-stan.org/cmd
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Compile a Stan program</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/model.R" class="external-link"><code>R/model.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/model.R" class="external-link"><code>R/model.R</code></a></small>
       <div class="d-none name"><code>model-method-compile.Rd</code></div>
     </div>
 
@@ -162,7 +162,10 @@ without compiling it or for a model that is already compiled the
 <dt id="arg-include-paths">include_paths<a class="anchor" aria-label="anchor" href="#arg-include-paths"></a></dt>
 <dd><p>(character vector) Paths to directories where Stan
 should look for files specified in <code>#include</code> directives in the Stan
-program.</p></dd>
+program. Relative paths are resolved against the working directory when
+the model object is created (or when <code>$compile()</code> is called) and stored as
+absolute paths, so subsequent changes to the working directory do not
+affect them.</p></dd>
 
 
 <dt id="arg-user-header">user_header<a class="anchor" aria-label="anchor" href="#arg-user-header"></a></dt>
@@ -172,10 +175,14 @@ to compile with the Stan model.</p></dd>
 
 <dt id="arg-cpp-options">cpp_options<a class="anchor" aria-label="anchor" href="#arg-cpp-options"></a></dt>
 <dd><p>(list) Any makefile options to be used when compiling the
-model (<code>STAN_THREADS</code>, <code>STAN_MPI</code>, <code>STAN_OPENCL</code>, etc.). Anything you would
+model (<code>stan_threads</code>, <code>stan_mpi</code>, <code>stan_opencl</code>, etc.). Anything you would
 otherwise write in the <code>make/local</code> file. For an example of using threading
-see the Stan case study
-<a href="https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html" class="external-link">Reduce Sum: A Minimal Example</a>.</p></dd>
+see the Stan case study <a href="https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html" class="external-link">Reduce Sum: A Minimal Example</a>.
+<strong>Note:</strong> For historical reasons, CmdStan treats some options as enabled
+whenever their <code>Make</code> variable is non-empty. In particular, setting
+<code>stan_threads</code> to <code>FALSE</code> passes <code>STAN_THREADS=FALSE</code> to <code>Make</code>, which
+still enables threading! To leave threading disabled, simply omit
+<code>stan_threads</code> entirely or set it to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-stanc-options">stanc_options<a class="anchor" aria-label="anchor" href="#arg-stanc-options"></a></dt>
@@ -255,19 +262,28 @@ documentation and tutorials.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"examples/bernoulli/bernoulli.stan"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">stan_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="set_cmdstan_path.html">cmdstan_path</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"examples/bernoulli/bernoulli.stan"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># by default compilation happens when cmdstan_model() is called.</span></span></span>
 <span class="r-in"><span><span class="co"># to delay compilation until calling the $compile() method set compile=FALSE</span></span></span>
-<span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">stan_file</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/home/runner/.cmdstan/cmdstan-2.39.0/examples/bernoulli/bernoulli"</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># turn on threading support (for using functions that support within-chain parallelization)</span></span></span>
-<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span>force_recompile <span class="op">=</span> <span class="cn">TRUE</span>, cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>stan_threads <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">exe_file</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/home/runner/.cmdstan/cmdstan-2.39.0/examples/bernoulli/bernoulli"</span>
+<span class="r-in"><span><span class="co"># turn on threading support for using functions that support within-chain</span></span></span>
+<span class="r-in"><span><span class="co"># parallelization or running multiple pathfinder paths in parallel</span></span></span>
+<span class="r-in"><span><span class="co"># (here we compile a copy of the model in a temporary directory so that the</span></span></span>
+<span class="r-in"><span><span class="co"># executable compiled without threading above is not overwritten)</span></span></span>
+<span class="r-in"><span><span class="va">stan_file_threads</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"bernoulli.stan"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="va">stan_file</span>, <span class="va">stan_file_threads</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span><span class="va">mod_threads</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">stan_file_threads</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mod_threads</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span>cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>stan_threads <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mod_threads</span><span class="op">$</span><span class="fu">cpp_options</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $stan_threads</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># turn on pedantic mode</span></span></span>
 <span class="r-in"><span><span class="va">file_pedantic</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">"</span></span></span>
@@ -278,11 +294,12 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="st">  sigma ~ exponential(1);</span></span></span>
 <span class="r-in"><span><span class="st">}</span></span></span>
 <span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file_pedantic</span>, pedantic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/Rtmp3nC1us/model-1c4960ec9c21.stan', line 6, column 2 to column 7:</span>
+<span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file_pedantic</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span>pedantic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/RtmpUMR7XL/model-233c50643f93.stan', line 6, column 2 to column 7:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     Parameter sigma is given a exponential distribution, which has strictly</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     positive support, but sigma was not constrained to be strictly positive.</span>
-<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># same as mod &lt;- cmdstan_model(file_pedantic, pedantic = TRUE)</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

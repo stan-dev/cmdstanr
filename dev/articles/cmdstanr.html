@@ -33,7 +33,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -97,7 +97,7 @@
 Rok Češnovar, and Andrew Johnson</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/vignettes/cmdstanr.Rmd" class="external-link"><code>vignettes/cmdstanr.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/vignettes/cmdstanr.Rmd" class="external-link"><code>vignettes/cmdstanr.Rmd</code></a></small>
       <div class="d-none name"><code>cmdstanr.Rmd</code></div>
     </div>
 
@@ -527,10 +527,11 @@ demonstrated above.</p>
 <div class="section level3">
 <h3 id="optimization">Optimization<a class="anchor" aria-label="anchor" href="#optimization"></a>
 </h3>
-<p>Following CmdStan’s terminology, we can find the (penalized) maximum
-likelihood estimate (MLE) using <a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a>.</p>
+<p>We can find a mode of the target using <a href="https://mc-stan.org/cmdstanr/reference/model-method-optimize.html"><code>$optimize()</code></a>.
+The point estimate is extracted with the <code>$mle()</code> method (the
+method name is retained for historical reasons).</p>
 <div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_mle</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit_optim</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span>data <span class="op">=</span> <span class="va">data_list</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></code></pre></div>
 <pre><code>Initial log joint probability = -16.144 
     Iter      log prob        ||dx||      ||grad||       alpha      alpha0  # evals  Notes  
        6      -5.00402   0.000246518   8.73164e-07           1           1        9    
@@ -538,19 +539,19 @@ Optimization terminated normally:
   Convergence detected: relative gradient magnitude is below tolerance 
 Finished in  0.1 seconds.</code></pre>
 <div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span> <span class="co"># includes lp__ (log prob calculated by Stan program)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span> <span class="co"># includes lp__ (log prob calculated by Stan program)</span></span></code></pre></div>
 <pre><code> variable estimate
     lp__     -5.00
     theta     0.20</code></pre>
 <div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span>    <span class="va">theta</span> </span>
 <span><span class="fl">0.2000001</span> </span></code></pre>
-<p>Here’s a plot comparing the penalized MLE to the posterior
-distribution of <code>theta</code>.</p>
+<p>Here’s a plot comparing the optimized point estimate to the posterior
+of <code>theta</code>.</p>
 <div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">vline_at</a></span><span class="op">(</span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">vline_at</a></span><span class="op">(</span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
 <pre><code>Warning:  [1m [22mUsing `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
  [36mℹ [39m Please use `linewidth` instead.
  [36mℹ [39m The deprecated feature was likely used in the  [34mbayesplot [39m package.
@@ -558,18 +559,16 @@ distribution of <code>theta</code>.</p>
  [90mThis warning is displayed once per session. [39m
  [90mCall `lifecycle::last_lifecycle_warnings()` to see where this warning was [39m
  [90mgenerated. [39m</code></pre>
-<p><img src="cmdstanr_files/figure-html/plot-mle-1.png" class="r-plt" alt="" width="60%" style="display: block; margin: auto;"></p>
+<p><img src="cmdstanr_files/figure-html/plot-optim-1.png" class="r-plt" alt="" width="60%" style="display: block; margin: auto;"></p>
 <p>For optimization, by default the mode is calculated without the
-Jacobian adjustment for constrained variables. Including the Jacobian
-adjustment by setting <code>jacobian=TRUE</code> produces a maximum a
-posteriori (MAP) estimate. More precisely, the default finds a mode of
-the target in the constrained parameter space, whereas
-<code>jacobian=TRUE</code> finds a mode of the corresponding density in
-the unconstrained space. See the <a href="https://mc-stan.org/docs/cmdstan-guide/maximum-likelihood-estimation.html" class="external-link">Maximum
-Likelihood Estimation</a> section of the CmdStan User’s Guide for more
+Jacobian adjustment for constrained variables, which finds a mode of the
+target in the constrained parameter space, whereas
+<code>jacobian = TRUE</code> finds a mode of the corresponding density
+in the unconstrained space. See the <a href="https://mc-stan.org/docs/cmdstan-guide/optimize_config.html#jacobian-adjustments" class="external-link">Jacobian
+adjustments</a> section of the CmdStan User’s Guide for more
 details.</p>
 <div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fit_map</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">fit_optim_jacobian</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">optimize</span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">data_list</span>,</span>
 <span>  jacobian <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span></span>
@@ -586,23 +585,19 @@ Finished in  0.1 seconds.</code></pre>
 </h3>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/model-method-laplace.html"><code>$laplace()</code></a>
 method produces a sample from a normal approximation centered at the
-mode of a distribution in the unconstrained space. Following CmdStan’s
-terminology, if the mode is a MAP estimate, the draws provide an
-estimate of the mean and standard deviation of the posterior
-distribution. If the mode is an MLE, the draws provide an estimate of
-the standard error of the likelihood. Whether the mode is called MAP or
-MLE depends on the value of the <code>jacobian</code> argument when
-running optimization. The Laplace <code>jacobian</code> setting must
-match the setting used for optimization so that both use the same target
-density. See the <a href="https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html" class="external-link">Laplace
+mode of a distribution in the unconstrained space. When the mode was
+found with the Jacobian adjustment, the draws provide an estimate of the
+mean and standard deviation of the posterior distribution. The Laplace
+<code>jacobian</code> setting must match the setting used for
+optimization so that both use the same target density. See the <a href="https://mc-stan.org/docs/cmdstan-guide/laplace_sample_config.html" class="external-link">Laplace
 Sampling</a> chapter of the CmdStan User’s Guide for more details.</p>
-<p>Here we pass in the <code>fit_map</code> object from above as the
-<code>mode</code> argument. If <code>mode</code> is omitted then
+<p>Here we pass in the <code>fit_optim_jacobian</code> object from above
+as the <code>mode</code> argument. If <code>mode</code> is omitted then
 optimization will be run internally before taking draws from the normal
 approximation.</p>
 <div class="sourceCode" id="cb61"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_laplace</span> <span class="op">&lt;-</span> <span class="va">mod</span><span class="op">$</span><span class="fu">laplace</span><span class="op">(</span></span>
-<span>    mode <span class="op">=</span> <span class="va">fit_map</span>,</span>
+<span>    mode <span class="op">=</span> <span class="va">fit_optim_jacobian</span>,</span>
 <span>    draws <span class="op">=</span> <span class="fl">4000</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">data_list</span>,</span>
 <span>    seed <span class="op">=</span> <span class="fl">123</span>,</span>
@@ -642,8 +637,8 @@ EXPERIMENTAL ALGORITHM:
   This procedure has not been thoroughly tested and may be unstable 
   or buggy. The interface is subject to change. 
 ------------------------------------------------------------ 
-Gradient evaluation took 3e-06 seconds 
-1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+Gradient evaluation took 2e-06 seconds 
+1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
 Adjust your expectations accordingly! 
 Begin eta adaptation. 
 Iteration:   1 / 250 [  0%]  (Adaptation) 

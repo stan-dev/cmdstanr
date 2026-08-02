@@ -68,8 +68,8 @@ fit_mcmc <- cmdstanr_example("logistic")
 head(fit_mcmc$lp())
 #> [1] -67.48149 -70.15671 -65.15136 -66.78601 -66.59203 -67.35672
 
-fit_mle <- cmdstanr_example("logistic", method = "optimize")
-fit_mle$lp()
+fit_optim <- cmdstanr_example("logistic", method = "optimize")
+fit_optim$lp()
 #> [1] -63.9218
 
 fit_vb <- cmdstanr_example("logistic", method = "variational")

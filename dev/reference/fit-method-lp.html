@@ -23,7 +23,7 @@ constants are dropped from log probability calculations."><meta property="og:ima
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -70,7 +70,7 @@ constants are dropped from log probability calculations."><meta property="og:ima
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Extract log probability (target)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R" class="external-link"><code>R/fit.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/fit.R" class="external-link"><code>R/fit.R</code></a></small>
       <div class="d-none name"><code>fit-method-lp.Rd</code></div>
     </div>
 
@@ -135,8 +135,8 @@ International Conference on Machine Learning</em>, PMLR 80:5581–5590.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">lp</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] -67.48149 -70.15671 -65.15136 -66.78601 -66.59203 -67.35672</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">fit_mle</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"optimize"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">fit_mle</span><span class="op">$</span><span class="fu">lp</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit_optim</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"optimize"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">lp</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] -63.9218</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"variational"</span><span class="op">)</span></span></span>

@@ -34,7 +34,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/stan-dev/cmdstanr/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/DESCRIPTION)
 
 Gabry J, Češnovar R, Johnson A, Bronder S (2026). *cmdstanr: R Interface
 to 'CmdStan'*. R package version 0.9.0.9001,

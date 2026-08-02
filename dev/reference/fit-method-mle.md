@@ -2,21 +2,19 @@
 
 The `$mle()` method is only available for
 [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
-objects. It returns the point estimate as a numeric vector with one
-element per variable. The returned vector does *not* include `lp__`, the
-target log density evaluated by Stan, up to an additive constant. `lp__`
-is available via the
+objects. The method name is retained for historical reasons. It returns
+the point estimate as a numeric vector with one element per variable.
+The returned vector does *not* include `lp__`, the target log density
+evaluated by Stan, up to an additive constant. `lp__` is available via
+the
 [`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md)
 method and also included in the
 [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
 method.
 
-Following CmdStan's terminology, for models with constrained parameters
-that are fit with `jacobian=TRUE`, this point estimate is called a
-maximum a posteriori (MAP) estimate rather than an MLE. More precisely,
-`jacobian=FALSE` finds a mode of the target in the constrained parameter
-space and `jacobian=TRUE` finds a mode in the unconstrained parameter
-space. See
+With `jacobian = FALSE`, the point estimate is a mode of the target in
+the constrained parameter space. With `jacobian = TRUE`, it is a mode of
+the corresponding density in the unconstrained parameter space. See
 [`$optimize()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md)
 and the CmdStan User's Guide for more details.
 

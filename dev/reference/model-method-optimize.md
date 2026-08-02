@@ -2,22 +2,17 @@
 
 The `$optimize()` method of a
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
-object runs Stan's optimizer. Following CmdStan's terminology,
-optimization without the Jacobian adjustment (the default) returns a
-maximum likelihood estimate (MLE), whereas optimization with the
-adjustment returns a maximum a posteriori (MAP) estimate. More
-precisely, without the adjustment the optimization finds a mode of the
-target in the original constrained parameter space (if the mode exists),
-whereas with the adjustment it finds a mode of the corresponding density
-in the unconstrained parameter space.
+object runs Stan's optimizer. Without the Jacobian adjustment (the
+default), optimization finds a mode of the target in the original
+constrained parameter space (if the mode exists). With the adjustment,
+it finds a mode of the corresponding density in the unconstrained
+parameter space.
 
 The `jacobian` argument does not determine whether prior terms are
 included. Every contribution to the Stan program's `target`, including
-prior terms, is included under either setting. The MLE or MAP
-interpretation therefore depends on both the contents of the target and
-the parameterization. The Jacobian adjustment is particularly useful
-when making a distributional approximation in the unconstrained space
-(see [Laplace
+prior terms, is included under either setting. The Jacobian adjustment
+is particularly useful when making a distributional approximation in the
+unconstrained space (see [Laplace
 sampling](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)).
 If the model has only unconstrained parameters, including the Jacobian
 has no effect. See the [CmdStan User's
@@ -250,12 +245,11 @@ optimize(
 
   (logical) Whether or not to use the Jacobian adjustment for
   constrained variables. For historical reasons, the default is `FALSE`.
-  CmdStan refers to the estimates obtained with `FALSE` and `TRUE` as
-  MLE and MAP estimates, respectively. More precisely, `FALSE` finds a
-  mode of the target in the constrained parameter space and `TRUE` finds
-  a mode in the unconstrained space. This argument does not control
-  whether prior terms are included. See the **Description** section and
-  the CmdStan User's Guide for more details. For use later with
+  `FALSE` finds a mode of the target in the constrained parameter space
+  and `TRUE` finds a mode in the unconstrained space. This argument does
+  not control whether prior terms are included. See the **Description**
+  section and the CmdStan User's Guide for more details. For use later
+  with
   [`$laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
   the `jacobian` argument should typically be set to `TRUE`.
 
@@ -604,8 +598,8 @@ fit_vb <- mod$variational(data = stan_data, seed = 123)
 #>   This procedure has not been thoroughly tested and may be unstable 
 #>   or buggy. The interface is subject to change. 
 #> ------------------------------------------------------------ 
-#> Gradient evaluation took 3e-06 seconds 
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+#> Gradient evaluation took 2e-06 seconds 
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
 #> Adjust your expectations accordingly! 
 #> Begin eta adaptation. 
 #> Iteration:   1 / 250 [  0%]  (Adaptation) 

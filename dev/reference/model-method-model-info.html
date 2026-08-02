@@ -39,7 +39,7 @@ save_hpp_file(dir = NULL)
 
     <a class="navbar-brand me-2" href="../index.html">
       <!-- Add Stan logo -->
-      <picture><source type="image/svg+xml" srcset="../logo.svg"><img src="../logo.png" class="stan-logo" alt="Stan blue hex logo"></source></picture>
+      <img src="../reference/figures/logo.svg" class="stan-logo" alt="Stan blue hex logo">
       cmdstanr
     </a>
 
@@ -86,7 +86,7 @@ save_hpp_file(dir = NULL)
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Access information from a <code>CmdStanModel</code> object</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/model.R" class="external-link"><code>R/model.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/R/model.R" class="external-link"><code>R/model.R</code></a></small>
       <div class="d-none name"><code>model-method-model-info.Rd</code></div>
     </div>
 
@@ -141,7 +141,7 @@ code, or <code>NULL</code> if the model was created without a Stan file.</p></li
 <li><p><code>$model_name()</code> returns the model name as a string.</p></li>
 <li><p><code>$exe_file()</code> returns a path as a string, or <code>character(0)</code> if no
 executable path is set.</p></li>
-<li><p><code>$include_paths()</code> returns a character vector of paths or <code>NULL</code>.</p></li>
+<li><p><code>$include_paths()</code> returns a character vector of absolute paths or <code>NULL</code>.</p></li>
 <li><p><code>$cmdstan_version()</code> returns a CmdStan version as a string.</p></li>
 <li><p><code>$cpp_options()</code> returns a named list of C++ options.</p></li>
 <li><p><code>$hpp_file()</code> returns the path to the <code>.hpp</code> file as a string when C++ code

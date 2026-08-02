@@ -16,14 +16,14 @@ example mpicxx), which is required to compile the model.
 
 An example of compiling with MPI:
 
-    mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+    mpi_options = list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
     mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 
 The C++ options that must be supplied to the
 [compile](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
 call are:
 
-- `STAN_MPI`: Enables the use of MPI with Stan if `TRUE`.
+- `stan_mpi`: Enables the use of MPI with Stan if `TRUE`.
 
 - `CXX`: The name of the MPI C++ compiler wrapper. Typically `"mpicxx"`.
 
@@ -476,7 +476,7 @@ Other CmdStanModel methods:
 
 ``` r
 # \dontrun{
-# mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+# mpi_options <- list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 # mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
 # fit <- mod$sample_mpi(..., mpi_args = list("n" = 4))
 # }
