@@ -1594,6 +1594,76 @@ test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANC
   expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
 })
 
+test_that("compile() checks it can commit before replacing the executable", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  exe <- cmdstan_ext(strip_ext(stan_file))
+
+  lockEnvironment(model$functions, bindings = FALSE)
+
+  # The commit block clears this environment in place, which is the one thing in
+  # it that is not an assignment, and it fails on a locked environment. Failing
+  # there installed the new executable and then left the object recording
+  # nothing about it -- exactly the hybrid the ordering exists to prevent.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_error(
+      model$compile(force_recompile = TRUE),
+      "missing or locked",
+      fixed = TRUE
+    )
+  )
+  expect_false(file.exists(exe))
+  expect_length(model$exe_file(), 0)
+})
+
+test_that("compile() checks the functions environment is still there", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  exe <- cmdstan_ext(strip_ext(stan_file))
+
+  # R6's lock_objects prevents adding fields, not replacing them, so this is
+  # allowed. Without the check the commit block reached rm(envir = NULL) after
+  # the executable had already been installed.
+  model$functions <- NULL
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_error(
+      model$compile(force_recompile = TRUE),
+      "missing or locked",
+      fixed = TRUE
+    )
+  )
+  expect_false(file.exists(exe))
+})
+
+test_that("compile() tolerates a locked binding in the functions environment", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  model <- cmdstan_model(stan_file, compile = FALSE)
+
+  # A locked binding is not a locked environment: rm() still removes it, and the
+  # commit block's assignments then create bindings afresh rather than meeting a
+  # locked one. Rejecting this would refuse a compilation that works.
+  model$functions$compiled <- FALSE
+  lockBinding("compiled", model$functions)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_error(model$compile(force_recompile = TRUE))
+  )
+  expect_true(file.exists(cmdstan_ext(strip_ext(stan_file))))
+})
+
 test_that("compile() refuses an executable destination that is a directory", {
   model_dir <- withr::local_tempdir()
   stan_file <- file.path(model_dir, "bernoulli.stan")

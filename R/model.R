@@ -1004,6 +1004,26 @@ compile <- function(quiet = TRUE,
     writeLines(model_methods_env$hpp_code_,
                con = wsl_safe_path(hpp_file, revert = TRUE))
 
+    # The commit block below is otherwise only assignments, so nothing in it can
+    # fail once the executable is in place. Clearing the functions environment is
+    # the exception: it is done in place to keep the environment's identity for
+    # any fit holding a reference, so it needs an environment that can still be
+    # cleared. `functions` is public and R6 permits replacing it, so that is not
+    # guaranteed. Checked here rather than there because failing after the swap
+    # installs the executable and then leaves the object describing the previous
+    # program -- which is the #1228 failure this ordering exists to prevent.
+    #
+    # A locked binding is deliberately not checked: it does not stop rm() from
+    # removing it, and the assignments that follow create bindings afresh.
+    if (!is.environment(self$functions) ||
+        environmentIsLocked(self$functions)) {
+      stop(
+        "The model's 'functions' environment is missing or locked, so the ",
+        "compiled model could not be recorded. The executable was not replaced.",
+        call. = FALSE
+      )
+    }
+
     # Errors if the executable could not be replaced, so a failure here can
     # never leave the model with no executable at all. A backup that could not
     # be cleaned up afterwards is reported rather than signalled, and warned

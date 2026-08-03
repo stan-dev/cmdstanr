@@ -91,6 +91,9 @@ An executable path that names a directory, which `$exe_file()` and
 `cmdstan_model(exe_file = )` both accept without checking, previously had that
 directory renamed aside as though it were the old executable and a file put in
 its place. (#1235)
+* `$compile()` now checks that it can record the compiled model before replacing
+the executable, so a failure at that point can no longer leave a new executable
+on disk that the model object knows nothing about. (#1235)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are
