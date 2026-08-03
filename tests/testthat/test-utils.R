@@ -218,10 +218,21 @@ local_exe_fixture <- function(destination_exists = TRUE,
     to = file.path(dir, "model-exe")
   )
   writeLines("new executable", fixture$from)
+  # Compiled by make, so executable. Installation has to preserve that.
+  Sys.chmod(fixture$from, "0755", use_umask = FALSE)
   if (destination_exists) {
     writeLines("old executable", fixture$to)
   }
   fixture
+}
+
+# Windows does not carry a POSIX executable bit, so the check is meaningful only
+# where one exists. WSL runs the Linux side, where it does.
+expect_installed_executable <- function(path) {
+  expect_identical(readLines(path), "new executable")
+  if (!os_is_windows() || os_is_wsl()) {
+    expect_identical(file.access(path, mode = 1)[[1]], 0L)
+  }
 }
 
 # Normalize the random staging and backup names out of a snapshot, keeping the
@@ -275,7 +286,7 @@ test_that("install_executable() installs when there is no existing executable", 
   fixture <- local_exe_fixture(destination_exists = FALSE)
 
   expect_null(install_executable(fixture$from, fixture$to))
-  expect_identical(readLines(fixture$to), "new executable")
+  expect_installed_executable(fixture$to)
   expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
 })
 
@@ -283,7 +294,7 @@ test_that("install_executable() replaces an executable and removes the backup", 
   fixture <- local_exe_fixture()
 
   expect_null(install_executable(fixture$from, fixture$to))
-  expect_identical(readLines(fixture$to), "new executable")
+  expect_installed_executable(fixture$to)
   expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
 })
 

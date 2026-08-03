@@ -16,8 +16,12 @@ with_mocked_cli <- function(code, compile_ret, info_ret) {
         # writes nothing when it fails. Without this, code that installs the
         # compiled artifact silently has nothing to install. `isTRUE()` because
         # callers may pass a `compile_ret` with no status at all.
+        # Executable mode as well, so that installation losing it is something
+        # the tests can notice rather than something the mock never modelled.
         if (isTRUE(compile_ret$status == 0)) {
-          file.create(wsl_safe_path(args[1], revert = TRUE))
+          mock_exe <- wsl_safe_path(args[1], revert = TRUE)
+          file.create(mock_exe)
+          Sys.chmod(mock_exe, "0755", use_umask = FALSE)
         }
         compile_ret
       } else if (!is.null(args) && args[1] == "info") {
