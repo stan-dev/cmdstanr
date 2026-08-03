@@ -1593,3 +1593,29 @@ test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANC
   withr::local_envvar(MAKEFLAGS = "-w -j 4")
   expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
 })
+
+test_that("compile() refuses an executable destination that is a directory", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  destination <- file.path(model_dir, "target-dir")
+  dir.create(destination)
+  writeLines("important", file.path(destination, "data.txt"))
+
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  # $exe_file(path) assigns without validating, so this is the shortest route to
+  # a destination the compile path never checks.
+  model$exe_file(destination)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_error(
+      model$compile(force_recompile = TRUE),
+      "is a directory",
+      fixed = TRUE
+    )
+  )
+  expect_true(dir.exists(destination))
+  expect_identical(readLines(file.path(destination, "data.txt")), "important")
+})

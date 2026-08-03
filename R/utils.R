@@ -302,6 +302,19 @@ copy_temp_files <-
 #'   signalling from here would unwind before the caller could record the state
 #'   describing it.
 install_executable <- function(from, to) {
+  # Checked before anything is staged or moved: file.exists() is true of
+  # directories, and both $exe_file(path) and cmdstan_model(exe_file = ) reach
+  # here without one, so a destination that is a directory would otherwise be
+  # renamed aside as though it were the previous executable -- leaving a regular
+  # file in its place, the directory displaced under a name the leftover-backup
+  # warning calls an executable, and the user hunting for their data.
+  if (dir.exists(to)) {
+    stop(
+      "Cannot install the compiled executable at '", to,
+      "' because that path is a directory. Nothing was modified.",
+      call. = FALSE
+    )
+  }
   # repair_path() because tempfile() joins with a backslash on Windows, giving
   # "//wsl$/distro/path/to/dir\\exe-new-1234". The Win32 calls below tolerate the
   # mixed separators, but wsl_safe_path() only rewrites the prefix, so the POSIX
