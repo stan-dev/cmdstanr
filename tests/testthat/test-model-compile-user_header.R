@@ -383,6 +383,36 @@ test_that("user_header = NULL clears a header from every supply route", {
   }
 })
 
+test_that("duplicate headers of one spelling take the last, as make does", {
+  first <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  second <- withr::local_tempfile(lines = "", fileext = ".hpp")
+
+  # Every duplicate reaches make and a makefile takes the last, which is what
+  # the cpp_options parser implements. Reading with [["USER_HEADER"]] took the
+  # first instead, so the model compiled against a header make would not have
+  # used -- and removing by name dropped only one occurrence, leaving the other
+  # to reach make alongside the header selected here.
+  for (spelling in c("USER_HEADER", "user_header")) {
+    duplicated <- structure(
+      list(first, second),
+      names = c(spelling, spelling)
+    )
+    resolved <- resolve_user_header(NULL, FALSE, duplicated)
+    expect_equal(resolved$user_header, second)
+    expect_length(resolved$cpp_options, 0)
+  }
+
+  # Across spellings, the last of each is what make would have seen, and
+  # precedence still picks USER_HEADER. Neither survives the strip.
+  mixed <- structure(
+    list(first, second, first),
+    names = c("user_header", "USER_HEADER", "user_header")
+  )
+  resolved <- resolve_user_header(NULL, FALSE, mixed)
+  expect_equal(resolved$user_header, second)
+  expect_length(resolved$cpp_options, 0)
+})
+
 skip_if(os_is_macos())
 
 w_path <- function(f) {

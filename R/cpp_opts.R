@@ -225,8 +225,22 @@ resolve_user_header <- function(user_header,
                                 cpp_options,
                                 cpp_options_supplied = TRUE,
                                 previous = NULL) {
-  from_upper <- cpp_options[["USER_HEADER"]]
-  from_lower <- cpp_options[["user_header"]]
+  # Positions rather than [[name]]: every duplicate reaches make and a makefile
+  # takes the last, so the last occurrence of a spelling is the one that would
+  # have been used. Reading by name takes the first, and removing by name drops
+  # only one occurrence, which would leave the others to reach make alongside
+  # the header selected here.
+  upper_at <- which(names(cpp_options) == "USER_HEADER")
+  lower_at <- which(names(cpp_options) == "user_header")
+  last_of <- function(positions) {
+    if (length(positions) == 0) {
+      NULL
+    } else {
+      cpp_options[[positions[[length(positions)]]]]
+    }
+  }
+  from_upper <- last_of(upper_at)
+  from_lower <- last_of(lower_at)
   conflict <- NULL
   spelling <- "USER_HEADER"
 
@@ -253,8 +267,12 @@ resolve_user_header <- function(user_header,
   if (!is.null(header)) {
     checkmate::assert_string(header, .var.name = "user_header")
   }
-  cpp_options[["USER_HEADER"]] <- NULL
-  cpp_options[["user_header"]] <- NULL
+  # Guarded because negative indexing by an empty vector returns nothing at all
+  # rather than everything.
+  header_at <- c(upper_at, lower_at)
+  if (length(header_at) > 0) {
+    cpp_options <- cpp_options[-header_at]
+  }
 
   list(
     user_header = header,

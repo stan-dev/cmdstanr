@@ -94,6 +94,9 @@ its place. (#1235)
 * `$compile()` now checks that it can record the compiled model before replacing
 the executable, so a failure at that point can no longer leave a new executable
 on disk that the model object knows nothing about. (#1235)
+* A duplicated `USER_HEADER` or `user_header` entry in `cpp_options` now selects
+the last one, matching what `Make` does with repeated assignments. Previously
+the first was compiled with and the rest were left in `cpp_options`. (#1235)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are
