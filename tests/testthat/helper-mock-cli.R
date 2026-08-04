@@ -6,8 +6,10 @@ with_mocked_cli <- function(code, compile_ret, info_ret) {
   local_mocked_bindings(
     wsl_compatible_run = function(command, args, ...) {
       if (
+        # make_cmd() rather than "make": production honours $MAKE, so a literal
+        # comparison lets the mock be bypassed and the real command run.
         !is.null(command)
-        && command == "make"
+        && command == make_cmd()
         && !is.null(args)
         && startsWith(basename(args[1]), "model-")
       ) {
