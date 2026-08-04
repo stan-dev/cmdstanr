@@ -35,15 +35,14 @@ numeric, integer, logical, or factor
 }
 \subsection{Factor conversion}{
 
-Factors are written as their level indices: the position of each value in
-\code{levels(x)} rather than the value itself. The default levels are the sorted
-unique values, so \code{factor(c(10, 9, 8))} has levels \code{8}, \code{9}, \code{10} and is
-written as \verb{[3, 2, 1]}, and an unused level shifts the indices of the levels
-after it. If the original values are what you want, convert them first, e.g.
-with \code{as.numeric(as.character(x))}. The fitting methods of a model compiled
-from a Stan file error if a factor is supplied for a variable that is not
-declared as \code{int}, but \code{write_stan_json()} has no declarations to check
-against and so always converts.
+Factors are written as their level indices, i.e., the position of each value
+in \code{levels(x)} rather than the value itself. The default levels are the
+sorted unique values, e.g., \code{factor(c(10, 9, 8))} has levels \code{8}, \code{9}, \code{10}
+and is written as \verb{[3, 2, 1]}. An unused level shifts the indices of the
+levels after it. The fitting methods of a model compiled from a Stan file
+will error if a factor is supplied for a variable that is not declared as
+\code{int}, but if \code{write_stan_json()} is called directly by the user it has no
+declarations to check and so it always does the conversion.
 }
 
 \subsection{List to array conversion}{

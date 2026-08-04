@@ -22,16 +22,14 @@
 #' * `table` -> `vector`, `matrix`, or `array` (depending on dimensions of table)
 #'
 #' ### Factor conversion
-#' Factors are written as their level indices: the position of each value in
-#' `levels(x)` rather than the value itself. The default levels are the sorted
-#' unique values, so `factor(c(10, 9, 8))` has levels `8`, `9`, `10` and is
-#' written as `[3, 2, 1]`, and an unused level shifts the indices of the levels
-#' after it. If the original values are what you want, convert them first, e.g.
-#' with `as.numeric(as.character(x))`. The fitting methods of a model compiled
-#' from a Stan file error if a factor is supplied for a variable that is not
-#' declared as `int`, but `write_stan_json()` has no declarations to check
-#' against and so always converts.
-#'
+#' Factors are written as their level indices, i.e., the position of each value
+#' in `levels(x)` rather than the value itself. The default levels are the
+#' sorted unique values, e.g., `factor(c(10, 9, 8))` has levels `8`, `9`, `10`
+#' and is written as `[3, 2, 1]`. An unused level shifts the indices of the
+#' levels after it. The fitting methods of a model compiled from a Stan file
+#' will error if a factor is supplied for a variable that is not declared as
+#' `int`, but if `write_stan_json()` is called directly by the user it has no
+#' declarations to check and so it always does the conversion.
 #'
 #' ### List to array conversion
 #' The `list` to `array` conversion is intended to make it easier to prepare
@@ -118,7 +116,6 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
     }
     validate_data_type(var, var_name)
     var <- convert_to_array(var, var_name)
-    # after the conversion, so that NAs nested inside a list are also found
     if (anyNA(var)) {
       stop("Variable '", var_name, "' has NA values.", call. = FALSE)
     }
@@ -167,9 +164,8 @@ convert_to_array <- function(var, var_name = NULL) {
   if (is.table(var)) {
     var <- unclass(var)
   } else if (is.data.frame(var)) {
-    # data.matrix() silently coerces character columns to factor codes and
-    # date/time columns to their numeric representation, so apply the same
-    # type check used for the variables themselves (#817)
+    # first check all columns are valid types, so data.matrix() doesn't silently
+    # coerce character columns to factor codes and date/time columns to numeric
     invalid <- !vapply(var, is_valid_data_type, logical(1))
     if (any(invalid)) {
       stop("Variable '", var_name, "' has columns of invalid type: ",
@@ -179,7 +175,7 @@ convert_to_array <- function(var, var_name = NULL) {
   } else if (is.list(var)) {
     var <- list_to_array(var, var_name)
   }
-  # after the conversions above so that lists of logicals are also converted
+  # after the conversions above so we also convert lists of logicals
   if (is.logical(var)) {
     mode(var) <- "integer"
   }
