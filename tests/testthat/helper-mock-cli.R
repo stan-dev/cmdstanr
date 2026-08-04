@@ -1,5 +1,17 @@
 real_wcr <- wsl_compatible_run
 
+# Distinct contents for every mocked build in the session. A mock that wrote the
+# same empty file each time could not tell "the new artifact was installed" from
+# "the old one was left in place", which is the invariant most of these tests
+# exist to check.
+mock_exe_contents <- local({
+  n <- 0L
+  function() {
+    n <<- n + 1L
+    paste0("mock executable ", n)
+  }
+})
+
 with_mocked_cli <- function(code, compile_ret, info_ret) {
   code <- substitute(code)
   caller <- parent.frame()
@@ -22,7 +34,7 @@ with_mocked_cli <- function(code, compile_ret, info_ret) {
         # the tests can notice rather than something the mock never modelled.
         if (isTRUE(compile_ret$status == 0)) {
           mock_exe <- wsl_safe_path(args[1], revert = TRUE)
-          file.create(mock_exe)
+          writeLines(mock_exe_contents(), mock_exe)
           Sys.chmod(mock_exe, "0755", use_umask = FALSE)
         }
         compile_ret

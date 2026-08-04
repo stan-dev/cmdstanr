@@ -643,8 +643,10 @@ expect_describes_new_program <- function(model) {
   expect_match(paste(private$model_methods_env_$hpp_code_, collapse = "\n"), "beta")
   expect_match(paste(readLines(model$hpp_file()), collapse = "\n"), "beta")
   expect_true(model$cpp_options()$stan_threads)
-  # The mocked replacement is empty, the executable it replaced was not.
-  expect_equal(file.size(model$exe_file()), 0)
+  # The installed file is the mocked replacement rather than the executable it
+  # replaced, told apart by contents. Size alone used to carry this, because the
+  # mock wrote an empty file and the fixture's old executable was not empty.
+  expect_match(readLines(model$exe_file()), "^mock executable ")
 }
 
 test_that("a leftover backup warns without discarding a successful compile", {
@@ -1688,4 +1690,27 @@ test_that("compile() refuses an executable destination that is a directory", {
   )
   expect_true(dir.exists(destination))
   expect_identical(readLines(file.path(destination, "data.txt")), "important")
+})
+
+test_that("compile() installs the artifact it just built, not the previous one", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  exe <- cmdstan_ext(strip_ext(stan_file))
+
+  # Each mocked build writes distinct contents, so "the new artifact was
+  # installed" is distinguishable from "the old one was left in place". While
+  # every build produced the same empty file, no test could tell the two apart.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = {
+      model$compile(force_recompile = TRUE)
+      first <- readLines(exe)
+      model$compile(force_recompile = TRUE)
+      second <- readLines(exe)
+    }
+  )
+  expect_false(identical(first, second))
 })
