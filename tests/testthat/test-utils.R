@@ -226,11 +226,15 @@ local_exe_fixture <- function(destination_exists = TRUE,
   fixture
 }
 
-# Windows does not carry a POSIX executable bit, so the check is meaningful only
-# where one exists. WSL runs the Linux side, where it does.
+# Windows R never creates a POSIX mode for installation to preserve or lose:
+# Sys.chmod() there toggles the read-only attribute, and default DrvFs derives
+# Linux permissions from Windows ones rather than storing mode metadata. That
+# covers WSL too, where R itself is Windows R. A genuine WSL permission test
+# would need a fixture on the Linux filesystem and would have to prove its own
+# setup can tell an executable file from a non-executable one first.
 expect_installed_executable <- function(path) {
   expect_identical(readLines(path), "new executable")
-  if (!os_is_windows() || os_is_wsl()) {
+  if (!os_is_windows()) {
     expect_identical(file.access(path, mode = 1)[[1]], 0L)
   }
 }
