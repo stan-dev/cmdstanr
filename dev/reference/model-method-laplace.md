@@ -351,7 +351,7 @@ fit_mode <- mod$optimize(data = stan_data, jacobian = TRUE)
 #>        4      -6.74802    0.00348588   7.79186e-05           1           1        7    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
-#> Finished in  0.2 seconds.
+#> Finished in  0.1 seconds.
 fit_laplace <- mod$laplace(data = stan_data, mode = fit_mode)
 #> Calculating Hessian 
 #> Calculating inverse of Cholesky factor 

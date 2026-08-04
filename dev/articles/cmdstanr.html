@@ -302,25 +302,25 @@ variables to summarize and any arguments after that are passed on to
 compute, whether to use multiple cores, etc.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code> [38;5;246m# A tibble: 2 × 10 [39m
+<pre><code># A tibble: 2 × 10
   variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
-   [3m [38;5;246m&lt;chr&gt; [39m [23m      [3m [38;5;246m&lt;dbl&gt; [39m [23m   [3m [38;5;246m&lt;dbl&gt; [39m [23m  [3m [38;5;246m&lt;dbl&gt; [39m [23m  [3m [38;5;246m&lt;dbl&gt; [39m [23m    [3m [38;5;246m&lt;dbl&gt; [39m [23m   [3m [38;5;246m&lt;dbl&gt; [39m [23m  [3m [38;5;246m&lt;dbl&gt; [39m [23m     [3m [38;5;246m&lt;dbl&gt; [39m [23m     [3m [38;5;246m&lt;dbl&gt; [39m [23m
- [38;5;250m1 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  - [31m7 [39m [31m. [39m [31m0 [39m [31m1 [39m  0.805 0.345 - [31m8 [39m [31m. [39m [31m82 [39m   - [31m6 [39m [31m. [39m [31m75 [39m   1.00     [4m1 [24m834.     [4m2 [24m187.
- [38;5;250m2 [39m theta     0.257  0.243 0.124 0.126  0.079 [4m2 [24m  0.486  1.00     [4m1 [24m165.     [4m1 [24m581.</code></pre>
+  &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+1 lp__     -7.30  -7.01  0.805 0.345 -8.82   -6.75   1.00    1834.    2187.
+2 theta     0.257  0.243 0.124 0.126  0.0792  0.486  1.00    1165.    1581.</code></pre>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span>variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"theta"</span>, <span class="st">"lp__"</span><span class="op">)</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span></span></code></pre></div>
-<pre><code> [38;5;246m# A tibble: 2 × 3 [39m
+<pre><code># A tibble: 2 × 3
   variable   mean    sd
-   [3m [38;5;246m&lt;chr&gt; [39m [23m      [3m [38;5;246m&lt;dbl&gt; [39m [23m  [3m [38;5;246m&lt;dbl&gt; [39m [23m
- [38;5;250m1 [39m theta     0.257 0.124
- [38;5;250m2 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  0.805</code></pre>
+  &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt;
+1 theta     0.257 0.124
+2 lp__     -7.30  0.805</code></pre>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># use a formula to summarize arbitrary functions, e.g. Pr(theta &lt;= 0.5)</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"theta"</span>, pr_lt_half <span class="op">=</span> <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">.</span> <span class="op">&lt;=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code> [38;5;246m# A tibble: 1 × 2 [39m
+<pre><code># A tibble: 1 × 2
   variable pr_lt_half
-   [3m [38;5;246m&lt;chr&gt; [39m [23m          [3m [38;5;246m&lt;dbl&gt; [39m [23m
- [38;5;250m1 [39m theta         0.960</code></pre>
+  &lt;chr&gt;         &lt;dbl&gt;
+1 theta         0.960</code></pre>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># summarise all variables with default and additional summary measures</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span></span>
@@ -328,11 +328,11 @@ compute, whether to use multiple cores, etc.</p>
 <span>  <span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/draws_summary.html" class="external-link">default_summary_measures</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  extra_quantiles <span class="op">=</span> <span class="op">~</span><span class="fu">posterior</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/posterior/reference/quantile2.html" class="external-link">quantile2</a></span><span class="op">(</span><span class="va">.</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.975</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code> [38;5;246m# A tibble: 2 × 9 [39m
+<pre><code># A tibble: 2 × 9
   variable   mean median    sd   mad      q5    q95    q2.5  q97.5
-   [3m [38;5;246m&lt;chr&gt; [39m [23m      [3m [38;5;246m&lt;dbl&gt; [39m [23m   [3m [38;5;246m&lt;dbl&gt; [39m [23m  [3m [38;5;246m&lt;dbl&gt; [39m [23m  [3m [38;5;246m&lt;dbl&gt; [39m [23m    [3m [38;5;246m&lt;dbl&gt; [39m [23m   [3m [38;5;246m&lt;dbl&gt; [39m [23m    [3m [38;5;246m&lt;dbl&gt; [39m [23m   [3m [38;5;246m&lt;dbl&gt; [39m [23m
- [38;5;250m1 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  - [31m7 [39m [31m. [39m [31m0 [39m [31m1 [39m  0.805 0.345 - [31m8 [39m [31m. [39m [31m82 [39m   - [31m6 [39m [31m. [39m [31m75 [39m  - [31m9 [39m [31m. [39m [31m37 [39m   - [31m6 [39m [31m. [39m [31m75 [39m 
- [38;5;250m2 [39m theta     0.257  0.243 0.124 0.126  0.079 [4m2 [24m  0.486  0.061 [4m5 [24m  0.531</code></pre>
+  &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;
+1 lp__     -7.30  -7.01  0.805 0.345 -8.82   -6.75  -9.37   -6.75 
+2 theta     0.257  0.243 0.124 0.126  0.0792  0.486  0.0615  0.531</code></pre>
 </div>
 <div class="section level4">
 <h4 id="cmdstans-stansummary-utility">CmdStan’s stansummary utility<a class="anchor" aria-label="anchor" href="#cmdstans-stansummary-utility"></a>
@@ -552,13 +552,13 @@ of <code>theta</code>.</p>
 <div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-distributions.html" class="external-link">mcmc_hist</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://mc-stan.org/bayesplot/reference/bayesplot-helpers.html" class="external-link">vline_at</a></span><span class="op">(</span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">mle</span><span class="op">(</span><span class="st">"theta"</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span></span></code></pre></div>
-<pre><code>Warning:  [1m [22mUsing `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
- [36mℹ [39m Please use `linewidth` instead.
- [36mℹ [39m The deprecated feature was likely used in the  [34mbayesplot [39m package.
-  Please report the issue at  [3m [34m&lt;https://github.com/stan-dev/bayesplot/issues/&gt; [39m [23m.
- [90mThis warning is displayed once per session. [39m
- [90mCall `lifecycle::last_lifecycle_warnings()` to see where this warning was [39m
- [90mgenerated. [39m</code></pre>
+<pre><code>Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.
+ℹ The deprecated feature was likely used in the bayesplot package.
+  Please report the issue at &lt;https://github.com/stan-dev/bayesplot/issues/&gt;.
+This warning is displayed once per session.
+Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+generated.</code></pre>
 <p><img src="cmdstanr_files/figure-html/plot-optim-1.png" class="r-plt" alt="" width="60%" style="display: block; margin: auto;"></p>
 <p>For optimization, by default the mode is calculated without the
 Jacobian adjustment for constrained variables, which finds a mode of the

@@ -264,22 +264,22 @@ etc.
 fit$summary()
 ```
 
-     [38;5;246m# A tibble: 2 × 10 [39m
+    # A tibble: 2 × 10
       variable   mean median    sd   mad      q5    q95  rhat ess_bulk ess_tail
-       [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m     [3m [38;5;246m<dbl> [39m [23m     [3m [38;5;246m<dbl> [39m [23m
-     [38;5;250m1 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  - [31m7 [39m [31m. [39m [31m0 [39m [31m1 [39m  0.805 0.345 - [31m8 [39m [31m. [39m [31m82 [39m   - [31m6 [39m [31m. [39m [31m75 [39m   1.00     [4m1 [24m834.     [4m2 [24m187.
-     [38;5;250m2 [39m theta     0.257  0.243 0.124 0.126  0.079 [4m2 [24m  0.486  1.00     [4m1 [24m165.     [4m1 [24m581.
+      <chr>     <dbl>  <dbl> <dbl> <dbl>   <dbl>  <dbl> <dbl>    <dbl>    <dbl>
+    1 lp__     -7.30  -7.01  0.805 0.345 -8.82   -6.75   1.00    1834.    2187.
+    2 theta     0.257  0.243 0.124 0.126  0.0792  0.486  1.00    1165.    1581.
 
 ``` r
 
 fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 ```
 
-     [38;5;246m# A tibble: 2 × 3 [39m
+    # A tibble: 2 × 3
       variable   mean    sd
-       [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m
-     [38;5;250m1 [39m theta     0.257 0.124
-     [38;5;250m2 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  0.805
+      <chr>     <dbl> <dbl>
+    1 theta     0.257 0.124
+    2 lp__     -7.30  0.805
 
 ``` r
 
@@ -287,10 +287,10 @@ fit$summary(variables = c("theta", "lp__"), "mean", "sd")
 fit$summary("theta", pr_lt_half = ~ mean(. <= 0.5))
 ```
 
-     [38;5;246m# A tibble: 1 × 2 [39m
+    # A tibble: 1 × 2
       variable pr_lt_half
-       [3m [38;5;246m<chr> [39m [23m          [3m [38;5;246m<dbl> [39m [23m
-     [38;5;250m1 [39m theta         0.960
+      <chr>         <dbl>
+    1 theta         0.960
 
 ``` r
 
@@ -302,11 +302,11 @@ fit$summary(
 )
 ```
 
-     [38;5;246m# A tibble: 2 × 9 [39m
+    # A tibble: 2 × 9
       variable   mean median    sd   mad      q5    q95    q2.5  q97.5
-       [3m [38;5;246m<chr> [39m [23m      [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m  [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m    [3m [38;5;246m<dbl> [39m [23m   [3m [38;5;246m<dbl> [39m [23m
-     [38;5;250m1 [39m lp__     - [31m7 [39m [31m. [39m [31m30 [39m  - [31m7 [39m [31m. [39m [31m0 [39m [31m1 [39m  0.805 0.345 - [31m8 [39m [31m. [39m [31m82 [39m   - [31m6 [39m [31m. [39m [31m75 [39m  - [31m9 [39m [31m. [39m [31m37 [39m   - [31m6 [39m [31m. [39m [31m75 [39m 
-     [38;5;250m2 [39m theta     0.257  0.243 0.124 0.126  0.079 [4m2 [24m  0.486  0.061 [4m5 [24m  0.531
+      <chr>     <dbl>  <dbl> <dbl> <dbl>   <dbl>  <dbl>   <dbl>  <dbl>
+    1 lp__     -7.30  -7.01  0.805 0.345 -8.82   -6.75  -9.37   -6.75 
+    2 theta     0.257  0.243 0.124 0.126  0.0792  0.486  0.0615  0.531
 
 #### CmdStan’s stansummary utility
 
@@ -583,13 +583,13 @@ mcmc_hist(fit$draws("theta")) +
   vline_at(fit_optim$mle("theta"), size = 1.5)
 ```
 
-    Warning:  [1m [22mUsing `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-     [36mℹ [39m Please use `linewidth` instead.
-     [36mℹ [39m The deprecated feature was likely used in the  [34mbayesplot [39m package.
-      Please report the issue at  [3m [34m<https://github.com/stan-dev/bayesplot/issues/> [39m [23m.
-     [90mThis warning is displayed once per session. [39m
-     [90mCall `lifecycle::last_lifecycle_warnings()` to see where this warning was [39m
-     [90mgenerated. [39m
+    Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+    ℹ Please use `linewidth` instead.
+    ℹ The deprecated feature was likely used in the bayesplot package.
+      Please report the issue at <https://github.com/stan-dev/bayesplot/issues/>.
+    This warning is displayed once per session.
+    Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    generated.
 
 ![](cmdstanr_files/figure-html/plot-optim-1.png)
 
