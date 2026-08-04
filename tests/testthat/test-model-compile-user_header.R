@@ -413,6 +413,42 @@ test_that("duplicate headers of one spelling take the last, as make does", {
   expect_length(resolved$cpp_options, 0)
 })
 
+test_that("a NULL header entry clears a persisted one rather than being ignored", {
+  persisted <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  first <- withr::local_tempfile(lines = "", fileext = ".hpp")
+
+  # A NULL entry stands for an explicit `USER_HEADER=`, which make takes as
+  # clearing whatever came before it. Reading presence off the value made NULL
+  # indistinguishable from absence, so the persisted header was carried forward
+  # and the object described a header the build did not use. Every shape below
+  # went wrong the same way; only the trailing-duplicate one was reported.
+  for (spelling in c("USER_HEADER", "user_header")) {
+    single <- structure(list(NULL), names = spelling)
+    resolved <- resolve_user_header(NULL, FALSE, single, previous = persisted)
+    expect_null(resolved$user_header)
+    expect_length(resolved$cpp_options, 0)
+
+    duplicated <- structure(list(first, NULL), names = c(spelling, spelling))
+    resolved <- resolve_user_header(NULL, FALSE, duplicated, previous = persisted)
+    expect_null(resolved$user_header)
+    expect_length(resolved$cpp_options, 0)
+  }
+
+  # A non-NULL last occurrence still wins, so this is not just "any NULL clears".
+  kept <- structure(list(NULL, first), names = c("USER_HEADER", "USER_HEADER"))
+  resolved <- resolve_user_header(NULL, FALSE, kept, previous = persisted)
+  expect_equal(resolved$user_header, first)
+
+  # An entry that clears is still an entry, so it conflicts with the argument.
+  resolved <- resolve_user_header(
+    first,
+    TRUE,
+    list(USER_HEADER = NULL),
+    previous = persisted
+  )
+  expect_identical(resolved$conflict, "argument")
+})
+
 skip_if(os_is_macos())
 
 w_path <- function(f) {

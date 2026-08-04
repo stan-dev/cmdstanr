@@ -239,22 +239,32 @@ resolve_user_header <- function(user_header,
       cpp_options[[positions[[length(positions)]]]]
     }
   }
+  # Presence comes from the positions, never from the value, because NULL is a
+  # value an entry can hold rather than a way of being absent. An entry whose
+  # final occurrence is NULL stands for an explicit `USER_HEADER=` -- the
+  # assignment that would reach make if the resolver did not strip it, and the
+  # one make would take as clearing anything set before it. Reading presence
+  # off the value instead treated that as "no header given" and fell back to
+  # the persisted one, so the compile ran with no header while the object went
+  # on describing the old one. Matches cpp_option_value() below.
+  has_upper <- length(upper_at) > 0
+  has_lower <- length(lower_at) > 0
   from_upper <- last_of(upper_at)
   from_lower <- last_of(lower_at)
   conflict <- NULL
   spelling <- "USER_HEADER"
 
   if (supplied) {
-    if (cpp_options_supplied && (!is.null(from_upper) || !is.null(from_lower))) {
+    if (cpp_options_supplied && (has_upper || has_lower)) {
       conflict <- "argument"
     }
     header <- user_header
-  } else if (!is.null(from_upper)) {
-    if (!is.null(from_lower)) {
+  } else if (has_upper) {
+    if (has_lower) {
       conflict <- "cpp_options"
     }
     header <- from_upper
-  } else if (!is.null(from_lower)) {
+  } else if (has_lower) {
     header <- from_lower
     spelling <- "user_header"
   } else {

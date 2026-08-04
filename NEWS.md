@@ -97,6 +97,11 @@ on disk that the model object knows nothing about. (#1235)
 * A duplicated `USER_HEADER` or `user_header` entry in `cpp_options` now selects
 the last one, matching what `Make` does with repeated assignments. Previously
 the first was compiled with and the rest were left in `cpp_options`. (#1235)
+* A `USER_HEADER` or `user_header` entry in `cpp_options` set to `NULL` now
+clears a previously configured user header instead of being ignored. It stands
+for an explicit `USER_HEADER=`, which `Make` takes as clearing anything set
+before it, so the model previously compiled with no header while continuing to
+report the old one. (#1235)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are
