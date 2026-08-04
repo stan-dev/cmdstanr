@@ -107,15 +107,14 @@ numeric, integer, logical, or factor</p></li>
 <h3 id="factor-conversion">Factor conversion<a class="anchor" aria-label="anchor" href="#factor-conversion"></a></h3>
 
 
-<p>Factors are written as their level indices: the position of each value in
-<code>levels(x)</code> rather than the value itself. The default levels are the sorted
-unique values, so <code>factor(c(10, 9, 8))</code> has levels <code>8</code>, <code>9</code>, <code>10</code> and is
-written as <code>[3, 2, 1]</code>, and an unused level shifts the indices of the levels
-after it. If the original values are what you want, convert them first, e.g.
-with <code>as.numeric(as.character(x))</code>. The fitting methods of a model compiled
-from a Stan file error if a factor is supplied for a variable that is not
-declared as <code>int</code>, but <code>write_stan_json()</code> has no declarations to check
-against and so always converts.</p>
+<p>Factors are written as their level indices, i.e., the position of each value
+in <code>levels(x)</code> rather than the value itself. The default levels are the
+sorted unique values, e.g., <code>factor(c(10, 9, 8))</code> has levels <code>8</code>, <code>9</code>, <code>10</code>
+and is written as <code>[3, 2, 1]</code>. An unused level shifts the indices of the
+levels after it. The fitting methods of a model compiled from a Stan file
+will error if a factor is supplied for a variable that is not declared as
+<code>int</code>, but if <code>write_stan_json()</code> is called directly by the user it has no
+declarations to check and so it always does the conversion.</p>
 </div>
 
 <div class="section">
