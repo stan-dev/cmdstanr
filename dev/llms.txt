@@ -378,7 +378,7 @@ Stan on GPUs, and using CmdStanR in R Markdown documents.
 - [How does CmdStanR
   work?](https://mc-stan.org/cmdstanr/dev/articles/cmdstanr-internals.md):
 - [Working with
-  Posteriors](https://mc-stan.org/cmdstanr/dev/articles/posterior.md):
+  posteriors](https://mc-stan.org/cmdstanr/dev/articles/posterior.md):
 - [R Markdown CmdStan
   Engine](https://mc-stan.org/cmdstanr/dev/articles/r-markdown.md):
 - [Profiling Stan programs with

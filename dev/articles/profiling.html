@@ -97,7 +97,7 @@
 Jonah Gabry and Ben Bales</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/fix-pkgdown-fail/vignettes/profiling.Rmd" class="external-link"><code>vignettes/profiling.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/vignettes/profiling.Rmd" class="external-link"><code>vignettes/profiling.Rmd</code></a></small>
       <div class="d-none name"><code>profiling.Rmd</code></div>
     </div>
 
@@ -211,8 +211,8 @@ documentation</a>.</p>
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 140716901218112 0.004630869  0.003727645  0.000903224       34026
-2 likelihood 140716901218112 0.637663270  0.508156090  0.129507190       51039
+1     priors 139656801437504 0.003611565  0.002609738  0.001001827       34026
+2 likelihood 139656801437504 0.655333680  0.514339740  0.140993940       51039
   no_chain_stack autodiff_calls no_autodiff_calls
 1          34026          17013                 1
 2       34043013          17013                 1</code></pre>
@@ -260,8 +260,8 @@ like for the previous one.</p>
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 139877042886464 0.004100486  0.003124675  0.000975811       35528
-2 likelihood 139877042886464 0.446394810  0.445259020  0.001135793       53292
+1     priors 139799669925696 0.003783456  0.002775115  0.001008341       35528
+2 likelihood 139799669925696 0.454744390  0.453593640  0.001150755       53292
   no_chain_stack autodiff_calls no_autodiff_calls
 1          35528          17764                 1
 2          17764          17764                 1</code></pre>
@@ -288,7 +288,7 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span> <span class="op">/</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 2.721959e-07 3.748094e-05</code></pre>
+<pre><code>[1] 2.122827e-07 3.851958e-05</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
@@ -298,7 +298,7 @@ CmdStan stores the profiling data in CSV files in a temporary location.
 The paths of the profiling CSV files can be retrieved using <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$profile_files()</code></a>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/RtmpkjAPre/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202608022007-1-8eea7c.csv"</code></pre>
+<pre><code>[1] "/tmp/Rtmpq5GOQx/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202608041836-1-8eed10.csv"</code></pre>
 <p>These can be saved to a more permanent location with the <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$save_profile_files()</code></a>
 method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
