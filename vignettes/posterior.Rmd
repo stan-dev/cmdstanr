@@ -19,6 +19,7 @@ vignette: >
 library(cmdstanr)
 library(posterior)
 library(ggplot2)
+theme_set(bayesplot::theme_default())
 ```
 
 ## Summary statistics
@@ -193,7 +194,7 @@ theta_df <- data.frame(
 )
 
 ggplot(theta_df, aes(school, theta, group = .draw)) +
-  ggplot2::geom_line(alpha = 0.01)
+  geom_line(alpha = 0.01)
 ```
 
 The reshaping above uses only base R. Tidyverse users can produce the same plot
