@@ -598,6 +598,7 @@ compile <- function(quiet = TRUE,
     include_paths <- private$precompile_include_paths_
   }
   private$include_paths_ <- resolve_path(include_paths)
+  include_paths <- private$include_paths_
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
@@ -630,7 +631,6 @@ compile <- function(quiet = TRUE,
     }
 
     cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
-    stanc_options[["allow-undefined"]] <- TRUE
     private$using_user_header_ <- TRUE
   } else if (!is.null(cpp_options[["USER_HEADER"]])) {
     if (!is.null(cpp_options[["user_header"]])) {
@@ -648,6 +648,7 @@ compile <- function(quiet = TRUE,
 
 
   if (!is.null(user_header)) {
+    stanc_options[["allow-undefined"]] <- TRUE
     user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
     if (!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
@@ -709,29 +710,18 @@ compile <- function(quiet = TRUE,
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
-    } else if (option_name == "name") { # Quoting model name mangles generated namespace
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
-    }  else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
-    }
-  }
-  stancflags_combined <- stanc_built_options
+  stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
+  stancflags_direct <- stanc_options_to_args(stanc_options)
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
   if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
+    stancflags_direct <- c(stancflags_direct, stancflags_local)
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
-  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
+  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_direct)
   self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined))
+  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
   self$functions$external <- !is.null(user_header)
   self$functions$existing_exe <- FALSE
 
@@ -796,12 +786,8 @@ compile <- function(quiet = TRUE,
       )
     )
     if (is.na(run_log$status) || run_log$status != 0) {
-      err_msg <- "An error occured during compilation! See the message above for more information."
-      if (grepl("auto-format flag to stanc", run_log$stderr)) {
-        format_msg <- "\nTo fix deprecated or removed syntax please see ?cmdstanr::format for an example."
-        err_msg <- paste(err_msg, format_msg)
-      }
-      stop(err_msg, call. = FALSE)
+      stop("An error occurred during compilation! See the message above for more information.",
+           call. = FALSE)
     }
     if (file.exists(exe)) {
       file.remove(exe)
@@ -991,17 +977,7 @@ check_syntax <- function(pedantic = FALSE,
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
-    } else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
-    }
-  }
+  stanc_built_options <- stanc_options_to_args(stanc_options)
 
   withr::with_path(
     c(
@@ -1111,37 +1087,21 @@ format <- function(overwrite_file = FALSE,
     max_line_length,
     lower = 1, len = 1, null.ok = TRUE
   )
-  stanc_options <- private$precompile_stanc_options_
+  stanc_options <- as.list(private$precompile_stanc_options_)
   stancflags_val <- include_paths_stanc3_args(
     self$include_paths(),
     direct_call = TRUE
   )
-  stanc_options["auto-format"] <- TRUE
+  stanc_options[["auto-format"]] <- TRUE
   if (!is.null(max_line_length)) {
-    stanc_options["max-line-length"] <- max_line_length
+    stanc_options[["max-line-length"]] <- max_line_length
   }
   if (isTRUE(canonicalize)) {
-    stanc_options["print-canonical"] <- TRUE
+    stanc_options[["print-canonical"]] <- TRUE
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
-    stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
+    stanc_options[["canonicalize"]] <- paste0(canonicalize, collapse = ",")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]])) && !is.numeric(stanc_options[[i]])) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(
-        stanc_built_options,
-        paste0("--", stanc_options[[i]])
-      )
-    } else {
-      stanc_built_options <- c(
-        stanc_built_options,
-        paste0("--", option_name, "=", stanc_options[[i]])
-      )
-    }
-  }
+  stanc_built_options <- stanc_options_to_args(stanc_options)
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -1497,25 +1457,19 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer. Following CmdStan's terminology, optimization without
-#'   the Jacobian adjustment (the default) returns a maximum likelihood estimate
-#'   (MLE), whereas optimization with the adjustment returns a maximum a
-#'   posteriori (MAP) estimate. More precisely, without the adjustment the
+#'   Stan's optimizer. Without the Jacobian adjustment (the default),
 #'   optimization finds a mode of the target in the original constrained
-#'   parameter space (if the mode exists), whereas with the adjustment it
-#'   finds a mode of the corresponding density in the unconstrained parameter
-#'   space.
+#'   parameter space (if the mode exists). With the adjustment, it finds a mode
+#'   of the corresponding density in the unconstrained parameter space.
 #'
 #'   The `jacobian` argument does not determine whether prior terms are
 #'   included. Every contribution to the Stan program's `target`, including
-#'   prior terms, is included under either setting. The MLE or MAP
-#'   interpretation therefore depends on both the contents of the target and the
-#'   parameterization. The Jacobian adjustment is particularly useful when
-#'   making a distributional approximation in the unconstrained space (see
-#'   [Laplace sampling][model-method-laplace]). If the model has only
-#'   unconstrained parameters, including the Jacobian has no effect. See the
-#'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/index.html)
-#'   for more details.
+#'   prior terms, is included under either setting. The Jacobian adjustment is
+#'   particularly useful when making a distributional approximation in the
+#'   unconstrained space (see [Laplace sampling][model-method-laplace]). If the
+#'   model has only unconstrained parameters, including the Jacobian has no
+#'   effect. See the [CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/index.html) for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the [CmdStan User’s
@@ -1536,13 +1490,12 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
 #' @param jacobian (logical) Whether or not to use the Jacobian adjustment for
 #'   constrained variables. For historical reasons, the default is `FALSE`.
-#'   CmdStan refers to the estimates obtained with `FALSE` and `TRUE` as MLE and
-#'   MAP estimates, respectively. More precisely, `FALSE` finds a mode of the
-#'   target in the constrained parameter space and `TRUE` finds a mode in the
-#'   unconstrained space. This argument does not control whether prior terms are
-#'   included. See the **Description** section and the CmdStan User's Guide for
-#'   more details. For use later with [`$laplace()`][model-method-laplace], the
-#'   `jacobian` argument should typically be set to `TRUE`.
+#'   `FALSE` finds a mode of the target in the constrained parameter space and
+#'   `TRUE` finds a mode in the unconstrained space. This argument does not
+#'   control whether prior terms are included. See the **Description** section
+#'   and the CmdStan User's Guide for more details. For use later with
+#'   [`$laplace()`][model-method-laplace], the `jacobian` argument should
+#'   typically be set to `TRUE`.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1644,16 +1597,11 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @description The `$laplace()` method of a [`CmdStanModel`] object produces a
 #'   sample from a normal approximation centered at the mode of a distribution
-#'   in the unconstrained space. Following CmdStan's terminology, if the mode is
-#'   a maximum a posteriori (MAP) estimate, the samples provide an estimate of
-#'   the mean and standard deviation of the posterior distribution. If the mode
-#'   is a maximum likelihood estimate (MLE), the sample provides an estimate of
-#'   the standard error of the likelihood. Whether the mode is called MAP or MLE
-#'   depends on the value of the `jacobian` argument when running optimization.
-#'   This terminology does not imply that `jacobian` controls whether prior
-#'   terms are included; it controls the parameterization of the density, while
-#'   the Stan program determines the contents of the target. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   in the unconstrained space. When the mode was found with the Jacobian
+#'   adjustment, the draws provide an estimate of the mean and standard
+#'   deviation of the posterior distribution. See the `jacobian` argument below
+#'   for how this setting relates to the value used when running optimization,
+#'   and the [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
@@ -1679,7 +1627,7 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' @param draws (positive integer) The number of draws to take.
 #' @param jacobian (logical) Whether or not to enable the Jacobian adjustment
 #'   for constrained parameters. The default is `TRUE`. See the
-#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace_sample_config.html)
 #'   section of the CmdStan User's Guide for more details. If `mode` is not
 #'   `NULL` then the value of `jacobian` must match the value used when
 #'   optimization was originally run so the mode and the Laplace approximation
@@ -2469,6 +2417,39 @@ assert_stan_file_exists <- function(stan_file) {
   if (!file.exists(stan_file)) {
     stop("The Stan file used to create the `CmdStanModel` object does not exist.", call. = FALSE)
   }
+}
+
+#' Turn a `stanc_options` list into `stanc` command line arguments
+#'
+#' @param stanc_options (list) Named or unnamed stanc options. Logical values
+#'   mark boolean flags and any other value is passed as `--name=value`.
+#' @param quote_values (logical) Single-quote option values? Only the
+#'   `STANCFLAGS` string handed to Make needs quoting, because Make expands it
+#'   through a shell. Arguments for direct `stanc` calls are passed to processx
+#'   as separate elements and must be left unquoted (#1227).
+#' @return A character vector of arguments, one per element.
+#' @noRd
+stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
+  args <- c()
+  for (i in seq_len(length(stanc_options))) {
+    option_name <- names(stanc_options)[i]
+    option_value <- stanc_options[[i]]
+    if (is.null(option_name) || !nzchar(option_name)) {
+      # Unnamed options are already flag names, e.g. list("allow-undefined")
+      args <- c(args, paste0("--", option_value))
+    } else if (is.logical(option_value)) {
+      # TRUE emits a bare flag, FALSE leaves the flag out entirely
+      if (isTRUE(option_value)) {
+        args <- c(args, paste0("--", option_name))
+      }
+    } else if (isTRUE(quote_values) && option_name != "name") {
+      # Quoting the model name mangles the generated namespace
+      args <- c(args, paste0("--", option_name, "=", "'", option_value, "'"))
+    } else {
+      args <- c(args, paste0("--", option_name, "=", option_value))
+    }
+  }
+  args
 }
 
 #' Build stanc include-path arguments

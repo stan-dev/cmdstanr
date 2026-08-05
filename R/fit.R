@@ -35,9 +35,6 @@ CmdStanFit <- R6::R6Class(
       if (!is.null(private$model_methods_env_$model_ptr)) {
         initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
       }
-      # Need to update the output directory path to one that can be accessed
-      # from Windows, for the post-processing of results
-      self$runset$args$output_dir <- wsl_safe_path(self$runset$args$output_dir, revert = TRUE)
       invisible(self)
     },
     num_procs = function() {
@@ -787,8 +784,8 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #' fit_mcmc <- cmdstanr_example("logistic")
 #' head(fit_mcmc$lp())
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
-#' fit_mle$lp()
+#' fit_optim <- cmdstanr_example("logistic", method = "optimize")
+#' fit_optim$lp()
 #'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' plot(fit_vb$lp(), fit_vb$lp_approx())
@@ -1176,13 +1173,13 @@ CmdStanFit$set("public", name = "metric_files", value = metric_files)
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' fit_vb$time()
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
-#' fit_mle$time()
+#' fit_optim <- cmdstanr_example("logistic", method = "optimize", jacobian = TRUE)
+#' fit_optim$time()
 #'
-#' # use fit_mle to draw samples from laplace approximation
-#' fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_mle)
+#' # use fit_optim to draw samples from laplace approximation
+#' fit_laplace <- cmdstanr_example("logistic", method = "laplace", mode = fit_optim)
 #' fit_laplace$time() # just time for drawing sample not for running optimize
-#' fit_laplace$time()$total + fit_mle$time()$total # total time
+#' fit_laplace$time()$total + fit_optim$time()$total # total time
 #' }
 #'
 time <- function() {
@@ -1216,8 +1213,8 @@ CmdStanFit$set("public", name = "time", value = time)
 #' out <- fit_mcmc$output()
 #' str(out)
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
-#' fit_mle$output()
+#' fit_optim <- cmdstanr_example("logistic", method = "optimize")
+#' fit_optim$output()
 #'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' fit_vb$output()
@@ -1245,8 +1242,8 @@ CmdStanFit$set("public", name = "output", value = output)
 #' fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 #' str(fit_mcmc$metadata())
 #'
-#' fit_mle <- cmdstanr_example("logistic", method = "optimize")
-#' str(fit_mle$metadata())
+#' fit_optim <- cmdstanr_example("logistic", method = "optimize")
+#' str(fit_optim$metadata())
 #'
 #' fit_vb <- cmdstanr_example("logistic", method = "variational")
 #' str(fit_vb$metadata())
@@ -1972,14 +1969,12 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'
 #' @description A `CmdStanMLE` object is the fitted model object returned by the
 #'   [`$optimize()`][model-method-optimize] method of a [`CmdStanModel`] object.
-#'   Following CmdStan's terminology, the object contains an MLE if optimization
-#'   was run with `jacobian=FALSE` and a MAP estimate if it was run with
-#'   `jacobian=TRUE`. The name "MLE" is retained for historical reasons. More
-#'   precisely, the estimates correspond to a mode in either the constrained
-#'   parameter space or the unconstrained parameter space, depending on the
-#'   value of `jacobian` (and whether the model has constrained parameters).
-#'   The `jacobian` argument does not control whether prior terms are included;
-#'   all contributions to the Stan program's target are included under either
+#'   The name "MLE" is retained for historical reasons. With
+#'   `jacobian = FALSE`, the point estimate is a mode of the target in the
+#'   constrained parameter space. With `jacobian = TRUE`, it is a mode of the
+#'   corresponding density in the unconstrained parameter space. The `jacobian`
+#'   argument does not control whether prior terms are included; all
+#'   contributions to the Stan program's target are included under either
 #'   setting. See [`$optimize()`][model-method-optimize] and the CmdStan User's
 #'   Guide for more details.
 #'
@@ -2069,19 +2064,18 @@ CmdStanMLE <- R6::R6Class(
 #' @name fit-method-mle
 #' @aliases mle
 #' @description The `$mle()` method is only available for [`CmdStanMLE`]
-#'   objects. It returns the point estimate as a numeric vector with one element
-#'   per variable. The returned vector does *not* include `lp__`, the
-#'   target log density evaluated by Stan, up to an additive constant. `lp__` is
-#'   available via the [`$lp()`][fit-method-lp] method and also included in the
+#'   objects. The method name is retained for historical reasons. It returns the
+#'   point estimate as a numeric vector with one element per variable. The
+#'   returned vector does *not* include `lp__`, the target log density evaluated
+#'   by Stan, up to an additive constant. `lp__` is available via the
+#'   [`$lp()`][fit-method-lp] method and also included in the
 #'   [`$draws()`][fit-method-draws] method.
 #'
-#'   Following CmdStan's terminology, for models with constrained parameters
-#'   that are fit with `jacobian=TRUE`, this point estimate is called a maximum
-#'   a posteriori (MAP) estimate rather than an MLE. More precisely,
-#'   `jacobian=FALSE` finds a mode of the target in the constrained parameter
-#'   space and `jacobian=TRUE` finds a mode in the unconstrained parameter
-#'   space. See [`$optimize()`][model-method-optimize] and the CmdStan User's
-#'   Guide for more details.
+#'   With `jacobian = FALSE`, the point estimate is a mode of the target in the
+#'   constrained parameter space. With `jacobian = TRUE`, it is a mode of the
+#'   corresponding density in the unconstrained parameter space. See
+#'   [`$optimize()`][model-method-optimize] and the CmdStan User's Guide for more
+#'   details.
 #'
 #' @param variables (character vector) The variables (parameters, transformed
 #'   parameters, and generated quantities) to include. If NULL (the default)

@@ -931,6 +931,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
   name <- strip_ext(basename(stan_file))
   path <- dirname(stan_file)
   hpp_path <- file.path(path, paste0(name, ".hpp"))
+  on.exit(unlink(hpp_path), add = TRUE)
 
   status <- withr::with_path(
       c(
@@ -944,13 +945,25 @@ get_standalone_hpp <- function(stan_file, stancflags) {
         error_on_status = FALSE
       )
     )
-  if (status$status == 0) {
-    hpp <- suppressWarnings(readLines(hpp_path, warn = FALSE))
-    unlink(hpp_path)
-    hpp
-  } else {
-    invisible(NULL)
+  if (is.na(status$status) || status$status != 0) {
+    if (length(status$stderr) > 0 && nzchar(status$stderr)) {
+      message(status$stderr)
+    }
+    err_msg <- paste0(
+      "An error occurred during compilation! See the message above for more ",
+      "information. (stanc exited with status ", status$status, ")"
+    )
+    if (length(status$stderr) > 0 &&
+        grepl("auto-format flag to stanc", status$stderr)) {
+      err_msg <- paste0(
+        err_msg,
+        "\nTo fix deprecated or removed syntax please see ",
+        "?cmdstanr::format for an example."
+      )
+    }
+    stop(err_msg, call. = FALSE)
   }
+  suppressWarnings(readLines(hpp_path, warn = FALSE))
 }
 
 get_function_name <- function(fun_start, fun_end, model_lines) {

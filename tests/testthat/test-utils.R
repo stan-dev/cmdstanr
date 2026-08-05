@@ -135,6 +135,50 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
   expect_output(delete_and_run(), "Checking sampler transitions treedepth")
 })
 
+test_that("get_standalone_hpp() reports stanc failures", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "model.stan")
+  hpp_file <- file.path(model_dir, "model.hpp")
+  writeLines("parameters { real y; } model { y ~ std_normal(); }", stan_file)
+  writeLines("// partial output", hpp_file)
+  local_mocked_bindings(
+    wsl_compatible_run = function(...) {
+      list(
+        status = 124L,
+        stdout = "",
+        stderr = "stanc: invalid canonicalize value"
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    get_standalone_hpp(
+      stan_file,
+      "--canonicalize='deprecations'"
+    )
+  )
+  expect_false(file.exists(hpp_file))
+})
+
+test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
+  stan_file <- withr::local_tempfile(fileext = ".stan")
+  local_mocked_bindings(
+    wsl_compatible_run = function(...) {
+      list(
+        status = 1L,
+        stdout = "",
+        stderr = "Syntax error: Use the auto-format flag to stanc"
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    get_standalone_hpp(stan_file, character())
+  )
+})
+
 
 # misc --------------------------------------------------------------------
 
@@ -212,6 +256,19 @@ test_that("wsl_safe_path() works with multiple paths", {
     os_is_wsl = function() TRUE,
     wsl_dir_prefix = function(...) "//wsl$/Ubuntu"
   )
+})
+
+test_that("wsl_compatible_run() preserves arguments containing spaces", {
+  skip_if_not(os_is_wsl())
+  arg <- "--filename-in-msg=model filename with spaces.stan"
+  result <- wsl_compatible_run(
+    command = "printf",
+    args = c("%s", arg),
+    wd = cmdstan_path()
+  )
+
+  expect_equal(result$status, 0L)
+  expect_equal(result$stdout, arg)
 })
 
 test_that("list_to_array works with empty list", {

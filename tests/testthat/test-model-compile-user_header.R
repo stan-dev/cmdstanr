@@ -1,3 +1,38 @@
+# This test is deliberately placed above the file-level skip_if(os_is_macos())
+# below: it mocks the stanc call and never compiles, so it needs no toolchain
+# and should run on every platform.
+test_that("cpp_options user headers allow undefined functions", {
+  stan_file <- testing_stan_file("bernoulli_external")
+  user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  for (option_name in c("USER_HEADER", "user_header")) {
+    model <- cmdstan_model(stan_file, compile = FALSE)
+    model$compile(
+      cpp_options = setNames(list(user_header), option_name),
+      force_recompile = TRUE,
+      dry_run = TRUE
+    )
+  }
+
+  expect_length(received_stancflags, 4)
+  expect_equal(
+    vapply(
+      received_stancflags,
+      function(x) "--allow-undefined" %in% x,
+      logical(1)
+    ),
+    rep(TRUE, 4)
+  )
+})
+
 skip_if(os_is_macos())
 
 w_path <- function(f) {
