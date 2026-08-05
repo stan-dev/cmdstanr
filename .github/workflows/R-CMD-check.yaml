@@ -80,7 +80,7 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache: "always"
-          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.os == 'windows-11-arm' && 'RcppCore/RcppParallel' || '' }}
+          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.r == '4.1' && 'qs2=?ignore' || '' }}, ${{ matrix.config.os == 'windows-11-arm' && 'RcppCore/RcppParallel' || '' }}
 
       - name: Debug Windows toolchain resolution
         if: ${{ runner.os == 'Windows' }}
@@ -144,6 +144,7 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         env:
           _R_CHECK_CRAN_INCOMING_: false
+          _R_CHECK_FORCE_SUGGESTS_: ${{ matrix.config.r == '4.1' && 'false' || 'true' }}
 
       - name: Show testthat output
         if: always()
