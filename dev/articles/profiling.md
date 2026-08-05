@@ -124,8 +124,8 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140349090862912 0.639110980  0.509713550  0.129397430       51039
-    2     priors 140349090862912 0.004477878  0.003512694  0.000965184       34026
+    1 likelihood 140646877333312 0.654871170  0.513287680  0.141583490       51039
+    2     priors 140646877333312 0.003671218  0.002624899  0.001046319       34026
       no_chain_stack autodiff_calls no_autodiff_calls
     1       34043013          17013                 1
     2          34026          17013                 1
@@ -186,8 +186,8 @@ fit_glm$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 139934671918912 0.452627070  0.451448550  0.001178520       53292
-    2     priors 139934671918912 0.004601019  0.003643044  0.000957975       35528
+    1 likelihood 140001141307200 0.448490100  0.447302630  0.001187472       53292
+    2     priors 140001141307200 0.003772064  0.002801714  0.000970350       35528
       no_chain_stack autodiff_calls no_autodiff_calls
     1          17764          17764                 1
     2          35528          17764                 1
@@ -220,7 +220,7 @@ per_gradient_timing <- profile_chain_1$total_time / profile_chain_1$autodiff_cal
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.756604e-05 2.632033e-07
+    [1] 3.84924e-05 2.15789e-07
 
 ### Accessing and saving the profile files
 
@@ -234,7 +234,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/RtmpeU7d1z/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202608051514-1-8eea76.csv"
+    [1] "/tmp/RtmpO2MK7x/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202608052005-1-8ee4d1.csv"
 
 These can be saved to a more permanent location with the
 [`$save_profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html)
