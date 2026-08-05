@@ -244,17 +244,11 @@ CmdStanModel <- R6::R6Class(
     include_paths_ = NULL,
     user_header_ = NULL,
     using_user_header_ = FALSE,
-    # Neither configuration nor a description of the executable: a record that
-    # the two have drifted apart. Set by a change of header, cleared only by a
-    # successful executable replacement.
+    # Build inputs that have changed since the current executable was produced.
     user_header_dirty_ = FALSE,
-    # The same, for a change of include paths.
     include_paths_dirty_ = FALSE,
-    # The cpp_options actually passed to make for the current executable, as
-    # distinct from cpp_options_, which also carries what the binary reports
-    # about itself. Only these would be dropped by a recompilation that omitted
-    # them; anything else the binary has came from make/local and would be
-    # inherited again.
+    # Options this object passed to make. By contrast, cpp_options_ may also
+    # contain values discovered from executable metadata or make/local.
     built_cpp_options_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
@@ -276,29 +270,22 @@ CmdStanModel <- R6::R6Class(
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
-        # The same precedence $compile() applies, run here too: a model created
-        # with compile = FALSE never enters $compile(), so resolving the paths
-        # alone would let an explicit user_header = NULL be ignored. `...`
-        # preserves NULL entries, so names() is the missing() equivalent here.
+        # Resolve headers here so compile = FALSE preserves an explicit NULL.
+        # names(args) distinguishes NULL from an omitted argument.
         resolved_header <- resolve_user_header(
           user_header = args$user_header,
           supplied = "user_header" %in% names(args),
           cpp_options = args$cpp_options %||% list()
         )
         if (!compile) {
-          # Otherwise $compile() receives the original arguments below and warns
-          # once; warning here as well would double up.
+          # compile() reports this conflict when compilation is requested.
           warn_user_header_conflict(resolved_header$conflict)
         }
-        # Deliberately without the header: the resolver strips both spellings
-        # and only $compile() reinserts the selected one. Storing it here would
-        # mean storing a WSL-safe path, which the next $compile() would pick up
-        # as its host-path `user_header` and fail to find on WSLv1 -- the hazard
-        # the comment at the resolver call in $compile() describes. user_header_
-        # below is the single source instead.
+        # Keep only the host path here. Persisting the WSL path would break reuse
+        # on WSL1.
         private$precompile_cpp_options_ <- resolved_header$cpp_options
-        # Prepopulating this also keeps the first $compile() from seeing a
-        # change of header and rebuilding an already-current executable.
+        # Use the header supplied to cmdstan_model() as the baseline for change
+        # detection.
         private$user_header_ <- resolve_path(resolved_header$user_header)
         private$using_user_header_ <- !is.null(resolved_header$user_header)
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
@@ -614,24 +601,11 @@ NULL
 #' # same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 #' }
 #'
-# The object holds three kinds of state, committed at different moments. The
-# comments through this function explain individual assignments; the rule they
-# are all instances of is:
-#
-#   Source configuration -- what the next build should use. Assigned eagerly and
-#     kept through a failure, because a bare retry after fixing a bad header or
-#     a wrong path has to build what the user last asked for.
-#   Artifact description -- what the executable on disk actually is. Committed
-#     only after that executable has been successfully replaced, so a dry run, a
-#     failed compile, or a failed install can never leave the object describing
-#     a program that was never built. (#1228)
-#   Divergence markers -- a record that the two have drifted apart, which is
-#     neither of the above. Latched rather than assigned, because on a retry the
-#     configuration resolves back to itself and nothing looks changed.
-#
-# exe_file_ and cmdstan_version_ are deliberate exceptions: they are also the
-# configured destination and the toolchain version, so they are assigned on a
-# dry run and on a no-op, but never on a failure.
+# Keep requested build inputs after a failure, but update executable-derived
+# state only after installation succeeds. user_header_dirty_ and
+# include_paths_dirty_ stay set until those inputs are compiled successfully.
+# exe_file_ and cmdstan_version_ also describe dry runs. exe_file_ is updated
+# on no-ops as well.
 compile <- function(quiet = TRUE,
                     dir = NULL,
                     pedantic = FALSE,
@@ -651,17 +625,14 @@ compile <- function(quiet = TRUE,
     )
   }
   assert_stan_file_exists(self$stan_file())
-  # Captured before either is reassigned below: an explicit user_header = NULL
-  # is indistinguishable from an omitted argument by value alone, and a header
-  # inherited from an earlier call is not a conflict worth warning about.
+  # missing() distinguishes an omitted header from user_header = NULL.
   user_header_supplied <- !missing(user_header)
   cpp_options_supplied <- length(cpp_options) > 0
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
-  # Distinct from cpp_options_supplied, which is only about whether this call
-  # carried a conflicting header: options held from cmdstan_model(compile =
-  # FALSE) did not arrive with this call but are still the caller's intent.
+  # Precompile options still need mismatch checks even though they were not
+  # passed to this call.
   cpp_options_available <- length(cpp_options) > 0
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
@@ -671,16 +642,8 @@ compile <- function(quiet = TRUE,
     include_paths <- private$include_paths_ %||% private$precompile_include_paths_
   }
   resolved_include_paths <- resolve_path(include_paths)
-  # Compared before the assignment below, and latched for the same reason the
-  # header's marker is: a failed compile must keep the new paths, so on the
-  # retry they resolve back to themselves and nothing looks changed. Order is
-  # significant -- it decides which directory a directive resolves from -- so
-  # this is an ordered comparison, which same_path() already does.
-  #
-  # Only a change counts, never the first configuration: a fresh object holds no
-  # paths, so comparing against nothing would force a rebuild in every new R
-  # session. That leaves an executable adopted from an earlier session unproven,
-  # which is documented under `force_recompile`.
+  # Keep this dirty flag set across failed builds. Include-path order affects
+  # resolution. The first configured value is initial state, not a change.
   private$include_paths_dirty_ <- isTRUE(private$include_paths_dirty_) ||
     (length(private$include_paths_) > 0 &&
        !same_path(resolved_include_paths, private$include_paths_))
@@ -712,8 +675,6 @@ compile <- function(quiet = TRUE,
     supplied = user_header_supplied,
     cpp_options = cpp_options,
     cpp_options_supplied = cpp_options_supplied,
-    # the header the model was last compiled with, or the one supplied to
-    # cmdstan_model() if it has not been compiled yet
     previous = private$user_header_
   )
   warn_user_header_conflict(resolved_header$conflict)
@@ -723,9 +684,7 @@ compile <- function(quiet = TRUE,
   using_user_header <- !is.null(user_header)
   if (using_user_header) {
     stanc_options[["allow-undefined"]] <- TRUE
-    # Note that unlike cpp_options["USER_HEADER"], the user_header variable is
-    # deliberately not transformed with wsl_safe_path() as that breaks the check
-    # below on WSLv1
+    # Keep user_header as a host path for the WSL1 file check below.
     user_header <- resolve_path(user_header)
     if (!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
@@ -733,22 +692,15 @@ compile <- function(quiet = TRUE,
     cpp_options[[resolved_header$spelling]] <- wsl_safe_path(user_header)
   }
 
-  # Source configuration, so assigned eagerly: it says what the next stanc or
-  # make invocation should use, and a failed compile must not revert it. The
-  # usual route to a failed compile with a new header is a bug in that header,
-  # and a bare retry after fixing it has to build the header the user supplied.
-  #
-  # The divergence marker is latched rather than assigned, because on that retry
-  # the reuse branch resolves back to the same header and nothing looks changed.
+  # Save the request before compiling so a failed build can be retried.
+  # Keep the dirty flag set until a build succeeds.
   private$user_header_dirty_ <- isTRUE(private$user_header_dirty_) ||
     !same_path(user_header, private$user_header_)
   private$user_header_ <- user_header
   private$using_user_header_ <- using_user_header
 
-  # The resolved destination need not be the executable this object describes,
-  # e.g. $compile(dir = ) aimed at a directory that already holds a current
-  # executable. Adopting that binary while keeping this object's generated C++
-  # and metadata would produce a hybrid, so build the model there instead.
+  # Do not adopt an executable from a new destination. Its generated C++ and
+  # metadata may not match this object.
   exe_changed <- length(private$exe_file_) > 0 && !same_path(exe, private$exe_file_)
 
   # compile if:
@@ -780,24 +732,11 @@ compile <- function(quiet = TRUE,
     if (rlang::is_interactive()) {
       message("Model executable is up to date!")
     }
-    # Nothing was compiled, so nothing describing the current executable may be
-    # consumed or overwritten by configuration this call merely proposed.
-    # Options supplied to this call describe an executable that was not built,
-    # so they are deliberately not recorded: assert_valid_threads() and the
-    # OpenCL checks read these back as fact, and a stan_threads the binary
-    # lacks makes a plain $sample() fail with "the model executable was built
-    # with threading enabled", which is false and cannot be worked around
-    # without recompiling. What is already recorded still describes the
-    # executable that exists, so it is carried forward untouched. (#1019)
-    # This object holds the generated C++ for an executable only if it compiled
-    # it. Even then the record is only what was passed to make: options
-    # inherited from make/local never reach $compile() and so were never
-    # recorded, which is why the record alone is not the artifact.
+    # A no-op must not record options that were not compiled into the executable.
+    # hpp_code is present only when this object built the executable.
     built_here <- !is.null(self$functions$hpp_code)
 
-    # Asking the executable about itself. Best effort, because
-    # model_compile_info() runs it and errors outright rather than returning a
-    # status when the file is not runnable.
+    # Treat unreadable executable metadata as unavailable.
     exe_info <- NULL
     if (cpp_options_available || length(private$exe_file_) == 0) {
       exe_info <- tryCatch(
@@ -806,76 +745,47 @@ compile <- function(quiet = TRUE,
       )
     }
 
-    # The two accounts of the executable, combined: metadata reports the
-    # STAN_* flags actually compiled in, including any inherited from
-    # make/local, and the record holds the options metadata cannot report.
-    # Metadata wins where both speak, since it describes the binary; a metadata
-    # FALSE is skipped by the merge, so an explicit NULL survives as an empty
-    # assignment. A failed query leaves the record untouched.
+    # Add options reported as enabled by the executable and keep recorded values
+    # for anything it cannot report.
     recorded_cpp_options <-
       merge_exe_info_cpp_options(private$cpp_options_, exe_info)
 
-    # Recording options the executable does not have would otherwise be a quiet
-    # lie: nothing was rebuilt, so a requested stan_threads produces the
-    # "N thread(s) per chain" message while the binary, compiled without
-    # STAN_THREADS, runs single-threaded. Rebuilding on a mismatch is the real
-    # fix and is still outstanding (see the skipped tests in
-    # test-model-recompile-logic.R); until then, say so.
+    # A no-op cannot apply requested cpp_options. Warn instead of recording them
+    # as fact. It would be preferable to rebuild on mismatch (see #1019).
     options_mismatch <- FALSE
     if (cpp_options_available) {
       if (built_here) {
-        # Options the binary reports but the record never held cannot have come
-        # from $compile(), so they came from make/local -- and a rebuild would
-        # inherit them again. Applying them to both sides keeps an option the
-        # request never mentioned, and never had to, from reading as a change.
-        # Anything the record does hold was passed on the command line and
-        # would be dropped by a rebuild that omits it, so it stays subject to
-        # the symmetric comparison.
+        # Options reported by the executable but absent from built_options came
+        # from make/local, so a rebuild would inherit them again.
         built_options <- private$built_cpp_options_
         inherited <- merge_exe_info_cpp_options(list(), exe_info)
-        # Which options were passed explicitly is a question about what make was
-        # given, not about the shape of the list: an unnamed "STAN_THREADS=TRUE"
-        # is as explicit as a named entry, and names() cannot see it.
+        # Parse make flags so unnamed assignments also count as explicit.
         explicit <- names(parsed_cpp_options(built_options)$assignments)
         inherited <- inherited[!tolower(names(inherited)) %in% explicit]
-        # Explicit options are appended last because cpp_options reach make on
-        # the command line, which overrides make/local.
+        # Command-line options override make/local.
         options_mismatch <- cpp_options_disagree(
           c(inherited, cpp_options),
           c(inherited, built_options)
         )
       } else if (length(exe_info) > 0) {
-        # An adopted executable can only be asked about itself, and it answers
-        # about a handful of STAN_* flags. Options outside that set are left
-        # alone rather than reported as a mismatch: unverifiable is not the same
-        # as wrong, and warning whenever provenance is unknown would fire on
-        # ordinary reuse. Recording provenance beside the executable is the
-        # fix (#1238).
+        # For adopted executables, compare only reported options. The rest are
+        # unknown, not mismatches. It would be preferable to record build
+        # provenance alongside the executable (see #1238).
         options_mismatch <-
           !isTRUE(exe_info_reflects_cpp_options(exe_info, cpp_options))
       }
     }
 
+    # existing_exe means this object has no generated C++ for the executable.
     if (length(private$exe_file_) == 0) {
-      # This object is adopting an executable it did not build: it holds no
-      # generated C++ for it, and the only description of it beyond the request
-      # is what the binary reports about itself.
       self$functions$existing_exe <- TRUE
     } else {
-      # The flag means "we don't hold the generated C++ for this executable",
-      # which is not the same as "this call compiled nothing".
       self$functions$existing_exe <- is.null(self$functions$hpp_code)
     }
     private$cpp_options_ <- recorded_cpp_options
     private$exe_file_ <- exe
-    # Warned about only once the state above is recorded: under
-    # options(warn = 2) this is an error, and raising it earlier would unwind
-    # with the object half-updated.
+    # Update state before warning because warn = 2 turns the warning into an error.
     if (options_mismatch) {
-      # Deliberately not phrased as a claim about how the executable was built:
-      # options inherited from make/local are invisible here unless the binary
-      # reports them, so what is actually known is that the two descriptions
-      # disagree. (#1238)
       warning(
         "The 'cpp_options' recorded or reported for the existing executable ",
         "do not match the ones requested. The executable was not rebuilt, so ",
@@ -891,12 +801,8 @@ compile <- function(quiet = TRUE,
     }
   }
 
-  # Evaluated here rather than in the tail: cmdstan_version() is not infallible
-  # despite being an accessor, because set_cmdstan_path() can leave PATH set
-  # while VERSION stays NULL, and in that state stanc and make both run but this
-  # errors. Staging it removes a failure point after the executable is already
-  # installed. It cannot be hoisted above the no-op return, which today never
-  # reaches this call at all.
+  # Resolve the CmdStan version before replacing the executable because this
+  # lookup can fail.
   compiled_cmdstan_version <- cmdstan_version()
 
   if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
@@ -931,8 +837,6 @@ compile <- function(quiet = TRUE,
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
   stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_direct)
   standalone_hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
-  # Staged in a local: this describes the program being compiled now, so it may
-  # not reach the object unless that program's executable is installed. (#1228)
   model_methods_env <- new.env()
   model_methods_env$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
 
@@ -996,25 +900,15 @@ compile <- function(quiet = TRUE,
       stop("An error occurred during compilation! See the message above for more information.",
            call. = FALSE)
     }
-    # Everything that can still fail happens before the executable is replaced,
-    # so that the commit block below is only assignments. Writing the
-    # model-method header is fallible and has to come after make, which
-    # generates its own .hpp at the same path.
+    # Finish fallible work before installing the executable. Write the model-method
+    # header after make because make uses the same path.
     stan_code <- readLines(temp_stan_file)
     writeLines(model_methods_env$hpp_code_,
                con = wsl_safe_path(hpp_file, revert = TRUE))
 
-    # The commit block below is otherwise only assignments, so nothing in it can
-    # fail once the executable is in place. Clearing the functions environment is
-    # the exception: it is done in place to keep the environment's identity for
-    # any fit holding a reference, so it needs an environment that can still be
-    # cleared. `functions` is public and R6 permits replacing it, so that is not
-    # guaranteed. Checked here rather than there because failing after the swap
-    # installs the executable and then leaves the object describing the previous
-    # program -- which is the #1228 failure this ordering exists to prevent.
-    #
-    # A locked binding is deliberately not checked: it does not stop rm() from
-    # removing it, and the assignments that follow create bindings afresh.
+    # Clear functions in place to preserve existing references. Because the public
+    # field can be replaced, verify it is a mutable environment before installing.
+    # Locked bindings are okay because rm() can remove them.
     if (!is.environment(self$functions) ||
         environmentIsLocked(self$functions)) {
       stop(
@@ -1024,15 +918,9 @@ compile <- function(quiet = TRUE,
       )
     }
 
-    # Errors if the executable could not be replaced, so a failure here can
-    # never leave the model with no executable at all. A backup that could not
-    # be cleaned up afterwards is reported rather than signalled, and warned
-    # about only once all the optional work below has had its chance to run.
     leftover_backup <- install_executable(tmp_exe, exe)
 
-    # The new executable is in place, so everything derived from the Stan
-    # program that was just compiled can be committed. A dry run or a failed
-    # compilation leaves the previously compiled state untouched. (#1228)
+    # Commit executable-derived state only after installation succeeds.
     rm(list = ls(self$functions, all.names = TRUE), envir = self$functions)
     self$functions$compiled <- FALSE
     self$functions$hpp_code <- standalone_hpp_code
@@ -1051,18 +939,12 @@ compile <- function(quiet = TRUE,
     private$precompile_include_paths_ <- NULL
   } # End - if(!dry_run)
 
-  # Both are exceptions to the rule that state describing the compiled artifact
-  # is committed only above: during a dry run they are also the configured
-  # destination and the toolchain version, so they are assigned on a dry run and
-  # on success -- and, for exe_file_, on a no-op -- but never on a failure.
+  # These fields also describe dry runs, so update them outside the commit block.
   private$cmdstan_version_ <- compiled_cmdstan_version
   private$exe_file_ <- exe
 
   if (!dry_run) {
-    # Both exposures are optional and fallible, and both run only once every
-    # field describing the installed executable has been committed -- including
-    # exe_file_ above. Failing here must not leave the object unable to find an
-    # executable that is sitting on disk.
+    # Run optional exposure only after executable state is committed.
     if (compile_standalone) {
       expose_stan_functions(self$functions, verbose = !quiet)
     }
@@ -1070,9 +952,7 @@ compile <- function(quiet = TRUE,
       expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
     }
     if (!is.null(leftover_backup)) {
-      # Deliberately last: under options(warn = 2) this is an error, and raising
-      # it any earlier would abort exposure the user asked for -- or worse, roll
-      # back before the state describing the installed executable was recorded.
+      # Warn last because warn = 2 aborts the remaining work.
       warning(
         "The previously compiled executable could not be removed. ",
         "It has been left at '", leftover_backup, "'.",
@@ -1412,10 +1292,7 @@ format <- function(overwrite_file = FALSE,
   cat(run_log$stdout, file = out_file, sep = "\n")
   if (isTRUE(overwrite_file)) {
     private$stan_code_ <- readLines(self$stan_file())
-    # The program on disk has been rewritten, so anything parsed from it is
-    # stale. $variables() reparses when this is NULL; leaving it would let
-    # $code() and $variables() describe different programs, and the fitting
-    # methods validate data and inits against $variables(). (#1228)
+    # Force variables() to reparse the formatted source.
     private$variables_ <- NULL
   }
 

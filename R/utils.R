@@ -205,15 +205,8 @@ resolve_path <- function(path) {
   repair_path(absolute_path(path))
 }
 
-# Do two paths name the same file? Compared canonically rather than as strings,
-# so that symlink aliases, ".." components, separator differences and (on
-# Windows) casing don't make one file look like two.
-#
-# mustWork = FALSE is deliberate: neither path is guaranteed to exist, and the
-# default mustWork = NA warns when a path cannot be normalized, which
-# options(warn = 2) would turn into an error. A path that cannot be normalized
-# is compared as given, which for a missing path against an existing one means
-# "different" -- the safe answer for both callers.
+# Compare canonical paths without requiring them to exist. mustWork = FALSE
+# also avoids normalizePath() warnings under warn = 2.
 same_path <- function(x, y) {
   if (length(x) == 0 || length(y) == 0) {
     return(length(x) == length(y))
@@ -275,39 +268,19 @@ copy_temp_files <-
     absolute_path(destinations)
   }
 
-#' Replace a model executable with a newly compiled one
+#' Replace a model executable while preserving the previous one
 #'
-#' Stages the new executable beside the destination, moves any existing
-#' executable aside, and only then renames the staged copy into place. Every step
-#' that fails before the final rename leaves the destination exactly as it was;
-#' a failed final rename restores the previous executable.
-#'
-#' Staged and rollback-capable rather than transactional: a crash between the two
-#' renames can still leave the previous executable at the backup path only.
-#'
-#' Every filesystem call is wrapped in `suppressWarnings()` and checked by value.
-#' `file.copy()` and `file.rename()` warn on failure, so under
-#' `options(warn = 2)` base would throw before returning `FALSE` -- and if that
-#' happened on the final rename, the rollback below would never run and the only
-#' good executable would be stranded at the backup path. `unlink()` reports a
-#' status without signalling, so it needs no such treatment, but it returns
-#' `0L` for success rather than `TRUE`.
+#' Stage the new executable, move the old one aside, and attempt to restore it
+#' if installation fails. Suppress file.copy() and file.rename() warnings so
+#' warn = 2 cannot interrupt rollback. A crash between renames may leave only
+#' the backup.
 #'
 #' @noRd
 #' @param from Path to the newly compiled executable.
 #' @param to Path the executable should be installed at.
-#' @return `NULL` on a clean install, or the path to a backup of the previous
-#'   executable that could not be removed afterwards. Callers must not treat a
-#'   returned path as a failure: the new executable is installed either way, and
-#'   signalling from here would unwind before the caller could record the state
-#'   describing it.
+#' @return NULL after a clean install, or the leftover backup path if cleanup
+#'   fails. The new executable is installed in either case.
 install_executable <- function(from, to) {
-  # Checked before anything is staged or moved: file.exists() is true of
-  # directories, and both $exe_file(path) and cmdstan_model(exe_file = ) reach
-  # here without one, so a destination that is a directory would otherwise be
-  # renamed aside as though it were the previous executable -- leaving a regular
-  # file in its place, the directory displaced under a name the leftover-backup
-  # warning calls an executable, and the user hunting for their data.
   if (dir.exists(to)) {
     stop(
       "Cannot install the compiled executable at '", to,
@@ -315,14 +288,8 @@ install_executable <- function(from, to) {
       call. = FALSE
     )
   }
-  # repair_path() because tempfile() joins with a backslash on Windows, giving
-  # "//wsl$/distro/path/to/dir\\exe-new-1234". The Win32 calls below tolerate the
-  # mixed separators, but wsl_safe_path() only rewrites the prefix, so the POSIX
-  # chmod inside WSL would be handed a path that does not exist.
+  # Normalize mixed Windows separators before converting the path for WSL.
   candidate <- repair_path(tempfile(pattern = "exe-new-", tmpdir = dirname(to)))
-  # Discarding the staged copy can fail too, so the diagnostics say where it was
-  # left rather than implying it is gone and sending the user looking for a file
-  # that is still there.
   discard_candidate <- function() {
     if (unlink(candidate, expand = FALSE) == 0L) {
       ""

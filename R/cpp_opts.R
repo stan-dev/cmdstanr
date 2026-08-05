@@ -73,11 +73,8 @@ model_compile_info <- function(exe_file, version) {
   info
 }
 
-# Merge the options an executable reports about itself into the options already
-# recorded for it. STAN_VERSION describes the toolchain rather than a make
-# option, and a flag the executable reports as FALSE was never set at all, so
-# recording it would pass "FLAG=FALSE" to make, which CmdStan reads as enabling
-# the flag.
+# Merge build options reported by the executable. Ignore STAN_VERSION and false
+# flags (passing FLAG=FALSE back to CmdStan can enable the flag).
 merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
   for (option_name in names(exe_info)) {
     value <- exe_info[[option_name]]
@@ -89,22 +86,9 @@ merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
   cpp_options
 }
 
-# The options a compilation would actually be run with, normalized so that a
-# request can be compared against what an executable was built with.
-#
-# Deliberately canonicalizes the output of cpp_options_to_compile_flags() rather
-# than reading the list itself: what make is handed is what decides whether two
-# builds differ, and any second reading of these lists drifts from the first.
-# Named and unnamed entries, duplicate names, vector values that expand into
-# several assignments and NULLs that expand into an empty NAME= are all already
-# resolved by the time the flags exist.
-#
-# Assignments are reduced last-wins, as a makefile does, and compared by
-# lower-cased name so that spelling is not a difference. Anything that is not an
-# assignment is opaque and keeps its order relative to the other opaque
-# arguments, though not its position among the assignments. Header entries are
-# dropped: header identity is tracked separately and forces a rebuild on its
-# own.
+# Normalize the flags sent to make. Assignment names are case-insensitive and
+# the last value wins. Nonassignments keep their order. Headers are handled
+# separately.
 parsed_cpp_options <- function(cpp_options) {
   assignments <- list()
   opaque <- character()
@@ -134,9 +118,7 @@ normalized_cpp_options <- function(cpp_options) {
   c(sort(reduced), parsed$opaque)
 }
 
-# Whether an executable built with `recorded` would differ from one built with
-# `requested`. Symmetric, because cpp_options are one-shot: a recompilation
-# carrying `requested` would drop anything `recorded` holds that it does not.
+# Omitted recorded options count as changes because cpp_options are one-shot.
 cpp_options_disagree <- function(requested, recorded) {
   !identical(
     normalized_cpp_options(requested),
@@ -200,36 +182,16 @@ validate_cpp_options <- function(cpp_options) {
 }
 
 # user headers ---------------------------------------------------------
-# Decide which user header a compilation should use and reduce cpp_options to a
-# single, unambiguous source for it.
-#
-# Precedence:
-#   1. an explicit non-NULL `user_header` argument;
-#   2. an explicit `user_header = NULL`, which clears any header carried in
-#      cpp_options as well;
-#   3. only when the argument is omitted, cpp_options -- USER_HEADER ahead of
-#      user_header whichever order they appear in -- and then `previous`, the
-#      header the model already holds.
-#
-# `supplied` is what makes (2) expressible at all: `user_header = NULL` is also
-# the default, so the value alone cannot separate "cleared" from "not
-# mentioned". `cpp_options_supplied` separates a header passed in the same call,
-# a conflict worth warning about, from one inherited from an earlier call.
-#
-# Both spellings are always dropped from cpp_options; callers reinsert the
-# selected header under `spelling`, in whatever form they store. The header is
-# returned as supplied, neither made absolute nor WSL-safe, because callers
-# differ on which they need.
+# Resolve one header and remove both header spellings from cpp_options.
+# Precedence is explicit user_header (including NULL), USER_HEADER,
+# user_header, then previous. `supplied` distinguishes NULL from omission.
+# `cpp_options_supplied` limits conflict warnings to this call.
 resolve_user_header <- function(user_header,
                                 supplied,
                                 cpp_options,
                                 cpp_options_supplied = TRUE,
                                 previous = NULL) {
-  # Positions rather than [[name]]: every duplicate reaches make and a makefile
-  # takes the last, so the last occurrence of a spelling is the one that would
-  # have been used. Reading by name takes the first, and removing by name drops
-  # only one occurrence, which would leave the others to reach make alongside
-  # the header selected here.
+  # Use positions so duplicate options follow make's last-value-wins behavior.
   upper_at <- which(names(cpp_options) == "USER_HEADER")
   lower_at <- which(names(cpp_options) == "user_header")
   last_of <- function(positions) {
@@ -239,14 +201,7 @@ resolve_user_header <- function(user_header,
       cpp_options[[positions[[length(positions)]]]]
     }
   }
-  # Presence comes from the positions, never from the value, because NULL is a
-  # value an entry can hold rather than a way of being absent. An entry whose
-  # final occurrence is NULL stands for an explicit `USER_HEADER=` -- the
-  # assignment that would reach make if the resolver did not strip it, and the
-  # one make would take as clearing anything set before it. Reading presence
-  # off the value instead treated that as "no header given" and fell back to
-  # the persisted one, so the compile ran with no header while the object went
-  # on describing the old one. Matches cpp_option_value() below.
+  # NULL is still present here because it emits an empty USER_HEADER= assignment.
   has_upper <- length(upper_at) > 0
   has_lower <- length(lower_at) > 0
   from_upper <- last_of(upper_at)
@@ -271,14 +226,11 @@ resolve_user_header <- function(user_header,
     header <- previous
   }
 
-  # Shape is checked wherever a header is accepted; whether it exists is checked
-  # only when compiling, so that a header created between construction and
-  # $compile() still works.
+  # Validate the value now and check file existence when compiling.
   if (!is.null(header)) {
     checkmate::assert_string(header, .var.name = "user_header")
   }
-  # Guarded because negative indexing by an empty vector returns nothing at all
-  # rather than everything.
+  # Guarded because x[-integer(0)] is empty.
   header_at <- c(upper_at, lower_at)
   if (length(header_at) > 0) {
     cpp_options <- cpp_options[-header_at]
@@ -379,17 +331,13 @@ exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
   }
   if (is.null(cpp_options)) return(TRUE)
 
-  # Only the assignments the binary can speak to. Anything else is left alone
-  # rather than reported as a mismatch: an adopted executable carries no record
-  # of what produced it, so an unreportable option is unverifiable, not wrong.
-  # Read through parsed_cpp_options() so that unnamed raw assignments, duplicate
-  # names and vector values mean here what they mean to make.
+  # Compare only options reported by the executable. Other options are unknown.
+  # Parse the emitted flags so duplicates and unnamed assignments match make.
   assignments <- parsed_cpp_options(cpp_options)$assignments
   reported <- intersect(names(assignments), tolower(names(exe_info)))
 
   for (option_name in reported) {
-    # CmdStan enables these whenever the make variable is non-empty, so an empty
-    # assignment is the only way to ask for one to be off.
+    # CmdStan treats any nonempty make value as enabled.
     requested <- nzchar(assignments[[option_name]])
     if (requested != isTRUE(cpp_option_value(exe_info, option_name))) {
       return(FALSE)
