@@ -35,9 +35,6 @@ CmdStanFit <- R6::R6Class(
       if (!is.null(private$model_methods_env_$model_ptr)) {
         initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
       }
-      # Need to update the output directory path to one that can be accessed
-      # from Windows, for the post-processing of results
-      self$runset$args$output_dir <- wsl_safe_path(self$runset$args$output_dir, revert = TRUE)
       invisible(self)
     },
     num_procs = function() {
