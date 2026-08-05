@@ -1,5 +1,8 @@
 # cmdstanr (development version)
 
+* When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
+and metric files now remain accessible to Windows R when an explicit output 
+directory is supplied. (#1110; related: #1113)
 * Lists of matrices/vectors and data frames can now be supplied for variables
 declared as `int` in the Stan program. Previously these worked only for `real`
 variables and errored for `int` ones. (#817)
