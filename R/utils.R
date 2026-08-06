@@ -89,10 +89,6 @@ is_rosetta2 <- function() {
   rosetta2
 }
 
-arch_is_aarch64 <- function() {
-  isTRUE(R.version$arch == "aarch64")
-}
-
 # Returns the type of make command to use to compile depending on the OS
 # First checks if $MAKE is set, otherwise falls back to "make"
 make_cmd <- function() {

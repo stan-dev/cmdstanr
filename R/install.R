@@ -619,8 +619,10 @@ check_rtools4x_windows_toolchain <- function(quiet = FALSE) {
   toolchain_path <- toolchain_PATH_env_var()
   if (is.null(toolchain_path)) {
     stop(
-      "\nNo C++ toolchain was found for your current installation.",
-      "\nPlease install or reinstall the appropriate Rtools version for this R installation or add it to your PATH",
+      "CmdStanR could not find both make and a C++ compiler in R's ",
+      "configured toolchain or on PATH.",
+      "\nPlease install or reinstall the appropriate Rtools version for this ",
+      "R installation, or add a compatible toolchain to PATH,",
       "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
@@ -710,7 +712,7 @@ cmdstan_arch_suffix <- function(version = NULL) {
 .cmdstanr_rcmd <- function(...) tools::Rcmd(...)
 
 toolchain_PATH_env_var <- function() {
-  # Return cached result if available (toolchain doesn't change mid-session)
+  # Return a previously successful lookup if available
   # For non-windows systems the initialized path stays NULL
   if (!is.null(.cmdstanr$TOOLCHAIN_PATH) || !os_is_windows()) {
     return(.cmdstanr$TOOLCHAIN_PATH)
@@ -719,8 +721,6 @@ toolchain_PATH_env_var <- function() {
   # Lookup the configured toolchain location for the installation
   # This variable is set at installation since R 4.2
   #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
-  rtools_soft <- ""
-
   # R 4.0 and R 4.1 did not set the R_TOOLS_SOFT config variable, so
   # we use the RTOOLS40_HOME environment variable instead
   if (current_r_version() < "4.2.0") {
@@ -744,22 +744,35 @@ toolchain_PATH_env_var <- function() {
   rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
   rtools_cpp_dir <- file.path(rtools_soft, "bin")
 
-  if (!file.exists(file.path(rtools_bin_dir, "make.exe")) ||
-        !file.exists(file.path(rtools_cpp_dir, "c++.exe"))) {
-
-    # If the configured toolchain location is empty, search the PATH
-    # R4.2+ prepends the toolchain directory to the path, so will be found first
+  # R 4.2+ prepends the toolchain directory to PATH, so it will be found first
+  if (!nzchar(rtools_soft) ||
+      !file.exists(file.path(rtools_bin_dir, "make.exe"))) {
     make_path <- Sys.which("make")
-    cpp_path <- Sys.which("c++")
     rtools_bin_dir <- ifelse(nzchar(make_path), dirname(make_path), "")
+  }
+  if (!nzchar(rtools_soft) ||
+      !file.exists(file.path(rtools_cpp_dir, "c++.exe"))) {
+    cpp_path <- Sys.which("c++")
     rtools_cpp_dir <- ifelse(nzchar(cpp_path), dirname(cpp_path), "")
   }
 
   if (rtools_bin_dir != "" && rtools_cpp_dir != "") {
-    # Use short path to protect against spaces
-    .cmdstanr$TOOLCHAIN_PATH <- paste0(repair_path(utils::shortPathName(c(rtools_bin_dir, rtools_cpp_dir))), collapse = ";")
+    toolchain_dirs <- unique(
+      repair_path(short_path(c(rtools_bin_dir, rtools_cpp_dir)))
+    )
+    if (any(grepl("[() ]", toolchain_dirs))) {
+      stop(
+        "The Windows toolchain path contains spaces or parentheses, and ",
+        "CmdStanR could not convert it to a usable short path. Please install ",
+        "or move the toolchain to a path without spaces or parentheses, ",
+        "restart R, and then run cmdstanr::check_cmdstan_toolchain().",
+        call. = FALSE
+      )
+    }
+    .cmdstanr$TOOLCHAIN_PATH <- paste(toolchain_dirs, collapse = ";")
   }
 
+  # Leave failed lookups uncached so later toolchain or PATH changes are found
   .cmdstanr$TOOLCHAIN_PATH
 }
 
