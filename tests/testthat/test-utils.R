@@ -226,12 +226,7 @@ local_exe_fixture <- function(destination_exists = TRUE,
   fixture
 }
 
-# Windows R never creates a POSIX mode for installation to preserve or lose:
-# Sys.chmod() there toggles the read-only attribute, and default DrvFs derives
-# Linux permissions from Windows ones rather than storing mode metadata. That
-# covers WSL too, where R itself is Windows R. A genuine WSL permission test
-# would need a fixture on the Linux filesystem and would have to prove its own
-# setup can tell an executable file from a non-executable one first.
+# POSIX execute permissions are not available through Windows R, including WSL.
 expect_installed_executable <- function(path) {
   expect_identical(readLines(path), "new executable")
   if (!os_is_windows()) {
@@ -239,25 +234,14 @@ expect_installed_executable <- function(path) {
   }
 }
 
-# Normalize the random staging and backup names out of a snapshot, keeping the
-# structure of the paths the diagnostics name.
-#
-# Separators are normalized first because on Windows these paths arrive with a
-# mixture: dirname() converts to forward slashes, while withr::local_tempdir()
-# and tempfile() use backslashes, so tempfile(tmpdir = dirname(to)) yields
-# "C:/a/b\exe-new-1234".
+# Replace platform-specific directory spellings and random filenames without
+# hiding separator regressions in paths created by install_executable().
 exe_path_transform <- function(fixture) {
-  # Every spelling the directory can appear in: withr::local_tempdir() can
-  # return "/tmp//Rtmpx", file.path() keeps that, and install_executable()
-  # passes its own paths through repair_path(), which collapses it.
   dirs <- unique(c(
     fixture$dir,
     repair_path(fixture$dir),
     gsub("\\\\", "/", fixture$dir)
   ))
-  # Deliberately not normalizing separators in the message itself:
-  # install_executable() repairs the paths it builds, so a backslash reaching a
-  # diagnostic is a regression these snapshots should catch, not hide.
   function(lines) {
     for (dir in dirs) {
       lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
@@ -307,11 +291,8 @@ test_that("install_executable() refuses to install over a directory", {
   dir.create(fixture$to)
   writeLines("important", file.path(fixture$to, "data.txt"))
 
-  # file.exists() is true of directories, so a destination that is one used to
-  # be renamed aside as though it were the previous executable, leaving a
-  # regular file in its place and the directory displaced under a name the
-  # leftover-backup warning describes as an executable. $exe_file(path) and
-  # exe_file= both reach here without a directory check.
+  # Directories satisfy file.exists(), so reject them before staging or renaming.
+  # Both $exe_file(path) and exe_file= can pass a directory here.
   expect_error(
     install_executable(fixture$from, fixture$to),
     "is a directory",
@@ -319,7 +300,6 @@ test_that("install_executable() refuses to install over a directory", {
   )
   expect_true(dir.exists(fixture$to))
   expect_identical(readLines(file.path(fixture$to, "data.txt")), "important")
-  # Nothing staged, nothing moved aside.
   expect_setequal(
     list.files(fixture$dir),
     basename(c(fixture$from, fixture$to))
@@ -383,9 +363,7 @@ test_that("install_executable() keeps the backup if it cannot be restored", {
 
 test_that("install_executable() rolls back when warnings are errors", {
   fixture <- local_exe_fixture()
-  # base warns and returns FALSE; under warn = 2 the warning alone would throw
-  # from inside file.rename(), skipping the rollback and stranding the only good
-  # executable at the backup path.
+  # file.rename() warnings must not interrupt rollback when warn = 2.
   local_failing_file_rename(fail_on = 2, warn = TRUE)
   withr::local_options(warn = 2)
 
@@ -401,9 +379,7 @@ test_that("install_executable() reports a backup it could not remove", {
   fixture <- local_exe_fixture()
   local_mocked_bindings(unlink = function(...) 1L, .package = "base")
 
-  # Reporting rather than signalling is the whole point: a warning here would,
-  # under options(warn = 2), unwind before the caller could record the state
-  # describing the executable that was just installed.
+  # Return the backup without warning so the caller can commit state first.
   expect_no_warning(leftover <- install_executable(fixture$from, fixture$to))
   expect_identical(readLines(fixture$to), "new executable")
   expect_true(file.exists(leftover))

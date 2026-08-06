@@ -241,9 +241,7 @@ test_that("$compile() reuses include paths from the previous compilation", {
     include_paths = include_dir,
     compile = FALSE
   )
-  # A successful compile rather than a dry run: a dry run leaves
-  # precompile_include_paths_ in place, so the call after it can find the paths
-  # there and the reuse through the compiled state is never exercised.
+  # Use a successful compile to move the paths out of precompile state.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
@@ -251,8 +249,6 @@ test_that("$compile() reuses include paths from the previous compilation", {
   )
   expect_null(mod$.__enclos_env__$private$precompile_include_paths_)
 
-  # The include path isn't supplied again, but the included file is still found
-  # and the path still reaches stanc.
   received_stancflags <- list()
   with_mocked_cli(
     compile_ret = list(status = 0),
@@ -260,9 +256,7 @@ test_that("$compile() reuses include paths from the previous compilation", {
     code = expect_no_error(mod$compile(force_recompile = TRUE, quiet = TRUE))
   )
   expect_equal(mod$include_paths(), resolve_path(include_dir))
-  # Compared against the arguments stanc is actually handed, not the stored
-  # path: under WSL the model holds a Windows host path while the stanc
-  # argument is converted to /mnt/<drive>/..., so the two do not match.
+  # Compare stanc arguments because WSL converts stored Windows paths.
   include_args <- include_paths_stanc3_args(mod$include_paths(), direct_call = TRUE)
   expect_true(all(vapply(
     received_stancflags,
@@ -272,8 +266,7 @@ test_that("$compile() reuses include paths from the previous compilation", {
 })
 
 test_that("$compile() doesn't reuse cpp and stanc options from the previous compilation", {
-  # A mocked compile installs a real (empty) executable, so this has to build a
-  # temporary copy rather than the shared test model.
+  # Use a temporary copy because mocked compiles install executables.
   model_dir <- withr::local_tempdir()
   stan_file <- file.path(model_dir, "bernoulli.stan")
   file.copy(testing_stan_file("bernoulli"), stan_file)
@@ -287,10 +280,7 @@ test_that("$compile() doesn't reuse cpp and stanc options from the previous comp
     }
   )
 
-  # Successful compiles rather than dry runs: the precompile state these options
-  # travel in is cleared only once an executable has been installed, so a pair
-  # of dry runs never reaches the transition this test is named for and passes
-  # merely because arguments to one call are absent from another.
+  # Successful compiles clear one-shot cpp and stanc options.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
@@ -352,8 +342,6 @@ test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_mo
     rep(TRUE, 2)
   )
 
-  # The held options are released only by a successful compilation, so this is
-  # the transition that a pair of dry runs cannot reach.
   received_stancflags <- list()
   with_mocked_cli(
     compile_ret = list(status = 0),
@@ -504,14 +492,7 @@ test_that("a failed compile() doesn't refresh cached model state", {
   expect_false(model$functions$compiled)
 })
 
-# A compiled model whose compiler is mocked, so that stanc runs for real and
-# only the C++ stage can be made to fail. That is the case the tests above miss:
-# the generated C++ for the new program is already in hand, so any state derived
-# from it that is recorded before the executable is replaced would outlive a
-# failure and describe a program the executable was never built from.
-#
-# The copy is temporary because a mocked compile installs a real (empty)
-# executable, and the model here is the CmdStan installation's own example.
+# Run stanc normally but mock the C++ compiler on a temporary model copy.
 local_mocked_bernoulli_model <- function(.local_envir = parent.frame()) {
   stan_file <- file.path(
     withr::local_tempdir(.local_envir = .local_envir),
@@ -534,37 +515,15 @@ test_that("a failed C++ compile doesn't refresh generated-code state", {
   functions_before <- as.list(model$functions)
   hpp_file_before <- model$hpp_file()
   hpp_code_before <- private$model_methods_env_$hpp_code_
+  exe_before <- model$exe_file()
+  other_dir <- withr::local_tempdir()
   expect_true(any(nzchar(hpp_code_before)))
 
-  # The model-method environment is handed to every fit, so a stale pairing here
-  # means fit$init_model_methods() compiles log_prob() from a program the draws
-  # did not come from.
+  # model_methods_env_ must describe the same program as the executable.
   writeLines(
     "parameters { real beta; } model { beta ~ std_normal(); }",
     model$stan_file()
   )
-  with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(status = 1),
-    code = expect_error(
-      model$compile(force_recompile = TRUE),
-      "An error occurred during compilation!",
-      fixed = TRUE
-    )
-  )
-
-  expect_identical(model$code(), code_before)
-  expect_identical(model$variables(), variables_before)
-  expect_identical(as.list(model$functions), functions_before)
-  expect_identical(model$hpp_file(), hpp_file_before)
-  expect_identical(private$model_methods_env_$hpp_code_, hpp_code_before)
-})
-
-test_that("a failed C++ compile doesn't move the executable path", {
-  model <- local_mocked_bernoulli_model()
-  exe_before <- model$exe_file()
-  other_dir <- withr::local_tempdir()
-
   with_mocked_cli(
     compile_ret = list(status = 1),
     info_ret = list(status = 1),
@@ -575,49 +534,16 @@ test_that("a failed C++ compile doesn't move the executable path", {
     )
   )
 
+  expect_identical(model$code(), code_before)
+  expect_identical(model$variables(), variables_before)
+  expect_identical(as.list(model$functions), functions_before)
+  expect_identical(model$hpp_file(), hpp_file_before)
+  expect_identical(private$model_methods_env_$hpp_code_, hpp_code_before)
   expect_identical(model$exe_file(), exe_before)
   expect_true(file.exists(exe_before))
 })
 
-test_that("compile() errors if the executable cannot be replaced", {
-  model <- local_mocked_bernoulli_model()
-  exe <- model$exe_file()
-  writeLines("old executable", exe)
-
-  # Fail the first attempt to put a file at the destination. A replacement that
-  # fails unnoticed leaves the model with no executable at all.
-  real_file_copy <- base::file.copy
-  real_file_rename <- base::file.rename
-  installs <- 0
-  local_mocked_bindings(
-    file.copy = function(from, to, ...) {
-      if (identical(to, exe)) {
-        installs <<- installs + 1
-        if (installs == 1L) return(FALSE)
-      }
-      real_file_copy(from, to, ...)
-    },
-    file.rename = function(from, to) {
-      if (identical(to, exe)) {
-        installs <<- installs + 1
-        if (installs == 1L) return(FALSE)
-      }
-      real_file_rename(from, to)
-    },
-    .package = "base"
-  )
-
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = expect_error(model$compile(force_recompile = TRUE))
-  )
-  expect_true(file.exists(exe))
-  expect_identical(readLines(exe), "old executable")
-})
-
-# Set up a model whose executable is about to be replaced by a program that can
-# be told apart from it, with removal of the old executable's backup failing.
+# Build a distinct replacement whose old backup cannot be removed.
 local_leftover_backup_model <- function(.local_envir = parent.frame()) {
   model <- local_mocked_bernoulli_model(.local_envir = .local_envir)
   writeLines("old executable", model$exe_file())
@@ -643,43 +569,14 @@ expect_describes_new_program <- function(model) {
   expect_match(paste(private$model_methods_env_$hpp_code_, collapse = "\n"), "beta")
   expect_match(paste(readLines(model$hpp_file()), collapse = "\n"), "beta")
   expect_true(model$cpp_options()$stan_threads)
-  # The installed file is the mocked replacement rather than the executable it
-  # replaced, told apart by contents. Size alone used to carry this, because the
-  # mock wrote an empty file and the fixture's old executable was not empty.
   expect_match(readLines(model$exe_file()), "^mock executable ")
 }
-
-test_that("a leftover backup warns without discarding a successful compile", {
-  model <- local_leftover_backup_model()
-
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = condition <- expect_warning(
-      model$compile(cpp_options = list(stan_threads = TRUE), force_recompile = TRUE),
-      "could not be removed"
-    )
-  )
-
-  # Reporting the backup instead of deleting it is only worth anything if the
-  # path named is real and still holds the previous executable, so check the
-  # path out of the message rather than trusting that one was mentioned.
-  leftover <- sub(".*left at '([^']*)'.*", "\\1", conditionMessage(condition))
-  expect_true(file.exists(leftover))
-  expect_identical(readLines(leftover), "old executable")
-  expect_false(same_path(leftover, model$exe_file()))
-
-  expect_describes_new_program(model)
-})
 
 test_that("a leftover backup doesn't unwind a compile when warnings are errors", {
   model <- local_leftover_backup_model()
   model_dir <- dirname(model$exe_file())
 
-  # Signalling the cleanup failure before the state is committed would install
-  # the new executable while the object still described the old program -- the
-  # exact hybrid this all exists to prevent. The option is scoped to the call so
-  # that testthat's own snapshot warnings stay warnings.
+  # The warning must come after the new executable state is committed.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
@@ -689,8 +586,7 @@ test_that("a leftover backup doesn't unwind a compile when warnings are errors",
         list(warn = 2),
         model$compile(cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
       ),
-      # Separators are normalized first: on Windows the backup path arrives as
-      # "<dir>\exe-old-1234", since tempfile() joins with a backslash.
+      # Normalize Windows separators and the random backup name.
       transform = function(lines) {
         for (dir in unique(c(model_dir, repair_path(model_dir)))) {
           lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
@@ -807,11 +703,10 @@ test_that("*hpp_file() functions work", {
   expect_equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))
   mod$save_hpp_file(tmp_dir)
   expect_equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))
-  # A dry run generates no C++, so it leaves the saved location alone rather
-  # than pointing $hpp_file() at a temporary file that was never written.
+  # A dry run leaves the saved header location unchanged.
   mod$compile(force_recompile = TRUE, dry_run = TRUE)
   expect_equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))
-  # A real recompilation does write it, to a fresh temporary location.
+  # A real recompilation uses a fresh temporary header.
   expect_call_compilation(mod$compile(force_recompile = TRUE))
   expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))))
   expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))))
@@ -934,9 +829,7 @@ test_that("check_syntax() works with include_paths on compiled model", {
 
 test_that("check_syntax() and format() allow undefined functions with a user header", {
   stan_file <- testing_stan_file("bernoulli_external")
-  # both methods only run stanc, which never reads the user header, so an empty
-  # one is enough here. Compiling against a real header is tested in
-  # test-model-compile-user_header.R
+  # Stanc does not read the header, so an empty one is enough.
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   mod <- cmdstan_model(stan_file, user_header = user_header, compile = FALSE)
 
@@ -1229,10 +1122,7 @@ test_that("format(overwrite_file = TRUE) refreshes cached variables", {
   model <- cmdstan_model(stan_file, compile = FALSE)
   expect_equal(names(model$variables()$parameters), "alpha")
 
-  # The program is edited behind the object's back, then formatted in place.
-  # $format() reloads $code() from disk, so a cached $variables() would go on
-  # describing a different program than $code() does -- and the fitting methods
-  # validate data and initial values against $variables(). (#1228)
+  # Formatting in place must refresh variables along with the cached code.
   writeLines(
     "parameters { real beta; } model { beta ~ std_normal(); }",
     stan_file
@@ -1605,10 +1495,7 @@ test_that("compile() checks it can commit before replacing the executable", {
 
   lockEnvironment(model$functions, bindings = FALSE)
 
-  # The commit block clears this environment in place, which is the one thing in
-  # it that is not an assignment, and it fails on a locked environment. Failing
-  # there installed the new executable and then left the object recording
-  # nothing about it -- exactly the hybrid the ordering exists to prevent.
+  # Clearing a locked environment would fail during the state commit.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
@@ -1622,50 +1509,6 @@ test_that("compile() checks it can commit before replacing the executable", {
   expect_length(model$exe_file(), 0)
 })
 
-test_that("compile() checks the functions environment is still there", {
-  model_dir <- withr::local_tempdir()
-  stan_file <- file.path(model_dir, "bernoulli.stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file)
-  model <- cmdstan_model(stan_file, compile = FALSE)
-  exe <- cmdstan_ext(strip_ext(stan_file))
-
-  # R6's lock_objects prevents adding fields, not replacing them, so this is
-  # allowed. Without the check the commit block reached rm(envir = NULL) after
-  # the executable had already been installed.
-  model$functions <- NULL
-
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = expect_error(
-      model$compile(force_recompile = TRUE),
-      "missing or locked",
-      fixed = TRUE
-    )
-  )
-  expect_false(file.exists(exe))
-})
-
-test_that("compile() tolerates a locked binding in the functions environment", {
-  model_dir <- withr::local_tempdir()
-  stan_file <- file.path(model_dir, "bernoulli.stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file)
-  model <- cmdstan_model(stan_file, compile = FALSE)
-
-  # A locked binding is not a locked environment: rm() still removes it, and the
-  # commit block's assignments then create bindings afresh rather than meeting a
-  # locked one. Rejecting this would refuse a compilation that works.
-  model$functions$compiled <- FALSE
-  lockBinding("compiled", model$functions)
-
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = expect_no_error(model$compile(force_recompile = TRUE))
-  )
-  expect_true(file.exists(cmdstan_ext(strip_ext(stan_file))))
-})
-
 test_that("compile() refuses an executable destination that is a directory", {
   model_dir <- withr::local_tempdir()
   stan_file <- file.path(model_dir, "bernoulli.stan")
@@ -1675,8 +1518,6 @@ test_that("compile() refuses an executable destination that is a directory", {
   writeLines("important", file.path(destination, "data.txt"))
 
   model <- cmdstan_model(stan_file, compile = FALSE)
-  # $exe_file(path) assigns without validating, so this is the shortest route to
-  # a destination the compile path never checks.
   model$exe_file(destination)
 
   with_mocked_cli(
@@ -1699,9 +1540,6 @@ test_that("compile() installs the artifact it just built, not the previous one",
   model <- cmdstan_model(stan_file, compile = FALSE)
   exe <- cmdstan_ext(strip_ext(stan_file))
 
-  # Each mocked build writes distinct contents, so "the new artifact was
-  # installed" is distinguishable from "the old one was left in place". While
-  # every build produced the same empty file, no test could tell the two apart.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),

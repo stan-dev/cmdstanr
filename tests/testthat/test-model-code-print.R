@@ -59,8 +59,7 @@ test_that("code() doesn't change when file changes (unless recompiled or recreat
   expect_identical(mod$code(), code_2_answer)
   expect_identical(utils::capture.output(mod$print()), code_2_answer)
 
-  # overwrite with the original code, mod$code() shouldn't change until the
-  # model is successfully recompiled (#1228)
+  # Recompilation refreshes the cached code (#1228).
   writeLines(code_1_answer, stan_file_1)
   expect_identical(mod$code(), code_2_answer)
   mod$compile()

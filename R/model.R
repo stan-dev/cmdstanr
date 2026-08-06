@@ -908,7 +908,6 @@ compile <- function(quiet = TRUE,
 
     # Clear functions in place to preserve existing references. Because the public
     # field can be replaced, verify it is a mutable environment before installing.
-    # Locked bindings are okay because rm() can remove them.
     if (!is.environment(self$functions) ||
         environmentIsLocked(self$functions)) {
       stop(

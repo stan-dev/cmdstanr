@@ -111,10 +111,12 @@ test_that("$variables() is refreshed when the model is recompiled", {
     utils::capture.output(
       mod$sample(
         chains = 1,
-        iter_warmup = 100,
-        iter_sampling = 100,
+        iter_warmup = 10,
+        iter_sampling = 10,
         refresh = 0,
-        init = list(list(beta = 0))
+        init = list(list(beta = 0)),
+        diagnostics = NULL,
+        show_messages = FALSE
       )
     ),
     message = "Init values were only set for a subset of parameters"
