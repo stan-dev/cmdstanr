@@ -309,3 +309,232 @@ test_that("check_cmdstan_toolchain(fix = TRUE) is deprecated", {
     check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
   )
 })
+
+# Windows toolchain discovery tests ----------------------------------------
+
+test_that("toolchain_PATH_env_var() returns NULL on non-Windows", {
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local_mocked_bindings(os_is_windows = function() FALSE)
+  expect_null(toolchain_PATH_env_var())
+})
+
+test_that("toolchain_PATH_env_var() caches result after first call", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+
+  # First call should populate the cache
+  first_result <- toolchain_PATH_env_var()
+  expect_identical(.cmdstanr$TOOLCHAIN_PATH, first_result)
+
+  # Second call should return cached value without re-running lookup
+  second_result <- toolchain_PATH_env_var()
+  expect_identical(second_result, first_result)
+})
+
+test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_home <- withr::local_tempdir(pattern = "rtools40-home-")
+  # Create the expected directory structure for R 4.0/4.1
+  dir.create(file.path(fake_home, "mingw64", "bin"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(fake_home, "usr", "bin"), recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_home, "mingw64", "bin", "c++.exe"))
+  file.create(file.path(fake_home, "usr", "bin", "make.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.1.0"),
+      repair_path = function(path) path
+    )
+    withr::local_envvar(c(RTOOLS40_HOME = fake_home, R_ARCH = ""))
+    result <- toolchain_PATH_env_var()
+    expect_false(is.null(result))
+    expect_identical(
+      result,
+      paste0(file.path(fake_home, "usr", "bin"), ";", file.path(fake_home, "mingw64", "bin"))
+    )
+  })
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.1.0"),
+      repair_path = function(path) path
+    )
+    withr::local_envvar(c(RTOOLS40_HOME = fake_home, R_ARCH = "/i386"))
+    result <- toolchain_PATH_env_var()
+    expect_false(is.null(result))
+    expect_identical(
+      result,
+      paste0(file.path(fake_home, "usr", "bin"), ";", file.path(fake_home, "mingw32", "bin"))
+    )
+  })
+})
+
+test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", {
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_bin <- withr::local_tempdir(pattern = "rtools-fallback-")
+  file.create(file.path(fake_bin, "make"))
+  file.create(file.path(fake_bin, "c++"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.2.0"),
+      repair_path = function(path) path
+    )
+    # Mock .cmdstanr_rcmd to simulate a failure
+    local_mocked_bindings(
+      .cmdstanr_rcmd = function(..., stdout = FALSE) stop("Rcmd not found")
+    )
+    withr::local_envvar(c(PATH = fake_bin))
+    result <- toolchain_PATH_env_var()
+    # Should fall back to Sys.which() and find the fake binaries
+    expect_false(is.null(result))
+    expect_identical(result, paste0(fake_bin, ";", fake_bin))
+  })
+})
+
+test_that("toolchain_PATH_env_var() returns NULL when both approaches fail", {
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.2.0"),
+      repair_path = function(path) path
+    )
+    # Mock .cmdstanr_rcmd to return empty string
+    local_mocked_bindings(
+      .cmdstanr_rcmd = function(..., stdout = FALSE) ""
+    )
+    # Mock Sys.which to return empty (no tools in PATH)
+    local_mocked_bindings(
+      Sys.which = function(name) ""
+    )
+    result <- toolchain_PATH_env_var()
+    expect_null(result)
+  })
+})
+
+test_that("toolchain_PATH_env_var() returns NULL when only one tool in PATH", {
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_bin <- withr::local_tempdir(pattern = "rtools-partial-")
+  file.create(file.path(fake_bin, "make"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.2.0"),
+      repair_path = function(path) path
+    )
+    # Mock .cmdstanr_rcmd to return empty (triggers fallback)
+    local_mocked_bindings(
+      .cmdstanr_rcmd = function(..., stdout = FALSE) ""
+    )
+    # Only make is in PATH, c++ is not
+    local_mocked_bindings(
+      Sys.which = function(name) {
+        if (name == "make") file.path(fake_bin, "make") else ""
+      }
+    )
+    result <- toolchain_PATH_env_var()
+    # Should return NULL because c++ was not found
+    expect_null(result)
+  })
+})
+
+test_that("toolchain_PATH_env_var() falls back to PATH when executables missing at R_TOOLS_SOFT", {
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_soft <- withr::local_tempdir(pattern = "rtools-soft-")
+  dir.create(file.path(fake_soft, "bin"), recursive = TRUE, showWarnings = FALSE)
+  # Note: no make.exe or c++.exe created
+
+  fake_bin <- withr::local_tempdir(pattern = "rtools-path-")
+  file.create(file.path(fake_bin, "make"))
+  file.create(file.path(fake_bin, "c++"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.2.0"),
+      repair_path = function(path) path
+    )
+    # Rcmd returns a valid path, but executables don't exist there
+    local_mocked_bindings(
+      .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft
+    )
+    withr::local_envvar(c(PATH = fake_bin))
+    result <- toolchain_PATH_env_var()
+    # Should fall back to PATH and find the tools there
+    expect_false(is.null(result))
+    expect_identical(result, paste0(fake_bin, ";", fake_bin))
+  })
+})
+
+test_that("check_rtools4x_windows_toolchain() stops when no toolchain found", {
+  local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
+  expect_error(
+    check_rtools4x_windows_toolchain(),
+    "No C++ toolchain was found",
+    fixed = TRUE
+  )
+})
+
+test_that("is_ucrt_toolchain() returns correct values for R versions", {
+  # is_ucrt_toolchain() is TRUE for R 4.2.x – 4.x.x on Windows
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.2.0")
+    )
+    expect_true(is_ucrt_toolchain())
+  })
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.4.0")
+    )
+    expect_true(is_ucrt_toolchain())
+  })
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("4.1.0")
+    )
+    expect_false(is_ucrt_toolchain())
+  })
+  local({
+    local_mocked_bindings(
+      os_is_windows = function() TRUE,
+      current_r_version = function() numeric_version("5.0.0")
+    )
+    expect_false(is_ucrt_toolchain())
+  })
+  local({
+    local_mocked_bindings(os_is_windows = function() FALSE)
+    expect_false(is_ucrt_toolchain())
+  })
+})

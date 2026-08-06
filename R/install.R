@@ -706,9 +706,15 @@ cmdstan_arch_suffix <- function(version = NULL) {
   paste0("-linux-", selected_arch)
 }
 
+#' Thin wrapper around `tools::Rcmd()` for testability
+#' @noRd
+.cmdstanr_rcmd <- function(...) tools::Rcmd(...)
+
 toolchain_PATH_env_var <- function() {
-  if (!os_is_windows()) {
-    return(NULL)
+  # Return cached result if available (toolchain doesn't change mid-session)
+  # For non-windows systems the initialized path stays NULL
+  if (!is.null(.cmdstanr$TOOLCHAIN_PATH) || !os_is_windows()) {
+    return(.cmdstanr$TOOLCHAIN_PATH)
   }
 
   # Lookup the configured toolchain location for the installation
@@ -716,14 +722,17 @@ toolchain_PATH_env_var <- function() {
   #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
   rtools_soft <- ""
 
-  # R 4.0 did not set the R_TOOLS_SOFT config variable, so
+  # R 4.0 and R 4.1 did not set the R_TOOLS_SOFT config variable, so
   # we use the RTOOLS40_HOME environment variable instead
   if (current_r_version() < "4.2.0") {
     rtools40_home <- repair_path(Sys.getenv("RTOOLS40_HOME", "C:\\rtools40"))
     r_arch <- ifelse(Sys.getenv("R_ARCH") == "/i386", "mingw32", "mingw64")
     rtools_soft <- file.path(rtools40_home, r_arch)
   } else {
-    rtools_soft <- repair_path(tools::Rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE))
+    rtools_soft <- tryCatch(
+      trimws(.cmdstanr_rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE)),
+      error = function(e) ""
+    )
   }
 
   rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
@@ -733,15 +742,18 @@ toolchain_PATH_env_var <- function() {
         !file.exists(file.path(rtools_cpp_dir, "c++.exe"))) {
 
     # If the configured toolchain location is empty, search the PATH
-    rtools_bin_dir <- repair_path(dirname(Sys.which("make")))
-    rtools_cpp_dir <- repair_path(dirname(Sys.which("c++")))
+    # R4.2+ prepends the toolchain directory to the path, so will be found first
+    make_path <- Sys.which("make")
+    cpp_path <- Sys.which("c++")
+    rtools_bin_dir <- if (nzchar(make_path)) repair_path(dirname(make_path)) else ""
+    rtools_cpp_dir <- if (nzchar(cpp_path)) repair_path(dirname(cpp_path)) else ""
   }
 
   if (rtools_bin_dir != "" && rtools_cpp_dir != "") {
-    return(paste0(rtools_bin_dir, ";", rtools_cpp_dir))
+    .cmdstanr$TOOLCHAIN_PATH <- paste0(rtools_bin_dir, ";", rtools_cpp_dir)
   }
 
-  NULL
+  .cmdstanr$TOOLCHAIN_PATH
 }
 
 assert_supported_requested_cmdstan_version <- function(version, source = "version") {
