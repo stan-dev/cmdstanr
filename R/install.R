@@ -729,9 +729,16 @@ toolchain_PATH_env_var <- function() {
     rtools_soft <- file.path(rtools40_home, r_arch)
   } else {
     rtools_soft <- tryCatch(
-      trimws(.cmdstanr_rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE)),
+      suppressWarnings(
+        .cmdstanr_rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE)
+      ),
       error = function(e) ""
     )
+    if (!is.null(attr(rtools_soft, "status")) || length(rtools_soft) != 1L) {
+      rtools_soft <- ""
+    } else {
+      rtools_soft <- trimws(rtools_soft)
+    }
   }
 
   rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")

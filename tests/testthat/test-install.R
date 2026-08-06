@@ -391,6 +391,29 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   })
 })
 
+test_that("toolchain_PATH_env_var() compares R versions numerically", {
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_home <- withr::local_tempdir(pattern = "rtools-home-")
+  rcmd_calls <- 0L
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local_mocked_bindings(
+    os_is_windows = function() TRUE,
+    current_r_version = function() numeric_version("4.10.0"),
+    .cmdstanr_rcmd = function(...) {
+      rcmd_calls <<- rcmd_calls + 1L
+      file.path(fake_home, "toolchain")
+    }
+  )
+  withr::local_envvar(c(PATH = ""))
+
+  result <- toolchain_PATH_env_var()
+
+  expect_identical(rcmd_calls, 1L)
+  expect_null(result)
+})
+
 test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", {
   skip_if(!os_is_windows())
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
@@ -408,15 +431,21 @@ test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", 
       current_r_version = function() numeric_version("4.2.0"),
       repair_path = function(path) path
     )
-    # Mock .cmdstanr_rcmd to simulate a failure
     local_mocked_bindings(
-      .cmdstanr_rcmd = function(..., stdout = FALSE) stop("Rcmd not found")
+      .cmdstanr_rcmd = function(..., stdout = FALSE) {
+        warning("Rcmd config failed")
+        structure(
+          "ERROR: no information for variable 'R_TOOLS_SOFT'",
+          status = 1L
+        )
+      }
     )
     withr::local_envvar(c(PATH = fake_bin))
-    result <- toolchain_PATH_env_var()
-    # Should fall back to Sys.which() and find the fake binaries
-    expect_false(is.null(result))
-    paste0(repair_path(utils::shortPathName(c(fake_bin, fake_bin))), collapse = ";")
+    expect_no_warning(result <- toolchain_PATH_env_var())
+    expect_identical(
+      result,
+      paste0(repair_path(utils::shortPathName(c(fake_bin, fake_bin))), collapse = ";")
+    )
   })
 })
 
@@ -497,9 +526,10 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
     )
     withr::local_envvar(c(PATH = fake_bin))
     result <- toolchain_PATH_env_var()
-    # Should fall back to PATH and find the tools there
-    expect_false(is.null(result))
-    paste0(repair_path(utils::shortPathName(c(fake_bin, fake_bin))), collapse = ";")
+    expect_identical(
+      result,
+      paste0(repair_path(utils::shortPathName(c(fake_bin, fake_bin))), collapse = ";")
+    )
   })
 })
 
