@@ -339,6 +339,8 @@ test_that("toolchain_PATH_env_var() caches result after first call", {
 })
 
 test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
+  skip_if(!os_is_windows())
+
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
@@ -384,6 +386,8 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
 
 test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", {
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  skip_if(!os_is_windows())
+
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_bin <- withr::local_tempdir(pattern = "rtools-fallback-")
@@ -410,6 +414,8 @@ test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", 
 })
 
 test_that("toolchain_PATH_env_var() returns NULL when both approaches fail", {
+  skip_if(!os_is_windows())
+
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
@@ -434,6 +440,8 @@ test_that("toolchain_PATH_env_var() returns NULL when both approaches fail", {
 })
 
 test_that("toolchain_PATH_env_var() returns NULL when only one tool in PATH", {
+  skip_if(!os_is_windows())
+
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
@@ -464,6 +472,8 @@ test_that("toolchain_PATH_env_var() returns NULL when only one tool in PATH", {
 })
 
 test_that("toolchain_PATH_env_var() falls back to PATH when executables missing at R_TOOLS_SOFT", {
+  skip_if(!os_is_windows())
+
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
@@ -495,6 +505,8 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
 })
 
 test_that("check_rtools4x_windows_toolchain() stops when no toolchain found", {
+  skip_if(!os_is_windows())
+
   local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
   expect_error(
     check_rtools4x_windows_toolchain(),
@@ -504,6 +516,8 @@ test_that("check_rtools4x_windows_toolchain() stops when no toolchain found", {
 })
 
 test_that("is_ucrt_toolchain() returns correct values for R versions", {
+  skip_if(!os_is_windows())
+
   # is_ucrt_toolchain() is TRUE for R 4.2.x – 4.x.x on Windows
   local({
     local_mocked_bindings(

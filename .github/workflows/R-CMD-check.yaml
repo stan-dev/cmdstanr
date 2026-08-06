@@ -65,6 +65,14 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
 
+      - name: Test Windows toolchain in directory with spaces
+        if: ${{ runner.os == 'windows' && matrix.config.r == '4.1'}}
+        run: |
+          New-Item -ItemType Directory -Path "C:\tmp path with spaces" -Force
+          Move-Item -Path "C:\rtools40" -Destination "C:\tmp path with spaces\"
+          echo "RTOOLS40_HOME=C:/tmp path with spaces/rtools40" >> $env:GITHUB_ENV
+        shell: pwsh
+
       - name: Install R Package Build Dependencies on MacOS
         if: ${{ runner.os == 'macOS' }}
         uses: r-hub/actions/setup-r-sysreqs@v1

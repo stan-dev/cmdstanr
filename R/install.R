@@ -706,8 +706,7 @@ cmdstan_arch_suffix <- function(version = NULL) {
   paste0("-linux-", selected_arch)
 }
 
-#' Thin wrapper around `tools::Rcmd()` for testability
-#' @noRd
+# Thin wrapper around `tools::Rcmd()` to allow mocking
 .cmdstanr_rcmd <- function(...) tools::Rcmd(...)
 
 toolchain_PATH_env_var <- function() {
@@ -725,7 +724,7 @@ toolchain_PATH_env_var <- function() {
   # R 4.0 and R 4.1 did not set the R_TOOLS_SOFT config variable, so
   # we use the RTOOLS40_HOME environment variable instead
   if (current_r_version() < "4.2.0") {
-    rtools40_home <- repair_path(Sys.getenv("RTOOLS40_HOME", "C:\\rtools40"))
+    rtools40_home <- Sys.getenv("RTOOLS40_HOME", "C:\\rtools40")
     r_arch <- ifelse(Sys.getenv("R_ARCH") == "/i386", "mingw32", "mingw64")
     rtools_soft <- file.path(rtools40_home, r_arch)
   } else {
@@ -745,12 +744,13 @@ toolchain_PATH_env_var <- function() {
     # R4.2+ prepends the toolchain directory to the path, so will be found first
     make_path <- Sys.which("make")
     cpp_path <- Sys.which("c++")
-    rtools_bin_dir <- if (nzchar(make_path)) repair_path(dirname(make_path)) else ""
-    rtools_cpp_dir <- if (nzchar(cpp_path)) repair_path(dirname(cpp_path)) else ""
+    rtools_bin_dir <- ifelse(nzchar(make_path), dirname(make_path), "")
+    rtools_cpp_dir <- ifelse(nzchar(cpp_path), dirname(cpp_path), "")
   }
 
   if (rtools_bin_dir != "" && rtools_cpp_dir != "") {
-    .cmdstanr$TOOLCHAIN_PATH <- paste0(rtools_bin_dir, ";", rtools_cpp_dir)
+    # Use short path to protect against spaces
+    .cmdstanr$TOOLCHAIN_PATH <- paste0(repair_path(utils::shortPathName(c(rtools_bin_dir, rtools_cpp_dir))), collapse = ";")
   }
 
   .cmdstanr$TOOLCHAIN_PATH
