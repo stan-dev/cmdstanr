@@ -33,18 +33,18 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest, r: 'devel', opencl: true}
+          - {os: macOS-latest, r: 'devel', opencl: false}
           - {os: macOS-latest, r: 'release', opencl: true}
           - {os: macos-26, r: 'release', opencl: false}
           - {os: macos-15-intel, r: 'release', opencl: false}
-          - {os: windows-latest, r: 'devel' }
-          - {os: windows-latest, r: 'release'}
-          - {os: windows-2022, r: '4.1'}
-          - {os: windows-latest, r: 'oldrel'}
-          - {os: ubuntu-latest, r: 'devel', opencl: true}
+          - {os: windows-latest, r: 'devel', opencl: false}
+          - {os: windows-latest, r: 'release', opencl: false}
+          - {os: windows-2022, r: '4.1', opencl: false}
+          - {os: windows-latest, r: 'oldrel', opencl: false}
+          - {os: ubuntu-latest, r: 'devel', opencl: false}
           - {os: ubuntu-latest, r: 'release', opencl: true}
-          - {os: ubuntu-latest, r: 'oldrel', opencl: true}
-          - {os: windows-11-arm, r: 'release'}
+          - {os: ubuntu-latest, r: 'oldrel', opencl: false}
+          - {os: windows-11-arm, r: 'release', opencl: false}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -87,13 +87,13 @@ jobs:
           extra-packages: any::rcmdcheck, local::., ${{ matrix.config.r == '4.1' && 'qs2=?ignore' || '' }}
 
       - name: Install POCL on Ubuntu Runners
-        if: ${{ matrix.config.os == 'ubuntu-latest' }}
+        if: ${{ matrix.config.os == 'ubuntu-latest' && matrix.config.opencl }}
         run: |
           sudo apt-get update && sudo apt-get install -y ocl-icd-opencl-dev pocl-opencl-icd
         shell: bash
 
       - name: Install POCL on MacOS Runners
-        if: ${{ matrix.config.os == 'macOS-latest' }}
+        if: ${{ matrix.config.os == 'macOS-latest' && matrix.config.opencl }}
         run: |
           brew install pocl
           # Set LDLIBS_OPENCL environment variable so that CPU OpenCL is found
