@@ -344,12 +344,15 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
-  fake_home <- withr::local_tempdir(pattern = "rtools40-home-")
+  fake_home <- utils::shortPathName(withr::local_tempdir(pattern = "rtools40-home-"))
+  fake_cpp_dir <- file.path(fake_home, "mingw64", "bin")
+  fake_bin_dir <- file.path(fake_home, "usr", "bin")
+
   # Create the expected directory structure for R 4.0/4.1
-  dir.create(file.path(fake_home, "mingw64", "bin"), recursive = TRUE, showWarnings = FALSE)
-  dir.create(file.path(fake_home, "usr", "bin"), recursive = TRUE, showWarnings = FALSE)
-  file.create(file.path(fake_home, "mingw64", "bin", "c++.exe"))
-  file.create(file.path(fake_home, "usr", "bin", "make.exe"))
+  dir.create(fake_cpp_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(fake_bin_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_cpp_dir, "c++.exe"))
+  file.create(file.path(fake_bin_dir, "make.exe"))
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
@@ -358,14 +361,18 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
       current_r_version = function() numeric_version("4.1.0"),
       repair_path = function(path) path
     )
-    withr::local_envvar(c(RTOOLS40_HOME = fake_home, R_ARCH = ""))
+    withr::local_envvar(c(RTOOLS40_HOME = fake_home, R_ARCH = "/x64"))
     result <- toolchain_PATH_env_var()
     expect_false(is.null(result))
     expect_identical(
       result,
-      paste0(file.path(fake_home, "usr", "bin"), ";", file.path(fake_home, "mingw64", "bin"))
+      paste0(repair_path(utils::shortPathName(c(fake_bin_dir, fake_cpp_dir))), collapse = ";")
     )
   })
+
+  fake_cpp_dir <- file.path(fake_home, "mingw32", "bin")
+  dir.create(fake_cpp_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_cpp_dir, "c++.exe"))
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
@@ -379,20 +386,20 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
     expect_false(is.null(result))
     expect_identical(
       result,
-      paste0(file.path(fake_home, "usr", "bin"), ";", file.path(fake_home, "mingw32", "bin"))
+      paste0(repair_path(utils::shortPathName(c(fake_bin_dir, fake_cpp_dir))), collapse = ";")
     )
   })
 })
 
 test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", {
-  old_cache <- .cmdstanr$TOOLCHAIN_PATH
   skip_if(!os_is_windows())
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
 
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_bin <- withr::local_tempdir(pattern = "rtools-fallback-")
-  file.create(file.path(fake_bin, "make"))
-  file.create(file.path(fake_bin, "c++"))
+  file.create(file.path(fake_bin, "make.exe"))
+  file.create(file.path(fake_bin, "c++.exe"))
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
@@ -409,7 +416,7 @@ test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", 
     result <- toolchain_PATH_env_var()
     # Should fall back to Sys.which() and find the fake binaries
     expect_false(is.null(result))
-    expect_identical(result, paste0(fake_bin, ";", fake_bin))
+    paste0(repair_path(utils::shortPathName(c(fake_bin, fake_bin))), collapse = ";")
   })
 })
 
@@ -430,10 +437,7 @@ test_that("toolchain_PATH_env_var() returns NULL when both approaches fail", {
     local_mocked_bindings(
       .cmdstanr_rcmd = function(..., stdout = FALSE) ""
     )
-    # Mock Sys.which to return empty (no tools in PATH)
-    local_mocked_bindings(
-      Sys.which = function(name) ""
-    )
+    withr::local_envvar(c(PATH = ""))
     result <- toolchain_PATH_env_var()
     expect_null(result)
   })
@@ -459,12 +463,7 @@ test_that("toolchain_PATH_env_var() returns NULL when only one tool in PATH", {
     local_mocked_bindings(
       .cmdstanr_rcmd = function(..., stdout = FALSE) ""
     )
-    # Only make is in PATH, c++ is not
-    local_mocked_bindings(
-      Sys.which = function(name) {
-        if (name == "make") file.path(fake_bin, "make") else ""
-      }
-    )
+    withr::local_envvar(c(PATH = fake_bin))
     result <- toolchain_PATH_env_var()
     # Should return NULL because c++ was not found
     expect_null(result)
@@ -482,8 +481,8 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
   # Note: no make.exe or c++.exe created
 
   fake_bin <- withr::local_tempdir(pattern = "rtools-path-")
-  file.create(file.path(fake_bin, "make"))
-  file.create(file.path(fake_bin, "c++"))
+  file.create(file.path(fake_bin, "make.exe"))
+  file.create(file.path(fake_bin, "c++.exe"))
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
@@ -500,7 +499,7 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
     result <- toolchain_PATH_env_var()
     # Should fall back to PATH and find the tools there
     expect_false(is.null(result))
-    expect_identical(result, paste0(fake_bin, ";", fake_bin))
+    paste0(repair_path(utils::shortPathName(c(fake_bin, fake_bin))), collapse = ";")
   })
 })
 
