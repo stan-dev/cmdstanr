@@ -6,7 +6,11 @@ testing_data <- function(name) {
   }
 }
 testing_stan_file <- function(name) {
-  test_path("resources", "stan", paste0(name, ".stan"))
+  stan_dir <- .cmdstanr$TESTING_STAN_DIR %||% test_path("resources", "stan")
+  file.path(stan_dir, paste0(name, ".stan"))
+}
+testing_stan_dir <- function() {
+  .cmdstanr$TESTING_STAN_DIR %||% test_path("resources", "stan")
 }
 
 local_include_model_with_spaces <- function(.local_envir = parent.frame()) {

@@ -8,6 +8,7 @@ name: Unit tests - WSL Backend
   push:
     branches:
       - master
+      - parallel-tests
   pull_request:
     branches:
       - master
@@ -28,6 +29,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
       CMDSTANR_OPENCL_TESTS: true
+      TESTTHAT_CPUS: 4
 
     steps:
       - uses: actions/checkout@v7

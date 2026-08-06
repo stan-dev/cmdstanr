@@ -8,6 +8,7 @@ name: Unit tests
   push:
     branches:
       - master
+      - parallel-tests
   pull_request:
     branches:
       - master
@@ -52,6 +53,7 @@ jobs:
       CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
       CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
       PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
+      TESTTHAT_CPUS: 4
 
     steps:
       - name: cmdstan env vars

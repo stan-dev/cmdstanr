@@ -1,3 +1,4 @@
+worker_cmdstan <- Sys.getenv("CMDSTAN")
 Sys.unsetenv("CMDSTAN")
 PATH <- absolute_path(set_cmdstan_path())
 VERSION <- cmdstan_version()
@@ -292,5 +293,9 @@ test_that("is_release_candidate() works", {
 })
 
 # cleanup -----------------------------------------------------------------
-Sys.unsetenv("CMDSTAN")
+if (nzchar(worker_cmdstan)) {
+  Sys.setenv("CMDSTAN" = worker_cmdstan)
+} else {
+  Sys.unsetenv("CMDSTAN")
+}
 unset_cmdstan_path()

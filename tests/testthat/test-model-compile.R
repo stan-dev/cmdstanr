@@ -55,7 +55,7 @@ test_that("compile() method works with spaces in path", {
   stan_file <- testing_stan_file("bernoulli")
   stan_model_with_spaces <- testing_stan_file("folder spaces/bernoulli spaces")
 
-  dir_with_spaces <- test_path("resources", "stan", "folder spaces")
+  dir_with_spaces <- file.path(testing_stan_dir(), "folder spaces")
   if (!file.exists(dir_with_spaces)) {
     dir.create(dir_with_spaces)
   }
@@ -105,7 +105,7 @@ test_that("compilation works with include_paths", {
 
   expect_call_compilation(
     mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
-                                   include_paths = test_path("resources", "stan"),
+                                   include_paths = testing_stan_dir(),
                                    force_recompile = TRUE)
   )
   expect_equal(
@@ -522,7 +522,7 @@ test_that("check_syntax() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
   mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
-                                 include_paths = test_path("resources", "stan"))
+                                 include_paths = testing_stan_dir())
   expect_true(mod_w_include$check_syntax())
 
 })
@@ -900,7 +900,7 @@ test_that("format() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
   mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
-                                 include_paths = test_path("resources", "stan"))
+                                 include_paths = testing_stan_dir())
   expect_output(
     mod_w_include$format(),
     "#include ",
