@@ -122,6 +122,7 @@ cmdstan_version <- function(error_on_NA = TRUE) {
 .cmdstanr$VERSION <- NULL
 .cmdstanr$TEMP_DIR <- NULL
 .cmdstanr$WSL <- FALSE
+.cmdstanr$TOOLCHAIN_PATH <- NULL
 
 unset_cmdstan_path <- function() {
   .cmdstanr$PATH <- NULL
