@@ -87,7 +87,7 @@ jobs:
         shell: pwsh
 
       - name: Verify R_TOOLS_SOFT configuration
-        if: ${{ runner.os == 'Windows' && matrix.config.r != '4.1' }}
+        if: ${{ matrix.config.os == 'windows-latest' && matrix.config.r != '4.1' }}
         run: |
           rtools_soft <- suppressWarnings(
             tools::Rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE)

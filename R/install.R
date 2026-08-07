@@ -772,7 +772,6 @@ toolchain_PATH_env_var <- function() {
     .cmdstanr$TOOLCHAIN_PATH <- paste(toolchain_dirs, collapse = ";")
   }
 
-  # Leave failed lookups uncached so later toolchain or PATH changes are found
   .cmdstanr$TOOLCHAIN_PATH
 }
 
