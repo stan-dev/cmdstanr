@@ -15,7 +15,7 @@
       cmdstanr
     </a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.9.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.9.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,7 @@
 <li><p>Supplying a factor for a variable not declared as <code>int</code> is now an error. (<a href="https://github.com/stan-dev/cmdstanr/issues/1225" class="external-link">#1225</a>)</p></li>
 <li><p>Factors are now accepted for length-1 <code>int</code> arrays (e.g. <code>array[1] int x</code>), which previously errored. (<a href="https://github.com/stan-dev/cmdstanr/issues/1225" class="external-link">#1225</a>)</p></li>
 <li><p>The <code>CMDSTANR_NO_VER_CHECK</code> R option and environment variable are deprecated as of CmdStanR 1.0.0; use the lowercase <code>cmdstanr_no_ver_check</code> forms instead.</p></li>
+<li><p><code><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain()</a></code> now locates Windows toolchains using <code>R_TOOLS_SOFT</code> and falls back to <code>PATH</code>, improving support for alternate R distributions and future Rtools releases. (<a href="https://github.com/stan-dev/cmdstanr/issues/1211" class="external-link">#1211</a>)</p></li>
 <li><p><code>$compile()</code> now works with named <code>stanc_options</code> values such as <code>canonicalize</code>. The values were shell-quoted for Make and the same quoted strings were also passed to <code>stanc</code> directly, which rejected them. (<a href="https://github.com/stan-dev/cmdstanr/issues/1227" class="external-link">#1227</a>)</p></li>
 <li><p><code>$compile()</code> now enables <code>allow-undefined</code> for user headers supplied through <code>cpp_options</code>, not just through the <code>user_header</code> argument. (<a href="https://github.com/stan-dev/cmdstanr/issues/1227" class="external-link">#1227</a>)</p></li>
 <li><p><code>stanc</code> failures during <code>$compile()</code> are now reported immediately, with the <code>stanc</code> error message. Previously they surfaced several steps later. (<a href="https://github.com/stan-dev/cmdstanr/issues/1227" class="external-link">#1227</a>)</p></li>

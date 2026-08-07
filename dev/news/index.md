@@ -37,6 +37,12 @@
   deprecated as of CmdStanR 1.0.0; use the lowercase
   `cmdstanr_no_ver_check` forms instead.
 
+- [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
+  now locates Windows toolchains using `R_TOOLS_SOFT` and falls back to
+  `PATH`, improving support for alternate R distributions and future
+  Rtools releases.
+  ([\#1211](https://github.com/stan-dev/cmdstanr/issues/1211))
+
 - `$compile()` now works with named `stanc_options` values such as
   `canonicalize`. The values were shell-quoted for Make and the same
   quoted strings were also passed to `stanc` directly, which rejected
