@@ -242,7 +242,14 @@ CmdStanModel <- R6::R6Class(
     cpp_options_ = list(),
     stanc_options_ = list(),
     include_paths_ = NULL,
+    user_header_ = NULL,
     using_user_header_ = FALSE,
+    # Build inputs that have changed since the current executable was produced.
+    user_header_dirty_ = FALSE,
+    include_paths_dirty_ = FALSE,
+    # Options this object passed to make. By contrast, cpp_options_ may also
+    # contain values discovered from executable metadata or make/local.
+    built_cpp_options_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -262,12 +269,25 @@ CmdStanModel <- R6::R6Class(
         private$stan_file_ <- resolve_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
-        private$precompile_cpp_options_ <- args$cpp_options %||% list()
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
-        if (!is.null(args$user_header) || !is.null(args$cpp_options[["USER_HEADER"]]) ||
-            !is.null(args$cpp_options[["user_header"]])) {
-          private$using_user_header_ <- TRUE
+        # Resolve headers here so compile = FALSE preserves an explicit NULL.
+        # names(args) distinguishes NULL from an omitted argument.
+        resolved_header <- resolve_user_header(
+          user_header = args$user_header,
+          supplied = "user_header" %in% names(args),
+          cpp_options = args$cpp_options %||% list()
+        )
+        if (!compile) {
+          # compile() reports this conflict when compilation is requested.
+          warn_user_header_conflict(resolved_header$conflict)
         }
+        # Keep only the host path here. Persisting the WSL path would break reuse
+        # on WSL1.
+        private$precompile_cpp_options_ <- resolved_header$cpp_options
+        # Use the header supplied to cmdstan_model() as the baseline for change
+        # detection.
+        private$user_header_ <- resolve_path(resolved_header$user_header)
+        private$using_user_header_ <- !is.null(resolved_header$user_header)
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
@@ -294,22 +314,15 @@ CmdStanModel <- R6::R6Class(
       # as the version the model was compiled with
       private$cmdstan_version_ <- cmdstan_version()
       if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
-        for (cpp_option_name in names(cpp_options)) {
-          if (tolower(cpp_option_name) != "stan_version" &&
-              (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
-            private$cpp_options_[[cpp_option_name]] <- cpp_options[[cpp_option_name]]
-          }
-        }
+        private$cpp_options_ <- merge_exe_info_cpp_options(
+          private$cpp_options_,
+          model_compile_info(self$exe_file(), self$cmdstan_version())
+        )
       }
       invisible(self)
     },
     include_paths = function() {
-      if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        return(private$include_paths_)
-      } else {
-        return(private$precompile_include_paths_)
-      }
+      private$include_paths_ %||% private$precompile_include_paths_
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
@@ -483,9 +496,18 @@ NULL
 #'   program. Relative paths are resolved against the working directory when
 #'   the model object is created (or when `$compile()` is called) and stored as
 #'   absolute paths, so subsequent changes to the working directory do not
-#'   affect them.
+#'   affect them. If `$compile()` is called again without `include_paths`, the
+#'   most recently supplied paths are reused, and changing them forces
+#'   recompilation. Edits to the included files themselves do not; see
+#'   `force_recompile`.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
-#'   to compile with the Stan model.
+#'   to compile with the Stan model. If `$compile()` is called again without
+#'   `user_header`, the most recently supplied header is reused, and changing
+#'   it forces recompilation. Pass `user_header = NULL` to compile without one.
+#'   A header can also be supplied via `cpp_options` as `USER_HEADER` or
+#'   `user_header`; the `user_header` argument takes precedence over both.
+#'   See `force_recompile` for the case of a header supplied for a program
+#'   whose executable is already up to date.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
 #'   otherwise write in the `make/local` file. For an example of using threading
@@ -494,8 +516,10 @@ NULL
 #'   **Note:** For historical reasons, CmdStan treats some options as enabled
 #'   whenever their `Make` variable is non-empty. In particular, setting
 #'   `stan_threads` to `FALSE` passes `STAN_THREADS=FALSE` to `Make`, which
-#'   still enables threading! To leave threading disabled, simply omit
-#'   `stan_threads` entirely or set it to `NULL`.
+#'   still enables threading! To leave threading disabled, either omit
+#'   `stan_threads` entirely, which leaves any setting in `make/local` in
+#'   place, or set it to `NULL`, which passes an empty `STAN_THREADS=` and so
+#'   overrides `make/local` too.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   [`stanc` chapter of the CmdStan User's
@@ -504,6 +528,15 @@ NULL
 #' @param force_recompile (logical) Should the model be recompiled even if it
 #'   has not been modified since it was last compiled? The default is `FALSE`.
 #'   Can also be set via a global `cmdstanr_force_recompile` option.
+#'
+#'   Only the Stan program itself and the user header (if any) are checked for
+#'   modification. Files pulled in by `#include` directives are not, at any
+#'   depth, so editing an included file does not on its own trigger
+#'   recompilation. Use `force_recompile = TRUE` after changing one. Similarly,
+#'   when a model object is created for a Stan program whose executable already
+#'   exists and is up to date, CmdStanR cannot tell which `user_header` or
+#'   `include_paths` that executable was built with, so supplying different
+#'   ones does not force a rebuild.
 #' @param compile_model_methods (logical) Compile additional model methods
 #'   (`log_prob()`, `grad_log_prob()`, `hessian()`, `constrain_variables()`,
 #'   `unconstrain_variables()`, `unconstrain_draws()`, and
@@ -568,6 +601,11 @@ NULL
 #' # same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 #' }
 #'
+# Keep requested build inputs after a failure, but update executable-derived
+# state only after installation succeeds. user_header_dirty_ and
+# include_paths_dirty_ stay set until those inputs are compiled successfully.
+# exe_file_ and cmdstan_version_ also describe dry runs. exe_file_ is updated
+# on no-ops as well.
 compile <- function(quiet = TRUE,
                     dir = NULL,
                     pedantic = FALSE,
@@ -587,17 +625,29 @@ compile <- function(quiet = TRUE,
     )
   }
   assert_stan_file_exists(self$stan_file())
+  # missing() distinguishes an omitted header from user_header = NULL.
+  user_header_supplied <- !missing(user_header)
+  cpp_options_supplied <- length(cpp_options) > 0
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
+  # Precompile options still need mismatch checks even though they were not
+  # passed to this call.
+  cpp_options_available <- length(cpp_options) > 0
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
   stanc_options <- assert_valid_stanc_options(stanc_options)
-  if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
-    include_paths <- private$precompile_include_paths_
+  if (is.null(include_paths)) {
+    include_paths <- private$include_paths_ %||% private$precompile_include_paths_
   }
-  private$include_paths_ <- resolve_path(include_paths)
+  resolved_include_paths <- resolve_path(include_paths)
+  # Keep this dirty flag set across failed builds. Include-path order affects
+  # resolution. The first configured value is initial state, not a change.
+  private$include_paths_dirty_ <- isTRUE(private$include_paths_dirty_) ||
+    (length(private$include_paths_) > 0 &&
+       !same_path(resolved_include_paths, private$include_paths_))
+  private$include_paths_ <- resolved_include_paths
   include_paths <- private$include_paths_
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
@@ -607,9 +657,6 @@ compile <- function(quiet = TRUE,
   if (!is.null(dir)) {
     dir <- repair_path(dir)
     assert_dir_exists(dir, access = "rw")
-    if (length(self$exe_file()) != 0) {
-      private$exe_file_ <- file.path(dir, basename(self$exe_file()))
-    }
   }
 
   exe <- resolve_exe_path(dir, private$dir_, self$exe_file(), self$stan_file())
@@ -623,45 +670,54 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
 
-  # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
-  # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
-  if (!is.null(user_header)) {
-    if (!is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])) {
-      warning("User header specified both via user_header argument and via cpp_options arguments")
-    }
+  resolved_header <- resolve_user_header(
+    user_header = user_header,
+    supplied = user_header_supplied,
+    cpp_options = cpp_options,
+    cpp_options_supplied = cpp_options_supplied,
+    previous = private$user_header_
+  )
+  warn_user_header_conflict(resolved_header$conflict)
+  user_header <- resolved_header$user_header
+  cpp_options <- resolved_header$cpp_options
 
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
-    private$using_user_header_ <- TRUE
-  } else if (!is.null(cpp_options[["USER_HEADER"]])) {
-    if (!is.null(cpp_options[["user_header"]])) {
-      warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
-    }
-
-    user_header <- cpp_options[["USER_HEADER"]]
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
-    private$using_user_header_ <- TRUE
-  } else if (!is.null(cpp_options[["user_header"]])) {
-    user_header <- cpp_options[["user_header"]]
-    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
-    private$using_user_header_ <- TRUE
-  }
-
-
-  if (!is.null(user_header)) {
+  using_user_header <- !is.null(user_header)
+  if (using_user_header) {
     stanc_options[["allow-undefined"]] <- TRUE
-    user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
+    # Keep user_header as a host path for the WSL1 file check below.
+    user_header <- resolve_path(user_header)
     if (!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
     }
+    cpp_options[[resolved_header$spelling]] <- wsl_safe_path(user_header)
   }
+
+  # Save the request before compiling so a failed build can be retried.
+  # Keep the dirty flag set until a build succeeds.
+  private$user_header_dirty_ <- isTRUE(private$user_header_dirty_) ||
+    !same_path(user_header, private$user_header_)
+  private$user_header_ <- user_header
+  private$using_user_header_ <- using_user_header
+
+  # Do not adopt an executable from a new destination. Its generated C++ and
+  # metadata may not match this object.
+  exe_changed <- length(private$exe_file_) > 0 && !same_path(exe, private$exe_file_)
 
   # compile if:
   # - the user forced compilation,
   # - the executable does not exist
+  # - the destination is not the executable this object already describes
+  # - the user header in use is not the one the executable was built against
+  # - the include paths in use are not the ones the executable was built against
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
-  self$exe_file(exe)
   if (!file.exists(exe)) {
+    force_recompile <- TRUE
+  } else if (exe_changed) {
+    force_recompile <- TRUE
+  } else if (isTRUE(private$user_header_dirty_)) {
+    force_recompile <- TRUE
+  } else if (isTRUE(private$include_paths_dirty_)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
              && file.mtime(exe) < file.mtime(self$stan_file())) {
@@ -676,17 +732,78 @@ compile <- function(quiet = TRUE,
     if (rlang::is_interactive()) {
       message("Model executable is up to date!")
     }
-    private$cpp_options_ <- cpp_options
-    private$precompile_cpp_options_ <- NULL
-    private$precompile_stanc_options_ <- NULL
-    private$precompile_include_paths_ <- NULL
-    self$functions$existing_exe <- TRUE
+    # A no-op must not record options that were not compiled into the executable.
+    # hpp_code is present only when this object built the executable.
+    built_here <- !is.null(self$functions$hpp_code)
+
+    # Treat unreadable executable metadata as unavailable.
+    exe_info <- NULL
+    if (cpp_options_available || length(private$exe_file_) == 0) {
+      exe_info <- tryCatch(
+        model_compile_info(exe, self$cmdstan_version()),
+        error = function(e) NULL
+      )
+    }
+
+    # Add options reported as enabled by the executable and keep recorded values
+    # for anything it cannot report.
+    recorded_cpp_options <-
+      merge_exe_info_cpp_options(private$cpp_options_, exe_info)
+
+    # A no-op cannot apply requested cpp_options. Warn instead of recording them
+    # as fact. It would be preferable to rebuild on mismatch (see #1019).
+    options_mismatch <- FALSE
+    if (cpp_options_available) {
+      if (built_here) {
+        # Options reported by the executable but absent from built_options came
+        # from make/local, so a rebuild would inherit them again.
+        built_options <- private$built_cpp_options_
+        inherited <- merge_exe_info_cpp_options(list(), exe_info)
+        # Parse make flags so unnamed assignments also count as explicit.
+        explicit <- names(parsed_cpp_options(built_options)$assignments)
+        inherited <- inherited[!tolower(names(inherited)) %in% explicit]
+        # Command-line options override make/local.
+        options_mismatch <- cpp_options_disagree(
+          c(inherited, cpp_options),
+          c(inherited, built_options)
+        )
+      } else if (length(exe_info) > 0) {
+        # For adopted executables, compare only reported options. The rest are
+        # unknown, not mismatches. It would be preferable to record build
+        # provenance alongside the executable (see #1238).
+        options_mismatch <-
+          !isTRUE(exe_info_reflects_cpp_options(exe_info, cpp_options))
+      }
+    }
+
+    # existing_exe means this object has no generated C++ for the executable.
+    if (length(private$exe_file_) == 0) {
+      self$functions$existing_exe <- TRUE
+    } else {
+      self$functions$existing_exe <- is.null(self$functions$hpp_code)
+    }
+    private$cpp_options_ <- recorded_cpp_options
+    private$exe_file_ <- exe
+    # Update state before warning because warn = 2 turns the warning into an error.
+    if (options_mismatch) {
+      warning(
+        "The 'cpp_options' recorded or reported for the existing executable ",
+        "do not match the ones requested. The executable was not rebuilt, so ",
+        "this call did not apply them. Use 'force_recompile = TRUE' to ",
+        "rebuild the model.",
+        call. = FALSE
+      )
+    }
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
       message("Compiling Stan program...")
     }
   }
+
+  # Resolve the CmdStan version before replacing the executable because this
+  # lookup can fail.
+  compiled_cmdstan_version <- cmdstan_version()
 
   if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
     warning("Additional model methods and standalone functions are not ",
@@ -703,7 +820,7 @@ compile <- function(quiet = TRUE,
   if (os_is_windows() && !os_is_wsl()) {
     tmp_exe <- utils::shortPathName(tmp_exe)
   }
-  private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
+  hpp_file <- paste0(temp_file_no_ext, ".hpp")
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
@@ -719,19 +836,13 @@ compile <- function(quiet = TRUE,
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
   stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_direct)
-  self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
-  private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
-  self$functions$external <- !is.null(user_header)
-  self$functions$existing_exe <- FALSE
+  standalone_hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  model_methods_env <- new.env()
+  model_methods_env$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
   if (!dry_run) {
-
-    if (compile_standalone) {
-      expose_stan_functions(self$functions, verbose = !quiet)
-    }
 
     withr::with_envvar(
       c("HOME" = short_path(Sys.getenv("HOME"))),
@@ -789,32 +900,63 @@ compile <- function(quiet = TRUE,
       stop("An error occurred during compilation! See the message above for more information.",
            call. = FALSE)
     }
-    if (file.exists(exe)) {
-      file.remove(exe)
-    }
-    file.copy(tmp_exe, exe, overwrite = TRUE)
-    if (os_is_wsl()) {
-      res <- processx::run(
-        command = "wsl",
-        args = c("chmod", "+x", wsl_safe_path(exe)),
-        error_on_status = FALSE
+    # Finish fallible work before installing the executable. Write the model-method
+    # header after make because make uses the same path.
+    stan_code <- readLines(temp_stan_file)
+    writeLines(model_methods_env$hpp_code_,
+               con = wsl_safe_path(hpp_file, revert = TRUE))
+
+    # Clear functions in place to preserve existing references. Because the public
+    # field can be replaced, verify it is a mutable environment before installing.
+    if (!is.environment(self$functions) ||
+        environmentIsLocked(self$functions)) {
+      stop(
+        "The model's 'functions' environment is missing or locked, so the ",
+        "compiled model could not be recorded. The executable was not replaced.",
+        call. = FALSE
       )
     }
 
-    writeLines(private$model_methods_env_$hpp_code_,
-               con = wsl_safe_path(private$hpp_file_, revert = TRUE))
+    leftover_backup <- install_executable(tmp_exe, exe)
+
+    # Commit executable-derived state only after installation succeeds.
+    rm(list = ls(self$functions, all.names = TRUE), envir = self$functions)
+    self$functions$compiled <- FALSE
+    self$functions$hpp_code <- standalone_hpp_code
+    self$functions$external <- using_user_header
+    self$functions$existing_exe <- FALSE
+    private$stan_code_ <- stan_code
+    private$variables_ <- NULL
+    private$user_header_dirty_ <- FALSE
+    private$include_paths_dirty_ <- FALSE
+    private$hpp_file_ <- hpp_file
+    private$model_methods_env_ <- model_methods_env
+    private$cpp_options_ <- cpp_options
+    private$built_cpp_options_ <- cpp_options
+    private$precompile_cpp_options_ <- NULL
+    private$precompile_stanc_options_ <- NULL
+    private$precompile_include_paths_ <- NULL
   } # End - if(!dry_run)
 
-  private$cmdstan_version_ <- cmdstan_version()
+  # These fields also describe dry runs, so update them outside the commit block.
+  private$cmdstan_version_ <- compiled_cmdstan_version
   private$exe_file_ <- exe
-  private$cpp_options_ <- cpp_options
-  private$precompile_cpp_options_ <- NULL
-  private$precompile_stanc_options_ <- NULL
-  private$precompile_include_paths_ <- NULL
 
   if (!dry_run) {
+    # Run optional exposure only after executable state is committed.
+    if (compile_standalone) {
+      expose_stan_functions(self$functions, verbose = !quiet)
+    }
     if (compile_model_methods) {
       expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
+    }
+    if (!is.null(leftover_backup)) {
+      # Warn last because warn = 2 aborts the remaining work.
+      warning(
+        "The previously compiled executable could not be removed. ",
+        "It has been left at '", leftover_backup, "'.",
+        call. = FALSE
+      )
     }
   }
   invisible(self)
@@ -961,6 +1103,9 @@ check_syntax <- function(pedantic = FALSE,
   if (is.null(include_paths) && !is.null(self$include_paths())) {
     include_paths <- self$include_paths()
   }
+  if (private$using_user_header_) {
+    stanc_options[["allow-undefined"]] <- TRUE
+  }
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- wsl_safe_path(temp_hpp_file)
@@ -1092,6 +1237,9 @@ format <- function(overwrite_file = FALSE,
     self$include_paths(),
     direct_call = TRUE
   )
+  if (private$using_user_header_) {
+    stanc_options[["allow-undefined"]] <- TRUE
+  }
   stanc_options[["auto-format"]] <- TRUE
   if (!is.null(max_line_length)) {
     stanc_options[["max-line-length"]] <- max_line_length
@@ -1143,6 +1291,8 @@ format <- function(overwrite_file = FALSE,
   cat(run_log$stdout, file = out_file, sep = "\n")
   if (isTRUE(overwrite_file)) {
     private$stan_code_ <- readLines(self$stan_file())
+    # Force variables() to reparse the formatted source.
+    private$variables_ <- NULL
   }
 
   invisible(TRUE)

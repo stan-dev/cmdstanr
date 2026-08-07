@@ -23,13 +23,89 @@ as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 `canonicalize`. The values were shell-quoted for Make and the same quoted
 strings were also passed to `stanc` directly, which rejected them. (#1227)
 * `$compile()` now enables `allow-undefined` for user headers supplied through
-`cpp_options`, not just through the `user_header` argument. (#1227)
+`cpp_options`, not just through the `user_header` argument. `$check_syntax()`
+and `$format()` also now correctly enable `allow-undefined` for models that use
+a user header. (#1227, #1234)
 * `stanc` failures during `$compile()` are now reported immediately, with the
 `stanc` error message. Previously they surfaced several steps later. (#1227)
 * Errors for include paths that do not exist now report the resolved absolute
 path. (#1227)
 * Numeric `stanc_options` values such as `list("max-line-length" = 78)` are no
 longer dropped. (#1233)
+* `$compile()` now refreshes `$code()` and `$variables()` after a successful
+compilation. (#1228)
+* `$compile()` now discards standalone functions exposed from an earlier
+version of the Stan program. They must be exposed again with
+`$expose_functions()` after a recompilation. (#1228)
+* `$compile()` now reuses the include paths and the user header of the previous
+compilation when they are not supplied again. Recompiling a model that uses
+`#include` directives or a user header through the same object previously
+failed because those inputs were dropped. (#1234)
+* `$compile()` now recompiles when `include_paths` change. Previously the model
+went on using the executable built against the old paths while `$variables()`
+and `$include_paths()` described the new ones, so data and initial values were
+validated against a program that was not running. (#1235)
+* A `user_header` supplied to `cmdstan_model()` is now used by a later
+`$compile()`. Previously it was only honored when the model was compiled
+immediately. (#1234)
+* `$compile()` now accepts `user_header = NULL` to compile without a user
+header. Previously a header, once supplied, could not be removed. (#1235)
+* `$compile()` now recompiles when the user header changes. Previously a
+different header was ignored if the executable was otherwise up to date. (#1235)
+* `$compile()` now reduces duplicate `USER_HEADER`/`user_header` entries in
+`cpp_options` to the one actually used, so `$cpp_options()` no longer reports
+the ignored spelling after a successful compilation. (#1235)
+* A `$compile()` call that finds the executable up to date no longer erases
+`$cpp_options()`. (#1235)
+* `$expose_functions()` now works after a `$compile()` call that found the
+executable up to date. (#1235)
+* A failed compilation no longer moves `$exe_file()` or replaces the generated
+C++ used by `$hpp_file()` and `fit$init_model_methods()`. Previously a failure
+at the C++ stage left the old executable paired with model methods generated
+from the new program. (#1235)
+* `$compile()` now warns when `cpp_options` are supplied but the existing
+executable is up to date, so nothing is rebuilt and the options are not applied.
+The check is best effort. For an executable the model object compiled itself it
+compares the options passed to `Make` against those requested, and treats
+anything the binary reports but was never passed as inherited from `make/local`
+and so unchanged by a rebuild. For one adopted from an earlier session only the
+few `STAN_*` flags the binary reports can be checked, and anything else passes
+unremarked. It can also warn when nothing would in fact change: an option
+inherited from `make/local` that the binary does not report looks like a request
+the executable lacks, and one that was both passed explicitly and set in
+`make/local` looks like something a rebuild would drop when it would be
+inherited again. Use `force_recompile = TRUE` when a supplied option has to take
+effect. (#1235)
+* `$cpp_options()` now also reports options the executable was built with that
+were never passed to `$compile()`, such as those inherited from `make/local`,
+when the binary reports them. `$sample()` and friends previously refused
+`threads_per_chain` for an executable that did have threading. (#1019, #1235)
+* `$cpp_options()` no longer reports options the executable was not built with.
+Previously a request that did not rebuild the model was recorded as though it
+had, so `$sample()` could fail with "the model executable was built with
+threading enabled" for a binary that had no threading. (#1019, #1235)
+* `$format(overwrite_file = TRUE)` now refreshes `$variables()` along with
+`$code()`, which previously kept describing the program as it was before
+formatting. (#1235)
+* `$compile()` now errors if the newly compiled executable cannot be installed,
+restoring the previous executable. Previously the replacement was unchecked, so
+a failure could silently leave the model with no executable at all. (#1235)
+* `$compile()` now errors instead of installing an executable over a directory.
+An executable path that names a directory, which `$exe_file()` and
+`cmdstan_model(exe_file = )` both accept without checking, previously had that
+directory renamed aside as though it were the old executable and a file put in
+its place. (#1235)
+* `$compile()` now checks that it can record the compiled model before replacing
+the executable, so a failure at that point can no longer leave a new executable
+on disk that the model object knows nothing about. (#1235)
+* A duplicated `USER_HEADER` or `user_header` entry in `cpp_options` now selects
+the last one, matching what `Make` does with repeated assignments. Previously
+the first was compiled with and the rest were left in `cpp_options`. (#1235)
+* A `USER_HEADER` or `user_header` entry in `cpp_options` set to `NULL` now
+clears a previously configured user header instead of being ignored. It stands
+for an explicit `USER_HEADER=`, which `Make` takes as clearing anything set
+before it, so the model previously compiled with no header while continuing to
+report the old one. (#1235)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are
@@ -109,6 +185,7 @@ are recompiled lazily if needed. (#1158)
     - `save_extra_diagnostics` (`save_latent_dynamics`)
     - `max_depth` (`max_treedepth`)
     - `stepsize` (`step_size`)
+
 
 
 # cmdstanr 0.9.0
