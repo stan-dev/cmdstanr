@@ -23,6 +23,6 @@ jobs:
       - name: Check RTools paths
         run: |
           sessionInfo()
-          Sys.getenv()
+          Sys.getenv()[grep("_HOME", names(Sys.getenv()), value = TRUE)]
         shell: Rscript {0}
 
