@@ -365,9 +365,14 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
     withr::local_envvar(c(RTOOLS40_HOME = fake_home, R_ARCH = "/x64"))
     result <- toolchain_PATH_env_var()
     expect_false(is.null(result))
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
     expect_identical(
-      result,
-      paste(c(fake_bin_dir, fake_cpp_dir), collapse = ";")
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(
+        c(fake_bin_dir, fake_cpp_dir),
+        winslash = "/",
+        mustWork = TRUE
+      )
     )
   })
 
@@ -386,9 +391,14 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
     withr::local_envvar(c(RTOOLS40_HOME = fake_home, R_ARCH = "/i386"))
     result <- toolchain_PATH_env_var()
     expect_false(is.null(result))
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
     expect_identical(
-      result,
-      paste(c(fake_bin_dir, fake_cpp_dir), collapse = ";")
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(
+        c(fake_bin_dir, fake_cpp_dir),
+        winslash = "/",
+        mustWork = TRUE
+      )
     )
   })
 })
@@ -439,22 +449,26 @@ test_that("toolchain_PATH_env_var() uses configured R_TOOLS_SOFT", {
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
-      repair_path = function(path) paste0("repaired:", path)
+      repair_path = function(path) {
+        paste0(
+          "repaired:",
+          normalizePath(path, winslash = "/", mustWork = TRUE)
+        )
+      }
     )
     local_mocked_bindings(
       Sys.which = function(command) stop("PATH fallback should not be used."),
       .package = "base"
     )
     result <- toolchain_PATH_env_var()
+    expected_dirs <- normalizePath(
+      c(fake_bin_dir, fake_cpp_dir),
+      winslash = "/",
+      mustWork = TRUE
+    )
     expect_identical(
       result,
-      paste(
-        c(
-          paste0("repaired:", fake_bin_dir),
-          paste0("repaired:", fake_cpp_dir)
-        ),
-        collapse = ";"
-      )
+      paste(paste0("repaired:", expected_dirs), collapse = ";")
     )
   })
 })
@@ -488,7 +502,11 @@ test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", 
     )
     withr::local_envvar(c(PATH = fake_bin))
     expect_no_warning(result <- toolchain_PATH_env_var())
-    expect_identical(result, fake_bin)
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(fake_bin, winslash = "/", mustWork = TRUE)
+    )
   })
 })
 
@@ -525,7 +543,11 @@ test_that("toolchain_PATH_env_var() searches PATH when R_TOOLS_SOFT is empty", {
     result <- toolchain_PATH_env_var()
     expect_identical(file_exists_calls, character())
     expect_identical(which_calls, c("make", "c++"))
-    expect_identical(result, fake_bin)
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(fake_bin, winslash = "/", mustWork = TRUE)
+    )
   })
 })
 
@@ -609,7 +631,11 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
     )
     withr::local_envvar(c(PATH = fake_bin))
     result <- toolchain_PATH_env_var()
-    expect_identical(result, fake_bin)
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(fake_bin, winslash = "/", mustWork = TRUE)
+    )
   })
 })
 
@@ -646,9 +672,14 @@ test_that("toolchain_PATH_env_var() preserves configured compiler", {
       .package = "base"
     )
     result <- toolchain_PATH_env_var()
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
     expect_identical(
-      result,
-      paste(c(fake_path_dir, fake_cpp_dir), collapse = ";")
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(
+        c(fake_path_dir, fake_cpp_dir),
+        winslash = "/",
+        mustWork = TRUE
+      )
     )
   })
 })
@@ -686,9 +717,14 @@ test_that("toolchain_PATH_env_var() preserves configured make", {
       .package = "base"
     )
     result <- toolchain_PATH_env_var()
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
     expect_identical(
-      result,
-      paste(c(fake_bin_dir, fake_path_dir), collapse = ";")
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(
+        c(fake_bin_dir, fake_path_dir),
+        winslash = "/",
+        mustWork = TRUE
+      )
     )
   })
 })
