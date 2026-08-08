@@ -6,14 +6,12 @@
 \description{
 A \code{CmdStanMLE} object is the fitted model object returned by the
 \code{\link[=model-method-optimize]{$optimize()}} method of a \code{\link{CmdStanModel}} object.
-Following CmdStan's terminology, the object contains an MLE if optimization
-was run with \code{jacobian=FALSE} and a MAP estimate if it was run with
-\code{jacobian=TRUE}. The name "MLE" is retained for historical reasons. More
-precisely, the estimates correspond to a mode in either the constrained
-parameter space or the unconstrained parameter space, depending on the
-value of \code{jacobian} (and whether the model has constrained parameters).
-The \code{jacobian} argument does not control whether prior terms are included;
-all contributions to the Stan program's target are included under either
+The name "MLE" is retained for historical reasons. With
+\code{jacobian = FALSE}, the point estimate is a mode of the target in the
+constrained parameter space. With \code{jacobian = TRUE}, it is a mode of the
+corresponding density in the unconstrained parameter space. The \code{jacobian}
+argument does not control whether prior terms are included; all
+contributions to the Stan program's target are included under either
 setting. See \code{\link[=model-method-optimize]{$optimize()}} and the CmdStan User's
 Guide for more details.
 

@@ -1,3 +1,24 @@
+# get_standalone_hpp() reports stanc failures
+
+    Code
+      get_standalone_hpp(stan_file, "--canonicalize='deprecations'")
+    Message
+      stanc: invalid canonicalize value
+    Condition
+      Error:
+      ! An error occurred during compilation! See the message above for more information. (stanc exited with status 124)
+
+# get_standalone_hpp() suggests formatting deprecated syntax
+
+    Code
+      get_standalone_hpp(stan_file, character())
+    Message
+      Syntax error: Use the auto-format flag to stanc
+    Condition
+      Error:
+      ! An error occurred during compilation! See the message above for more information. (stanc exited with status 1)
+      To fix deprecated or removed syntax please see ?cmdstanr::format for an example.
+
 # copy_temp_files retains sources if any copy fails
 
     Code

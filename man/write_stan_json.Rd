@@ -27,10 +27,25 @@ Write data to a JSON file readable by CmdStan
 file:
 \itemize{
 \item \code{logical} -> \code{integer} (\code{TRUE} -> \code{1}, \code{FALSE} -> \code{0})
-\item \code{data.frame} -> \code{matrix} (via \code{\link[=data.matrix]{data.matrix()}})
+\item \code{factor} -> \code{integer} (the index of each value's level)
+\item \code{data.frame} -> \code{matrix} (via \code{\link[=data.matrix]{data.matrix()}}); every column must be
+numeric, integer, logical, or factor
 \item \code{list} -> \code{array}
 \item \code{table} -> \code{vector}, \code{matrix}, or \code{array} (depending on dimensions of table)
 }
+\subsection{Factor conversion}{
+
+Factors are written as their level indices, i.e., the position of each value
+in \code{levels(x)} rather than the value itself. The default levels are the
+sorted unique values, e.g., \code{factor(c(10, 9, 8))} has levels \code{8}, \code{9}, \code{10}
+and is written as \verb{[3, 2, 1]}. An unused level shifts the indices of the
+levels after it. The fitting methods of a model compiled from a Stan file
+will error if a factor is supplied for a variable that is not declared as
+\code{int}, but if \code{write_stan_json()} is called directly by the user it has no
+declarations to check and so it always does the conversion.
+}
+
+\subsection{List to array conversion}{
 
 The \code{list} to \code{array} conversion is intended to make it easier to prepare
 the data for certain Stan declarations involving arrays:
@@ -39,13 +54,36 @@ the data for certain Stan declarations involving arrays:
 elements where each element is a vector of length \code{J}
 \item \verb{array[K] matrix[I,J] m } can be constructed in \R as a list with \code{K}
 elements where each element is an \code{IxJ} matrix
+\item \verb{array[K,I,J] int n } can be constructed in \R as a list with \code{K}
+elements where each element is an \code{IxJ} matrix of integers
 }
 
 These can also be passed in from \R as arrays instead of lists but the list
-option is provided for convenience. Unfortunately for arrays with more than
-one dimension (e.g. \verb{array[K,L] vector[J] v }) it is not possible to use an
-\R list and an array must be used instead. For this example the array in \R
-should have dimensions \code{KxLxJ}.
+option is provided for convenience. A list always contributes exactly one
+leading dimension, so \verb{array[K,L] vector[J] v } can be supplied either as a
+list of \code{K} matrices each with dimensions \code{LxJ} or as a single \R array with
+dimensions \code{KxLxJ}. Nested lists are not supported: every element of the list
+must be a vector, matrix, or array.
+}
+
+\subsection{Scalar vs. length-1 vector}{
+
+Because \R does not distinguish between a scalar and a vector of length 1, a
+length-1 vector like \code{c(42)} is written to JSON as a scalar (\code{42}) rather
+than an array (\verb{[42]}). If a Stan variable is declared as a vector or array
+that may have length 1, wrap the value in \code{\link[=array]{array()}} to force array output.
+Because \code{array()} uses the length of its input as the default dimension, this
+works regardless of length:
+\itemize{
+\item \code{write_stan_json(list(x = array(42)), file)} writes \verb{"x": [42]}
+\item \code{write_stan_json(list(x = array(c(42, 43))), file)} writes \verb{"x": [42, 43]}
+}
+
+This is only necessary when calling \code{write_stan_json()} directly. When
+passing a data list to the fitting methods of a model compiled from a Stan
+file (e.g., \verb{$sample()}), CmdStanR uses the model's variable declarations to
+make this correction automatically.
+}
 }
 \examples{
 x <- matrix(rnorm(10), 5, 2)

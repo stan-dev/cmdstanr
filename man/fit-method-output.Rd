@@ -32,8 +32,8 @@ fit_mcmc$output(1)
 out <- fit_mcmc$output()
 str(out)
 
-fit_mle <- cmdstanr_example("logistic", method = "optimize")
-fit_mle$output()
+fit_optim <- cmdstanr_example("logistic", method = "optimize")
+fit_optim$output()
 
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 fit_vb$output()

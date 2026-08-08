@@ -20,8 +20,8 @@ fitting the model. See \strong{Examples} and \code{\link[=read_cmdstan_csv]{read
 fit_mcmc <- cmdstanr_example("logistic", method = "sample")
 str(fit_mcmc$metadata())
 
-fit_mle <- cmdstanr_example("logistic", method = "optimize")
-str(fit_mle$metadata())
+fit_optim <- cmdstanr_example("logistic", method = "optimize")
+str(fit_optim$metadata())
 
 fit_vb <- cmdstanr_example("logistic", method = "variational")
 str(fit_vb$metadata())

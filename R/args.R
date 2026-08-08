@@ -61,12 +61,10 @@ CmdStanArgs <- R6::R6Class(
       self$using_tempdir <- is.null(output_dir)
       self$model_variables <- model_variables
       self$save_cmdstan_config <- save_cmdstan_config
-      if (os_is_wsl()) {
+      if (os_is_wsl() && self$using_tempdir) {
         # Want to ensure that any files under WSL are written to a tempdir within
         # WSL to avoid IO performance issues
-        self$output_dir <- ifelse(is.null(output_dir),
-                                  file.path(wsl_dir_prefix(), wsl_tempdir()),
-                                  wsl_safe_path(output_dir))
+        self$output_dir <- file.path(wsl_dir_prefix(), wsl_tempdir())
       } else {
         self$output_dir <- output_dir %||% tempdir(check = TRUE)
       }
@@ -1134,7 +1132,7 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
     bad_names <- unlist(lapply(variable_names, function(var_name) {
       x <- drop(posterior::draws_of(drop(
         posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
-      if (any(is.infinite(x)) || any(is.na(x))) {
+      if (any(is.infinite(x)) || anyNA(x)) {
         return(var_name)
       }
       return("")
