@@ -171,7 +171,7 @@ read_cmdstan_csv <- function(files,
     files <- file.path(temp_storage, basename(files))
   }
   format <- assert_valid_draws_format(format)
-  assert_file_exists(files, access = "r", extension = "csv")
+  assert_file_exists(files, access = "r", extension = c("csv", "gz", "bz2"))
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -282,23 +282,7 @@ read_cmdstan_csv <- function(files,
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
   num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
   for (output_file in files) {
-    if (os_is_windows()) {
-      grep_path_repaired <- withr::with_path(
-        c(
-          toolchain_PATH_env_var()
-        ),
-        repair_path(Sys.which("grep.exe"))
-      )
-      grep_path_quotes <- paste0('"', grep_path_repaired, '"')
-      fread_cmd <- paste0(
-        grep_path_quotes,
-        " -v \"^#\" --color=never \"",
-        wsl_safe_path(output_file, revert = TRUE),
-        "\""
-      )
-    } else {
-      fread_cmd <- paste0("grep -v '^#' --color=never '", path.expand(output_file), "'")
-    }
+    fread_cmd <- build_fread_cmd(output_file, "^#", invert = TRUE)
     if (length(sampler_diagnostics) > 0) {
       post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
       warmup_sd_id <- length(warmup_sampler_diagnostics) + 1
@@ -706,6 +690,43 @@ parse_generated_quantities_time <- function(line) {
   time
 }
 
+# Build a command for data.table::fread() that filters CSV lines via grep.
+# Handles gzip (.gz) and bzip2 (.bz2) compressed files.
+# @param file Path to the CSV file (possibly compressed)
+# @param pattern Regex pattern to filter by
+# @param invert If TRUE, exclude matching lines (grep -v)
+build_fread_cmd <- function(file, pattern, invert = FALSE) {
+  v_flag <- if (invert) "-v " else ""
+  compression <- if (grepl("\\.gz$", file, ignore.case = TRUE)) "gz"
+                 else if (grepl("\\.bz2$", file, ignore.case = TRUE)) "bz2"
+                 else NULL
+
+  if (os_is_windows()) {
+    toolchain <- withr::with_path(
+      c(toolchain_PATH_env_var()),
+      list(
+        grep = repair_path(Sys.which("grep.exe")),
+        gz = repair_path(Sys.which("gzip.exe")),
+        bz2 = repair_path(Sys.which("bzip2.exe"))
+      )
+    )
+    file_path <- wsl_safe_path(file, revert = TRUE)
+    grep_args <- paste0("--color=never ", v_flag, '"', pattern, '"')
+    if (is.null(compression)) {
+      paste0('"', toolchain$grep, '" ', grep_args, ' "', file_path, '"')
+    } else {
+      paste0('"', toolchain[[compression]], '" -dc "', file_path, '" | "',
+             toolchain$grep, '" ', grep_args)
+    }
+  } else {
+    grep_cmd <- if (is.null(compression)) "grep"
+                 else if (compression == "gz") "zgrep"
+                 else "bzgrep"
+    paste0(grep_cmd, " --color=never ", v_flag, "'", pattern, "' '",
+           path.expand(file), "'")
+  }
+}
+
 #' Reads the sampling arguments and the diagonal of the
 #' inverse mass matrix from the comments in a CSV file.
 #'
@@ -715,7 +736,7 @@ parse_generated_quantities_time <- function(line) {
 #'   mass matrix (or its diagonal depending on the metric).
 #'
 read_csv_metadata <- function(csv_file) {
-  assert_file_exists(csv_file, access = "r", extension = "csv")
+  assert_file_exists(csv_file, access = "r", extension = c("csv", "gz", "bz2"))
   inv_metric_next <- FALSE
   csv_file_info <- list()
   csv_file_info$inv_metric <- NULL
@@ -727,23 +748,7 @@ read_csv_metadata <- function(csv_file) {
   warmup_time <- 0
   sampling_time <- 0
   total_time <- 0
-  if (os_is_windows()) {
-    grep_path_repaired <- withr::with_path(
-      c(
-        toolchain_PATH_env_var()
-      ),
-      repair_path(Sys.which("grep.exe"))
-    )
-    grep_path_quotes <- paste0('"', grep_path_repaired, '"')
-    fread_cmd <- paste0(
-      grep_path_quotes,
-      " \"^[#a-zA-Z]\" --color=never \"",
-      wsl_safe_path(csv_file, revert = TRUE),
-      "\""
-    )
-  } else {
-    fread_cmd <- paste0("grep '^[#a-zA-Z]' --color=never '", path.expand(csv_file), "'")
-  }
+  fread_cmd <- build_fread_cmd(csv_file, "^[#a-zA-Z]", invert = FALSE)
   suppressWarnings(
     metadata <- data.table::fread(
       cmd = fread_cmd,
