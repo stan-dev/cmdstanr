@@ -304,7 +304,7 @@ test_that("output and latent dynamics files are cleaned up correctly", {
   }
 })
 
-test_that("CmdStanArgs erorrs if idx is out of proc_ids range", {
+test_that("CmdStanArgs errors if idx is out of proc_ids range", {
   data_file <- test_path("resources", "data", "bernoulli.data.json")
   mod <- testing_model("bernoulli")
   arg <- CmdStanArgs$new(
