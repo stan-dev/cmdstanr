@@ -1,6 +1,7 @@
 # cmdstanr (development version)
 
-* Chain IDs in generated filenames are now zero-padded to at least two digits, for example `01` instead of `1`.
+* Chain IDs in generated filenames are now zero-padded to at least two digits, 
+for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
 and metric files now remain accessible to Windows R when an explicit output 
 directory is supplied. (#1110; related: #1113)
