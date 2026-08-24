@@ -182,6 +182,18 @@ test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
 
 # misc --------------------------------------------------------------------
 
+test_that("generate_file_names() zero-pads IDs", {
+  expect_equal(
+    generate_file_names(
+      basename = "output",
+      ids = c(1, 9, 10, 100),
+      timestamp = FALSE,
+      random = FALSE
+    ),
+    paste0("output-", c("01", "09", "10", "100"), ".csv")
+  )
+})
+
 test_that("copy_temp_files retains sources if any copy fails", {
   source_dir <- withr::local_tempdir()
   destination_dir <- withr::local_tempdir()

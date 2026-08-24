@@ -266,7 +266,7 @@ generate_file_names <-
       new_names <- paste0(new_names, "-", stamp)
     }
     if (!is.null(ids)) {
-      new_names <- paste0(new_names, "-", ids)
+      new_names <- paste0(new_names, "-", sprintf("%02d", ids))
     }
     if (random) {
       rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
