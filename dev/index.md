@@ -70,8 +70,9 @@ from anyone! If you are interested in contributing, please [comment on
 an open issue or open a new
 one](https://github.com/stan-dev/cmdstanr/issues) on GitHub. For more
 details, please check
-[CONTRIBUTING.md](https://github.com/stan-dev/cmdstanr/blob/fe126708f53d89ecd889d2f122f6bd69c7404836/.github/CONTRIBUTING.md).
-\### License
+[CONTRIBUTING.md](https://mc-stan.org/cmdstanr/dev/CONTRIBUTING.md).
+
+### License
 
 CmdStanR, like CmdStan and the core Stan C++ code, is licensed under the
 following licenses:
