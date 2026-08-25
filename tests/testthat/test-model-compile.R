@@ -1099,7 +1099,7 @@ test_that("cmdstan_model works with user_header", {
   )
 })
 
-test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
+test_that("cmdstan_model cpp_options dont capitalize cxxflags ", {
   file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   cpp_options <- list(
     "CXXFLAGS_OPTIM += -Dsomething_not_used"

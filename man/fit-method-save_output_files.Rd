@@ -104,7 +104,8 @@ the form \code{basename-timestamp-id-random.csv}, where
 \item \code{basename} is the user's provided \code{basename} argument or, if \code{NULL}, the
 model name;
 \item \code{timestamp} is of the form \code{format(Sys.time(), "\%Y\%m\%d\%H\%M")};
-\item \code{id} is the MCMC chain id (or \code{1} for non MCMC);
+\item \code{id} is the MCMC chain id, zero-padded to at least two digits (or \code{01} for
+non-MCMC);
 \item \code{random} contains six random hexadecimal characters.
 }
 

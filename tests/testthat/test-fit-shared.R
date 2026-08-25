@@ -37,7 +37,7 @@ test_that("saving csv output files works", {
     should_match <- paste0("testing-output-",
                            base::format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
-                           seq_len(fit$num_procs()))
+                           sprintf("%02d", seq_len(fit$num_procs())))
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
     }
@@ -72,7 +72,7 @@ test_that("saving diagnostic csv output works", {
     should_match <- paste0("testing-output-diagnostic-",
                            base::format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
-                           seq_len(fit$num_procs()))
+                           sprintf("%02d", seq_len(fit$num_procs())))
 
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
@@ -304,7 +304,7 @@ test_that("output and latent dynamics files are cleaned up correctly", {
   }
 })
 
-test_that("CmdStanArgs erorrs if idx is out of proc_ids range", {
+test_that("CmdStanArgs errors if idx is out of proc_ids range", {
   data_file <- test_path("resources", "data", "bernoulli.data.json")
   mod <- testing_model("bernoulli")
   arg <- CmdStanArgs$new(

@@ -169,9 +169,9 @@ test_that("pathfinder() saves single path outputs", {
     )
   )
 
-  expect_equal(basename(fit$output_files()), "pathfinder-1.csv")
+  expect_equal(basename(fit$output_files()), "pathfinder-01.csv")
   single_path_files <- file.path(output_dir, paste0(
-    "pathfinder-1_path_",
+    "pathfinder-01_path_",
     rep(1:2, each = 2),
     c(".csv", ".json")
   ))
