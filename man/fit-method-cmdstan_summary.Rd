@@ -15,21 +15,28 @@ cmdstan_diagnose()
 \item{flags}{An optional character vector of flags (e.g.
 \code{flags = c("--sig_figs=1")}).}
 }
+\value{
+Both methods invisibly return a list containing the command's exit
+status, standard output, and standard error.
+}
 \description{
 Run CmdStan's \code{stansummary} and \code{diagnose} utilities. These are
 documented in the CmdStan Guide:
 \itemize{
-\item https://mc-stan.org/docs/cmdstan-guide/stansummary.html
-\item https://mc-stan.org/docs/cmdstan-guide/diagnose.html
+\item \href{https://mc-stan.org/docs/cmdstan-guide/stansummary.html}{\code{stansummary}}
+\item \href{https://mc-stan.org/docs/cmdstan-guide/diagnose.html}{\code{diagnose}}
 }
 
-Although these methods can be used for models fit using the
-\code{\link[=model-method-variational]{$variational()}} method, much of the output is
-currently only relevant for models fit using the
-\code{\link[=model-method-sample]{$sample()}} method.
+These methods can be used for models fit using
+\code{\link[=model-method-sample]{$sample()}},
+\code{\link[=model-method-variational]{$variational()}}, or
+\code{\link[=model-method-pathfinder]{$pathfinder()}}. Much of the output is currently
+only relevant for models fit using \verb{$sample()}. These methods are not
+available for optimization, Laplace approximation, or standalone generated
+quantities.
 
 See the \link[=fit-method-summary]{$summary()} for computing similar summaries in
-R rather than calling CmdStan's utilites.
+R rather than calling CmdStan's utilities.
 }
 \examples{
 \dontrun{
@@ -40,5 +47,5 @@ fit$cmdstan_summary()
 
 }
 \seealso{
-\code{\link{CmdStanMCMC}}, \link{fit-method-summary}
+\link{fit-method-summary}
 }

@@ -14,11 +14,25 @@ startup_messages <- function() {
     default = identical(tolower(Sys.getenv("cmdstanr_no_ver_check")), "true")
   ))
   if (!skip_version_check) {
-    # check if they used the old all caps version
-    skip_version_check <- isTRUE(getOption(
+    deprecated_no_ver_check_option <- getOption("CMDSTANR_NO_VER_CHECK")
+    deprecated_no_ver_check_env <- Sys.getenv(
       "CMDSTANR_NO_VER_CHECK",
-      default = identical(tolower(Sys.getenv("CMDSTANR_NO_VER_CHECK")), "true")
-    ))
+      unset = NA_character_
+    )
+    if (!is.null(deprecated_no_ver_check_option) ||
+        !is.na(deprecated_no_ver_check_env)) {
+      warning(
+        "The 'CMDSTANR_NO_VER_CHECK' option and environment variable are ",
+        "deprecated as of CmdStanR 1.0.0 and will be removed in a future ",
+        "release. Use lowercase 'cmdstanr_no_ver_check' instead.",
+        call. = FALSE
+      )
+    }
+    # fall back to the deprecated all-caps setting
+    skip_version_check <- isTRUE(
+      deprecated_no_ver_check_option %||%
+        identical(tolower(deprecated_no_ver_check_env), "true")
+    )
   }
   if (!skip_version_check) {
     latest_version <- try(suppressWarnings(latest_released_version(retries = 0)), silent = TRUE)

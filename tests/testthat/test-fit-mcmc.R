@@ -1,6 +1,6 @@
 set_cmdstan_path()
 fit_mcmc <- testing_fit("logistic", method = "sample",
-                        seed = 123, chains = 2)
+                        seed = 123, chains = 2, save_metric = FALSE)
 fit_mcmc_0 <- testing_fit("logistic", method = "sample",
                           seed = 123, chains = 2,
                           refresh = 0)
@@ -25,7 +25,7 @@ fit_mcmc_fixed_param <- testing_fit("logistic", method = "sample",
                                     refresh = 0, fixed_param = TRUE)
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
-test_that("draws() stops for unkown variables", {
+test_that("draws() stops for unknown variables", {
   expect_error(
     draws_betas <- fit_mcmc$draws(variables = "ABCD"),
     "Can't find the following variable(s) in the output: ABCD",
@@ -270,7 +270,7 @@ test_that("inc_warmup in draws() works", {
   expect_equal(dim(y4), NULL)
 })
 
-test_that("inc_warmup in draws() works", {
+test_that("inc_warmup in draws() works with a single chain", {
   x3 <- fit_mcmc_2$draws(inc_warmup = FALSE)
   expect_equal(dim(x3), c(10000, 1, 5))
   expect_error(fit_mcmc_2$draws(inc_warmup = TRUE),
@@ -279,7 +279,7 @@ test_that("inc_warmup in draws() works", {
   expect_equal(dim(y3), c(10000, 1, 6))
 })
 
-test_that("output() shows informational messages depening on show_messages", {
+test_that("output() shows informational messages depending on show_messages", {
   fit_info_msg <- testing_fit("info_message")
   expect_output(
     fit_info_msg$output(1),
@@ -338,7 +338,7 @@ test_that("loo method works with moment-matching", {
   expect_no_warning(fit$loo(moment_match = TRUE, k_threshold=0.4))
 })
 
-test_that("loo errors if it can't find log lik variables", {
+test_that("loo errors if it can't find log like variables", {
   skip_if_not_installed("loo")
   fit_schools <- testing_fit("schools")
   expect_error(
@@ -430,6 +430,30 @@ test_that("metadata()$time has chains rows", {
   expect_equal(nrow(fit_mcmc_1$metadata()$time), fit_mcmc_1$num_chains())
   expect_equal(nrow(fit_mcmc_2$metadata()$time), fit_mcmc_2$num_chains())
   expect_equal(nrow(fit_mcmc_3$metadata()$time), fit_mcmc_3$num_chains())
+})
+
+test_that("save_metric_files has clear error message when no files", {
+  expect_snapshot(error = TRUE, fit_mcmc$save_metric_files())
+})
+
+test_that("saved metric and config files survive fit cleanup", {
+  dir <- withr::local_tempdir()
+  fit <- testing_fit(
+    "logistic",
+    save_metric = TRUE,
+    save_cmdstan_config = TRUE
+  )
+  metric_paths <- fit$save_metric_files(dir = dir)
+  config_paths <- fit$save_config_files(dir = dir)
+  checkmate::expect_file_exists(metric_paths, extension = "json")
+  checkmate::expect_file_exists(config_paths, extension = "json")
+  expect_gt(min(file.size(metric_paths)), 0)
+  expect_gt(min(file.size(config_paths)), 0)
+
+  rm(fit)
+  gc()
+  checkmate::expect_file_exists(metric_paths, extension = "json")
+  checkmate::expect_file_exists(config_paths, extension = "json")
 })
 
 test_that("sampler_diagnostics() throws informative error when fixed_param=TRUE", {

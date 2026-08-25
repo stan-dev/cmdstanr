@@ -1,23 +1,93 @@
 # cmdstanr (development version)
 
+* Chain IDs in generated filenames are now zero-padded to at least two digits, 
+for example `01` instead of `1`. (#1244)
+* When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
+and metric files now remain accessible to Windows R when an explicit output 
+directory is supplied. (#1110; related: #1113)
+* Lists of matrices/vectors and data frames can now be supplied for variables
+declared as `int` in the Stan program. Previously these worked only for `real`
+variables and errored for `int` ones. (#817)
+* Data frame columns that are not numeric, integer, logical, or
+factor are now an error. Previously `data.matrix()` silently coerced them, so a
+character column reached Stan as alphabetically ordered integer codes. Convert
+the column explicitly, e.g. with `as.integer()`, if integer codes are what you
+want. (#1225)
+* Lists of logical vectors/matrices are now converted to integers like logical
+variables are, instead of erroring. (#1225)
+* Supplying a factor for a variable not declared as `int` is now an error. (#1225)
+* Factors are now accepted for length-1 `int` arrays (e.g. `array[1] int x`),
+which previously errored. (#1225)
+* The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
+as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
+* `check_cmdstan_toolchain()` now locates Windows toolchains using `R_TOOLS_SOFT` and falls back to `PATH`, improving support for alternate R distributions and future Rtools releases. (#1211)
+* `$compile()` now works with named `stanc_options` values such as
+`canonicalize`. The values were shell-quoted for Make and the same quoted
+strings were also passed to `stanc` directly, which rejected them. (#1227)
+* `$compile()` now enables `allow-undefined` for user headers supplied through
+`cpp_options`, not just through the `user_header` argument. (#1227)
+* `stanc` failures during `$compile()` are now reported immediately, with the
+`stanc` error message. Previously they surfaced several steps later. (#1227)
+* Errors for include paths that do not exist now report the resolved absolute
+path. (#1227)
+* Numeric `stanc_options` values such as `list("max-line-length" = 78)` are no
+longer dropped. (#1233)
+* CmdStanModel methods now correctly handle `#include` directories with spaces
+in their paths. (#820)
+* `$include_paths()` now returns absolute paths, and relative include paths are
+resolved when the model object is created or `$compile()` is called rather than
+on each `stanc` call. Previously a model created from a relative path could
+resolve `#include` directives against the wrong directory if the working
+directory changed. (#1229)
+* `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 
+executable's metadata. It was never a C++ option; use `$cmdstan_version()` instead. (#1215)
+* CmdStanModel methods now use executable metadata regardless of the 
+capitalization of C++ option names. Any executable reporting threading enabled 
+requires the corresponding `threads` or `threads_per_chain` argument. (#765, #1100)
+* Pathfinder fits used as initial values now use uniform weights when CmdStan 
+already PSIS-resampled their draws, avoiding a second application of importance weights. (#1206)
+* Pathfinder fits used as initial values now correctly treat draws with different 
+initialization parameter values as distinct even when their log weights are equal, 
+and collapse duplicate resampled draws while retaining their selection frequency. (#1207)
+* `pathfinder()` now passes separately supplied initial values to every path 
+instead of using only the first path's initial values. (#1206)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
 to be consistent with other methods.
+* The `num_paths` documentation for `pathfinder()` now notes that running
+multiple paths in parallel requires compiling with
+`cpp_options = list(stan_threads = TRUE)` and setting `threads`. (#896)
+* The `save_latent_dynamics` argument is now limited to `$sample()`, 
+`$sample_mpi()`, and `$variational()`, matching the CmdStan algorithms 
+that support diagnostic CSV output.
 * Informative error when exposing functions using names that are reserved 
 keywords (@VisruthSK, #1154)
-* `save_cmdstan_config` and `save_metric` default to `FALSE` but can be 
+* `save_cmdstan_config` and `save_metric` default to `FALSE` but can be
 set to `TRUE` for an entire R session via new global options. (#1159)
-* `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing 
+* The compilation spinner can now be disabled for an entire R session by setting
+the new `cmdstanr_spinner` global option to `FALSE`. The spinner shown while
+installing or rebuilding CmdStan and while checking syntax also respects this
+option, and is no longer shown when knitting. (#486)
+* `save_metric_files()` now gives an informative error when metric files were
+not created and keeps saved metric files after the fitted model is garbage-collected. (#1021)
+* `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing
 output while reading `STANCFLAGS` from `make`. (#1163)
+* `cmdstan_model()` now retains include paths when initialized with both a Stan file
+and a precompiled executable (#1094).
+* `$generate_quantities()` now also accepts `CmdStanMLE`, `CmdStanLaplace`,
+and `CmdStanPathfinder` fitted model objects as `fitted_params`. (#1203)
+* `$generate_quantities()` now reports per-process execution times with
+CmdStan 2.39 or newer, and `read_cmdstan_csv()` returns these times from
+standalone generated quantities CSV files. (#1168)
 * `laplace()` no longer overwrites the internally generated optimizer CSV when
 `mode = NULL` and `output_basename` is supplied. The internally generated
-optimizer CSV now uses the filename `<output_basename>-mode-1.csv`.
+optimizer CSV now uses the filename `<output_basename>-mode-01.csv`.
 
 * CmdStanModel objects created using `compile_model_methods = TRUE` that are
 then saved and reloaded no longer error in model fitting methods. Model methods
 are recompiled lazily if needed. (#1158)
-  
+
 * CmdStan versions older than 2.35.0 are no longer supported. (#1144)
 * Minimum R version increased to 4.0.0. (#1144)
 * Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
@@ -41,7 +111,7 @@ are recompiled lazily if needed. (#1158)
     - `save_extra_diagnostics` (`save_latent_dynamics`)
     - `max_depth` (`max_treedepth`)
     - `stepsize` (`step_size`)
-  
+
 
 # cmdstanr 0.9.0
 

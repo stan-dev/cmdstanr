@@ -8,7 +8,7 @@
 gradients()
 }
 \value{
-A list of lists. See \strong{Examples}.
+A data frame containing the gradients for all parameters.
 }
 \description{
 Return the data frame containing the gradients for all

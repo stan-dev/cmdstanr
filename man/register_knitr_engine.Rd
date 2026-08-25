@@ -10,6 +10,9 @@ register_knitr_engine(override = TRUE)
 \item{override}{(logical) Override knitr's built-in, RStan-based engine for
 Stan? The default is \code{TRUE}. See \strong{Details}.}
 }
+\value{
+A named list containing the registered engine, invisibly.
+}
 \description{
 Registers CmdStanR's knitr engine \code{\link[=eng_cmdstan]{eng_cmdstan()}} for processing Stan chunks.
 Refer to the vignette
@@ -45,4 +48,7 @@ specify \code{engine = "cmdstan"} in the chunk options after registering the
 \item \href{https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html}{Register a custom language engine for knitr}
 \item \href{https://bookdown.org/yihui/rmarkdown/language-engines.html#stan}{knitr's built-in Stan language engine}
 }
+}
+\seealso{
+\code{\link[=eng_cmdstan]{eng_cmdstan()}}
 }

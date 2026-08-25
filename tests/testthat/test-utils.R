@@ -135,8 +135,103 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
   expect_output(delete_and_run(), "Checking sampler transitions treedepth")
 })
 
+test_that("get_standalone_hpp() reports stanc failures", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "model.stan")
+  hpp_file <- file.path(model_dir, "model.hpp")
+  writeLines("parameters { real y; } model { y ~ std_normal(); }", stan_file)
+  writeLines("// partial output", hpp_file)
+  local_mocked_bindings(
+    wsl_compatible_run = function(...) {
+      list(
+        status = 124L,
+        stdout = "",
+        stderr = "stanc: invalid canonicalize value"
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    get_standalone_hpp(
+      stan_file,
+      "--canonicalize='deprecations'"
+    )
+  )
+  expect_false(file.exists(hpp_file))
+})
+
+test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
+  stan_file <- withr::local_tempfile(fileext = ".stan")
+  local_mocked_bindings(
+    wsl_compatible_run = function(...) {
+      list(
+        status = 1L,
+        stdout = "",
+        stderr = "Syntax error: Use the auto-format flag to stanc"
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    get_standalone_hpp(stan_file, character())
+  )
+})
+
 
 # misc --------------------------------------------------------------------
+
+test_that("generate_file_names() zero-pads IDs for lexicographic sorting", {
+  expect_equal(
+    generate_file_names(
+      basename = "output",
+      ids = 1:10,
+      timestamp = FALSE,
+      random = FALSE
+    ),
+    paste0("output-", sprintf("%02d", 1:10), ".csv")
+  )
+
+  file_names <- generate_file_names(
+    basename = "output",
+    ids = 1:100,
+    timestamp = FALSE,
+    random = FALSE
+  )
+  expect_equal(
+    file_names[c(1, 9, 10, 100)],
+    paste0("output-", c("001", "009", "010", "100"), ".csv")
+  )
+  expect_equal(sort(file_names), file_names)
+})
+
+test_that("copy_temp_files retains sources if any copy fails", {
+  source_dir <- withr::local_tempdir()
+  destination_dir <- withr::local_tempdir()
+  source_paths <- file.path(source_dir, c("one.csv", "two.csv"))
+  writeLines("one", source_paths[1])
+  writeLines("two", source_paths[2])
+  # Simulate a partial copy failure without relying on platform-specific file
+  # permissions. The original binding is restored at the end of the test.
+  local_mocked_bindings(
+    file.copy = function(...) c(TRUE, FALSE),
+    .package = "base"
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    copy_temp_files(
+      current_paths = source_paths,
+      new_dir = destination_dir,
+      new_basename = "output",
+      ids = 1:2,
+      timestamp = FALSE,
+      random = FALSE
+    )
+  )
+  expect_identical(file.exists(source_paths), c(TRUE, TRUE))
+})
 
 test_that("repair_path() fixes slashes", {
   # all slashes should be single "/", and no trailing slash
@@ -154,13 +249,59 @@ test_that("repair_path works with multiple paths", {
   expect_equal(repair_path(c("a//b\\c/", "d\\e//f")), c("a/b/c", "d/e/f"))
 })
 
+test_that("wsl_safe_path() works with multiple paths", {
+  with_mocked_bindings(
+    {
+      expect_equal(
+        wsl_safe_path(
+          c(
+            "/mnt/c/project/init-1.json",
+            "/mnt/d/project/init-2.json",
+            "relative/init-3.json"
+          ),
+          revert = TRUE
+        ),
+        c(
+          "C:/project/init-1.json",
+          "D:/project/init-2.json",
+          "relative/init-3.json"
+        )
+      )
+      expect_equal(
+        wsl_safe_path(
+          c(
+            "//wsl$/Ubuntu/tmp/init-1.json",
+            "//wsl$/Ubuntu/tmp/init-2.json"
+          )
+        ),
+        c("/tmp/init-1.json", "/tmp/init-2.json")
+      )
+    },
+    os_is_wsl = function() TRUE,
+    wsl_dir_prefix = function(...) "//wsl$/Ubuntu"
+  )
+})
+
+test_that("wsl_compatible_run() preserves arguments containing spaces", {
+  skip_if_not(os_is_wsl())
+  arg <- "--filename-in-msg=model filename with spaces.stan"
+  result <- wsl_compatible_run(
+    command = "printf",
+    args = c("%s", arg),
+    wd = cmdstan_path()
+  )
+
+  expect_equal(result$status, 0L)
+  expect_equal(result$stdout, arg)
+})
+
 test_that("list_to_array works with empty list", {
   expect_equal(list_to_array(list()), NULL)
 })
 
 test_that("list_to_array fails for non-numeric values", {
   expect_error(list_to_array(list(k = "test"), name = "test-list"),
-               "All elements in list 'test-list' must be numeric!")
+               "All elements in list 'test-list' must be numeric or logical!")
 })
 
 test_that("cmdstan_make_local() works", {
@@ -264,6 +405,30 @@ test_that("require_suggested_package() works", {
     require_suggested_package("not_a_real_package"),
     "Please install the 'not_a_real_package' package to use this function."
   )
+})
+
+test_that("use_spinner() respects the cmdstanr_spinner option", {
+  # rlang::is_interactive() is FALSE while testing, so simulate an interactive
+  # session. The option and env var are cleared so that the tests don't inherit
+  # them from the session running the tests.
+  withr::local_options(list(rlang_interactive = TRUE, cmdstanr_spinner = NULL))
+  withr::local_envvar(IN_PKGDOWN = NA)
+  expect_true(use_spinner())
+  withr::with_options(list(cmdstanr_spinner = FALSE), expect_false(use_spinner()))
+  withr::with_options(list(cmdstanr_spinner = TRUE), expect_true(use_spinner()))
+})
+
+test_that("use_spinner() is FALSE unless interactive", {
+  withr::local_options(list(cmdstanr_spinner = NULL))
+  withr::local_envvar(IN_PKGDOWN = NA)
+
+  withr::local_options(rlang_interactive = FALSE)
+  expect_false(use_spinner())
+  withr::with_options(list(cmdstanr_spinner = TRUE), expect_false(use_spinner()))
+
+  withr::local_options(rlang_interactive = TRUE)
+  withr::local_envvar(IN_PKGDOWN = "true")
+  expect_false(use_spinner())
 })
 
 test_that("as_mcmc.list() works", {

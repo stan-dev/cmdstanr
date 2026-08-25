@@ -10,6 +10,8 @@
 #' @param override (logical) Override knitr's built-in, RStan-based engine for
 #'   Stan? The default is `TRUE`. See **Details**.
 #'
+#' @return A named list containing the registered engine, invisibly.
+#'
 #' @details
 #' If `override = TRUE` (default), this registers CmdStanR's knitr engine as the
 #' engine for `stan` chunks, replacing knitr's built-in, RStan-based engine. If
@@ -38,6 +40,8 @@
 #' * [Register a custom language engine for knitr](https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html)
 #' * [knitr's built-in Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
 #'
+#' @seealso [eng_cmdstan()]
+#'
 register_knitr_engine <- function(override = TRUE) {
   require_suggested_package("knitr")
   if (override) {
@@ -56,8 +60,12 @@ register_knitr_engine <- function(override = TRUE) {
 #' [R Markdown CmdStan Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html)
 #' for an example.
 #'
-#' @param options (named list) Chunk options, as provided by `knitr` during
-#'   chunk execution.
+#' @param options (named list) Chunk options supplied by `knitr`. The
+#'   `output.var` element is required and must be a single character string
+#'   naming the `CmdStanModel` object created by the chunk.
+#' @return A character vector containing the formatted chunk output produced by
+#'   [knitr::engine_output()].
+#' @seealso [register_knitr_engine()]
 #' @examples \dontrun{
 #' knitr::knit_engines$set(stan = cmdstanr::eng_cmdstan)
 #' }

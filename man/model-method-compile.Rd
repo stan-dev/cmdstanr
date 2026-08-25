@@ -26,43 +26,50 @@ error we recommend trying again with \code{quiet=FALSE} to see more of the
 output.}
 
 \item{dir}{(string) The path to the directory in which to store the CmdStan
-executable (or \code{.hpp} file if using \verb{$save_hpp_file()}). The default is the
-same location as the Stan program.}
+executable. The default is the same location as the Stan program.}
 
 \item{pedantic}{(logical) Should pedantic mode be turned on? The default is
 \code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
 Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html}{\emph{Pedantic mode} section} in
-the Stan Reference Manual. \strong{Note:} to do a pedantic check for a model
+the Stan User's Guide. \strong{Note:} to do a pedantic check for a model
 without compiling it or for a model that is already compiled the
 \code{\link[=model-method-check_syntax]{$check_syntax()}} method can be used instead.}
 
 \item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
-program.}
+program. Relative paths are resolved against the working directory when
+the model object is created (or when \verb{$compile()} is called) and stored as
+absolute paths, so subsequent changes to the working directory do not
+affect them.}
 
 \item{user_header}{(string) The path to a C++ file (with a .hpp extension)
 to compile with the Stan model.}
 
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
-model (\code{STAN_THREADS}, \code{STAN_MPI}, \code{STAN_OPENCL}, etc.). Anything you would
+model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would
 otherwise write in the \code{make/local} file. For an example of using threading
-see the Stan case study
-\href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
+see the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
+\strong{Note:} For historical reasons, CmdStan treats some options as enabled
+whenever their \code{Make} variable is non-empty. In particular, setting
+\code{stan_threads} to \code{FALSE} passes \code{STAN_THREADS=FALSE} to \code{Make}, which
+still enables threading! To leave threading disabled, simply omit
+\code{stan_threads} entirely or set it to \code{NULL}.}
 
 \item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
 when compiling the model. See the \strong{Examples} section below as well as the
-\code{stanc} chapter of the CmdStan Guide for more details on available options:
-https://mc-stan.org/docs/cmdstan-guide/stanc.html.}
+\href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{\code{stanc} chapter of the CmdStan User's Guide} for more details
+on available options.}
 
-\item{force_recompile}{(logical) Should the model be recompiled even if was
-not modified since last compiled. The default is \code{FALSE}. Can also be set
-via a global \code{cmdstanr_force_recompile} option.}
+\item{force_recompile}{(logical) Should the model be recompiled even if it
+has not been modified since it was last compiled? The default is \code{FALSE}.
+Can also be set via a global \code{cmdstanr_force_recompile} option.}
 
 \item{compile_model_methods}{(logical) Compile additional model methods
-(\code{log_prob()}, \code{grad_log_prob()}, \code{constrain_variables()},
-\code{unconstrain_variables()}). Note: the compiled model-method bindings are
-not preserved in a usable form when saving a model object. If you plan to
-save and reload the model object before model fitting, we recommend instead
+(\code{log_prob()}, \code{grad_log_prob()}, \code{hessian()}, \code{constrain_variables()},
+\code{unconstrain_variables()}, \code{unconstrain_draws()}, and
+\code{variable_skeleton()}). Note: the compiled model-method bindings are not
+preserved in a usable form when saving a model object. If you plan to save
+and reload the model object before model fitting, we recommend instead
 waiting to compile the model methods until after fitting via
 \code{\link[=fit-method-init_model_methods]{fit$init_model_methods()}}.}
 
@@ -80,8 +87,11 @@ The \verb{$compile()} method is called for its side effect of creating the
 executable and adding its path to the \code{\link{CmdStanModel}} object, but it also
 returns the \code{\link{CmdStanModel}} object invisibly.
 
-After compilation, the \verb{$exe_file()}, \verb{$hpp_file()}, and \verb{$save_hpp_file()}
-methods can be used and return file paths.
+The \code{\link[=model-method-model-info]{$exe_file()}} method returns the executable
+path. If compilation generated C++ code, the
+\code{\link[=model-method-model-info]{$hpp_file()}} and
+\code{\link[=model-method-model-info]{$save_hpp_file()}} methods can also be used. See
+their linked documentation for return values.
 }
 \description{
 The \verb{$compile()} method of a \code{\link{CmdStanModel}} object checks the
@@ -95,26 +105,35 @@ method as compilation will occur when calling \code{\link[=cmdstan_model]{cmdsta
 is possible to set \code{compile=FALSE} in the call to \code{cmdstan_model()} and
 subsequently call the \verb{$compile()} method directly.
 
-After compilation, the paths to the executable and the \code{.hpp} file
-containing the generated C++ code are available via the \verb{$exe_file()} and
-\verb{$hpp_file()} methods. The default is to create the executable in the same
-directory as the Stan program and to write the generated C++ code in a
-temporary directory. To save the C++ code to a non-temporary location use
-\verb{$save_hpp_file(dir)}.
+After compilation, the path to the executable is available via
+\code{\link[=model-method-model-info]{$exe_file()}}. If compilation generated C++ code
+instead of reusing an up-to-date executable, its path is also available via
+\code{\link[=model-method-model-info]{$hpp_file()}}. Use \code{force_recompile=TRUE} to
+force generation of the C++ code. By default, the executable is created in
+the same directory as the Stan program and the generated C++ code is
+written to a temporary directory. To save the C++ code to a non-temporary
+location use
+\code{\link[=model-method-model-info]{$save_hpp_file(dir)}}.
 }
 \examples{
 \dontrun{
-file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+stan_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 
 # by default compilation happens when cmdstan_model() is called.
 # to delay compilation until calling the $compile() method set compile=FALSE
-mod <- cmdstan_model(file, compile = FALSE)
+mod <- cmdstan_model(stan_file, compile = FALSE)
 mod$compile()
 mod$exe_file()
 
-# turn on threading support (for using functions that support within-chain parallelization)
-mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-mod$exe_file()
+# turn on threading support for using functions that support within-chain
+# parallelization or running multiple pathfinder paths in parallel
+# (here we compile a copy of the model in a temporary directory so that the
+# executable compiled without threading above is not overwritten)
+stan_file_threads <- file.path(tempdir(), "bernoulli.stan")
+file.copy(stan_file, stan_file_threads)
+mod_threads <- cmdstan_model(stan_file_threads, compile = FALSE)
+mod_threads$compile(cpp_options = list(stan_threads = TRUE))
+mod_threads$cpp_options()
 
 # turn on pedantic mode
 file_pedantic <- write_stan_file("
@@ -125,14 +144,15 @@ model {
   sigma ~ exponential(1);
 }
 ")
-mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-
+mod <- cmdstan_model(file_pedantic, compile = FALSE)
+mod$compile(pedantic = TRUE)
+# same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 }
 
 }
 \seealso{
 The \code{\link[=model-method-check_syntax]{$check_syntax()}} method to check
-Stan syntax or enable pedantic model without compiling.
+Stan syntax or enable pedantic mode without compiling.
 
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
@@ -152,6 +172,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

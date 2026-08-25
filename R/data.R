@@ -8,28 +8,65 @@
 #' If `TRUE` all \R objects in `data` intended for integers must be of integer
 #' type.
 #'
+#' @return `NULL`, invisibly.
+#'
 #' @details
 #' `write_stan_json()` performs several conversions before writing the JSON
 #' file:
 #'
 #' * `logical` -> `integer` (`TRUE` -> `1`, `FALSE` -> `0`)
-#' * `data.frame` -> `matrix` (via [data.matrix()])
+#' * `factor` -> `integer` (the index of each value's level)
+#' * `data.frame` -> `matrix` (via [data.matrix()]); every column must be
+#' numeric, integer, logical, or factor
 #' * `list` -> `array`
 #' * `table` -> `vector`, `matrix`, or `array` (depending on dimensions of table)
 #'
+#' ### Factor conversion
+#' Factors are written as their level indices, i.e., the position of each value
+#' in `levels(x)` rather than the value itself. The default levels are the
+#' sorted unique values, e.g., `factor(c(10, 9, 8))` has levels `8`, `9`, `10`
+#' and is written as `[3, 2, 1]`. An unused level shifts the indices of the
+#' levels after it. The fitting methods of a model compiled from a Stan file
+#' will error if a factor is supplied for a variable that is not declared as
+#' `int`, but if `write_stan_json()` is called directly by the user it has no
+#' declarations to check and so it always does the conversion.
+#'
+#' ### List to array conversion
 #' The `list` to `array` conversion is intended to make it easier to prepare
 #' the data for certain Stan declarations involving arrays:
 #'
 #' * `array[K] vector[J] v ` can be constructed in \R as a list with `K`
-#' elements where each element a vector of length `J`
+#' elements where each element is a vector of length `J`
 #' * `array[K] matrix[I,J] m ` can be constructed in \R as a list with `K`
-#' elements where each element an `IxJ` matrix
+#' elements where each element is an `IxJ` matrix
+#' * `array[K,I,J] int n ` can be constructed in \R as a list with `K`
+#' elements where each element is an `IxJ` matrix of integers
 #'
 #' These can also be passed in from \R as arrays instead of lists but the list
-#' option is provided for convenience. Unfortunately for arrays with more than
-#' one dimension (e.g. `array[K,L] vector[J] v `) it is not possible to use an
-#' \R list and an array must be used instead. For this example the array in \R
-#' should have dimensions `KxLxJ`.
+#' option is provided for convenience. A list always contributes exactly one
+#' leading dimension, so `array[K,L] vector[J] v ` can be supplied either as a
+#' list of `K` matrices each with dimensions `LxJ` or as a single \R array with
+#' dimensions `KxLxJ`. Nested lists are not supported: every element of the list
+#' must be a vector, matrix, or array.
+#'
+#' ### Scalar vs. length-1 vector
+#' Because \R does not distinguish between a scalar and a vector of length 1, a
+#' length-1 vector like `c(42)` is written to JSON as a scalar (`42`) rather
+#' than an array (`[42]`). If a Stan variable is declared as a vector or array
+#' that may have length 1, wrap the value in [array()] to force array output.
+#' Because `array()` uses the length of its input as the default dimension, this
+#' works regardless of length:
+#'
+#' * `write_stan_json(list(x = array(42)), file)` writes `"x": [42]`
+#' * `write_stan_json(list(x = array(c(42, 43))), file)` writes `"x": [42, 43]`
+#'
+#' This is only necessary when calling `write_stan_json()` directly. When
+#' passing a data list to the fitting methods of a model compiled from a Stan
+#' file (e.g., `$sample()`), CmdStanR uses the model's variable declarations to
+#' make this correction automatically.
+#'
+#' @seealso [`$variables()`][model-method-variables] for inspecting the input
+#'   and output variables of a Stan program.
 #'
 #' @examples
 #' x <- matrix(rnorm(10), 5, 2)
@@ -77,22 +114,10 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
     if (is.null(var)) {
       stop("Variable '", var_name, "' is NULL.", call. = FALSE)
     }
-    if (!(is.numeric(var) || is.factor(var) || is.logical(var) ||
-          is.data.frame(var) || is.list(var))) {
-      stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
-    }
+    validate_data_type(var, var_name)
+    var <- convert_to_array(var, var_name)
     if (anyNA(var)) {
       stop("Variable '", var_name, "' has NA values.", call. = FALSE)
-    }
-
-    if (is.table(var)) {
-      var <- unclass(var)
-    } else if (is.logical(var)) {
-      mode(var) <- "integer"
-    } else if (is.data.frame(var)) {
-      var <- data.matrix(var)
-    } else if (is.list(var)) {
-      var <- list_to_array(var, var_name)
     }
     data[[var_name]] <- var
   }
@@ -110,6 +135,54 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
 }
 
 
+# Types accepted for a data variable and for each column of a data frame
+is_valid_data_type <- function(x) {
+  is.numeric(x) || is.factor(x) || is.logical(x)
+}
+
+
+# TRUE for a factor, or a data frame with any factor column
+has_factor <- function(x) {
+  is.factor(x) || (is.data.frame(x) && any(vapply(x, is.factor, logical(1))))
+}
+
+
+# Error if a variable is not one of the types accepted in a data list. Data
+# frames and lists are accepted here and converted by convert_to_array().
+validate_data_type <- function(var, var_name) {
+  if (!is_valid_data_type(var) && !is.data.frame(var) && !is.list(var)) {
+    stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+
+# Convert the R container types accepted in a data list to the atomic arrays
+# CmdStan's JSON reader expects. Used by both write_stan_json() and
+# process_data() so that the two paths agree.
+convert_to_array <- function(var, var_name = NULL) {
+  if (is.table(var)) {
+    var <- unclass(var)
+  } else if (is.data.frame(var)) {
+    # first check all columns are valid types, so data.matrix() doesn't silently
+    # coerce character columns to factor codes and date/time columns to numeric
+    invalid <- !vapply(var, is_valid_data_type, logical(1))
+    if (any(invalid)) {
+      stop("Variable '", var_name, "' has columns of invalid type: ",
+           paste(names(var)[invalid], collapse = ", "), ".", call. = FALSE)
+    }
+    var <- data.matrix(var)
+  } else if (is.list(var)) {
+    var <- list_to_array(var, var_name)
+  }
+  # after the conversions above so we also convert lists of logicals
+  if (is.logical(var)) {
+    mode(var) <- "integer"
+  }
+  var
+}
+
+
 list_to_array <- function(x, name = NULL) {
   list_length <- length(x)
   if (list_length == 0) {
@@ -122,9 +195,9 @@ list_to_array <- function(x, name = NULL) {
   if (!all_equal_dim) {
     stop("All matrices/vectors in list '", name, "' must be the same size!", call. = FALSE)
   }
-  all_numeric <- all(sapply(x, function(a) is.numeric(a)))
+  all_numeric <- all(sapply(x, function(a) is.numeric(a) || is.logical(a)))
   if (!all_numeric) {
-    stop("All elements in list '", name, "' must be numeric!", call. = FALSE)
+    stop("All elements in list '", name, "' must be numeric or logical!", call. = FALSE)
   }
   element_num_of_dim <- length(all_dims[[1]])
   x <- unlist(x)
@@ -138,12 +211,6 @@ list_to_array <- function(x, name = NULL) {
 #' @noRd
 #' @param data If not `NULL`, then either a path to a data file compatible with
 #'   CmdStan, or a named list of \R objects to pass to [write_stan_json()].
-#' @param stan_file If not `NULL`, the path to the Stan model for which to
-#'   process the named list suppiled to the `data` argument. The Stan model
-#'   is used for checking whether the supplied named list has all the
-#'   required elements/Stan variables and to help differentiate between a
-#'   vector of length 1 and a scalar when genereting the JSON file. This
-#'   argument is ignored when a path to a data file is supplied for `data`.
 #' @param model_variables A list of all parameters with their types and
 #'   number of dimensions. Typically the output of model$variables().
 #' @return Path to data file.
@@ -172,6 +239,21 @@ process_data <- function(data, model_variables = NULL) {
         if (is.null(data[[var_name]])) {
           stop("Variable '", var_name, "' is NULL.", call. = FALSE)
         }
+        validate_data_type(data[[var_name]], var_name)
+        # Factors are written as level indices, which are only meaningful for
+        # variables declared as int. Handle them before the conversions below,
+        # which replace factors with their codes and drop the factor class.
+        if (data_variables[[var_name]]$type == "int") {
+          if (is.factor(data[[var_name]])) {
+            data[[var_name]] <- as.integer(data[[var_name]])
+          }
+        } else if (has_factor(data[[var_name]])) {
+          stop("A factor was supplied for '", var_name, "', which is declared as '",
+               data_variables[[var_name]]$type, "'.", call. = FALSE)
+        }
+        # Convert lists and data frames to arrays before the checks below,
+        # which require an atomic object (#817)
+        data[[var_name]] <- convert_to_array(data[[var_name]], var_name)
         # distinguish between scalars and arrays/vectors of length 1
         if (length(data[[var_name]]) == 1
             && data_variables[[var_name]]$dimensions == 1) {
@@ -181,17 +263,15 @@ process_data <- function(data, model_variables = NULL) {
         # generating a decimal point in write_stan_json
         if (data_variables[[var_name]]$type == "int"
             && !is.integer(data[[var_name]])) {
-          if (!is.factor(data[[var_name]])) {
-            if (!isTRUE(all(is_wholenumber(data[[var_name]])))) {
-              # Don't warn for NULL/NA, as different warnings are used for those
-              if (!isTRUE(any(is.na(data[[var_name]])))) {
-                warning("A non-integer value was supplied for '", var_name, "'!",
-                        " It will be truncated to an integer.", call. = FALSE)
-              }
-            } else {
-              # Round before setting mode to integer to avoid floating point errors
-              data[[var_name]] <- round(data[[var_name]])
+          if (!isTRUE(all(is_wholenumber(data[[var_name]])))) {
+            # Don't warn for NULL/NA, as different warnings are used for those
+            if (!isTRUE(anyNA(data[[var_name]]))) {
+              warning("A non-integer value was supplied for '", var_name, "'!",
+                      " It will be truncated to an integer.", call. = FALSE)
             }
+          } else {
+            # Round before setting mode to integer to avoid floating point errors
+            data[[var_name]] <- round(data[[var_name]])
           }
           mode(data[[var_name]]) <- "integer"
         }
@@ -205,11 +285,6 @@ process_data <- function(data, model_variables = NULL) {
   path
 }
 
-# check if any objects in the data list have zero as one of their dimensions
-any_zero_dims <- function(data) {
-  has_zero_dims <- sapply(data, function(x) any(dim(x) == 0))
-  any(has_zero_dims)
-}
 
 #' Write posterior draws objects to CSV files suitable for running standalone generated
 #' quantities with CmdStan.
@@ -218,26 +293,32 @@ any_zero_dims <- function(data) {
 #' @param draws A `posterior::draws_*` object.
 #' @param sampler_diagnostics Either `NULL` or a `posterior::draws_*` object
 #'  of sampler diagnostics.
-#' @param dir (string) An optional path to the directory where the CSV files will be
-#'   written. If not set, [temporary directory][base::tempdir] is used.
-#' @param basename (string) If `dir` is specified, `basename`` is used for naming
-#' the output CSV files. If not specified, the file names are randomly generated.
+#' @param dir (string) An optional path to the directory where the CSV files
+#'   will be written. If not set, [temporary directory][base::tempdir] is used.
+#' @param basename (string) The base name for the output CSV files. The default
+#'   is `"fittedParams"`. A timestamp, chain ID, and six-character random
+#'   hexadecimal suffix are appended to the base name.
 #'
 #' @return Paths to CSV files (one per chain).
 #'
 #' @details
 #' `draws_to_csv()` generates a CSV suitable for running standalone generated
-#' quantities with CmdStan. The CSV file contains a single comment `#num_samples`,
-#' which equals the number of iterations in the supplied draws object.
+#' quantities with CmdStan. The CSV file contains a single comment
+#' `# num_samples = <n>`, where `<n>` is the number of iterations in the
+#' supplied draws object.
 #'
-#' The comment is followed by the column names. The first column is the `lp__` value,
-#' followed by sampler diagnostics and finnaly other variables of the draws object.
-#' #' If the draws object does not contain the `lp__` or sampler diagnostics variables,
-#' columns with zeros are created in order to conform with the requirements of the
-#' standalone generated quantities method of CmdStan.
+#' The comment is followed by the column names. The first column is the `lp__`
+#' value, followed by sampler diagnostics and finally other variables of the
+#' draws object. If the draws object does not contain the `lp__` or sampler
+#' diagnostics variables, columns with zeros are created in order to conform
+#' with the requirements of the standalone generated quantities method of
+#' CmdStan.
 #'
 #' The column names line is finally followed by the values of the draws in the same
 #' order as the column names.
+#'
+#' @seealso [`$generate_quantities()`][model-method-generate-quantities] for
+#'   using the generated CSV files
 #'
 #' @examples
 #' \dontrun{
@@ -247,7 +328,7 @@ any_zero_dims <- function(data) {
 #' print(draws_csv_files)
 #'
 #' # draws_csv_files <- draws_to_csv(draws,
-#' #                                 sampler_diagnostic = sampler_diagnostics,
+#' #                                 sampler_diagnostics = sampler_diagnostics,
 #' #                                 dir = "~/my_folder",
 #' #                                 basename = "my-samples")
 #' }
@@ -333,7 +414,8 @@ draws_to_csv <- function(draws,
 #'
 #' @noRd
 #' @param fitted_params Paths to CSV files produced by CmdStan sampling,
-#'  a CmdStanMCMC or CmdStanVB object, a draws_array or draws_matrix.
+#'  a CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, or CmdStanPathfinder
+#'  object, a draws_array or draws_matrix.
 #' @return Paths to CSV files containing parameter values.
 #'
 process_fitted_params <- function(fitted_params) {
@@ -353,7 +435,10 @@ process_fitted_params <- function(fitted_params) {
       fitted_params$sampler_diagnostics()
     )
     paths <- draws_to_csv(draws, sampler_diagnostics)
-  } else if (checkmate::test_r6(fitted_params, "CmdStanVB")) {
+  } else if (checkmate::test_r6(fitted_params, "CmdStanMLE") ||
+             checkmate::test_r6(fitted_params, "CmdStanLaplace") ||
+             checkmate::test_r6(fitted_params, "CmdStanVB") ||
+             checkmate::test_r6(fitted_params, "CmdStanPathfinder")) {
     draws <- tryCatch(
       fitted_params$draws(),
       error = function(cond) {
@@ -368,7 +453,8 @@ process_fitted_params <- function(fitted_params) {
   } else {
     stop(
       "'fitted_params' must be a list of paths to CSV files, ",
-      "a CmdStanMCMC/CmdStanVB object, ",
+      "a CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, or ",
+      "CmdStanPathfinder object, ",
       "a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)
   }
   paths

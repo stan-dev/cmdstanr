@@ -10,19 +10,19 @@ cmdstan_defaults(
 )
 }
 \arguments{
-\item{method}{(string) The inference method whose defaults to
-retrieve. One of \code{"sample"}, \code{"optimize"}, \code{"variational"},
-\code{"pathfinder"}, or \code{"laplace"}.}
+\item{method}{(string) The inference method for which to retrieve default
+argument values. One of \code{"sample"}, \code{"optimize"}, \code{"variational"},
+\code{"pathfinder"}, or \code{"laplace"}. The default is \code{"sample"}.}
 }
 \value{
 A named list of default argument values for the specified
-method, with cmdstanr-style argument names.
+method, with CmdStanR-style argument names.
 }
 \description{
 The \verb{$cmdstan_defaults()} method of a \code{\link{CmdStanModel}}
 object queries the compiled model binary for the default argument
 values used by a given inference method. The returned list uses
-cmdstanr-style argument names (e.g., \code{iter_sampling} instead of
+CmdStanR-style argument names (e.g., \code{iter_sampling} instead of
 CmdStan's \code{num_samples}).
 
 The model must be compiled before calling this method.
@@ -55,6 +55,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

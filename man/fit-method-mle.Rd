@@ -17,17 +17,18 @@ A numeric vector. See \strong{Examples}.
 }
 \description{
 The \verb{$mle()} method is only available for \code{\link{CmdStanMLE}}
-objects. It returns the point estimate as a numeric vector with one element
-per variable. The returned vector does \emph{not} include \code{lp__}, the total log
-probability (\code{target}) accumulated in the model block of the Stan program,
-which is available via the \code{\link[=fit-method-lp]{$lp()}} method and also
-included in the \code{\link[=fit-method-draws]{$draws()}} method.
+objects. The method name is retained for historical reasons. It returns the
+point estimate as a numeric vector with one element per variable. The
+returned vector does \emph{not} include \code{lp__}, the target log density evaluated
+by Stan, up to an additive constant. \code{lp__} is available via the
+\code{\link[=fit-method-lp]{$lp()}} method and also included in the
+\code{\link[=fit-method-draws]{$draws()}} method.
 
-For models with constrained parameters that are fit with \code{jacobian=TRUE},
-the \verb{$mle()} method actually returns the maximum a posteriori (MAP)
-estimate (posterior mode) rather than the MLE. See
-\code{\link[=model-method-optimize]{$optimize()}} and the CmdStan User's Guide for
-more details.
+With \code{jacobian = FALSE}, the point estimate is a mode of the target in the
+constrained parameter space. With \code{jacobian = TRUE}, it is a mode of the
+corresponding density in the unconstrained parameter space. See
+\code{\link[=model-method-optimize]{$optimize()}} and the CmdStan User's Guide for more
+details.
 }
 \examples{
 \dontrun{

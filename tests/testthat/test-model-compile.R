@@ -1,14 +1,14 @@
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
-cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
+local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
   expect_equal(mod$exe_file(), character(0))
   expect_error(
     mod$hpp_file(),
-    "The .hpp file does not exists. Please (re)compile the model.",
+    "The .hpp file does not exist. Please (re)compile the model.",
     fixed = TRUE
   )
 })
@@ -88,7 +88,12 @@ test_that("compilation works with include_paths", {
   expect_error(
     cmdstan_model(stan_file = stan_program_w_include, include_paths = "NOT_A_DIR",
                   quiet = TRUE),
-    "Directory 'NOT_A_DIR' does not exist"
+    paste0(
+      "Directory '",
+      repair_path(absolute_path("NOT_A_DIR")),
+      "' does not exist"
+    ),
+    fixed = TRUE
   )
 
   expect_error(
@@ -109,15 +114,121 @@ test_that("compilation works with include_paths", {
   )
 })
 
+test_that("precompiled models retain include paths", {
+  model_dir <- withr::local_tempdir()
+  write_stan_file(
+    "
+    functions {
+      real silly_logit(real x) {
+        return logit(x);
+      }
+    }
+    ",
+    dir = file.path(model_dir, "utils"),
+    basename = "silly.stan"
+  )
+  stan_file <- write_stan_file(
+    "
+    #include utils/silly.stan
+    data {
+      int<lower=0> N;
+      array[N] int<lower=0, upper=1> y;
+    }
+    parameters {
+      real<lower=0, upper=1> theta;
+    }
+    model {
+      theta ~ beta(1, 1);
+      y ~ bernoulli(theta);
+    }
+    generated quantities {
+      real theta_lin = silly_logit(theta);
+    }
+    ",
+    dir = model_dir,
+    basename = "bernoulli.stan"
+  )
+  compiled_model <- cmdstan_model(
+    stan_file,
+    include_paths = model_dir,
+    quiet = TRUE
+  )
+
+  model_with_explicit_path <- cmdstan_model(
+    stan_file,
+    exe_file = compiled_model$exe_file(),
+    compile = FALSE,
+    include_paths = model_dir
+  )
+  expect_equal(model_with_explicit_path$include_paths(), repair_path(model_dir))
+  expect_no_error(model_with_explicit_path$variables())
+
+  model_with_automatic_path <- cmdstan_model(
+    stan_file,
+    exe_file = compiled_model$exe_file(),
+    compile = FALSE
+  )
+  expect_equal(model_with_automatic_path$include_paths(), repair_path(dirname(stan_file)))
+  expect_no_error(model_with_automatic_path$variables())
+})
+
+test_that("include paths are resolved when the model is created", {
+  model_dir <- withr::local_tempdir()
+  file.copy(
+    c(testing_stan_file("bernoulli_include"), testing_stan_file("divide_real_by_two")),
+    model_dir
+  )
+  mod <- withr::with_dir(
+    model_dir,
+    cmdstan_model("bernoulli_include.stan", compile = FALSE)
+  )
+  # the working directory no longer contains the included file
+  expect_true(mod$check_syntax(quiet = TRUE))
+})
+
+test_that("relative include_paths are resolved when the model is created", {
+  model_dir <- withr::local_tempdir()
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir)
+  file.copy(testing_stan_file("bernoulli_include"), model_dir)
+  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
+
+  mod <- withr::with_dir(
+    model_dir,
+    cmdstan_model(
+      "bernoulli_include.stan",
+      include_paths = "includes",
+      compile = FALSE
+    )
+  )
+  # "includes" no longer resolves relative to the working directory
+  expect_true(mod$check_syntax(quiet = TRUE))
+})
+
+test_that("relative include_paths given to $compile() are resolved when it is called", {
+  model_dir <- withr::local_tempdir()
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir)
+  file.copy(testing_stan_file("bernoulli_include"), model_dir)
+  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
+
+  mod <- withr::with_dir(model_dir, {
+    mod <- cmdstan_model("bernoulli_include.stan", compile = FALSE)
+    mod$compile(include_paths = "includes", quiet = TRUE)
+    mod
+  })
+  expect_true(mod$check_syntax(quiet = TRUE))
+})
+
 test_that("name in STANCFLAGS is set correctly", {
   local_reproducible_output()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
-    out_no_name <- "bin/stanc.exe --name='bernoulli_model' --o"
-    out_name <- "bin/stanc.exe --name='bernoulli2_model' --o"
+    out_no_name <- "bin/stanc.exe --name=bernoulli_model --o"
+    out_name <- "bin/stanc.exe --name=bernoulli2_model --o"
   } else {
-    out_no_name <- "bin/stanc --name='bernoulli_model' --o"
-    out_name <- "bin/stanc --name='bernoulli2_model' --o"
+    out_no_name <- "bin/stanc --name=bernoulli_model --o"
+    out_name <- "bin/stanc --name=bernoulli2_model --o"
   }
   expect_output(print(out), out_no_name)
 
@@ -178,7 +289,18 @@ test_that("compile errors are shown", {
   stan_file <- testing_stan_file("fail")
   expect_error(
     cmdstan_model(stan_file),
-    "An error occured during compilation! See the message above for more information."
+    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
+    fixed = TRUE
+  )
+})
+
+test_that("compile() performs stanc checks during dry runs", {
+  stan_file <- testing_stan_file("fail")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  expect_error(
+    model$compile(force_recompile = TRUE, dry_run = TRUE),
+    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
+    fixed = TRUE
   )
 })
 
@@ -385,10 +507,13 @@ test_that("check_syntax() works with pedantic=TRUE", {
 })
 
 test_that("check_syntax() works with include_paths", {
-  stan_program_w_include <- testing_stan_file("bernoulli_include")
+  include_model <- local_include_model_with_spaces()
 
-  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=FALSE,
-                                   include_paths = test_path("resources", "stan"))
+  mod_w_include <- cmdstan_model(
+    stan_file = include_model$stan_file,
+    compile = FALSE,
+    include_paths = include_model$include_paths
+  )
   expect_true(mod_w_include$check_syntax())
 
 })
@@ -402,7 +527,7 @@ test_that("check_syntax() works with include_paths on compiled model", {
 
 })
 
-test_that("check_syntax() works with pedantic=TRUE", {
+test_that("compile() and check_syntax() error on removed syntax", {
   model_code <- "
   transformed data {
     real a;
@@ -413,7 +538,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
   mod_dep_warning <- cmdstan_model(stan_file, compile = FALSE)
   expect_error(
     mod_dep_warning$compile(),
-    "An error occured during compilation! See the message above for more information.",
+    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
     fixed = TRUE
   )
   expect_error(
@@ -423,7 +548,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
   )
 })
 
-test_that("compiliation errors if folder with the model name exists", {
+test_that("compilation errors if folder with the model name exists", {
   skip_if(os_is_windows() && !os_is_wsl())
   model_code <- "
   parameters {
@@ -470,20 +595,31 @@ test_that("include_paths_stanc3_args() works", {
   }
   path_1 <- repair_path(path_1)
   path_1_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_1), path_1)
+  path_1_make <- if (grepl(" ", path_1_compare, fixed = TRUE)) {
+    paste0("'", path_1_compare, "'")
+  } else {
+    path_1_compare
+  }
   expect_equal(
     include_paths_stanc3_args(path_1),
-    paste0("--include-paths=", path_1_compare))
-  path_2 <- file.path(tempdir(), "folder2")
+    paste0("--include-paths=", path_1_make))
+  path_2 <- file.path(tempdir(), "folder 2")
   if (!dir.exists(path_2)) {
     dir.create(path_2)
   }
   path_2 <- repair_path(path_2)
   path_2_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_2), path_2)
+  path_2_make <- paste0("'", path_2_compare, "'")
   expect_equal(
     include_paths_stanc3_args(c(path_1, path_2)),
-    c(
-      paste0("--include-paths=", path_1_compare, ",", path_2_compare)
-    )
+    paste0("--include-paths=", path_1_make, ",", path_2_make)
+  )
+  expect_equal(
+    include_paths_stanc3_args(
+      c(path_1, path_2),
+      direct_call = TRUE
+    ),
+    c("--include-paths", paste0(path_1_compare, ",", path_2_compare))
   )
 })
 
@@ -512,6 +648,12 @@ test_that("cpp_options work with settings in make/local", {
 
   # restore
   cmdstan_make_local(cpp_options = backup, append = FALSE)
+})
+
+test_that("cpp_options() excludes the Stan version reported by the executable", {
+  mod <- cmdstan_model(stan_file = stan_program)
+  expect_null(mod$cpp_options()$STAN_VERSION)
+  expect_equal(mod$cmdstan_version(), cmdstan_version())
 })
 
 test_that("cmdstan_model works with exe_file", {
@@ -600,11 +742,12 @@ test_that("cmdstan_model works with user_header", {
   ))
   file.remove(mod$exe_file())
 
+  # No stanc_options here: a user header supplied via cpp_options must enable
+  # allow-undefined on its own (#1227)
   expect_call_compilation(
     mod_2 <- cmdstan_model(
       stan_file = testing_stan_file("bernoulli_external"),
-      cpp_options=list(USER_HEADER=tmpfile),
-      stanc_options = list("allow-undefined")
+      cpp_options=list(USER_HEADER=tmpfile)
     )
   )
 
@@ -646,7 +789,7 @@ test_that("cmdstan_model works with user_header", {
   )
 })
 
-test_that("cmdstan_model cpp_options dont captialize cxxflags ", {
+test_that("cmdstan_model cpp_options dont capitalize cxxflags ", {
   file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   cpp_options <- list(
     "CXXFLAGS_OPTIM += -Dsomething_not_used"
@@ -729,10 +872,13 @@ test_that("format() works", {
 })
 
 test_that("format() works with include_paths", {
-  stan_program_w_include <- testing_stan_file("bernoulli_include")
+  include_model <- local_include_model_with_spaces()
 
-  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=FALSE,
-                                   include_paths = test_path("resources", "stan"))
+  mod_w_include <- cmdstan_model(
+    stan_file = include_model$stan_file,
+    compile = FALSE,
+    include_paths = include_model$include_paths
+  )
   expect_output(
     mod_w_include$format(),
     "#include ",
@@ -824,7 +970,7 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
     y ~ std_normal();
   }
   "
-  tmpdir <- tempdir()
+  tmpdir <- withr::local_tempdir(pattern = "include path")
   stan_data_file <- write_stan_file(data_code, basename = "separate_file.stan", dir = tmpdir)
   stan_file <- write_stan_file(model_code, dir = tmpdir)
 
@@ -848,11 +994,159 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
   )
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
-    out_w_flags <- "bin/stanc.exe --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   } else {
-    out_w_flags <- "bin/stanc --name='bernoulli_model'[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
+})
+
+test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
+  # Unnamed options are already flag names and are never quoted
+  expect_equal(stanc_options_to_args(list("allow-undefined")), "--allow-undefined")
+  expect_equal(
+    stanc_options_to_args(list("allow-undefined"), quote_values = TRUE),
+    "--allow-undefined"
+  )
+
+  # Logical values mark boolean flags
+  expect_equal(stanc_options_to_args(list("warn-pedantic" = TRUE)), "--warn-pedantic")
+  expect_equal(stanc_options_to_args(list("warn-pedantic" = FALSE)), NULL)
+
+  # Values are quoted only for Make (#1227)
+  expect_equal(
+    stanc_options_to_args(list(canonicalize = "deprecations")),
+    "--canonicalize=deprecations"
+  )
+  expect_equal(
+    stanc_options_to_args(list(canonicalize = "deprecations"), quote_values = TRUE),
+    "--canonicalize='deprecations'"
+  )
+
+  # Quoting the model name mangles the generated namespace
+  expect_equal(
+    stanc_options_to_args(list(name = "m_model"), quote_values = TRUE),
+    "--name=m_model"
+  )
+
+  # Numeric values are kept rather than collapsed to a bare flag (#1233)
+  expect_equal(
+    stanc_options_to_args(list("max-line-length" = 78)),
+    "--max-line-length=78"
+  )
+
+  expect_equal(stanc_options_to_args(list()), NULL)
+  expect_equal(stanc_options_to_args(NULL), NULL)
+})
+
+test_that("compile() passes unquoted named stanc options to direct calls", {
+  stan_file <- testing_stan_file("bernoulli")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  model$compile(
+    stanc_options = list(
+      canonicalize = "deprecations",
+      "filename-in-msg" = "model filename with spaces.stan"
+    ),
+    force_recompile = TRUE,
+    dry_run = TRUE
+  )
+
+  expected <- c(
+    "--canonicalize=deprecations",
+    "--filename-in-msg=model filename with spaces.stan"
+  )
+  direct_options <- lapply(received_stancflags, function(x) {
+    grep("^--(canonicalize|filename-in-msg)=", x, value = TRUE)
+  })
+  expect_length(received_stancflags, 2)
+  expect_equal(direct_options, rep(list(expected), 2))
+  expect_equal(
+    grep("'", unlist(received_stancflags), fixed = TRUE, value = TRUE),
+    character()
+  )
+})
+
+test_that("compile() works with named stanc option values", {
+  stan_file <- write_stan_file(
+    "
+    functions {
+      real half(real x) {
+        return x / 2;
+      }
+    }
+    parameters {
+      real y;
+    }
+    model {
+      y ~ std_normal();
+    }
+    ",
+    dir = withr::local_tempdir(),
+    basename = "issue1227.stan"
+  )
+
+  expect_call_compilation(
+    model <- cmdstan_model(
+      stan_file,
+      stanc_options = list(
+        canonicalize = "deprecations",
+        "filename-in-msg" = "model filename with spaces.stan"
+      )
+    )
+  )
+})
+
+test_that("compile() detects stan_opencl without case or partial matching", {
+  stan_file <- testing_stan_file("bernoulli")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  model$compile(
+    cpp_options = list(STAN_OPENCL = TRUE),
+    force_recompile = TRUE,
+    dry_run = TRUE
+  )
+  expect_length(received_stancflags, 2)
+  expect_equal(
+    vapply(
+      received_stancflags,
+      function(x) "--use-opencl" %in% x,
+      logical(1)
+    ),
+    rep(TRUE, length(received_stancflags))
+  )
+
+  received_stancflags <- list()
+  model$compile(
+    cpp_options = list(stan_opencl_x = TRUE),
+    force_recompile = TRUE,
+    dry_run = TRUE
+  )
+  expect_length(received_stancflags, 2)
+  expect_equal(
+    vapply(
+      received_stancflags,
+      function(x) "--use-opencl" %in% x,
+      logical(1)
+    ),
+    rep(FALSE, length(received_stancflags))
+  )
 })
 
 test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {

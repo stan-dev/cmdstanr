@@ -20,11 +20,17 @@ using the \code{\link[=fit-method-summary]{$print()}} method. The default is 10.
 \item \code{cmdstanr_print_line_numbers}: Should line numbers be included when
 printing a Stan program? The default is \code{FALSE}.
 \item \code{cmdstanr_no_ver_check}: Should the check for a more recent version of
-CmdStan be disabled? The default is \code{FALSE}.
+CmdStan be disabled? The default is \code{FALSE}. Alternatively, set the
+\code{cmdstanr_no_ver_check} environment variable to \code{"true"} (case-insensitive).
+Configure the option or environment variable before attaching the package.
 \item \code{cmdstanr_output_dir}: The directory where CmdStan should write its output
 CSV files when fitting models. The default is a temporary directory. Files in
 a temporary directory are removed as part of \R garbage collection, while
 files in an explicitly defined directory are not automatically deleted.
+\item \code{cmdstanr_spinner}: Should a spinner be shown while CmdStan compiles a
+model, checks syntax, or is installed or rebuilt? The default is \code{TRUE}. The
+spinner is only ever shown in interactive sessions, so setting this to
+\code{FALSE} is only necessary to suppress it in an interactive session.
 \item \code{cmdstanr_verbose}: Should more information be printed
 when compiling or running models, including showing how CmdStan was called
 internally? The default is \code{FALSE}.
@@ -42,4 +48,7 @@ JSON file when running MCMC? The default is \code{FALSE}.
 \item \code{cmdstanr_save_config}: Should a JSON file be saved containing the argument
 tree and extra information when running CmdStan? The default is \code{FALSE}.
 }
+}
+\seealso{
+\code{\link[=cmdstan_model]{cmdstan_model()}}, \code{\link[=install_cmdstan]{install_cmdstan()}}, and \code{\link[=write_stan_file]{write_stan_file()}}
 }

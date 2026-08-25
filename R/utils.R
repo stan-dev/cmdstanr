@@ -11,6 +11,15 @@ is_verbose_mode <- function() {
   getOption("cmdstanr_verbose", default = FALSE)
 }
 
+# Should a spinner be shown while an external process runs? Only in genuinely
+# interactive use, so that the spinner characters don't end up in knitr/pkgdown
+# output or in redirected output (#486).
+use_spinner <- function() {
+  getOption("cmdstanr_spinner", default = TRUE) &&
+    rlang::is_interactive() &&
+    !identical(Sys.getenv("IN_PKGDOWN"), "true")
+}
+
 # Famous helper for switching on `NULL` or zero length
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0) y else x
@@ -78,10 +87,6 @@ is_rosetta2 <- function() {
     rosetta2 <- rosetta2_check$stdout == "1\n"
   }
   rosetta2
-}
-
-arch_is_aarch64 <- function() {
-  isTRUE(R.version$arch == "aarch64")
 }
 
 # Returns the type of make command to use to compile depending on the OS
@@ -185,6 +190,17 @@ strip_ext <- function(file) {
 }
 absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 
+# Resolve paths when they are stored on a model object rather than when they are
+# used, so that later use doesn't depend on the working directory. Empty input
+# becomes NULL, the value callers treat as "not set" (absolute_path() would
+# otherwise return list()).
+resolve_path <- function(path) {
+  if (!length(path)) {
+    return(NULL)
+  }
+  repair_path(absolute_path(path))
+}
+
 # read, write, and copy files --------------------------------------------
 
 #' Copy temporary files (e.g., output, data) to a different location
@@ -200,8 +216,7 @@ absolute_path <- Vectorize(.absolute_path, USE.NAMES = FALSE)
 #' @param ids Unique identifiers (e.g., `chain_ids`).
 #' @param timestamp Add a timestamp to the file names?
 #' @param ext Extension to use for all saved files (default is `ext=".csv"`).
-#' @return The paths to the new files or `NA` for any that couldn't be
-#'   copied.
+#' @return The paths to the new files. Errors if any file cannot be copied.
 copy_temp_files <-
   function(current_paths,
            new_dir,
@@ -228,7 +243,11 @@ copy_temp_files <-
       overwrite = TRUE
     )
     if (!all(copied)) {
-      destinations[!copied] <- NA_character_
+      stop(
+        "Failed to move files: one or more files could not be copied. ",
+        "No original files were removed.",
+        call. = FALSE
+      )
     }
     absolute_path(destinations)
   }
@@ -247,7 +266,8 @@ generate_file_names <-
       new_names <- paste0(new_names, "-", stamp)
     }
     if (!is.null(ids)) {
-      new_names <- paste0(new_names, "-", ids)
+      width <- max(2L, nchar(sprintf("%d", max(ids))))
+      new_names <- paste0(new_names, "-", sprintf("%0*d", width, ids))
     }
     if (random) {
       rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
@@ -312,7 +332,7 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
       warning("E-BFMI not computed because it is undefined for posterior chains of length less than 3.", call. = FALSE)
     } else {
       energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
-      if (any(is.na(energy))) {
+      if (anyNA(energy)) {
         warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
       } else {
         efbmi_per_chain <- apply(energy, 2, function(x) {
@@ -460,6 +480,8 @@ create_draws_format <- function(format, ...) {
 #' @export
 #' @param x A [CmdStanMCMC] object.
 #' @return An `mcmc.list` object compatible with the \pkg{coda} package.
+#' @seealso [`$draws()`][fit-method-draws], [CmdStanMCMC], and
+#'   [posterior::as_draws()]
 #' @examples
 #' \dontrun{
 #' fit <- cmdstanr_example()
@@ -495,6 +517,16 @@ as_mcmc.list <- function(x) {
 wsl_safe_path <- function(path = NULL, revert = FALSE) {
   if (!is.character(path) || is.null(path) || !os_is_wsl()) {
     return(path)
+  }
+  # Apply the existing scalar conversion to each path, forwarding `revert`.
+  if (length(path) != 1L) {
+    return(vapply(
+      path,
+      wsl_safe_path,
+      character(1),
+      revert = revert,
+      USE.NAMES = FALSE
+    ))
   }
   if (revert) {
     if (!grepl("^/mnt/", path)) {
@@ -896,6 +928,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
   name <- strip_ext(basename(stan_file))
   path <- dirname(stan_file)
   hpp_path <- file.path(path, paste0(name, ".hpp"))
+  on.exit(unlink(hpp_path), add = TRUE)
 
   status <- withr::with_path(
       c(
@@ -909,13 +942,25 @@ get_standalone_hpp <- function(stan_file, stancflags) {
         error_on_status = FALSE
       )
     )
-  if (status$status == 0) {
-    hpp <- suppressWarnings(readLines(hpp_path, warn = FALSE))
-    unlink(hpp_path)
-    hpp
-  } else {
-    invisible(NULL)
+  if (is.na(status$status) || status$status != 0) {
+    if (length(status$stderr) > 0 && nzchar(status$stderr)) {
+      message(status$stderr)
+    }
+    err_msg <- paste0(
+      "An error occurred during compilation! See the message above for more ",
+      "information. (stanc exited with status ", status$status, ")"
+    )
+    if (length(status$stderr) > 0 &&
+        grepl("auto-format flag to stanc", status$stderr)) {
+      err_msg <- paste0(
+        err_msg,
+        "\nTo fix deprecated or removed syntax please see ",
+        "?cmdstanr::format for an example."
+      )
+    }
+    stop(err_msg, call. = FALSE)
   }
+  suppressWarnings(readLines(hpp_path, warn = FALSE))
 }
 
 get_function_name <- function(fun_start, fun_end, model_lines) {

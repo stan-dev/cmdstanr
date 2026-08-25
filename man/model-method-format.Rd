@@ -15,7 +15,7 @@ format(
 }
 \arguments{
 \item{overwrite_file}{(logical) Should the formatted code be written back
-to the input model file. The default is \code{FALSE}.}
+to the input model file? The default is \code{FALSE}.}
 
 \item{canonicalize}{(list or logical) Defines whether or not the compiler
 should 'canonicalize' the Stan model, removing things like deprecated syntax.
@@ -25,10 +25,12 @@ are passed to \code{stanc}. See the
 \href{https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing}{User's guide section}
 for available canonicalization options.}
 
-\item{backup}{(logical) If \code{TRUE}, create stanfile.bak backups before
-writing to the file. Disable this option if you're sure you have other
-copies of the file or are using a version control system like Git. Defaults
-to \code{TRUE}. The value is ignored if \code{overwrite_file = FALSE}.}
+\item{backup}{(logical) If \code{TRUE}, create a backup before writing to the
+file. The backup filename is the Stan filename followed by
+\code{.bak-YYYYMMDDHHMMSS}, where the final digits encode the timestamp. Disable
+this option if you're sure you have other copies of the file or are using a
+version control system like Git. Defaults to \code{TRUE}. The value is ignored
+if \code{overwrite_file = FALSE}.}
 
 \item{max_line_length}{(integer) The maximum length of a line when formatting.
 The default is \code{NULL}, which defers to the default line length of stanc.}
@@ -37,13 +39,13 @@ The default is \code{NULL}, which defers to the default line length of stanc.}
 default is \code{FALSE}.}
 }
 \value{
-The \verb{$format()} method returns \code{TRUE} (invisibly) if the model
-is valid.
+The \verb{$format()} method returns \code{TRUE} (invisibly) if formatting
+succeeds.
 }
 \description{
 The \verb{$format()} method of a \code{\link{CmdStanModel}} object
-runs stanc's auto-formatter on the model code. Either saves the formatted
-model directly back to the file or prints it for inspection.
+runs stanc's auto-formatter on the model code. It either saves the
+formatted model directly back to the file or prints it for inspection.
 }
 \examples{
 \dontrun{
@@ -92,6 +94,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-generate-quantities}},
 \code{\link{model-method-laplace}},
+\code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},
 \code{\link{model-method-sample}},

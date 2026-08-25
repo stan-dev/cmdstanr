@@ -14,6 +14,10 @@ parameters in the skeleton (defaults to \code{TRUE}).}
 \item{generated_quantities}{(logical) Whether to include generated quantities
 in the skeleton (defaults to \code{TRUE}).}
 }
+\value{
+A named list suitable for use as the \code{skeleton} argument to
+\code{\link[utils:relist]{utils::relist()}}.
+}
 \description{
 The \verb{$variable_skeleton()} method returns the variable skeleton
 needed by \code{utils::relist()} to re-structure a vector of constrained
@@ -28,6 +32,5 @@ fit_mcmc$variable_skeleton()
 }
 \seealso{
 \code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
-\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}},
-\code{\link[=hessian]{hessian()}}
+\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=hessian]{hessian()}}
 }

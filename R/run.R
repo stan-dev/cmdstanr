@@ -76,7 +76,6 @@ CmdStanRun <- R6::R6Class(
     },
     config_files = function(include_failed = FALSE) {
       files <- private$config_files_
-      files_win_path <- sapply(private$config_files_, wsl_safe_path, revert = TRUE)
       if (include_failed) {
         files
       } else {
@@ -86,7 +85,6 @@ CmdStanRun <- R6::R6Class(
     },
     metric_files = function(include_failed = FALSE) {
       files <- private$metric_files_
-      files_win_path <- sapply(private$metric_files_, wsl_safe_path, revert = TRUE)
       if (include_failed) {
         files
       } else {
@@ -251,6 +249,7 @@ CmdStanRun <- R6::R6Class(
         " files and set internal paths to new locations:\n",
         paste("-", new_paths, collapse = "\n")
       )
+      private$config_files_saved_ <- TRUE
       invisible(new_paths)
     },
     save_metric_files = function(dir = ".",
@@ -258,6 +257,12 @@ CmdStanRun <- R6::R6Class(
                                  timestamp = TRUE,
                                  random = TRUE) {
       current_files <- self$metric_files(include_failed = TRUE) # used so we get error if 0 files
+      if (!length(current_files)) {
+        stop(
+          "No metric files found. Make sure to set 'save_metric=TRUE' when fitting the model.",
+          call. = FALSE
+        )
+      }
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -275,6 +280,7 @@ CmdStanRun <- R6::R6Class(
         " files and set internal paths to new locations:\n",
         paste("-", new_paths, collapse = "\n")
       )
+      private$metric_files_saved_ <- TRUE
       invisible(new_paths)
     },
 
@@ -349,7 +355,7 @@ CmdStanRun <- R6::R6Class(
       } else if (self$method() == "generate_quantities") {
         chain_time <- data.frame(
           chain_id = self$procs$proc_ids()[self$procs$is_finished()],
-          total = self$procs$proc_total_time()[self$procs$is_finished()]
+          total = as.vector(self$procs$proc_total_time())
         )
 
         time <- list(total = self$procs$total_time(), chains = chain_time)
@@ -1135,6 +1141,8 @@ CmdStanGQProcs <- R6::R6Class(
         if (self$is_still_working(id) && !self$is_queued(id) && !self$is_alive(id)) {
           # if the process just finished make sure we process all
           # input and mark the process finished
+          self$process_output(id)
+          self$process_error_output(id)
           if (self$get_proc(id)$get_exit_status() == 0) {
             self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
           } else {
@@ -1156,8 +1164,13 @@ CmdStanGQProcs <- R6::R6Class(
         if (nzchar(line)) {
           if (self$proc_state(id) == 1 && grepl("refresh = ", line, perl = TRUE)) {
             self$set_proc_state(id, new_state = 1.5)
-          } else if (self$proc_state(id) >= 2 && private$show_stdout_messages_) {
-            cat("Chain", id, line, "\n")
+          } else {
+            generated_quantities_time <- parse_generated_quantities_time(line)
+            if (!is.null(generated_quantities_time)) {
+              private$proc_total_time_[[id]] <- generated_quantities_time
+            } else if (self$proc_state(id) >= 2 && private$show_stdout_messages_) {
+              cat("Chain", id, line, "\n")
+            }
           }
         } else {
           # after the metadata is printed and we found a blank line

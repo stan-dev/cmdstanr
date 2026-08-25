@@ -33,17 +33,18 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macOS-latest, r: 'devel', opencl: true}
+          - {os: macOS-latest, r: 'devel', opencl: false}
           - {os: macOS-latest, r: 'release', opencl: true}
           - {os: macos-26, r: 'release', opencl: false}
           - {os: macos-15-intel, r: 'release', opencl: false}
-          - {os: windows-latest, r: 'devel' }
-          - {os: windows-latest, r: 'release'}
-          - {os: windows-2022, r: '4.1'}
-          - {os: windows-latest, r: 'oldrel'}
-          - {os: ubuntu-latest, r: 'devel', opencl: true}
+          - {os: windows-latest, r: 'devel', opencl: false}
+          - {os: windows-latest, r: 'release', opencl: false}
+          - {os: windows-2022, r: '4.1', opencl: false}
+          - {os: windows-latest, r: 'oldrel', opencl: false}
+          - {os: ubuntu-latest, r: 'devel', opencl: false}
           - {os: ubuntu-latest, r: 'release', opencl: true}
-          - {os: ubuntu-latest, r: 'oldrel', opencl: true}
+          - {os: ubuntu-latest, r: 'oldrel', opencl: false}
+          - {os: windows-11-arm, r: 'release', opencl: false}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -75,38 +76,51 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache: "always"
-          extra-packages: any::rcmdcheck, local::.
+          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.r == '4.1' && 'qs2=?ignore' || '' }}
 
-      - name: Debug Windows toolchain resolution
-        if: ${{ runner.os == 'Windows' }}
+      - name: Test Windows toolchain in directory with spaces
+        if: ${{ runner.os == 'Windows' && matrix.config.r == '4.1' }}
         run: |
-          rtools_home <- cmdstanr:::rtools4x_home_path()
-          candidates <- cmdstanr:::rtools4x_toolchain_candidates()
-          selected <- cmdstanr:::rtools4x_toolchain_path()
-          cat("R version: ", as.character(getRversion()), "\n", sep = "")
-          cat("Rtools home: ", rtools_home, "\n", sep = "")
-          cat("Toolchain candidates:\n")
-          if (length(candidates) == 0) {
-            cat("  - <none>\n")
-          } else {
-            cat(paste0("  - ", candidates), sep = "\n")
-            cat("\n")
+          New-Item -ItemType Directory -Path "C:\tmp path with spaces" -Force
+          Move-Item -Path "C:\rtools40" -Destination "C:\tmp path with spaces\"
+          echo "RTOOLS40_HOME=C:/tmp path with spaces/rtools40" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Verify R_TOOLS_SOFT configuration
+        if: ${{ matrix.config.os == 'windows-latest' && matrix.config.r != '4.1' }}
+        run: |
+          rtools_soft <- suppressWarnings(
+            tools::Rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE)
+          )
+          if (
+            !is.null(attr(rtools_soft, "status")) ||
+              length(rtools_soft) != 1L ||
+              !nzchar(trimws(rtools_soft))
+          ) {
+            stop("R CMD config R_TOOLS_SOFT did not return a valid path.")
           }
-          cat("Selected toolchain: ", selected, "\n", sep = "")
-          selected_ok <- cmdstanr:::is_rtools4x_toolchain_usable(selected)
-          if (!selected_ok) {
-            stop("Resolved Windows toolchain path is not usable.")
+          rtools_soft <- trimws(rtools_soft)
+          required <- c(
+            file.path(dirname(rtools_soft), "usr", "bin", "make.exe"),
+            file.path(rtools_soft, "bin", "c++.exe")
+          )
+          missing <- required[!file.exists(required)]
+          if (length(missing)) {
+            stop(
+              "R_TOOLS_SOFT is configured, but expected executables are missing: ",
+              paste(missing, collapse = ", ")
+            )
           }
         shell: Rscript {0}
 
       - name: Install POCL on Ubuntu Runners
-        if: ${{ matrix.config.os == 'ubuntu-latest' }}
+        if: ${{ matrix.config.os == 'ubuntu-latest' && matrix.config.opencl }}
         run: |
           sudo apt-get update && sudo apt-get install -y ocl-icd-opencl-dev pocl-opencl-icd
         shell: bash
 
       - name: Install POCL on MacOS Runners
-        if: ${{ matrix.config.os == 'macOS-latest' }}
+        if: ${{ matrix.config.os == 'macOS-latest' && matrix.config.opencl }}
         run: |
           brew install pocl
           # Set LDLIBS_OPENCL environment variable so that CPU OpenCL is found
@@ -139,6 +153,7 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         env:
           _R_CHECK_CRAN_INCOMING_: false
+          _R_CHECK_FORCE_SUGGESTS_: ${{ matrix.config.r == '4.1' && 'false' || 'true' }}
 
       - name: Show testthat output
         if: always()

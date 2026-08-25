@@ -47,7 +47,7 @@ test_that("sample method works with valid numeric init values", {
   )
 })
 
-test_that("sample method throws error for invalid init argument", {
+test_that("fitting methods throw errors for invalid init arguments", {
   expect_error(
     mod$sample(data = data_list, chains = 2, init = -10, seed = 123),
     "If 'init' is numeric it must be a single real number >= 0",
@@ -72,7 +72,16 @@ test_that("sample method throws error for invalid init argument", {
 
   expect_error(
     mod$sample(data = data_list, chains = 3, init = c(init_json_1, init_json_2)),
-    "length 1 or number of chains"
+    "number of chains or Pathfinder paths"
+  )
+
+  expect_error(
+    mod$pathfinder(
+      data = data_list,
+      num_paths = 3,
+      init = c(init_json_1, init_json_2)
+    ),
+    "number of chains or Pathfinder paths"
   )
 })
 

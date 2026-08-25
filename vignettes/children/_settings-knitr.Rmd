@@ -2,6 +2,7 @@
 stopifnot(require(knitr))
 opts_chunk$set(
   # collapse = TRUE,
+  R.options = list(cli.num_colors = 1),
   dev = "png",
   dpi = 150,
   fig.asp = 0.618,

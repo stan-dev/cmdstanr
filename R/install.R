@@ -29,7 +29,9 @@
 #' @export
 #' @param dir (string) The path to the directory in which to install CmdStan.
 #'   The default is to install it in a directory called `.cmdstan` within the
-#'   user's home directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstan")`).
+#'   user's home directory. On Windows the home directory is determined from
+#'   `USERPROFILE`, falling back to `HOMEDRIVE` and `HOMEPATH`. On other
+#'   platforms it is determined from `HOME`.
 #' @param cores (integer) The number of CPU cores to use to parallelize building
 #'   CmdStan and speed up installation. If `cores` is not specified then the
 #'   default is to look for the option `"mc.cores"`, which can be set for an
@@ -45,27 +47,39 @@
 #'   is `FALSE`, in which case an informative error is thrown instead of
 #'   overwriting the user's installation.
 #' @param timeout (positive real) Timeout (in seconds) for the build stage of
-#'   the installation.
+#'   the installation. The default is 1200 seconds for `install_cmdstan()` and
+#'   600 seconds for `rebuild_cmdstan()`.
 #' @param version (string) The CmdStan release version to install. The default
 #'   is `NULL`, which downloads the latest stable release from
 #'   <https://github.com/stan-dev/cmdstan/releases>.
 #' @param release_url (string) The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
-#'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
+#'   The URL should point to the tarball (`.tar.gz` file) itself, e.g.,
 #'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param release_file (string) A file path to a CmdStan release tar.gz file
 #'   downloaded from the releases page: <https://github.com/stan-dev/cmdstan/releases>.
-#'   For example: `release_file=""./cmdstan-2.35.0.tar.gz"`. If `release_file` is
+#'   For example: `release_file="./cmdstan-2.35.0.tar.gz"`. If `release_file` is
 #'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
 #'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
 #'   the use of clang for compilation.
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
-#'   that the required toolchain is installed and properly configured. The
+#'   that the required toolchain is installed and properly configured? The
 #'   default is `TRUE`.
 #' @param wsl (logical) Should CmdStan be installed and run through the Windows
 #'  Subsystem for Linux (WSL). The default is `FALSE`.
+#'
+#' @return
+#' If a build fails or times out, `install_cmdstan()` issues a warning and
+#' invisibly returns the process result.
+#'
+#' For `cmdstan_make_local()`, if `cpp_options = NULL` then the existing
+#' contents of `make/local` are returned without writing anything; otherwise,
+#' the updated contents are returned.
+#'
+#' @seealso [set_cmdstan_path()], [cmdstan_default_install_path()], and
+#'   [cmdstan_default_path()]
 #'
 #' @examples
 #' \dontrun{
@@ -301,9 +315,6 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @param append (logical) For `cmdstan_make_local()`, should the listed
 #'   makefile flags be appended to the end of the existing `make/local` file?
 #'   The default is `TRUE`. If `FALSE` the file is overwritten.
-#' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
-#'   contents of `make/local` are returned without writing anything, otherwise
-#'   the updated contents are returned.
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -342,13 +353,15 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 
 #' @rdname install_cmdstan
 #' @export
-#' @param fix As of v1.0 this argument is deprecated and ignored and only
-#'   retained for compatibility.
+#' @param fix Deprecated and will be removed in a future release. This argument
+#'   is ignored and retained only for compatibility.
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (isTRUE(fix)) {
-    warning("The 'fix' argument is deprecated and will be removed in a future release.",
-            call. = FALSE)
+    warning(
+      "The 'fix' argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
+      call. = FALSE
+    )
   }
   warn_if_ignored_msys_toolchain_env()
   if (os_is_windows()) {
@@ -477,7 +490,7 @@ build_cmdstan <- function(dir,
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) },
         timeout = timeout
@@ -502,7 +515,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) }
       )
@@ -525,7 +538,7 @@ build_example <- function(dir, cores, quiet, timeout) {
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) },
         timeout = timeout
@@ -603,54 +616,13 @@ check_wsl_toolchain <- function() {
 }
 
 check_rtools4x_windows_toolchain <- function(quiet = FALSE) {
-  rtools_path <- rtools4x_home_path()
-  rtools_version <- paste0("Rtools", rtools4x_version())
-  # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
-  # we assume that RTools 40 is not installed.
-  if (!nzchar(rtools_path)) {
+  toolchain_path <- toolchain_PATH_env_var()
+  if (is.null(toolchain_path)) {
     stop(
-      "\n", rtools_version, " was not found but is required to run CmdStan with R version ",
-      R.version$major, ".", R.version$minor, ".",
-      "\nPlease install or reinstall the appropriate Rtools version for this R installation,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  # If RTools is installed in a path with spaces or brackets
-  # we error as this path is not valid
-  if (grepl("\\(|)| ", rtools_path)) {
-    stop(
-      "\n", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall the appropriate Rtools version for this R installation to a valid path,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  usr_bin <- repair_path(file.path(rtools_path, "usr", "bin"))
-  # Fail early with a clear message if the base make tool is missing
-  make_found <- any(file.exists(file.path(usr_bin, c("make.exe", "mingw32-make.exe"))))
-  if (!make_found) {
-    stop(
-      "\n", rtools_version, " is missing the required 'make' executable in ", usr_bin, ".",
-      "\nPlease reinstall the appropriate Rtools version for this R installation,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  candidates <- rtools4x_toolchain_candidates()
-  # Validate candidate toolchains here so build errors later are not opaque
-  has_usable_toolchain <- any(vapply(candidates, is_rtools4x_toolchain_usable, logical(1)))
-  if (!has_usable_toolchain) {
-    if (length(candidates) == 0) {
-      candidates_message <- "\n- <none>"
-    } else {
-      candidates_message <- paste0("\n- ", paste(candidates, collapse = "\n- "))
-    }
-    stop(
-      "\n", rtools_version, " does not contain a supported C++ toolchain.",
-      "\nChecked the following paths:",
-      candidates_message,
-      "\nPlease reinstall the appropriate Rtools version for this R installation,",
+      "CmdStanR could not find both make and a C++ compiler in R's ",
+      "configured toolchain or on PATH.",
+      "\nPlease install or reinstall the appropriate Rtools version for this ",
+      "R installation, or add a compatible toolchain to PATH,",
       "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
@@ -736,108 +708,71 @@ cmdstan_arch_suffix <- function(version = NULL) {
   paste0("-linux-", selected_arch)
 }
 
+# Thin wrapper around `tools::Rcmd()` to allow mocking
+.cmdstanr_rcmd <- function(...) tools::Rcmd(...)
+
 toolchain_PATH_env_var <- function() {
-  if (!os_is_windows()) {
-    return(NULL)
+  # Return a previously successful lookup if available
+  # For non-windows systems the initialized path stays NULL
+  if (!is.null(.cmdstanr$TOOLCHAIN_PATH) || !os_is_windows()) {
+    return(.cmdstanr$TOOLCHAIN_PATH)
   }
-  rtools_home <- rtools4x_home_path()
-  if (!nzchar(rtools_home)) {
-    return(NULL)
-  }
-  paste0(
-    repair_path(file.path(rtools_home, "usr", "bin")), ";",
-    rtools4x_toolchain_path()
-  )
-}
 
-#' Ordered candidate RTools toolchain bin paths
-#'
-#' On x86_64, candidate order is ABI-aware so legacy fallback paths are tried
-#' in an order compatible with the current R toolchain.
-#'
-#' @noRd
-#' @return A character vector of normalized candidate toolchain bin paths
-rtools4x_toolchain_candidates <- function() {
-  rtools_home <- rtools4x_home_path()
-  if (!nzchar(rtools_home)) {
-    return(character())
-  }
-  # Prefer the modern static toolchain first, then ABI-compatible legacy
-  # fallbacks for older Rtools layouts
-  toolchains <- if (arch_is_aarch64()) {
-    "aarch64-w64-mingw32.static.posix"
-  } else if (is_ucrt_toolchain()) {
-    c("x86_64-w64-mingw32.static.posix", "ucrt64", "mingw64")
+  # Lookup the configured toolchain location for the installation
+  # This variable is set at installation since R 4.2
+  #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
+  # R 4.0 and R 4.1 did not set the R_TOOLS_SOFT config variable, so
+  # we use the RTOOLS40_HOME environment variable instead
+  if (current_r_version() < "4.2.0") {
+    rtools40_home <- Sys.getenv("RTOOLS40_HOME", "C:\\rtools40")
+    r_arch <- ifelse(Sys.getenv("R_ARCH") == "/i386", "mingw32", "mingw64")
+    rtools_soft <- file.path(rtools40_home, r_arch)
   } else {
-    c("x86_64-w64-mingw32.static.posix", "mingw64", "ucrt64")
-  }
-  repair_path(file.path(rtools_home, toolchains, "bin"))
-}
-
-# A candidate is usable if the directory exists and contains a g++ executable
-is_rtools4x_toolchain_usable <- function(path) {
-  if (!nzchar(path) || !dir.exists(path)) {
-    return(FALSE)
-  }
-  any(file.exists(file.path(path, c("g++.exe", "g++"))))
-}
-
-#' Resolve the preferred RTools toolchain bin path
-#'
-#' Returns the first usable path from `rtools4x_toolchain_candidates()`. If no
-#' candidate is usable, returns the first candidate for deterministic diagnostics.
-#'
-#' @noRd
-#' @return A single path string, or `""` if no candidates are available.
-rtools4x_toolchain_path <- function() {
-  candidates <- rtools4x_toolchain_candidates()
-  if (length(candidates) == 0) {
-    return("")
-  }
-  # Return the first usable candidate (ordered by preference above).
-  usable <- vapply(candidates, is_rtools4x_toolchain_usable, logical(1))
-  if (any(usable)) {
-    return(candidates[which(usable)[1]])
-  }
-  candidates[1]
-}
-
-rtools4x_version <- function() {
-  rtools_ver <- NULL
-  r_version <- current_r_version()
-
-  if (r_version < "4.2.0") {
-    rtools_ver <- "40"
-  } else if (r_version < "4.3.0") {
-    rtools_ver <- "42"
-  } else if (r_version < "4.4.0") {
-    rtools_ver <- "43"
-  } else if (r_version < "4.5.0") {
-    rtools_ver <- "44"
-  } else {
-    rtools_ver <- "45"
-  }
-  rtools_ver
-}
-
-rtools4x_home_path <- function() {
-  rtools_ver <- rtools4x_version()
-  if (arch_is_aarch64()) {
-    rtools_ver <- paste0(rtools_ver, "_AARCH64")
-  }
-  path <- Sys.getenv(paste0("RTOOLS", rtools_ver, "_HOME"))
-
-  if (!nzchar(path)) {
-    default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
-    if (arch_is_aarch64()) {
-      default_path <- paste0(default_path, "-aarch64")
-    }
-    if (dir.exists(default_path)) {
-      path <- default_path
+    rtools_soft <- tryCatch(
+      suppressWarnings(
+        .cmdstanr_rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE)
+      ),
+      error = function(e) ""
+    )
+    if (!is.null(attr(rtools_soft, "status")) || length(rtools_soft) != 1L) {
+      rtools_soft <- ""
+    } else {
+      rtools_soft <- trimws(rtools_soft)
     }
   }
 
-  path
+  rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
+  rtools_cpp_dir <- file.path(rtools_soft, "bin")
+
+  # R 4.2+ prepends the toolchain directory to PATH, so it will be found first
+  if (!nzchar(rtools_soft) ||
+      !file.exists(file.path(rtools_bin_dir, "make.exe"))) {
+    make_path <- Sys.which("make")
+    rtools_bin_dir <- ifelse(nzchar(make_path), dirname(make_path), "")
+  }
+  if (!nzchar(rtools_soft) ||
+      !file.exists(file.path(rtools_cpp_dir, "c++.exe"))) {
+    cpp_path <- Sys.which("c++")
+    rtools_cpp_dir <- ifelse(nzchar(cpp_path), dirname(cpp_path), "")
+  }
+
+  if (rtools_bin_dir != "" && rtools_cpp_dir != "") {
+    toolchain_dirs <- unique(
+      repair_path(short_path(c(rtools_bin_dir, rtools_cpp_dir)))
+    )
+    if (any(grepl("[() ]", toolchain_dirs))) {
+      stop(
+        "The Windows toolchain path contains spaces or parentheses, and ",
+        "CmdStanR could not convert it to a usable short path. Please install ",
+        "or move the toolchain to a path without spaces or parentheses, ",
+        "restart R, and then run cmdstanr::check_cmdstan_toolchain().",
+        call. = FALSE
+      )
+    }
+    .cmdstanr$TOOLCHAIN_PATH <- paste(toolchain_dirs, collapse = ";")
+  }
+
+  .cmdstanr$TOOLCHAIN_PATH
 }
 
 assert_supported_requested_cmdstan_version <- function(version, source = "version") {
