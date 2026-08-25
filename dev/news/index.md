@@ -2,6 +2,10 @@
 
 ## cmdstanr (development version)
 
+- Chain IDs in generated filenames are now zero-padded to at least two
+  digits, for example `01` instead of `1`.
+  ([\#1244](https://github.com/stan-dev/cmdstanr/issues/1244))
+
 - When using CmdStan through WSL, paths for output, diagnostic, profile,
   config, and metric files now remain accessible to Windows R when an
   explicit output directory is supplied.
@@ -164,7 +168,7 @@
   no longer overwrites the internally generated optimizer CSV when
   `mode = NULL` and `output_basename` is supplied. The internally
   generated optimizer CSV now uses the filename
-  `<output_basename>-mode-1.csv`.
+  `<output_basename>-mode-01.csv`.
 
 - CmdStanModel objects created using `compile_model_methods = TRUE` that
   are then saved and reloaded no longer error in model fitting methods.
