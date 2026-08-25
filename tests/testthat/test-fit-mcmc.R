@@ -25,7 +25,7 @@ fit_mcmc_fixed_param <- testing_fit("logistic", method = "sample",
                                     refresh = 0, fixed_param = TRUE)
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
-test_that("draws() stops for unkown variables", {
+test_that("draws() stops for unknown variables", {
   expect_error(
     draws_betas <- fit_mcmc$draws(variables = "ABCD"),
     "Can't find the following variable(s) in the output: ABCD",
@@ -279,7 +279,7 @@ test_that("inc_warmup in draws() works with a single chain", {
   expect_equal(dim(y3), c(10000, 1, 6))
 })
 
-test_that("output() shows informational messages depening on show_messages", {
+test_that("output() shows informational messages depending on show_messages", {
   fit_info_msg <- testing_fit("info_message")
   expect_output(
     fit_info_msg$output(1),
@@ -338,7 +338,7 @@ test_that("loo method works with moment-matching", {
   expect_no_warning(fit$loo(moment_match = TRUE, k_threshold=0.4))
 })
 
-test_that("loo errors if it can't find log lik variables", {
+test_that("loo errors if it can't find log like variables", {
   skip_if_not_installed("loo")
   fit_schools <- testing_fit("schools")
   expect_error(
