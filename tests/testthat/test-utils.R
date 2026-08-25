@@ -182,16 +182,28 @@ test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
 
 # misc --------------------------------------------------------------------
 
-test_that("generate_file_names() zero-pads IDs", {
+test_that("generate_file_names() zero-pads IDs for lexicographic sorting", {
   expect_equal(
     generate_file_names(
       basename = "output",
-      ids = c(1, 9, 10, 100),
+      ids = 1:10,
       timestamp = FALSE,
       random = FALSE
     ),
-    paste0("output-", c("01", "09", "10", "100"), ".csv")
+    paste0("output-", sprintf("%02d", 1:10), ".csv")
   )
+
+  file_names <- generate_file_names(
+    basename = "output",
+    ids = 1:100,
+    timestamp = FALSE,
+    random = FALSE
+  )
+  expect_equal(
+    file_names[c(1, 9, 10, 100)],
+    paste0("output-", c("001", "009", "010", "100"), ".csv")
+  )
+  expect_equal(sort(file_names), file_names)
 })
 
 test_that("copy_temp_files retains sources if any copy fails", {
