@@ -1000,7 +1000,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' * `basename` is the user's provided `basename` argument or, if `NULL`, the
 #'   model name;
 #' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
-#' * `id` is the MCMC chain id (or `1` for non MCMC);
+#' * `id` is the MCMC chain id, zero-padded to at least two digits (or `01` for
+#'   non-MCMC);
 #' * `random` contains six random hexadecimal characters.
 #'
 #' `$save_latent_dynamics_files()` uses the pattern

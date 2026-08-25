@@ -37,7 +37,7 @@ test_that("saving csv output files works", {
     should_match <- paste0("testing-output-",
                            base::format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
-                           seq_len(fit$num_procs()))
+                           sprintf("%02d", seq_len(fit$num_procs())))
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
     }
@@ -72,7 +72,7 @@ test_that("saving diagnostic csv output works", {
     should_match <- paste0("testing-output-diagnostic-",
                            base::format(Sys.time(), "%Y%m%d%H%M"),
                            "-",
-                           seq_len(fit$num_procs()))
+                           sprintf("%02d", seq_len(fit$num_procs())))
 
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
