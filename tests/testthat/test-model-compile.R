@@ -968,6 +968,19 @@ test_that("cpp_options work with settings in make/local", {
   cmdstan_make_local(cpp_options = backup, append = FALSE)
 })
 
+test_that("a recompile records options inherited from make/local", {
+  local_cmdstan_make_local(cpp_options = list(STAN_THREADS = "true"))
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod$compile(force_recompile = TRUE)
+
+  # Nothing was passed to $compile(), so only the binary can report threading.
+  expect_true(cpp_option_value(mod$cpp_options(), "stan_threads"))
+  expect_silent(assert_valid_threads(2, mod$cpp_options(), multiple_chains = TRUE))
+})
+
 test_that("cpp_options() excludes the Stan version reported by the executable", {
   mod <- cmdstan_model(stan_file = stan_program)
   expect_null(mod$cpp_options()$STAN_VERSION)
