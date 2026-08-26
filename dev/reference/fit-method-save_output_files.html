@@ -206,10 +206,10 @@ with multiple MCMC chains the data file is the same.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpJgSCUJ/logistic-202608251950-01-749bb6.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/RtmpJgSCUJ/logistic-202608251950-02-749bb6.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/RtmpJgSCUJ/logistic-202608251950-03-749bb6.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/RtmpJgSCUJ/logistic-202608251950-04-749bb6.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmphGKK7h/logistic-202608261829-01-749bd4.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/RtmphGKK7h/logistic-202608261829-02-749bd4.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/RtmphGKK7h/logistic-202608261829-03-749bd4.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/RtmphGKK7h/logistic-202608261829-04-749bd4.csv"</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">data_file</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/home/runner/work/_temp/Library/cmdstanr/logistic.data.json"</span>
 <span class="r-in"><span></span></span>
@@ -217,22 +217,22 @@ with multiple MCMC chains the data file is the same.</p>
 <span class="r-in"><span><span class="va">my_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_output_files</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">my_dir</span>, basename <span class="op">=</span> <span class="st">"banana"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Moved 4 files and set internal paths to new locations:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/banana-202608251950-01-54696d.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/banana-202608251950-02-54696d.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/banana-202608251950-03-54696d.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/banana-202608251950-04-54696d.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/banana-202608261829-01-54698b.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/banana-202608261829-02-54698b.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/banana-202608261829-03-54698b.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/banana-202608261829-04-54698b.csv</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_output_files</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">my_dir</span>, basename <span class="op">=</span> <span class="st">"tomato"</span>, timestamp <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Moved 4 files and set internal paths to new locations:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/tomato-01-1f3e6c.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/tomato-02-1f3e6c.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/tomato-03-1f3e6c.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/tomato-04-1f3e6c.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/tomato-01-1f3e8a.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/tomato-02-1f3e8a.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/tomato-03-1f3e8a.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/tomato-04-1f3e8a.csv</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_output_files</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">my_dir</span>, basename <span class="op">=</span> <span class="st">"lettuce"</span>, timestamp <span class="op">=</span> <span class="cn">FALSE</span>, random <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Moved 4 files and set internal paths to new locations:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/lettuce-01.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/lettuce-02.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/lettuce-03.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJgSCUJ/lettuce-04.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/lettuce-01.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/lettuce-02.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/lettuce-03.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmphGKK7h/lettuce-04.csv</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

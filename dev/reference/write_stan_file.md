@@ -85,7 +85,7 @@ model {
 
 f <- write_stan_file(stan_program)
 print(f)
-#> [1] "/tmp/RtmpJgSCUJ/model_0fc14724391f86141648501cc6535151.stan"
+#> [1] "/tmp/RtmphGKK7h/model_0fc14724391f86141648501cc6535151.stan"
 
 lines <- readLines(f)
 print(lines)
