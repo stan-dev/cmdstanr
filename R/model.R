@@ -304,7 +304,8 @@ CmdStanModel <- R6::R6Class(
         private$include_paths_ <-
           private$precompile_include_paths_ %||% resolve_path(args$include_paths)
       }
-      if (!is.null(stan_file) && compile) {
+      compiled_here <- !is.null(stan_file) && compile
+      if (compiled_here) {
         self$compile(...)
       }
 
@@ -313,7 +314,9 @@ CmdStanModel <- R6::R6Class(
       # in the future, will be set only if/when we have a binary
       # as the version the model was compiled with
       private$cmdstan_version_ <- cmdstan_version()
-      if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
+      # compile() reads the metadata itself on both of its exits.
+      if (!compiled_here &&
+          length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
         private$cpp_options_ <- merge_exe_info_cpp_options(
           private$cpp_options_,
           model_compile_info(self$exe_file(), self$cmdstan_version())

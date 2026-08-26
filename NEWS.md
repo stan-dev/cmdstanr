@@ -82,6 +82,8 @@ effect. (#1235)
 were never passed to `$compile()`, such as those inherited from `make/local`,
 when the binary reports them. `$sample()` and friends previously refused
 `threads_per_chain` for an executable that did have threading. (#1019, #1235)
+* `cmdstan_model()` no longer runs the model executable twice to read its build
+metadata. (#1236)
 * `$cpp_options()` no longer reports options the executable was not built with.
 Previously a request that did not rebuild the model was recorded as though it
 had, so `$sample()` could fail with "the model executable was built with

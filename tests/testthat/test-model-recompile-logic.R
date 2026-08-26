@@ -463,6 +463,46 @@ test_that("a successful compile records options only the executable reports", {
   expect_null(cpp_option_value(mod_blind$cpp_options(), "stan_threads"))
 })
 
+test_that("cmdstan_model() reads the executable metadata once, whatever the path", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+  info <- "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0"
+  real_model_compile_info <- model_compile_info
+  reads <- 0L
+  local_mocked_bindings(
+    model_compile_info = function(...) {
+      reads <<- reads + 1L
+      real_model_compile_info(...)
+    }
+  )
+
+  # Fresh compile.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = info),
+    code = mod <- cmdstan_model(stan_file)
+  )
+  expect_equal(reads, 1L)
+
+  # Executable already up to date.
+  reads <- 0L
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = info),
+    code = cmdstan_model(stan_file)
+  )
+  expect_equal(reads, 1L)
+
+  # Executable adopted without a Stan file.
+  reads <- 0L
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = info),
+    code = cmdstan_model(exe_file = mod$exe_file())
+  )
+  expect_equal(reads, 1L)
+})
+
 test_that("options inherited from make/local are learned, not warned about", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
