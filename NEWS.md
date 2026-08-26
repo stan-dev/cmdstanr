@@ -61,6 +61,9 @@ the ignored spelling after a successful compilation. (#1235)
 `$cpp_options()`. (#1235)
 * `$expose_functions()` now works after a `$compile()` call that found the
 executable up to date. (#1235)
+* `$expose_functions()` on a model with no executable, such as one created with
+`compile = FALSE` or compiled with `dry_run = TRUE`, now reports that it cannot
+expose functions instead of failing with "argument is of length zero". (#1235)
 * A failed compilation no longer moves `$exe_file()` or replaces the generated
 C++ used by `$hpp_file()` and `fit$init_model_methods()`. Previously a failure
 at the C++ stage left the old executable paired with model methods generated

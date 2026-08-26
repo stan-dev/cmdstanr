@@ -547,6 +547,22 @@ test_that("Exposing functions with precompiled model gives meaningful error", {
   )
 })
 
+test_that("$expose_functions() after a dry run reports why it cannot", {
+  stan_file <- write_stan_file("
+    functions { real a_plus_b(real a, real b) { return a + b; } }
+    parameters { real x; }
+    model { x ~ std_normal(); }
+  ")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod$compile(dry_run = TRUE)
+  # The wording is wrong for a model that was never compiled at all.
+  expect_error(
+    mod$expose_functions(),
+    "Exporting standalone functions is not possible with a pre-compiled Stan model!",
+    fixed = TRUE
+  )
+})
+
 test_that("Functions with SUNDIALS/KINSOL methods link correctly", {
   modcode <- "
     functions {

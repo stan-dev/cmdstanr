@@ -263,6 +263,8 @@ CmdStanModel <- R6::R6Class(
       private$dir_ <- args$dir
       self$functions <- new.env()
       self$functions$compiled <- FALSE
+      # No generated C++ until a compilation commits some.
+      self$functions$existing_exe <- TRUE
       if (!is.null(stan_file)) {
         assert_file_exists(stan_file, access = "r", extension = c("stan", "stanfunctions"))
         checkmate::assert_flag(compile)
