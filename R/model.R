@@ -946,6 +946,15 @@ compile <- function(quiet = TRUE,
   private$exe_file_ <- exe
 
   if (!dry_run) {
+    # Learn options the executable reports that were never passed, such as ones
+    # inherited from make/local. Ahead of the exposures, which can fail.
+    exe_info <- tryCatch(
+      model_compile_info(exe, self$cmdstan_version()),
+      error = function(e) NULL
+    )
+    private$cpp_options_ <-
+      merge_exe_info_cpp_options(private$cpp_options_, exe_info)
+
     # Run optional exposure only after executable state is committed.
     if (compile_standalone) {
       expose_stan_functions(self$functions, verbose = !quiet)

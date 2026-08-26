@@ -425,11 +425,11 @@ test_that("a raw make argument round-trips through the option comparison", {
   )
 })
 
-test_that("options inherited from make/local are learned, not warned about", {
+test_that("a successful compile records options only the executable reports", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
-  # make/local supplies STAN_THREADS=true, so the executable is threaded even
-  # though nothing was passed to $compile() and nothing could be recorded.
+  # Stands in for STAN_THREADS=true in make/local: nothing was passed to
+  # $compile(), but the binary reports threading.
   threaded <- paste0(
     "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\n",
     "STAN_THREADS=true"
@@ -441,10 +441,48 @@ test_that("options inherited from make/local are learned, not warned about", {
     info_ret = list(status = 0, stdout = threaded),
     code = mod$compile(force_recompile = TRUE)
   )
-  expect_null(mod$cpp_options()$stan_threads)
+  expect_true(cpp_option_value(mod$cpp_options(), "stan_threads"))
+  expect_silent(assert_valid_threads(2, mod$cpp_options(), multiple_chains = TRUE))
 
-  # Metadata fills in options inherited from make/local and records them so
-  # assert_valid_threads() sees the executable's threading support.
+  # What was passed to Make keeps only the request, so a later no-op can tell
+  # inherited options from explicit ones.
+  built <- mod$.__enclos_env__$private$built_cpp_options_
+  expect_null(cpp_option_value(built, "stan_threads"))
+
+  # Unreadable metadata leaves the request in place rather than erroring.
+  mod_blind <- cmdstan_model(stan_file, compile = FALSE)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod_blind$compile(
+      cpp_options = list(stan_cpp_optims = TRUE),
+      force_recompile = TRUE
+    )
+  )
+  expect_true(cpp_option_value(mod_blind$cpp_options(), "stan_cpp_optims"))
+  expect_null(cpp_option_value(mod_blind$cpp_options(), "stan_threads"))
+})
+
+test_that("options inherited from make/local are learned, not warned about", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+  # make/local supplies STAN_THREADS=true, so the executable is threaded even
+  # though nothing was passed to $compile().
+  threaded <- paste0(
+    "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0\n",
+    "STAN_THREADS=true"
+  )
+
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = threaded),
+    code = mod$compile(force_recompile = TRUE)
+  )
+  expect_true(cpp_option_value(mod$cpp_options(), "stan_threads"))
+
+  # A no-op keeps them recorded, and asking for what the executable already has
+  # is not a mismatch.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 0, stdout = threaded),
