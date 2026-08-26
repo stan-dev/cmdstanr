@@ -464,7 +464,7 @@ test_that("compile() with dry_run = TRUE doesn't refresh cached model state", {
 
   expect_identical(model$code(), code_before)
   expect_identical(model$variables(), variables_before)
-  expect_equal(ls(model$functions), "compiled")
+  expect_equal(ls(model$functions), c("compiled", "existing_exe"))
   expect_false(model$functions$compiled)
 })
 
@@ -488,7 +488,7 @@ test_that("a failed compile() doesn't refresh cached model state", {
 
   expect_identical(model$code(), code_before)
   expect_identical(model$variables(), variables_before)
-  expect_equal(ls(model$functions), "compiled")
+  expect_equal(ls(model$functions), c("compiled", "existing_exe"))
   expect_false(model$functions$compiled)
 })
 
