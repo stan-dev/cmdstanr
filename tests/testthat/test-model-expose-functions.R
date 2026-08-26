@@ -555,7 +555,7 @@ test_that("$expose_functions() after a dry run reports why it cannot", {
   ")
   mod <- cmdstan_model(stan_file, compile = FALSE)
   mod$compile(dry_run = TRUE)
-  # The wording is wrong for a model that was never compiled at all.
+  # The wording is wrong for a model that was never compiled at all (#1245).
   expect_error(
     mod$expose_functions(),
     "Exporting standalone functions is not possible with a pre-compiled Stan model!",
