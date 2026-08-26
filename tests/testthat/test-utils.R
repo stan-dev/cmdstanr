@@ -759,3 +759,56 @@ test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/loca
     }
   )
 })
+
+test_that("local_cmdstan_make_local() heals residue and nests", {
+  make_local_path <- file.path(cmdstan_path(), "make", "local")
+  original <- if (file.exists(make_local_path)) {
+    readBin(make_local_path, "raw", file.size(make_local_path))
+  } else {
+    NULL
+  }
+  withr::defer({
+    if (is.null(original)) {
+      unlink(make_local_path)
+    } else {
+      writeBin(original, make_local_path)
+    }
+    unlink(make_local_backup_path())
+  })
+  contents <- function() {
+    if (file.exists(make_local_path)) readLines(make_local_path) else character()
+  }
+
+  # A run killed before its restore leaves residue in make/local and its backup
+  # behind. The next call must heal from the backup, not adopt the residue.
+  if (is.null(original)) {
+    file.create(make_local_backup_path())
+  } else {
+    writeBin(original, make_local_backup_path())
+  }
+  cat("KILLED_RUN_RESIDUE=true\n", file = make_local_path, append = TRUE)
+
+  local({
+    local_cmdstan_make_local(cpp_options = list(OUTER_OPTION = "true"))
+    expect_false(any(grepl("KILLED_RUN_RESIDUE", contents())))
+    expect_true(any(grepl("OUTER_OPTION", contents())))
+
+    # A nested call restores to the outer state, not to the original.
+    local({
+      local_cmdstan_make_local(cpp_options = list(INNER_OPTION = "true"))
+      expect_true(any(grepl("INNER_OPTION", contents())))
+    })
+    expect_false(any(grepl("INNER_OPTION", contents())))
+    expect_true(any(grepl("OUTER_OPTION", contents())))
+    # The inner call must not have released the backup the outer one holds.
+    expect_true(file.exists(make_local_backup_path()))
+  })
+
+  expect_false(file.exists(make_local_backup_path()))
+  restored <- if (file.exists(make_local_path)) {
+    readBin(make_local_path, "raw", file.size(make_local_path))
+  } else {
+    NULL
+  }
+  expect_identical(restored, original)
+})
