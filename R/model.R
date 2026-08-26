@@ -686,18 +686,21 @@ compile <- function(quiet = TRUE,
     stanc_options[["allow-undefined"]] <- TRUE
     # Keep user_header as a host path for the WSL1 file check below.
     user_header <- resolve_path(user_header)
-    if (!file.exists(user_header)) {
-      stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
-    }
-    cpp_options[[resolved_header$spelling]] <- wsl_safe_path(user_header)
   }
 
-  # Save the request before compiling so a failed build can be retried.
+  # Save the request before anything can fail so a failed build can be retried.
   # Keep the dirty flag set until a build succeeds.
   private$user_header_dirty_ <- isTRUE(private$user_header_dirty_) ||
     !same_path(user_header, private$user_header_)
   private$user_header_ <- user_header
   private$using_user_header_ <- using_user_header
+
+  if (using_user_header) {
+    if (!file.exists(user_header)) {
+      stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
+    }
+    cpp_options[[resolved_header$spelling]] <- wsl_safe_path(user_header)
+  }
 
   # Do not adopt an executable from a new destination. Its generated C++ and
   # metadata may not match this object.

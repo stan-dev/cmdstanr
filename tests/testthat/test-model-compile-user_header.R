@@ -311,6 +311,34 @@ test_that("a bare retry after a failed compile keeps the newly supplied header",
   )
 })
 
+test_that("a header that does not exist is still recorded as the request", {
+  stan_file <- local_external_model()
+  header <- file.path(withr::local_tempdir(), "not_yet_written.hpp")
+  local_mocked_stanc()
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  private <- model$.__enclos_env__$private
+
+  expect_error(
+    model$compile(user_header = header, force_recompile = TRUE),
+    "does not exist"
+  )
+  expect_equal(private$user_header_, resolve_path(header))
+  expect_true(private$using_user_header_)
+  expect_true(private$user_header_dirty_)
+
+  # A bare retry once the header exists must build against it.
+  file.create(header)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_mock_compile(model$compile())
+  )
+  expect_equal(
+    model$cpp_options()[["USER_HEADER"]],
+    wsl_safe_path(resolve_path(header))
+  )
+})
+
 test_that("changing the user header forces compilation", {
   stan_file <- local_external_model()
   h1 <- withr::local_tempfile(lines = "", fileext = ".hpp")

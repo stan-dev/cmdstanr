@@ -835,6 +835,14 @@ test_that("check_syntax() and format() allow undefined functions with a user hea
 
   expect_true(mod$check_syntax(quiet = TRUE))
   expect_output(mod$format(), "make_odds", fixed = TRUE)
+
+  # A compile that failed because the header is missing still counts as using one.
+  mod_missing <- cmdstan_model(stan_file, compile = FALSE)
+  expect_error(
+    mod_missing$compile(user_header = "not_a_real_header.hpp"),
+    "does not exist"
+  )
+  expect_true(mod_missing$check_syntax(quiet = TRUE))
 })
 
 test_that("compile() and check_syntax() error on removed syntax", {

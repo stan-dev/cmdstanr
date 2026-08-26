@@ -108,6 +108,10 @@ clears a previously configured user header instead of being ignored. It stands
 for an explicit `USER_HEADER=`, which `Make` takes as clearing anything set
 before it, so the model previously compiled with no header while continuing to
 report the old one. (#1235)
+* A `$compile()` that fails because the user header does not exist now still
+records the header. Previously the request was discarded, so `$check_syntax()`
+and `$format()` reported the model's own undefined functions as errors and a
+bare retry after creating the file compiled with no header at all. (#1235)
 * CmdStanModel methods now correctly handle `#include` directories with spaces
 in their paths. (#820)
 * `$include_paths()` now returns absolute paths, and relative include paths are
