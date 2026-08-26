@@ -482,7 +482,9 @@ test_that("list_to_array fails for non-numeric values", {
 })
 
 test_that("cmdstan_make_local() works", {
-  exisiting_make_local <- cmdstan_make_local()
+  # Backup only, cmdstan_make_local() is the thing being tested.
+  local_make_local_backup()
+
   make_local_path <- file.path(cmdstan_path(), "make", "local")
   if (file.exists(make_local_path)) {
     file.remove(make_local_path)
@@ -511,7 +513,6 @@ test_that("cmdstan_make_local() works", {
                ))
   expect_equal(cmdstan_make_local(cpp_options = list("TEST4" = TRUE), append = FALSE),
                c("TEST4=true"))
-  cmdstan_make_local(cpp_options = as.list(exisiting_make_local), append = FALSE)
 })
 
 test_that("cmdstan_make_local() preserves empty make/local behavior", {
@@ -760,7 +761,7 @@ test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/loca
   )
 })
 
-test_that("local_cmdstan_make_local() heals residue and nests", {
+test_that("local_make_local_backup() heals residue and nests", {
   make_local_path <- file.path(cmdstan_path(), "make", "local")
   original <- if (file.exists(make_local_path)) {
     readBin(make_local_path, "raw", file.size(make_local_path))

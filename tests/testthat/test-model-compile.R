@@ -382,9 +382,8 @@ test_that("name in STANCFLAGS is set correctly", {
 test_that("switching threads on and off works without rebuild", {
   main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
   main_path_threads_o <- file.path(cmdstan_path(), "src", "cmdstan", "main_threads.o")
-  backup <- cmdstan_make_local()
-  no_threads <- grep("STAN_THREADS", backup, invert = TRUE, value = TRUE)
-  cmdstan_make_local(cpp_options = list(no_threads), append = FALSE)
+  no_threads <- grep("STAN_THREADS", cmdstan_make_local(), invert = TRUE, value = TRUE)
+  local_cmdstan_make_local(cpp_options = list(no_threads), append = FALSE)
   if (file.exists(main_path_threads_o)) {
     file.remove(main_path_threads_o)
   }
@@ -408,8 +407,6 @@ test_that("switching threads on and off works without rebuild", {
   mod$compile(force_recompile = TRUE)
   after_mtime <- file.mtime(main_path_o)
   expect_equal(before_mtime, after_mtime)
-
-  cmdstan_make_local(cpp_options = backup, append = FALSE)
 })
 
 test_that("multiple cpp_options work", {
@@ -942,9 +939,8 @@ test_that("include_paths_stanc3_args() works", {
 })
 
 test_that("cpp_options work with settings in make/local", {
-  backup <- cmdstan_make_local()
-  no_threads <- grep("STAN_THREADS", backup, invert = TRUE, value = TRUE)
-  cmdstan_make_local(cpp_options = list(no_threads), append = FALSE)
+  no_threads <- grep("STAN_THREADS", cmdstan_make_local(), invert = TRUE, value = TRUE)
+  local_cmdstan_make_local(cpp_options = list(no_threads), append = FALSE)
 
   if (length(mod$exe_file()) > 0 && file.exists(mod$exe_file())) {
     file.remove(mod$exe_file())
@@ -963,9 +959,6 @@ test_that("cpp_options work with settings in make/local", {
   expect_true(mod$cpp_options()$STAN_THREADS)
 
   file.remove(mod$exe_file())
-
-  # restore
-  cmdstan_make_local(cpp_options = backup, append = FALSE)
 })
 
 test_that("a recompile records options inherited from make/local", {

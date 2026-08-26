@@ -24,7 +24,7 @@ delete_extensions <- function() {
   }
 }
 
-# Tracks whether an outer local_cmdstan_make_local() is holding the on-disk
+# Tracks whether an outer local_make_local_backup() is holding the on-disk
 # backup, so nested calls restore in memory without disturbing it.
 make_local_backup <- new.env(parent = emptyenv())
 make_local_backup$held <- FALSE
@@ -51,15 +51,15 @@ restore_cmdstan_make_local <- function() {
   invisible(NULL)
 }
 
-# Write cpp_options to the make/local of the current CmdStan installation and
-# restore its original contents (or absence) when `envir` exits. Called at the
-# top level of a test file, the restore runs after all tests in that file.
+# Restore the make/local of the current CmdStan installation when `envir` exits,
+# without writing to it. Use this directly when the test does its own writing;
+# use local_cmdstan_make_local() below when it just wants options set.
 #
 # The outermost call also copies make/local aside for the duration. That copy is
 # what makes a killed run recoverable: the restore below never runs, but the next
 # call heals from the backup before taking its own snapshot, instead of adopting
 # the residue as its baseline and compounding it.
-local_cmdstan_make_local <- function(cpp_options, envir = parent.frame()) {
+local_make_local_backup <- function(envir = parent.frame()) {
   make_local_path <- file.path(cmdstan_path(), "make", "local")
   outermost <- !isTRUE(make_local_backup$held)
   if (outermost) {
@@ -91,5 +91,14 @@ local_cmdstan_make_local <- function(cpp_options, envir = parent.frame()) {
     },
     envir = envir
   )
-  cmdstan_make_local(cpp_options = cpp_options)
+  invisible(NULL)
+}
+
+# Write cpp_options to the make/local of the current CmdStan installation and
+# restore its original contents (or absence) when `envir` exits. Called at the
+# top level of a test file, the restore runs after all tests in that file.
+local_cmdstan_make_local <- function(cpp_options, envir = parent.frame(),
+                                     append = TRUE) {
+  local_make_local_backup(envir = envir)
+  cmdstan_make_local(cpp_options = cpp_options, append = append)
 }
