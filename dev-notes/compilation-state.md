@@ -124,8 +124,61 @@ an earlier draft collapsed them:
 enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan chooses
 to report — threading, OpenCL, Stan version — not arbitrary flags. **Absence must
 never be read as disabled.** `$cpp_options()` merges `request` with
-`reported_features` as the current code already does (`R/cpp_opts.R:78`), without
-claiming completeness.
+`reported_features` — structurally like `merge_exe_info_cpp_options()`
+(`R/cpp_opts.R:78`), though that function does not implement the tri-state
+contract today and will need changing — without claiming completeness.
+
+### What consumers do with each state
+
+Recording three states is useless unless downstream code acts on three. The policy:
+
+| State | Behaviour |
+|---|---|
+| known enabled | proceed |
+| known disabled | **error** if the user explicitly asked for the feature; otherwise proceed |
+| **unknown** | **error** if the operation requires the feature — never silently read as disabled, never discard the user's runtime option |
+
+`assert_valid_threads()` (`R/cpp_opts.R:157`) needs changing on both counts, and it
+is already inconsistent with itself. Asking for threads on an unthreaded binary
+warns and then *discards the argument*:
+
+```r
+stan_threads <- cpp_option_value(cpp_options, "stan_threads")
+if (is.null(stan_threads) || !isTRUE(stan_threads)) {
+  if (!is.null(threads)) {
+    warning(...)
+    threads <- NULL          # the user asked for threads and silently got none
+```
+
+while the converse — a threaded binary with no `threads` argument — is already a
+`stop()`. Both are the same kind of mismatch between what was asked for and what
+the artifact has, and §5 says operations error on those. The warning is also the
+worse half of the pair in practice: a silently single-threaded run is a
+four-hour job that should have taken one, discovered afterwards.
+
+Erroring here is a deliberate behaviour change, not preservation of current
+behaviour. It costs a user who genuinely wants to run unthreaded nothing — they
+simply stop passing `threads_per_chain`.
+
+**Scope this to features an operation actually requires.** For arbitrary options —
+`CXXFLAGS`, a user header — status is *permanently* unknown, because CmdStan never
+reports them; erroring on those would error on everything. It applies where a
+runtime argument depends on a build feature: `threads_per_chain` on `STAN_THREADS`,
+OpenCL device selection on `STAN_OPENCL`.
+
+In practice the error will rarely fire. CmdStan 2.39 reports all four flags
+explicitly, including negatives:
+
+```
+STAN_THREADS=false
+STAN_MPI=false
+STAN_OPENCL=false
+STAN_NO_RANGE_CHECKS=false
+```
+
+so exactly the features with runtime checks are the ones whose status is known.
+Unknown arises when `<exe> info` cannot be run at all, or on a CmdStan old enough
+not to report a flag — which is when erroring is most warranted.
 
 **A model object is a handle on an executable plus its record.** It holds no
 durable configuration of its own.
@@ -137,16 +190,17 @@ durable configuration of its own.
 > Every call that builds specifies the configuration it wants. Omitting an option
 > means you are not asking for it.
 
-`cmdstan_model()` always compiles when given a Stan file. There is no
-`compile = FALSE` (§8), and **`$compile()` is removed** — once deferred compilation
+`cmdstan_model()` **ensures a current compiled executable** when given a Stan file
+— it reuses one that is up to date and builds when it is not; it does not compile
+unconditionally. There is no `compile = FALSE` (§8), and **`$compile()` is removed** — once deferred compilation
 is gone it has no unique public purpose, and `cmdstan_model(file,
 force_recompile = TRUE, ...)` covers every remaining use.
 
 Removing it rather than narrowing it also avoids a trust problem. A `$compile()`
 that rebuilds "as recorded" has to replay build arguments from a file, including
 opaque Make arguments, which means it needs a strictly validated record schema
-before it can be safe. An internal exact-rebuild operation may still be needed for
-freshness checks, but it should not be a second public configuration lifecycle.
+before it can be safe. Nothing replaces it internally either: the assessment never
+rebuilds (§5), and constructor compilation uses the explicit current request.
 
 Nothing structural blocks removal: fits do not hold model references
 (`R/fit.R:20-26` copies the model-methods environment rather than pointing at the
@@ -166,8 +220,14 @@ runtime check at all.
 
 Single-configuration caching is an acceptable simplicity tradeoff for v1, but it
 needs a guard rather than a hope. The model object records the artifact identity it
-was constructed against, and §5's pre-run validation detects that another call or
-process replaced it — reporting the changed configuration by name.
+was constructed against, and §5's assessment detects that another call or process
+replaced it.
+
+**Report what actually differs.** If the replacement carries a different
+configuration, name it. If another process installed an *equivalent* configuration
+as a different artifact, the honest message is that the executable was replaced —
+promising a changed option name when none changed would be a lie the user cannot
+act on.
 
 A content-addressed executable cache would remove the problem rather than detect
 it. That is deferred, not rejected.
@@ -419,6 +479,23 @@ current file would show code the binary does not have. It also does not undo #12
 which was staleness after a **recompile**; a snapshot as of the last compile fixes
 exactly that case.
 
+**The snapshot must be captured eagerly, or it is not a snapshot.** `$variables()`
+parses from disk on first call (`R/model.R:874`), so an edit made before that first
+call would return information about the *new* source while claiming to describe the
+built one — the contract violated by the mechanism meant to implement it.
+
+Capture costs nothing extra: the assessment already invokes `stanc --info` for
+include resolution (§6), and the same output carries the variables. The assessment
+returns parsed source information; the constructor commits it as the object's
+snapshot after a successful validation or rebuild.
+
+**`$format(overwrite_file = TRUE)` must not replace the snapshot.** Today it
+rewrites the file and refreshes the caches from it (`R/model.R:1309-1311`). Under
+this contract that is backwards: formatting changes the source and makes the object
+stale, so `$code()` and `$variables()` must go on describing the binary until a new
+model is constructed. Refreshing them would leave the object describing source that
+was never compiled.
+
 ---
 
 ## 6. Contract: when a rebuild happens (#1019)
@@ -472,24 +549,49 @@ accepting it contradicts the premise that we never silently run the wrong binary
 a branch switch adding a higher-priority include is the same workflow used to
 justify hashing.
 
-**Record, for each include: its spelling, its ordered search roots, and the path
-selected.** Validation re-resolves that mapping; if a higher-priority root now
-holds a candidate that was not selected before, the resolution changed.
+**`stanc --info` already answers this.** It returns the resolved include set
+directly:
 
-**Re-resolve by invoking stanc, not by reimplementing its rules.** Recording the
-selected paths is easy; reproducing stanc's resolution semantics in R without
-invoking it is a correctness hazard, and getting it subtly wrong reintroduces the
-silent-stale-binary class this design exists to remove. There is no performance
-argument for taking that risk:
+```json
+{
+  "parameters": { "y": { "type": "real", "dimensions": 0 } },
+  "included_files": [
+    "/abs/path/to/inc/half.stan"
+  ]
+}
+```
+
+So: **store the normalised `included_files` vector at build time and compare it
+against fresh `stanc --info` output.** The `include_paths` already in `request`
+supplies the search configuration. An earlier draft proposed recording each
+include's spelling, its ordered search roots and the selected path, then
+re-resolving that mapping — unnecessary, and it would need parsing stanc does for
+us.
+
+**Re-resolve by invoking stanc, never by reimplementing its rules.** Reproducing
+stanc's resolution semantics in R is a correctness hazard, and getting it subtly
+wrong reintroduces the silent-stale-binary class this design exists to remove.
+There is no performance argument for the risk:
 
 ```
 stanc --info      : 29.9 ms
 exe info          : 32.2 ms
 ```
 
-Against ~8.8 ms of hashing and a 30–90 second compile, a stanc call is free. An
-earlier draft proposed stat calls as the primary mechanism; treat that as an
-optimisation to consider only if measurement ever justifies it.
+Against ~8.8 ms of hashing and a 30–90 second compile, a stanc call is free.
+
+**Invoke stanc from the recorded `builder`, not from whichever installation is
+selected now**, or a different stanc's resolution rules get applied to a model this
+one did not build. **Check builder identity first**: if the selected installation
+differs from `builder`, or the recorded installation no longer exists, that is
+already a rebuild trigger (above) and should be reported without attempting
+re-resolution at all.
+
+**Open for Stage 2: normalisation.** `included_files` comes back as absolute paths,
+so relocating a project changes every recorded entry and triggers a rebuild. That
+is probably acceptable — moving a project is rare and rebuilding is the safe
+response — but it should be a decision rather than a discovery, and it applies
+equally to the recorded Stan file and `include_paths`.
 
 ### Provenance we cannot complete
 
@@ -664,11 +766,10 @@ nothing left to drop.
 
 ## 9. Order of work
 
-Two orderings matter. The Make-option fixes come first, because per-field
-canonicalization depends on them. And **the old lifecycle is removed before the
-record drives anything** — an earlier draft had the record driving decisions while
-`$compile()` and deferred compilation still existed, which would mean specifying
-and implementing transitional behaviour that never ships.
+Two constraints shape this. The Make-option fixes come first, because per-field
+canonicalization depends on them. And **the API change and the decision engine ship
+as one stage** — separating them leaves a window where the new promise is broken
+whichever way the cut is made (Stage 4).
 
 ### Stage 0 — landing in #1235
 
@@ -699,20 +800,27 @@ Executable-plus-record staged and committed together, with verification and the
 rollback in §4. Locking deliberately excluded. This is where the file first
 appears on disk; it is written but does not yet drive decisions.
 
-### Stage 4 — the API change
+### Stage 4 — the API change and the decision engine, together
 
-Removing deferred compilation and `$compile()`, adding the standalone family (§8).
-Closes **#1252**, likely closes **#1253**. Doing this *before* Stage 5 means the
-record only ever has to describe the final lifecycle.
+Removing deferred compilation and `$compile()`, adding the standalone family (§8),
+**and** the constructor decision engine: **#1019** and **#1237**, the triggers in
+§6, include re-resolution, and §5's assessment with its two caller behaviours.
+Closes **#1252**, likely closes **#1253**.
 
-### Stage 5 — the record drives decisions
+**These cannot ship separately, in either order.** An earlier draft split them and
+said combining was optional. It is not — the intermediate state is broken whichever
+way it is cut:
 
-**#1019** and **#1237**: constructor rebuilds, the triggers in §6, include
-re-resolution, and §5's assessment with its two caller behaviours.
+```r
+mod <- cmdstan_model(file, cpp_options = list(stan_threads = TRUE))
+```
 
-Stages 4 and 5 could reasonably be combined.
+If `$compile()` is removed before configuration mismatches trigger rebuilds, an
+existing unthreaded executable is still reused under today's decision logic while
+the only escape route is gone. That breaks the central promise of the new API —
+that supplied options apply — in the window between the two stages.
 
-### Stage 6 — public build-record inspection
+### Stage 5 — public build-record inspection
 
 `stan_build_info()` last, once the schema has stabilised under real use.
 
