@@ -749,9 +749,10 @@ stan_build_info(exe)
 
 `compile_stan_file()` and `format_stan_file()` match cmdstanpy exactly.
 cmdstanpy has no standalone syntax check, and its `src_info()` is lower-level than
-`$variables()`, so those two are cmdstanr-only and named to fit R. **The names
-should be agreed with the cmdstanpy developers rather than each side guessing**,
-since the two APIs are taught together.
+`$variables()`, so those two are cmdstanr-only and named to fit R. **Where
+cmdstanpy already has a name we copy it; where it does not, we pick one and they
+can copy it if they add a counterpart.** The two APIs are taught together, so
+parity matters, but nothing here waits on a joint naming decision.
 
 `model_variables()` at `R/model.R:2657` is already this shape internally.
 
@@ -840,10 +841,12 @@ nothing left to drop.
 
 ## 9. Order of work
 
-Two constraints shape this. The Make-option fixes come first, because per-field
-canonicalization depends on them. And **the API change and the decision engine ship
-as one stage** — separating them leaves a window where the new promise is broken
-whichever way the cut is made (Stage 4).
+Three constraints shape this. The Make-option fixes come first, because per-field
+canonicalization depends on them. **The API change and the decision engine ship as
+one stage** — separating them leaves a window where the new promise is broken
+whichever way the cut is made (Stage 4). And Stages 0–4 must all be in the release
+candidate, because the API removal is the breaking change downstream packages need
+to see; Stage 5 adds a function and breaks nothing, so it need not be.
 
 ### Stage 0 — landing in #1235
 
@@ -896,21 +899,56 @@ that supplied options apply — in the window between the two stages.
 
 ### Stage 5 — public build-record inspection
 
-`stan_build_info()` last, once the schema has stabilised under real use.
+`stan_build_info()` last, once the schema has stabilised under real use — and the
+release-candidate period is that use. Purely additive, so it can land after the
+candidate, or after 1.0.
+
+### The release candidate
+
+A 1.0 candidate ships after Stage 4, so packages built around precompiled models —
+`instantiate` most directly — have something to migrate against rather than a
+release note. That is what makes §8's breaking change affordable.
+
+One scheduling constraint follows. The repo-wide formatting and linting work
+(#1153, #1172) lands either before Stage 1 or after 1.0, never between Stage 4 and
+the candidate: a reformatting diff on top of the API removal leaves a downstream
+maintainer unable to see what actually broke.
+
+### How the stages are executed
+
+One pull request per stage, merged to master, green and revertable on its own.
+Long-lived integration branches are the wrong unit here — #1235 alone ran to sixty
+commits across weeks of review, and a branch held open across two stages spends
+more time being rebased than reviewed.
+
+Stage 4 ships as one pull request but is built in two parts: the assessment engine
+as a pure function with its full decision table, tested and unwired; then the wiring
+and the API removal. Most of the risk is retired before anything user-facing moves.
+
+Parallel work is bounded by what the tests contend for, not by what a checkout
+isolates. `make/local` lives in the CmdStan installation, the precompiled headers
+are keyed by `STAN_FLAGS` in that same installation, and parts of the suite reach
+`rebuild_cmdstan()`. Separate checkouts separate none of that, so **only one
+compiling task runs at a time** — and a run killed part-way leaves residue that the
+next run snapshots as its baseline. What does parallelise is the work that never
+compiles: record fixtures, the downstream-usage inventory, documentation and test
+migration once the API commit exists, and adversarial review of a finished stage.
+That last is worth a reviewer rather than another implementer; this document
+reached its current form through five review rounds.
 
 ### Independent, can land any time
 
 **#1245**, **#1246** (error message quality) and **#1249** (`$cmdstan_version()`
 reports the installed CmdStan, not the one that built the executable — caused by
-`R/model.R:318`, not `dry_run`).
+`R/model.R:318`, not `dry_run`). Small, user-visible, and the natural work to pick
+up while Stage 0 is in review.
 
 ### Issue consolidation
 
-Held until this draft settles. The full list is in "Issues that will mislead you
-right now" above. Net: #1248 and #1252 close outright and #1253 probably joins them;
-#1247 folds into #1238; #1250 grows in priority; #1019 grows in scope. New issues
-for removing deferred compilation, the standalone family, and the unsupported-
-dependency documentation.
+Done. #1247, #1248 and #1252 are closed. #1237, #1238, #1245, #1246, #1249, #1250
+and #1253 have been rewritten against this document. #1255 (rebuild decisions),
+#1256 (removing deferred compilation, adding the standalone family) and #1257
+(untracked dependencies) are new. #1019 closes when #1255 does.
 
 ---
 
@@ -940,4 +978,4 @@ convenience rebuild tucked inside the assessment reintroduces the hidden
 recompilation this design removed.
 
 **Naming is open.** `stan_build_info()`, `check_syntax_stan_file()` and `.dep` are
-placeholders, and the standalone names should be settled jointly with cmdstanpy.
+placeholders, to be settled in the stage that implements each (§8).
