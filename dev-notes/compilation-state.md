@@ -485,6 +485,30 @@ Cost is **~8.8 ms**: source hashes plus the executable hash. An earlier draft ci
 include re-resolution runs here too (§6) add ~30 ms. Still negligible against a
 sampling run, and the accurate number belongs in the document.
 
+### The verdict is not state, and must not be stored as state
+
+Assessment reads the filesystem each time it is asked, and its answer is good only
+for that moment. That matters most where a model object outlives the machine that
+built it, which is not hypothetical: brms keeps a whole `CmdStanModel` in
+`attributes(fit$fit)`, so a saved `brmsfit` carries our object — and its recorded
+absolute paths — to wherever the fit is next opened.
+
+That case needs nothing extra. Where the executable is absent the assessment fails
+and the operation errors; where a *different* executable sits at the same path, the
+artifact hash (§4) catches it rather than running the wrong binary. Both fall out of
+the contract above.
+
+What would break it is memoization. **~8.8 ms per operation is exactly the number
+someone later decides to cache on the object**, and a cached verdict is right within
+a session and wrong the moment the object is deserialized somewhere else. That
+failure is silent and looks like a caching bug rather than a violated contract,
+which is why it is worth prohibiting here while the reason is still visible.
+
+One knock-on for consumers: **`$exe_file()` must stay a plain, non-erroring
+accessor.** brms's `needs_recompilation()` reads it and calls `file.exists()` on the
+result (`brms/R/backends.R:377-383`), and that is how a relocated fit gets
+recompiled before anything asks us for a verdict at all. #1253 must not change it.
+
 ### Introspection is a construction-time snapshot
 
 Pre-operation validation does **not** make cached introspection safe: `$code()` and
@@ -919,9 +943,23 @@ candidate, or after 1.0.
 
 ### The release candidate
 
-A 1.0 candidate ships after Stage 4, so packages built around precompiled models —
-`instantiate` most directly — have something to migrate against rather than a
-release note. That is what makes §8's breaking change affordable.
+A 1.0 candidate ships after Stage 4, so downstream packages have something to
+migrate against rather than a release note. That is what makes §8's breaking change
+affordable.
+
+Two are known to be affected. `instantiate` is built around precompiled models.
+**brms** uses `cmdstan_model(compile = FALSE)` in `.parse_model_cmdstanr()`
+(`brms/R/backends.R:23-34`) to build a throwaway object solely for `$check_syntax()`
+and `$code()` — precisely the case §8's standalone family replaces, and the clearest
+confirmation so far that the family is the right shape. Note that it forwards `...`,
+so `check_syntax_stan_file()` has to accept what users pass through `brm()`. brms
+also sets `cpp_options$stan_threads` only when threading is requested, so its users
+meet §1's threading policy as a rebuild when they toggle it off.
+
+We open those pull requests ourselves rather than waiting to be asked; the candidate
+is what they are written and tested against. They need to work against both the old
+and the new cmdstanr — brms is on CRAN and cmdstanr is not — so a version guard
+rather than a clean switch.
 
 The formatting and linting work is scheduled around this, and the formatter and the
 linter go to different places.
