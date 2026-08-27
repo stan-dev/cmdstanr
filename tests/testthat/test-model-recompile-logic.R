@@ -135,6 +135,81 @@ test_that("changing include_paths forces recompilation", {
   )
 })
 
+test_that("constructor include_paths are the baseline for the first compile", {
+  model_dir <- withr::local_tempdir()
+  dir_a <- file.path(model_dir, "a")
+  dir_b <- file.path(model_dir, "b")
+  dir.create(dir_a)
+  dir.create(dir_b)
+  writeLines("parameters { real alpha; }", file.path(dir_a, "params.stan"))
+  writeLines("parameters { real beta; }", file.path(dir_b, "params.stan"))
+  stan_file <- file.path(model_dir, "included.stan")
+  writeLines(c("#include params.stan", "model { target += 0; }"), stan_file)
+  Sys.setFileTime(stan_file, Sys.time() - 60)
+  exe <- cmdstan_ext(strip_ext(stan_file))
+  writeLines("executable built with A", exe)
+  Sys.chmod(exe, "0755", use_umask = FALSE)
+
+  mod <- cmdstan_model(
+    stan_file,
+    include_paths = dir_a,
+    compile = FALSE
+  )
+  expect_equal(names(mod$variables()$parameters), "alpha")
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_mock_compile(mod$compile(include_paths = dir_b))
+  )
+
+  expect_match(readLines(exe), "^mock executable [0-9]+$")
+  expect_equal(mod$include_paths(), resolve_path(dir_b))
+  expect_equal(names(mod$variables()$parameters), "beta")
+})
+
+test_that("failed include_paths changes remain dirty for a bare retry", {
+  model_dir <- withr::local_tempdir()
+  dir_a <- file.path(model_dir, "a")
+  dir_b <- file.path(model_dir, "b")
+  dir.create(dir_a)
+  dir.create(dir_b)
+  writeLines("parameters { real alpha; }", file.path(dir_a, "params.stan"))
+  writeLines("parameters { real beta; }", file.path(dir_b, "params.stan"))
+  stan_file <- file.path(model_dir, "included.stan")
+  writeLines(c("#include params.stan", "model { target += 0; }"), stan_file)
+  Sys.setFileTime(stan_file, Sys.time() - 60)
+  exe <- cmdstan_ext(strip_ext(stan_file))
+  writeLines("executable built with A", exe)
+  Sys.chmod(exe, "0755", use_umask = FALSE)
+
+  mod <- cmdstan_model(
+    stan_file,
+    include_paths = dir_a,
+    compile = FALSE
+  )
+  expect_equal(names(mod$variables()$parameters), "alpha")
+
+  with_mocked_cli(
+    compile_ret = list(status = 1),
+    info_ret = list(status = 1),
+    code = expect_error(
+      mod$compile(include_paths = dir_b, force_recompile = TRUE),
+      "An error occurred during compilation"
+    )
+  )
+  expect_identical(readLines(exe), "executable built with A")
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_mock_compile(mod$compile())
+  )
+  expect_match(readLines(exe), "^mock executable [0-9]+$")
+  expect_equal(mod$include_paths(), resolve_path(dir_b))
+  expect_equal(names(mod$variables()$parameters), "beta")
+})
+
 test_that("a no-op compile adopts an executable the object did not build", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
@@ -492,6 +567,33 @@ test_that("cmdstan_model() reads the executable metadata once, whatever the path
     code = cmdstan_model(stan_file)
   )
   expect_equal(reads, 1L)
+
+  # Explicit, up-to-date executable with a Stan file.
+  reads <- 0L
+  reported_options <- paste0(
+    info,
+    "\nSTAN_THREADS=true\nSTAN_OPENCL=true"
+  )
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = reported_options),
+    code = mod_explicit <- cmdstan_model(
+      stan_file,
+      exe_file = mod$exe_file(),
+      compile = TRUE
+    )
+  )
+  expect_equal(reads, 1L)
+  expect_true(mod_explicit$cpp_options()$STAN_THREADS)
+  expect_true(mod_explicit$cpp_options()$STAN_OPENCL)
+  expect_silent(
+    assert_valid_threads(
+      2,
+      mod_explicit$cpp_options(),
+      multiple_chains = TRUE
+    )
+  )
+  expect_silent(assert_valid_opencl(c(0, 0), mod_explicit$cpp_options()))
 
   # Executable adopted without a Stan file.
   reads <- 0L

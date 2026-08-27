@@ -813,3 +813,128 @@ test_that("local_make_local_backup() heals residue and nests", {
   }
   expect_identical(restored, original)
 })
+
+test_that("local_make_local_backup() stops when file backup creation fails", {
+  fake_cmdstan <- withr::local_tempdir()
+  dir.create(file.path(fake_cmdstan, "make"))
+  make_local_path <- file.path(fake_cmdstan, "make", "local")
+  writeLines("ORIGINAL=true", make_local_path)
+  make_local_backup$held <- FALSE
+  withr::defer(make_local_backup$held <- FALSE)
+  local_mocked_bindings(cmdstan_path = function() fake_cmdstan)
+  local_mocked_bindings(file.copy = function(...) FALSE, .package = "base")
+
+  expect_snapshot(
+    error = TRUE,
+    local({
+      local_make_local_backup()
+    }),
+    transform = function(lines) {
+      gsub(fake_cmdstan, "<fake-cmdstan>", lines, fixed = TRUE)
+    }
+  )
+
+  expect_identical(readLines(make_local_path), "ORIGINAL=true")
+  expect_false(file.exists(make_local_backup_path()))
+  expect_false(make_local_backup$held)
+})
+
+test_that("local_make_local_backup() stops when sentinel creation fails", {
+  fake_cmdstan <- withr::local_tempdir()
+  dir.create(file.path(fake_cmdstan, "make"))
+  make_local_path <- file.path(fake_cmdstan, "make", "local")
+  make_local_backup$held <- FALSE
+  withr::defer(make_local_backup$held <- FALSE)
+  local_mocked_bindings(cmdstan_path = function() fake_cmdstan)
+  local_mocked_bindings(file.create = function(...) FALSE, .package = "base")
+
+  expect_snapshot(
+    error = TRUE,
+    local({
+      local_make_local_backup()
+    }),
+    transform = function(lines) {
+      gsub(fake_cmdstan, "<fake-cmdstan>", lines, fixed = TRUE)
+    }
+  )
+
+  expect_false(file.exists(make_local_path))
+  expect_false(file.exists(make_local_backup_path()))
+  expect_false(make_local_backup$held)
+})
+
+test_that("local_make_local_backup() retains a failed recovery backup", {
+  fake_cmdstan <- withr::local_tempdir()
+  dir.create(file.path(fake_cmdstan, "make"))
+  make_local_path <- file.path(fake_cmdstan, "make", "local")
+  writeLines("ORIGINAL=true", make_local_path)
+  make_local_backup$held <- FALSE
+  withr::defer(make_local_backup$held <- FALSE)
+  local_mocked_bindings(cmdstan_path = function() fake_cmdstan)
+  real_file_copy <- file.copy
+  copies <- 0L
+  with_mocked_bindings(
+    expect_snapshot(
+      error = TRUE,
+      local({
+        local_make_local_backup()
+        writeLines("MUTATED=true", make_local_path)
+      }),
+      transform = function(lines) {
+        gsub(fake_cmdstan, "<fake-cmdstan>", lines, fixed = TRUE)
+      }
+    ),
+    file.copy = function(...) {
+      copies <<- copies + 1L
+      if (copies == 1L) real_file_copy(...) else FALSE
+    },
+    .package = "base"
+  )
+
+  expect_identical(readLines(make_local_path), "MUTATED=true")
+  expect_true(file.exists(make_local_backup_path()))
+  expect_identical(readLines(make_local_backup_path()), "ORIGINAL=true")
+  expect_false(make_local_backup$held)
+
+  local({
+    local_make_local_backup()
+  })
+  expect_identical(readLines(make_local_path), "ORIGINAL=true")
+  expect_false(file.exists(make_local_backup_path()))
+})
+
+test_that("restore_cmdstan_make_local() preserves the backup when verification fails", {
+  fake_cmdstan <- withr::local_tempdir()
+  dir.create(file.path(fake_cmdstan, "make"))
+  make_local_path <- file.path(fake_cmdstan, "make", "local")
+  backup_path <- file.path(
+    fake_cmdstan,
+    "make",
+    "local.cmdstanr-test-backup"
+  )
+  writeLines("MUTATED=true", make_local_path)
+  writeLines("ORIGINAL=true", backup_path)
+  local_mocked_bindings(cmdstan_path = function() fake_cmdstan)
+  real_file_size <- file.size
+  local_mocked_bindings(
+    file.size = function(path) {
+      if (length(path) == 1 && path %in% c(make_local_path, backup_path)) {
+        return(NA_real_)
+      }
+      real_file_size(path)
+    },
+    file.copy = function(...) FALSE,
+    .package = "base"
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    restore_cmdstan_make_local(),
+    transform = function(lines) {
+      gsub(fake_cmdstan, "<fake-cmdstan>", lines, fixed = TRUE)
+    }
+  )
+
+  expect_identical(readLines(make_local_path), "MUTATED=true")
+  expect_identical(file.exists(backup_path), TRUE)
+})

@@ -34,6 +34,16 @@ make_local_backup_path <- function() {
   file.path(cmdstan_path(), "make", "local.cmdstanr-test-backup")
 }
 
+read_make_local_contents <- function(path) {
+  if (!file.exists(path)) {
+    return(NULL)
+  }
+  tryCatch(
+    readBin(path, "raw", file.size(path)),
+    error = function(e) FALSE
+  )
+}
+
 # Restore make/local from the on-disk backup and remove it. An empty backup
 # stands for "no make/local", which make treats the same as an empty one.
 restore_cmdstan_make_local <- function() {
@@ -42,12 +52,37 @@ restore_cmdstan_make_local <- function() {
     return(invisible(NULL))
   }
   make_local_path <- file.path(cmdstan_path(), "make", "local")
-  if (file.size(backup_path) == 0) {
-    unlink(make_local_path)
+  backup_contents <- read_make_local_contents(backup_path)
+  if (!is.raw(backup_contents)) {
+    restored <- FALSE
+  } else if (length(backup_contents) == 0) {
+    suppressWarnings(unlink(make_local_path))
+    restored <- !file.exists(make_local_path)
   } else {
-    file.copy(backup_path, make_local_path, overwrite = TRUE)
+    tryCatch(
+      suppressWarnings(file.copy(backup_path, make_local_path, overwrite = TRUE)),
+      error = function(e) FALSE
+    )
+    restored <- identical(
+      read_make_local_contents(make_local_path),
+      backup_contents
+    )
   }
-  unlink(backup_path)
+  if (!isTRUE(restored)) {
+    stop(
+      "Could not restore CmdStan's 'make/local'. The recovery backup has ",
+      "been retained at '", backup_path, "'.",
+      call. = FALSE
+    )
+  }
+  suppressWarnings(unlink(backup_path))
+  if (file.exists(backup_path)) {
+    stop(
+      "CmdStan's 'make/local' was restored, but the recovery backup could ",
+      "not be removed from '", backup_path, "'.",
+      call. = FALSE
+    )
+  }
   invisible(NULL)
 }
 
@@ -65,28 +100,69 @@ local_make_local_backup <- function(envir = parent.frame()) {
   if (outermost) {
     restore_cmdstan_make_local()
     backup_path <- make_local_backup_path()
-    if (file.exists(make_local_path)) {
-      file.copy(make_local_path, backup_path, overwrite = TRUE)
+    make_local_orig <- read_make_local_contents(make_local_path)
+    if (is.raw(make_local_orig)) {
+      created <- tryCatch(
+        suppressWarnings(
+          file.copy(make_local_path, backup_path, overwrite = TRUE)
+        ),
+        error = function(e) FALSE
+      )
     } else {
-      file.create(backup_path)
+      created <- tryCatch(
+        suppressWarnings(file.create(backup_path)),
+        error = function(e) FALSE
+      )
+    }
+    backup_contents <- read_make_local_contents(backup_path)
+    expected_backup <- if (is.null(make_local_orig)) raw() else make_local_orig
+    if (!isTRUE(created) || !identical(backup_contents, expected_backup)) {
+      suppressWarnings(unlink(backup_path))
+      stop(
+        "Could not create a verified recovery backup of CmdStan's ",
+        "'make/local' at '", backup_path, "'. 'make/local' was not modified.",
+        call. = FALSE
+      )
     }
     make_local_backup$held <- TRUE
-  }
-  make_local_orig <- if (file.exists(make_local_path)) {
-    readBin(make_local_path, "raw", file.size(make_local_path))
   } else {
-    NULL
+    make_local_orig <- read_make_local_contents(make_local_path)
+    if (!is.null(make_local_orig) && !is.raw(make_local_orig)) {
+      stop(
+        "Could not snapshot CmdStan's 'make/local' for nested restoration. ",
+        "The recovery backup is at '", make_local_backup_path(), "'.",
+        call. = FALSE
+      )
+    }
   }
   withr::defer(
     {
-      if (is.null(make_local_orig)) {
-        unlink(make_local_path)
-      } else {
-        writeBin(make_local_orig, make_local_path)
-      }
       if (outermost) {
-        unlink(make_local_backup_path())
+        # Clear this before restoration so an error cannot poison later calls.
         make_local_backup$held <- FALSE
+        restore_cmdstan_make_local()
+      } else {
+        tryCatch(
+          {
+            if (is.null(make_local_orig)) {
+              suppressWarnings(unlink(make_local_path))
+            } else {
+              writeBin(make_local_orig, make_local_path)
+            }
+          },
+          error = function(e) FALSE
+        )
+        if (!identical(
+          read_make_local_contents(make_local_path),
+          make_local_orig
+        )) {
+          stop(
+            "Could not restore nested CmdStan 'make/local' state. The ",
+            "recovery backup has been retained at '",
+            make_local_backup_path(), "'.",
+            call. = FALSE
+          )
+        }
       }
     },
     envir = envir

@@ -643,15 +643,17 @@ compile <- function(quiet = TRUE,
     stanc_options <- private$precompile_stanc_options_
   }
   stanc_options <- assert_valid_stanc_options(stanc_options)
+  previous_include_paths <-
+    private$include_paths_ %||% private$precompile_include_paths_
   if (is.null(include_paths)) {
-    include_paths <- private$include_paths_ %||% private$precompile_include_paths_
+    include_paths <- previous_include_paths
   }
   resolved_include_paths <- resolve_path(include_paths)
   # Keep this dirty flag set across failed builds. Include-path order affects
   # resolution. The first configured value is initial state, not a change.
   private$include_paths_dirty_ <- isTRUE(private$include_paths_dirty_) ||
-    (length(private$include_paths_) > 0 &&
-       !same_path(resolved_include_paths, private$include_paths_))
+    (length(previous_include_paths) > 0 &&
+       !same_path(resolved_include_paths, previous_include_paths))
   private$include_paths_ <- resolved_include_paths
   include_paths <- private$include_paths_
   if (is.null(dir) && !is.null(private$dir_)) {
@@ -745,13 +747,10 @@ compile <- function(quiet = TRUE,
     built_here <- !is.null(self$functions$hpp_code)
 
     # Treat unreadable executable metadata as unavailable.
-    exe_info <- NULL
-    if (cpp_options_available || length(private$exe_file_) == 0) {
-      exe_info <- tryCatch(
-        model_compile_info(exe, self$cmdstan_version()),
-        error = function(e) NULL
-      )
-    }
+    exe_info <- tryCatch(
+      model_compile_info(exe, self$cmdstan_version()),
+      error = function(e) NULL
+    )
 
     # Add options reported as enabled by the executable and keep recorded values
     # for anything it cannot report.
