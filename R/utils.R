@@ -201,6 +201,18 @@ resolve_path <- function(path) {
   repair_path(absolute_path(path))
 }
 
+# Compare canonical paths without requiring them to exist. mustWork = FALSE
+# also avoids normalizePath() warnings under warn = 2.
+same_path <- function(x, y) {
+  if (length(x) == 0 || length(y) == 0) {
+    return(length(x) == length(y))
+  }
+  identical(
+    normalizePath(x, winslash = "/", mustWork = FALSE),
+    normalizePath(y, winslash = "/", mustWork = FALSE)
+  )
+}
+
 # read, write, and copy files --------------------------------------------
 
 #' Copy temporary files (e.g., output, data) to a different location
@@ -251,6 +263,104 @@ copy_temp_files <-
     }
     absolute_path(destinations)
   }
+
+#' Replace a model executable while preserving the previous one
+#'
+#' Stage the new executable, move the old one aside, and attempt to restore it
+#' if installation fails. Suppress file.copy() and file.rename() warnings so
+#' warn = 2 cannot interrupt rollback. A crash between renames may leave only
+#' the backup.
+#'
+#' @noRd
+#' @param from Path to the newly compiled executable.
+#' @param to Path the executable should be installed at.
+#' @return NULL after a clean install, or the leftover backup path if cleanup
+#'   fails. The new executable is installed in either case.
+install_executable <- function(from, to) {
+  if (dir.exists(to)) {
+    stop(
+      "Cannot install the compiled executable at '", to,
+      "' because that path is a directory. Nothing was modified.",
+      call. = FALSE
+    )
+  }
+  # Normalize mixed Windows separators before converting the path for WSL.
+  candidate <- repair_path(tempfile(pattern = "exe-new-", tmpdir = dirname(to)))
+  discard_candidate <- function() {
+    if (unlink(candidate, expand = FALSE) == 0L) {
+      ""
+    } else {
+      paste0(" The staged copy has been left at '", candidate, "'.")
+    }
+  }
+
+  if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
+    stop(
+      "Could not stage the compiled executable at '", candidate, "'. ",
+      "The model executable at '", to, "' was not modified.",
+      call. = FALSE
+    )
+  }
+  if (os_is_wsl()) {
+    chmod <- processx::run(
+      command = "wsl",
+      args = c("chmod", "+x", wsl_safe_path(candidate)),
+      error_on_status = FALSE
+    )
+    if (is.na(chmod$status) || chmod$status != 0) {
+      stop(
+        "Could not make the compiled executable executable. ",
+        "The model executable at '", to, "' was not modified.",
+        discard_candidate(),
+        call. = FALSE
+      )
+    }
+  }
+
+  backup <- NULL
+  if (file.exists(to)) {
+    backup <- repair_path(tempfile(pattern = "exe-old-", tmpdir = dirname(to)))
+    if (!isTRUE(suppressWarnings(file.rename(to, backup)))) {
+      stop(
+        "Could not move the existing executable '", to, "' aside. ",
+        "It was not modified.",
+        discard_candidate(),
+        call. = FALSE
+      )
+    }
+  }
+
+  if (!isTRUE(suppressWarnings(file.rename(candidate, to)))) {
+    leftover_candidate <- discard_candidate()
+    if (is.null(backup)) {
+      stop(
+        "Could not install the compiled executable at '", to, "'.",
+        leftover_candidate,
+        call. = FALSE
+      )
+    }
+    if (!isTRUE(suppressWarnings(file.rename(backup, to)))) {
+      stop(
+        "Could not install the compiled executable at '", to, "' and the ",
+        "previously compiled executable could not be restored. It has been ",
+        "kept at '", backup, "'.",
+        leftover_candidate,
+        call. = FALSE
+      )
+    }
+    stop(
+      "Could not install the compiled executable at '", to, "'. ",
+      "The previously compiled executable has been restored.",
+      leftover_candidate,
+      call. = FALSE
+    )
+  }
+
+  if (!is.null(backup) && unlink(backup, expand = FALSE) != 0L) {
+    return(backup)
+  }
+  NULL
+}
 
 # generate new file names
 # see doc above for copy_temp_files

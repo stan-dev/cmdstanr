@@ -1,6 +1,30 @@
-# This test is deliberately placed above the file-level skip_if(os_is_macos())
-# below: it mocks the stanc call and never compiles, so it needs no toolchain
-# and should run on every platform.
+local_mocked_stanc <- function(.local_envir = parent.frame()) {
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) "",
+    .env = .local_envir
+  )
+}
+
+# Mocked compiles use temporary model copies to protect test resources.
+local_external_model <- function(.local_envir = parent.frame()) {
+  stan_file <- file.path(
+    withr::local_tempdir(.local_envir = .local_envir),
+    "bernoulli_external.stan"
+  )
+  file.copy(testing_stan_file("bernoulli_external"), stan_file)
+  stan_file
+}
+
+user_header_routes <- function(header) {
+  list(
+    list(user_header = header),
+    list(cpp_options = list(USER_HEADER = header)),
+    list(cpp_options = list(user_header = header))
+  )
+}
+
+# Keep mocked compilation tests above the toolchain skip below.
 test_that("cpp_options user headers allow undefined functions", {
   stan_file <- testing_stan_file("bernoulli_external")
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
@@ -31,6 +55,399 @@ test_that("cpp_options user headers allow undefined functions", {
     ),
     rep(TRUE, 4)
   )
+})
+
+test_that("compile() reuses the user header from the previous compilation", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli_external.stan")
+  file.copy(testing_stan_file("bernoulli_external"), stan_file)
+  user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  expect_false(model$.__enclos_env__$private$using_user_header_)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0),
+    code = model$compile(user_header = user_header, force_recompile = TRUE)
+  )
+  expect_true(model$.__enclos_env__$private$using_user_header_)
+
+  received_stancflags <- list()
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0),
+    code = model$compile(force_recompile = TRUE)
+  )
+  expect_true(model$.__enclos_env__$private$using_user_header_)
+  expect_equal(
+    model$cpp_options()[["USER_HEADER"]],
+    wsl_safe_path(absolute_path(user_header))
+  )
+  expect_equal(
+    vapply(received_stancflags, function(x) "--allow-undefined" %in% x, logical(1)),
+    rep(TRUE, 2)
+  )
+})
+
+test_that("a no-op compile preserves a header supplied via cpp_options", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli_external.stan")
+  file.copy(testing_stan_file("bernoulli_external"), stan_file)
+  user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) ""
+  )
+  model <- cmdstan_model(stan_file, compile = FALSE)
+
+  # The lowercase spelling is the telling one: a bare recompile re-derives the
+  # header under the USER_HEADER spelling, so only this one shows whether the
+  # no-op path rebuilt the recorded options or left them alone.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(
+      cpp_options = list(user_header = user_header),
+      force_recompile = TRUE
+    )
+  )
+  expect_equal(
+    model$cpp_options()[["user_header"]],
+    wsl_safe_path(absolute_path(user_header))
+  )
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(model$compile())
+  )
+  expect_equal(
+    model$cpp_options()[["user_header"]],
+    wsl_safe_path(absolute_path(user_header))
+  )
+})
+
+test_that("compile() uses a user header supplied to cmdstan_model()", {
+  user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) character(),
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  model <- cmdstan_model(
+    local_external_model(),
+    user_header = user_header,
+    compile = FALSE
+  )
+  # Use a successful compile so its options are recorded.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(force_recompile = TRUE)
+  )
+
+  expect_equal(
+    model$cpp_options()[["USER_HEADER"]],
+    wsl_safe_path(absolute_path(user_header))
+  )
+  expect_equal(
+    vapply(received_stancflags, function(x) "--allow-undefined" %in% x, logical(1)),
+    rep(TRUE, 2)
+  )
+})
+
+test_that("a header configured over a current executable does not rebuild", {
+  stan_file <- local_external_model()
+  header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_stanc()
+
+  # An executable that already exists and is newer than both the program and
+  # the header, built through a different object.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+  exe <- cmdstan_ext(strip_ext(stan_file))
+  Sys.setFileTime(stan_file, Sys.time() - 60)
+  Sys.setFileTime(header, Sys.time() - 60)
+  Sys.setFileTime(exe, Sys.time())
+
+  # A fresh object cannot know which header built an existing executable, so it
+  # keeps the executable without recording the requested header.
+  for (route in user_header_routes(header)) {
+    model <- do.call(
+      cmdstan_model,
+      c(list(stan_file, compile = FALSE), route)
+    )
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = expect_no_mock_compile(model$compile())
+    )
+    expect_null(model$cpp_options()[["USER_HEADER"]])
+    expect_null(model$cpp_options()[["user_header"]])
+    # Stanc still uses the configured header.
+    expect_true(model$.__enclos_env__$private$using_user_header_)
+  }
+})
+
+test_that("cmdstan_model() records a user header from every supply route", {
+  header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+
+  for (route in user_header_routes(header)) {
+    model <- do.call(
+      cmdstan_model,
+      c(list(testing_stan_file("bernoulli_external"), compile = FALSE), route)
+    )
+    private <- model$.__enclos_env__$private
+    expect_equal(private$user_header_, resolve_path(header))
+    expect_true(private$using_user_header_)
+    expect_false(private$user_header_dirty_)
+  }
+})
+
+test_that("cmdstan_model() honours an explicit user_header = NULL", {
+  header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+
+  expect_warning(
+    model <- cmdstan_model(
+      testing_stan_file("bernoulli_external"),
+      compile = FALSE,
+      user_header = NULL,
+      cpp_options = list(USER_HEADER = header)
+    ),
+    "User header specified both"
+  )
+
+  private <- model$.__enclos_env__$private
+  expect_null(private$user_header_)
+  expect_false(private$using_user_header_)
+  expect_null(private$precompile_cpp_options_[["USER_HEADER"]])
+  expect_null(private$precompile_cpp_options_[["user_header"]])
+})
+
+test_that("cmdstan_model() rejects an empty user header", {
+  expect_error(
+    cmdstan_model(
+      testing_stan_file("bernoulli_external"),
+      compile = FALSE,
+      user_header = character(0)
+    ),
+    "user_header"
+  )
+  model <- cmdstan_model(testing_stan_file("bernoulli_external"), compile = FALSE)
+  expect_error(model$compile(user_header = character(0)), "user_header")
+})
+
+test_that("a relative cpp_options user header survives a directory change", {
+  model_dir <- withr::local_tempdir()
+  file.copy(testing_stan_file("bernoulli_external"), model_dir)
+  writeLines("", file.path(model_dir, "header.hpp"))
+  local_mocked_stanc()
+
+  model <- withr::with_dir(
+    model_dir,
+    cmdstan_model(
+      "bernoulli_external.stan",
+      compile = FALSE,
+      cpp_options = list(USER_HEADER = "header.hpp")
+    )
+  )
+
+  expect_equal(
+    normalizePath(model$.__enclos_env__$private$user_header_),
+    normalizePath(file.path(model_dir, "header.hpp"))
+  )
+  # The compile happens from the test's own working directory.
+  expect_no_error(model$compile(force_recompile = TRUE, dry_run = TRUE))
+})
+
+test_that("a bare retry after a failed compile keeps the newly supplied header", {
+  stan_file <- local_external_model()
+  h1 <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  h2 <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_stanc()
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  private <- model$.__enclos_env__$private
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(user_header = h1, force_recompile = TRUE)
+  )
+  expect_equal(private$user_header_, resolve_path(h1))
+  expect_false(private$user_header_dirty_)
+
+  with_mocked_cli(
+    compile_ret = list(status = 1),
+    info_ret = list(status = 1),
+    code = expect_error(model$compile(user_header = h2), "An error occurred")
+  )
+  expect_equal(private$user_header_, resolve_path(h2))
+  expect_true(private$user_header_dirty_)
+
+  # A bare retry must build h2 rather than reverting to h1.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_mock_compile(model$compile())
+  )
+  expect_equal(private$user_header_, resolve_path(h2))
+  expect_false(private$user_header_dirty_)
+  expect_equal(
+    model$cpp_options()[["USER_HEADER"]],
+    wsl_safe_path(resolve_path(h2))
+  )
+})
+
+test_that("a header that does not exist is still recorded as the request", {
+  stan_file <- local_external_model()
+  header <- file.path(withr::local_tempdir(), "not_yet_written.hpp")
+  local_mocked_stanc()
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  private <- model$.__enclos_env__$private
+
+  expect_error(
+    model$compile(user_header = header, force_recompile = TRUE),
+    "does not exist"
+  )
+  expect_equal(private$user_header_, resolve_path(header))
+  expect_true(private$using_user_header_)
+  expect_true(private$user_header_dirty_)
+
+  # A bare retry once the header exists must build against it.
+  file.create(header)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_mock_compile(model$compile())
+  )
+  expect_equal(
+    model$cpp_options()[["USER_HEADER"]],
+    wsl_safe_path(resolve_path(header))
+  )
+})
+
+test_that("changing the user header forces compilation", {
+  stan_file <- local_external_model()
+  h1 <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  h2 <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_stanc()
+  model <- cmdstan_model(stan_file, compile = FALSE)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(user_header = h1, force_recompile = TRUE)
+  )
+  # Older than the executable, so only the change of header identity can force
+  # a rebuild here (#813 only covers a header that was modified in place).
+  Sys.setFileTime(h2, file.mtime(model$exe_file()) - 60)
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_mock_compile(model$compile(user_header = h2))
+  )
+  expect_equal(
+    model$cpp_options()[["USER_HEADER"]],
+    wsl_safe_path(resolve_path(h2))
+  )
+})
+
+test_that("user_header = NULL clears a header from every supply route", {
+  header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_stanc()
+
+  for (route in user_header_routes(header)) {
+    model <- cmdstan_model(local_external_model(), compile = FALSE)
+    private <- model$.__enclos_env__$private
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = do.call(model$compile, c(route, list(force_recompile = TRUE)))
+    )
+    expect_true(private$using_user_header_)
+
+    # Clearing a compiled header must force a rebuild.
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = expect_mock_compile(model$compile(user_header = NULL))
+    )
+    expect_null(private$user_header_)
+    expect_false(private$using_user_header_)
+    expect_null(model$cpp_options()[["USER_HEADER"]])
+    expect_null(model$cpp_options()[["user_header"]])
+  }
+})
+
+test_that("duplicate headers of one spelling take the last, as make does", {
+  first <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  second <- withr::local_tempfile(lines = "", fileext = ".hpp")
+
+  # Use the last duplicate and remove every header entry before calling make.
+  for (spelling in c("USER_HEADER", "user_header")) {
+    duplicated <- structure(
+      list(first, second),
+      names = c(spelling, spelling)
+    )
+    resolved <- resolve_user_header(NULL, FALSE, duplicated)
+    expect_equal(resolved$user_header, second)
+    expect_length(resolved$cpp_options, 0)
+  }
+
+  # USER_HEADER still takes precedence across spellings.
+  mixed <- structure(
+    list(first, second, first),
+    names = c("user_header", "USER_HEADER", "user_header")
+  )
+  resolved <- resolve_user_header(NULL, FALSE, mixed)
+  expect_equal(resolved$user_header, second)
+  expect_length(resolved$cpp_options, 0)
+})
+
+test_that("a NULL header entry clears a persisted one rather than being ignored", {
+  persisted <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  first <- withr::local_tempfile(lines = "", fileext = ".hpp")
+
+  # A NULL entry emits USER_HEADER= and clears any previous header.
+  for (spelling in c("USER_HEADER", "user_header")) {
+    single <- structure(list(NULL), names = spelling)
+    resolved <- resolve_user_header(NULL, FALSE, single, previous = persisted)
+    expect_null(resolved$user_header)
+    expect_length(resolved$cpp_options, 0)
+
+    duplicated <- structure(list(first, NULL), names = c(spelling, spelling))
+    resolved <- resolve_user_header(NULL, FALSE, duplicated, previous = persisted)
+    expect_null(resolved$user_header)
+    expect_length(resolved$cpp_options, 0)
+  }
+
+  # A non-NULL last occurrence still wins, so this is not just "any NULL clears".
+  kept <- structure(list(NULL, first), names = c("USER_HEADER", "USER_HEADER"))
+  resolved <- resolve_user_header(NULL, FALSE, kept, previous = persisted)
+  expect_equal(resolved$user_header, first)
+
+  # An entry that clears is still an entry, so it conflicts with the argument.
+  resolved <- resolve_user_header(
+    first,
+    TRUE,
+    list(USER_HEADER = NULL),
+    previous = persisted
+  )
+  expect_identical(resolved$conflict, "argument")
 })
 
 skip_if(os_is_macos())
@@ -87,7 +504,10 @@ test_that("cmdstan_model works with user_header with mock", {
 
   with_mocked_cli(
     compile_ret = list(status = 0),
-    info_ret = list(),
+    # The mocked compile installs an executable, so the constructor queries it
+    # for compilation info; report a failure rather than an empty list, which
+    # model_compile_info() cannot interpret.
+    info_ret = list(status = 1),
     code = expect_mock_compile({
       mod_2 <- cmdstan_model(
         stan_file = testing_stan_file("bernoulli_external"),
@@ -100,8 +520,8 @@ test_that("cmdstan_model works with user_header with mock", {
 
   # Check recompilation upon changing header
   exe_mtime <- header_mtime + 10
-  # Mocked compile does not create the executable that real compilation writes.
-  file.create(file_that_exists)
+  # The mocked compile above installed the executable with a fresh mtime; pin it
+  # so the up-to-date check below compares against a known value.
   Sys.setFileTime(file_that_exists, exe_mtime)
   with_mocked_cli(
     compile_ret = list(status = 0),
@@ -121,8 +541,6 @@ test_that("cmdstan_model works with user_header with mock", {
     })
   )
 
-  # Mocked compile does not create the executable that real compilation writes.
-  file.create(mod$exe_file())
   Sys.setFileTime(mod$exe_file(), header_mtime + 10) # make exe newer than header
 
   # Alternative spec of user header
@@ -181,64 +599,27 @@ test_that("cmdstan_model works with user_header with mock", {
 
 test_that("wsl path conversion is done as expected", {
   tmp_file <- withr::local_tempfile(lines = hpp, fileext = ".hpp")
- # Case 1: arg
-  with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
-    code = {
-      mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
-        user_header = tmp_file,
-        dry_run = TRUE
-      )
-    }
-  )
+  local_mocked_stanc()
 
-  # USER_HEADER is converted
-  # user_header is NULL
-  expect_equal(mod$cpp_options()[['USER_HEADER']],  w_path(tmp_file))
-  expect_true(is.null(mod$cpp_options()[['user_header']]))
+  routes <- user_header_routes(tmp_file)
+  expected_names <- c("USER_HEADER", "USER_HEADER", "user_header")
+  for (i in seq_along(routes)) {
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = {
+        mod <- do.call(
+          cmdstan_model,
+          c(list(stan_file = local_external_model()), routes[[i]])
+        )
+      }
+    )
 
-  # Case 2: cpp opt USER_HEADER
-  with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
-    code = {
-      mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
-        cpp_options = list(
-          USER_HEADER = tmp_file
-        ),
-        dry_run = TRUE
-      )
-    }
-  )
-
-  # USER_HEADER is converted
-  # user_header is unconverted
-  expect_equal(mod$cpp_options()[['USER_HEADER']],  w_path(tmp_file))
-  expect_true(is.null(mod$cpp_options()[['user_header']]))
-
-  # Case # 3: only user_header opt
-  with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
-    code = {
-      mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
-        cpp_options = list(
-          user_header = tmp_file
-        ),
-        dry_run = TRUE
-      )
-    }
-  )
-
-
-  # In  other cases, in the *output* USER_HEADER is windows style user_header is not.
-  # In this case, USER_HEADER is null.
-  expect_true(is.null(mod$cpp_options()[['USER_HEADER']]))
-  expect_equal(mod$cpp_options()[['user_header']],  w_path(tmp_file))
+    expected_name <- expected_names[[i]]
+    other_name <- setdiff(c("USER_HEADER", "user_header"), expected_name)
+    expect_equal(mod$cpp_options()[[expected_name]], w_path(tmp_file))
+    expect_null(mod$cpp_options()[[other_name]])
+  }
 })
 
 test_that("user_header precedence order is correct", {
@@ -248,85 +629,70 @@ test_that("user_header precedence order is correct", {
     .local_envir = parent.frame(3)
   ))
 
-  # Case # 1: all 3 specified
+  local_mocked_stanc()
+  # Successful compiles record the selected header and drop ignored spellings.
+
+  # The explicit argument wins.
+  mod <- cmdstan_model(local_external_model(), compile = FALSE)
   with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
     code = expect_warning({
-      mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
+      mod$compile(
         user_header = tmp_files[1],
         cpp_options = list(
           USER_HEADER = tmp_files[2],
           user_header = tmp_files[3]
         ),
-        dry_run = TRUE
+        force_recompile = TRUE
       )
     }, "User header specified both")
   )
-  # In this case:
-  # cpp_options[['USER_HEADER']] == tmp_files[1] <- actually used
-  # cpp_options[['user_header']] == tmp_files[3] <- ignored
-  # tmp_files[2] is not stored
   expect_equal(
     match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
     1
   )
-  expect_equal(
-    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
-    3
-  )
+  expect_null(mod$cpp_options()[['user_header']])
 
-  # Case # 2: Both opts, but no arg
+  # USER_HEADER wins over user_header.
+  mod <- cmdstan_model(local_external_model(), compile = FALSE)
   with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
     code = expect_warning({
-      mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
+      mod$compile(
         cpp_options = list(
           USER_HEADER = tmp_files[2],
           user_header = tmp_files[3]
         ),
-        dry_run = TRUE
+        force_recompile = TRUE
       )
     }, "User header specified both")
   )
-  # In this case:
-  # cpp_options[['USER_HEADER']] == tmp_files[2]
-  # cpp_options[['user_header']] == tmp_files[3]
-  # tmp_files[2] is not stored
   expect_equal(
     match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
     2
   )
-  expect_equal(
-    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
-    3
-  )
+  expect_null(mod$cpp_options()[['user_header']])
 
-  # Case # 3: Both opts, other order
+  # Option order does not change precedence.
+  mod <- cmdstan_model(local_external_model(), compile = FALSE)
   with_mocked_cli(
-    compile_ret = list(status = 1),
-    info_ret = list(),
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
     code = expect_warning({
-      mod <- cmdstan_model(
-        stan_file = testing_stan_file("bernoulli_external"),
+      mod$compile(
         cpp_options = list(
           user_header = tmp_files[3],
           USER_HEADER = tmp_files[2]
         ),
-        dry_run = TRUE
+        force_recompile = TRUE
       )
     }, "User header specified both")
   )
-  # Same as Case #2
   expect_equal(
     match(!!(mod$cpp_options()[['USER_HEADER']]), w_path(tmp_files)),
     2
   )
-  expect_equal(
-    match(!!(mod$cpp_options()[['user_header']]), tmp_files),
-    3
-  )
+  expect_null(mod$cpp_options()[['user_header']])
 })
