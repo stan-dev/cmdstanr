@@ -75,12 +75,21 @@ compile(
   paths are resolved against the working directory when the model object
   is created (or when `$compile()` is called) and stored as absolute
   paths, so subsequent changes to the working directory do not affect
-  them.
+  them. If `$compile()` is called again without `include_paths`, the
+  most recently supplied paths are reused, and changing them forces
+  recompilation. Edits to the included files themselves do not; see
+  `force_recompile`.
 
 - user_header:
 
   (string) The path to a C++ file (with a .hpp extension) to compile
-  with the Stan model.
+  with the Stan model. If `$compile()` is called again without
+  `user_header`, the most recently supplied header is reused, and
+  changing it forces recompilation. Pass `user_header = NULL` to compile
+  without one. A header can also be supplied via `cpp_options` as
+  `USER_HEADER` or `user_header`; the `user_header` argument takes
+  precedence over both. See `force_recompile` for the case of a header
+  supplied for a program whose executable is already up to date.
 
 - cpp_options:
 
@@ -93,7 +102,9 @@ compile(
   enabled whenever their `Make` variable is non-empty. In particular,
   setting `stan_threads` to `FALSE` passes `STAN_THREADS=FALSE` to
   `Make`, which still enables threading! To leave threading disabled,
-  simply omit `stan_threads` entirely or set it to `NULL`.
+  either omit `stan_threads` entirely, which leaves any setting in
+  `make/local` in place, or set it to `NULL`, which passes an empty
+  `STAN_THREADS=` and so overrides `make/local` too.
 
 - stanc_options:
 
@@ -108,6 +119,15 @@ compile(
   (logical) Should the model be recompiled even if it has not been
   modified since it was last compiled? The default is `FALSE`. Can also
   be set via a global `cmdstanr_force_recompile` option.
+
+  Only the Stan program itself and the user header (if any) are checked
+  for modification. Files pulled in by `#include` directives are not, at
+  any depth, so editing an included file does not on its own trigger
+  recompilation. Use `force_recompile = TRUE` after changing one.
+  Similarly, when a model object is created for a Stan program whose
+  executable already exists and is up to date, CmdStanR cannot tell
+  which `user_header` or `include_paths` that executable was built with,
+  so supplying different ones does not force a rebuild.
 
 - compile_model_methods:
 
@@ -219,6 +239,9 @@ mod_threads$cpp_options()
 #> $stan_threads
 #> [1] TRUE
 #> 
+#> $STAN_THREADS
+#> [1] TRUE
+#> 
 
 # turn on pedantic mode
 file_pedantic <- write_stan_file("
@@ -231,7 +254,7 @@ model {
 ")
 mod <- cmdstan_model(file_pedantic, compile = FALSE)
 mod$compile(pedantic = TRUE)
-#> Warning in '/tmp/RtmphGKK7h/model-1c98119984ee.stan', line 6, column 2 to column 7:
+#> Warning in '/tmp/Rtmph3DGHt/model-1cda1e117278.stan', line 6, column 2 to column 7:
 #>     Parameter sigma is given a exponential distribution, which has strictly
 #>     positive support, but sigma was not constrained to be strictly positive.
 # same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)

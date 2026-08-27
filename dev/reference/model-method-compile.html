@@ -165,12 +165,21 @@ should look for files specified in <code>#include</code> directives in the Stan
 program. Relative paths are resolved against the working directory when
 the model object is created (or when <code>$compile()</code> is called) and stored as
 absolute paths, so subsequent changes to the working directory do not
-affect them.</p></dd>
+affect them. If <code>$compile()</code> is called again without <code>include_paths</code>, the
+most recently supplied paths are reused, and changing them forces
+recompilation. Edits to the included files themselves do not; see
+<code>force_recompile</code>.</p></dd>
 
 
 <dt id="arg-user-header">user_header<a class="anchor" aria-label="anchor" href="#arg-user-header"></a></dt>
 <dd><p>(string) The path to a C++ file (with a .hpp extension)
-to compile with the Stan model.</p></dd>
+to compile with the Stan model. If <code>$compile()</code> is called again without
+<code>user_header</code>, the most recently supplied header is reused, and changing
+it forces recompilation. Pass <code>user_header = NULL</code> to compile without one.
+A header can also be supplied via <code>cpp_options</code> as <code>USER_HEADER</code> or
+<code>user_header</code>; the <code>user_header</code> argument takes precedence over both.
+See <code>force_recompile</code> for the case of a header supplied for a program
+whose executable is already up to date.</p></dd>
 
 
 <dt id="arg-cpp-options">cpp_options<a class="anchor" aria-label="anchor" href="#arg-cpp-options"></a></dt>
@@ -181,8 +190,10 @@ see the Stan case study <a href="https://mc-stan.org/users/documentation/case-st
 <strong>Note:</strong> For historical reasons, CmdStan treats some options as enabled
 whenever their <code>Make</code> variable is non-empty. In particular, setting
 <code>stan_threads</code> to <code>FALSE</code> passes <code>STAN_THREADS=FALSE</code> to <code>Make</code>, which
-still enables threading! To leave threading disabled, simply omit
-<code>stan_threads</code> entirely or set it to <code>NULL</code>.</p></dd>
+still enables threading! To leave threading disabled, either omit
+<code>stan_threads</code> entirely, which leaves any setting in <code>make/local</code> in
+place, or set it to <code>NULL</code>, which passes an empty <code>STAN_THREADS=</code> and so
+overrides <code>make/local</code> too.</p></dd>
 
 
 <dt id="arg-stanc-options">stanc_options<a class="anchor" aria-label="anchor" href="#arg-stanc-options"></a></dt>
@@ -195,7 +206,15 @@ on available options.</p></dd>
 <dt id="arg-force-recompile">force_recompile<a class="anchor" aria-label="anchor" href="#arg-force-recompile"></a></dt>
 <dd><p>(logical) Should the model be recompiled even if it
 has not been modified since it was last compiled? The default is <code>FALSE</code>.
-Can also be set via a global <code>cmdstanr_force_recompile</code> option.</p></dd>
+Can also be set via a global <code>cmdstanr_force_recompile</code> option.</p>
+<p>Only the Stan program itself and the user header (if any) are checked for
+modification. Files pulled in by <code>#include</code> directives are not, at any
+depth, so editing an included file does not on its own trigger
+recompilation. Use <code>force_recompile = TRUE</code> after changing one. Similarly,
+when a model object is created for a Stan program whose executable already
+exists and is up to date, CmdStanR cannot tell which <code>user_header</code> or
+<code>include_paths</code> that executable was built with, so supplying different
+ones does not force a rebuild.</p></dd>
 
 
 <dt id="arg-compile-model-methods">compile_model_methods<a class="anchor" aria-label="anchor" href="#arg-compile-model-methods"></a></dt>
@@ -284,6 +303,9 @@ documentation and tutorials.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $stan_threads</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $STAN_THREADS</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># turn on pedantic mode</span></span></span>
 <span class="r-in"><span><span class="va">file_pedantic</span> <span class="op">&lt;-</span> <span class="fu"><a href="write_stan_file.html">write_stan_file</a></span><span class="op">(</span><span class="st">"</span></span></span>
@@ -296,7 +318,7 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="st">"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstan_model.html">cmdstan_model</a></span><span class="op">(</span><span class="va">file_pedantic</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">compile</span><span class="op">(</span>pedantic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/RtmphGKK7h/model-1c98119984ee.stan', line 6, column 2 to column 7:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/Rtmph3DGHt/model-1cda1e117278.stan', line 6, column 2 to column 7:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     Parameter sigma is given a exponential distribution, which has strictly</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     positive support, but sigma was not constrained to be strictly positive.</span>
 <span class="r-in"><span><span class="co"># same as mod &lt;- cmdstan_model(file_pedantic, pedantic = TRUE)</span></span></span>
