@@ -50,9 +50,11 @@ where the reasoning lives.
 - `compile = FALSE` and `$compile()` are removed. **`cmdstan_model(exe_file =)`
   stays** — you can still hand cmdstanr an executable it did not build, and it says
   up front whether it knows how that executable was built.
-- Introspection moves to standalone functions: `format_stan_file()`,
-  `check_syntax_stan_file()`, `stan_variables()`, `stan_build_info()`, and
-  `compile_stan_file()` if a consumer commits to it.
+- Introspection and compilation both get standalone functions:
+  `format_stan_file()`, `check_syntax_stan_file()`, `stan_variables()`,
+  `stan_build_info()` and `compile_stan_file()`. `cmdstan_model()` and
+  `compile_stan_file()` share one implementation — the object is a wrapper around
+  the build, not a second path to it.
 - `$code()` and `$variables()` describe the source the executable was built from,
   not the file as it is now.
 - Anything that runs the binary checks that it is current and **errors** — it never
@@ -753,9 +755,53 @@ since the two APIs are taught together.
 
 `model_variables()` at `R/model.R:2657` is already this shape internally.
 
-**Export `compile_stan_file()` only if there is a committed consumer.** An earlier
-draft cited `instantiate` as motivation; that was speculative and should not be the
-basis for public API. Keep the helper internal until demand is demonstrated.
+### `compile_stan_file()` is exported, and shares one implementation
+
+An earlier draft said to export it only if a consumer committed to it, on the
+grounds that citing `instantiate` was speculative. That was the wrong bar. The
+better argument is parity: cmdstanpy already has `compile_stan_file`, and having
+`format_stan_file()` and `check_syntax_stan_file()` public while the compile step
+is not is arbitrary — with `compile = FALSE` gone there would be no way to build
+without constructing an R6 object.
+
+**One implementation, two entry points**, so nothing is duplicated:
+
+```
+compile_impl(stan_file, cpp_options, stanc_options, include_paths,
+             user_header, dir, force_recompile, quiet, dry_run)
+    -> list(path =, record =, src_info =, hpp_code =)
+
+compile_stan_file(...)   # exported: compile_impl(...)$path
+cmdstan_model(...)       # exported: R6 object built from all four
+```
+
+This is a lift of today's `$compile()` rather than a rewrite — the stanc and make
+invocation moves unchanged, and 12 of its 31 `private$` touches are `precompile_*`
+fields this issue deletes anyway. What remains resolves into arguments in and
+values out.
+
+Four constraints:
+
+- **The internal returns more than a path.** Otherwise `cmdstan_model()` re-reads
+  the record and re-runs stanc, which is duplication in its most wasteful form. It
+  needs `record` for `$cpp_options()` and `$cmdstan_version()`, and `src_info` for
+  the eager `$code()`/`$variables()` snapshot (§5) — which is the `stanc --info`
+  call the build already makes.
+- **`hpp_code` answers #1245's discriminator.** Populated when a build ran, absent
+  when an executable was reused, which is exactly the "is there generated C++?"
+  half of the two independent questions that issue needs.
+- **`dry_run` lives on the internal only.** The single argument the public wrapper
+  omits, which makes `compile_stan_file()` a genuine wrapper rather than a
+  re-export — but a three-line one.
+- **`compile_stan_file()` performs the same up-to-date check**, reusing a current
+  executable rather than always compiling. The verb suggests otherwise, so this
+  needs documenting; one operation behaving two ways depending on entry point is
+  the inconsistency this design exists to remove. It writes the record too, so a
+  later `cmdstan_model(exe_file = path)` finds it and knows provenance (#1238).
+
+`force_recompile` keeps cmdstanr's spelling rather than cmdstanpy's `force`.
+Matching on the function *name* is what buys cross-implementation teachability;
+matching every argument at the cost of internal consistency is not worth it.
 
 **`stan_build_info()` returns a parsed object**, not the file. Users should not be
 encouraged to depend on the record's on-disk format.
