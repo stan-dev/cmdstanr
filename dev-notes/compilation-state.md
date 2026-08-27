@@ -923,10 +923,25 @@ A 1.0 candidate ships after Stage 4, so packages built around precompiled models
 `instantiate` most directly — have something to migrate against rather than a
 release note. That is what makes §8's breaking change affordable.
 
-One scheduling constraint follows. The repo-wide formatting and linting work
-(#1153, #1172) lands either before Stage 1 or after 1.0, never between Stage 4 and
-the candidate: a reformatting diff on top of the API removal leaves a downstream
-maintainer unable to see what actually broke.
+The formatting and linting work is scheduled around this, and the formatter and the
+linter go to different places.
+
+Air's one-time whole-repo format (#1153) is the **last** change before 1.0. It is
+whitespace-only and deterministic, so shipping it after the candidate is cheap, and
+by then there is no branch left for it to conflict with — which there would be
+today, with #1235 and #1254 both open. Its PR-review action is a separate thing:
+additive, conflicting with nothing, and most useful *during* the stages, since
+Stages 2 to 4 write a good deal of new code that would otherwise be formatted after
+the fact. Check first whether it comments on changed lines or on whole files; if the
+latter, it waits for the format.
+
+Jarl (#1172) does not travel with it. Adopting the linter is additive, but acting on
+its findings is semantic editing, and that must not land after the candidate — 1.0
+would then ship code in a form nobody tested. Those findings are ordinary reviewed
+changes, taken whenever, not a sweep.
+
+Neither may land between Stage 4 and the candidate, where a reformatting diff on top
+of the API removal leaves a downstream maintainer unable to see what actually broke.
 
 ### How the stages are executed
 
