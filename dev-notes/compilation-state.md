@@ -13,14 +13,13 @@ remaining work off them rather than off the issue list.
 
 **This note is deliberately not the specification.** Each decision below lives on
 its issue in more detail than is repeated here — that is where an implementer
-should read once the issues have been brought into line. What this note adds is
-the part no issue can carry: why the contracts are what they are, why the work is
-ordered this way, and which tempting alternatives were rejected.
+should read, and it is the copy to trust if the two disagree. What this note adds
+is the part no issue can carry: why the contracts are what they are, why the work
+is ordered this way, and which tempting alternatives were rejected.
 
-> **The issues have not been updated yet, and several now contradict this draft.**
-> Until they are, **this note is the current copy** — the reverse of the usual
-> rule. See "Issues that will mislead you right now" below before reading any of
-> them.
+The work is tracked in #1238 (the record), #1255 (rebuild decisions), #1256
+(removing deferred compilation), #1257 (untracked dependencies), #1237 (includes),
+#1250 (option classification) and #1251 (logical `FALSE`).
 
 **In scope:** what is recorded about an executable and when; what a configuration
 means when it reaches `make`; when the record is validated; what can and cannot be
@@ -70,69 +69,6 @@ applicable reason is reported, not only the first.
 the include list from `stanc --info`; the `make/local` hash; the CmdStan
 installation; a hash of the executable; known-untracked dependencies; and a format
 version.
-
----
-
-## What changed from the previous draft
-
-Two drafts have been superseded. The first was built on **persistent options**
-(#1248) and **deferred compilation**; the second replaced those with a one-shot
-rule and a build record, but treated that record as authoritative in ways it
-cannot support. Both revisions came from review, and both are recorded here rather
-than quietly folded in.
-
-**On persistence.** #1248's case was not "persistence is nicer." It was that
-one-shot semantics force #1019 to invent a third lifecycle: once cmdstanr rebuilds
-on its own initiative, it has to build with *something*, and under one-shot the
-honest answer is "nothing — the previous compile consumed the options."
-
-That objection was correct, and it is answered rather than dismissed: **rebuilds
-the user did not request are no longer replayed from stored configuration at all.**
-They error and ask for an explicit rebuild (§5). Nothing needs to persist, in the
-object or in the record, for that to be safe.
-
-**On the record.** The second draft claimed "the record is the state" and treated
-it as the single answer to what a binary is. It cannot be, for two reasons that
-review made plain: a record does not prove *which* executable it describes, and a
-record of resolved call arguments is not the same fact as what a binary actually
-has enabled. §1 and §4 are rewritten accordingly. The record is a provenance
-manifest — it describes, it does not authorise.
-
-| | First draft | Second draft | This draft |
-|---|---|---|---|
-| Configuration between builds | object fields | the record | not replayed at all |
-| Unrequested rebuild | persisted config | recorded config | errors, asks the user |
-| Binds record to executable | — | atomic rename (wrong) | executable hash |
-| What a binary has enabled | merged into one list | resolved arguments | separate reported field |
-| `$compile()` | takes options | takes none | removed |
-
-### Issues that will mislead you right now
-
-None of the issues have been updated — that work is deliberately held until the
-design settles, so it does not have to be redone. Read them knowing:
-
-- **#1248** is the sharpest trap. Its *title* asserts the decision this draft
-  reverses, and its comments carry a written decision to persist options for 1.0.
-  That argument is answered above, not ignored, but nothing on the issue says so.
-  It will close as won't-do.
-- **#1252** will close. Its premise — stanc options meant for compilation leaking
-  into `$check_syntax()` and `$format()` — disappears with the precompile store.
-- **#1253** will probably close, once `dry_run` is internal (§8).
-- **#1247** folds into #1238; canonical option spelling becomes part of the record.
-- **#1250 grows in priority.** An earlier draft said it shrinks. That was wrong:
-  per-field canonicalization (§4) needs the named/opaque classification to know
-  which treatment applies, so it is a **prerequisite** for the record, not a
-  nice-to-have.
-- **#1019** grows, to the triggers in §6 including `make/local` and CmdStan
-  identity.
-- **#1238** will absorb the exe-vs-record bug (§4), the executable hash, and
-  transactional installation. Its current text describes only a passive record.
-- **#1249** is substantively unchanged, but this draft corrects its attribution:
-  the cause is `R/model.R:318` clobbering unconditionally on construction, not
-  `dry_run`.
-
-Unaffected and safe to read as written: **#1251**, **#1230**, **#1232**, **#1245**,
-**#1246**, **#1237**, **#1025**.
 
 ---
 
@@ -248,6 +184,19 @@ durable configuration of its own.
 
 > Every call that builds specifies the configuration it wants. Omitting an option
 > means you are not asking for it.
+
+**Persistent options were proposed and rejected (#1248).** Recorded here because it
+is the most tempting alternative in this design and will be proposed again. The
+case for it was not convenience: once cmdstanr rebuilds on its own initiative it
+has to build with *something*, and under one-shot semantics the previous compile
+consumed the options, so an automatic rebuild would silently drop the user's
+threading.
+
+That is answered by removing the premise rather than by persisting. An unrequested
+rebuild never replays stored configuration — the constructor builds from the
+request in front of it, and anything that would run a stale executable errors
+instead (§5). There is no point at which cmdstanr needs configuration it was not
+just given.
 
 `cmdstan_model()` **ensures a current compiled executable** when given a Stan file
 — it reuses one that is up to date and builds when it is not; it does not compile
