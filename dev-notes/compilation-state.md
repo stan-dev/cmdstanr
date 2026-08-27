@@ -504,10 +504,14 @@ a session and wrong the moment the object is deserialized somewhere else. That
 failure is silent and looks like a caching bug rather than a violated contract,
 which is why it is worth prohibiting here while the reason is still visible.
 
-One knock-on for consumers: **`$exe_file()` must stay a plain, non-erroring
-accessor.** brms's `needs_recompilation()` reads it and calls `file.exists()` on the
-result (`brms/R/backends.R:377-383`), and that is how a relocated fit gets
-recompiled before anything asks us for a verdict at all. #1253 must not change it.
+One knock-on for consumers, stated at the right level. brms currently decides
+whether to rebuild by reading `$exe_file()` and calling `file.exists()` on the
+result (`brms/R/backends.R:377-383`), which is how a relocated fit gets recompiled
+before anything asks us for a verdict at all. That code is ours to change, so it is
+not a constraint on #1253. The **capability** is: a caller must be able to ask
+whether a usable executable exists **without triggering an error**. Whether that
+stays `$exe_file()` returning something benign, or becomes a public form of the
+assessment above, is open. Leaving no way to ask is not.
 
 ### Introspection is a construction-time snapshot
 
@@ -951,10 +955,15 @@ Two are known to be affected. `instantiate` is built around precompiled models.
 **brms** uses `cmdstan_model(compile = FALSE)` in `.parse_model_cmdstanr()`
 (`brms/R/backends.R:23-34`) to build a throwaway object solely for `$check_syntax()`
 and `$code()` — precisely the case §8's standalone family replaces, and the clearest
-confirmation so far that the family is the right shape. Note that it forwards `...`,
-so `check_syntax_stan_file()` has to accept what users pass through `brm()`. brms
-also sets `cpp_options$stan_threads` only when threading is requested, so its users
-meet §1's threading policy as a rebuild when they toggle it off.
+confirmation so far that the family is the right shape. brms also sets
+`cpp_options$stan_threads` only when threading is requested, so its users meet §1's
+threading policy as a rebuild when they toggle it off.
+
+**These are signals, not constraints.** brms internals are ours to change, and the
+survey above is worth having because it shows what real callers need to express —
+not because their current code has to keep working. Build what §8 describes, then
+make brms use it. The only genuine obligation is negative: nothing here may leave a
+downstream package unable to express something it legitimately needs.
 
 We open those pull requests ourselves rather than waiting to be asked; the candidate
 is what they are written and tested against. They need to work against both the old
