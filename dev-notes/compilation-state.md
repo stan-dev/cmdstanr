@@ -26,7 +26,10 @@ ordered this way, and which tempting alternatives were rejected.
 means when it reaches `make`; when the record is validated; what can and cannot be
 known about an executable cmdstanr did not build.
 
-**Out of scope:** toolchain and installation paths.
+**Out of scope:** the toolchain itself — compiler version, system libraries — which
+is deliberately untracked (§6). The *selected CmdStan installation* is in scope and
+is part of `builder` identity; an earlier draft put installation paths out of scope
+and then relied on them, which was a contradiction.
 
 **Relation to the 1.0 milestone.** Every issue in this area is milestoned
 `v1.0.0 - release`, so the milestone is mostly this work — but not only: it also
@@ -221,6 +224,22 @@ compiles in while `resolve_user_header()` never sees it.
 **Names are lower-cased at `R/cpp_opts.R:100`**, so `foo=1` and `FOO=1` compare
 equal despite being different Make variables.
 
+**Raw `NAME+=`, `NAME?=` and `NAME:=` are assignments, not opaque arguments.**
+`parsed_cpp_options()`'s `^[A-Za-z_][A-Za-z0-9_]*=` does not match them, so they
+fall through to `opaque` — but on the command line they *are* plain assignments:
+
+```
+make 'FOO=x'   -> FOO=[x]  origin=command line
+make 'FOO+=x'  -> FOO=[x]  origin=command line
+make 'FOO?=x'  -> FOO=[x]  origin=command line
+make 'FOO:=x'  -> FOO=[x]  origin=command line
+```
+
+So `list("FOO+=x")` and `list(foo = "x")` produce identical builds and must
+classify identically. An earlier draft argued against widening the regex on the
+grounds that `+=` appends; that was written before the Make test above and is
+wrong for the command line.
+
 **This is a prerequisite for the record, not adjacent to it.** Per-field
 canonicalization (§4) cannot be implemented without a correct named/opaque
 classification, because the two kinds get different treatment.
@@ -254,11 +273,12 @@ an earlier claim in this document that distrust of the artifact is "never
 detectable." It is detectable, cheaply.
 
 **Installation is a transaction:** build and stage both artifacts, install the
-executable, install the record, and verify the pair before reuse. If record
-installation fails, restore the previous executable and fail the compile. An
-earlier draft called record-write failure "non-fatal but visible" — that is
-incompatible with §5, since an executable without a valid record is immediately
-unusable.
+executable, install the record, then verify the pair. **Any failure — including a
+successful record install whose pair verification then fails — restores both the
+previous executable and the previous record**, leaving a consistent pair rather
+than a new artifact with old provenance. An earlier draft called record-write
+failure "non-fatal but visible"; that is incompatible with §5, since an executable
+without a valid record is immediately unusable.
 
 **Concurrency is out of scope for v1.** The hash fixes crash-created and sequential
 mismatches. It does **not** fix active concurrency: process A can validate
@@ -302,7 +322,11 @@ the case above. What hashing adds is the false-positive column:
 |---|---|---|
 | exe vs. source mtime (today) | **easy** | rare |
 | recorded vs. source mtime | needs mtime restored to the exact recorded value | branch round-trip, `touch`, cloud sync |
-| recorded vs. source hash | none | none |
+| recorded vs. source hash | none *within tracked files* | none |
+
+The bottom row is bounded by what is tracked. Toolchain drift and the untracked
+dependencies in §6 are false negatives by construction, not defects in the
+comparison.
 
 The false-positive case is ordinary — the Stan file is in git, the executable is a
 gitignored artifact beside it, and a branch round-trip leaves identical content
@@ -321,7 +345,12 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
 - **Opaque Make arguments** — preserve order exactly; later arguments can override
   earlier ones.
 - **Include paths** — preserve order; it controls shadowing.
-- **Stanc options** — canonicalize per option semantics.
+- **Stanc options** — a **conservative comparison** for v1: compare the resolved
+  set literally and accept that equivalent spellings may occasionally trigger an
+  unnecessary rebuild. "Canonicalize per option semantics" appeared in an earlier
+  draft and is not implementable guidance — it would require enumerating the
+  semantics of every stanc option. Enumerate them later if the spurious rebuilds
+  turn out to matter.
 - **User-header paths** — normalise without erasing meaningful distinctions.
 - **`NULL` / `FALSE`** — preserve the explicit empty-assignment meaning (§3).
 
@@ -337,21 +366,58 @@ force/migration.**
 ## 5. Contract: when validation happens
 
 Specifying rebuild triggers is not enough; the design must say *when* they are
-checked. Today `$format(overwrite_file = TRUE)` rewrites the Stan file (`R/model.R:1293`)
-and updates cached source and variables (`:1309-1311`) but leaves the executable
-untouched, and an external editor does the same. The object can then show new Stan code while `$sample()` runs the old
-binary.
+checked and what each caller does about them. Today `$format(overwrite_file = TRUE)`
+rewrites the Stan file (`R/model.R:1293`) and updates cached source and variables
+(`:1309-1311`) but leaves the executable untouched, and an external editor does the
+same. The object can then show new Stan code while `$sample()` runs the old binary.
 
-**Validation runs at construction and before every fitting operation.** It is cheap
-— roughly 0.3 ms for a realistic source set — so there is no reason to skip it.
+### Assessment is separate from what the caller does about it
 
-**Validation never compiles.** On stale source, changed configuration, a mismatched
-executable/record pair, or a missing or corrupt record, it **errors** and tells the
-user to create a new model with `cmdstan_model(..., force_recompile = TRUE)`.
+One operation answers one question — *is this executable current?* — and it
+**never compiles and never mutates state.** Callers differ:
 
-Erroring rather than rebuilding is deliberate. A silent 30–90 second compile
-appearing inside `$sample()` is worse than an actionable message, and it is exactly
-the kind of latency users cannot predict or plan around.
+| Caller | On a trigger |
+|---|---|
+| `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
+| any operation that runs or derives state from the binary | **errors** |
+
+An earlier draft stated both behaviours as if they were one contract, which read as
+a contradiction between §5 and §6. They are one assessment with two responses.
+
+### What the error says
+
+**Not `force_recompile = TRUE`.** An earlier draft told users to reach for it after
+a source or configuration change, which is wrong: the constructor detects those on
+its own, so a plain `cmdstan_model(...)` is the fix. Reserve `force_recompile` for
+what it is actually for — a corrupt or missing record, an executable/record
+mismatch, or explicit distrust of the artifact.
+
+Erroring rather than rebuilding is deliberate. A 30–90 second compile appearing
+inside `$sample()` is worse than an actionable message, and it is exactly the kind
+of latency users cannot predict or plan around.
+
+### Scope and cost
+
+**Guard every operation that executes or derives state from the binary** — not only
+the fitting methods. At least: `$sample()`, `$optimize()`, `$variational()`,
+`$laplace()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`,
+`$cmdstan_defaults()`, and the exposure methods.
+
+Cost is **~8.8 ms**: source hashes plus the executable hash. An earlier draft cited
+0.3 ms, which counted only the sources and predates the artifact hash in §4. If
+include re-resolution runs here too (§6) add ~30 ms. Still negligible against a
+sampling run, and the accurate number belongs in the document.
+
+### Introspection is a construction-time snapshot
+
+Pre-operation validation does **not** make cached introspection safe: `$code()` and
+`$variables()` can still be stale after an external edit. The rule is that they
+describe **the source the executable was built from**, not the file as it is now.
+
+That is the more correct answer rather than a compromise — `$code()` returning the
+current file would show code the binary does not have. It also does not undo #1228,
+which was staleness after a **recompile**; a snapshot as of the last compile fixes
+exactly that case.
 
 ---
 
@@ -364,8 +430,16 @@ A rebuild is triggered by any of:
 - the user header changed
 - `make/local` changed
 - the supplied `cpp_options` or `stanc_options` differ from `request`
+- the supplied `include_paths` or `user_header` path differ from `request`
 - the selected CmdStan installation differs from `builder`
 - `force_recompile = TRUE`
+
+**The comparison is request identity, not effective-source identity.** A changed
+include-path *order*, or a user header at a different path with identical content,
+triggers a rebuild even though the resolved sources happen to match. That is the
+conservative rule and the simple one: it can rebuild unnecessarily, but it cannot
+miss a change. Effective-source identity would be tighter and is not worth the
+specification cost for v1.
 
 **CmdStan identity rules.** A different selected installation is a different
 requested build environment and triggers a rebuild at `cmdstan_model()`. The same
@@ -399,9 +473,23 @@ a branch switch adding a higher-priority include is the same workflow used to
 justify hashing.
 
 **Record, for each include: its spelling, its ordered search roots, and the path
-selected.** Validation re-resolves that mapping. If a higher-priority root now
-holds a candidate that was not selected before, the resolution changed and the
-model rebuilds. This is stat calls, not a stanc invocation.
+selected.** Validation re-resolves that mapping; if a higher-priority root now
+holds a candidate that was not selected before, the resolution changed.
+
+**Re-resolve by invoking stanc, not by reimplementing its rules.** Recording the
+selected paths is easy; reproducing stanc's resolution semantics in R without
+invoking it is a correctness hazard, and getting it subtly wrong reintroduces the
+silent-stale-binary class this design exists to remove. There is no performance
+argument for taking that risk:
+
+```
+stanc --info      : 29.9 ms
+exe info          : 32.2 ms
+```
+
+Against ~8.8 ms of hashing and a 30–90 second compile, a stanc call is free. An
+earlier draft proposed stat calls as the primary mechanism; treat that as an
+optimisation to consider only if measurement ever justifies it.
 
 ### Provenance we cannot complete
 
@@ -416,13 +504,30 @@ hit it rather than only the documentation:
   misses them.
 
 In both cases a regex — `^\s*-?include\b` for `make/local`, `^\s*#\s*include\s*"`
-for the user header — tells us the record *cannot* be complete without resolving
-anything. Set `provenance_complete: false` with the reason, and say so when
-validation runs:
+for the user header — tells us there *is* an untracked dependency, without
+resolving anything.
+
+**The field is `known_untracked_dependencies`, not `provenance_complete`.** A regex
+can establish that a gap exists; it cannot establish that none does. Make also has
+`sinclude`, variable expansion and `eval`; C++ has angle-bracket local headers,
+macro-expanded includes, line continuations and conditional inclusion. **No match
+means "no known gap," never "complete."** Until compiler depfiles exist, *any* user
+header potentially carries untracked transitive dependencies — the regex improves
+the message, not the guarantee.
+
+(An earlier draft named this `provenance_complete`, which is the same error §10
+warns about for `reported_features`: treating absence of evidence as evidence of
+absence, in the same document.)
+
+**Surface it at construction and through `stan_build_info()` — not in
+pre-operation validation.** It is a standing property of the model, not a change,
+and validation reports only what changed. A warning on every `$sample()` call is
+noise that trains people to ignore warnings.
 
 ```
-#> This model's build record is incomplete: make/local includes another
-#>   makefile, which is not tracked. If you changed it, use force_recompile.
+#> Note: this model has dependencies cmdstanr does not track — make/local
+#>   includes another makefile. If you change it, rebuild with
+#>   force_recompile = TRUE.
 ```
 
 **Compiler-generated dependency files are the right long-term mechanism for
@@ -455,25 +560,41 @@ of their statements are impossible for it: that `cmdstan_model()` always compile
 that a missing record causes a rebuild, and that pre-record executables get a
 one-time rebuild.
 
-**Executable-only models are preserved, with provenance explicitly unknown:**
+**They are preserved, and they split into two cases.** An earlier draft called them
+all unprovenanced, which discards information we may have written ourselves —
+`compile_stan_file()` followed by `cmdstan_model(exe_file = path)` is a first-class
+flow under this design, and it produces an executable *with* a record.
 
-- read whatever metadata the executable reports, as today
-- permit fitting
-- never claim a record describes them
-- never attempt an automatic rebuild — there is no source to build from
-- `stan_build_info()` returns an explicit *unavailable / unprovenanced* result,
-  not an empty one that could be mistaken for "nothing was configured"
+**Executable plus a valid hash-bound record.** Artifact provenance is *known*: the
+record describes this binary, verified by the hash in §4. Report it.
+`stan_build_info()` returns the build information, not "unavailable." Source
+freshness may still be unverifiable — if the recorded sources are absent or the
+paths no longer resolve, say so specifically rather than collapsing it to unknown
+provenance.
 
-They are the deliberate exception to §5's requirement that a model have a valid
-record before fitting.
+**Executable without a usable record** — missing, corrupt, or hash mismatch.
+Explicitly unprovenanced: read whatever metadata the executable reports as today,
+and have `stan_build_info()` return an explicit *unavailable* result rather than an
+empty one that could be mistaken for "nothing was configured."
+
+In both cases: permit fitting, and **never attempt an automatic rebuild** — there
+is no source to build from. They are the deliberate exception to §5's requirement
+that a model have a valid record before running.
 
 Rejecting executable-only models would also be coherent for v1, but it is a
 substantial capability removal and would need its own argument. None is made here.
 
-**Pre-record executables** — anything built before this work — are a separate case
-from executable-only models: they *have* source, so they can be rebuilt. The
-migration is a one-time rebuild, and it must be a deliberate decision with a
-message rather than a silent 90-second surprise on first use after upgrade.
+**Pre-record executables** — anything built before this work — are a separate case:
+they *have* source, so they can be rebuilt. **Migration happens during the
+explicitly requested `cmdstan_model()` call, with the reason printed**, rather than
+erroring and demanding `force_recompile`. The user asked for a model; a one-time
+rebuild with a stated cause is the least surprising way to give them one. This is
+the same rule as §5 — the constructor rebuilds, operations error.
+
+```
+#> Recompiling: this executable predates build records, so what it was
+#>   built with cannot be determined.
+```
 
 ---
 
@@ -529,15 +650,25 @@ include-path baseline and `include_paths_dirty_` (`R/model.R:642-656`).
 **Note on #1235.** That PR's include-path fix at `R/model.R:646-656` *is* the
 persistence mechanism this design rejects. It should still merge — it fixes a live
 bug against today's API, and this work deletes the mechanism rather than correcting
-it. #1234 stays fixed throughout; the guarantee moves from a private field to the
-record. There is no window where it regresses.
+it.
+
+**#1234's guarantee does not move into the record.** An earlier draft said it did,
+which was true of a draft where the record was replayed and is false now (§2). What
+actually happens is that the *lifecycle disappears*: #1234 exists because a second
+build call — `$compile()` — could drop the include paths and user header the first
+one supplied. Once deferred compilation and `$compile()` are gone there is no
+second call, every build carries its own complete configuration, and there is
+nothing left to drop.
 
 ---
 
 ## 9. Order of work
 
-Reordered from earlier drafts: the Make-option fixes come first, because
-per-field canonicalization depends on them.
+Two orderings matter. The Make-option fixes come first, because per-field
+canonicalization depends on them. And **the old lifecycle is removed before the
+record drives anything** — an earlier draft had the record driving decisions while
+`$compile()` and deferred compilation still existed, which would mean specifying
+and implementing transitional behaviour that never ships.
 
 ### Stage 0 — landing in #1235
 
@@ -545,34 +676,41 @@ per-field canonicalization depends on them.
 
 ### Stage 1 — Make-option correctness
 
-**#1251** (logical `FALSE`), **#1250** (casing and raw assignments), **#1230** and
-**#1232** (quoting and escaping). All independent of the record, all prerequisites
-for comparing configurations correctly.
+**#1251** (logical `FALSE`), **#1250** (casing and raw assignments, including the
+`+=` / `?=` / `:=` classification in §3), **#1230** and **#1232** (quoting and
+escaping). All independent of the record, all prerequisites for comparing
+configurations correctly.
 
-### Stage 2 — specify and test the record schema
+### Stage 2 — schema and helper tests
 
-Field separation (§1), executable hash, corruption, forward versions, executable-only
-models. Specification and tests before behaviour.
+Field separation (§1), executable hash, corruption, forward versions,
+executable-only models. Parser, writer and comparison helpers tested against
+fixtures.
 
-**This stage is not behaviour-free.** It creates a user-visible file beside every
-Stan program. Settle its name, location, portability and git-ignore story before
-shipping — `.dep` is a placeholder and must not collide with anything `make` or
-another build system claims in the same directory.
+**This stage is behaviour-free**, and should be kept that way: nothing writes a
+record beside a user's Stan program until Stage 3. But settle the file's name,
+location, portability and git-ignore story *here*, before anything creates one —
+`.dep` is a placeholder and must not collide with anything `make` or another build
+system claims in the same directory.
 
-### Stage 3 — transactional installation
+### Stage 3 — transactional record writing
 
-Executable-plus-record staged and committed together, with verification on reuse.
-Locking deliberately excluded (§4).
+Executable-plus-record staged and committed together, with verification and the
+rollback in §4. Locking deliberately excluded. This is where the file first
+appears on disk; it is written but does not yet drive decisions.
 
-### Stage 4 — the record drives decisions
+### Stage 4 — the API change
 
-**#1019** and **#1237**: constructor reuse, the triggers in §6, include-shadowing
-re-resolution, and §5's pre-run validation.
+Removing deferred compilation and `$compile()`, adding the standalone family (§8).
+Closes **#1252**, likely closes **#1253**. Doing this *before* Stage 5 means the
+record only ever has to describe the final lifecycle.
 
-### Stage 5 — the API change
+### Stage 5 — the record drives decisions
 
-Removing deferred compilation and `$compile()`, adding the standalone family.
-Closes **#1252**, likely closes **#1253**.
+**#1019** and **#1237**: constructor rebuilds, the triggers in §6, include
+re-resolution, and §5's assessment with its two caller behaviours.
+
+Stages 4 and 5 could reasonably be combined.
 
 ### Stage 6 — public build-record inspection
 
@@ -606,9 +744,18 @@ asked for" means rebuild. "The record cannot be read" means there is nothing to
 disagree with. Conflating them makes an unreadable record silently equivalent to a
 matching one.
 
-**Absence is not disabled.** `reported_features` is tri-state (§1). A feature that
-CmdStan does not report is *unknown*, and code that treats unknown as disabled will
-reproduce #765 in a new place.
+**Absence of evidence is not evidence of absence — twice.** `reported_features` is
+tri-state (§1): a feature CmdStan does not report is *unknown*, and treating
+unknown as disabled reproduces #765 in a new place. `known_untracked_dependencies`
+(§6) is the same shape: an empty list means nothing was *detected*, never that the
+record is complete. Both drafts of this document got one of these wrong, so it is
+worth checking for deliberately rather than trusting the field names.
+
+**The assessment is pure.** The operation that answers "is this executable
+current?" must not compile, install, or mutate object state (§5). Callers decide
+what to do about the answer — the constructor rebuilds, everything else errors. A
+convenience rebuild tucked inside the assessment reintroduces the hidden
+recompilation this design removed.
 
 **Naming is open.** `stan_build_info()`, `check_syntax_stan_file()` and `.dep` are
 placeholders, and the standalone names should be settled jointly with cmdstanpy.
