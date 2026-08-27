@@ -117,8 +117,13 @@ an earlier draft collapsed them:
   never mentioned.
 - **`dependencies`** — the sources consumed, and enough about how they were
   resolved to re-resolve them.
-- **`artifact`** — which executable this record describes.
+- **`artifact`** — which executable this record describes, by hash (§4).
 - **`builder`** — which CmdStan installation produced it.
+- **`known_untracked_dependencies`** — dependencies we can see exist but cannot
+  resolve (§6). Named for what it is: an empty list means nothing was *detected*,
+  never that the record is complete.
+- **`format_version`** — the record schema's own version, without which the
+  forward-compatibility rule in §4 has nothing to check.
 
 `reported_features` is **tri-state and best-effort**: each feature is *known
 enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan chooses
@@ -528,7 +533,21 @@ A rebuild is triggered by any of:
 - the supplied `cpp_options` or `stanc_options` differ from `request`
 - the supplied `include_paths` or `user_header` path differ from `request`
 - the selected CmdStan installation differs from `builder`
+- the executable does not match `artifact` — replaced by another process, or corrupt
+- the record is missing or unreadable
+- the executable predates build records, so there is nothing to compare
 - `force_recompile = TRUE`
+
+The middle three are *artifact-side*: reasons the recorded facts cannot be trusted,
+rather than reasons the inputs changed. They belong in the same list because the
+constructor's response is identical — rebuild, and say why.
+
+**One case is deliberately not in that list.** A record whose `format_version` is
+*newer* than this cmdstanr understands does **not** trigger a rebuild, because
+rebuilding would install a replacement record over one written by a version that
+knows more than we do. It errors and requires explicit force or migration (§4).
+"Unreadable" and "readable but from the future" look alike and must not be
+conflated — the first has nothing to preserve, the second does.
 
 **The comparison is request identity, not effective-source identity.** A changed
 include-path *order*, or a user header at a different path with identical content,
