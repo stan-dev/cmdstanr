@@ -132,15 +132,18 @@ contract today and will need changing — without claiming completeness.
 
 Recording three states is useless unless downstream code acts on three. The policy:
 
-| State | Behaviour |
+**This table covers one case only: a runtime argument asks for a build feature.**
+The converse — an artifact that has a feature nobody asked to use — is a separate
+policy below, and conflating the two is easy.
+
+| State, *when the feature was requested at runtime* | Behaviour |
 |---|---|
 | known enabled | proceed |
-| known disabled | **error** if the user explicitly asked for the feature; otherwise proceed |
-| **unknown** | **error** if the operation requires the feature — never silently read as disabled, never discard the user's runtime option |
+| known disabled | **error** |
+| **unknown** | **error** — never silently read as disabled, never discard the user's runtime option |
 
-`assert_valid_threads()` (`R/cpp_opts.R:157`) needs changing on both counts, and it
-is already inconsistent with itself. Asking for threads on an unthreaded binary
-warns and then *discards the argument*:
+`assert_valid_threads()` (`R/cpp_opts.R:157`) is the case to fix. Asking for threads
+on an unthreaded binary warns and then *discards the argument*:
 
 ```r
 stan_threads <- cpp_option_value(cpp_options, "stan_threads")
@@ -150,15 +153,31 @@ if (is.null(stan_threads) || !isTRUE(stan_threads)) {
     threads <- NULL          # the user asked for threads and silently got none
 ```
 
-while the converse — a threaded binary with no `threads` argument — is already a
-`stop()`. Both are the same kind of mismatch between what was asked for and what
-the artifact has, and §5 says operations error on those. The warning is also the
-worse half of the pair in practice: a silently single-threaded run is a
-four-hour job that should have taken one, discovered afterwards.
+That is a genuine request-exceeds-artifact mismatch, which §5 says operations error
+on, and it is the expensive half: a silently single-threaded run is the four-hour
+job that should have taken one, discovered afterwards. Erroring is a deliberate
+behaviour change rather than preservation, and it costs a user who wants to run
+unthreaded nothing — they stop passing `threads_per_chain`.
 
-Erroring here is a deliberate behaviour change, not preservation of current
-behaviour. It costs a user who genuinely wants to run unthreaded nothing — they
-simply stop passing `threads_per_chain`.
+### The converse case: a capability nobody asked to use
+
+**Additional policy, not an instance of the table above.** A threading-enabled
+binary run with no `threads` argument is not a mismatch — the artifact simply
+exceeds the request. cmdstanr errors today (`R/cpp_opts.R:174`), and **that is
+kept**, on the grounds that building with threading and then not using it is much
+more likely a mistake than an intention.
+
+Two things make keeping it the conservative choice rather than a new imposition.
+It is well established — five assertion sites in `test-threads.R` plus snapshots.
+And it is already reachable for threading inherited from `make/local`, because
+`$cpp_options()` has merged executable metadata on the construction and no-op paths
+for some time; #1235 extends that merge to the fresh-compile path, making the
+behaviour uniform rather than introducing it.
+
+The cost is real and should be stated: a user with `STAN_THREADS=true` in
+`make/local` must pass a threads argument on every run. That is defensible — a
+threaded binary should be told how many threads to use — but it is a policy choice,
+not a consequence of the tri-state contract.
 
 **Scope this to features an operation actually requires.** For arbitrary options —
 `CXXFLAGS`, a user header — status is *permanently* unknown, because CmdStan never
@@ -587,11 +606,17 @@ differs from `builder`, or the recorded installation no longer exists, that is
 already a rebuild trigger (above) and should be reported without attempting
 re-resolution at all.
 
-**Open for Stage 2: normalisation.** `included_files` comes back as absolute paths,
-so relocating a project changes every recorded entry and triggers a rebuild. That
-is probably acceptable — moving a project is rare and rebuilding is the safe
-response — but it should be a decision rather than a discovery, and it applies
-equally to the recorded Stan file and `include_paths`.
+**Normalisation: normalised absolute paths, and relocation rebuilds.**
+`included_files` comes back as absolute paths, so moving a project changes every
+recorded entry and triggers a rebuild. That is the v1 rule, and it applies equally
+to the recorded Stan file and `include_paths`.
+
+Relocatable records were considered and rejected: they would require defining
+roots, symlink behaviour and paths that fall outside the project, for little
+benefit against a conservative rule that is easy to explain. It is also consistent
+with treating the CmdStan installation path as part of `builder` identity. And the
+case where rebuilding is genuinely impossible — no source — is already covered by
+executable-only models (§7).
 
 ### Provenance we cannot complete
 
