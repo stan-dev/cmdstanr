@@ -885,10 +885,10 @@ appears on disk; it is written but does not yet drive decisions.
 
 ### Stage 4 — the API change and the decision engine, together
 
-Removing deferred compilation and `$compile()`, adding the standalone family (§8),
-**and** the constructor decision engine: **#1019** and **#1237**, the triggers in
-§6, include re-resolution, and §5's assessment with its two caller behaviours.
-Closes **#1252**, likely closes **#1253**.
+Removing deferred compilation and `$compile()` and adding the standalone family
+(§8) is **#1256**. The constructor decision engine is **#1255**, superseding
+**#1019**, and brings with it **#1237**, the triggers in §6, include re-resolution,
+and §5's assessment with its two caller behaviours. Likely closes **#1253**.
 
 **These cannot ship separately, in either order.** An earlier draft split them and
 said combining was optional. It is not — the intermediate state is broken whichever
@@ -902,6 +902,14 @@ If `$compile()` is removed before configuration mismatches trigger rebuilds, an
 existing unthreaded executable is still reused under today's decision logic while
 the only escape route is gone. That breaks the central promise of the new API —
 that supplied options apply — in the window between the two stages.
+
+**One thing possibly worth automating here.** §6 treats an executable predating
+records as a rebuild trigger, and that transition can be tested rather than merely
+waited for: 0.9 stays installable from GitHub, so a job could install it, build an
+executable, then install this branch and assert the adoption path — no record,
+provenance unknown, rebuild triggered. Worth weighing when the stage is planned,
+not a commitment. Building such an executable by hand when it is needed may well be
+enough, and is one fewer moving part in CI.
 
 ### Stage 5 — public build-record inspection
 
