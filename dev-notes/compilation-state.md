@@ -38,6 +38,41 @@ holds linting (#1172), formatting (#1153), interactive installation (#605) and t
 
 ---
 
+## At a glance
+
+Orientation, not specification — the sections below are the contract, and they are
+where the reasoning lives.
+
+**The API**
+
+- `cmdstan_model()` is the only place a build is *configured*. It ensures a current
+  executable: reusing one that matches the requested source and options, rebuilding
+  when it does not.
+- `compile = FALSE` and `$compile()` are removed. **`cmdstan_model(exe_file =)`
+  stays** — you can still hand cmdstanr an executable it did not build, and it says
+  up front whether it knows how that executable was built.
+- Introspection moves to standalone functions: `format_stan_file()`,
+  `check_syntax_stan_file()`, `stan_variables()`, `stan_build_info()`, and
+  `compile_stan_file()` if a consumer commits to it.
+- `$code()` and `$variables()` describe the source the executable was built from,
+  not the file as it is now.
+- Anything that runs the binary checks that it is current and **errors** — it never
+  compiles. Only `cmdstan_model()` builds.
+
+**When it rebuilds** — the Stan program, an include or how one resolves,
+`include_paths`, the user header or its path, `make/local`, `cpp_options` or
+`stanc_options`, the CmdStan installation, a replaced or corrupt executable, a
+missing record, an executable predating records, or `force_recompile = TRUE`. Every
+applicable reason is reported, not only the first.
+
+**What the record holds** — the request; what the binary reports as enabled
+(tri-state, and absence never means disabled); source paths and hashes, including
+the include list from `stanc --info`; the `make/local` hash; the CmdStan
+installation; a hash of the executable; known-untracked dependencies; and a format
+version.
+
+---
+
 ## What changed from the previous draft
 
 Two drafts have been superseded. The first was built on **persistent options**
