@@ -66,7 +66,8 @@ where the reasoning lives.
 missing record, an executable predating records, or `force_recompile = TRUE`. Every
 applicable reason is reported, not only the first.
 
-**What the record holds** — the request; what the binary reports as enabled
+**What the record holds** — a JSON file beside the executable,
+`<model>.cmdstanr.json`, holding the request; what the binary reports as enabled
 (tri-state, and absence never means disabled); source paths and hashes, including
 the include list from `stanc --info`; the `make/local` hash; the CmdStan
 installation; a hash of the executable; known-untracked dependencies; and a format
@@ -318,7 +319,13 @@ classification, because the two kinds get different treatment.
 
 ## 4. Contract: the build record (#1238)
 
-A file beside the executable describing how it was built.
+A file beside the executable describing how it was built. JSON, named
+`<model>.cmdstanr.json` — so `bernoulli.stan` compiled to `bernoulli` is described
+by `bernoulli.cmdstanr.json` in the same directory. `jsonlite` is already an
+import, the format is readable and diffable by hand, and the name stays clear of
+`.dep` and `.d`, which `make` and the C++ toolchain already claim in that
+directory. Both remain revisable up to the release, so nothing outside the reader
+and the writer should depend on either.
 
 ### Binding the record to its executable
 
@@ -866,10 +873,9 @@ executable-only models. Parser, writer and comparison helpers tested against
 fixtures.
 
 **This stage is behaviour-free**, and should be kept that way: nothing writes a
-record beside a user's Stan program until Stage 3. But settle the file's name,
-location, portability and git-ignore story *here*, before anything creates one —
-`.dep` is a placeholder and must not collide with anything `make` or another build
-system claims in the same directory.
+record beside a user's Stan program until Stage 3. Name and format are settled
+(§4); portability and the git-ignore story are not, and both need an answer *here*,
+before anything creates a file.
 
 ### Stage 3 — transactional record writing
 
@@ -969,7 +975,10 @@ tri-state (§1): a feature CmdStan does not report is *unknown*, and treating
 unknown as disabled reproduces #765 in a new place. `known_untracked_dependencies`
 (§6) is the same shape: an empty list means nothing was *detected*, never that the
 record is complete. Both drafts of this document got one of these wrong, so it is
-worth checking for deliberately rather than trusting the field names.
+worth checking for deliberately rather than trusting the field names. JSON adds a
+third way to get it wrong: a tri-state field has to round-trip *unknown* as
+distinct from both absent and `false`, which is a property to test rather than
+assume of the serializer.
 
 **The assessment is pure.** The operation that answers "is this executable
 current?" must not compile, install, or mutate object state (§5). Callers decide
@@ -977,5 +986,7 @@ what to do about the answer — the constructor rebuilds, everything else errors
 convenience rebuild tucked inside the assessment reintroduces the hidden
 recompilation this design removed.
 
-**Naming is open.** `stan_build_info()`, `check_syntax_stan_file()` and `.dep` are
-placeholders, to be settled in the stage that implements each (§8).
+**Naming is open.** `stan_build_info()` and `check_syntax_stan_file()` are
+placeholders, to be settled in the stage that implements each (§8). So is
+`<model>.cmdstanr.json` (§4), with the difference that changing it after the
+release means migrating records that already exist.
