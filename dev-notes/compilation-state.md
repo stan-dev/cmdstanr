@@ -73,8 +73,8 @@ where the reasoning lives.
 missing record, an executable predating records, or `force_recompile = TRUE`. Every
 applicable reason is reported, not only the first.
 
-**What the record holds** — a JSON file beside the executable,
-`<model>.cmdstanr.json`, holding the request; what the binary reports as enabled
+**What the record holds** — a hidden JSON file beside the executable,
+`.<model>.cmdstanr.json`, holding the request; what the binary reports as enabled
 (tri-state, and absence never means disabled); source paths and hashes, including
 the include list from `stanc --info`; the `make/local` hash; the CmdStan
 installation; a hash of the executable; known-untracked dependencies; and a format
@@ -412,12 +412,28 @@ classification, because the two kinds get different treatment.
 ## 4. Contract: the build record (#1238)
 
 A file beside the executable describing how it was built. JSON, named
-`<model>.cmdstanr.json` — so `bernoulli.stan` compiled to `bernoulli` is described
-by `bernoulli.cmdstanr.json` in the same directory. `jsonlite` is already an
-import, the format is readable and diffable by hand, and the name stays clear of
-`.dep` and `.d`, which `make` and the C++ toolchain already claim in that
-directory. Both remain revisable up to the release, so nothing outside the reader
-and the writer should depend on either.
+`.<model>.cmdstanr.json` — so `bernoulli.stan` compiled to `bernoulli` is described
+by `.bernoulli.cmdstanr.json` in the same directory.
+
+**The leading dot is deliberate: this is not a file users are expected to open.**
+`stan_build_info()` is the supported way to ask what an executable is (§1), so the
+record is an implementation detail rather than a user-facing artifact, and hiding it
+on macOS and Linux keeps a project directory from filling with files nobody needs to
+read. Windows does not hide by naming convention, but it shows the same file either
+way, so the dot costs nothing there.
+
+JSON still earns its place, just not for the reason an earlier draft gave. Not
+because users read it — they should not have to — but because `jsonlite` is already
+an import, a parse failure hands us §4's "unreadable" case for free, and a
+text format makes bug reports, golden fixtures and our own debugging tractable. The
+name also stays clear of `.dep` and `.d`, which `make` and the C++ toolchain already
+claim in that directory.
+
+**Implementation trap:** `list.files()` defaults to `all.files = FALSE` and will not
+see the record. Anything enumerating files beside a model must opt in.
+
+Both name and format remain revisable up to the release, so nothing outside the
+reader and the writer should depend on either.
 
 ### Binding the record to its executable
 
@@ -1072,9 +1088,10 @@ executable-only models. Parser, writer and comparison helpers tested against
 fixtures.
 
 **This stage is behaviour-free**, and should be kept that way: nothing writes a
-record beside a user's Stan program until Stage 3. Name and format are settled
-(§4); portability and the git-ignore story are not, and both need an answer *here*,
-before anything creates a file.
+record beside a user's Stan program until Stage 3. Name and format are decided
+(§4) — settled enough to build against, and revisable until the release. Portability
+and the git-ignore story are *not* decided, and both need an answer here, before
+anything creates a file. Note that a leading dot does not hide a file from git.
 
 ### Stage 3 — transactional record writing
 
@@ -1252,7 +1269,8 @@ what to do about the answer — the constructor rebuilds, everything else errors
 convenience rebuild tucked inside the assessment reintroduces the hidden
 recompilation this design removed.
 
-**Naming is open.** `stan_build_info()` and `check_syntax_stan_file()` are
-placeholders, to be settled in the stage that implements each (§8). So is
-`<model>.cmdstanr.json` (§4), with the difference that changing it after the
-release means migrating records that already exist.
+**Naming.** `stan_build_info()` and `check_syntax_stan_file()` are still
+placeholders, to be settled in the stage that implements each (§8).
+`.<model>.cmdstanr.json` is *decided* rather than open (§4) — build against it — but
+it stays revisable until the release, after which changing it means migrating
+records that already exist.
