@@ -1120,13 +1120,19 @@ fit* rather than once at install (§9), so a message here reaches every user of 
 package built that way, on every call, and cannot be silenced by fixing anything.
 `stan_build_info()` is how a caller asks.
 
-The line is between a standing property and an unmet request. **Say something when
-the user asks for what we cannot deliver** — `cpp_options` supplied alongside
-`exe_file` that no rebuild can apply, or a `threads_per_chain` we cannot confirm the
-binary supports — because that is about their argument, not about the artifact.
-**Say nothing about what merely is.** The same rule governs
-`known_untracked_dependencies` (§6) and the threading policy (§1); this is the third
-place it decides something, so it is worth stating once as a rule.
+The line is not "standing properties are silent" — §6 *does* surface
+`known_untracked_dependencies` at construction, and should, because a `make/local`
+that includes another makefile is something the user neither chose nor can discover.
+The line is **what the caller's own action already implies.** Passing `exe_file =` is
+itself a statement that cmdstanr did not build this, so reporting back that cmdstanr
+does not know how it was built adds nothing. The threading policy (§1) is the same
+call for the same reason: `STAN_THREADS` in `make/local` is deliberate, so saying it
+back is noise.
+
+**Say something when the user asks for what we cannot deliver** — `cpp_options`
+supplied alongside `exe_file` that no rebuild can apply, or a `threads_per_chain`
+whose support we cannot confirm. That is about their argument rather than the
+artifact, and nothing they did implies it.
 
 Rejecting executable-only models would also be coherent for v1, but it is a
 substantial capability removal and would need its own argument. None is made here.
