@@ -137,7 +137,7 @@ policy below, and conflating the two is easy.
 | known disabled | **error** |
 | **unknown** | **error** — never silently read as disabled, never discard the user's runtime option |
 
-`assert_valid_threads()` (`R/cpp_opts.R:157`) is the case to fix. Asking for threads
+`assert_valid_threads()` (`R/cpp_opts.R:282`) is the case to fix. Asking for threads
 on an unthreaded binary warns and then *discards the argument*:
 
 ```r
@@ -158,21 +158,52 @@ unthreaded nothing — they stop passing `threads_per_chain`.
 
 **Additional policy, not an instance of the table above.** A threading-enabled
 binary run with no `threads` argument is not a mismatch — the artifact simply
-exceeds the request. cmdstanr errors today (`R/cpp_opts.R:174`), and **that is
-kept**, on the grounds that building with threading and then not using it is much
-more likely a mistake than an intention.
+exceeds the request, and the run is correct — merely serial. cmdstanr errors on this
+today (`R/cpp_opts.R:297-303`), and **that error is removed.**
 
-Two things make keeping it the conservative choice rather than a new imposition.
-It is well established — five assertion sites in `test-threads.R` plus snapshots.
-And it is already reachable for threading inherited from `make/local`, because
-`$cpp_options()` has merged executable metadata on the construction and no-op paths
-for some time; #1235 extends that merge to the fresh-compile path, making the
-behaviour uniform rather than introducing it.
+The rule is asymmetric, because the two directions are not equally expensive:
 
-The cost is real and should be stated: a user with `STAN_THREADS=true` in
-`make/local` must pass a threads argument on every run. That is defensible — a
-threaded binary should be told how many threads to use — but it is a policy choice,
-not a consequence of the tri-state contract.
+| Runtime request | Feature enabled | Feature disabled or unknown |
+|---|---|---|
+| `threads > 1` | proceed | **error** |
+| `threads == 1` | proceed | proceed |
+| no `threads` argument | proceed | proceed |
+
+Only the top-right cell is the expensive silent failure — parallelism asked for and
+not delivered, discovered after a run that took four hours instead of one. Omitting
+the argument, or asking for a single thread, requests no parallelism at all, so
+there is nothing to fail to deliver.
+
+The current `stop()` is wrong in three ordinary situations. A model with no
+`reduce_sum` or `map_rect` cannot use threads at all, yet is required to supply the
+argument. Running `parallel_chains = 4` with one thread each is a sensible
+configuration that must currently be spelled `threads_per_chain = 1` to avoid an
+error. And `STAN_THREADS=true` in `make/local` is a single global setting that makes
+every model on the machine error by default.
+
+Its message also gives the wrong advice:
+
+```
+The model executable was built with threading enabled but 'threads_per_chain'
+was not set!
+```
+
+If what concerns the user is paying for threading they do not use, the remedy is to
+build without it — not to start passing `threads_per_chain`.
+
+**Threading is not free when unused, and that is a documentation point rather than a
+runtime one.** With `STAN_THREADS` defined, Stan Math makes the autodiff stack
+pointer thread-local, on the hottest path in the program. The cost has been
+engineered down deliberately — a pointer is used so the TLS can be
+constant-initialized, and the `__thread` extension is preferred over `thread_local`
+because only it "guarantees that constant initialization and its implied speedup"
+(`stan/math/rev/core/autodiffstackstorage.hpp`). Small and constant, not structural.
+Worth saying where users choose whether to enable threading globally; not worth a
+runtime message, since anyone who put it in `make/local` chose it deliberately, and
+`stan_build_info()` reports it on demand.
+
+Five assertion sites in `test-threads.R`, plus snapshots, encode the old behaviour
+and will change.
 
 **Scope this to features an operation actually requires.** For arbitrary options —
 `CXXFLAGS`, a user header — status is *permanently* unknown, because CmdStan never
@@ -289,7 +320,7 @@ Make test:
 - Both properties propagate into sub-makes via `MAKEFLAGS`.
 
 In `make/local` — a file — `+=` is real and appends. cmdstanr's own `+=` usage
-(`CXXFLAGS` at `R/install.R:92`, `:258`, `:269`; `CPPFLAGS_SUNDIALS` at
+(`CXXFLAGS` at `R/install.R:258` and `:269`; `CPPFLAGS_SUNDIALS` at
 `R/utils.R:932`) is all `make/local`, and is not evidence that `+=` works in
 `cpp_options`. It does not. `::=` errors on Make 3.81, still the macOS default.
 
@@ -597,7 +628,7 @@ which was staleness after a **recompile**; a snapshot as of the last compile fix
 exactly that case.
 
 **The snapshot must be captured eagerly, or it is not a snapshot.** `$variables()`
-parses from disk on first call (`R/model.R:874`), so an edit made before that first
+parses from disk on first call (`R/model.R:1032`), so an edit made before that first
 call would return information about the *new* source while claiming to describe the
 built one — the contract violated by the mechanism meant to implement it.
 
