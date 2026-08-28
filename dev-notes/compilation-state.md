@@ -1247,11 +1247,12 @@ A 1.0 candidate ships after Stage 4, so downstream packages have something to
 migrate against rather than a release note. That is what makes §8's breaking change
 affordable.
 
-**brms** and **instantiate** are the priorities, and they are chokepoints rather
-than merely important packages: instantiate's own dependents call
+**brms**, **instantiate** and **rethinking** are the priorities. The first two are
+chokepoints rather than merely important packages: instantiate's own dependents call
 `instantiate::stan_package_model()` rather than cmdstanr directly, so fixing
-instantiate carries its dependency tree with it. Everyone else has the candidate
-period to adapt on their own.
+instantiate carries its dependency tree with it. rethinking is here for reach rather
+than fan-out — it is how most people first meet cmdstanr. Everyone else has the
+candidate period to adapt on their own.
 
 brms uses `cmdstan_model(compile = FALSE)` in `.parse_model_cmdstanr()`
 (`brms/R/backends.R:23-34`) to build a throwaway object solely for `$check_syntax()`
@@ -1270,9 +1271,52 @@ whole fix, since adoption never compiles. Its other branch — `stan_file = ` wi
 means a package was installed without its binary, so erroring is defensible.
 `stan_package_compile()` maps onto `compile_stan_file()` directly.
 
-Neither survey proves there is no third caller, and instantiate reaches us through
+rethinking is the smallest of the three. It reaches cmdstanr at four places — three
+in `ulam()` (`R/ulam-function.R:1424`, `:1455`, `:1493`) and one in `cstan()`
+(`R/cmdstan_support.r:32`), all of the form `cmdstan_model(stan_file, compile = ,
+cpp_options = , stanc_options = )` — and never reads build state back. No
+`$compile()`, no `dry_run`, no `exe_file` (commented out at all three sites), none of
+the §5 accessors. Everything else it touches is fit-side.
+
+§8 is therefore the only thing that reaches it. In `ulam()` the argument is
+`compile = filex[[3]]`, and `filex[[3]]` is hardcoded `TRUE` (`:1399`), so deleting
+the line is the whole fix. `cstan()` is the one place across all three packages where
+the removal propagates to end users: `compile` is rethinking's own documented
+argument (`R/cmdstan_support.r:17`), passed straight through.
+
+One thing worth fixing for them separately. `ulam()` sets
+`cpp_options[['stan_threads']] <- TRUE` unconditionally (`:1404`, with the
+`threads > 1` guard commented out directly above), so every ulam model built through
+cmdstan pays for §1's thread-local autodiff stack whether or not it uses threads.
+Not a break — `threads_per_chain` is always supplied, so the threading policy is
+satisfied either way — but a real cost paid by every ulam user.
+
+The guard cannot simply be restored, which is presumably why it is commented out.
+`ulam()` passes `threads_per_chain = threads` to `$sample()` unconditionally, and
+`assert_valid_threads()` warns when that is set on a non-threaded executable
+(`R/cpp_opts.R:287-296`), so guarding the `cpp_options` entry alone would warn on
+every default call. Both halves have to move together: guard the option, and supply
+`threads_per_chain` only when `threads > 1`. `cstan()` already branches this way
+(`R/cmdstan_support.r:19`, and again at the two `$sample()` calls), so it is
+`ulam()` that is inconsistent with its sibling. The result behaves identically
+before and after §1's threading change, so it does not need to wait for the
+candidate.
+
+The nearby `do_compile <- TRUE # force for now because of odd bug` (`:1396-1401`)
+is **not** worth acting on. `compile = TRUE` does not force anything — it means
+"compile at construction", and `$compile()` still returns early when the executable
+is up to date (`R/model.R:741`) — so the workaround is inert. Models are written to
+`tempdir()` under a content-hash name, so an executable never survives the session
+and the commented-out `exe_file` could only ever have helped within one, where
+cmdstanr already reuses. What makes ulam recompile every session is the temporary
+directory, which is rethinking's design choice, not something a record changes.
+
+rethinking has no version-control exposure: `tempdir()` means records never reach a
+repository.
+
+No survey proves there is no further caller, and instantiate reaches us through
 `eval(parse(text = paste0("cmdstanr::", name)))`, so no static check will find a
-break in it — ours or theirs. Run both packages' test suites against the candidate
+break in it — ours or theirs. Run all three packages' test suites against the candidate
 rather than trusting a search.
 
 **These are signals, not constraints.** brms internals are ours to change, and the
@@ -1284,7 +1328,9 @@ downstream package unable to express something it legitimately needs.
 We open those pull requests ourselves rather than waiting to be asked; the candidate
 is what they are written and tested against. They need to work against both the old
 and the new cmdstanr — brms is on CRAN and cmdstanr is not — so a version guard
-rather than a clean switch.
+rather than a clean switch. rethinking is the exception: it is distributed from
+GitHub and already has cmdstanr in `Depends`, so it can require the new version
+outright.
 
 The formatting and linting work is scheduled around this, and the formatter and the
 linter go to different places.
