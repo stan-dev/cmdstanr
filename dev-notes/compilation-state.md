@@ -780,9 +780,11 @@ whether to rebuild by reading `$exe_file()` and calling `file.exists()` on the
 result (`brms/R/backends.R:377-383`), which is how a relocated fit gets recompiled
 before anything asks us for a verdict at all. That code is ours to change, so it is
 not a constraint on #1253. The **capability** is: a caller must be able to ask
-whether a usable executable exists **without triggering an error**. Whether that
-stays `$exe_file()` returning something benign, or becomes a public form of the
-assessment above, is open. Leaving no way to ask is not.
+whether a usable executable exists **without triggering an error**. `$exe_file()`
+provides it, and the table above settles that it stays a plain accessor that never
+errors. A public form of the assessment may be added later for callers wanting a
+fuller answer; that would not change the accessor's contract, and the two are not
+alternatives. What is ruled out is leaving no way to ask.
 
 ### Introspection is a construction-time snapshot
 
@@ -821,13 +823,6 @@ Capture costs nothing extra: the assessment already invokes `stanc --info` for
 include resolution (§6), and the same output carries the variables. The assessment
 returns parsed source information; the constructor commits it as the object's
 snapshot after a successful validation or rebuild.
-
-**`$format(overwrite_file = TRUE)` must not replace the snapshot.** Today it
-rewrites the file and refreshes the caches from it (`R/model.R:1309-1311`). Under
-this contract that is backwards: formatting changes the source and makes the object
-stale, so `$code()` and `$variables()` must go on describing the binary until a new
-model is constructed. Refreshing them would leave the object describing source that
-was never compiled.
 
 ---
 
@@ -1099,9 +1094,14 @@ launching the binary (§4), this costs nothing.
 
 **Executable without a usable record** — missing, corrupt, hash mismatch, or written
 in a format version this cmdstanr does not read.
-Explicitly unprovenanced: read whatever metadata the executable reports as today,
-and have `stan_build_info()` return an explicit *unavailable* result rather than an
-empty one that could be mistaken for "nothing was configured."
+Explicitly unprovenanced, which is a statement about *provenance* and must not
+suppress what the binary does report. `stan_build_info()` returns an explicit
+unavailable provenance — `provenance = "unavailable"` or equivalent, never an empty
+result that could be mistaken for "nothing was configured" — **together with the
+`reported_features` the executable supplies**. The four `STAN_*` flags and the
+version from `<exe> info` are real information, and §1's separation is exactly what
+makes reporting them here consistent rather than contradictory: the request is
+unknown, the reported features are not.
 
 Here `$cpp_options()` **is** empty, and that is the honest answer — no request is
 known, and inventing one from the four flags the binary happens to report is exactly
