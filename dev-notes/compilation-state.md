@@ -579,9 +579,41 @@ of latency users cannot predict or plan around.
 ### Scope and cost
 
 **Guard every operation that executes or derives state from the binary** — not only
-the fitting methods. At least: `$sample()`, `$optimize()`, `$variational()`,
-`$laplace()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`,
-`$cmdstan_defaults()`, and the exposure methods.
+the fitting methods. "At least" is not implementable, so the full public surface is
+classified here. Thirteen members are defined in the class body and fourteen are
+attached with `CmdStanModel$set()`; every one appears below.
+
+| Behaviour | Members |
+|---|---|
+| **Validate, and error on any trigger** | `$sample()`, `$sample_mpi()`, `$optimize()`, `$laplace()`, `$variational()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`, `$cmdstan_defaults()`, `$expose_functions()` |
+| **Rebuild, printing every reason** | `cmdstan_model()` itself — the constructor, and the only builder |
+| **Snapshot of the built source; no validation** | `$code()`, `$variables()`, `$print()` |
+| **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()` |
+| **Operates on source, not the binary; no validation** | `$check_syntax()`, `$format()` |
+| **Generated C++; no validation** | `$hpp_file()`, `$save_hpp_file()` |
+| **Removed** | `$compile()` (§8) |
+
+Two entries need their reasoning stated rather than inferred.
+
+**`$check_syntax()` and `$format()` never touch the executable** — they run `stanc`
+against source. Validating there would demand a current binary in order to answer a
+question the binary is irrelevant to, and would make a syntax check on a model whose
+executable is stale fail for the wrong reason.
+
+**Functions exposed by `$expose_functions()` are a snapshot, like `$code()`.** The
+validation happens at exposure; the resulting entries in `$functions` are plain R
+bindings over separately compiled code, and re-validating on every call is neither
+practical nor meaningful — they are not the CmdStan binary. A recompile drops them
+and they must be exposed again, which is already the behaviour #1228 established.
+
+**The `$exe_file(path)` setter is removed** (`R/model.R:365-370`). It assigns
+`private$exe_file_` with no validation, no snapshot refresh and no provenance
+update, so under this design it would leave an object holding a record that
+describes a *different* binary — the exact pairing §4 exists to prevent. The getter
+stays and must keep not erroring (§1). Retargeting is done by constructing a new
+object, which is the same answer §8 gives to the rest of the mutable-configuration
+surface. Its only call site is `test-model-compile.R:1535`, in a test built on
+`compile = FALSE`, so it retires with that. Folded into #1253.
 
 Cost is **~8.8 ms**: source hashes plus the executable hash. An earlier draft cited
 0.3 ms, which counted only the sources and predates the artifact hash in §4. If
