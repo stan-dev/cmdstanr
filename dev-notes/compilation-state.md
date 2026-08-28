@@ -796,30 +796,46 @@ because the two warrant different messages: one says the file could not be parse
 the other says which format version was found and which is understood. Same
 behaviour, different diagnosis.
 
-**Dependencies are identified by content, not by path.** A source whose bytes are
-unchanged does not trigger a rebuild merely because it now sits somewhere else, so
-**moving a project does not rebuild it** — renaming the folder, relocating it on
-disk. The stored paths remain, for re-resolution and for naming *which* file
-changed, but they are not identity.
+**Dependencies are identified by path and content together.** A dependency matches
+only when its normalised absolute path *and* its content hash both match what the
+record holds. Moving a project therefore rebuilds it, once, and the rebuild reason
+names the cause: the recorded build location differs from the current one.
 
-This is the same rule stated below for the CmdStan installation. An earlier draft
-applied the opposite one here, calling path-sensitivity "conservative" because it
-"cannot miss a change" — which was never true. Transitive headers (#1257), toolchain
-drift and in-place CmdStan modification all pass straight through it. What it
-actually bought was catching a moved user header whose *transitive* includes resolve
-differently, by accident, in a case already documented as untracked.
+**Content-only identity was tried and rejected**, because the executable is not
+location-independent. stanc embeds the absolute path of the Stan file and of every
+resolved include into the generated C++ `locations_array__` — verified against 2.39,
+six occurrences for a twenty-line model plus one per included file — and those
+strings are compiled in and surface in every runtime exception:
 
-**Relocation is supported; portability is not.** The record still stores normalised
-absolute paths, and an *absolute* `include_paths` or `user_header` supplied at the
-new location is a genuinely different request, so it rebuilds — as does a changed
-include-path *order*, which controls shadowing (§4). What is fixed is narrower: the
-same call, from a project that moved, no longer rebuilds because strings changed.
-Defining project roots, symlink behaviour and out-of-project paths remains rejected.
+```
+Exception: normal_lpdf: Scale parameter is 0, but must be positive!
+  (in '/old/path/model.stan', line 12, column 2 to column 30)
+```
+
+So a relocated executable is not equivalent to a rebuilt one. It computes the same
+answers and reports them against a location that no longer exists, indefinitely,
+until something else triggers a rebuild.
+
+The variant that keeps relocation free — compare content, but store an immutable
+`built_from` path so the manifest still records where the artifact was actually
+built — is coherent, and was rejected on cost rather than correctness. It removes
+one field comparison and adds six things to explain: the built-from versus
+current-resolution split, why the record is not rewritten after a move, stale paths
+in exception messages, the copy-and-run trap, how `stan_build_info()` presents a
+build location that is gone, and an explicit rule that request paths are never
+compared. Five of those exist only to explain why something that looks wrong is
+fine.
+
+What this costs is narrow. Normal development, branch switching, CI checkouts and
+container builds all keep stable paths and are unaffected; moving a project costs a
+single compile. Defining project roots, symlink behaviour and out-of-project paths
+stays rejected, and under path identity there is nothing left to define.
 
 **Moving everything except the record is fine.** The record is hidden (§4), so a
-`cp *` or a drag-select will leave it behind. That is a missing record, which
-rebuilds once and writes a new one. Forgetting it costs a single compile, never a
-wrong answer.
+`cp *` or a drag-select will leave it behind. Where source is available that is a
+missing record, which rebuilds once and writes a new one — a single compile, never a
+wrong answer. For an executable-only model (§7) there is nothing to rebuild from, so
+a lost record costs provenance rather than time.
 
 **CmdStan identity rules.** The comparison is the **version**, plus the `make/local`
 hash, which is its own dependency with its own trigger rather than part of `builder`.
@@ -898,12 +914,11 @@ differs from `builder`, or the recorded installation no longer exists, that is
 already a rebuild trigger (above) and should be reported without attempting
 re-resolution at all.
 
-**Normalisation: normalised absolute paths, compared by content.** `included_files`
-comes back from `stanc --info` as absolute paths, so moving a project changes every
-recorded entry — but those entries are not identity. Each file is compared by
-content hash, so relocation rewrites the recorded paths without triggering a rebuild
-(§6). The paths are still stored, because they are how re-resolution finds the files
-again and how a rebuild reason can name which file changed.
+**Normalisation: normalised absolute paths, compared as identity.** `included_files`
+comes back from `stanc --info` as absolute paths. Each entry is compared by path and
+content together (§6), so a moved project rebuilds and the record is rewritten with
+the new locations. Normalising first is what keeps an unchanged project from
+rebuilding because a path was merely spelled differently.
 
 Relocatable *records* remain a separate and rejected idea: storing paths relative to
 some root would require defining that root, symlink behaviour, and what to do with
