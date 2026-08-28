@@ -993,9 +993,9 @@ rebuilding because a path was merely spelled differently.
 
 Relocatable *records* remain a separate and rejected idea: storing paths relative to
 some root would require defining that root, symlink behaviour, and what to do with
-paths outside the project. Content comparison delivers what motivated it without any
-of that. The case where rebuilding is genuinely impossible — no source — is covered
-by executable-only models (§7).
+paths outside the project. Under path identity there is nothing to define — a moved
+project rebuilds once (§6) — and the case where rebuilding is genuinely impossible,
+no source at all, is covered by executable-only models (§7).
 
 ### Provenance we cannot complete
 
