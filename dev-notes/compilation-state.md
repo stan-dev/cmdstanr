@@ -435,25 +435,45 @@ see the record. Anything enumerating files beside a model must opt in.
 Both name and format remain revisable up to the release, so nothing outside the
 reader and the writer should depend on either.
 
-### Keeping the record out of version control
+### The record's lifecycle follows the executable's
 
-**The record should be ignored, and cmdstanr has to say so** — the leading dot
-hides it from `ls`, not from git, so `git add -A` commits it silently.
+Whatever ignores the executable ignores the record; wherever the executable goes,
+the record goes with it. One rule, which answers the cases below and the ones nobody
+has thought of yet. It is also why the pair is hash-bound in the first place (§4): a
+record without its executable describes nothing, and an executable without its
+record is unprovenanced.
 
-A committed record is worse than no record for whoever checks it out. It holds a
-hash of an executable that does not exist on their machine and an absolute path to
-the CmdStan installation that built it, so it fails validation and rebuilds anyway,
-having produced a diff on every rebuild in the meantime. Nothing is lost by ignoring
-it: the record is derived data, and a missing one costs a single rebuild (§6). The
-pattern to document is `.*.cmdstanr.json`.
+**In practice that means `.gitignore`**, because a Stan executable is a
+platform-specific build artifact that almost nobody commits. Add `.*.cmdstanr.json`
+beside whatever already excludes the binary. The leading dot makes this easy to
+forget — it hides the file from `ls`, not from git, so `git add -A` commits it
+silently.
 
-**`.Rbuildignore` needs the same entry**, which is easy to miss. `R CMD build`
-excludes hidden files by a fixed list (`tools:::.hidden_file_exclusions`), not by
-leading dot, so this name is not covered — a package author who compiles in a source
-tree ships records inside the tarball describing their own machine. That is the case
-that reaches instantiate-style packages.
+Committing a record beside a *disposable* executable is worse than having none. It
+holds a hash of a binary that does not exist on the machine checking it out and an
+absolute path to the CmdStan installation that built it, so it fails validation and
+rebuilds anyway — having produced a diff on every rebuild in the meantime.
 
-**cmdstanr does not write either file itself.** Compiling a model should not modify a
+**`.Rbuildignore` follows the same rule**, and is the easier one to miss. `R CMD
+build` excludes hidden files by a fixed list (`tools:::.hidden_file_exclusions`), not
+by leading dot, so this name is not covered: a package author who compiles in a
+source tree ships records inside the tarball describing their own machine. Exclude
+the executable and the record together.
+
+**Where the executable is deliberately kept, keep the record with it** — a CI job
+passing a built binary to a later job, a container layer, a shared build directory.
+Any staging step that copies one must copy both. These cases are real but uncommon,
+and instantiate is specifically *not* one of them: it compiles on the user's machine
+at install time, so the record is generated locally beside a binary that was never in
+git or in the tarball.
+
+**Losing a record never breaks anything**, which is worth saying so nobody engineers
+around it. The model still samples and `<exe> info` still reports its flags. What is
+lost is the recorded request and any verdict on source freshness — recovered by a
+rebuild where source exists (§6), and for an executable-only model (§7) by rebuilding
+or replacing the binary.
+
+**cmdstanr writes neither ignore file itself.** Compiling a model should not modify a
 user's repository configuration; the recommendation belongs in documentation.
 
 **This repository needs the patterns too, before Stage 3 writes anything.**
