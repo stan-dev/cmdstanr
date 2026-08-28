@@ -1113,6 +1113,21 @@ In both cases: permit fitting, and **never attempt an automatic rebuild** — th
 is no source to build from. They are the deliberate exception to §5's requirement
 that a model have a valid record before running.
 
+**Adoption is silent.** Unknown provenance is a standing property of the executable,
+not a change, and cmdstanr must not announce it on every construction. The reason is
+concrete rather than stylistic: `instantiate::stan_package_model()` adopts on *every
+fit* rather than once at install (§9), so a message here reaches every user of every
+package built that way, on every call, and cannot be silenced by fixing anything.
+`stan_build_info()` is how a caller asks.
+
+The line is between a standing property and an unmet request. **Say something when
+the user asks for what we cannot deliver** — `cpp_options` supplied alongside
+`exe_file` that no rebuild can apply, or a `threads_per_chain` we cannot confirm the
+binary supports — because that is about their argument, not about the artifact.
+**Say nothing about what merely is.** The same rule governs
+`known_untracked_dependencies` (§6) and the threading policy (§1); this is the third
+place it decides something, so it is worth stating once as a rule.
+
 Rejecting executable-only models would also be coherent for v1, but it is a
 substantial capability removal and would need its own argument. None is made here.
 
@@ -1362,6 +1377,32 @@ whole fix, since adoption never compiles. Its other branch — `stan_file = ` wi
 `compile = FALSE` and the executable *missing* — has no successor, but that state
 means a package was installed without its binary, so erroring is defensible.
 `stan_package_compile()` maps onto `compile_stan_file()` directly.
+
+**Adoption happens on every fit, not once at install.** `stan_package_compile()` runs
+from `configure`, but `stan_package_model()` is called inside the user-facing model
+function — instantiate's own example package wraps it and `$sample()` together in
+`run_bernoulli_model()`. So anything cmdstanr prints at adoption prints on every fit,
+in every package built this way, through a function that does not look like it
+touches a compiler. That is the concrete case behind the silence rule in §7.
+
+**Its `.gitignore` template needs the record, and will not get it by accident.** The
+example package ships:
+
+```
+inst/stan/**
+!inst/stan/**/*.*
+inst/stan/**/*.exe
+inst/stan/**/*.EXE
+```
+
+Ignore everything, re-include anything with a dot so `.stan` files survive, re-ignore
+Windows binaries. The rule is built on "extensionless means binary", and the record
+has an extension, so it is re-included. Verified with `git check-ignore`: the
+executable is ignored, `.bernoulli.cmdstanr.json` is not. Telling users to "ignore the
+record alongside the binary" does not help against a pattern that un-ignores it by
+construction, which is why §4 asks for an explicit `.*.cmdstanr.json` line. Updating
+this template is part of the instantiate pull request, alongside dropping
+`compile = FALSE` and deciding the missing-executable branch.
 
 rethinking is the smallest of the three. It reaches cmdstanr at four places — three
 in `ulam()` (`R/ulam-function.R:1424`, `:1455`, `:1493`) and one in `cstan()`
