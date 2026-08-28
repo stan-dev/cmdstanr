@@ -11,11 +11,18 @@ number of contracts that were never written down, so each was rediscovered by
 being violated. The intent is to state those contracts once, and to sequence the
 remaining work off them rather than off the issue list.
 
-**This note is deliberately not the specification.** Each decision below lives on
-its issue in more detail than is repeated here — that is where an implementer
-should read, and it is the copy to trust if the two disagree. What this note adds
-is the part no issue can carry: why the contracts are what they are, why the work
-is ordered this way, and which tempting alternatives were rejected.
+**This note is the specification for these contracts, and is the copy to trust if
+it and an issue disagree.** The issues carry implementation detail, reproductions
+and progress, and link back to the sections here; they are not a second source of
+truth. An earlier version of this paragraph said the opposite, which produced
+exactly the drift it invited — §3 and #1250 came to contradict each other on raw
+Make assignments, and the *document* was the stale copy.
+
+What this note adds beyond the contracts themselves is the part no issue can carry:
+why they are what they are, why the work is ordered this way, and which tempting
+alternatives were rejected. Those rejected-alternative passages are kept
+deliberately. They are longer than a summary would be, and they are what stops the
+same rejected idea being proposed again each round.
 
 The work is tracked in #1238 (the record), #1255 (rebuild decisions), #1256
 (removing deferred compilation), #1257 (untracked dependencies), #1237 (includes),
