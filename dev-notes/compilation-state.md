@@ -712,6 +712,23 @@ parses from disk on first call (`R/model.R:1032`), so an edit made before that f
 call would return information about the *new* source while claiming to describe the
 built one — the contract violated by the mechanism meant to implement it.
 
+**`$format(overwrite_file = TRUE)` must stop refreshing the cache**
+(`R/model.R:1308-1312`). It rewrites the Stan file and then reassigns `stan_code_`
+and clears `variables_`, which makes both accessors describe a source the executable
+was *never* built from — #1228's failure in the opposite direction. #1235 added that
+refresh deliberately, under the older contract where `$code()` meant "the file as it
+is now"; the accessors have since been redefined and this has not caught up.
+
+Removing those lines is the whole fix. **`$format()` is kept, overwriting included** —
+a reviewer proposed removing the method, but rewriting the file is the useful part
+and is not what breaks anything. With the refresh gone: the file changes, the
+snapshot keeps describing the built source, the Stan file's content hash no longer
+matches, and the next operation that runs the binary errors and points at
+`cmdstan_model()`. So **reformatting forces a recompile**, which is correct rather
+than unfortunate — the bytes changed, and whether the build is unaffected cannot be
+known without doing it. No warning is needed, because §5 already says this about
+external edits and formatting is only an edit cmdstanr performs on the user's behalf.
+
 Capture costs nothing extra: the assessment already invokes `stanc --info` for
 include resolution (§6), and the same output carries the variables. The assessment
 returns parsed source information; the constructor commits it as the object's
@@ -1180,6 +1197,21 @@ therefore optional. It is not: because §1 keeps the request separate from what 
 binary reports, this is the only way to ask what an executable actually is, and the
 only answer available at all for an unprovenanced one (§7). Landing it during the
 candidate period is fine; landing it after the release is not.
+
+### Reconciling NEWS before the candidate
+
+`NEWS.md` accumulates entries describing behaviour that later stages remove, and by
+1.0 it would read as a changelog for methods that no longer exist. The unreleased
+section already carries fifteen-plus entries about `$compile()`, `compile = FALSE`
+and `dry_run`, all of which Stage 4 deletes, plus at least one — the
+`$format(overwrite_file = TRUE)` cache refresh (`NEWS.md:94-96`) — describing
+behaviour this document now reverses.
+
+**Entries are removed, not annotated.** An entry that no longer applies at 1.0 is
+noise for the reader it was written for, whichever release introduced it: a user
+upgrading from 0.9 to 1.0 never saw the intermediate behaviour and does not need to
+know it existed. This is a pass before the candidate, once the stages have settled,
+not something to do incrementally while the picture is still moving.
 
 ### The release candidate
 
