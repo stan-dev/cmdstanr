@@ -1284,35 +1284,11 @@ the line is the whole fix. `cstan()` is the one place across all three packages 
 the removal propagates to end users: `compile` is rethinking's own documented
 argument (`R/cmdstan_support.r:17`), passed straight through.
 
-One thing worth fixing for them separately. `ulam()` sets
-`cpp_options[['stan_threads']] <- TRUE` unconditionally (`:1404`, with the
-`threads > 1` guard commented out directly above), so every ulam model built through
-cmdstan pays for §1's thread-local autodiff stack whether or not it uses threads.
-Not a break — `threads_per_chain` is always supplied, so the threading policy is
-satisfied either way — but a real cost paid by every ulam user.
+§1's threading policy leaves it unchanged: `ulam()` enables `stan_threads` and
+always supplies `threads_per_chain`, so it satisfies the rule both before and after.
 
-The guard cannot simply be restored, which is presumably why it is commented out.
-`ulam()` passes `threads_per_chain = threads` to `$sample()` unconditionally, and
-`assert_valid_threads()` warns when that is set on a non-threaded executable
-(`R/cpp_opts.R:287-296`), so guarding the `cpp_options` entry alone would warn on
-every default call. Both halves have to move together: guard the option, and supply
-`threads_per_chain` only when `threads > 1`. `cstan()` already branches this way
-(`R/cmdstan_support.r:19`, and again at the two `$sample()` calls), so it is
-`ulam()` that is inconsistent with its sibling. The result behaves identically
-before and after §1's threading change, so it does not need to wait for the
-candidate.
-
-The nearby `do_compile <- TRUE # force for now because of odd bug` (`:1396-1401`)
-is **not** worth acting on. `compile = TRUE` does not force anything — it means
-"compile at construction", and `$compile()` still returns early when the executable
-is up to date (`R/model.R:741`) — so the workaround is inert. Models are written to
-`tempdir()` under a content-hash name, so an executable never survives the session
-and the commented-out `exe_file` could only ever have helped within one, where
-cmdstanr already reuses. What makes ulam recompile every session is the temporary
-directory, which is rethinking's design choice, not something a record changes.
-
-rethinking has no version-control exposure: `tempdir()` means records never reach a
-repository.
+rethinking has no version-control exposure either: `tempdir()` means records never
+reach a repository.
 
 No survey proves there is no further caller, and instantiate reaches us through
 `eval(parse(text = paste0("cmdstanr::", name)))`, so no static check will find a
