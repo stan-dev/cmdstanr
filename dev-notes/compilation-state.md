@@ -51,9 +51,10 @@ where the reasoning lives.
 
 **The API**
 
-- `cmdstan_model()` is the only place a build is *configured*. It ensures a current
-  executable: reusing one that matches the requested source and options, rebuilding
-  when it does not.
+- `cmdstan_model()` and `compile_stan_file()` are the public build entry points. **No
+  operation on an existing model object compiles.** `cmdstan_model()` ensures a
+  current executable: reusing one that matches the requested source and options,
+  rebuilding when it does not.
 - `compile = FALSE` and `$compile()` are removed. **`cmdstan_model(exe_file =)`
   stays** — you can still hand cmdstanr an executable it did not build, and it says
   up front whether it knows how that executable was built.
@@ -696,7 +697,7 @@ is not itself a member, so it does not count toward either total.
 | Behaviour | Members |
 |---|---|
 | **Validate, and error on any trigger** | `$sample()`, `$sample_mpi()`, `$optimize()`, `$laplace()`, `$variational()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`, `$cmdstan_defaults()`, `$expose_functions()` |
-| **Rebuild, printing every reason** | `cmdstan_model()` itself — the constructor, and the only builder |
+| **Rebuild, printing every reason** | `cmdstan_model()` itself — the constructor. `compile_stan_file()` is the other build entry point, but returns a path rather than a model |
 | **Snapshot of the built model; no validation** | `$code()`, `$variables()`, `$print()`, `$functions` |
 | **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()` |
 | **Operates on source, not the binary; no validation** | `$check_syntax()`, `$format()` |
