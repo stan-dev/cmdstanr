@@ -266,7 +266,8 @@ exactly this and must keep meaning it.
 Different languages, and the difference is not cosmetic. Verified with a recursive
 Make test:
 
-- On the command line, `+=`, `?=` and `:=` **all collapse to `=`**.
+- On the command line, a **lone** `+=`, `?=` or `:=` collapses to `=`. Two
+  assignments to the same variable do **not** — see the rejection rule below.
 - A command-line assignment has command-line *origin*, which **blocks** any
   makefile-side `+=` to the same variable.
 - Both properties propagate into sub-makes via `MAKEFLAGS`.
@@ -297,19 +298,56 @@ equal despite being different Make variables.
 
 **Raw `NAME+=`, `NAME?=` and `NAME:=` are assignments, not opaque arguments.**
 `parsed_cpp_options()`'s `^[A-Za-z_][A-Za-z0-9_]*=` does not match them, so they
-fall through to `opaque` — but on the command line they *are* plain assignments:
+fall through to `opaque`. But the collapse is only true of an assignment appearing
+**alone**. Two assignments to the same variable retain operator semantics
+(GNU Make 3.81):
 
 ```
-make 'FOO=x'   -> FOO=[x]  origin=command line
-make 'FOO+=x'  -> FOO=[x]  origin=command line
-make 'FOO?=x'  -> FOO=[x]  origin=command line
-make 'FOO:=x'  -> FOO=[x]  origin=command line
+make 'FOO=x'                -> FOO=[x]       # alone: all four collapse
+make 'FOO+=x'               -> FOO=[x]
+make 'FOO?=x'               -> FOO=[x]
+make 'FOO:=x'               -> FOO=[x]
+
+make 'FOO=base' 'FOO+=x'    -> FOO=[base x]  # in combination: they do not
+make 'FOO=base' 'FOO?=x'    -> FOO=[base]
+make 'FOO+=x'   'FOO+=y'    -> FOO=[x y]
+make 'FOO+=x'   'FOO:=y'    -> FOO=[y]
+make 'FOO=a'    'FOO=b'     -> FOO=[b]
 ```
 
-So `list("FOO+=x")` and `list(foo = "x")` produce identical builds and must
-classify identically. An earlier draft argued against widening the regex on the
-grounds that `+=` appends; that was written before the Make test above and is
-wrong for the command line.
+**So raw assignment-shaped entries are rejected, not reclassified.** A previous
+draft of this section said `list("FOO+=x")` and `list(foo = "x")` "must classify
+identically", reasoning from the single-assignment collapse alone. That is false
+whenever a second assignment to the same variable exists, and supporting these
+correctly would mean preserving and interpreting an ordered assignment program —
+real complexity for no user benefit. #1250 already specifies the rejection; this
+section was the stale half.
+
+**Rejection is what makes §4's canonicalization sound.** With only named entries
+reachable, only `=` is ever emitted, so "last assignment wins" is correct. The two
+rules are not independent: accepting raw operators would invalidate the
+canonicalization rule as well.
+
+**Plain `NAME=value` is rejected too**, though it is unambiguous, because it is the
+spelling that causes the worst live bug: raw `USER_HEADER=my.hpp` compiles the
+header in while `resolve_user_header()` never sees it. Accepting raw `=` means
+re-implementing every special-cased variable on the raw path. Nothing is lost —
+named entries already emit `NAME=value` (`R/cpp_opts.R:141`), so the migration is a
+spelling change and the error can name the form to use.
+
+**This applies to `cmdstan_model(cpp_options = )` only.** `cmdstan_make_local()`
+passes unnamed entries through verbatim (`R/install.R:332-333`) into a *file*, where
+`+=` is real and is not otherwise expressible — cmdstanr's own documented example
+(`man/install_cmdstan.Rd:137-142`) is exactly this:
+
+```r
+cpp_options <- list("CXX" = "clang++", "CXXFLAGS+= -march=native", ...)
+```
+
+That must keep working. `+=` there preserves an environment-provided `CXXFLAGS`
+where `=` discards it, and since `append = TRUE` is the default, repeated calls
+accumulate rather than clobber. The asymmetry is principled: on the command line
+named entries cover every case one-to-one, and in a makefile they do not.
 
 **This is a prerequisite for the record, not adjacent to it.** Per-field
 canonicalization (§4) cannot be implemented without a correct named/opaque
