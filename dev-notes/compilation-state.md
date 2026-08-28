@@ -837,13 +837,25 @@ missing record, which rebuilds once and writes a new one — a single compile, n
 wrong answer. For an executable-only model (§7) there is nothing to rebuild from, so
 a lost record costs provenance rather than time.
 
-**CmdStan identity rules.** The comparison is the **version**, plus the `make/local`
-hash, which is its own dependency with its own trigger rather than part of `builder`.
+**CmdStan identity rules.** The comparison is the **normalised installation path and
+the version**, plus the `make/local` hash, which is its own dependency with its own
+trigger rather than part of `builder`.
 
-**A different path at the same version is not a rebuild reason.** Anything that
-could differ between two same-version installations is either already caught by the
-`make/local` hash or untracked in both cases, so comparing paths costs a spurious
-rebuild and detects nothing that can be named.
+**A different path at the same version is a rebuild reason.** Selecting another
+installation with `set_cmdstan_path()` is a deliberate act, and under a version-only
+rule it would have no effect at all: the executable would still be the one the old
+installation built, still linked against its TBB at an absolute path inside it
+(below), while validation ran the new installation's `stanc`. Rebuilding is what
+makes the selection mean something.
+
+Version-only identity was tried and rejected. The argument for it was that nothing
+nameable distinguishes two same-version installations — which is nearly true, since
+`make/local` lives inside the installation and is hashed separately, so switching
+usually rebuilds on that alone. But that makes path identity nearly free rather than
+unnecessary. It adds a rebuild only when both installations are configured
+identically, which is precisely the case where the user's explicit choice would
+otherwise be ignored silently. "The installation that built it" is also the simpler
+rule to state.
 
 **The recorded installation must still exist**, which is a separate rule with a
 concrete mechanism behind it. Stan Math links model executables against TBB at an
