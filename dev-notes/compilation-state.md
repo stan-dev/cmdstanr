@@ -951,13 +951,33 @@ A 1.0 candidate ships after Stage 4, so downstream packages have something to
 migrate against rather than a release note. That is what makes §8's breaking change
 affordable.
 
-Two are known to be affected. `instantiate` is built around precompiled models.
-**brms** uses `cmdstan_model(compile = FALSE)` in `.parse_model_cmdstanr()`
+**brms** and **instantiate** are the priorities, and they are chokepoints rather
+than merely important packages: instantiate's own dependents call
+`instantiate::stan_package_model()` rather than cmdstanr directly, so fixing
+instantiate carries its dependency tree with it. Everyone else has the candidate
+period to adapt on their own.
+
+brms uses `cmdstan_model(compile = FALSE)` in `.parse_model_cmdstanr()`
 (`brms/R/backends.R:23-34`) to build a throwaway object solely for `$check_syntax()`
 and `$code()` — precisely the case §8's standalone family replaces, and the clearest
-confirmation so far that the family is the right shape. brms also sets
-`cpp_options$stan_threads` only when threading is requested, so its users meet §1's
-threading policy as a rebuild when they toggle it off.
+confirmation so far that the family is the right shape; the replacement removes
+lines rather than adding them. `.compile_model_cmdstanr()` needs no change at all,
+since it already supplies options on every construction, which is what §2 asks of
+every caller. brms does set `cpp_options$stan_threads` only when threading is
+requested, so its users meet §1's threading policy as a rebuild when they toggle it
+off.
+
+instantiate is smaller still. `stan_package_model()` adopts an existing executable
+with `cmdstan_model(exe_file = , compile = FALSE)`, and dropping the argument is the
+whole fix, since adoption never compiles. Its other branch — `stan_file = ` with
+`compile = FALSE` and the executable *missing* — has no successor, but that state
+means a package was installed without its binary, so erroring is defensible.
+`stan_package_compile()` maps onto `compile_stan_file()` directly.
+
+Neither survey proves there is no third caller, and instantiate reaches us through
+`eval(parse(text = paste0("cmdstanr::", name)))`, so no static check will find a
+break in it — ours or theirs. Run both packages' test suites against the candidate
+rather than trusting a search.
 
 **These are signals, not constraints.** brms internals are ours to change, and the
 survey above is worth having because it shows what real callers need to express —
