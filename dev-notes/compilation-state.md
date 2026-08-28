@@ -102,10 +102,26 @@ an earlier draft collapsed them:
 `reported_features` is **tri-state and best-effort**: each feature is *known
 enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan chooses
 to report — threading, OpenCL, Stan version — not arbitrary flags. **Absence must
-never be read as disabled.** `$cpp_options()` merges `request` with
-`reported_features` — structurally like `merge_exe_info_cpp_options()`
-(`R/cpp_opts.R:78`), though that function does not implement the tri-state
-contract today and will need changing — without claiming completeness.
+never be read as disabled.**
+
+**The two are never merged into one accessor.** `$cpp_options()` reports the
+request. `stan_build_info()` reports what the binary says, with its provenance. And
+**runtime validators read `reported_features` directly, never a merged convenience
+list.** A merged structure answers neither question: it looks complete but is not,
+and it cannot represent *unknown*, so a requested `TRUE` sitting over an unknown
+reading survives as a plain `TRUE` and the table below is silently bypassed.
+
+`merge_exe_info_cpp_options()` (`R/cpp_opts.R:78`) is what this replaces, and it
+already demonstrates the failure. It **drops FALSE values** — the comment explains
+that passing `FLAG=FALSE` back to CmdStan can enable the flag, which is #1251 — so a
+binary reporting `STAN_THREADS=false` contributes nothing, and known-disabled is
+already indistinguishable from never-reported. Fixing #1251 removes the reason for
+dropping FALSE but not the representational gap: `cpp_options` is a *request*
+structure, and has nowhere to put *unknown*.
+
+Little is given up by separating them. `<exe> info` reports four `STAN_*` booleans
+and the Stan version; `CXX`, `CXXFLAGS`, `PRECOMPILED_HEADERS` and everything else
+have no reported counterpart and are request-only regardless.
 
 ### What consumers do with each state
 
@@ -795,10 +811,22 @@ freshness may still be unverifiable — if the recorded sources are absent or th
 paths no longer resolve, say so specifically rather than collapsing it to unknown
 provenance.
 
+`$cpp_options()` returns the **recorded** request here. That is consistent with §1
+rather than an exception to it: the accessor always answers "what was this build
+asked for", and adoption simply sources that answer from the record instead of from
+the current call. Since adoption hydrates from a hash-matched record without
+launching the binary (§4), this costs nothing.
+
 **Executable without a usable record** — missing, corrupt, or hash mismatch.
 Explicitly unprovenanced: read whatever metadata the executable reports as today,
 and have `stan_build_info()` return an explicit *unavailable* result rather than an
 empty one that could be mistaken for "nothing was configured."
+
+Here `$cpp_options()` **is** empty, and that is the honest answer — no request is
+known, and inventing one from the four flags the binary happens to report is exactly
+the merge §1 rejects. This is the one case where a user must call
+`stan_build_info()` to learn anything, and error messages about options should say
+so rather than leaving them at an empty list.
 
 In both cases: permit fitting, and **never attempt an automatic rebuild** — there
 is no source to build from. They are the deliberate exception to §5's requirement
@@ -937,7 +965,8 @@ canonicalization depends on them. **The API change and the decision engine ship 
 one stage** — separating them leaves a window where the new promise is broken
 whichever way the cut is made (Stage 4). And Stages 0–4 must all be in the release
 candidate, because the API removal is the breaking change downstream packages need
-to see; Stage 5 adds a function and breaks nothing, so it need not be.
+to see; Stage 5 may land during the candidate period rather than before it, but it
+cannot be deferred past 1.0.
 
 ### Stage 0 — landing in #1235
 
@@ -998,8 +1027,13 @@ enough, and is one fewer moving part in CI.
 ### Stage 5 — public build-record inspection
 
 `stan_build_info()` last, once the schema has stabilised under real use — and the
-release-candidate period is that use. Purely additive, so it can land after the
-candidate, or after 1.0.
+release-candidate period is that use.
+
+**It must ship in 1.0.** An earlier ordering treated it as purely additive and
+therefore optional. It is not: because §1 keeps the request separate from what the
+binary reports, this is the only way to ask what an executable actually is, and the
+only answer available at all for an unprovenanced one (§7). Landing it during the
+candidate period is fine; landing it after the release is not.
 
 ### The release candidate
 
