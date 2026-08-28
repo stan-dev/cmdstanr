@@ -26,9 +26,9 @@ means when it reaches `make`; when the record is validated; what can and cannot 
 known about an executable cmdstanr did not build.
 
 **Out of scope:** the toolchain itself — compiler version, system libraries — which
-is deliberately untracked (§6). The *selected CmdStan installation* is in scope and
-is part of `builder` identity; an earlier draft put installation paths out of scope
-and then relied on them, which was a contradiction.
+is deliberately untracked (§6). The *CmdStan version* is in scope as `builder`
+identity, as is whether the recorded installation still exists; the installation's
+path is not compared (§6).
 
 **Relation to the 1.0 milestone.** Every issue in this area is milestoned
 `v1.0.0 - release`, so the milestone is mostly this work — but not only: it also
@@ -656,7 +656,7 @@ A rebuild is triggered by any of:
 - `make/local` changed
 - the supplied `cpp_options` or `stanc_options` differ from `request`
 - the supplied `include_paths` or `user_header` path differ from `request`
-- the selected CmdStan installation differs from `builder`
+- the CmdStan version differs from `builder`, or the recorded installation is gone
 - the executable does not match `artifact` — replaced by another process, or corrupt
 - the record is missing or unreadable
 - the executable predates build records, so there is nothing to compare
@@ -680,12 +680,20 @@ conservative rule and the simple one: it can rebuild unnecessarily, but it canno
 miss a change. Effective-source identity would be tighter and is not worth the
 specification cost for v1.
 
-**CmdStan identity rules.** A different selected installation is a different
-requested build environment and triggers a rebuild at `cmdstan_model()`. The same
-version at a different path also counts — the path is part of the identity, since
-two installations at the same version can differ in `make/local` and in patches.
-If the recorded installation no longer exists, the record's `builder` is
-unverifiable and the model must be rebuilt against the current one.
+**CmdStan identity rules.** The comparison is the **version**, plus the `make/local`
+hash, which is its own dependency with its own trigger rather than part of `builder`.
+
+**A different path at the same version is not a rebuild reason.** Anything that
+could differ between two same-version installations is either already caught by the
+`make/local` hash or untracked in both cases, so comparing paths costs a spurious
+rebuild and detects nothing that can be named.
+
+**The recorded installation must still exist**, which is a separate rule with a
+concrete mechanism behind it. Stan Math links model executables against TBB at an
+absolute path inside the installation (`TBB_BIN_ABSOLUTE_PATH`,
+`stan/lib/stan_math/make/compiler_flags:279`), so a binary carries a hard reference
+to the installation that built it. If that installation is gone, the executable may
+not launch at all, and the model is rebuilt against the current one.
 
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
@@ -813,6 +821,14 @@ compilation driver, not merely reading a file that is already there.
 
 - **Toolchain drift.** A compiler upgrade, a changed system library. Deliberately
   outside the recorded set rather than chasing completeness.
+- **CmdStan or Stan Math modified in place.** A patch applied, or a checkout
+  updated, at the same path and version. The version is unchanged, `make/local` is
+  unchanged, and nothing else is recorded, so this is invisible and needs
+  `force_recompile = TRUE` (#1257). Tracking a git identity was considered and
+  rejected: `install_cmdstan()` unpacks a tarball, so a typical installation is not
+  a repository at all, and a check that works only for developers running from a
+  checkout would report "unchanged" for everyone else — the absence-of-evidence
+  failure §10 warns about, in a new place.
 - **Distrust of a *source*.** The artifact is now verifiable (§4); its inputs are
   only as trustworthy as the filesystem.
 
