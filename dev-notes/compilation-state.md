@@ -676,11 +676,19 @@ a contradiction between §5 and §6. They are one assessment with two responses.
 
 ### What the error says
 
-**Not `force_recompile = TRUE`.** An earlier draft told users to reach for it after
-a source or configuration change, which is wrong: the constructor detects those on
-its own, so a plain `cmdstan_model(...)` is the fix. Reserve `force_recompile` for
-what it is actually for — a corrupt or missing record, an executable/record
-mismatch, or explicit distrust of the artifact.
+**Not `force_recompile = TRUE`.** Everything the assessment detects, the constructor
+already fixes — a changed source or configuration, a corrupt or missing record, an
+executable that does not match the record it sits beside. Naming any of those as a
+reason to reach for the flag is circular: a plain `cmdstan_model(...)` is the fix.
+For an executable-only model it cannot help at all, because there is no source to
+rebuild from.
+
+Reserve `force_recompile` for what nothing we compare can see: **explicit distrust of
+the artifact**, and **a change to one of the untracked dependencies** below —
+toolchain drift, CmdStan or Stan Math modified in place, headers reached
+transitively through `USER_HEADER`, a `make/local` that includes another makefile.
+Those are the cases where the assessment is right that nothing it tracks has changed
+and wrong about the conclusion.
 
 Erroring rather than rebuilding is deliberate. A 30–90 second compile appearing
 inside `$sample()` is worse than an actionable message, and it is exactly the kind
