@@ -413,6 +413,24 @@ with a fresh mtime. Measured on six realistic source files: **0.04 ms** to stat,
 Ninja uses mtime because it stats tens of thousands of files per invocation. We
 stat about six.
 
+### The record is parsed into an object, and compared as one
+
+JSON is how the record is *stored*, not how it is reasoned about. Reading one yields
+a structured R object, and the request assembled at `cmdstan_model()` is built into
+the same shape, so deciding whether to rebuild is a field-by-field comparison of two
+objects rather than text matching or a single equality test. That is what lets §6
+report every applicable reason instead of the first, and it is why the rules below
+are per field.
+
+The two are separable concerns, worth keeping separable. The object model is what
+delivers the comparison and the reasons; the format is only how bytes reach disk.
+JSON earns its place there on different grounds — a parse failure is exactly the
+"unreadable" case §4 needs, and getting it from `jsonlite` leaves only the
+`format_version` check to write by hand. RDS would round-trip R types exactly, which
+would remove the tri-state hazard in §10 for free, but at the cost of an opaque
+binary beside the user's model and a second forward-compatibility surface under our
+own. Not worth it while the tri-state property is testable.
+
 ### Canonicalization is per-field
 
 A single "sort and last-wins-deduplicate" rule is wrong. The correct rules differ:
