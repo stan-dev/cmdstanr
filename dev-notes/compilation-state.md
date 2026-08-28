@@ -1389,6 +1389,32 @@ whole fix, since adoption never compiles. Its other branch — `stan_file = ` wi
 means a package was installed without its binary, so erroring is defensible.
 `stan_package_compile()` maps onto `compile_stan_file()` directly.
 
+**Restoring `stan_file` is the shape to aim for.** instantiate currently adopts
+executable-only and forwards `include_paths` into a branch that supplies no source.
+That comes from #1094 by way of two independent changes: dropping `stan_file` when
+`compile = FALSE` (instantiate #28, following the workaround suggested in the
+cmdstanr issue) and adding an `include_paths` argument (#33). #1094 is itself an
+artifact of deferred compilation — its fix is `precompile_include_paths_`
+(`R/model.R:293-296`, `:306-307`, `:329-330`), a second include-path variable that
+exists only so a model constructed without compiling can carry paths it has not used
+yet, complete with a `dirname(stan_file)` guess when none were supplied. §8 removes
+the argument that made it necessary, so the mechanism and its failure mode go
+together.
+
+Under 1.0 the shape is `cmdstan_model(stan_file = , exe_file = , include_paths = )`.
+The paths mean something again — part of the request, compared against the record,
+used for re-resolution — and `$variables()` and `$check_syntax()` come back to a
+package's models instead of being lost to a workaround. For a *genuine*
+executable-only model `include_paths` stays inert, which is why supplying build
+configuration without a `stan_file` is rejected rather than ignored (§7).
+
+**What to verify rather than assume:** with source registered, validation runs on
+every `stan_package_model()` call, which is every fit. It must never conclude
+"rebuild", or a compile lands inside a user-facing function. It should not — the
+executable is built at install time from that source at that path, so path and
+content both match — but that is a property the instantiate pull request has to
+demonstrate, not reason about.
+
 **Adoption happens on every fit, not once at install.** `stan_package_compile()` runs
 from `configure`, but `stan_package_model()` is called inside the user-facing model
 function — instantiate's own example package wraps it and `$sample()` together in
