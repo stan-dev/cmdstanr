@@ -435,6 +435,33 @@ see the record. Anything enumerating files beside a model must opt in.
 Both name and format remain revisable up to the release, so nothing outside the
 reader and the writer should depend on either.
 
+### Keeping the record out of version control
+
+**The record should be ignored, and cmdstanr has to say so** — the leading dot
+hides it from `ls`, not from git, so `git add -A` commits it silently.
+
+A committed record is worse than no record for whoever checks it out. It holds a
+hash of an executable that does not exist on their machine and an absolute path to
+the CmdStan installation that built it, so it fails validation and rebuilds anyway,
+having produced a diff on every rebuild in the meantime. Nothing is lost by ignoring
+it: the record is derived data, and a missing one costs a single rebuild (§6). The
+pattern to document is `.*.cmdstanr.json`.
+
+**`.Rbuildignore` needs the same entry**, which is easy to miss. `R CMD build`
+excludes hidden files by a fixed list (`tools:::.hidden_file_exclusions`), not by
+leading dot, so this name is not covered — a package author who compiles in a source
+tree ships records inside the tarball describing their own machine. That is the case
+that reaches instantiate-style packages.
+
+**cmdstanr does not write either file itself.** Compiling a model should not modify a
+user's repository configuration; the recommendation belongs in documentation.
+
+**This repository needs the patterns too, before Stage 3 writes anything.**
+`tests/testthat/resources/stan/.gitignore` enumerates fifteen compiled binaries by
+hand and is already behind — four models there have no entry, and two generated
+`.hpp` files sit untracked beside them. Every compiled test model will add a record,
+so replace the enumeration with patterns rather than extending it.
+
 ### Binding the record to its executable
 
 **The record must contain a hash of the executable it describes.** Atomic
@@ -1148,10 +1175,11 @@ executable-only models. Parser, writer and comparison helpers tested against
 fixtures.
 
 **This stage is behaviour-free**, and should be kept that way: nothing writes a
-record beside a user's Stan program until Stage 3. Name and format are decided
-(§4) — settled enough to build against, and revisable until the release. Portability
-and the git-ignore story are *not* decided, and both need an answer here, before
-anything creates a file. Note that a leading dot does not hide a file from git.
+record beside a user's Stan program until Stage 3. Name, format and the
+version-control story are decided (§4) — settled enough to build against, and
+revisable until the release. What this stage owes is the groundwork that has to be
+in place before Stage 3 creates a file: ignore patterns in this repository, and the
+user-facing wording to ship with the writer.
 
 ### Stage 3 — transactional record writing
 
