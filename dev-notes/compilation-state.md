@@ -728,12 +728,30 @@ knows more than we do. It errors and requires explicit force or migration (§4).
 "Unreadable" and "readable but from the future" look alike and must not be
 conflated — the first has nothing to preserve, the second does.
 
-**The comparison is request identity, not effective-source identity.** A changed
-include-path *order*, or a user header at a different path with identical content,
-triggers a rebuild even though the resolved sources happen to match. That is the
-conservative rule and the simple one: it can rebuild unnecessarily, but it cannot
-miss a change. Effective-source identity would be tighter and is not worth the
-specification cost for v1.
+**Dependencies are identified by content, not by path.** A source whose bytes are
+unchanged does not trigger a rebuild merely because it now sits somewhere else, so
+**moving a project does not rebuild it** — renaming the folder, relocating it on
+disk. The stored paths remain, for re-resolution and for naming *which* file
+changed, but they are not identity.
+
+This is the same rule stated below for the CmdStan installation. An earlier draft
+applied the opposite one here, calling path-sensitivity "conservative" because it
+"cannot miss a change" — which was never true. Transitive headers (#1257), toolchain
+drift and in-place CmdStan modification all pass straight through it. What it
+actually bought was catching a moved user header whose *transitive* includes resolve
+differently, by accident, in a case already documented as untracked.
+
+**Relocation is supported; portability is not.** The record still stores normalised
+absolute paths, and an *absolute* `include_paths` or `user_header` supplied at the
+new location is a genuinely different request, so it rebuilds — as does a changed
+include-path *order*, which controls shadowing (§4). What is fixed is narrower: the
+same call, from a project that moved, no longer rebuilds because strings changed.
+Defining project roots, symlink behaviour and out-of-project paths remains rejected.
+
+**Moving everything except the record is fine.** The record is hidden (§4), so a
+`cp *` or a drag-select will leave it behind. That is a missing record, which
+rebuilds once and writes a new one. Forgetting it costs a single compile, never a
+wrong answer.
 
 **CmdStan identity rules.** The comparison is the **version**, plus the `make/local`
 hash, which is its own dependency with its own trigger rather than part of `builder`.
@@ -812,17 +830,18 @@ differs from `builder`, or the recorded installation no longer exists, that is
 already a rebuild trigger (above) and should be reported without attempting
 re-resolution at all.
 
-**Normalisation: normalised absolute paths, and relocation rebuilds.**
-`included_files` comes back as absolute paths, so moving a project changes every
-recorded entry and triggers a rebuild. That is the v1 rule, and it applies equally
-to the recorded Stan file and `include_paths`.
+**Normalisation: normalised absolute paths, compared by content.** `included_files`
+comes back from `stanc --info` as absolute paths, so moving a project changes every
+recorded entry — but those entries are not identity. Each file is compared by
+content hash, so relocation rewrites the recorded paths without triggering a rebuild
+(§6). The paths are still stored, because they are how re-resolution finds the files
+again and how a rebuild reason can name which file changed.
 
-Relocatable records were considered and rejected: they would require defining
-roots, symlink behaviour and paths that fall outside the project, for little
-benefit against a conservative rule that is easy to explain. It is also consistent
-with treating the CmdStan installation path as part of `builder` identity. And the
-case where rebuilding is genuinely impossible — no source — is already covered by
-executable-only models (§7).
+Relocatable *records* remain a separate and rejected idea: storing paths relative to
+some root would require defining that root, symlink behaviour, and what to do with
+paths outside the project. Content comparison delivers what motivated it without any
+of that. The case where rebuilding is genuinely impossible — no source — is covered
+by executable-only models (§7).
 
 ### Provenance we cannot complete
 
