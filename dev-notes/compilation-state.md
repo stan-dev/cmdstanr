@@ -655,17 +655,19 @@ of latency users cannot predict or plan around.
 
 **Guard every operation that executes or derives state from the binary** — not only
 the fitting methods. "At least" is not implementable, so the full public surface is
-classified here. Thirteen members are defined in the class body and fourteen are
-attached with `CmdStanModel$set()`; every one appears below.
+classified here: `CmdStanModel` carries **twenty-seven public methods and one public
+field**, and every one appears below. `cmdstan_model()` is listed as the builder but
+is not itself a member, so it does not count toward either total.
 
 | Behaviour | Members |
 |---|---|
 | **Validate, and error on any trigger** | `$sample()`, `$sample_mpi()`, `$optimize()`, `$laplace()`, `$variational()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`, `$cmdstan_defaults()`, `$expose_functions()` |
 | **Rebuild, printing every reason** | `cmdstan_model()` itself — the constructor, and the only builder |
-| **Snapshot of the built source; no validation** | `$code()`, `$variables()`, `$print()` |
+| **Snapshot of the built model; no validation** | `$code()`, `$variables()`, `$print()`, `$functions` |
 | **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()` |
 | **Operates on source, not the binary; no validation** | `$check_syntax()`, `$format()` |
 | **Generated C++; no validation** | `$hpp_file()`, `$save_hpp_file()` |
+| **R6 plumbing; no validation** | `$initialize()`, `$clone()` |
 | **Removed** | `$compile()` (§8) |
 
 Two entries need their reasoning stated rather than inferred.
@@ -680,6 +682,22 @@ validation happens at exposure; the resulting entries in `$functions` are plain 
 bindings over separately compiled code, and re-validating on every call is neither
 practical nor meaningful — they are not the CmdStan binary. A recompile drops them
 and they must be exposed again, which is already the behaviour #1228 established.
+The `$functions` field itself is classified with them, for the same reason.
+
+**`$initialize()` and `$clone()` are R6 plumbing**, listed because an unlisted member
+is indistinguishable from an overlooked one. Neither is guarded. `$initialize()` is
+the constructor: it is reached through `cmdstan_model()`, nothing in cmdstanr calls
+it on a live object, and no supported workflow calls it directly. Invoking it a
+second time would retarget private state, but writing a guard for that is error
+handling for a case nobody arrives at.
+
+`$clone()` copies state and derives nothing from the binary. It needs one note,
+because it looks like a defect until it doesn't: `functions` is an environment
+(`R/model.R:264`) and there is no `deep_clone` method, so a clone *shares* that
+environment with the original and exposing functions on either is visible on both.
+That is safe precisely because §8 makes a model immutable after construction. The
+two objects describe the same executable permanently and cannot diverge, so a shared
+exposure is valid for both.
 
 **The `$exe_file(path)` setter is removed** (`R/model.R:365-370`). It assigns
 `private$exe_file_` with no validation, no snapshot refresh and no provenance
