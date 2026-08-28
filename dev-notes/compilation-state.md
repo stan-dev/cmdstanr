@@ -1121,13 +1121,18 @@ package built that way, on every call, and cannot be silenced by fixing anything
 `stan_build_info()` is how a caller asks.
 
 The line is not "standing properties are silent" — §6 *does* surface
-`known_untracked_dependencies` at construction, and should, because a `make/local`
-that includes another makefile is something the user neither chose nor can discover.
-The line is **what the caller's own action already implies.** Passing `exe_file =` is
-itself a statement that cmdstanr did not build this, so reporting back that cmdstanr
-does not know how it was built adds nothing. The threading policy (§1) is the same
-call for the same reason: `STAN_THREADS` in `make/local` is deliberate, so saying it
-back is noise.
+`known_untracked_dependencies` at construction, and should. Nor is it whether the
+user chose the thing: including another makefile from `make/local` is entirely
+deliberate, and `make/local.example:36` ships it as a suggestion. The line is
+**whether the consequence follows from the action.**
+
+Passing `exe_file =` is itself a statement that cmdstanr did not build this, so
+answering that we do not know how it was built repeats what the caller just told us.
+The threading policy (§1) is the same: `STAN_THREADS` in `make/local` produces a
+threaded binary, which is the thing that was asked for. But writing an `-include`
+line says nothing about cmdstanr's staleness detection stopping at the first file.
+That is a limitation of ours, invisible from where the user stands, and no amount of
+deliberateness on their part reveals it.
 
 **Say something when the user asks for what we cannot deliver** — `cpp_options`
 supplied alongside `exe_file` that no rebuild can apply, or a `threads_per_chain`
