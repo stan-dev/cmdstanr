@@ -1141,10 +1141,45 @@ line says nothing about cmdstanr's staleness detection stopping at the first fil
 That is a limitation of ours, invisible from where the user stands, and no amount of
 deliberateness on their part reveals it.
 
-**Say something when the user asks for what we cannot deliver** — `cpp_options`
-supplied alongside `exe_file` that no rebuild can apply, or a `threads_per_chain`
-whose support we cannot confirm. That is about their argument rather than the
-artifact, and nothing they did implies it.
+**Say something when the user asks for what we cannot deliver.** That is about their
+argument rather than the artifact, and nothing they did implies it.
+
+### Build configuration cannot accompany an adopted executable
+
+**With no `stan_file`, explicitly supplied build configuration is an error** —
+`cpp_options`, `stanc_options`, `include_paths`, `user_header`, `force_recompile`.
+None of them can configure an artifact that will not be rebuilt, and a valid record
+is there to be *inspected*, not overridden. Silently ignoring them is the failure
+mode this design exists to remove: the user believes they asked for something.
+
+**The check is on whether the argument was supplied, not on what it resolves to**,
+and `force_recompile` is why. Its default is `getOption("cmdstanr_force_recompile")`
+(`R/model.R:621`), so a check written as `isTRUE(force_recompile)` would error for
+every adoption performed by anyone who has that option set — including every
+`instantiate` fit (§9), from inside a package the user never chose to look at. The
+option was set for *their* models; adoption is a third party's implementation
+detail.
+
+That difference is the §7 line applied to provenance rather than to content. Writing
+`force_recompile = TRUE` beside `exe_file =` is a per-call request we cannot honour,
+so it errors. A session-wide option is not a statement about this model, so it is
+ignored. Document that on the option's help page — it has no effect on
+executable-only models — so the advice arrives as documentation rather than as a
+runtime failure in somebody else's code.
+
+Prefer a `NULL` sentinel to `missing()`: resolve the option inside the body after the
+check. `missing()` is fragile through wrapper layers, and instantiate reaches us
+through `eval(parse(text = paste0("cmdstanr::", name)))` with `...` forwarding, which
+is exactly the shape that breaks it.
+
+**`force_recompile` never enters the record.** It changes *whether* we build, never
+*what* we build, so it is a decision override rather than configuration. Two
+identical builds must produce identical records whether or not one of them was
+forced; recording it would leave a forced rebuild permanently marked and every later
+comparison seeing a difference that means nothing. For the same reason the rebuild
+*reason* should name the option when the value came from there — "`force_recompile =
+TRUE`" is baffling to someone who set it in `.Rprofile` months ago and passed
+nothing.
 
 Rejecting executable-only models would also be coherent for v1, but it is a
 substantial capability removal and would need its own argument. None is made here.
