@@ -1663,9 +1663,10 @@ what an issue checklist cannot carry: why the sequence is what it is, and what b
 under the orderings that were rejected.
 
 Three constraints shape it. The Make-option fixes come first, because per-field
-canonicalization depends on them. **The API change and the decision engine ship as
-one stage** — separating them leaves a window where the new promise is broken
-whichever way the cut is made (Stage 4). And Stages 0–4 must all be in the release
+canonicalization depends on them. **The API change and the *live* decision engine
+ship as one stage** — separating those leaves a window where the new promise is
+broken whichever way the cut is made (Stage 4), though the engine's pure, unwired
+half separates cleanly and is Stage 3b. And Stages 0–4 must all be in the release
 candidate, because the API removal is the breaking change downstream packages need
 to see; Stage 5 may land during the candidate period rather than before it, but it
 cannot be deferred past 1.0.
@@ -1696,6 +1697,27 @@ user-facing wording to ship with the writer.
 Executable-plus-record staged and committed together, with verification and the
 rollback in §4. Locking deliberately excluded. This is where the file first
 appears on disk; it is written but does not yet drive decisions.
+
+### Stage 3b — why the engine separates from the API change
+
+The assessment is built and tested as a pure function before anything calls it,
+which is a stage of its own rather than the first half of Stage 4. It depends only
+on Stage 2's fixtures, compiles nothing, and can be worked alongside Stage 3.
+
+The reason to separate it is that **it is what makes this section's contract
+checkable**. §6's triggers are prose, and prose gives consistency only if a reader
+notices two statements disagreeing. As a decision table with a fixture per row, a
+contradiction is a red suite instead. This document has already paid for the
+difference: §6 held "`include_paths` is not compared as a spelling" and
+"re-resolution uses the recorded paths" eight lines apart for a full review round,
+and a single test asserting that `v1/` → `v2/` rebuilds would have failed against
+the second the day it was written. Landing the engine early moves that check ahead
+of Stage 4 rather than arriving with it.
+
+It does not weaken the argument below that the API change and the decision engine
+ship together. That argument is about the engine being *live* while `$compile()` is
+gone; an unwired function changes nothing observable, so it carries none of the
+risk the combined stage exists to contain.
 
 ### Stage 4 — the API change and the decision engine, together
 
@@ -2047,9 +2069,9 @@ Long-lived integration branches are the wrong unit here — #1235 alone ran to s
 commits across weeks of review, and a branch held open across two stages spends
 more time being rebased than reviewed.
 
-Stage 4 ships as one pull request but is built in two parts: the assessment engine
-as a pure function with its full decision table, tested and unwired; then the wiring
-and the API removal. Most of the risk is retired before anything user-facing moves.
+Stage 4 ships as one pull request, but with the engine already built and tested in
+Stage 3b what remains is the wiring and the API removal. Most of the risk is retired
+before anything user-facing moves, and it is retired in a separate reviewable unit.
 
 Parallel work is bounded by what the tests contend for, not by what a checkout
 isolates. `make/local` lives in the CmdStan installation, the precompiled headers
@@ -2057,8 +2079,9 @@ are keyed by `STAN_FLAGS` in that same installation, and parts of the suite reac
 `rebuild_cmdstan()`. Separate checkouts separate none of that, so **only one
 compiling task runs at a time** — and a run killed part-way leaves residue that the
 next run snapshots as its baseline. What does parallelise is the work that never
-compiles: record fixtures, the downstream-usage inventory, documentation and test
-migration once the API commit exists, and adversarial review of a finished stage.
+compiles: Stages 2 and 3b in their entirety, the downstream-usage inventory,
+documentation and test migration once the API commit exists, and adversarial review
+of a finished stage.
 That last is worth a reviewer rather than another implementer; this document
 reached its current form through five review rounds.
 
