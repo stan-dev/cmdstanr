@@ -33,9 +33,9 @@ means when it reaches `make`; when the record is validated; what can and cannot 
 known about an executable cmdstanr did not build.
 
 **Out of scope:** the toolchain itself — compiler version, system libraries — which
-is deliberately untracked (§6). The *CmdStan version* is in scope as `builder`
-identity, as is whether the recorded installation still exists; the installation's
-path is not compared (§6).
+is deliberately untracked (§6). The CmdStan installation *is* in scope: its
+normalised path and version together are `builder` identity, and whether that
+installation still exists is checked as well (§6).
 
 **Relation to the 1.0 milestone.** Every issue in this area is milestoned
 `v1.0.0 - release`, so the milestone is mostly this work — but not only: it also
