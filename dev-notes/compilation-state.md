@@ -466,20 +466,28 @@ and instantiate is specifically *not* one of them: it compiles on the user's mac
 at install time, so the record is generated locally beside a binary that was never in
 git or in the tarball.
 
-**Losing a record never breaks anything**, which is worth saying so nobody engineers
-around it. The model still samples and `<exe> info` still reports its flags. What is
-lost is the recorded request and any verdict on source freshness — recovered by a
-rebuild where source exists (§6), and for an executable-only model (§7) by rebuilding
-or replacing the binary.
+**Losing a record never corrupts the executable**, which is worth saying so nobody
+engineers around it — but it is not harmless, and the three cases differ:
+
+- **Source-backed construction** rebuilds and writes a new record (§6). One compile.
+- **An already-constructed source-backed object** errors on any guarded operation
+  (§5), because assessment reads the filesystem each time and the record is gone.
+  The remedy is `cmdstan_model()` again, not `force_recompile`.
+- **Executable-only adoption** continues with reduced provenance (§7). It is the
+  only case that keeps working without a record, and the only one where the loss is
+  not recovered by rebuilding.
+
+What is never lost is the binary itself, and `<exe> info` still reports its flags in
+all three.
 
 **cmdstanr writes neither ignore file itself.** Compiling a model should not modify a
 user's repository configuration; the recommendation belongs in documentation.
 
 **This repository needs the patterns too, before Stage 3 writes anything.**
 `tests/testthat/resources/stan/.gitignore` enumerates fifteen compiled binaries by
-hand and is already behind — four models there have no entry, and two generated
-`.hpp` files sit untracked beside them. Every compiled test model will add a record,
-so replace the enumeration with patterns rather than extending it.
+hand and is already behind — four models there have no entry. Every compiled test
+model will add a record, so replace the enumeration with patterns rather than
+extending it.
 
 ### Binding the record to its executable
 
