@@ -81,12 +81,16 @@ the binary itself.
 
 That distinction is load-bearing because these are genuinely different facts:
 
-- **`request`** — the **effective** configuration the build was given: what the user
-  supplied, plus any default cmdstanr filled in before invoking anything. Not "what
-  the user typed" — a caller who passes no `include_paths` on a program with
-  `#include` still gets `dirname(stan_file)` recorded (§6). The test is
-  **replayability**: feed `request` back to a fresh build and the same artifact
-  should come out.
+- **`request`** — the configuration the build was given, stored at both grains:
+  exactly what the caller supplied, and the **effective** invocation after cmdstanr
+  filled in defaults and added its own options. Both, because they answer different
+  questions — the supplied form is what a later call is compared against, the
+  effective form is what actually ran (§4). A caller who passes no `include_paths`
+  on a program with `#include` supplied nothing and has `dirname(stan_file)` as the
+  effective value (§6). The test on the effective form is **replayability**: feed it
+  back to a fresh build, under the same builder and environment, and an equivalent
+  build comes out. Not a byte-identical artifact — nothing here records or promises
+  reproducibility at that grain.
 - **`reported_features`** — what the binary itself reports as enabled. Distinct
   from `request` because `make/local` can enable threading or OpenCL that the user
   never mentioned. The line between the two is *when the fact was known*: `request`
@@ -460,9 +464,10 @@ must not restate it — a rule written in two places is a future inconsistency.
 
 | Field | Recorded | Compared | Notes |
 |---|---|---|---|
-| `request.cpp_options`, as the user supplied them | yes | yes | canonicalized per field (§3, #1250) |
-| `request.stanc_options`, as the user supplied them | yes | yes | canonicalized per field |
-| options cmdstanr injects into either | yes | **no** | `--name`, `--warn-pedantic`, `--allow-undefined`, `--use-opencl`, `--filename-in-msg`. Each is either fixed by a compared field or changes only what stanc prints |
+| `request.cpp_options_supplied` | yes | yes | exactly what the caller passed, before any merge; canonicalized per field (§3, #1250) |
+| `request.stanc_options_supplied` | yes | yes | as above |
+| `request.cpp_options_effective` | yes | **no** | post-merge, what `make` was actually invoked with |
+| `request.stanc_options_effective` | yes | **no** | post-merge, what `stanc` was actually invoked with. What cmdstanr injected is `effective − supplied`, computed rather than listed |
 | `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is for replay and provenance |
 | `request.user_header` path | yes | **yes** | the one *dependency* path compared, because the C++ closure beneath it cannot be enumerated. `-I` flags decide the same resolution and are compared inside `cpp_options` above (§6) |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
@@ -476,18 +481,37 @@ must not restate it — a rule written in two places is a future inconsistency.
 
 Three consequences, each of which has been got wrong at least once:
 
-**Recorded-but-not-compared is the ordinary case, not a list of exceptions.** Six
-rows are in it. The default is *not* "everything in `request` is compared," and
-reasoning from that default is what produced the errors.
+**Recorded-but-not-compared is the ordinary case, not a list of exceptions.** Six of
+the fourteen rows are in it. The default is *not* "everything in `request` is
+compared," and reasoning from that default is what produced the errors.
 
-**The injected-options row is itself build semantics.** If a later cmdstanr injects
-a different set, two versions would disagree about whether to rebuild the same
-executable, so changing that list obliges a `format_version` bump (below).
+**Origin is stored, not inferred.** `pedantic = TRUE` and
+`stanc_options = list("warn-pedantic" = TRUE)` produce the same stanc flag and must
+compare differently, so a merged blob plus a rule about it is not enough — the two
+grains are separate fields. `R/model.R:673`, `:677`, `:693` and `:835` all mutate
+one variable, so `_supplied` has to be captured before any of them run.
+
+**What cmdstanr injects is itself build semantics.** The injected set is
+`effective − supplied` rather than a list this document maintains, so changing it no
+longer changes what is compared. It still obliges a `format_version` bump (below),
+for a different reason: an option a later cmdstanr injects can change the artifact
+while an old record's `_supplied` goes on matching, so nothing would rebuild. The
+bump is what forces it.
 
 **An injected option still applies; not comparing it only means it cannot force a
 rebuild.** Where the option's whole purpose is to produce output — `--warn-pedantic`
 is the only current case — the operation still has to happen on a model that is
 already up to date, or the user's request silently evaporates (§5).
+
+**The `stanc_options` spelling of `--warn-pedantic` is therefore rejected**, with an
+error naming `pedantic = TRUE`. Supplied rather than injected, it would be
+*compared*: the first build warns, the second construction matches the record,
+nothing rebuilds, and the warnings never appear again — the same evaporation through
+the door the rule above does not cover. One spelling that is already handled is
+cheaper than a second rule. `allow-undefined`, `name` and `filename-in-msg` stay
+supplyable: they have no dedicated argument, `allow-undefined` is our own documented
+spelling (`R/model.R:2574`), and `filename-in-msg` is deliberately caller-overridable
+(§9).
 
 ### The record's lifecycle follows the executable's
 
@@ -957,6 +981,46 @@ and that is checked directly: re-resolution runs `stanc --info` and compares the
 resulting sequence of content hashes against the record. A change to `include_paths`
 that alters what resolves therefore rebuilds; one that alters nothing does not.
 
+**That argument requires `include_paths` to be the only way paths reach stanc, so
+it is made the only way.** stanc accepts `--include-paths` repeatedly and
+accumulates them, and *four* cmdstanr channels reach the build's stanc invocation:
+the `include_paths` argument (`R/model.R:832`), `stanc_options` (`:837`),
+`make/local`'s `STANCFLAGS` (`:839`), and `STANCFLAGS` set through `cpp_options`,
+which arrives as a `make` command-line assignment that cmdstanr's own `STANCFLAGS +=`
+appends to rather than replaces — confirmed in a built binary's embedded `stancflags`
+string. Only the first reaches `model_variables()` (`:2668`), the `stanc --info` call
+re-resolution is built on, so a path supplied through any of the others resolves for
+the build and nowhere else. That is a live defect in released cmdstanr, independent
+of this design: a model built through `stanc_options` compiles and then fails on
+`$sample()`, which calls `$variables()` unconditionally (`:1410`).
+
+**`include_paths` is therefore the only accepted channel**, and the rest are rejected
+with an error naming it — `--include-paths` in `stanc_options` under either spelling,
+`list("include-paths" = p)` and `list("include-paths=p")`; `--include-paths` in
+`make/local`'s `STANCFLAGS`, where the message names the file; and `STANCFLAGS` in
+`cpp_options` outright, since `stanc_options` is the channel for stanc flags and a raw
+make-variable passthrough only duplicates it. Detection is a substring test on the
+flag, not a parse: we never interpret `--include-paths`'s comma lists, quoting or
+separator forms, only refuse them.
+
+**The two rejections are deliberately different in scope, and should not be unified.**
+`cpp_options` is a cmdstanr argument, so the whole variable goes. `make/local` is
+CmdStan's own configuration file — `make/local.example:20` ships
+`STANCFLAGS+= --warn-pedantic` as a suggested line — so only the include-path flag is
+refused there, not the variable. The check on `cpp_options` belongs in
+`validate_cpp_options()`, which `cmdstan_make_local()` does not call
+(`R/install.R:324-338` builds its flags inline), so writing `STANCFLAGS` *into*
+`make/local` through the supported function stays possible. A `--warn-pedantic` left
+there is fine and is not the case §4 rejects: it asks to warn whenever CmdStan builds,
+and that is what it does. §4 refuses the *per-call* spelling, where silence on an
+up-to-date model would contradict the request.
+
+This narrows what CmdStan accepts, deliberately. cmdstanr owns source resolution
+because it re-runs it, and a second spelling of the same configuration buys nothing
+and costs the guarantee above. The cost is a `make/local` set for command-line
+CmdStan use now erroring even for programs with no `#include` — a configuration
+that is already broken for every program that has one.
+
 **Re-resolution uses the include paths supplied on the current call, not the
 recorded ones.** This is the single easiest thing in this document to get backwards,
 and backwards it is inert. Resolving with the *recorded* paths can only ever confirm
@@ -1055,8 +1119,8 @@ exchanging contents in place.
 
 One reporting note for the implementer: when an include is added or removed the
 sequences differ in length and every later position shifts, so walking positions
-would name every subsequent file as changed. Report a length change as "the set of
-included files changed" and walk positions only when the lengths match. The verdict
+would name every subsequent file as changed. Report a length change as "the
+included-file sequence changed" and walk positions only when the lengths match. The verdict
 is correct either way; this is about the message.
 
 Defining project roots, symlink behaviour and out-of-project paths stays rejected, and
@@ -1075,7 +1139,7 @@ a lost record costs provenance rather than time.
 spelling, and nothing beneath it is tracked.** The `-I` flags a user puts in
 `cpp_options` are the explicit members of that set; the user header's own directory
 is the implicit one. The two are compared through different fields — the flags as
-part of `request.cpp_options`, the header's path as the one *dependency* whose
+part of `request.cpp_options_supplied`, the header's path as the one *dependency* whose
 recorded path is compared (§4) — but this is one rule with two instances, not a rule
 plus an exception.
 
@@ -1108,16 +1172,20 @@ so a caller who explicitly selected the second header runs the first.
 
 **So this is the same rule under incomplete information, not an exception to it.**
 Identity is the content of the whole input closure. Where the closure can be
-enumerated we compare it exactly; where it cannot, we compare the cheapest thing that
-must change if the invisible part changed — the directory it is rooted in. §6 already
-does this once, for `make/local`: the whole file is hashed and any edit rebuilds,
-including edits that change nothing, because we cannot tell which ones matter. This
-is the second instance, not a new principle, and a `-I` directory is the third: we
-compare the flag as the user wrote it and track nothing in the directory it names.
+enumerated we compare it exactly; where it cannot, we compare what identifies the
+closure's *root* and accept that we see nothing below it — for a header, the
+directory it hangs from. §6 already does this once, for `make/local`: the whole file
+is hashed, so any edit rebuilds, including edits that change nothing; equally, an
+edit to a makefile it includes rebuilds nothing (#1257). This is the second
+instance, not a new principle, and a `-I` directory is the third: we compare the
+flag as the user wrote it and track nothing in the directory it names.
 
-**It errs only in the safe direction.** A user-header model that moves rebuilds
-unnecessarily, costing one compile. It cannot skip a rebuild that was needed. Where
-we cannot tell, we buy the cheap mistake.
+**What the comparison does and does not guarantee.** It detects *re-rooting*: a
+model whose header moves, or whose caller selects a different header directory,
+rebuilds. On that class of change it errs only in the safe direction — an
+unnecessary rebuild costs one compile, and a binary built from a different root is
+never reused. It is not a conservative approximation of every change beneath the
+root, and the next paragraph is the case it misses.
 
 **What it does not catch, and what happens instead.** An in-place edit to a file the
 header includes changes nothing we compare, so the stale binary is reused and the
@@ -1343,11 +1411,13 @@ Stan source at all (`R/model.R:156`). Three otherwise-general statements do not 
 for it: that `cmdstan_model()` always compiles, that a missing record causes a
 rebuild, and that pre-record executables get a one-time rebuild.
 
-**A whole class of package lands here by construction.** Anything that compiles at
-install time and ships the binary inside itself — instantiate and its dependents most
-directly — has an executable whose source sits at a staged path that stops existing
-once R moves the tree (§9). Those models are executable-only because they cannot be
-anything else, which makes this section their normal case rather than their fallback.
+**A whole class of package belongs here by design, not by accident.** Anything that
+compiles at install time and ships the binary inside itself — instantiate and its
+dependents most directly — ships the source beside the binary and *could* register
+it; under content identity that would not even rebuild (§9). It should not, because
+the package owns when its model is built, and registering source hands that decision
+to the session. This section is their normal case rather than their fallback, and §9
+carries the argument.
 
 **They are preserved, and they split into two cases.** Calling them all unprovenanced
 would discard information we may have written ourselves —
@@ -1756,8 +1826,8 @@ Correct line and column, useless filename. This is a live defect in released
 cmdstanr, independent of everything else here, and it has never been filed. The fix
 is `--filename-in-msg=<normalised original path>`, which stanc has already
 (`absent=MODEL_FILE`). Verified accepted and effective on every CmdStan from 2.27 to
-2.39; if cmdstanr formally supports older than 2.27 the introduction version should
-be confirmed before injecting unconditionally.
+2.39, and `cmdstan_min_version()` is 2.35 (`R/path.R:145`), so it can be injected
+unconditionally with no version guard.
 
 **Precedence is settled, not left to implementation.** Absent, cmdstanr injects the
 real source path. Supplied by the caller in `stanc_options`, that value wins
@@ -1871,11 +1941,12 @@ case; the missing-executable case has no successor, but that state means a packa
 was installed without its binary, so erroring is defensible.
 `stan_package_compile()` maps onto `compile_stan_file()` directly.
 
-**Its runtime model stays executable-only, and that is forced rather than chosen.** R
-installs packages in staged mode by default: `src/install.libs.R` runs against an
-`R_PACKAGE_DIR` under `00LOCK-<pkg>/00new/<pkg>`, and R moves the tree to its final
-location afterwards. instantiate compiles there, so the source a package's executable
-was built from sits at a path that stops existing the moment installation finishes.
+**Its runtime model stays executable-only, and that is a choice — the staged build
+path is not the reason.** R installs packages in staged mode by default:
+`src/install.libs.R` runs against an `R_PACKAGE_DIR` under `00LOCK-<pkg>/00new/<pkg>`,
+and R moves the tree to its final location afterwards. instantiate compiles there, so
+the path the executable was *built from* stops existing the moment installation
+finishes.
 Verified with an ordinary `R CMD INSTALL` of a probe package built to the same shape:
 
 ```
@@ -1883,29 +1954,56 @@ build time (R_PACKAGE_DIR): …/lib/00LOCK-pkgstage/00new/pkgstage/bin/stan/bern
 runtime (system.file):      …/lib/pkgstage/bin/stan/bernoulli.stan
 ```
 
-Identical content, different normalised path. Under §6's content identity that is not
-a rebuild — which is exactly why the recommendation needs a reason that does not
-depend on the identity rule.
+Identical content, different normalised path. **The source itself is still there**, at
+its final location, and could be registered — under §6's content identity that would
+not even rebuild. So the recommendation needs a reason that does not depend on the
+identity rule.
 
-**The reason is that registering source makes a runtime compile representable at
-all.** instantiate's defining promise is that models compile at installation and never
-during use. A source-backed model is one whose contract permits rebuilding, and
-content identity removes the *certainty* of a rebuild here without removing the
-possibility:
+**The reason is that registering source hands the rebuild decision to the session,
+and `builder` guarantees it fires.** instantiate's defining promise is that models
+compile at installation and never during use. §6 compares the CmdStan installation
+path and version, and `install_cmdstan()` puts every version in its own directory, so
+an upgrade changes both halves:
 
-- Somebody edits the installed `.stan` file in the package library to debug
-  something. Content differs, so the model rebuilds — inside a user-facing fit
-  function, into a directory that may be read-only.
+```
+Monday     install.packages("somepkg")  -> built against cmdstan-2.39.0
+Tuesday    install_cmdstan()            -> cmdstan-2.40.0
+Wednesday  somepkg::fit(...)            -> builder mismatch, rebuild inside the fit
+                                           call, into the package library
+```
 
-One real case is enough, because the claim is about *possibility*. A second
-candidate — two `.libPaths()` entries resolving source and binary to different
-package versions — does not exist: `stan_package_model()` derives the executable
-from the source it just found, `exe_file <- file.path(dirname(stan_file), name)`, so
-there is only ever one library resolution.
+`stan_package_model()` adopts on *every fit*, so this is the next fit rather than an
+eventual one. A `format_version` bump does the same for a cmdstanr upgrade.
 
-Rarer than a guaranteed rebuild on every installation, identical in shape. Adopting
-executable-only is the only construction that makes the promise structural rather than
-probable, and §7 forbids rebuilding those models outright.
+**And that rebuild would be unnecessary**, which is what makes this decisive rather
+than merely awkward. The executable is self-contained apart from TBB, which it loads
+through an absolute rpath baked in at link time, and `install_cmdstan()` leaves the
+old tree in place:
+
+```
+$ otool -l <model> | grep LC_RPATH -A2
+  path /Users/jgabry/.cmdstan/cmdstan-2.39.0/stan/lib/stan_math/lib/tbb
+$ ./<model> info      # no cmdstanr, no CmdStan on any path
+stan_version_minor = 39
+```
+
+`tbb_path()` is non-`NULL` only on Windows (`R/run.R:1238-1247`), so on macOS and Linux
+which CmdStan cmdstanr points at has no bearing on whether the binary loads. A new
+CmdStan release therefore costs a source-backed instantiate model a full recompile and
+buys it nothing anyone asked for.
+
+For an ordinary model, rebuilding when CmdStan changes is correct — you want the new
+Stan. For a model built at package-install time it is not: the *package* owns when
+that model is built, and the user asks for a rebuild by reinstalling the package.
+Executable-only adoption is what keeps that true, because §7 has no path that rebuilds
+a model with no source.
+
+A secondary case, weaker but real: somebody edits the installed `.stan` in the package
+library to debug something, and the content hash differs. A third candidate does not
+exist — two `.libPaths()` entries resolving source and binary to different package
+versions cannot happen, because `stan_package_model()` derives the executable from the
+source it just found, `exe_file <- file.path(dirname(stan_file), name)`, so there is
+only ever one library resolution.
 
 **This is not an instantiate quirk.** Any package that compiles at install time and
 ships the binary inside itself is in the same position, because staged installation is
@@ -1913,11 +2011,11 @@ R's default. The general statement: an install-time-built executable should be a
 executable-only, and §7 is the correct mode for that whole class of package rather
 than a degraded fallback.
 
-Note that this conclusion does not rest on the rebuild, which is what keeps it stable
-under §6. The measurement above still earns its place, for a narrower purpose: it
-establishes that this class of package exists and that `built_from` genuinely points
-somewhere that stops existing — which is what `stan_build_info()` reports, and why
-its existence flag has to read as normal rather than as a fault.
+Note that the conclusion does not rest on the staged path, which is what keeps it
+stable under §6's content identity. The measurement above still earns its place, for a
+narrower purpose: it establishes that `built_from` genuinely points somewhere that
+stops existing — which is what `stan_build_info()` reports, and why its existence flag
+has to read as normal rather than as a fault.
 
 **`include_paths` is settled at installation, and inert at adoption.** instantiate
 currently forwards it into a branch supplying no source, which §7 rejects — for the
@@ -2127,10 +2225,11 @@ re-resolves with the current call's paths — but replay and provenance do.
 **The injected options are merged into the user's list in place.** `R/model.R:673`,
 `:677`, `:693` and `:835` all mutate the same `stanc_options` variable, so by the time
 a record could be written the user's entries and cmdstanr's additions are
-indistinguishable. §4 compares one and not the other, so the snapshot has to be taken
-before the merge, or the user's list carried separately. Getting this wrong is silent:
-it turns every injection into a compared option, and toggling `pedantic` starts
-recompiling.
+indistinguishable. §4 stores both grains as separate fields, so `_supplied` has to be
+captured before the first of those lines runs — a copy taken at entry, not
+reconstructed afterwards by subtracting what we think we injected. Getting this wrong
+is silent: it turns every injection into a compared option, and toggling `pedantic`
+starts recompiling.
 
 **For the user header, the *directory* is the load-bearing part.** §6 compares the
 whole normalised path because that is what `built_from` already holds and the only
