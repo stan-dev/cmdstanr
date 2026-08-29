@@ -744,9 +744,11 @@ handling for a case nobody arrives at.
 because it looks like a defect until it doesn't: `functions` is an environment
 (`R/model.R:264`) and there is no `deep_clone` method, so a clone *shares* that
 environment with the original and exposing functions on either is visible on both.
-That is safe precisely because §8 makes a model immutable after construction. The
-two objects describe the same executable permanently and cannot diverge, so a shared
-exposure is valid for both.
+That is safe precisely because §8 makes a model immutable after construction. Through
+the supported API the two objects describe the same executable permanently and cannot
+diverge, so a shared exposure is valid for both. A direct `$initialize()` call could
+retarget one of them — that is the unguarded case above, and it is not defended
+against here either.
 
 **The `$exe_file(path)` setter is removed** (`R/model.R:365-370`). It assigns
 `private$exe_file_` with no validation, no snapshot refresh and no provenance
@@ -1032,10 +1034,19 @@ the message, not the guarantee.
 warns about for `reported_features`: treating absence of evidence as evidence of
 absence, in the same document.)
 
-**Surface it at construction and through `stan_build_info()` — not in
-pre-operation validation.** It is a standing property of the model, not a change,
-and validation reports only what changed. A warning on every `$sample()` call is
-noise that trains people to ignore warnings.
+**Surface it when the record is written, and through `stan_build_info()` — not in
+pre-operation validation, and not on every construction.** It is a standing property
+of the model, not a change, and validation reports only what changed. A warning on
+every `$sample()` call is noise that trains people to ignore warnings.
+
+Writing is the right trigger because it is the moment the information is new, and
+because it is stateless. "Once per session" would work too, but it needs a cache of
+what has already been said, and §5 spends a subsection prohibiting stored verdicts
+for reasons that apply to any sibling cache. Keying on the write also settles the
+case that raised this: adoption never writes a record, so
+`instantiate::stan_package_model()` — which constructs on every fit (§9) — stays
+silent, while the note still reaches whoever ran the build that could not be fully
+tracked.
 
 ```
 #> Note: this model has dependencies cmdstanr does not track — make/local
