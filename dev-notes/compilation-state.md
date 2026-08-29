@@ -231,7 +231,7 @@ durable configuration of its own.
 
 ---
 
-## 2. Contract: options are specified once, at `cmdstan_model()`
+## 2. Contract: options are specified once, on the build call
 
 > Every call that builds specifies the configuration it wants. Omitting an option
 > means you are not asking for it.
@@ -383,7 +383,11 @@ re-implementing every special-cased variable on the raw path. Nothing is lost �
 named entries already emit `NAME=value` (`R/cpp_opts.R:141`), so the migration is a
 spelling change and the error can name the form to use.
 
-**This applies to `cmdstan_model(cpp_options = )` only.** `cmdstan_make_local()`
+**This applies to `cpp_options` on a build call** — `cmdstan_model()` or
+`compile_stan_file()`, which share one implementation (§8), so a rule that held for
+only one of them would be bypassable by choosing the other. The distinction is
+between configuring a build and writing `make/local`, not between the two build
+entry points. `cmdstan_make_local()`
 passes unnamed entries through verbatim (`R/install.R:332-333`) into a *file*, where
 `+=` is real and is not otherwise expressible — cmdstanr's own documented example
 (`man/install_cmdstan.Rd:137-142`) is exactly this:
