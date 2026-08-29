@@ -97,8 +97,9 @@ an earlier draft collapsed them:
 - **`known_untracked_dependencies`** — dependencies we can see exist but cannot
   resolve (§6). Named for what it is: an empty list means nothing was *detected*,
   never that the record is complete.
-- **`format_version`** — the record schema's own version, so a record written by
-  a newer cmdstanr can be recognised as such and reported (§4).
+- **`format_version`** — the version of the *build interpretation contract*, not of
+  the JSON shape. A version this cmdstanr does not support, in either direction, is
+  reported and rebuilt; a change in option or build semantics obliges a bump (§4).
 
 `reported_features` is **tri-state and best-effort**: each feature is *known
 enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan chooses
@@ -845,12 +846,13 @@ The middle three are *artifact-side*: reasons the recorded facts cannot be trust
 rather than reasons the inputs changed. They belong in the same list because the
 constructor's response is identical — rebuild, and say why.
 
-**An unreadable format version is in that list too** — it rebuilds, with the reason
-stated (§4), whether the version is newer or older than what this cmdstanr reads. It
-is still worth *distinguishing* from a corrupt record, because the two warrant
-different messages: one says the file could not be parsed, the other says which
-format version was found and which are understood. Same behaviour, different
-diagnosis.
+**An unsupported format version is in that list too** — it rebuilds, with the reason
+stated (§4), whether the version is newer or older than what this cmdstanr supports.
+It is still worth *distinguishing* from an unreadable record, because the two warrant
+different messages: unreadable means the file could not be parsed, unsupported means
+a version was found that this cmdstanr does not interpret. Same behaviour, different
+diagnosis — and the vocabulary is kept apart deliberately, since a supported record
+can also be corrupt.
 
 **Dependencies are identified by path and content together.** A dependency matches
 only when its normalised absolute path *and* its content hash both match what the
@@ -1285,9 +1287,9 @@ configurations correctly.
 
 ### Stage 2 — schema and helper tests
 
-Field separation (§1), executable hash, corruption, forward versions,
-executable-only models. Parser, writer and comparison helpers tested against
-fixtures.
+Field separation (§1), executable hash, corruption, unsupported format versions in
+both directions, executable-only models. Parser, writer and comparison helpers
+tested against fixtures.
 
 **This stage is behaviour-free**, and should be kept that way: nothing writes a
 record beside a user's Stan program until Stage 3. Name, format and the
@@ -1544,8 +1546,9 @@ the class of bug this design exists to remove.
 asked for" and "the record cannot be read" both mean rebuild, but they are not the
 same check. Conflating them makes an unreadable record silently equivalent to a
 matching one — the failure is treating *no answer* as *the answer agreed*. The same
-applies to a record from a newer cmdstanr: identical behaviour, different diagnosis,
-and the message has to say which happened.
+applies to a record whose format version this cmdstanr does not support, in either
+direction: identical behaviour, different diagnosis, and the message has to say
+which happened.
 
 **Absence of evidence is not evidence of absence — twice.** `reported_features` is
 tri-state (§1): a feature CmdStan does not report is *unknown*, and treating
