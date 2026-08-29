@@ -62,7 +62,7 @@ applied internally.
 | §6 | Every rebuild trigger, what identity means for each kind of dependency, and what is deliberately untracked |
 | §7 | Executable-only models: adoption, provenance, and what cannot be configured |
 | §8 | Removing deferred compilation, and the standalone functions that replace it |
-| §9 | Order of work, the downstream packages, and the release candidate |
+| §9 | Why the work is ordered as it is, the downstream packages, and the release candidate. **#1258 holds the work list itself** |
 | §10 | Traps for whoever implements this |
 
 **Two things worth knowing before reading any of it.** Options are supplied on every
@@ -464,7 +464,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `request.stanc_options`, as the user supplied them | yes | yes | canonicalized per field |
 | options cmdstanr injects into either | yes | **no** | `--name`, `--warn-pedantic`, `--allow-undefined`, `--use-opencl`, `--filename-in-msg`. Each is either fixed by a compared field or changes only what stanc prints |
 | `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is for replay and provenance |
-| `request.user_header` path | yes | **yes** | the one path that is compared, because the C++ closure beneath it cannot be enumerated (§6) |
+| `request.user_header` path | yes | **yes** | the one *dependency* path compared, because the C++ closure beneath it cannot be enumerated. `-I` flags decide the same resolution and are compared inside `cpp_options` above (§6) |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
 | `dependencies[].hash` | yes | yes | content hash — this is what identity means |
 | `dependencies[].built_from` | yes | no | where the file was at build time; provenance. The user header is the exception above |
@@ -617,7 +617,7 @@ the case above. What hashing adds is the false-positive column:
 | recorded vs. source mtime | needs mtime restored to the exact recorded value | branch round-trip, `touch`, cloud sync |
 | recorded vs. source hash | none *within tracked files* | none |
 
-The bottom row is bounded by what is tracked. Toolchain drift and the untracked
+The hash row is bounded by what is tracked. Toolchain drift and the untracked
 dependencies in §6 are false negatives by construction, not defects in the
 comparison.
 
@@ -699,8 +699,8 @@ longer read.
 
 Refusing to replace a forward-version record was considered and rejected. The record
 is entirely *derived* data and every field regenerates on a rebuild, so refusing
-protects nothing while costing thirty to ninety seconds — paid with an error in the
-one situation where the rule actually arises. That situation is also not the one it
+protects nothing while costing one recompile (measured above) — paid with an error in
+the one situation where the rule actually arises. That situation is also not the one it
 was written for: passing an executable between machines barely works, since the
 binary links TBB at an absolute path inside the CmdStan installation that built it
 (§6). The realistic case is **one person on one machine downgrading cmdstanr**,
@@ -924,7 +924,8 @@ snapshot after a successful validation or rebuild.
 
 ## 6. Contract: when a rebuild happens (#1019)
 
-A rebuild is triggered by any of:
+A rebuild is triggered by `force_recompile = TRUE`, or when any of these differs from
+the record:
 
 - the Stan program changed
 - a resolved include changed, or resolves differently now (#1237)
@@ -934,14 +935,16 @@ A rebuild is triggered by any of:
   (options cmdstanr injects are recorded but never compared — §4)
 - the CmdStan installation path or version differs from `builder`, or the recorded
   installation is gone
+
+Or when the recorded facts cannot be trusted at all:
+
 - the executable does not match `artifact` — replaced by another process, or corrupt
 - the record is missing, unreadable, or written in a format version this cmdstanr
   does not read
 - the executable predates build records, so there is nothing to compare
-- `force_recompile = TRUE`
 
-The middle three are *artifact-side*: reasons the recorded facts cannot be trusted,
-rather than reasons the inputs changed. They belong in the same list because the
+The second group is *artifact-side*: reasons the record cannot be relied on, rather
+than reasons the inputs changed. It belongs in the same contract because the
 constructor's response is identical — rebuild, and say why.
 
 **`include_paths` is absent from that list deliberately.** Comparing it *as a
@@ -966,10 +969,11 @@ header below.
 shadowing, so re-resolution must be given them in the order supplied. The recorded
 order is provenance (§4).
 
-**The user header is the exception, and its path *is* compared.** The reasoning is
-in "Identity for the user header" below; the short form is that a Stan file's
-include closure is fully visible to us and a C++ header's is not, so the header's
-directory stands in for the part we cannot hash.
+**The user header's path *is* compared**, as one instance of a general rule:
+directories that participate in C++ include resolution are compared as spellings,
+and nothing beneath them is tracked. Stated with its reasoning, and with the `-I`
+flags that are the rule's other instance, in "Identity for C++ include resolution"
+below.
 
 **An unsupported format version is in that list too** — it rebuilds, with the reason
 stated (§4), whether the version is newer or older than what this cmdstanr supports.
@@ -1013,7 +1017,7 @@ Against that, the everyday case — renaming a working directory from `docs/A` t
 `docs/B` — pays a full recompile for a benefit its user never receives. Nobody models
 a directory name as a compiler input, so the rebuild does not follow from the action,
 which is the test §7 applies to messages and which applies at least as strongly to
-something that costs minutes.
+something that costs a full recompile.
 
 Nor is it rescued by the exotic cases. Cross-machine scenarios almost always rebuild
 on **builder** identity anyway, since CmdStan is identified by installation path and
@@ -1065,12 +1069,19 @@ missing record, which rebuilds once and writes a new one — a single compile, n
 wrong answer. For an executable-only model (§7) there is nothing to rebuild from, so
 a lost record costs provenance rather than time.
 
-### Identity for the user header
+### Identity for C++ include resolution
 
-**The user header is matched on normalised path *and* content.** It is the one
-dependency whose recorded path is compared, and the reason is not that C++ headers
-are special — it is that our information about them is incomplete in a way it is not
-for Stan files.
+**Every directory that participates in C++ include resolution is compared as a
+spelling, and nothing beneath it is tracked.** The `-I` flags a user puts in
+`cpp_options` are the explicit members of that set; the user header's own directory
+is the implicit one. The two are compared through different fields — the flags as
+part of `request.cpp_options`, the header's path as the one *dependency* whose
+recorded path is compared (§4) — but this is one rule with two instances, not a rule
+plus an exception.
+
+**The user header is therefore matched on normalised path *and* content**, and the
+reason is not that C++ headers are special — it is that our information about them is
+incomplete in a way it is not for Stan files.
 
 For a Stan program, `stanc --info` hands back the *entire* include closure, so
 hashing it covers every byte that went into the artifact and the paths are genuinely
@@ -1101,7 +1112,8 @@ enumerated we compare it exactly; where it cannot, we compare the cheapest thing
 must change if the invisible part changed — the directory it is rooted in. §6 already
 does this once, for `make/local`: the whole file is hashed and any edit rebuilds,
 including edits that change nothing, because we cannot tell which ones matter. This
-is the second instance, not a new principle.
+is the second instance, not a new principle, and a `-I` directory is the third: we
+compare the flag as the user wrote it and track nothing in the directory it names.
 
 **It errs only in the safe direction.** A user-header model that moves rebuilds
 unnecessarily, costing one compile. It cannot skip a rebuild that was needed. Where
@@ -1109,18 +1121,24 @@ we cannot tell, we buy the cheap mistake.
 
 **What it does not catch, and what happens instead.** An in-place edit to a file the
 header includes changes nothing we compare, so the stale binary is reused and the
-numbers are silently wrong. That gap exists today and is documented in #1257 with
-`force_recompile = TRUE` as the remedy, plus a single message at compile time for
-models the regex detects. Closing it properly means asking the compiler for the
+numbers are silently wrong. It makes no difference whether the included file sits
+beside the header or arrives through a `-I` directory; the gap and the remedy are the
+same. That gap exists today and is documented in #1257 with `force_recompile = TRUE`
+as the remedy, plus a single message at compile time for models the regex detects —
+triggered by the `#include` directive in the header, not by where it resolves, so a
+`-I` supplied without a user header raises nothing and correctly so, having no
+user-controlled `#include` to satisfy. Closing it properly means asking the compiler for the
 closure — `c++ -MM -MG` returns it in ~150 ms and `-MG` conveniently leaves
 CmdStan's own headers as unresolved names to discard. That is recorded on #1257 with
 the measurements, and deliberately not in v1: the cost is not the 150 ms but coupling
 record validation to compiler flag construction, which can drift quietly. When it
 does land, this path comparison is what it replaces.
 
-**CmdStan identity rules.** The comparison is the **normalised installation path and
-the version**, plus the `make/local` hash, which is its own dependency with its own
-trigger rather than part of `builder`.
+### Identity for the CmdStan installation
+
+The comparison is the **normalised installation path and the version**, plus the
+`make/local` hash, which is its own dependency with its own trigger rather than part
+of `builder`.
 
 **A different path at the same version is a rebuild reason.** Selecting another
 installation with `set_cmdstan_path()` is a deliberate act, and under a version-only
@@ -1256,6 +1274,14 @@ macro-expanded includes, line continuations and conditional inclusion. **No matc
 means "no known gap," never "complete."** Until compiler depfiles exist, *any* user
 header potentially carries untracked transitive dependencies — the regex improves
 the message, not the guarantee.
+
+Angle brackets are the blind spot most worth naming, because a user-supplied `-I` is
+exactly what makes `#include <helpers.hpp>` work for a user's own files, so the form
+is realistic rather than exotic once `cpp_options` carries include directories. The
+regex is still not widened to `[<"]`: it would then fire on `<vector>`, which is to
+say on nearly every real user header, and separating `<helpers.hpp>` from `<vector>`
+means resolving against the search path — the work the regex exists to avoid, and
+what depfiles would do properly.
 
 (Naming it `provenance_complete` would repeat the error §10 warns about for
 `reported_features`: treating absence of evidence as evidence of absence.)
@@ -1630,7 +1656,13 @@ nothing left to drop.
 
 ## 9. Order of work
 
-Three constraints shape this. The Make-option fixes come first, because per-field
+**#1258 is the work list; this section is only the reasoning behind the order.** The
+items belonging to each stage are enumerated there, with the file and line references
+implementation needs, and where the two disagree #1258 is right. What lives here is
+what an issue checklist cannot carry: why the sequence is what it is, and what breaks
+under the orderings that were rejected.
+
+Three constraints shape it. The Make-option fixes come first, because per-field
 canonicalization depends on them. **The API change and the decision engine ship as
 one stage** — separating them leaves a window where the new promise is broken
 whichever way the cut is made (Stage 4). And Stages 0–4 must all be in the release
@@ -1638,16 +1670,13 @@ candidate, because the API removal is the breaking change downstream packages ne
 to see; Stage 5 may land during the candidate period rather than before it, but it
 cannot be deferred past 1.0.
 
-### Stage 0 — landing in #1235
+### Stages 0 and 1 — landing in #1235, then Make-option correctness
 
-#1228, #1234 and the double metadata query (#1236). Independent of everything below.
-
-### Stage 1 — Make-option correctness
-
-**#1251** (logical `FALSE`), **#1250** (casing and raw assignments, including the
-`+=` / `?=` / `:=` classification in §3), **#1230** and **#1232** (quoting and
-escaping). All independent of the record, all prerequisites for comparing
-configurations correctly.
+Both are independent of the record, which is why they can go first. Stage 1 must go
+before everything below because per-field canonicalization (§3) is meaningless while
+options are still parsed and spelled inconsistently — comparing two configurations
+presupposes knowing what each one means, so the `+=` / `?=` / `:=` classification,
+casing, quoting and escaping all have to be settled before any comparison is written.
 
 ### Stage 2 — schema and helper tests
 
@@ -2039,13 +2068,6 @@ reached its current form through five review rounds.
 reports the installed CmdStan, not the one that built the executable — caused by
 `R/model.R:318`, not `dry_run`). Small, user-visible, and the natural work to pick
 up while Stage 0 is in review.
-
-### Issue consolidation
-
-Done. #1247, #1248 and #1252 are closed. #1237, #1238, #1245, #1246, #1249, #1250
-and #1253 have been rewritten against this document. #1255 (rebuild decisions),
-#1256 (removing deferred compilation, adding the standalone family) and #1257
-(untracked dependencies) are new. #1019 closes when #1255 does.
 
 ---
 
