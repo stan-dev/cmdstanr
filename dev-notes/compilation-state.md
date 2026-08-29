@@ -14,9 +14,8 @@ remaining work off them rather than off the issue list.
 **This note is the specification for these contracts, and is the copy to trust if
 it and an issue disagree.** The issues carry implementation detail, reproductions
 and progress, and link back to the sections here; they are not a second source of
-truth. An earlier version of this paragraph said the opposite, which produced
-exactly the drift it invited — §3 and #1250 came to contradict each other on raw
-Make assignments, and the *document* was the stale copy.
+truth. §3 and #1250 have already contradicted each other on raw Make assignments,
+with the *document* the stale copy — which is what a second source of truth costs.
 
 What this note adds beyond the contracts themselves is the part no issue can carry:
 why they are what they are, why the work is ordered this way, and which tempting
@@ -49,12 +48,9 @@ holds linting (#1172), formatting (#1153), interactive installation (#605) and t
 **A map, not a summary.** Every rule is stated once, in the section that owns it,
 and this section only says which section that is.
 
-That is a deliberate change. An earlier version restated the contracts here, and
-drifted from them in two consecutive review rounds — asserting that only
-`cmdstan_model()` builds after that stopped being true, and that the CmdStan
-installation path is not compared after it became identity. A second copy of a
-specification is a second thing to keep correct, and it loses. The same argument
-this document makes for being canonical over the issues applies to it internally.
+Restating a rule here would make it a second thing to keep correct, and the copy
+loses — the same argument this document makes for being canonical over the issues,
+applied internally.
 
 | Section | Answers |
 |---|---|
@@ -83,15 +79,15 @@ exist. It is not a configuration store, not an authority that can authorise
 whatever happens to be at the executable path, and not a substitute for observing
 the binary itself.
 
-That distinction is load-bearing because these are genuinely different facts, and
-an earlier draft collapsed them:
+That distinction is load-bearing because these are genuinely different facts:
 
 - **`request`** — what the user asked for on the call that built it.
 - **`reported_features`** — what the binary itself reports as enabled. Distinct
   from `request` because `make/local` can enable threading or OpenCL that the user
   never mentioned.
 - **`dependencies`** — the sources consumed, and enough about how they were
-  resolved to re-resolve them.
+  resolved to re-resolve them. Identified by content; each also records the
+  `built_from` path it had at build time, which is provenance and never compared (§6).
 - **`artifact`** — which executable this record describes, by hash (§4).
 - **`builder`** — which CmdStan installation produced it.
 - **`known_untracked_dependencies`** — dependencies we can see exist but cannot
@@ -272,8 +268,7 @@ object).
 `dir`, and the most recent compile owns it. Two call sites wanting different
 options will each rebuild to evict the other.
 
-An earlier draft claimed this "fails loudly." **That was wrong**, and only true for
-threading: `assert_valid_threads()` warns when `threads_per_chain` is set on an
+**This does not fail loudly**, except for threading: `assert_valid_threads()` warns when `threads_per_chain` is set on an
 unthreaded model, but nothing warns about changed optimisation flags, range checks,
 a different user header, or opaque Make options. Most configuration changes have no
 runtime check at all.
@@ -421,8 +416,8 @@ on macOS and Linux keeps a project directory from filling with files nobody need
 read. Windows does not hide by naming convention, but it shows the same file either
 way, so the dot costs nothing there.
 
-JSON still earns its place, just not for the reason an earlier draft gave. Not
-because users read it — they should not have to — but because `jsonlite` is already
+JSON earns its place, though not because users read it — they should not have to.
+Rather: `jsonlite` is already
 an import, a parse failure hands us §4's "unreadable" case for free, and a
 text format makes bug reports, golden fixtures and our own debugging tractable. The
 name also stays clear of `.dep` and `.d`, which `make` and the C++ toolchain already
@@ -430,6 +425,13 @@ claim in that directory.
 
 **Implementation trap:** `list.files()` defaults to `all.files = FALSE` and will not
 see the record. Anything enumerating files beside a model must opt in.
+
+**Scope: the record describes how the artifact was built, not what the model
+contains.** That boundary is what keeps `format_version` tractable — storing derived
+model metadata such as stanc's variable output would make every change in that output
+a record format change. It also settles proposals to hydrate `$variables()` or
+similar onto adopted models from the record: they are out of scope by construction,
+not merely unimplemented.
 
 Both name and format remain revisable up to the release, so nothing outside the
 reader and the writer should depend on either.
@@ -507,17 +509,16 @@ already acknowledges a crash window when replacing an executable — *"A crash
 between renames may leave only the backup"* (`R/utils.R:267-272`). Hashing a CmdStan binary measured **8.5 ms**, against 28.6 ms
 merely to spawn `<exe> info`, so cost is not an argument against it.
 
-The hash also detects manual replacement and ordinary corruption — which retires
-an earlier claim in this document that distrust of the artifact is "never
-detectable." It is detectable, cheaply.
+The hash also detects manual replacement and ordinary corruption, so distrust of the
+artifact is not the undetectable case it might look like. It is detectable, cheaply.
 
 **Installation is a transaction:** build and stage both artifacts, install the
 executable, install the record, then verify the pair. **Any failure — including a
 successful record install whose pair verification then fails — restores both the
 previous executable and the previous record**, leaving a consistent pair rather
-than a new artifact with old provenance. An earlier draft called record-write
-failure "non-fatal but visible"; that is incompatible with §5, since an executable
-without a valid record is immediately unusable.
+than a new artifact with old provenance. Treating a record-write failure as
+non-fatal but visible would be incompatible with §5, since an executable without a
+valid record is immediately unusable.
 
 **Concurrency is out of scope for v1.** The hash fixes crash-created and sequential
 mismatches. It does **not** fix active concurrency: process A can validate
@@ -601,14 +602,16 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
   sort by name for comparison.
 - **Opaque Make arguments** — preserve order exactly; later arguments can override
   earlier ones.
-- **Include paths** — preserve order; it controls shadowing.
+- **Include paths** — preserve order, because re-resolution has to reproduce the
+  same shadowing. A recording rule, not a comparison one: include paths are not
+  compared as spellings (§6).
 - **Stanc options** — a **conservative comparison** for v1: compare the resolved
   set literally and accept that equivalent spellings may occasionally trigger an
-  unnecessary rebuild. "Canonicalize per option semantics" appeared in an earlier
-  draft and is not implementable guidance — it would require enumerating the
-  semantics of every stanc option. Enumerate them later if the spurious rebuilds
-  turn out to matter.
-- **User-header paths** — normalise without erasing meaningful distinctions.
+  unnecessary rebuild. "Canonicalize per option semantics" is not implementable
+  guidance — it would require enumerating the semantics of every stanc option.
+  Enumerate them later if the spurious rebuilds turn out to matter.
+- **User-header paths** — normalise for recording. Also not compared as spellings;
+  the header is a hashed dependency and is compared by content (§6).
 - **`NULL` / `FALSE`** — preserve the explicit empty-assignment meaning (§3).
 
 ### Format versions, in both directions
@@ -677,8 +680,8 @@ One operation answers one question — *is this executable current?* — and it
 | `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
 | any operation that runs or derives state from the binary | **errors** |
 
-An earlier draft stated both behaviours as if they were one contract, which read as
-a contradiction between §5 and §6. They are one assessment with two responses.
+These are one assessment with two responses, not two contracts — stating them as one
+contract is what makes §5 and §6 look like they disagree.
 
 ### What the error says
 
@@ -759,8 +762,8 @@ object, which is the same answer §8 gives to the rest of the mutable-configurat
 surface. Its only call site is `test-model-compile.R:1535`, in a test built on
 `compile = FALSE`, so it retires with that. Folded into #1253.
 
-Cost is **~8.8 ms**: source hashes plus the executable hash. An earlier draft cited
-0.3 ms, which counted only the sources and predates the artifact hash in §4. If
+Cost is **~8.8 ms**: source hashes plus the executable hash, which dominates — a
+figure counting only the sources comes out at 0.3 ms and understates it. If
 include re-resolution runs here too (§6) add ~30 ms. Still negligible against a
 sampling run, and the accurate number belongs in the document.
 
@@ -843,7 +846,6 @@ A rebuild is triggered by any of:
 - the user header changed
 - `make/local` changed
 - the supplied `cpp_options` or `stanc_options` differ from `request`
-- the supplied `include_paths` or `user_header` path differ from `request`
 - the CmdStan installation path or version differs from `builder`, or the recorded
   installation is gone
 - the executable does not match `artifact` — replaced by another process, or corrupt
@@ -856,6 +858,25 @@ The middle three are *artifact-side*: reasons the recorded facts cannot be trust
 rather than reasons the inputs changed. They belong in the same list because the
 constructor's response is identical — rebuild, and say why.
 
+**`include_paths` and `user_header` are absent from that list deliberately**, and it
+is the one place the identity rule below is easy to undo by accident. Both are
+recorded in `request`, and comparing them *as spellings* would reintroduce path
+sensitivity for anyone whose model has an include or a header — renaming a working
+directory would rebuild after all, through a different field, for exactly the
+population content identity is meant to serve.
+
+Neither needs comparing, because each is fully accounted for downstream. An include
+path's whole effect is which files it resolved, and that set is compared by content
+and re-resolved through `stanc --info`, so a reordering that changes what wins changes
+the resolved set and rebuilds, while a reordering that changes nothing does not. The
+user header is itself a hashed dependency; comparing its path as well would apply
+path identity to one file after rejecting it everywhere else.
+
+**Order still matters for recording, just not for comparing.** Include paths are
+stored in the order supplied because re-resolution has to reproduce the same shadowing
+(§4). That is a storage requirement, and it is separate from the question of whether
+two spellings differ.
+
 **An unsupported format version is in that list too** — it rebuilds, with the reason
 stated (§4), whether the version is newer or older than what this cmdstanr supports.
 It is still worth *distinguishing* from an unreadable record, because the two warrant
@@ -864,40 +885,71 @@ a version was found that this cmdstanr does not interpret. Same behaviour, diffe
 diagnosis — and the vocabulary is kept apart deliberately, since a supported record
 can also be corrupt.
 
-**Dependencies are identified by path and content together.** A dependency matches
-only when its normalised absolute path *and* its content hash both match what the
-record holds. Moving a project therefore rebuilds it, once, and the rebuild reason
-names the cause: the recorded build location differs from the current one.
+**Dependencies are identified by content.** A dependency matches when its content hash
+matches what the record holds, wherever it now lives. Moving a project does not
+rebuild it.
 
-**Content-only identity was tried and rejected**, because the executable is not
-location-independent. stanc embeds the absolute path of the Stan file and of every
-resolved include into the generated C++ `locations_array__` — verified against 2.39,
-six occurrences for a twenty-line model plus one per included file — and those
-strings are compiled in and surface in every runtime exception:
+The record still stores the absolute path each dependency had **at build time**, as
+`built_from`. That field is provenance, not identity: it records where the artifact
+was actually built, is never compared, and is never rewritten. Its immutability needs
+no mechanism, since records are replaced whole on every build (§4).
+
+**Path-and-content identity was considered and rejected. This is the closest call in
+the document**, so the reasoning is recorded in full rather than summarised.
+
+The argument for including path is real and survives scrutiny: stanc compiles absolute
+source paths into the generated C++ `locations_array__` — every resolved include
+today, and the program itself once Stage 4 passes `--filename-in-msg` (§9). Two builds
+at two paths produce genuinely different binaries, so a cache reporting "up to date"
+is reporting on an artifact that differs from what a fresh build would make. On that
+view the path is a build input like any other and needs no special rule.
+
+**It was rejected because the difference is one string, and no user benefits from
+correcting it.** What a relocated executable actually costs is a stale directory
+prefix in an exception message:
 
 ```
 Exception: normal_lpdf: Scale parameter is 0, but must be positive!
-  (in '/old/path/model.stan', line 12, column 2 to column 30)
+  (in '/old/path/sub/helper.stan', line 12, column 2 to column 30)
 ```
 
-So a relocated executable is not equivalent to a rebuilt one. It computes the same
-answers and reports them against a location that no longer exists, indefinitely,
-until something else triggers a rebuild.
+Correct line, correct column, and whoever moved the project knows where it went.
+Against that, the everyday case — renaming a working directory from `docs/A` to
+`docs/B` — pays a full recompile for a benefit its user never receives. Nobody models
+a directory name as a compiler input, so the rebuild does not follow from the action,
+which is the test §7 applies to messages and which applies at least as strongly to
+something that costs minutes.
 
-The variant that keeps relocation free — compare content, but store an immutable
-`built_from` path so the manifest still records where the artifact was actually
-built — is coherent, and was rejected on cost rather than correctness. It removes
-one field comparison and adds six things to explain: the built-from versus
-current-resolution split, why the record is not rewritten after a move, stale paths
-in exception messages, the copy-and-run trap, how `stan_build_info()` presents a
-build location that is gone, and an explicit rule that request paths are never
-compared. Five of those exist only to explain why something that looks wrong is
-fine.
+Nor is it rescued by the exotic cases. Cross-machine scenarios almost always rebuild
+on **builder** identity anyway, since CmdStan is identified by installation path and
+version, so path identity is the sole trigger only when the project moved and the
+installation did not. That is the folder rename, and nothing else of consequence.
 
-What this costs is narrow. Normal development, branch switching, CI checkouts and
-container builds all keep stable paths and are unaffected; moving a project costs a
-single compile. Defining project roots, symlink behaviour and out-of-project paths
-stays rejected, and under path identity there is nothing left to define.
+**This is the rule the rest of the section already uses:** rebuild when the artifact
+would differ in a way the caller can observe and care about. It is why dependencies
+are hashed rather than trusted by mtime, and why `make/local` rebuilds even on an edit
+that changes nothing — there we cannot tell whether it matters. Here we can.
+
+Outside precedent agrees. ccache meets this exactly, with absolute paths baked into
+debug information, and ships `base_dir` and `-fdebug-prefix-map` so users can defeat
+path-induced cache misses. The mature tools in this space treat "moved the tree, lost
+the cache" as a defect to work around rather than a property to preserve.
+
+**Provenance argues for neither side**, though it has been cited for both. A manifest
+recording where equivalent inputs are *now* rather than where the artifact was built
+is not a provenance manifest — but that is a constraint on what the record *stores*,
+which `built_from` satisfies, and no rebuild policy either repairs or requires it.
+
+**What this costs us, so nobody rediscovers it the hard way.** `built_from` is a join
+key for reporting but not part of the test, and when a whole project moves that join
+fails for every entry at once. The verdict therefore compares the *set* of content
+hashes; naming which file changed needs a second pass that tolerates entries whose
+paths moved. Call it a few dozen lines. It runs only when a rebuild is already
+happening, so imprecision there degrades a message rather than a decision.
+
+Defining project roots, symlink behaviour and out-of-project paths stays rejected, and
+under content identity there is nothing left to define — normalisation now matters
+only for `built_from`, which is recorded rather than compared.
 
 **Moving everything except the record is fine.** The record is hidden (§4), so a
 `cp *` or a drag-select will leave it behind. Where source is available that is a
@@ -919,11 +971,19 @@ makes the selection mean something.
 Version-only identity was tried and rejected. The argument for it was that nothing
 nameable distinguishes two same-version installations — which is nearly true, since
 `make/local` lives inside the installation and is hashed separately, so switching
-usually rebuilds on that alone. But that makes path identity nearly free rather than
-unnecessary. It adds a rebuild only when both installations are configured
-identically, which is precisely the case where the user's explicit choice would
-otherwise be ignored silently. "The installation that built it" is also the simpler
-rule to state.
+usually rebuilds on that alone. But that makes comparing the installation path nearly
+free rather than unnecessary. It adds a rebuild only when both installations are
+configured identically, which is precisely the case where the user's explicit choice
+would otherwise be ignored silently. "The installation that built it" is also the
+simpler rule to state.
+
+**Why this is path-sensitive when dependencies are not.** The asymmetry is deliberate.
+A dependency is a file whose *content* is the input; its location is incidental, and moving it
+changes nothing anyone can act on. An installation is not a file — the executable is
+linked against its TBB at an absolute path inside it, so where it lives is a standing
+runtime dependency of the binary rather than a build-time locator. And
+`set_cmdstan_path()` is an explicit act of selecting a different toolchain, where
+renaming a working directory is not an act of selecting anything.
 
 **The recorded installation must still exist**, which is a separate rule with a
 concrete mechanism behind it. Stan Math links model executables against TBB at an
@@ -951,10 +1011,9 @@ installs to a new directory, so `builder` already differs.
 
 ### Include shadowing is detected, not accepted
 
-An earlier draft accepted this as an undetectable limitation. It is tractable, and
-accepting it contradicts the premise that we never silently run the wrong binary —
-a branch switch adding a higher-priority include is the same workflow used to
-justify hashing.
+Accepting this as an undetectable limitation would contradict the premise that we
+never silently run the wrong binary — a branch switch adding a higher-priority
+include is the same workflow used to justify hashing. It is tractable.
 
 **`stanc --info` already answers this.** It returns the resolved include set
 directly:
@@ -970,10 +1029,9 @@ directly:
 
 So: **store the normalised `included_files` vector at build time and compare it
 against fresh `stanc --info` output.** The `include_paths` already in `request`
-supplies the search configuration. An earlier draft proposed recording each
-include's spelling, its ordered search roots and the selected path, then
-re-resolving that mapping — unnecessary, and it would need parsing stanc does for
-us.
+supplies the search configuration. Recording each include's spelling, its ordered
+search roots and the selected path, then re-resolving that mapping, is unnecessary —
+and it would need parsing that stanc does for us.
 
 **Re-resolve by invoking stanc, never by reimplementing its rules.** Reproducing
 stanc's resolution semantics in R is a correctness hazard, and getting it subtly
@@ -994,17 +1052,18 @@ differs from `builder`, or the recorded installation no longer exists, that is
 already a rebuild trigger (above) and should be reported without attempting
 re-resolution at all.
 
-**Normalisation: normalised absolute paths, compared as identity.** `included_files`
-comes back from `stanc --info` as absolute paths. Each entry is compared by path and
-content together (§6), so a moved project rebuilds and the record is rewritten with
-the new locations. Normalising first is what keeps an unchanged project from
-rebuilding because a path was merely spelled differently.
+**Normalisation: normalised absolute paths, recorded but not compared.**
+`included_files` comes back from `stanc --info` as absolute paths. Each entry is
+compared by content (§6); the normalised path is stored as its `built_from` so the
+record still says where the artifact was built. Normalising is therefore about the
+record reading consistently rather than about avoiding spurious rebuilds, which
+content identity already avoids.
 
 Relocatable *records* remain a separate and rejected idea: storing paths relative to
 some root would require defining that root, symlink behaviour, and what to do with
-paths outside the project. Under path identity there is nothing to define — a moved
-project rebuilds once (§6) — and the case where rebuilding is genuinely impossible,
-no source at all, is covered by executable-only models (§7).
+paths outside the project. Content identity removes the reason anyone wanted them —
+a moved project does not rebuild (§6) — and the case where rebuilding is genuinely
+impossible, no source at all, is covered by executable-only models (§7).
 
 ### Provenance we cannot complete
 
@@ -1030,9 +1089,8 @@ means "no known gap," never "complete."** Until compiler depfiles exist, *any* u
 header potentially carries untracked transitive dependencies — the regex improves
 the message, not the guarantee.
 
-(An earlier draft named this `provenance_complete`, which is the same error §10
-warns about for `reported_features`: treating absence of evidence as evidence of
-absence, in the same document.)
+(Naming it `provenance_complete` would repeat the error §10 warns about for
+`reported_features`: treating absence of evidence as evidence of absence.)
 
 **Surface it when the record is written, and through `stan_build_info()` — not in
 pre-operation validation, and not on every construction.** It is a standing property
@@ -1087,13 +1145,18 @@ rewriting.
 ## 7. Executable-only models
 
 `cmdstan_model(exe_file = ...)` is a first-class workflow today, including with no
-Stan source at all (`R/model.R:156`). Earlier drafts omitted it entirely, and three
-of their statements are impossible for it: that `cmdstan_model()` always compiles,
-that a missing record causes a rebuild, and that pre-record executables get a
-one-time rebuild.
+Stan source at all (`R/model.R:156`). Three otherwise-general statements do not hold
+for it: that `cmdstan_model()` always compiles, that a missing record causes a
+rebuild, and that pre-record executables get a one-time rebuild.
 
-**They are preserved, and they split into two cases.** An earlier draft called them
-all unprovenanced, which discards information we may have written ourselves —
+**A whole class of package lands here by construction.** Anything that compiles at
+install time and ships the binary inside itself — instantiate and its dependents most
+directly — has an executable whose source sits at a staged path that stops existing
+once R moves the tree (§9). Those models are executable-only because they cannot be
+anything else, which makes this section their normal case rather than their fallback.
+
+**They are preserved, and they split into two cases.** Calling them all unprovenanced
+would discard information we may have written ourselves —
 `compile_stan_file()` followed by `cmdstan_model(exe_file = path)` is a first-class
 flow under this design, and it produces an executable *with* a record.
 
@@ -1163,6 +1226,14 @@ None of them can configure an artifact that will not be rebuilt, and a valid rec
 is there to be *inspected*, not overridden. Silently ignoring them is the failure
 mode this design exists to remove: the user believes they asked for something.
 
+`include_paths` is rejected for a slightly different reason worth stating, because it
+is not really build configuration: it configures **source resolution**, and every
+stanc invocation needs it — compiling, `$check_syntax()`, and the `$variables()` call
+`$sample()` makes to validate data (`R/model.R:1410`). It is therefore meaningful
+whenever a source is registered, whether or not anything is compiled. With no source
+there is nothing to resolve against, so the rejection stands; but the reason is the
+missing source, not the missing build.
+
 **The check is on whether the argument was supplied, not on what it resolves to**,
 and `force_recompile` is why. Its default is `getOption("cmdstanr_force_recompile")`
 (`R/model.R:621`), so a check written as `isTRUE(force_recompile)` would error for
@@ -1179,9 +1250,15 @@ executable-only models — so the advice arrives as documentation rather than as
 runtime failure in somebody else's code.
 
 Prefer a `NULL` sentinel to `missing()`: resolve the option inside the body after the
-check. `missing()` is fragile through wrapper layers, and instantiate reaches us
-through `eval(parse(text = paste0("cmdstanr::", name)))` with `...` forwarding, which
-is exactly the shape that breaks it.
+check, so omission survives both public build entry points and the shared
+implementation without a separate `force_recompile_supplied` flag.
+
+The fragility is ours, not a caller's. `missing()` survives dynamic dispatch and `...`
+forwarding — including instantiate's `eval(parse(text = paste0("cmdstanr::", name)))`,
+measured — and breaks only when an intermediate layer declares its own default and
+forwards it. That is exactly the shape §8 introduces: `cmdstan_model()` and
+`compile_stan_file()` each declare `force_recompile = getOption(...)` and hand it to
+one shared implementation, at which point `missing()` is `FALSE` on every call.
 
 **`force_recompile` never enters the record.** It changes *whether* we build, never
 *what* we build, so it is a decision override rather than configuration. Two
@@ -1237,9 +1314,8 @@ parity matters, but nothing here waits on a joint naming decision.
 
 ### `compile_stan_file()` is exported, and shares one implementation
 
-An earlier draft said to export it only if a consumer committed to it, on the
-grounds that citing `instantiate` was speculative. That was the wrong bar. The
-better argument is parity: cmdstanpy already has `compile_stan_file`, and having
+Exporting it only once a consumer commits to it would be the wrong bar. The argument
+is parity: cmdstanpy already has `compile_stan_file`, and having
 `format_stan_file()` and `check_syntax_stan_file()` public while the compile step
 is not is arbitrary — with `compile = FALSE` gone there would be no way to build
 without constructing an R6 object.
@@ -1286,9 +1362,9 @@ matching every argument at the cost of internal consistency is not worth it.
 **`stan_build_info()` returns a parsed object**, not the file. Users should not be
 encouraged to depend on the record's on-disk format.
 
-**`$format()` gets a standalone plus a method wrapper.** An earlier draft argued it
-must stay a method because it invalidates `stan_code_` and `variables_`
-(`R/model.R:1309-1311`). That argument is weak: another model object or an external
+**`$format()` gets a standalone plus a method wrapper.** The case for keeping it
+method-only — that it invalidates `stan_code_` and `variables_`
+(`R/model.R:1309-1311`) — is weak: another model object or an external
 editor already bypasses that invalidation, so it was never a guarantee. §5's
 pre-run validation is what actually makes it safe.
 
@@ -1308,9 +1384,9 @@ persistence mechanism this design rejects. It should still merge — it fixes a 
 bug against today's API, and this work deletes the mechanism rather than correcting
 it.
 
-**#1234's guarantee does not move into the record.** An earlier draft said it did,
-which was true of a draft where the record was replayed and is false now (§2). What
-actually happens is that the *lifecycle disappears*: #1234 exists because a second
+**#1234's guarantee does not move into the record.** It would if the record were
+replayed on a later build, but it is not (§2). What happens instead is that the
+*lifecycle disappears*: #1234 exists because a second
 build call — `$compile()` — could drop the include paths and user header the first
 one supplied. Once deferred compilation and `$compile()` are gone there is no
 second call, every build carries its own complete configuration, and there is
@@ -1365,9 +1441,8 @@ Removing deferred compilation and `$compile()` and adding the standalone family
 **#1019**, and brings with it **#1237**, the triggers in §6, include re-resolution,
 and §5's assessment with its two caller behaviours. Likely closes **#1253**.
 
-**These cannot ship separately, in either order.** An earlier draft split them and
-said combining was optional. It is not — the intermediate state is broken whichever
-way it is cut:
+**These cannot ship separately, in either order.** Combining them is not optional —
+the intermediate state is broken whichever way it is cut:
 
 ```r
 mod <- cmdstan_model(file, cpp_options = list(stan_threads = TRUE))
@@ -1377,6 +1452,34 @@ If `$compile()` is removed before configuration mismatches trigger rebuilds, an
 existing unthreaded executable is still reused under today's decision logic while
 the only escape route is gone. That breaks the central promise of the new API —
 that supplied options apply — in the window between the two stages.
+
+**The main file's compiled-in path is wrong today, and Stage 4 fixes it.** stanc bakes
+source paths into `locations_array__`, which holds for resolved includes but not for
+the program itself: `R/model.R:823-824` copies it to a `tempfile()` and compiles the
+copy. This is independent of §6 — content identity means the path never decides a
+rebuild — and is worth fixing purely on its own merits. Measured on 2.39 for a model with one include —
+ten occurrences of `/var/folders/…/RtmpLEUpO4/model-92f518cac7e5.stan`, two of the
+include's real absolute path. What a user sees is a location that was deleted before
+they could reach it:
+
+```
+Chain 1 Exception: normal_lpdf: Location parameter is nan, but must be finite!
+  (in '/var/folders/…/RtmpxvEWEP/model-950f21e1e16b.stan', line 6, column 2 to column 38)
+```
+
+Correct line and column, useless filename. This is a live defect in released
+cmdstanr, independent of everything else here, and it has never been filed. The fix
+is `--filename-in-msg=<normalised original path>`, which stanc has already
+(`absent=MODEL_FILE`), derived internally from the dependency identity rather than
+offered as configuration. Two things to settle when implementing: what happens if a
+caller supplies their own `--filename-in-msg` in `stanc_options`, and that the
+injected flag stays *out* of the record — it is fully determined by the dependency
+path, which is recorded already. Its own NEWS entry and its own test; it is small in
+code but it changes what every user reads in every runtime error.
+
+For a model built at install time the recovered path is the staged build location
+(§9), so this makes the artifact describe where it was built — which is all it
+claims to do — rather than making that location reachable.
 
 **One thing possibly worth automating here.** §6 treats an executable predating
 records as a rebuild trigger, and that transition can be tested rather than merely
@@ -1391,11 +1494,19 @@ enough, and is one fewer moving part in CI.
 `stan_build_info()` last, once the schema has stabilised under real use — and the
 release-candidate period is that use.
 
-**It must ship in 1.0.** An earlier ordering treated it as purely additive and
-therefore optional. It is not: because §1 keeps the request separate from what the
-binary reports, this is the only way to ask what an executable actually is, and the
+**It must ship in 1.0**, despite looking purely additive. Because §1 keeps the
+request separate from what the binary reports, this is the only way to ask what an
+executable actually is, and the
 only answer available at all for an unprovenanced one (§7). Landing it during the
 candidate period is fine; landing it after the release is not.
+
+**It reports each dependency's `built_from` alongside where that file resolves now.**
+Content identity means the two can differ without anything being wrong (§6), so this
+is where a relocated or install-time build becomes visible to whoever asks. Showing
+`built_from` alone would be a location that no longer exists with nothing to compare
+it against; showing only the current path would discard the provenance the record
+exists to hold. Deliberately not a message — a relocation that costs nothing should
+not narrate itself on every construction.
 
 ### Reconciling NEWS before the candidate
 
@@ -1436,41 +1547,121 @@ requested, so its users meet §1's threading policy as a rebuild when they toggl
 off.
 
 instantiate is smaller still. `stan_package_model()` adopts an existing executable
-with `cmdstan_model(exe_file = , compile = FALSE)`, and dropping the argument is the
-whole fix, since adoption never compiles. Its other branch — `stan_file = ` with
-`compile = FALSE` and the executable *missing* — has no successor, but that state
-means a package was installed without its binary, so erroring is defensible.
+with `cmdstan_model(exe_file = , compile = FALSE)`; dropping `compile` *and*
+`include_paths` from that call is the whole of the runtime change, since adoption
+never compiles. Its other branch fires on `!file.exists(exe_file) || isTRUE(compile)`
+and does supply `stan_file`, so it survives §8 unchanged for the explicit-compile
+case; the missing-executable case has no successor, but that state means a package
+was installed without its binary, so erroring is defensible.
 `stan_package_compile()` maps onto `compile_stan_file()` directly.
 
-**Restoring `stan_file` is the shape to aim for.** instantiate currently adopts
-executable-only and forwards `include_paths` into a branch that supplies no source.
-That comes from #1094 by way of two independent changes: dropping `stan_file` when
-`compile = FALSE` (instantiate #28, following the workaround suggested in the
-cmdstanr issue) and adding an `include_paths` argument (#33). #1094 is itself an
-artifact of deferred compilation — its fix is `precompile_include_paths_`
-(`R/model.R:293-296`, `:306-307`, `:329-330`), a second include-path variable that
-exists only so a model constructed without compiling can carry paths it has not used
-yet, complete with a `dirname(stan_file)` guess when none were supplied. §8 removes
-the argument that made it necessary, so the mechanism and its failure mode go
-together.
+**Its runtime model stays executable-only, and that is forced rather than chosen.** R
+installs packages in staged mode by default: `src/install.libs.R` runs against an
+`R_PACKAGE_DIR` under `00LOCK-<pkg>/00new/<pkg>`, and R moves the tree to its final
+location afterwards. instantiate compiles there, so the source a package's executable
+was built from sits at a path that stops existing the moment installation finishes.
+Verified with an ordinary `R CMD INSTALL` of a probe package built to the same shape:
 
-Under 1.0 the shape is `cmdstan_model(stan_file = , exe_file = , include_paths = )`.
-The paths mean something again — part of the request, compared against the record,
-used for re-resolution — and `$variables()` and `$check_syntax()` come back to a
-package's models instead of being lost to a workaround. For a *genuine*
-executable-only model `include_paths` stays inert, which is why supplying build
-configuration without a `stan_file` is rejected rather than ignored (§7).
+```
+build time (R_PACKAGE_DIR): …/lib/00LOCK-pkgstage/00new/pkgstage/bin/stan/bernoulli.stan
+runtime (system.file):      …/lib/pkgstage/bin/stan/bernoulli.stan
+```
 
-**What to verify rather than assume:** with source registered, validation runs on
-every `stan_package_model()` call, which is every fit. It must never conclude
-"rebuild", or a compile lands inside a user-facing function. It should not — the
-executable is built at install time from that source at that path, so path and
-content both match — but that is a property the instantiate pull request has to
-demonstrate, not reason about.
+Identical content, different normalised path. Under §6's content identity that is not
+a rebuild — which is exactly why the recommendation needs a reason that does not
+depend on the identity rule.
+
+**The reason is that registering source makes a runtime compile representable at
+all.** instantiate's defining promise is that models compile at installation and never
+during use. A source-backed model is one whose contract permits rebuilding, and
+content identity removes the *certainty* of a rebuild here without removing the
+possibility:
+
+- Somebody edits the installed `.stan` file in the package library to debug
+  something. Content differs, so the model rebuilds — inside a user-facing fit
+  function, into a directory that may be read-only.
+- Two entries in `.libPaths()` hold different versions of the package, and
+  `system.file()` resolves to one whose source does not match the executable beside
+  it.
+
+Rarer than a guaranteed rebuild on every installation, identical in shape. Adopting
+executable-only is the only construction that makes the promise structural rather than
+probable, and §7 forbids rebuilding those models outright.
+
+**This is not an instantiate quirk.** Any package that compiles at install time and
+ships the binary inside itself is in the same position, because staged installation is
+R's default. The general statement: an install-time-built executable should be adopted
+executable-only, and §7 is the correct mode for that whole class of package rather
+than a degraded fallback.
+
+Note that this conclusion does not rest on the rebuild, which is what keeps it stable
+under §6. The measurement above still earns its place, for a narrower purpose: it
+shows that `built_from` genuinely differs from where the source lives, which is what
+`stan_build_info()` will report.
+
+**`include_paths` is settled at installation, and inert at adoption.** instantiate
+currently forwards it into a branch supplying no source, which §7 rejects — for the
+reason given there: with no source there is nothing to resolve, not because nothing
+will be compiled.
+
+#1094 is that distinction being missed. A model built with `stan_file`, `exe_file`,
+`compile = FALSE` *and* `include_paths` failed at **fit** time, not compile time:
+with a source registered, `$sample()` reached `$variables()`, stanc ran with no
+include paths, and the include did not resolve. Dropping `stan_file` was the
+workaround, and instantiate's present shape follows from it — losing `stan_file`
+(instantiate #28) and gaining an `include_paths` argument (#33) as separate changes.
+
+1.0 dissolves this structurally rather than by patching storage. With `compile = FALSE`
+gone there is exactly one build call per model, it carries `include_paths`, and they
+are therefore stored once and available to every later stanc invocation.
+`precompile_include_paths_` exists only to bridge construction and a later
+`$compile()`; with no second call there is nothing to bridge.
+
+So the two calls separate cleanly — installation resolves includes, adoption has no
+source to resolve them against:
+
+```r
+# installation
+compile_stan_file(stan_file, include_paths = , cpp_options = , stanc_options = )
+# runtime
+cmdstan_model(exe_file = exe_file)
+```
+
+Nothing about include resolution is lost at the second line, because all of it was
+settled at the first; the record carries the requested include paths, the resolved
+files, their hashes and any known untracked dependencies, to be read rather than
+recomputed. `include_paths` survives in instantiate's own signature, narrowed to their
+explicit `compile = TRUE` branch, which does supply a source.
+
+**No instantiate user's model changes behaviour.** On the adoption path
+`include_paths` is stored and never consumed *today* — no source means no
+`$variables()`, so no stanc runs — so making it an error rather than a silent no-op
+changes what the argument does, not what any model does.
+
+**Executable-only adoption does cost data validation, which belongs in the trade.**
+With no source, `is_variables_method_supported()` is false, so `$sample()` skips the
+variable-based check of supplied data and `process_data()` serialises with
+`always_decimal = FALSE` (`R/data.R:281`). Both are already true of instantiate today,
+so neither is a regression — but unlike an accurate path in an exception message this
+is a real capability, and declining to add it is a trade rather than a free choice.
+
+Questions about the installed source go to §8's standalone family against that source
+directly — `stan_variables(file, include_paths = )`, `check_syntax_stan_file(file,
+include_paths = )` — which is also honest about what it describes: the source
+currently installed, not the file the executable was built from.
+
+**cmdstanr cannot repair an install-time-built model.** It is executable-only, so §7
+forbids rebuilding it, and no CmdStan upgrade or cmdstanr update changes that. The
+remedy is reinstalling the package, so any message here points at the package and
+never at `force_recompile`. That is today's behaviour too; what changes is that it
+follows from a decision rather than from an accident. Expect one cosmetic consequence
+rather than discovering it: `stan_build_info()` on such a model reports a
+`00LOCK-…/00new/…` build path, which is accurate provenance and will look like a bug
+to whoever sees it first.
 
 **Adoption happens on every fit, not once at install.** `stan_package_compile()` runs
-from `configure`, but `stan_package_model()` is called inside the user-facing model
-function — instantiate's own example package wraps it and `$sample()` together in
+from `src/install.libs.R` — instantiate ships no `configure` template at all — but
+`stan_package_model()` is called inside the user-facing model function — instantiate's own example package wraps it and `$sample()` together in
 `run_bernoulli_model()`. So anything cmdstanr prints at adoption prints on every fit,
 in every package built this way, through a function that does not look like it
 touches a compiler. That is the concrete case behind the silence rule in §7.
@@ -1595,6 +1786,30 @@ and #1253 have been rewritten against this document. #1255 (rebuild decisions),
 whatever is at the executable path — that is what the artifact hash is for. Code
 that reads the record and proceeds without verifying the pair reintroduces exactly
 the class of bug this design exists to remove.
+
+**The `dirname(stan_file)` include default is behaviour, not scaffolding.** When a
+program contains `#include` and no `include_paths` are supplied, cmdstanr defaults
+them to the model's own directory (`R/model.R:293-294`). stanc does *not* do this
+itself — invoked directly on a model with `#include utils/silly.stan` and no
+`--include-paths`, 2.39 fails with a syntax error at the include line — so the
+default is the only reason such models build. It is also load-bearing downstream:
+`instantiate::stan_package_compile()` defaults `include_paths` to `NULL` and the
+example `install.libs.R` does not pass it, so **every instantiate package with a
+multi-file model depends on this default**, and dropping it would turn their
+installs into build failures rather than degraded messages.
+
+§8 removes the reason `precompile_include_paths_` exists as a *separate variable* —
+there is no second build call left to bridge — but the default it carries has to
+survive in whatever replaces it. With one build call the natural form is to resolve
+the default where include paths are resolved for that build, with no second variable.
+Requirement, not mechanism; it needs a test either way.
+
+**Whatever resolves that default must do so before the request is recorded**, or §6's
+include re-resolution reproduces #1094 at validation time. Re-resolution invokes stanc
+using the `include_paths` in `request` (§6); if the record stores the user's empty
+value rather than the effective one, stanc runs with no include paths and fails on a
+model that builds perfectly. `$include_paths()` already reports the defaulted value
+today, so recording the effective set is consistent rather than a new disclosure.
 
 **Two checks that look alike and are not.** "The record disagrees with what was
 asked for" and "the record cannot be read" both mean rebuild, but they are not the
