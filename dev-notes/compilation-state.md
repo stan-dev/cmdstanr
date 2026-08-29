@@ -46,40 +46,33 @@ holds linting (#1172), formatting (#1153), interactive installation (#605) and t
 
 ## At a glance
 
-Orientation, not specification — the sections below are the contract, and they are
-where the reasoning lives.
+**A map, not a summary.** Every rule is stated once, in the section that owns it,
+and this section only says which section that is.
 
-**The API**
+That is a deliberate change. An earlier version restated the contracts here, and
+drifted from them in two consecutive review rounds — asserting that only
+`cmdstan_model()` builds after that stopped being true, and that the CmdStan
+installation path is not compared after it became identity. A second copy of a
+specification is a second thing to keep correct, and it loses. The same argument
+this document makes for being canonical over the issues applies to it internally.
 
-- `cmdstan_model()` and `compile_stan_file()` are the public build entry points. **No
-  operation on an existing model object compiles.** `cmdstan_model()` ensures a
-  current executable: reusing one that matches the requested source and options,
-  rebuilding when it does not.
-- `compile = FALSE` and `$compile()` are removed. **`cmdstan_model(exe_file =)`
-  stays** — you can still hand cmdstanr an executable it did not build, and it says
-  up front whether it knows how that executable was built.
-- Introspection and compilation both get standalone functions:
-  `format_stan_file()`, `check_syntax_stan_file()`, `stan_variables()`,
-  `stan_build_info()` and `compile_stan_file()`. `cmdstan_model()` and
-  `compile_stan_file()` share one implementation — the object is a wrapper around
-  the build, not a second path to it.
-- `$code()` and `$variables()` describe the source the executable was built from,
-  not the file as it is now.
-- Anything that runs the binary checks that it is current and **errors** — it never
-  compiles. Only `cmdstan_model()` builds.
+| Section | Answers |
+|---|---|
+| §1 | What the record is; what `$cpp_options()` and `stan_build_info()` each report, and why they are never merged |
+| §2 | Where a build is configured, and why nothing on an existing model object reconfigures it |
+| §3 | What a `cpp_options` entry means to `make`, which spellings are accepted, and why the rest are rejected |
+| §4 | What the record holds, where it lives, how it is bound to its executable, and who ignores it |
+| §5 | When an operation validates, what it does on failure, and the full classification of the public surface |
+| §6 | Every rebuild trigger, what identity means for each kind of dependency, and what is deliberately untracked |
+| §7 | Executable-only models: adoption, provenance, and what cannot be configured |
+| §8 | Removing deferred compilation, and the standalone functions that replace it |
+| §9 | Order of work, the downstream packages, and the release candidate |
+| §10 | Traps for whoever implements this |
 
-**When it rebuilds** — the Stan program, an include or how one resolves,
-`include_paths`, the user header or its path, `make/local`, `cpp_options` or
-`stanc_options`, the CmdStan installation, a replaced or corrupt executable, a
-missing record, an executable predating records, a record from a newer cmdstanr, or
-`force_recompile = TRUE`. Every applicable reason is reported, not only the first.
-
-**What the record holds** — a hidden JSON file beside the executable,
-`.<model>.cmdstanr.json`, holding the request; what the binary reports as enabled
-(tri-state, and absence never means disabled); source paths and hashes, including
-the include list from `stanc --info`; the `make/local` hash; the CmdStan
-installation; a hash of the executable; known-untracked dependencies; and a format
-version.
+**Two things worth knowing before reading any of it.** Options are supplied on every
+build call and never accumulate on the object (§2). And a model either has a current
+executable or errors — nothing compiles behind your back, and the only two things
+that build are `cmdstan_model()` and `compile_stan_file()` (§8).
 
 ---
 
