@@ -364,11 +364,15 @@ because neither is an ordinary Make assignment to compare.
 For `allow-undefined` the builds derive it and the source-only operations always set it
 (§8), so a caller has nothing left to decide.
 
-`--use-opencl` is worth rejecting rather than guarding, because supplying it alone
-cannot work: stanc emits `matrix_cl` members and `to_matrix_cl` calls, `STAN_OPENCL`
-is what makes those types exist (`stan/math/prim.hpp:6`), and the build dies with `no
-template named 'matrix_cl'`. One sentence naming `cpp_options` beats six template errors
-about a header the user never wrote.
+`--use-opencl` is worth rejecting rather than guarding, because supplying it alone never
+produces an OpenCL-enabled executable. It produces one of two other things, and which one
+depends on the model. stanc emits `matrix_cl` members and `to_matrix_cl` calls only where
+a GLM-family function takes data it can move to the device, and `STAN_OPENCL` is what
+makes those types exist (`stan/math/prim.hpp:6`). A model with such a call dies at compile
+time on `no template named 'matrix_cl'`. A model without one — `bernoulli.stan`, measured
+on 2.39 — emits C++ identical but for the embedded `stancflags` string, builds, and
+reports `STAN_OPENCL=false`. The second is the worse outcome: nothing tells the caller
+their request did nothing. One sentence naming `cpp_options` beats either.
 
 **`$user_header()` is added**, so the dedicated argument has a dedicated accessor.
 Today the only way to read the header back is `$cpp_options()[["USER_HEADER"]]`, which
