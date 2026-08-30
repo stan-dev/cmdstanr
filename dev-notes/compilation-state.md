@@ -357,10 +357,18 @@ The codebase already treats the header as not belonging here: `parsed_cpp_option
 skips `user_header` and `stan_version` when canonicalizing (`R/cpp_opts.R:101`),
 because neither is an ordinary Make assignment to compare.
 
-**`--allow-undefined` is not separately settable either.** It is the flag the header
-implies, so `stanc_options = list("allow-undefined")` and its named form are rejected with
-the same error. Builds derive it from `user_header`; the source-only operations always set
-it (§8). Nothing is left for a caller to decide.
+**A flag cmdstanr derives from another argument is not separately settable.** Two are:
+`--allow-undefined` is what `user_header` implies, and `--use-opencl` is what
+`cpp_options$stan_opencl` implies (`R/model.R:676-678`). Both are rejected in
+`stanc_options`, in either spelling, with an error naming the argument that owns them.
+For `allow-undefined` the builds derive it and the source-only operations always set it
+(§8), so a caller has nothing left to decide.
+
+`--use-opencl` is worth rejecting rather than guarding, because supplying it alone
+cannot work: stanc emits `matrix_cl` members and `to_matrix_cl` calls, `STAN_OPENCL`
+is what makes those types exist (`stan/math/prim.hpp:6`), and the build dies with `no
+template named 'matrix_cl'`. One sentence naming `cpp_options` beats six template errors
+about a header the user never wrote.
 
 **`$user_header()` is added**, so the dedicated argument has a dedicated accessor.
 Today the only way to read the header back is `$cpp_options()[["USER_HEADER"]]`, which
