@@ -737,11 +737,15 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
 - **Include paths** — preserve order. Order controls shadowing, so a record that
   reordered them would misdescribe the build. A recording rule only; see §4's table
   for whether it is compared, and §6 for what the verdict resolves with.
-- **Stanc options** — a **conservative comparison** for v1: compare the resolved
-  set literally and accept that equivalent spellings may occasionally trigger an
-  unnecessary rebuild. "Canonicalize per option semantics" is not implementable
-  guidance — it would require enumerating the semantics of every stanc option.
-  Enumerate them later if the spurious rebuilds turn out to matter.
+- **Stanc options** — compare the **sorted argument vector the options emit**, not the
+  R list. `stanc_options_to_args()` already computes it, and it collapses the two
+  accepted spellings at no cost: `list("allow-undefined")` and
+  `list("allow-undefined" = TRUE)` both become `--allow-undefined`. Sorting is safe
+  only because `--include-paths` — the one order-sensitive flag that could appear here
+  — is rejected from `stanc_options` (§6). What stays uncanonicalized is *semantic*
+  equivalence, two different flags meaning the same thing, and that would need the
+  semantics of every stanc option. Leave it: a spurious rebuild is the safe direction
+  and no one has reported hitting one.
 - **User-header paths** — normalise. This is the one path that is *also* compared,
   because the C++ include closure beneath the header cannot be enumerated (§6), so
   normalisation here affects the verdict rather than only the record's readability.
