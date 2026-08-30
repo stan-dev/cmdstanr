@@ -81,16 +81,16 @@ the binary itself.
 
 That distinction is load-bearing because these are genuinely different facts:
 
-- **`request`** — the configuration the build was given, stored at both grains:
-  exactly what the caller supplied, and the **effective** invocation after cmdstanr
-  filled in defaults and added its own options. Both, because they answer different
-  questions — the supplied form is what a later call is compared against, the
-  effective form is what actually ran (§4). A caller who passes no `include_paths`
-  on a program with `#include` supplied nothing and has `dirname(stan_file)` as the
-  effective value (§6). The test on the effective form is **replayability**: feed it
-  back to a fresh build, under the same builder and environment, and an equivalent
-  build comes out. Not a byte-identical artifact — nothing here records or promises
-  reproducibility at that grain.
+- **`request`** — the build configuration in its **effective** form: what the caller
+  supplied, plus the defaults and options cmdstanr added before invoking anything.
+  `cpp_options` and `stanc_options` additionally keep a canonicalized *supplied*
+  form, because for those two an option's origin decides whether it can force a
+  rebuild (§4). A caller who passes no `include_paths` on a program with `#include`
+  supplied nothing and has `dirname(stan_file)` as the effective value (§6). These
+  fields **explain** a build rather than replay one: they exclude what `make/local`
+  contributes to the same stanc invocation, and one option cmdstanr injects is a
+  spelling the build API now refuses (§4). Feeding them back is not a supported
+  operation and no rule here depends on it.
 - **`reported_features`** — what the binary itself reports as enabled. Distinct
   from `request` because `make/local` can enable threading or OpenCL that the user
   never mentioned. The line between the two is *when the fact was known*: `request`
@@ -117,7 +117,10 @@ to report — threading, OpenCL, Stan version — not arbitrary flags. **Absence
 never be read as disabled.**
 
 **The two are never merged into one accessor.** `$cpp_options()` reports the
-request. `stan_build_info()` reports what the binary says, with its provenance. And
+request, specifically `cpp_options_effective` — so a header passed through the
+dedicated `user_header` argument stays visible as `USER_HEADER`, which is what the
+accessor does today. `stan_build_info()` reports what the binary says, with its
+provenance. And
 **runtime validators read `reported_features` directly, never a merged convenience
 list.** A merged structure answers neither question: it looks complete but is not,
 and it cannot represent *unknown*, so a requested `TRUE` sitting over an unknown
@@ -454,8 +457,8 @@ reader and the writer should depend on either.
 
 These are two different questions, and treating them as one is what made several
 rules in earlier versions of this document inconsistent with each other.
-**Recording** serves replay and provenance: the record should describe the build
-completely enough to explain it. **Comparison** serves the rebuild verdict (§6), and
+**Recording** serves provenance and diagnosis: the record should describe the build
+completely enough to explain it, which is a weaker bar than reproducing it (§1). **Comparison** serves the rebuild verdict (§6), and
 a field belongs there only if it determines the artifact's observable behaviour and
 is not already determined by another compared field.
 
@@ -466,9 +469,9 @@ must not restate it — a rule written in two places is a future inconsistency.
 |---|---|---|---|
 | `request.cpp_options_supplied` | yes | yes | exactly what the caller passed, before any merge; canonicalized per field (§3, #1250) |
 | `request.stanc_options_supplied` | yes | yes | as above |
-| `request.cpp_options_effective` | yes | **no** | post-merge, what `make` was actually invoked with |
-| `request.stanc_options_effective` | yes | **no** | post-merge, what `stanc` was actually invoked with. What cmdstanr injected is `effective − supplied`, computed rather than listed |
-| `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is for replay and provenance |
+| `request.cpp_options_effective` | yes | **no** | post-merge: the options cmdstanr's own build call passed |
+| `request.stanc_options_effective` | yes | **no** | as above. `make/local`'s `STANCFLAGS` reach the same stanc invocation and are in *neither* field, being covered by `make/local`'s hash — so `effective − supplied` is exactly what cmdstanr injected, computed rather than listed |
+| `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is provenance |
 | `request.user_header` path | yes | **yes** | the one *dependency* path compared, because the C++ closure beneath it cannot be enumerated. `-I` flags decide the same resolution and are compared inside `cpp_options` above (§6) |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
 | `dependencies[].hash` | yes | yes | content hash — this is what identity means |
@@ -485,10 +488,11 @@ Three consequences, each of which has been got wrong at least once:
 the fourteen rows are in it. The default is *not* "everything in `request` is
 compared," and reasoning from that default is what produced the errors.
 
-**Origin is stored, not inferred.** `pedantic = TRUE` and
-`stanc_options = list("warn-pedantic" = TRUE)` produce the same stanc flag and must
-compare differently, so a merged blob plus a rule about it is not enough — the two
-grains are separate fields. `R/model.R:673`, `:677`, `:693` and `:835` all mutate
+**Origin is stored, not inferred.** Setting `user_header` injects `--allow-undefined`,
+and a caller can write `stanc_options = list("allow-undefined")` directly; the flag is
+identical and the two must compare differently, so a merged blob plus a rule about it
+is not enough — the two grains are separate fields. `--filename-in-msg` is the same
+shape (§9). `R/model.R:673`, `:677`, `:693` and `:835` all mutate
 one variable, so `_supplied` has to be captured before any of them run.
 
 **What cmdstanr injects is itself build semantics.** The injected set is
@@ -503,12 +507,16 @@ rebuild.** Where the option's whole purpose is to produce output — `--warn-ped
 is the only current case — the operation still has to happen on a model that is
 already up to date, or the user's request silently evaporates (§5).
 
-**The `stanc_options` spelling of `--warn-pedantic` is therefore rejected**, with an
-error naming `pedantic = TRUE`. Supplied rather than injected, it would be
-*compared*: the first build warns, the second construction matches the record,
-nothing rebuilds, and the warnings never appear again — the same evaporation through
-the door the rule above does not cover. One spelling that is already handled is
-cheaper than a second rule. `allow-undefined`, `name` and `filename-in-msg` stay
+**Every `stanc_options` spelling of `--warn-pedantic` is therefore rejected**, with an
+error naming `pedantic = TRUE` — `list("warn-pedantic")`, `list("warn-pedantic" = TRUE)`
+and `list("warn-pedantic" = FALSE)` alike. The named `FALSE` is refused too because it
+emits nothing today (logical `FALSE` leaves a flag out, #1251) while `pedantic = TRUE`
+still injects, so it reads as a way to switch pedantic off and is not one.
+
+Supplied rather than injected, the flag would be *compared*: the first build warns, the
+second construction matches the record, nothing rebuilds, and the warnings never appear
+again — the same evaporation through the door the rule above does not cover. One
+spelling that is already handled is cheaper than a second rule. `allow-undefined`, `name` and `filename-in-msg` stay
 supplyable: they have no dedicated argument, `allow-undefined` is our own documented
 spelling (`R/model.R:2574`), and `filename-in-msg` is deliberately caller-overridable
 (§9).
@@ -1283,7 +1291,7 @@ and it would need parsing that stanc does for us.
 the current call, not the one in `request`.** Using the recorded value would make
 changing `include_paths` a no-op: stanc would be pointed at the old directories,
 find the old files, report matching hashes, and reuse a binary the caller did not
-ask for. The recorded value exists for replay and provenance (§4); the verdict is
+ask for. The recorded value exists for provenance (§4); the verdict is
 about what *this* call would build.
 
 **Re-resolve by invoking stanc, never by reimplementing its rules.** Reproducing
@@ -1431,7 +1439,7 @@ freshness may still be unverifiable — if the recorded sources are absent or th
 paths no longer resolve, say so specifically rather than collapsing it to unknown
 provenance.
 
-`$cpp_options()` returns the **recorded** request here. That is consistent with §1
+`$cpp_options()` returns the **recorded** `cpp_options_effective` here. That is consistent with §1
 rather than an exception to it: the accessor always answers "what was this build
 asked for", and adoption simply sources that answer from the record instead of from
 the current call. Since adoption hydrates from a hash-matched record without
@@ -1612,7 +1620,7 @@ Mostly a move rather than new logic. Two constraints on it:
 useless to the machine.
 
 **It is not what the verdict re-resolves with.** The verdict uses the effective paths
-of the *current* call (§6); the recorded ones are for replay and provenance. Those
+of the *current* call (§6); the recorded ones are provenance. Those
 are the same value on the call that builds and can differ on any later one, which is
 the entire point.
 
@@ -1636,11 +1644,9 @@ check anyway — around 30 ms — or the caller asks to be warned about their mo
 receives silence. That is worse than an unnecessary recompile, because nothing
 indicates the request was dropped.
 
-Asking for the same flag through `stanc_options` instead — `list("warn-pedantic" =
-TRUE)` — *does* rebuild, because §4 compares what the user supplies there. The same
-flag behaving differently by route is a wart, and the alternative is worse: stripping
-known keys out of a user's explicit `stanc_options` would break §2's rule that
-supplied options apply. It is documented rather than fixed.
+Asking for the same flag through `stanc_options` is refused in every spelling (§4), so
+the two routes cannot diverge: `pedantic` owns the concept and is the only way to ask
+for it.
 
 ### `compile_stan_file()` is exported, and shares one implementation
 
@@ -1654,7 +1660,7 @@ without constructing an R6 object.
 
 ```
 compile_impl(stan_file, cpp_options, stanc_options, include_paths,
-             user_header, dir, force_recompile, quiet, dry_run)
+             user_header, pedantic, dir, force_recompile, quiet, dry_run)
     -> list(path =, record =, src_info =, hpp_code =)
 
 compile_stan_file(...)   # exported: compile_impl(...)$path
@@ -2220,7 +2226,7 @@ Requirement, not mechanism; it needs a test either way.
 record holds the effective value rather than the caller's empty one (§4).
 `$include_paths()` already reports the defaulted value today, so this is consistent
 rather than a new disclosure. Note the verdict does *not* depend on it — §6
-re-resolves with the current call's paths — but replay and provenance do.
+re-resolves with the current call's paths — but provenance does.
 
 **The injected options are merged into the user's list in place.** `R/model.R:673`,
 `:677`, `:693` and `:835` all mutate the same `stanc_options` variable, so by the time
