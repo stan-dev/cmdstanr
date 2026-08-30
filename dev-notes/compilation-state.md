@@ -357,6 +357,11 @@ The codebase already treats the header as not belonging here: `parsed_cpp_option
 skips `user_header` and `stan_version` when canonicalizing (`R/cpp_opts.R:101`),
 because neither is an ordinary Make assignment to compare.
 
+**`--allow-undefined` is not separately settable either.** It is the flag the header
+implies, so `stanc_options = list("allow-undefined")` and its named form are rejected with
+the same error. Builds derive it from `user_header`; the source-only operations always set
+it (§8). Nothing is left for a caller to decide.
+
 **`$user_header()` is added**, so the dedicated argument has a dedicated accessor.
 Today the only way to read the header back is `$cpp_options()[["USER_HEADER"]]`, which
 is why §1 can have `$cpp_options()` report `cpp_options_supplied` without losing
@@ -510,11 +515,12 @@ Three consequences, each of which has been got wrong at least once:
 the fourteen rows are in it. The default is *not* "everything in `request` is
 compared," and reasoning from that default is what produced the errors.
 
-**Origin is stored, not inferred.** Setting `user_header` injects `--allow-undefined`,
-and a caller can write `stanc_options = list("allow-undefined")` directly; the flag is
-identical and the two must compare differently, so a merged blob plus a rule about it
-is not enough — the two are separate fields. `--filename-in-msg` is the same shape
-(§9). They are built side by side rather than one being recovered from the other:
+**Origin is stored, not inferred.** cmdstanr injects `--filename-in-msg` as the real
+source path, and a caller may supply their own value, which wins untouched (§9). The
+flag is identical and the two must compare differently — a path-derived injection
+would reintroduce path sensitivity, a user-typed string is a fixed value like any
+other — so a merged blob plus a rule about it is not enough. `--name` is the same
+shape. The two fields are built side by side rather than one recovered from the other:
 `R/model.R:673`, `:677`, `:693` and `:835` currently write into a single
 `stanc_options` variable, which would force the record to reconstruct the caller's
 input, and accumulating injections into their own list instead makes both fields
@@ -541,10 +547,10 @@ still injects, so it reads as a way to switch pedantic off and is not one.
 Supplied rather than injected, the flag would be *compared*: the first build warns, the
 second construction matches the record, nothing rebuilds, and the warnings never appear
 again — the same evaporation through the door the rule above does not cover. One
-spelling that is already handled is cheaper than a second rule. `allow-undefined`, `name` and `filename-in-msg` stay
-supplyable: they have no dedicated argument, `allow-undefined` is our own documented
-spelling (`R/model.R:2574`), and `filename-in-msg` is deliberately caller-overridable
-(§9).
+spelling that is already handled is cheaper than a second rule. `name` and
+`filename-in-msg` stay supplyable: neither has a dedicated argument, and
+`filename-in-msg` is deliberately caller-overridable (§9). `allow-undefined` does not,
+being the flag `user_header` implies (§3).
 
 ### The record's lifecycle follows the executable's
 
@@ -1673,6 +1679,34 @@ indicates the request was dropped.
 Asking for the same flag through `stanc_options` is refused in every spelling (§4), so
 the two routes cannot diverge: `pedantic` owns the concept and is the only way to ask
 for it.
+
+### Only a build cares whether a function has a definition
+
+`--allow-undefined` suppresses exactly one error: a function declared and never
+defined. A call to something never declared at all is still *not in scope* and still
+fails, flag or no flag. Verified on CmdStan 2.39.
+
+**So the source-only operations always set it**, whether reached as a method or as a
+standalone function — `$format()`, `$check_syntax()`, `$variables()`,
+`format_stan_file()`, `check_syntax_stan_file()` and `stan_variables()`. Only the build
+entry points derive it from `user_header`, because only a build has to link. One rule,
+by operation rather than by entry point, so a retained method and its standalone twin
+cannot disagree.
+
+This finishes `eeed5baf` rather than reverting it. That commit fixed `$check_syntax()`
+and `$format()` reporting a syntax error on a program whose functions are defined in a
+user header, by having them consult `using_user_header_`. Under one rule those
+conditionals become unconditional and the dependency on `using_user_header_` leaves all
+three, which is less code than the conditional version and removes the divergence the
+retained methods would otherwise have: `mod$check_syntax()` erroring where
+`check_syntax_stan_file()` passes on the same file.
+
+**The accepted cost, recorded so it is not filed as a bug.** `check_syntax_stan_file()`
+reports success on a program that `compile_stan_file()` then rejects, in the one case
+where a function is declared, never defined, and no header is supplied. The build is
+where that surfaces, with a message naming the function. Everywhere else the flag is
+inert: `--auto-format` and `--info` return byte-identical output with and without it on
+a program that defines everything it declares.
 
 ### `compile_stan_file()` is exported, and shares one implementation
 
