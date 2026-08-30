@@ -81,16 +81,16 @@ the binary itself.
 
 That distinction is load-bearing because these are genuinely different facts:
 
-- **`request`** — the build configuration in its **effective** form: what the caller
-  supplied, plus the defaults and options cmdstanr added before invoking anything.
-  `cpp_options` and `stanc_options` additionally keep a canonicalized *supplied*
-  form, because for those two an option's origin decides whether it can force a
-  rebuild (§4). A caller who passes no `include_paths` on a program with `#include`
-  supplied nothing and has `dirname(stan_file)` as the effective value (§6). These
-  fields **explain** a build rather than replay one: they exclude what `make/local`
-  contributes to the same stanc invocation, and one option cmdstanr injects is a
-  spelling the build API now refuses (§4). Feeding them back is not a supported
-  operation and no rule here depends on it.
+- **`request`** — the build configuration, with `cpp_options` and `stanc_options`
+  each stored twice: what the caller **supplied**, and what cmdstanr **injected**.
+  The two are disjoint, because cmdstanr injects only what the caller did not
+  supply, and origin is what decides whether an option can force a rebuild (§4).
+  Everything else is stored once, in the form the build used: a caller who passes
+  no `include_paths` on a program with `#include` has `dirname(stan_file)` recorded
+  (§6). These fields **explain** a build rather than replay one — `make/local`
+  contributes to the same stanc invocation and appears in none of them, being
+  covered by its own hash. Feeding them back is not a supported operation and no
+  rule here depends on it.
 - **`reported_features`** — what the binary itself reports as enabled. Distinct
   from `request` because `make/local` can enable threading or OpenCL that the user
   never mentioned. The line between the two is *when the fact was known*: `request`
@@ -116,11 +116,11 @@ enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan choo
 to report — threading, OpenCL, Stan version — not arbitrary flags. **Absence must
 never be read as disabled.**
 
-**The two are never merged into one accessor.** `$cpp_options()` reports the
-request, specifically `cpp_options_effective` — so a header passed through the
-dedicated `user_header` argument stays visible as `USER_HEADER`, which is what the
-accessor does today. `stan_build_info()` reports what the binary says, with its
-provenance. And
+**The two are never merged into one accessor.** `$cpp_options()` reports
+`cpp_options_supplied`: what the caller asked for, not what cmdstanr added on top.
+The user header has its own accessor, `$user_header()`, matching its own argument —
+it is not readable through `$cpp_options()` because it is no longer settable there
+(§3). `stan_build_info()` reports what the binary says, with its provenance. And
 **runtime validators read `reported_features` directly, never a merged convenience
 list.** A merged structure answers neither question: it looks complete but is not,
 and it cannot represent *unknown*, so a requested `TRUE` sitting over an unknown
@@ -338,6 +338,30 @@ In `make/local` — a file — `+=` is real and appends. cmdstanr's own `+=` usa
 `R/utils.R:932`) is all `make/local`, and is not evidence that `+=` works in
 `cpp_options`. It does not. `::=` errors on Make 3.81, still the macOS default.
 
+### The user header is not a `cpp_options` entry
+
+`user_header` is currently reachable three ways: the dedicated argument,
+`cpp_options[["USER_HEADER"]]` and `cpp_options[["user_header"]]`, with the argument
+taking precedence over both (`R/model.R:512-513`). **Only the argument survives.**
+The two `cpp_options` spellings are rejected, with an error naming it.
+
+This is the same rule as `include_paths`, `warn-pedantic` and `STANCFLAGS` (§6, §4):
+one setting, one channel. It is worth stating separately because of what it deletes.
+`resolve_user_header()` (`R/cpp_opts.R:189-245`) exists almost entirely to reconcile
+the three, tracking positions of both casings so duplicates follow make's last-wins
+rule, walking a four-level precedence chain, and raising two distinct conflict
+warnings. §8 removes its `previous` parameter along with deferred compilation, and
+what remains is resolving a path and setting `USER_HEADER` for `make`.
+
+The codebase already treats the header as not belonging here: `parsed_cpp_options()`
+skips `user_header` and `stan_version` when canonicalizing (`R/cpp_opts.R:101`),
+because neither is an ordinary Make assignment to compare.
+
+**`$user_header()` is added**, so the dedicated argument has a dedicated accessor.
+Today the only way to read the header back is `$cpp_options()[["USER_HEADER"]]`, which
+is why §1 can have `$cpp_options()` report `cpp_options_supplied` without losing
+anything: the header was never really a `cpp_option`, and now it is not one at all.
+
 ### Assignments are named; everything else is opaque (#1250)
 
 Two verified defects. **Unnamed raw entries reach `make` but are invisible to
@@ -350,9 +374,7 @@ mod$sample(threads_per_chain = 4)
 #> Warning: ... not compiled with 'cpp_options = list(stan_threads = TRUE)'
 ```
 
-The model *is* threaded — #765's symptom via a different spelling. Raw
-`USER_HEADER=my.hpp` is worse: it lands in **neither** bucket, so the header
-compiles in while `resolve_user_header()` never sees it.
+The model *is* threaded — #765's symptom via a different spelling.
 
 **Names are lower-cased at `R/cpp_opts.R:100`**, so `foo=1` and `FOO=1` compare
 equal despite being different Make variables.
@@ -389,10 +411,10 @@ reachable, only `=` is ever emitted, so "last assignment wins" is correct. The t
 rules are not independent: accepting raw operators would invalidate the
 canonicalization rule as well.
 
-**Plain `NAME=value` is rejected too**, though it is unambiguous, because it is the
-spelling that causes the worst live bug: raw `USER_HEADER=my.hpp` compiles the
-header in while `resolve_user_header()` never sees it. Accepting raw `=` means
-re-implementing every special-cased variable on the raw path. Nothing is lost —
+**Plain `NAME=value` is rejected too**, though it is unambiguous, because accepting
+raw `=` means re-implementing every special-cased variable on the raw path: a raw
+`USER_HEADER=my.hpp` reaches `make` while everything keyed on names looks straight
+past it. Nothing is lost —
 named entries already emit `NAME=value` (`R/cpp_opts.R:141`), so the migration is a
 spelling change and the error can name the form to use.
 
@@ -467,10 +489,10 @@ must not restate it — a rule written in two places is a future inconsistency.
 
 | Field | Recorded | Compared | Notes |
 |---|---|---|---|
-| `request.cpp_options_supplied` | yes | yes | exactly what the caller passed, before any merge; canonicalized per field (§3, #1250) |
+| `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
 | `request.stanc_options_supplied` | yes | yes | as above |
-| `request.cpp_options_effective` | yes | **no** | post-merge: the options cmdstanr's own build call passed |
-| `request.stanc_options_effective` | yes | **no** | as above. `make/local`'s `STANCFLAGS` reach the same stanc invocation and are in *neither* field, being covered by `make/local`'s hash — so `effective − supplied` is exactly what cmdstanr injected, computed rather than listed |
+| `request.cpp_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction |
+| `request.stanc_options_injected` | yes | **no** | as above. `make/local`'s `STANCFLAGS` reach the same stanc invocation and appear in neither field, being covered by `make/local`'s hash |
 | `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is provenance |
 | `request.user_header` path | yes | **yes** | the one *dependency* path compared, because the C++ closure beneath it cannot be enumerated. `-I` flags decide the same resolution and are compared inside `cpp_options` above (§6) |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
@@ -491,16 +513,19 @@ compared," and reasoning from that default is what produced the errors.
 **Origin is stored, not inferred.** Setting `user_header` injects `--allow-undefined`,
 and a caller can write `stanc_options = list("allow-undefined")` directly; the flag is
 identical and the two must compare differently, so a merged blob plus a rule about it
-is not enough — the two grains are separate fields. `--filename-in-msg` is the same
-shape (§9). `R/model.R:673`, `:677`, `:693` and `:835` all mutate
-one variable, so `_supplied` has to be captured before any of them run.
+is not enough — the two are separate fields. `--filename-in-msg` is the same shape
+(§9). They are built side by side rather than one being recovered from the other:
+`R/model.R:673`, `:677`, `:693` and `:835` currently write into a single
+`stanc_options` variable, which would force the record to reconstruct the caller's
+input, and accumulating injections into their own list instead makes both fields
+fall out of the code (§10).
 
-**What cmdstanr injects is itself build semantics.** The injected set is
-`effective − supplied` rather than a list this document maintains, so changing it no
-longer changes what is compared. It still obliges a `format_version` bump (below),
-for a different reason: an option a later cmdstanr injects can change the artifact
-while an old record's `_supplied` goes on matching, so nothing would rebuild. The
-bump is what forces it.
+**What cmdstanr injects is itself build semantics.** The set is recorded rather than
+described here, so changing it does not change what is compared, and no list of
+injected options has to be kept correct in this document. It still obliges a
+`format_version` bump (below): an option a later cmdstanr injects can change the
+artifact while an old record's `_supplied` goes on matching, so nothing would
+rebuild. The bump is what forces it.
 
 **An injected option still applies; not comparing it only means it cannot force a
 rebuild.** Where the option's whole purpose is to produce output — `--warn-pedantic`
@@ -811,7 +836,7 @@ is not itself a member, so it does not count toward either total.
 | **Validate, and error on any trigger** | `$sample()`, `$sample_mpi()`, `$optimize()`, `$laplace()`, `$variational()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`, `$cmdstan_defaults()`, `$expose_functions()` |
 | **Rebuild, printing every reason** | `cmdstan_model()` itself — the constructor. `compile_stan_file()` is the other build entry point, but returns a path rather than a model |
 | **Snapshot of the built model; no validation** | `$code()`, `$variables()`, `$print()`, `$functions` |
-| **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()` |
+| **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()`, `$user_header()` |
 | **Operates on source, not the binary; no validation** | `$check_syntax()`, `$format()` |
 | **Generated C++; no validation** | `$hpp_file()`, `$save_hpp_file()` |
 | **R6 plumbing; no validation** | `$initialize()`, `$clone()` |
@@ -1439,7 +1464,8 @@ freshness may still be unverifiable — if the recorded sources are absent or th
 paths no longer resolve, say so specifically rather than collapsing it to unknown
 provenance.
 
-`$cpp_options()` returns the **recorded** `cpp_options_effective` here. That is consistent with §1
+`$cpp_options()` returns the **recorded** `cpp_options_supplied` here, and
+`$user_header()` the recorded header path. That is consistent with §1
 rather than an exception to it: the accessor always answers "what was this build
 asked for", and adoption simply sources that answer from the record instead of from
 the current call. Since adoption hydrates from a hash-matched record without
@@ -2228,14 +2254,15 @@ record holds the effective value rather than the caller's empty one (§4).
 rather than a new disclosure. Note the verdict does *not* depend on it — §6
 re-resolves with the current call's paths — but provenance does.
 
-**The injected options are merged into the user's list in place.** `R/model.R:673`,
-`:677`, `:693` and `:835` all mutate the same `stanc_options` variable, so by the time
-a record could be written the user's entries and cmdstanr's additions are
-indistinguishable. §4 stores both grains as separate fields, so `_supplied` has to be
-captured before the first of those lines runs — a copy taken at entry, not
-reconstructed afterwards by subtracting what we think we injected. Getting this wrong
-is silent: it turns every injection into a compared option, and toggling `pedantic`
-starts recompiling.
+**Stop merging the injected options into the user's list in place.** `R/model.R:673`,
+`:677`, `:693` and `:835` all write into the same `stanc_options` variable, so by the
+time a record could be written the user's entries and cmdstanr's additions are
+indistinguishable. Do not fix that with a snapshot taken before line 673; it only
+works until someone adds a fifth injection site above it. Accumulate injections in
+their own list and merge the two when converting to arguments, so `_supplied` and
+`_injected` are both values the code already holds and neither is reconstructed.
+Getting this wrong is silent: it turns every injection into a compared option, and
+toggling `pedantic` starts recompiling.
 
 **For the user header, the *directory* is the load-bearing part.** §6 compares the
 whole normalised path because that is what `built_from` already holds and the only
