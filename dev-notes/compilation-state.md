@@ -380,6 +380,48 @@ Today the only way to read the header back is `$cpp_options()[["USER_HEADER"]]`,
 is why §1 can have `$cpp_options()` report `cpp_options_supplied` without losing
 anything: the header was never really a `cpp_option`, and now it is not one at all.
 
+### One canonical spelling, established on entry
+
+`cpp_options_to_compile_flags()` (`R/cpp_opts.R:129`) uppercases every named entry, so
+`list(USER_HEADER = h)`, `list(user_header = h)` and `list(User_Header = h)` are one
+variable to `make` and three values to R. The codebase reconciles that three times in two
+directions today: `toupper()` on the way out to `make`, `tolower()` in
+`parsed_cpp_options()` (`:100`) on the way into comparison, and `tolower()` again in the
+dormant `validate_cpp_options()` (`:165`).
+
+**Named `cpp_options` entries are normalized to their `make` spelling once, on entry to
+the build call, ahead of validation.** Uppercase is the canonical direction because it is
+what `make` receives and what a compile log shows; lowercase is an artifact of R naming
+convention. After that point one spelling is in play, and validation, comparison, the
+record and `$cpp_options()` all use it. `list(stan_threads = TRUE)` keeps working — it is
+normalized immediately instead of at three later points.
+
+This is what makes the reserved-variable rejection below exact rather than approximate. A
+matcher that folded case itself would be a fourth normalization, and would have to specify
+which of the other three it runs before — an ordering constraint in a contract, which is
+the signal that the code shape is wrong rather than the rule.
+
+It also retires `parsed_cpp_options()`'s exclusion list (`:101`). Both entries are there
+because that function is fed a *merged* list: `stan_version` arrives from the binary's
+`info` output (`:38`) and `user_header` from cmdstanr's own injection. Comparison runs on
+`_supplied` (§4), where neither can appear.
+
+**One function owns normalize-then-check.** `assert_valid_cpp_options()` (#1250) does
+both, called from the single build implementation §8 leaves behind, so the ordering is
+structural rather than a convention a later contributor has to know. It pairs with
+`assert_valid_stanc_options()` (`R/model.R:2562`), which already does this job for the
+other list. `validate_cpp_options()` (`R/cpp_opts.R:151`) is **deleted** rather than left
+dormant: its one piece of substantive behaviour is a warning that a logical `FALSE` will
+turn an option *on*, which #1251 reverses, so leaving it in the file would document the
+opposite of v1.0's semantics to whoever reads it next. Its tests go with it
+(`test-cpp_opts.R:24-37`).
+
+**The `stanc_options` side is deliberately not symmetric.** `stanc_options_to_args()`
+passes names through unchanged and stanc is case-sensitive, so a miscased flag fails at
+the build with `unknown option --Warn-Pedantic. Did you mean --warn-pedantic?` — better
+than anything we would write. Canonicalizing there would add a transformation to solve a
+problem that does not exist.
+
 ### Rejection matches the option, not the spelling
 
 Six entries are rejected from an R option list that currently accepts them:
@@ -416,8 +458,15 @@ believing it disables pedantic mode gets silence rather than the error naming th
 `pedantic` argument. Rejecting on occurrence catches the whole column; §4 gives the
 `FALSE` case a second reason on top of this one.
 
-The `cpp_options` rejections are the same rule against Make variable names, which
-`parsed_cpp_options()` (`R/cpp_opts.R:101`) already extracts.
+The `cpp_options` rejections are the same rule against `make` variable names, applied
+after the normalization above, so `USER_HEADER` and `STANCFLAGS` are matched as literals
+with no case folding inside the matcher.
+
+Unnamed entries need a message rather than a matcher. They skip the uppercasing and reach
+`make` verbatim, so `list("User_Header=h")` assigns an unrelated variable and sets no
+header at all; only an exact-case raw assignment would do anything, and #1250 already
+rejects every assignment-shaped raw entry. What that rejection owes the reserved
+variables is guidance naming the argument that owns them, not a second occurrence test.
 
 ### Assignments are named; everything else is opaque (#1250)
 
@@ -799,8 +848,9 @@ own. Not worth it while the tri-state property is testable.
 
 A single "sort and last-wins-deduplicate" rule is wrong. The correct rules differ:
 
-- **Named Make assignments** — case-sensitive names, last assignment wins, then
-  sort by name for comparison.
+- **Named Make assignments** — canonical by the time anything compares them (§3), so
+  comparison is a literal match rather than a case-folding one; last assignment wins,
+  then sort by name.
 - **Opaque Make arguments** — preserve order exactly; later arguments can override
   earlier ones.
 - **Include paths** — preserve order. Order controls shadowing, so a record that
@@ -1127,7 +1177,7 @@ interpret `--include-paths`'s comma lists, quoting or separator forms, only refu
 CmdStan's own configuration file — `make/local.example:20` ships
 `STANCFLAGS+= --warn-pedantic` as a suggested line — so only the include-path flag is
 refused there, not the variable. The check on `cpp_options` belongs in
-`validate_cpp_options()`, which `cmdstan_make_local()` does not call
+`assert_valid_cpp_options()` (§3, #1250), which `cmdstan_make_local()` does not call
 (`R/install.R:324-338` builds its flags inline), so writing `STANCFLAGS` *into*
 `make/local` through the supported function stays possible. A `--warn-pedantic` left
 there is fine and is not the case §4 rejects: it asks to warn whenever CmdStan builds,
