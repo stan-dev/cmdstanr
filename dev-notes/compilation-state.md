@@ -11,11 +11,13 @@ number of contracts that were never written down, so each was rediscovered by
 being violated. The intent is to state those contracts once, and to sequence the
 remaining work off them rather than off the issue list.
 
-**This note is the specification for these contracts, and is the copy to trust if
-it and an issue disagree.** The issues carry implementation detail, reproductions
-and progress, and link back to the sections here; they are not a second source of
-truth. §3 and #1250 have already contradicted each other on raw Make assignments,
-with the *document* the stale copy — which is what a second source of truth costs.
+**This note owns behaviour and contracts, and is the copy to trust if it and an
+issue disagree about those.** The issues own what a specification cannot carry:
+staging, checklist detail, reproductions and progress. #1258 is therefore the
+authority on the order of work and on what belongs to each stage, which is what §9
+says. Neither is the authority on *code locations* — the `file:line` references
+throughout both are navigation aids that go stale on the next edit, and the source
+settles them.
 
 What this note adds beyond the contracts themselves is the part no issue can carry:
 why they are what they are, why the work is ordered this way, and which tempting
@@ -1966,7 +1968,9 @@ nothing left to drop.
 
 **#1258 is the work list; this section is only the reasoning behind the order.** The
 items belonging to each stage are enumerated there, with the file and line references
-implementation needs, and where the two disagree #1258 is right. What lives here is
+implementation needs. Staging is the issue's to own, so where the two disagree about
+what lands when, #1258 is right — the contracts being staged are still this
+document's, and the boundary is stated under Purpose and scope. What lives here is
 what an issue checklist cannot carry: why the sequence is what it is, and what breaks
 under the orderings that were rejected.
 
