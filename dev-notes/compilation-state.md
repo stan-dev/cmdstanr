@@ -118,6 +118,16 @@ enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan choo
 to report — threading, OpenCL, Stan version — not arbitrary flags. **Absence must
 never be read as disabled.**
 
+**Encode it by presence, not by a third value**: write a key only when the state is
+known, and let an absent key mean unknown. The obvious alternative, `NA` for unknown,
+does not survive the record. `jsonlite` writes `NA` as `null` and reads `null` back as
+`NULL`, which is also what a missing key yields, so `is.na()` stops detecting unknown
+the moment the value has been through a file — and a validator written as `!isTRUE(x)`
+then treats unknown and disabled identically, which is the collapse this rule exists to
+prevent. Encoding by presence leaves only `true` and `false` in the JSON, needs no null
+handling anywhere, and makes the rule a property of the format rather than something
+each reader has to remember. §4 carries the schema; this is the constraint it satisfies.
+
 **The two are never merged into one accessor.** `$cpp_options()` reports
 `cpp_options_supplied`: what the caller asked for, not what cmdstanr added on top.
 The user header has its own accessor, `$user_header()`, matching its own argument —
@@ -421,13 +431,17 @@ binary report (`R/model.R:774`); §1 stops merging those, so the only input left
 is a supplied list.
 
 `user_header` cannot appear in one — the named spelling is rejected above, and cmdstanr's
-own injection is not supplied. `stan_version` can, and should. `STAN_VERSION` is not a
-Make variable: cmdstanr synthesizes the name at `R/cpp_opts.R:68` from the three
-`stan_version_*` fields `<exe> info` prints, and CmdStan's makefiles never read it
-(`CMDSTAN_VERSION` is the real one). A caller who writes
-`cpp_options = list(STAN_VERSION = "9.9")` is setting an inert Make variable, and it is
-recorded and compared as one, exactly like `FOO`. Excluding it would silently drop a
-supplied entry, which is the failure this section removes rather than one to keep.
+own injection is not supplied. `stan_version` can, and should. Nothing in CmdStan reads
+`STAN_VERSION`: cmdstanr synthesizes the name at `R/cpp_opts.R:68` from the three
+`stan_version_*` fields `<exe> info` prints, and CmdStan's own version variable is
+`CMDSTAN_VERSION` (`makefile:151`). A supplied one is still an ordinary Make variable.
+`cpp_options_to_compile_flags()` puts it on the make command line (`R/cpp_opts.R:141`,
+`R/model.R:864`) and `make/local` is `-include`d before anything else runs
+(`makefile:20`), so a user's own file can read `$(STAN_VERSION)` and change `CXXFLAGS`
+with it — verified, not hypothetical. That is exactly the position `FOO` is in, which is
+why the treatment is the same: recorded, compared, and able to trigger a rebuild.
+Excluding it would silently drop a supplied entry that can change the artifact, which is
+the failure this section removes rather than one to keep.
 
 That leaves the parser with one caller, because the other is **deleted**.
 `exe_info_reflects_cpp_options()` (`:327`) exists to diff supplied `cpp_options` against an
@@ -1008,9 +1022,18 @@ latency is unpredictable, not that the number is large.
 
 **Guard every operation that executes or derives state from the binary** — not only
 the fitting methods. "At least" is not implementable, so the full public surface is
-classified here: `CmdStanModel` carries **twenty-seven public methods and one public
-field**, and every one appears below. `cmdstan_model()` is listed as the builder but
-is not itself a member, so it does not count toward either total.
+classified here: `CmdStanModel` carries **twenty-eight public methods and one public
+field**, and every one appears below. That is the post-§3 surface: twenty-seven today,
+`$clone()` included, plus the `$user_header()` that §3 adds. `cmdstan_model()` is
+listed as the builder but is not itself a member, so it does not count toward either
+total.
+
+The completeness claim is enforceable rather than merely asserted, and should be
+enforced: `CmdStanModel$public_methods` and `$public_fields` enumerate the live surface,
+so a test can compare it against the classified set and fail on any member that appears
+without a classification. Otherwise this table decays the first time someone adds a
+method, which is the failure the `$initialize()` and `$clone()` entries below already
+guard against by hand.
 
 | Behaviour | Members |
 |---|---|
@@ -1671,6 +1694,15 @@ so rather than leaving them at an empty list.
 In both cases: permit fitting, and **never attempt an automatic rebuild** — there
 is no source to build from. They are the deliberate exception to §5's requirement
 that a model have a valid record before running.
+
+**That exception is also who pays for a `format_version` bump**, and it is worth
+pricing before treating a bump as routine. An ordinary model reads a version it does
+not support, rebuilds once, and is current again. An adopted one cannot rebuild, so it
+drops to the unprovenanced path above and stays there until whoever produced the
+executable rebuilds it — for a package that compiles at install time, until the user
+reinstalls it. Nothing breaks: fitting, the runtime validators and `reported_features`
+are all unaffected, and what remains is exactly the pre-record behaviour. What is lost
+is provenance, and the saving of not launching the binary to get it.
 
 **Adoption is silent.** Unknown provenance is a standing property of the executable,
 not a change, and cmdstanr must not announce it on every construction. The reason is
@@ -2493,10 +2525,22 @@ tri-state (§1): a feature CmdStan does not report is *unknown*, and treating
 unknown as disabled reproduces #765 in a new place. `known_untracked_dependencies`
 (§6) is the same shape: an empty list means nothing was *detected*, never that the
 record is complete. Both drafts of this document got one of these wrong, so it is
-worth checking for deliberately rather than trusting the field names. JSON adds a
-third way to get it wrong: a tri-state field has to round-trip *unknown* as
-distinct from both absent and `false`, which is a property to test rather than
-assume of the serializer.
+worth checking for deliberately rather than trusting the field names.
+
+Serialization is where it gets lost in practice. `jsonlite` writes `NA` as `null`
+and reads `null` back as `NULL`, which is exactly what a missing key yields, so an
+in-memory tri-state quietly becomes two states on the way through a file and
+`is.na()` stops detecting unknown. §1 settles this by encoding presence — a key is
+written only when the state is known — so the serializer never sees a third value.
+Reintroducing `NA` for unknown reintroduces the collapse.
+
+`cmdstan_version_compare()` is a third instance, in a different costume: it returns
+`-1` for an absent or unusable version (`R/path.R:162-164`), so an unknown version
+compares as older than everything and every `<` gate fires. That fallback is correct
+where it is used, in install-path code where "no CmdStan" genuinely should lose every
+comparison. It is wrong for a model, so never hand it a version that might be
+missing — which is why an executable always yields one (§7) and a model without an
+executable cannot reach a gate (§8).
 
 **The assessment is pure.** The operation that answers "is this executable
 current?" must not compile, install, or mutate object state (§5). Callers decide
