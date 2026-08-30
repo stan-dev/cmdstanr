@@ -360,7 +360,8 @@ because neither is an ordinary Make assignment to compare.
 **A flag cmdstanr derives from another argument is not separately settable.** Two are:
 `--allow-undefined` is what `user_header` implies, and `--use-opencl` is what
 `cpp_options$stan_opencl` implies (`R/model.R:676-678`). Both are rejected in
-`stanc_options`, in either spelling, with an error naming the argument that owns them.
+`stanc_options` by the occurrence rule below, with an error naming the argument that
+owns them.
 For `allow-undefined` the builds derive it and the source-only operations always set it
 (§8), so a caller has nothing left to decide.
 
@@ -378,6 +379,45 @@ their request did nothing. One sentence naming `cpp_options` beats either.
 Today the only way to read the header back is `$cpp_options()[["USER_HEADER"]]`, which
 is why §1 can have `$cpp_options()` report `cpp_options_supplied` without losing
 anything: the header was never really a `cpp_option`, and now it is not one at all.
+
+### Rejection matches the option, not the spelling
+
+Six entries are rejected from an R option list that currently accepts them:
+`include-paths`, `warn-pedantic`, `allow-undefined` and `use-opencl` from
+`stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from `cpp_options`.
+**Every one is matched by where the option name occurs, never by enumerating accepted
+values.** (`--include-paths` inside `make/local`'s `STANCFLAGS` is rejected too, but
+that is text in CmdStan's own file rather than a list entry, so §6 gives it its own
+detection rule.)
+
+`stanc_options_to_args()` (`R/model.R:2598`) puts the flag name in a different slot
+depending on the entry's shape, so the rule has two arms:
+
+- **Named entry** — reject if the *name* is the flag, whatever the value is.
+- **Unnamed entry** — reject if the *value* is the flag, or begins with the flag
+  followed by `=`.
+
+Enumerating values does not terminate. `warn-pedantic` alone has six spellings that
+`stanc_options_to_args()` treats differently, three of which nothing in this document
+had considered:
+
+| spelling | emits |
+|---|---|
+| `list("warn-pedantic")` | `--warn-pedantic` |
+| `list("warn-pedantic" = TRUE)` | `--warn-pedantic` |
+| `list("warn-pedantic" = FALSE)` | *nothing* |
+| `list("warn-pedantic" = NA)` | *nothing* |
+| `list("warn-pedantic" = NULL)` | `--warn-pedantic=` |
+| `list("warn-pedantic" = "yes")` | `--warn-pedantic=yes` |
+
+**The two that emit nothing are rejected as well.** A validator keyed on the emitted
+arguments would pass them, and the caller who wrote `list("warn-pedantic" = FALSE)`
+believing it disables pedantic mode gets silence rather than the error naming the
+`pedantic` argument. Rejecting on occurrence catches the whole column; §4 gives the
+`FALSE` case a second reason on top of this one.
+
+The `cpp_options` rejections are the same rule against Make variable names, which
+`parsed_cpp_options()` (`R/cpp_opts.R:101`) already extracts.
 
 ### Assignments are named; everything else is opaque (#1250)
 
@@ -751,8 +791,8 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
   for whether it is compared, and §6 for what the verdict resolves with.
 - **Stanc options** — compare the **sorted argument vector the options emit**, not the
   R list. `stanc_options_to_args()` already computes it, and it collapses the two
-  accepted spellings at no cost: `list("allow-undefined")` and
-  `list("allow-undefined" = TRUE)` both become `--allow-undefined`. Sorting is safe
+  accepted spellings at no cost: `list("O1")` and `list("O1" = TRUE)` both become
+  `--O1`, so a model built one way is not rebuilt by the other. Sorting is safe
   only because `--include-paths` — the one order-sensitive flag that could appear here
   — is rejected from `stanc_options` (§6). What stays uncanonicalized is *semantic*
   equivalence, two different flags meaning the same thing, and that would need the
@@ -1058,13 +1098,12 @@ of this design: a model built through `stanc_options` compiles and then fails on
 `$sample()`, which calls `$variables()` unconditionally (`:1410`).
 
 **`include_paths` is therefore the only accepted channel**, and the rest are rejected
-with an error naming it — `--include-paths` in `stanc_options` under either spelling,
-`list("include-paths" = p)` and `list("include-paths=p")`; `--include-paths` in
-`make/local`'s `STANCFLAGS`, where the message names the file; and `STANCFLAGS` in
-`cpp_options` outright, since `stanc_options` is the channel for stanc flags and a raw
-make-variable passthrough only duplicates it. Detection is a substring test on the
-flag, not a parse: we never interpret `--include-paths`'s comma lists, quoting or
-separator forms, only refuse them.
+with an error naming it — `--include-paths` in `stanc_options`, matched on occurrence
+(§3); `--include-paths` in `make/local`'s `STANCFLAGS`, where the message names the
+file; and `STANCFLAGS` in `cpp_options` outright, since `stanc_options` is the channel
+for stanc flags and a raw make-variable passthrough only duplicates it. In the
+`make/local` case detection is a substring test on the flag, not a parse: we never
+interpret `--include-paths`'s comma lists, quoting or separator forms, only refuse them.
 
 **The two rejections are deliberately different in scope, and should not be unified.**
 `cpp_options` is a cmdstanr argument, so the whole variable goes. `make/local` is
@@ -1700,7 +1739,7 @@ check anyway — around 30 ms — or the caller asks to be warned about their mo
 receives silence. That is worse than an unnecessary recompile, because nothing
 indicates the request was dropped.
 
-Asking for the same flag through `stanc_options` is refused in every spelling (§4), so
+Asking for the same flag through `stanc_options` is refused however it is spelled (§3), so
 the two routes cannot diverge: `pedantic` owns the concept and is the only way to ask
 for it.
 
