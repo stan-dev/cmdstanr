@@ -354,8 +354,8 @@ warnings. §8 removes its `previous` parameter along with deferred compilation, 
 what remains is resolving a path and setting `USER_HEADER` for `make`.
 
 The codebase already treats the header as not belonging here: `parsed_cpp_options()`
-skips `user_header` and `stan_version` when canonicalizing (`R/cpp_opts.R:101`),
-because neither is an ordinary Make assignment to compare.
+skips `user_header` when canonicalizing (`R/cpp_opts.R:101`), because it is not an
+ordinary Make assignment to compare.
 
 **A flag cmdstanr derives from another argument is not separately settable.** Two are:
 `--allow-undefined` is what `user_header` implies, and `--use-opencl` is what
@@ -396,15 +396,49 @@ convention. After that point one spelling is in play, and validation, comparison
 record and `$cpp_options()` all use it. `list(stan_threads = TRUE)` keeps working — it is
 normalized immediately instead of at three later points.
 
-This is what makes the reserved-variable rejection below exact rather than approximate. A
-matcher that folded case itself would be a fourth normalization, and would have to specify
-which of the other three it runs before — an ordering constraint in a contract, which is
-the signal that the code shape is wrong rather than the rule.
+This is what makes the reserved-variable rejection below exact rather than approximate,
+but the rejection is not the reason to canonicalize. A matcher that folded case itself
+would get that one case right and leave every other consumer seeing whatever the caller
+typed, each folding again or not at all. Doing it once on entry is what gives validation,
+comparison, the record and `$cpp_options()` one representation, and it is the one `make`
+receives.
 
-It also retires `parsed_cpp_options()`'s exclusion list (`:101`). Both entries are there
-because that function is fed a *merged* list: `stan_version` arrives from the binary's
-`info` output (`:38`) and `user_header` from cmdstanr's own injection. Comparison runs on
-`_supplied` (§4), where neither can appear.
+**It changes what `$cpp_options()` returns, and that is a break worth naming.** Today the
+accessor reports the caller's spelling *and* the binary's, because
+`merge_exe_info_cpp_options()` writes reported names in upper case over the request
+(`R/cpp_opts.R:83`); `list(stan_threads = TRUE)` comes back as `stan_threads` and
+`STAN_THREADS` both. After this it is one entry, `STAN_THREADS`. Indexing the lower-case
+name stops working, which is loud. Indexing the upper-case name keeps working and quietly
+changes meaning, from a value the binary confirmed to one the caller asked for —
+`stan_build_info()` is where that meaning went (§1). Its own NEWS entry, tested on
+ordinary construction and on record-backed adoption.
+
+It also retires `parsed_cpp_options()`'s exclusion list (`:101`), for a different reason
+on each entry. Both are there because that function is fed a *merged* list of request and
+binary report (`R/model.R:774`); §1 stops merging those, so the only input left to parse
+is a supplied list.
+
+`user_header` cannot appear in one — the named spelling is rejected above, and cmdstanr's
+own injection is not supplied. `stan_version` can, and should. `STAN_VERSION` is not a
+Make variable: cmdstanr synthesizes the name at `R/cpp_opts.R:68` from the three
+`stan_version_*` fields `<exe> info` prints, and CmdStan's makefiles never read it
+(`CMDSTAN_VERSION` is the real one). A caller who writes
+`cpp_options = list(STAN_VERSION = "9.9")` is setting an inert Make variable, and it is
+recorded and compared as one, exactly like `FOO`. Excluding it would silently drop a
+supplied entry, which is the failure this section removes rather than one to keep.
+
+That leaves the parser with one caller, because the other is **deleted**.
+`exe_info_reflects_cpp_options()` (`:327`) exists to diff supplied `cpp_options` against an
+adopted binary, and §7 makes supplying them there an error, so it has no input left. The
+question it asks survives where it belongs: `assert_valid_threads()` and
+`assert_valid_opencl()` put it to `reported_features` at the moment the feature is used,
+rather than at construction against a request that could never have been applied.
+
+**Its deletion is sequenced with this rule, not after it.** The function matches the
+parser's names against `tolower(names(exe_info))` — one side folded, the other inherited
+from the parser. Canonicalizing while it still exists empties that intersection for every
+option, and the check silently stops checking: no error, no mismatch ever reported, just a
+validator that always agrees.
 
 **One function owns normalize-then-check.** `assert_valid_cpp_options()` (#1250) does
 both, called from the single build implementation §8 leaves behind, so the ordering is
