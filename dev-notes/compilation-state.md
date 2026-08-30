@@ -515,12 +515,20 @@ Three consequences, each of which has been got wrong at least once:
 the fourteen rows are in it. The default is *not* "everything in `request` is
 compared," and reasoning from that default is what produced the errors.
 
-**Origin is stored, not inferred.** cmdstanr injects `--filename-in-msg` as the real
-source path, and a caller may supply their own value, which wins untouched (§9). The
-flag is identical and the two must compare differently — a path-derived injection
-would reintroduce path sensitivity, a user-typed string is a fixed value like any
-other — so a merged blob plus a rule about it is not enough. `--name` is the same
-shape. The two fields are built side by side rather than one recovered from the other:
+**Origin is stored, not inferred.** The verdict compares only what the caller supplied,
+and a merged list cannot be split back apart without knowing this version's injection
+rules — which is the reconstruct-after-the-fact fragility this design removes
+everywhere else. That is the whole reason, and it holds even if no option can arrive
+by both routes.
+
+Options that *can* make the consequence visible: cmdstanr injects `--filename-in-msg`
+as the real source path, and a caller may supply their own value, which wins untouched
+(§9). The flag is identical and the two must compare differently — a path-derived
+injection would reintroduce path sensitivity, a user-typed string is a fixed value like
+any other. `--name` is the same shape. Neither is load-bearing: the rule does not depend
+on them existing, and a future rejection that removes one takes nothing with it.
+
+The two fields are built side by side rather than one recovered from the other:
 `R/model.R:673`, `:677`, `:693` and `:835` currently write into a single
 `stanc_options` variable, which would force the record to reconstruct the caller's
 input, and accumulating injections into their own list instead makes both fields
