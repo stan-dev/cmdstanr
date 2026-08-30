@@ -649,21 +649,29 @@ satisfies it for free, since turning it on mismatches the record and rebuilds. A
 uncompared one cannot, and needs a mechanism of its own — for `--warn-pedantic`, the
 only current case, §8 runs the check on a model that is already up to date.
 
-That leaves an asymmetry, accepted rather than defended as ideal. `pedantic = TRUE` warns
-on every construction, including an identical repeat, because an uncompared option has no
-build to attach to and "every time" is the only alternative to "never". A supplied
-diagnostic such as `--warn-uninitialized` warns whenever a build happens and is quiet on
-an identical repeat. Warning there too would be better; it is not worth what buying it
-costs (below), and it is the behaviour of every C compiler with `-W` flags and an
-up-to-date object file, so it is not a surprise we are introducing. Both routes deliver
-the flag's effect the moment the caller asks for it; only the nothing-changed case
-differs.
+`pedantic = TRUE` and a supplied `--warn-uninitialized` therefore behave differently on an
+identical repeat, and that is right rather than a compromise, because they are different
+kinds of thing. `pedantic` is a request scoped to the call, like `quiet`: it runs whenever
+it is asked for, and the way to stop the warnings is to stop asking for them.
+`--warn-uninitialized` is part of the build configuration, so it applies when a build
+happens and is otherwise quiet, which is what a C compiler does with `-W` flags against an
+up-to-date object file.
 
-**Extending warn-always to supplied options is refused.** It would need cmdstanr to know
-which stanc flags are diagnostic-only, per CmdStan version — the per-option semantics
-this section declines below for canonicalization, arrived at from the other direction. A
-misclassification is also silent and points the wrong way: treat a codegen flag as
-diagnostic and a needed rebuild is skipped.
+The record makes a third policy available — run the check only when the recorded
+injections show pedantic was not already applied — and it is rejected. It would make two
+identical calls behave differently on the strength of a file the caller cannot see, with
+no obvious way to ask for the output back, and it would defeat the main reason to put
+`pedantic` in a script, which is to have the check run on every execution. Suppressing a
+request because it was satisfied once is not a saving when the request costs 30 ms.
+Output the caller asked for runs whenever they ask, while output they did not ask for
+picks its moment — which is why §6's untracked-provenance note fires on writing a record
+rather than on every construction, and is not this decision taken the other way.
+
+**A general diagnostic classifier is refused.** Rerunning supplied `stanc_options`
+diagnostics on an up-to-date model would need cmdstanr to know which stanc flags are
+diagnostic-only, per CmdStan version — the per-option semantics this section declines
+below for canonicalization, arrived at from the other direction. What it buys is
+re-emitting warnings for a build nobody asked to repeat.
 
 **`--warn-pedantic` is rejected from `stanc_options`**, with an error naming
 `pedantic = TRUE`, matched on occurrence rather than by value (§3). This is the
