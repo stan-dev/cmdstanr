@@ -594,21 +594,38 @@ artifact while an old record's `_supplied` goes on matching, so nothing would
 rebuild. The bump is what forces it.
 
 **An injected option still applies; not comparing it only means it cannot force a
-rebuild.** Where the option's whole purpose is to produce output — `--warn-pedantic`
-is the only current case — the operation still has to happen on a model that is
-already up to date, or the user's request silently evaporates (§5).
+rebuild.** The invariant this obliges is narrower than "a diagnostic always re-emits":
+*asking for something you did not have before never yields nothing.* A compared option
+satisfies it for free, since turning it on mismatches the record and rebuilds. An
+uncompared one cannot, and needs a mechanism of its own — for `--warn-pedantic`, the
+only current case, §8 runs the check on a model that is already up to date.
 
-**Every `stanc_options` spelling of `--warn-pedantic` is therefore rejected**, with an
-error naming `pedantic = TRUE` — `list("warn-pedantic")`, `list("warn-pedantic" = TRUE)`
-and `list("warn-pedantic" = FALSE)` alike. The named `FALSE` is refused too because it
-emits nothing today (logical `FALSE` leaves a flag out, #1251) while `pedantic = TRUE`
-still injects, so it reads as a way to switch pedantic off and is not one.
+That leaves an asymmetry, accepted rather than defended as ideal. `pedantic = TRUE` warns
+on every construction, including an identical repeat, because an uncompared option has no
+build to attach to and "every time" is the only alternative to "never". A supplied
+diagnostic such as `--warn-uninitialized` warns whenever a build happens and is quiet on
+an identical repeat. Warning there too would be better; it is not worth what buying it
+costs (below), and it is the behaviour of every C compiler with `-W` flags and an
+up-to-date object file, so it is not a surprise we are introducing. Both routes deliver
+the flag's effect the moment the caller asks for it; only the nothing-changed case
+differs.
 
-Supplied rather than injected, the flag would be *compared*: the first build warns, the
-second construction matches the record, nothing rebuilds, and the warnings never appear
-again — the same evaporation through the door the rule above does not cover. One
-spelling that is already handled is cheaper than a second rule. `name` and
-`filename-in-msg` stay supplyable: neither has a dedicated argument, and
+**Extending warn-always to supplied options is refused.** It would need cmdstanr to know
+which stanc flags are diagnostic-only, per CmdStan version — the per-option semantics
+this section declines below for canonicalization, arrived at from the other direction. A
+misclassification is also silent and points the wrong way: treat a codegen flag as
+diagnostic and a needed rebuild is skipped.
+
+**`--warn-pedantic` is rejected from `stanc_options`**, with an error naming
+`pedantic = TRUE`, matched on occurrence rather than by value (§3). This is the
+one-channel rule of §3 and §6, and pedantic is the case where two channels would differ
+in *kind* rather than in spelling: `pedantic = TRUE` is injected and not compared, the
+same flag through `stanc_options` is supplied and compared, so one warns on every call
+and the other only on a build. The named `FALSE` has a second reason of its own: it emits
+nothing today (logical `FALSE` leaves a flag out, #1251) while `pedantic = TRUE` still
+injects, so it reads as a way to switch pedantic off and is not one.
+
+`name` and `filename-in-msg` stay supplyable: neither has a dedicated argument, and
 `filename-in-msg` is deliberately caller-overridable (§9). `allow-undefined` does not,
 being the flag `user_header` implies (§3).
 
