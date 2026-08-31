@@ -1779,9 +1779,9 @@ launching the binary (§4), this costs nothing.
 in a format version this cmdstanr does not read.
 Explicitly unprovenanced, which is a statement about *provenance* and must not
 suppress what the binary does report. `stan_build_info()` returns an explicit
-unavailable provenance — `provenance = "unavailable"` or equivalent, never an empty
-result that could be mistaken for "nothing was configured" — **together with the
-`reported_features` the executable supplies**. The four `STAN_*` flags and the
+unavailable provenance, never an empty result that could be mistaken for "nothing was
+configured", **together with the `reported_features` the executable supplies**. §8 carries
+the shape, and the four forms named above are the four reasons it reports. The four `STAN_*` flags and the
 version from `<exe> info` are real information, and §1's separation is exactly what
 makes reporting them here consistent rather than contradictory: the request is
 unknown, the reported features are not.
@@ -2108,8 +2108,92 @@ Four constraints:
 Matching on the function *name* is what buys cross-implementation teachability;
 matching every argument at the cost of internal consistency is not worth it.
 
-**`stan_build_info()` returns a parsed object**, not the file. Users should not be
-encouraged to depend on the record's on-disk format.
+**`stan_build_info()` returns a public result, not the parsed record.** Saying only
+that it returns "a parsed object" does not settle this: the obvious implementation is
+`jsonlite::fromJSON()` on the record, and then the returned object *is* the on-disk
+schema one deserialisation removed. That contradicts §4, which makes the format
+private and versions it so that it can change — a later cmdstanr that recanonicalises
+`cpp_options` bumps `format_version` and reshapes the field, and every script reading
+`info$request$cpp_options_supplied` breaks on a change §4 says is ours to make. So the
+reader **translates**: the public field names are the promise, and the record's layout
+is free underneath them.
+
+The public result is a plain list with these top-level fields:
+
+| field | present when | holds |
+|---|---|---|
+| `provenance` | always | `status`, and `reason` when unavailable (below) |
+| `reported_features` | always | the tri-state of §1, per feature |
+| `format_version` | the record parsed | the record's build-interpretation contract version |
+| `request` | provenance available | the recorded build configuration of §1 |
+| `dependencies` | provenance available | one entry per source: content identity, `built_from`, `exists` |
+| `artifact` | provenance available | the executable's hash |
+| `builder` | provenance available, and a builder was recorded | installation path, version, `exists` |
+| `known_untracked_dependencies` | provenance available | §6's list; empty means nothing was detected |
+
+`artifact` and `format_version` are both public, and `format_version` is not the
+coupling this rule exists to prevent: exposing the *value* is not exposing the
+*layout*. The promise is one integer naming which contract wrote the record, and it
+survives any rearrangement of the JSON beneath it.
+
+**`provenance` carries why, not only whether.** §7 already enumerates four ways a
+record fails to describe an executable, and collapsing them to a bare "unavailable"
+throws the distinction away at the only point a user can act on it:
+
+```r
+provenance = list(status = "available",   reason = NULL)
+provenance = list(status = "unavailable", reason = "record_missing")
+                                        # "record_unreadable"
+                                        # "artifact_mismatch"
+                                        # "unsupported_format"
+```
+
+`available` requires `reason = NULL`; `unavailable` requires exactly one. The enum is
+machine-readable and no free-form message is stored — the printer derives its prose
+from the reason, so the wording stays revisable and never becomes contract.
+
+**`unsupported_format` is not evidence that cmdstanr is old.** §4's format-version
+rule runs in both directions, and a downgrade regenerates old-format records, so the
+record may be either side of the readable set. The printer reads the direction off the
+reported `format_version` and says the corresponding thing: upgrade cmdstanr for a
+newer record, rebuild or obtain a newly produced artifact for an older one.
+
+**Unknown and empty must never render alike, anywhere in the result.** This is §6's
+`known_untracked_dependencies` rule and §1's absence-of-evidence rule stated once as a
+property of the whole object rather than per field. An empty
+`known_untracked_dependencies` means the scan detected nothing; no record to scan means
+the field is absent. A recorded builder whose path is gone is `exists = FALSE`; no
+builder provenance at all is an absent `builder`. An unknown request is absent, not
+`list()`.
+
+That last one is where the two accessors answer the same executable differently, and
+both are right. §7 keeps `$cpp_options()` empty for an unprovenanced executable because
+that accessor reports what the caller asked for and nobody asked for anything.
+`stan_build_info()` reports what is known about the build, so it must say unknown.
+
+**A readable record whose hash does not match is withheld in full.** `artifact_mismatch`
+returns the reason and `format_version` and nothing else, even though `request`,
+`dependencies` and `builder` all parsed. This is the one place the reader holds back
+data it can see, so it is worth saying why to whoever implements it: reporting the
+fields with a caveat is the natural instinct and it is wrong, because
+`reported_features` from that record is what §1 sends the runtime validators to. A
+helpful partial report puts `stan_threads: true` from some other build in front of a
+validator guarding this one, which is the silently single-threaded run this design
+exists to remove, arriving through a new door. Note that relocation never reaches here:
+a moved executable keeps its bytes and its hash, and §6 compares dependencies by
+content, so `artifact_mismatch` means the executable at this path was replaced without
+cmdstanr writing a new record.
+
+**The executable argument has two failure modes and both are errors.** A path that is
+missing or is not a file errors. Otherwise, a valid hash-matched record is answered
+from the record alone, without launching the binary — §4's adoption rule already works
+this way, and it is what keeps a cross-platform artifact fully reported. Only an
+executable with no usable record is launched for `<exe> info`, and if that fails the
+function errors rather than returning an all-unknown result: with neither a record nor
+an info response there is nothing to report, and an object of unknowns would be zero
+information wearing the shape of an answer. Feature-level *unknown* stays for a feature
+genuinely absent from a valid record or a successful info response, and never stands in
+for total inspection failure.
 
 **`$format()` gets a standalone plus a method wrapper.** The case for keeping it
 method-only — that it invalidates `stan_code_` and `variables_`
