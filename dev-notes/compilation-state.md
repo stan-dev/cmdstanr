@@ -394,6 +394,19 @@ Today the only way to read the header back is `$cpp_options()[["USER_HEADER"]]`,
 is why §1 can have `$cpp_options()` report `cpp_options_supplied` without losing
 anything: the header was never really a `cpp_option`, and now it is not one at all.
 
+**`R/model.R:709` is what makes it one, and it goes.** After resolution, `compile()`
+writes the header back into `cpp_options` under whichever spelling was used, and
+`:941` then stores that list, so a caller who passed `user_header = "inc/mine.hpp"` as
+an argument and never touched `cpp_options` gets `USER_HEADER = "/abs/path/inc/mine.hpp"`
+back from `$cpp_options()`. Wired to `cpp_options_supplied` with that line still in
+place, the accessor would report a field the caller never passed, holding a path they
+never wrote. What survives is only the Make flag: CmdStan reads `-include $(USER_HEADER)`
+(`make/program:41`), so `USER_HEADER=` still has to reach `make`, and it reaches it as an
+injected option merged at flag construction (§4) rather than through the list the record
+is taken from. `resolved_header$spelling` goes with the line — `:709` is its only
+consumer, and one channel has one spelling — alongside the `previous` parameter §8
+removes.
+
 ### One canonical spelling, established on entry
 
 `cpp_options_to_compile_flags()` (`R/cpp_opts.R:129`) uppercases every named entry, so
@@ -939,9 +952,16 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
 
 A record whose `format_version` this cmdstanr does not read **rebuilds, and says
 so**, exactly like an executable that predates records (§7). It is not refused and
-does not require `force_recompile`. At 1.0 the readable set is exactly `{1}`, so in
-practice any mismatch rebuilds; a later release may widen the set, which changes what
-is readable without changing this rule.
+does not require `force_recompile`. **A release reads exactly the format it writes and
+nothing else**, so in practice any mismatch rebuilds; a later release may widen the set,
+which changes what is readable without changing this rule.
+
+The number is deliberately not written down here. Stage 3 starts writing records and
+Stage 4 bumps the format (below), so a literal in this section would have to be kept
+in step with a value only the merging pull request knows — the two-owner failure that
+§9 exists to avoid. It costs nothing to leave open: the pre-bump format is never
+released, so the only records written under it are on development branches, and they
+rebuild once.
 
 **`format_version` versions the build interpretation contract, not the JSON shape.**
 If a later cmdstanr changes how `cpp_options` are canonicalised, identical bytes in a
@@ -1183,9 +1203,17 @@ samples pays it regardless, since `$sample()` calls `$variables()` to validate d
 **`$format(overwrite_file = TRUE)` must stop refreshing the cache**
 (`R/model.R:1308-1312`). It rewrites the Stan file and then reassigns `stan_code_`
 and clears `variables_`, which makes both accessors describe a source the executable
-was *never* built from — #1228's failure in the opposite direction. #1235 added that
-refresh deliberately, under the older contract where `$code()` meant "the file as it
-is now"; the accessors have since been redefined and this has not caught up.
+was *never* built from — #1228's failure in the opposite direction. Both lines were
+written under the older contract where `$code()` meant "the file as it is now"; the
+accessors have since been redefined and this has not caught up.
+
+**The two lines are not the same age, and the difference decides a NEWS entry.** The
+`variables_` clear is #1235's, written and reverted inside the unreleased window, so
+`NEWS.md:94` goes with it and no user upgrading from 0.9 ever saw it. The `stan_code_`
+reassignment is commit `1719851e` from April 2022 and shipped in 0.7.0 through 0.9.0,
+so removing it changes *released* behaviour and owes an entry of its own. `NEWS.md:94`
+describes both in one sentence, which is how deleting it as a stale unreleased entry
+would silently take the released half down with it.
 
 Removing those lines is the whole fix. **`$format()` is kept, overwriting included** —
 a reviewer proposed removing the method, but rewriting the file is the useful part
@@ -1719,6 +1747,19 @@ time. So this is the only place the invariant §10 relies on can be established.
 record must carry a parseable `builder` version, and on the fallback `<exe> info` must
 report complete version fields.
 
+**"Syntactically valid" means the grammar cmdstanr already uses**: three numeric
+components with an optional release-candidate suffix, `[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?`.
+That is not a new contract invented here — it is the pattern at `R/path.R:298` and `:337`,
+where cmdstanr already decides what counts as a CmdStan version when matching installation
+directories. Pointing this check at the same grammar keeps one definition doing both jobs.
+Note for whoever implements it that `cmdstan_version_for_comparison()` strips `-rc[0-9]+$`
+(`R/path.R:156`), so the check runs on the reported string before that stripping.
+
+**`utils::compareVersion()` must not be the validator.** "It did not complain" is a
+weaker property than "this is a CmdStan version": `compareVersion("2.36", "2.35.0")` and
+`compareVersion("2.36.0.1", "2.35.0")` both return `1` with no warning and no error, and
+neither input is a version CmdStan reports. Only the grammar rejects them.
+
 It is a syntactic check and nothing more. **Rejecting a version for being old would
 defeat this whole section**, whose purpose is that a binary built by an older CmdStan
 keeps working. Without the check, `model_compile_info()` synthesises `".."` from three
@@ -2057,12 +2098,11 @@ ship as one stage** — separating those leaves a window where the new promise i
 whichever way the cut is made (Stage 4), though the engine's pure, unwired half
 separates cleanly and is Stage 3b.
 
-**The release order is stated here and nowhere else.** Everything below refers to this
-line rather than restating it:
-
-```
-Stage 4 -> Stage 5 -> NEWS reconciliation -> release candidate -> Air's format -> 1.0
-```
+**#1258 states the release order; this section states the constraints behind it.** The
+split follows the boundary already set under Purpose and scope, and it has a test: if
+the order changes, the work list is what you edit; if the *reason* changes, this is.
+Both printing it is how four different statements of it came to exist in an earlier
+draft.
 
 The candidate ships when everything is ready rather than at the earliest defensible
 moment, and that is a structural choice rather than a preference. The moment an item can
@@ -2073,12 +2113,29 @@ One definition of ready removes the adjudication instead of getting it right eac
 
 What downstream gives up by waiting is a tag, not a start. We open their pull requests
 ourselves (below), and the dev version supplies the boundary in the meantime: bumped **in
-the same pull request as each break**, it lets brms write
-`packageVersion("cmdstanr") >= "0.9.0.9003"` against master the day the break lands,
-which is finer-grained than a tag rather than a substitute for one. Bumping in a
-follow-up commit is worse than not bumping at all, since a guard written against the new
-number then takes the old branch and calls a method that has already gone. Stages 1, 4
-and 5 each owe one; Stages 2, 3 and 3b change nothing observable and do not.
+the same pull request as each break**, it lets brms guard on `packageVersion("cmdstanr")`
+against master the day the break lands, which is finer-grained than a tag rather than a
+substitute for one. Bumping in a follow-up commit is worse than not bumping at all, since
+a guard written against the new number then takes the old branch and calls a method that
+has already gone.
+
+**Each guard names the stage it needs, not a number chosen now.** brms moves onto the
+standalone family, which arrives in Stage 4, so its boundary is *the Stage 4 dev
+version*, whatever that pull request assigns. Writing a literal here picks the wrong
+stage as soon as the arithmetic moves: from `0.9.0.9002`, Stage 1's bump is `.9003`, so
+a guard written against `.9003` today would switch brms to `compile_stan_file()` three
+stages before it exists — the partial migration this paragraph exists to prevent. The
+downstream pull requests we open carry the real numbers.
+
+**A bump is owed for a public contract downstream has to branch on, not for anything
+observable.** Stages 1, 4 and 5 owe one; Stages 2, 3 and 3b do not. Stage 3 is the case
+that makes the distinction necessary rather than pedantic: it creates a sidecar beside
+every executable and can print the untracked-dependency note, both plainly observable,
+and neither is something brms or instantiate could write an `if` against. A version
+number exists so someone can branch on it, and there is nothing there to branch on. What
+the sidecar does raise is whether instantiate carries the record into the package library
+alongside the staged executable, which is install mechanics and belongs to #1238; no
+version guard would answer it.
 
 ### Stages 0 and 1 — landing in #1235, then Make-option correctness
 
@@ -2204,10 +2261,16 @@ enough, and is one fewer moving part in CI.
 
 ### Stage 5 — public build-record inspection
 
-`stan_build_info()` last, because its inputs do not exist until Stage 4: it reports
-`reported_features` and the record, and Stage 4 is what makes both live. That is an
-ordering fact rather than a scheduling preference, so it cannot drift. It ships before
-the candidate, per the order above.
+`stan_build_info()` last, because **it publishes answers Stage 4 settles**. Its inputs
+exist a stage earlier — Stage 3 writes the record and captures `reported_features` — so
+the ordering is not about availability. It is about meaning. Until Stage 4 deletes the
+merge, `$cpp_options()` still answers "what is this binary" by mixing the report into
+the request, so a function published before then would arrive into a world where its
+own purpose is not yet true, and Stage 4 would change what it reports. It must also
+answer for an unprovenanced executable (§7), and record-aware adoption is Stage 4, so
+before that the case it most needs to cover does not exist. That is an ordering fact
+rather than a scheduling preference, so it cannot drift. It ships before the candidate,
+per #1258.
 
 **It must ship in 1.0**, despite looking purely additive. Because §1 keeps the
 request separate from what the binary reports, this is the only way to ask what an
@@ -2252,9 +2315,16 @@ upgrading from 0.9 to 1.0 never saw the intermediate behaviour and does not need
 know it existed. This is a pass before the candidate, once the stages have settled,
 not something to do incrementally while the picture is still moving.
 
+**The pass covers inherited gaps, not only this design's.** Release notes belong to the
+release rather than to whoever caused each line, and the unreleased window already
+carries user-facing changes that were never written up: measured against merge subjects
+since `v0.9.0`, roughly a quarter of the merged pull requests that touch behaviour have
+no entry, among them a new exported function, two new public methods and a changed
+default on `loo()`. #1258 owns the method and the list.
+
 ### The release candidate
 
-The candidate ships after the NEWS reconciliation, per the order above, so downstream
+The candidate ships after the NEWS reconciliation, per #1258, so downstream
 packages have something to migrate against rather than a release note. That is what
 makes §8's breaking change affordable.
 
@@ -2486,10 +2556,25 @@ outright.
 The formatting and linting work is scheduled around this, and the formatter and the
 linter go to different places.
 
-Air's one-time whole-repo format (#1153) is the **last** change before 1.0. It is
-whitespace-only and deterministic, so shipping it after the candidate is cheap, and
-by then there is no branch left for it to conflict with — which there would be
-today, with #1235 and #1254 both open. Its PR-review action is a separate thing:
+Air's one-time whole-repo format (#1153) is the **last** change before 1.0, **and it
+is optional**. That is the reason it goes last rather than just before the candidate.
+An optional cosmetic change cannot gate a tag: put it earlier and the candidate waits
+on a decision nobody has made about something that does not alter what the release
+does. Last, it is skippable, and skipping it changes nothing else.
+
+Two arguments that look like they belong here do not. Branch conflicts — real today,
+with #1235 and #1254 both open — stop once the NEWS reconciliation merges, which is
+*before* the tag, so that constraint says "not yet" and never says "after the tag."
+And whitespace-only determinism makes the change cheap in either slot, so it does not
+choose between them either. What decides it is that the item is a maybe.
+
+**One check when it runs.** Air reformats `#'` lines like any others, so a reflow that
+moves a roxygen tag regenerates `.Rd` and `NAMESPACE` differently and R CMD check will
+not notice. Re-run roxygen afterwards and confirm the generated files are unchanged.
+That is the whole of the residual risk in shipping it after the candidate, and it is
+cheaper to check than to reschedule.
+
+Its PR-review action is a separate thing:
 additive, conflicting with nothing, and most useful *during* the stages, since
 Stages 2 to 4 write a good deal of new code that would otherwise be formatted after
 the fact. Check first whether it comments on changed lines or on whole files; if the
@@ -2612,8 +2697,10 @@ every comparison. It is wrong for a model.
 
 The guard is also narrower than "unusable", which matters because it removes the
 temptation to lean on it: a malformed non-empty string never reaches the `-1` at all.
-`".."` errors inside `utils::compareVersion()` and `"garbage"` warns, so the function
-has two distinct bad-input behaviours and neither is a safe fallback. Filed as #1260,
+Both `".."` and `"garbage"` error inside `utils::compareVersion()`, with `missing value
+where TRUE/FALSE needed`; `"garbage"` emits `NAs introduced by coercion` first. So the
+bad-input behaviour is an error, sometimes with a warning in front of it, and never the
+`-1`. Filed as #1260,
 separately from this design: the comparison should not answer a question it was not
 asked, but fixing it is defence in depth rather than what closes this. That is why §7
 makes "an adopted executable always yields a valid version" a *checked* invariant rather
