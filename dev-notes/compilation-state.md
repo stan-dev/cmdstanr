@@ -663,7 +663,8 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
 | `request.stanc_options_supplied` | yes | yes | as above |
 | `request.cpp_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction |
-| `request.stanc_options_injected` | yes | **no** | as above. `make/local`'s `STANCFLAGS` reach the same stanc invocation and appear in neither field, being covered by `make/local`'s hash |
+| `request.stanc_options_injected` | yes | **no** | as above, with the model name the one exception, which has its own row below. `make/local`'s `STANCFLAGS` reach the same stanc invocation and appear in neither field, being covered by `make/local`'s hash |
+| `request.model_name` | yes | **yes** | the effective `--name` stanc receives, whether the caller supplied it or `R/model.R:834` derived it from the file name. It meets this column's own criterion: CmdStan stamps it into every CSV (`R/csv.R:873`), and no other compared field determines it, since content hashes are compared and paths are not |
 | `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is provenance |
 | `request.user_header` path | yes | **yes** | the one *dependency* path compared, because the C++ closure beneath it cannot be enumerated. `-I` flags decide the same resolution and are compared inside `cpp_options` above (§6) |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
@@ -678,7 +679,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 Three consequences, each of which has been got wrong at least once:
 
 **Recorded-but-not-compared is the ordinary case, not a list of exceptions.** Six of
-the fourteen rows are in it. The default is *not* "everything in `request` is
+the fifteen rows are in it. The default is *not* "everything in `request` is
 compared," and reasoning from that default is what produced the errors.
 
 **Origin is stored, not inferred.** The verdict compares only what the caller supplied,
@@ -691,8 +692,22 @@ Options that *can* make the consequence visible: cmdstanr injects `--filename-in
 as the real source path, and a caller may supply their own value, which wins untouched
 (§9). The flag is identical and the two must compare differently — a path-derived
 injection would reintroduce path sensitivity, a user-typed string is a fixed value like
-any other. `--name` is the same shape. Neither is load-bearing: the rule does not depend
-on them existing, and a future rejection that removes one takes nothing with it.
+any other. It is not load-bearing: the rule does not depend on it existing, and a future
+rejection that removes it takes nothing with it.
+
+**`--name` had the same shape and now has its own compared row**, because leaving it
+inside the injected field was unsound. `R/model.R:834` derives it from the file name
+whenever the caller supplies none, so move a source, its executable and its record
+together under a new name and nothing compared changes: content hash, artifact hash and
+builder all match, and the supplied options are empty on both sides. No rebuild. The
+object's `$model_name()` then reads `survival` while the binary goes on stamping
+`--name=bernoulli_model` into every CSV. Unlike `--filename-in-msg`, which describes a
+build that really happened, this is two live answers to one question, and both are
+visible inside R: `R/csv.R:873` maps the CSV header onto `fit$metadata()$model_name`,
+and `check_csv_metadata_matches()` (`:948-951`) then rejects runs from either side of
+the rename as "not generated with the same model". Comparing the *effective* name
+covers the supplied case as well; overlapping with `stanc_options_supplied` there is
+two routes agreeing, not a contradiction.
 
 The two fields are built side by side rather than one recovered from the other:
 `R/model.R:673`, `:677`, `:693` and `:835` currently write into a single
@@ -952,7 +967,7 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
 
 A record whose `format_version` this cmdstanr does not read **rebuilds, and says
 so**, exactly like an executable that predates records (§7). It is not refused and
-does not require `force_recompile`. **A release reads exactly the format it writes and
+does not require `force_recompile`. **1.0 reads exactly the format it writes and
 nothing else**, so in practice any mismatch rebuilds; a later release may widen the set,
 which changes what is readable without changing this rule.
 
@@ -1524,6 +1539,40 @@ absolute path inside the installation (`TBB_BIN_ABSOLUTE_PATH`,
 to the installation that built it. If that installation is gone, the executable may
 not launch at all, and the model is rebuilt against the current one.
 
+**Which is why an executable is launched with its builder's TBB rather than the
+session's.** The two platforms fail in opposite directions, so it takes one rule to
+cover both. `compiler_flags:329` bakes an absolute `-rpath` into the binary and `:327`
+guards that out on Windows. Measured on a compiled model, `otool` reports a single
+`LC_RPATH` into the builder's `stan/lib/stan_math/lib/tbb`, with no fallback entry. So
+on macOS and Linux `tbb_path()` returns `NULL` (`R/run.R:1238-1248`), cmdstanr supplies
+nothing, and a missing builder means the loader refuses the binary. On Windows there is
+no rpath, `tbb_path()` defaults `dir` to `cmdstan_path()`, and every runtime call site
+takes it bare (`R/run.R:336`, `:422`, `:660`, `:782`), so the session's current
+installation supplies the TBB whatever built the binary.
+
+That second half is not an adoption problem, which is what makes this a general rule
+rather than an adoption one. Build a model, call `set_cmdstan_path()`, then sample: on
+Windows a 2.39 binary runs against 2.40's TBB, in released cmdstanr, with no record
+involved. `instantiate` reaches the same state by design rather than by accident —
+`stan_package_model()` sets the CmdStan path, constructs the object, and restores the
+previous path `on.exit`, so by the time the user samples the session points at a third
+installation.
+
+So **cmdstanr supplies the TBB directory of the installation recorded as the builder**,
+and `cmdstan_path()` becomes the fallback for a model with no record rather than the
+default for every model. `tbb_path()` already takes `dir` and `R/install.R:485` already
+calls it that way, so nothing is needed but passing it.
+
+**A recorded builder that no longer exists is reported, not fatal.** Refusing adoption
+would break a working setup, because a model built with `cpp_options = list(tbb_lib =,
+tbb_inc =)` against a system TBB has an rpath outside CmdStan entirely and runs with the
+builder tree deleted. On Windows the fallback applies for a second reason: putting a
+directory that is gone on `PATH` is worse than today's wrong-but-present one.
+`stan_build_info()` reports the builder as absent — the treatment §7 already gives
+absent recorded sources, for the same reason — and a launch failure becomes an error
+naming the recorded installation, with reinstalling it or rebuilding from source as the
+two remedies.
+
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
 source and `make/local` should be told both.
@@ -1616,13 +1665,16 @@ hit it rather than only the documentation:
 - **Headers transitively included by `USER_HEADER`.** Hashing the top-level header
   misses them.
 
-In both cases a regex — `^\s*-?include\b` for `make/local`, `^\s*#\s*include\s*"`
-for the user header — tells us there *is* an untracked dependency, without
-resolving anything.
+In both cases a regex — `^\s*(?:-?include|sinclude)\b` for `make/local`,
+`^\s*#\s*include\s*"` for the user header — tells us there *is* an untracked
+dependency, without resolving anything. `sinclude` is GNU Make's silent-include
+spelling and costs one alternation rather than any Make parsing; verified on Make
+3.81, it loads the named file and stays quiet when that file is missing, exactly
+like `-include`.
 
 **The field is `known_untracked_dependencies`, not `provenance_complete`.** A regex
 can establish that a gap exists; it cannot establish that none does. Make also has
-`sinclude`, variable expansion and `eval`; C++ has angle-bracket local headers,
+variable expansion and `eval`; C++ has angle-bracket local headers,
 macro-expanded includes, line continuations and conditional inclusion. **No match
 means "no known gap," never "complete."** Until compiler depfiles exist, *any* user
 header potentially carries untracked transitive dependencies — the regex improves
@@ -1748,10 +1800,14 @@ record must carry a parseable `builder` version, and on the fallback `<exe> info
 report complete version fields.
 
 **"Syntactically valid" means the grammar cmdstanr already uses**: three numeric
-components with an optional release-candidate suffix, `[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?`.
-That is not a new contract invented here — it is the pattern at `R/path.R:298` and `:337`,
-where cmdstanr already decides what counts as a CmdStan version when matching installation
-directories. Pointing this check at the same grammar keeps one definition doing both jobs.
+components with an optional release-candidate suffix, anchored at both ends —
+`^[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$`. The grammar is not a new contract invented here.
+It is the version half of `R/path.R:298`'s `^cmdstan-[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$`,
+which decides what counts as a CmdStan installation directory, and of the
+trailing-component match at `:337`. What differs is where the anchors sit, and that
+follows from the job: there the string is a directory name and the anchors bind the
+`cmdstan-` prefix along with the version, while here the whole string is the version.
+Unanchored, `grepl()` accepts `cmdstan 2.36.0 (broken)`.
 Note for whoever implements it that `cmdstan_version_for_comparison()` strips `-rc[0-9]+$`
 (`R/path.R:156`), so the check runs on the reported string before that stripping.
 
@@ -1810,19 +1866,24 @@ argument rather than the artifact, and nothing they did implies it.
 
 ### Build configuration cannot accompany an adopted executable
 
-**With no `stan_file`, explicitly supplied build configuration is an error** —
-`cpp_options`, `stanc_options`, `include_paths`, `user_header`, `force_recompile`.
-None of them can configure an artifact that will not be rebuilt, and a valid record
-is there to be *inspected*, not overridden. Silently ignoring them is the failure
-mode this design exists to remove: the user believes they asked for something.
+**With no `stan_file`, an explicitly supplied argument that can only be honoured by
+building or by reading the source is an error** — `cpp_options`, `stanc_options`,
+`include_paths`, `user_header`, `force_recompile`, `pedantic`. Silently ignoring any of
+them is the failure mode this design exists to remove: the user believes they asked for
+something.
 
-`include_paths` is rejected for a slightly different reason worth stating, because it
-is not really build configuration: it configures **source resolution**, and every
-stanc invocation needs it — compiling, `$check_syntax()`, and the `$variables()` call
-`$sample()` makes to validate data (`R/model.R:1410`). It is therefore meaningful
-whenever a source is registered, whether or not anything is compiled. With no source
-there is nothing to resolve against, so the rejection stands; but the reason is the
-missing source, not the missing build.
+The rule is framed on both halves rather than on build configuration alone, because two
+of the six fail on the source rather than on the build, and a frame that named only the
+build would need an exception written for each. `cpp_options`, `stanc_options`,
+`user_header` and `force_recompile` cannot configure an artifact that will not be
+rebuilt, and a valid record is there to be *inspected*, not overridden. `include_paths`
+configures **source resolution**, and every stanc invocation needs it — compiling,
+`$check_syntax()`, and the `$variables()` call `$sample()` makes to validate data
+(`R/model.R:1410`) — so it is meaningful whenever a source is registered, whether or not
+anything is compiled. `pedantic` is a request scoped to the call (§4), and what it asks
+for is a stanc run over the program; with no program there is nothing to run and nothing
+to report, so the guarantee that it produces diagnostics on every call cannot be kept
+quietly. For both, the reason is the missing source, not the missing build.
 
 **The check is on whether the argument was supplied, not on what it resolves to**,
 and `force_recompile` is why. Its default is `getOption("cmdstanr_force_recompile")`
@@ -2059,6 +2120,53 @@ pre-run validation is what actually makes it safe.
 **`dry_run` demotes to internal.** Its documentation says *"Used to speedup tests"*
 (`R/model.R:558-559`); 22 test uses, zero vignette uses. It stays as an argument to
 the internal compile machinery that the public entry points wrap.
+
+### `compile_model_methods` and `compile_standalone` are removed
+
+Neither is build configuration. `compile_standalone = TRUE` runs
+`expose_stan_functions()` into `self$functions` after make finishes (`R/model.R:963`),
+and `compile_model_methods = TRUE` runs `expose_model_methods()` into the environment
+fit objects copy (`:966`). Neither sets a make flag or changes a byte of the executable,
+which is why neither appears in `compile_impl()` above: that signature was written from
+what the build consumes.
+
+**They are already broken on the reuse path, in released code.** `$compile()` returns at
+`R/model.R:804`, inside the `if (!force_recompile)` branch that opens at `:741`, and
+both exposure calls sit past that return. The same call therefore populates `functions`
+or does not, depending on whether a rebuild happened to be needed:
+
+```r
+mod <- cmdstan_model("bernoulli.stan", compile_standalone = TRUE)
+# fresh session, executable still current
+mod <- cmdstan_model("bernoulli.stan", compile_standalone = TRUE)
+mod$functions$foo   # not there
+```
+
+That is the failure this design exists to remove: a request the call cannot honour and
+does not report. Keeping them would mean writing a reuse-path rule for a case that has
+been wrong since before 0.9.0.
+
+**The replacements are the ones their own documentation already names.**
+`R/model.R:551` tells the caller to use `fit$init_model_methods()` instead when the
+model will be saved, and `:556` says `$expose_functions()` does the same job after
+compilation. Both are public, both are tested, and neither depends on the reuse path,
+because they run when they are called.
+
+**`$expose_functions()` has to be fixed in the same change, since removal makes it the
+only route.** `expose_stan_functions()` refuses whenever `function_env$existing_exe` is
+`TRUE` (`R/utils.R:1217`), and the no-op path sets exactly that: `:267` initialises it
+`TRUE`, `:299` sets `exe_file_` only when the caller passed `exe_file`, and `:786`
+branches on `length(private$exe_file_) == 0`, still true for a source-only construction.
+So `cmdstan_model("m.stan")` on an up-to-date executable, followed by
+`mod$expose_functions()`, errors with *"Exporting standalone functions is not possible
+with a pre-compiled Stan model!"* about a model that has a source sitting beside it.
+`existing_exe` should mean "this model has no source" rather than "this object did not
+personally run make", and the hpp should be generated on demand from the registered
+source the way `pedantic` re-runs stanc. The error stays for models that genuinely have
+no source (§7).
+
+Taken together, nothing is lost: on the reuse path today neither route works, one in
+silence and one with a message describing a different model.
 
 ### What this dissolves
 
@@ -2525,9 +2633,24 @@ the §5 accessors. Everything else it touches is fit-side.
 
 §8 is therefore the only thing that reaches it. In `ulam()` the argument is
 `compile = filex[[3]]`, and `filex[[3]]` is hardcoded `TRUE` (`:1399`), so deleting
-the line is the whole fix. `cstan()` is the one place across all three packages where
-the removal propagates to end users: `compile` is rethinking's own documented
-argument (`R/cmdstan_support.r:17`), passed straight through.
+the line is the whole fix. `cstan()` propagates to end users, because `compile` is
+rethinking's own documented argument (`R/cmdstan_support.r:17`), passed straight
+through.
+
+**brms and instantiate propagate too, through `...` rather than through a named
+argument.** `brm(stan_model_args = list(...))` becomes `compile_args` and reaches
+`do_call(cmdstanr::cmdstan_model, args)` inside `.compile_model_cmdstanr()`, and
+`instantiate::stan_compile_model()` and `stan_package_model()` both end their signature
+with `...` and forward it verbatim. So any argument removed from `cmdstan_model()`
+reaches users who never call cmdstanr directly, while the packages themselves need no
+change for it — which is what the migration note has to say, since "grep your own code"
+is easy advice to skip when you only ever call `brm()`. Neither package names
+`compile_model_methods` or `compile_standalone` anywhere, measured across both installed
+trees; rethinking cannot be reached this way at all, because its four call sites name
+every argument and forward no dots. brms already uses the replacement:
+`.expose_functions_cmdstanr()` calls `stanmodel$expose_functions()`, and
+`expose_functions.brmsfit` tests `"expose_functions" %in% names(stanmodel)`, so a
+downstream package inspects the R6 object for that method by name (§5).
 
 §1's threading policy leaves it unchanged: `ulam()` enables `stan_threads` and
 always supplies `threads_per_chain`, so it satisfies the rule both before and after.
@@ -2556,23 +2679,25 @@ outright.
 The formatting and linting work is scheduled around this, and the formatter and the
 linter go to different places.
 
-Air's one-time whole-repo format (#1153) is the **last** change before 1.0, **and it
-is optional**. That is the reason it goes last rather than just before the candidate.
-An optional cosmetic change cannot gate a tag: put it earlier and the candidate waits
-on a decision nobody has made about something that does not alter what the release
-does. Last, it is skippable, and skipping it changes nothing else.
+Air's one-time whole-repo format (#1153) is the **last** change before the release
+candidate, **and it is optional**. It goes before the tag rather than after because a
+candidate that is not the source we ship is not a candidate: the tag exists so people
+test what becomes 1.0, and a whole-repo automated rewrite afterwards leaves the tested
+tree and the released tree differing by a diff nobody reviewed against the release.
+Optionality does not answer that objection. It decides *whether* Air runs, not *when*,
+and the decision can be taken when the NEWS reconciliation lands.
 
-Two arguments that look like they belong here do not. Branch conflicts — real today,
-with #1235 and #1254 both open — stop once the NEWS reconciliation merges, which is
-*before* the tag, so that constraint says "not yet" and never says "after the tag."
-And whitespace-only determinism makes the change cheap in either slot, so it does not
-choose between them either. What decides it is that the item is a maybe.
+Three arguments that look like they belong here do not. Branch conflicts are real but
+choose no slot: eight open pull requests touch `R/` today, three of them untouched since
+2025, so the cost is whatever happens to be open when Air runs, which is much the same
+whenever that is. Whitespace-only determinism makes the change cheap in any slot.
+And the worry that a reformatting diff on top of the API removal would hide what broke
+does not survive Air being its own pull request, reviewed as whitespace-only with the
+suite green — nothing lands on top of anything.
 
 **One check when it runs.** Air reformats `#'` lines like any others, so a reflow that
 moves a roxygen tag regenerates `.Rd` and `NAMESPACE` differently and R CMD check will
 not notice. Re-run roxygen afterwards and confirm the generated files are unchanged.
-That is the whole of the residual risk in shipping it after the candidate, and it is
-cheaper to check than to reschedule.
 
 Its PR-review action is a separate thing:
 additive, conflicting with nothing, and most useful *during* the stages, since
@@ -2585,8 +2710,11 @@ its findings is semantic editing, and that must not land after the candidate —
 would then ship code in a form nobody tested. Those findings are ordinary reviewed
 changes, taken whenever, not a sweep.
 
-Neither may land between Stage 4 and the candidate, where a reformatting diff on top
-of the API removal leaves a downstream maintainer unable to see what actually broke.
+Neither is folded into Stage 4's own pull requests, where a reformatting or linting
+diff carried alongside the API removal would leave a downstream maintainer unable to
+see what actually broke. Air's slot after the NEWS reconciliation satisfies that on its
+own: the removal is reviewed and merged by then, and Air's diff sits beside that work
+rather than inside it.
 
 ### How the stages are executed
 
