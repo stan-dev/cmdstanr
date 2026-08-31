@@ -120,13 +120,15 @@ never be read as disabled.**
 
 **Encode it by presence, not by a third value**: write a key only when the state is
 known, and let an absent key mean unknown. The obvious alternative, `NA` for unknown,
-does not survive the record. `jsonlite` writes `NA` as `null` and reads `null` back as
-`NULL`, which is also what a missing key yields, so `is.na()` stops detecting unknown
-the moment the value has been through a file — and a validator written as `!isTRUE(x)`
-then treats unknown and disabled identically, which is the collapse this rule exists to
-prevent. Encoding by presence leaves only `true` and `false` in the JSON, needs no null
-handling anywhere, and makes the rule a property of the format rather than something
-each reader has to remember. §4 carries the schema; this is the constraint it satisfies.
+does not survive the record: `jsonlite` writes `NA` as `null` and reads it back as
+`NULL`, so the R type is gone after one trip through a file and `is.na()` on the result
+returns `logical(0)`, which errors inside an `if`. The two states do remain
+*recoverable* — `names()` distinguishes an explicit null from a missing key — but only
+through a two-step check at every lookup, while the one-step idiom anyone actually
+writes collapses them: `x[["stan_threads"]]` is `NULL` either way and `!isTRUE(x)` is
+`TRUE` either way, which is the disabled-versus-unknown collapse this rule exists to
+prevent. Encoding by presence leaves only `true` and `false` in the JSON, so the naive
+access is the correct access and no reader has a null branch to get wrong. §4 carries the schema; this is the constraint it satisfies.
 
 **The two are never merged into one accessor.** `$cpp_options()` reports
 `cpp_options_supplied`: what the caller asked for, not what cmdstanr added on top.
@@ -690,7 +692,12 @@ described here, so changing it does not change what is compared, and no list of
 injected options has to be kept correct in this document. It still obliges a
 `format_version` bump (below): an option a later cmdstanr injects can change the
 artifact while an old record's `_supplied` goes on matching, so nothing would
-rebuild. The bump is what forces it.
+rebuild. The bump is what forces it. The first instance is already scheduled:
+`--filename-in-msg` (§9) arrives a stage after records start being written, so without
+a bump an executable built before it goes on matching its record indefinitely and keeps
+naming a deleted tempfile in every exception it throws. **One bump covers a development
+window, not one per change** — these stages are merges rather than releases, and
+per-change bumps would mint versions nothing ever reads.
 
 **An injected option still applies; not comparing it only means it cannot force a
 rebuild.** The invariant this obliges is narrower than "a diagnostic always re-emits":
@@ -1022,18 +1029,32 @@ latency is unpredictable, not that the number is large.
 
 **Guard every operation that executes or derives state from the binary** — not only
 the fitting methods. "At least" is not implementable, so the full public surface is
-classified here: `CmdStanModel` carries **twenty-eight public methods and one public
-field**, and every one appears below. That is the post-§3 surface: twenty-seven today,
-`$clone()` included, plus the `$user_header()` that §3 adds. `cmdstan_model()` is
-listed as the builder but is not itself a member, so it does not count toward either
-total.
+classified here, and three counts are involved because the surface moves underneath the
+table. `CmdStanModel` carries **twenty-seven public methods and one public field** today
+and **twenty-seven** at 1.0 — §3 adds `$user_header()`, §8 removes `$compile()` — while
+the table below has **twenty-eight** method rows, being the union of both. It classifies
+the removed member rather than omitting it, so no count is wrong; they answer different
+questions and the test below depends on which one it asks. `cmdstan_model()` is listed as
+the builder but is not itself a member, so it counts toward none of them.
 
 The completeness claim is enforceable rather than merely asserted, and should be
 enforced: `CmdStanModel$public_methods` and `$public_fields` enumerate the live surface,
-so a test can compare it against the classified set and fail on any member that appears
-without a classification. Otherwise this table decays the first time someone adds a
-method, which is the failure the `$initialize()` and `$clone()` entries below already
-guard against by hand.
+so a test can compare it against the twenty-seven non-removed rows and fail on any member
+that appears without a classification, asserting `$compile()`'s absence separately rather
+than as an exception to the comparison. Otherwise this table decays the first time someone
+adds a method, which is the failure the `$initialize()` and `$clone()` entries below
+already guard against by hand.
+
+**Every member is exercised, not one per class.** A representative passing proves nothing
+about the other nine guarded methods, each of which can be classified correctly here and
+still run a stale executable. Call each guarded method against a stale model with **no
+other arguments**: if validation runs first every one of them fails with the staleness
+error, while a method that validates late fails with a missing-argument complaint instead
+— so the matrix checks ordering rather than only presence, and none of the ten get far
+enough to need MPI, data or an algorithm. The must-nots carry equal weight and cost the
+same, since guarding `$format()` or `$code()` is the regression this section argues
+against. `$initialize()` is excluded for the reason given below; `$clone()` is called and
+asserted not to error.
 
 | Behaviour | Members |
 |---|---|
@@ -1691,6 +1712,24 @@ the merge §1 rejects. This is the one case where a user must call
 `stan_build_info()` to learn anything, and error messages about options should say
 so rather than leaving them at an empty list.
 
+**Both paths must yield a syntactically valid version, and adoption fails if neither
+does.** Adoption is the one place a version arrives from an artifact nobody vouched for;
+everywhere else it comes from the CmdStan installation the session validated at install
+time. So this is the only place the invariant §10 relies on can be established. A usable
+record must carry a parseable `builder` version, and on the fallback `<exe> info` must
+report complete version fields.
+
+It is a syntactic check and nothing more. **Rejecting a version for being old would
+defeat this whole section**, whose purpose is that a binary built by an older CmdStan
+keeps working. Without the check, `model_compile_info()` synthesises `".."` from three
+absent fields (`R/cpp_opts.R:68`) — a string that passes every guard
+`cmdstan_version_compare()` has, so construction succeeds silently and the failure
+surfaces later inside a version gate, complaining about `TRUE/FALSE` values in code the
+user never called. An executable that cannot say what built it is not a CmdStan
+executable, and the error says so, sharing #1246's message rather than inventing a
+second one. Tests: an `info` result missing the version fields, and one printing a
+malformed value.
+
 In both cases: permit fitting, and **never attempt an automatic rebuild** — there
 is no source to build from. They are the deliberate exception to §5's requirement
 that a model have a valid record before running.
@@ -1832,6 +1871,12 @@ cmdstanpy has no standalone syntax check, and its `src_info()` is lower-level th
 cmdstanpy already has a name we copy it; where it does not, we pick one and they
 can copy it if they add a counterpart.** The two APIs are taught together, so
 parity matters, but nothing here waits on a joint naming decision.
+
+`stan_variables()` is the one name to revisit before it ships. `metadata()$stan_variables`
+already exists on fit objects (`R/csv.R:362`) and means something else — the variable
+names in the output, not the declarations in the program. That is not a collision in R
+and not a reason to hold the design; the name is provisional and the decision belongs
+with the implementation.
 
 `model_variables()` at `R/model.R:2657` is already this shape internally.
 
@@ -2006,14 +2051,34 @@ document's, and the boundary is stated under Purpose and scope. What lives here 
 what an issue checklist cannot carry: why the sequence is what it is, and what breaks
 under the orderings that were rejected.
 
-Three constraints shape it. The Make-option fixes come first, because per-field
-canonicalization depends on them. **The API change and the *live* decision engine
-ship as one stage** — separating those leaves a window where the new promise is
-broken whichever way the cut is made (Stage 4), though the engine's pure, unwired
-half separates cleanly and is Stage 3b. And Stages 0–4 must all be in the release
-candidate, because the API removal is the breaking change downstream packages need
-to see; Stage 5 may land during the candidate period rather than before it, but it
-cannot be deferred past 1.0.
+Two constraints shape it. The Make-option fixes come first, because per-field
+canonicalization depends on them. And **the API change and the *live* decision engine
+ship as one stage** — separating those leaves a window where the new promise is broken
+whichever way the cut is made (Stage 4), though the engine's pure, unwired half
+separates cleanly and is Stage 3b.
+
+**The release order is stated here and nowhere else.** Everything below refers to this
+line rather than restating it:
+
+```
+Stage 4 -> Stage 5 -> NEWS reconciliation -> release candidate -> Air's format -> 1.0
+```
+
+The candidate ships when everything is ready rather than at the earliest defensible
+moment, and that is a structural choice rather than a preference. The moment an item can
+be adjudicated safe-before or safe-after the tag, every item needs adjudicating, and the
+answers settle into separate paragraphs that drift apart — which is exactly how four
+different statements of this order came to exist in an earlier draft of this section.
+One definition of ready removes the adjudication instead of getting it right each time.
+
+What downstream gives up by waiting is a tag, not a start. We open their pull requests
+ourselves (below), and the dev version supplies the boundary in the meantime: bumped **in
+the same pull request as each break**, it lets brms write
+`packageVersion("cmdstanr") >= "0.9.0.9003"` against master the day the break lands,
+which is finer-grained than a tag rather than a substitute for one. Bumping in a
+follow-up commit is worse than not bumping at all, since a guard written against the new
+number then takes the old branch and calls a method that has already gone. Stages 1, 4
+and 5 each owe one; Stages 2, 3 and 3b change nothing observable and do not.
 
 ### Stages 0 and 1 — landing in #1235, then Make-option correctness
 
@@ -2139,14 +2204,18 @@ enough, and is one fewer moving part in CI.
 
 ### Stage 5 — public build-record inspection
 
-`stan_build_info()` last, once the schema has stabilised under real use — and the
-release-candidate period is that use.
+`stan_build_info()` last, because its inputs do not exist until Stage 4: it reports
+`reported_features` and the record, and Stage 4 is what makes both live. That is an
+ordering fact rather than a scheduling preference, so it cannot drift. It ships before
+the candidate, per the order above.
 
 **It must ship in 1.0**, despite looking purely additive. Because §1 keeps the
 request separate from what the binary reports, this is the only way to ask what an
 executable actually is, and the
-only answer available at all for an unprovenanced one (§7). Landing it during the
-candidate period is fine; landing it after the release is not.
+only answer available at all for an unprovenanced one (§7). From the candidate onward
+its output may gain fields — the dependency reporting is expected to — but may not
+rename or remove one. That is ordinary candidate discipline for any published API, not
+a dispensation this function needs arguing for.
 
 **It reports each dependency's `built_from`, and whether that path still exists.**
 It cannot report where the file resolves *now*, and must not try: it receives an
@@ -2185,9 +2254,9 @@ not something to do incrementally while the picture is still moving.
 
 ### The release candidate
 
-A 1.0 candidate ships after Stage 4, so downstream packages have something to
-migrate against rather than a release note. That is what makes §8's breaking change
-affordable.
+The candidate ships after the NEWS reconciliation, per the order above, so downstream
+packages have something to migrate against rather than a release note. That is what
+makes §8's breaking change affordable.
 
 **brms**, **instantiate** and **rethinking** are the priorities. The first two are
 chokepoints rather than merely important packages: instantiate's own dependents call
@@ -2527,20 +2596,26 @@ unknown as disabled reproduces #765 in a new place. `known_untracked_dependencie
 record is complete. Both drafts of this document got one of these wrong, so it is
 worth checking for deliberately rather than trusting the field names.
 
-Serialization is where it gets lost in practice. `jsonlite` writes `NA` as `null`
-and reads `null` back as `NULL`, which is exactly what a missing key yields, so an
-in-memory tri-state quietly becomes two states on the way through a file and
-`is.na()` stops detecting unknown. §1 settles this by encoding presence — a key is
-written only when the state is known — so the serializer never sees a third value.
+Serialization is where it gets lost in practice. `jsonlite` writes `NA` as `null` and
+reads it back as `NULL`, so an in-memory tri-state loses its R type on the way through a
+file. The states stay recoverable through `names()`, but not through the access anyone
+writes: neither `x[["k"]]` nor `!isTRUE(x)` can tell an explicit null from a missing key.
+§1 settles this by encoding presence — a key is written only when the state is known —
+so the serializer never sees a third value.
 Reintroducing `NA` for unknown reintroduces the collapse.
 
 `cmdstan_version_compare()` is a third instance, in a different costume: it returns
-`-1` for an absent or unusable version (`R/path.R:162-164`), so an unknown version
-compares as older than everything and every `<` gate fires. That fallback is correct
-where it is used, in install-path code where "no CmdStan" genuinely should lose every
-comparison. It is wrong for a model, so never hand it a version that might be
-missing — which is why an executable always yields one (§7) and a model without an
-executable cannot reach a gate (§8).
+`-1` for a version that is missing, `NA`, or empty (`R/path.R:162-164`), so an absent
+version compares as older than everything and every `<` gate fires. That fallback is
+correct where it is used, in install-path code where "no CmdStan" genuinely should lose
+every comparison. It is wrong for a model.
+
+The guard is also narrower than "unusable", which matters because it removes the
+temptation to lean on it: a malformed non-empty string never reaches the `-1` at all.
+`".."` errors inside `utils::compareVersion()` and `"garbage"` warns, so the function
+has two distinct bad-input behaviours and neither is a safe fallback. That is why §7
+makes "an adopted executable always yields a valid version" a *checked* invariant rather
+than an observation, and why a model without an executable cannot reach a gate (§8).
 
 **The assessment is pure.** The operation that answers "is this executable
 current?" must not compile, install, or mutate object state (§5). Callers decide
