@@ -2613,7 +2613,9 @@ every comparison. It is wrong for a model.
 The guard is also narrower than "unusable", which matters because it removes the
 temptation to lean on it: a malformed non-empty string never reaches the `-1` at all.
 `".."` errors inside `utils::compareVersion()` and `"garbage"` warns, so the function
-has two distinct bad-input behaviours and neither is a safe fallback. That is why §7
+has two distinct bad-input behaviours and neither is a safe fallback. Filed as #1260,
+separately from this design: the comparison should not answer a question it was not
+asked, but fixing it is defence in depth rather than what closes this. That is why §7
 makes "an adopted executable always yields a valid version" a *checked* invariant rather
 than an observation, and why a model without an executable cannot reach a gate (§8).
 
