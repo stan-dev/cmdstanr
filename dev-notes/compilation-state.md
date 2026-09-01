@@ -118,8 +118,10 @@ enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan choo
 to report — threading, OpenCL, Stan version — not arbitrary flags. **Absence must
 never be read as disabled.**
 
-**Encode it by presence, not by a third value**: write a key only when the state is
-known, and let an absent key mean unknown. The obvious alternative, `NA` for unknown,
+**Encode it by presence, not by a third value, in the record**: write a key only when
+the state is known, and let an absent key mean unknown. The rule is about what
+survives a file; §8 settles the public result separately and reaches the other
+answer. The obvious alternative, `NA` for unknown,
 does not survive the record: `jsonlite` writes `NA` as `null` and reads it back as
 `NULL`, so the R type is gone after one trip through a file and `is.na()` on the result
 returns `logical(0)`, which errors inside an `if`. The two states do remain
@@ -150,7 +152,11 @@ structure, and has nowhere to put *unknown*.
 
 Little is given up by separating them. `<exe> info` reports four `STAN_*` booleans
 and the Stan version; `CXX`, `CXXFLAGS`, `PRECOMPILED_HEADERS` and everything else
-have no reported counterpart and are request-only regardless.
+have no reported counterpart and are request-only regardless. `STAN_CPP_OPTIMS` is
+worth naming there, because it is a `STAN_*` flag that is *not* one of the four: it
+only adds compiler flags (`makefile:66`), leaving no macro for
+`write_stan_flags.hpp`'s `#ifdef`s to test, so CmdStan could not report it without a
+change of its own. Verified on 2.39.
 
 ### What consumers do with each state
 
@@ -1568,8 +1574,9 @@ would break a working setup, because a model built with `cpp_options = list(tbb_
 tbb_inc =)` against a system TBB has an rpath outside CmdStan entirely and runs with the
 builder tree deleted. On Windows the fallback applies for a second reason: putting a
 directory that is gone on `PATH` is worse than today's wrong-but-present one.
-`stan_build_info()` reports the builder as absent — the treatment §7 already gives
-absent recorded sources, for the same reason — and a launch failure becomes an error
+`stan_build_info()` reports the builder with `exists = FALSE` — the treatment §7
+already gives recorded sources that are gone, for the same reason — and a launch
+failure becomes an error
 naming the recorded installation, with reinstalling it or rebuilding from source as the
 two remedies.
 
@@ -1951,7 +1958,7 @@ compile_stan_file(file, include_paths = NULL, cpp_options = NULL, stanc_options 
 format_stan_file(file, include_paths = NULL, ...)
 check_syntax_stan_file(file, include_paths = NULL, ...)
 stan_variables(file, include_paths = NULL, ...)
-stan_build_info(exe)
+stan_build_info(exe_file)
 ```
 
 **Every function that hands a source file to stanc takes `include_paths`**, and
@@ -2118,23 +2125,99 @@ private and versions it so that it can change — a later cmdstanr that recanoni
 reader **translates**: the public field names are the promise, and the record's layout
 is free underneath them.
 
-The public result is a plain list with these top-level fields:
+**The result is a list with class `"stan_build_info"`.** That is what the print
+method below dispatches on. One class name rather than a vector: `is.list()` is already
+`TRUE` without adding `"list"`, and a second name only offers someone a wrong target
+to write a method against. The class name follows the function name, so §10's note
+that `stan_build_info()` is still a placeholder covers both.
 
 | field | present when | holds |
 |---|---|---|
-| `provenance` | always | `status`, and `reason` when unavailable (below) |
-| `reported_features` | always | the tri-state of §1, per feature |
-| `format_version` | the record parsed | the record's build-interpretation contract version |
+| `provenance` | always | `status` and `reason`, both always present |
+| `reported_features` | always | one entry per feature, `TRUE`, `FALSE` or `NA` |
+| `format_version` | the record parsed | which build-interpretation contract wrote it |
 | `request` | provenance available | the recorded build configuration of §1 |
-| `dependencies` | provenance available | one entry per source: content identity, `built_from`, `exists` |
-| `artifact` | provenance available | the executable's hash |
-| `builder` | provenance available, and a builder was recorded | installation path, version, `exists` |
+| `dependencies` | provenance available | every file whose content the build consumed |
+| `artifact` | provenance available | a hash of the executable, only useful for comparing against another one |
+| `builder` | provenance available | installation path, version, `exists` |
 | `known_untracked_dependencies` | provenance available | §6's list; empty means nothing was detected |
 
 `artifact` and `format_version` are both public, and `format_version` is not the
 coupling this rule exists to prevent: exposing the *value* is not exposing the
 *layout*. The promise is one integer naming which contract wrote the record, and it
-survives any rearrangement of the JSON beneath it.
+survives any rearrangement of the JSON beneath it. `artifact` is public on narrower
+terms — compare two of them and nothing else. §4 lets the hashing change at a
+`format_version` bump, so naming an algorithm would put a guarantee users can act on
+behind a signal this section keeps private.
+
+**The nested names are settled here rather than by whoever implements it**, because a
+test for the public shape cannot be written from a list of eight top-level fields.
+A source-backed model with one include, no user header, and a `make/local` that
+includes another makefile:
+
+```r
+list(
+  provenance = list(status = "available", reason = NULL),
+  reported_features = list(
+    stan_threads = TRUE, stan_mpi = FALSE, stan_opencl = FALSE,
+    stan_no_range_checks = FALSE, stan_version = "2.39.0"
+  ),
+  format_version = 1L,                    # a stand-in; §4 does not fix this number
+  request = list(
+    cpp_options_supplied   = list(STAN_THREADS = TRUE),
+    cpp_options_injected   = list(),
+    stanc_options_supplied = list(),
+    stanc_options_injected = list(name = "bernoulli"),
+    model_name             = "bernoulli",
+    include_paths          = "/proj"
+  ),
+  dependencies = list(
+    stan_file      = list(hash = "a1b2…", built_from = "/proj/bernoulli.stan", exists = TRUE),
+    included_files = list(
+      list(hash = "c3d4…", built_from = "/proj/inc/half.stan", exists = TRUE)
+    ),
+    user_header    = NULL,
+    make_local     = list(hash = "e5f6…", built_from = "/cmdstan-2.39.0/make/local", exists = TRUE)
+  ),
+  artifact = "9a8b…",
+  builder  = list(path = "/cmdstan-2.39.0", version = "2.39.0", exists = TRUE),
+  known_untracked_dependencies = list(
+    list(kind = "make_local_include", path = "/cmdstan-2.39.0/make/local")
+  )
+)
+```
+
+Three points in that sketch need explaining, because each is a place where the public
+shape and the record's shape differ on purpose.
+
+**The user header appears once, under `dependencies`.** §4's table names the compared
+field `request.user_header`, and the header is also a file with a content hash, so
+carrying both would put the same normalised path in two public places that can never
+disagree — a second owner, in the API rather than in the prose. It is a file the build
+read, so it sits with the other files the build read, and §4's row keeps describing
+where the *record* holds it.
+
+**`model_name` stays, even though `--name` also appears in the options lists.** This
+is not the same case. The options lists say who asked for the flag; `model_name` says
+what stanc received, which is the question §4 compares on and the one that cannot be
+answered by reading either list alone. `request.include_paths` is already the same
+kind of field, recording what the build resolved rather than what the caller typed.
+
+**`make_local` is `NULL` when the installation had none**, and that has to be
+distinguishable from a `make/local` that hashes to something, or creating the file
+after a build would not trigger §6's rebuild. No unknown case arises: a record always
+knows whether the file was there.
+
+**`reported_features` has fixed names, and unknown is `NA`.** §1 encodes unknown by
+omitting the key, which is right for the record and wrong here. Nothing in this result
+round-trips through a file, so `NA` keeps its type, and the two encodings fail in
+opposite directions: `isTRUE(x$stan_threads)` reads a missing key as disabled and says
+nothing, while `if (x$stan_threads)` on `NA` stops the caller where they stand. The
+loud failure is the one §1's rule is trying to buy. The names are the four booleans
+`<exe> info` prints — `stan_threads`, `stan_mpi`, `stan_opencl`,
+`stan_no_range_checks` — plus `stan_version`, which is a string and is `NA_character_`
+when unknown. They are always all present. A flag CmdStan starts reporting gets added
+here deliberately rather than appearing on its own.
 
 **`provenance` carries why, not only whether.** §7 already enumerates four ways a
 record fails to describe an executable, and collapsing them to a bare "unavailable"
@@ -2148,9 +2231,24 @@ provenance = list(status = "unavailable", reason = "record_missing")
                                         # "unsupported_format"
 ```
 
-`available` requires `reason = NULL`; `unavailable` requires exactly one. The enum is
-machine-readable and no free-form message is stored — the printer derives its prose
-from the reason, so the wording stays revisable and never becomes contract.
+Both names are always there. `available` requires `reason = NULL`, `unavailable`
+requires exactly one code, and `names(provenance)` is the same pair either way, which
+is what a test can hold. The enum is machine-readable and no free-form message is
+stored — the printer derives its prose from the reason, so the wording stays revisable
+and never becomes contract.
+
+Which of the four leaves a `format_version` behind follows from how far reading got:
+
+| reason | `format_version` | |
+|---|---|---|
+| `record_missing` | absent | nothing to read it from |
+| `record_unreadable` | absent | the parse failed before reaching it |
+| `unsupported_format` | present | reading it is how the record was rejected |
+| `artifact_mismatch` | present | the record parsed; only its binding to this executable is wrong |
+
+A record that parses but carries no usable `format_version` is `record_unreadable`
+rather than `unsupported_format`: with no version there is no contract to declare
+unsupported.
 
 **`unsupported_format` is not evidence that cmdstanr is old.** §4's format-version
 rule runs in both directions, and a downgrade regenerates old-format records, so the
@@ -2162,8 +2260,9 @@ newer record, rebuild or obtain a newly produced artifact for an older one.
 `known_untracked_dependencies` rule and §1's absence-of-evidence rule stated once as a
 property of the whole object rather than per field. An empty
 `known_untracked_dependencies` means the scan detected nothing; no record to scan means
-the field is absent. A recorded builder whose path is gone is `exists = FALSE`; no
-builder provenance at all is an absent `builder`. An unknown request is absent, not
+the field is absent. A recorded builder whose path is gone is `exists = FALSE`; an
+absent `builder` means there was no usable record to read one from, which is the only
+way it can be missing. An unknown request is absent, not
 `list()`.
 
 That last one is where the two accessors answer the same executable differently, and
@@ -2171,11 +2270,14 @@ both are right. §7 keeps `$cpp_options()` empty for an unprovenanced executable
 that accessor reports what the caller asked for and nobody asked for anything.
 `stan_build_info()` reports what is known about the build, so it must say unknown.
 
-**A readable record whose hash does not match is withheld in full.** `artifact_mismatch`
-returns the reason and `format_version` and nothing else, even though `request`,
-`dependencies` and `builder` all parsed. This is the one place the reader holds back
-data it can see, so it is worth saying why to whoever implements it: reporting the
-fields with a caveat is the natural instinct and it is wrong, because
+**A readable record whose hash does not match is read only to say why.**
+`artifact_mismatch` returns no record-derived field but the reason and
+`format_version`, even though `request`, `dependencies` and `builder` all parsed.
+`reported_features` still comes back, read off the executable rather than the record,
+which is the general rule below and not an exception to this one. This is the one
+place the reader holds back data it can see, so it is worth saying why to whoever
+implements it: reporting the fields with a caveat is the natural instinct and it is
+wrong, because
 `reported_features` from that record is what §1 sends the runtime validators to. A
 helpful partial report puts `stan_threads: true` from some other build in front of a
 validator guarding this one, which is the silently single-threaded run this design
@@ -2184,9 +2286,23 @@ a moved executable keeps its bytes and its hash, and §6 compares dependencies b
 content, so `artifact_mismatch` means the executable at this path was replaced without
 cmdstanr writing a new record.
 
-**The executable argument has two failure modes and both are errors.** A path that is
-missing or is not a file errors. Otherwise, a valid hash-matched record is answered
-from the record alone, without launching the binary — §4's adoption rule already works
+**Unavailable provenance still reports the binary's own features.** All four reasons
+are §7's "executable without a usable record", so all four read `reported_features`
+off the executable; an available one reads them from the record. That is one rule covering five
+states with nothing carved out of it, and it is what keeps `artifact_mismatch` narrow:
+what a mismatched record loses is everything it *claims about the build*, not what the
+binary says about itself.
+
+A test has to prove where the features came from, not that the field is populated.
+Reporting them with a caveat from the rejected record fills the field, so an assertion
+that it is non-empty passes. Make the record say `stan_threads = TRUE`, make `<exe>
+info` say `false`, and require `FALSE`.
+
+**The `exe_file` argument has two failure modes and both are errors.** The name
+matches `cmdstan_model(exe_file = )` and `$exe_file()` rather than inventing a third
+spelling for the same thing. A path that is missing or is not a file errors.
+Otherwise, a valid hash-matched record is answered from the record alone, without
+launching the binary — §4's adoption rule already works
 this way, and it is what keeps a cross-platform artifact fully reported. Only an
 executable with no usable record is launched for `<exe> info`, and if that fails the
 function errors rather than returning an all-unknown result: with neither a record nor
@@ -2898,8 +3014,10 @@ reads it back as `NULL`, so an in-memory tri-state loses its R type on the way t
 file. The states stay recoverable through `names()`, but not through the access anyone
 writes: neither `x[["k"]]` nor `!isTRUE(x)` can tell an explicit null from a missing key.
 §1 settles this by encoding presence — a key is written only when the state is known —
-so the serializer never sees a third value.
-Reintroducing `NA` for unknown reintroduces the collapse.
+so the serializer never sees a third value. Reintroducing `NA` for unknown *in the
+record* reintroduces the collapse. §8 uses `NA` in the public result for the opposite
+reason, and serialization is the whole of the difference: what never reaches a file
+keeps its R type.
 
 `cmdstan_version_compare()` is a third instance, in a different costume: it returns
 `-1` for a version that is missing, `NA`, or empty (`R/path.R:162-164`), so an absent
