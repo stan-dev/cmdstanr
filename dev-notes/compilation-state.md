@@ -670,7 +670,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `request.stanc_options_supplied` | yes | yes | as above |
 | `request.cpp_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction |
 | `request.stanc_options_injected` | yes | **no** | as above, with the model name the one exception, which has its own row below. `make/local`'s `STANCFLAGS` reach the same stanc invocation and appear in neither field, being covered by `make/local`'s hash |
-| `request.model_name` | yes | **yes** | the effective `--name` stanc receives, whether the caller supplied it or `R/model.R:834` derived it from the file name. It meets this column's own criterion: CmdStan stamps it into every CSV (`R/csv.R:873`), and no other compared field determines it, since content hashes are compared and paths are not |
+| `request.model_name` | yes | **yes** | the effective `--name` stanc receives, whether the caller supplied it or `R/model.R:834` derived it from the file name. It meets this column's own criterion: the build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its one visible effect is the CSV header (`R/csv.R:873`) |
 | `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is provenance |
 | `request.user_header` path | yes | **yes** | the one *dependency* path compared, because the C++ closure beneath it cannot be enumerated. `-I` flags decide the same resolution and are compared inside `cpp_options` above (§6) |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
@@ -714,6 +714,13 @@ and `check_csv_metadata_matches()` (`:948-951`) then rejects runs from either si
 the rename as "not generated with the same model". Comparing the *effective* name
 covers the supplied case as well; overlapping with `stanc_options_supplied` there is
 two routes agreeing, not a contradiction.
+
+Two limits belong here rather than waiting to be rediscovered. The rename has to carry
+the executable and the record with it, since otherwise cmdstanr looks for an executable
+that is not there and builds one. And it does nothing for executable-only models, which
+§7 forbids from rebuilding at all. So the row covers one route rather than a class of
+them, and what earns it a place is the criterion rather than how often it fires:
+dropping it would put an exception inside the rule that decides every other row.
 
 The two fields are built side by side rather than one recovered from the other:
 `R/model.R:673`, `:677`, `:693` and `:835` currently write into a single
