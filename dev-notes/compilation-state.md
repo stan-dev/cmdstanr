@@ -83,13 +83,14 @@ the binary itself.
 
 That distinction is load-bearing because these are genuinely different facts:
 
-- **`request`** — the build configuration, with `cpp_options` and `stanc_options`
-  each stored twice: what the caller **supplied**, and what cmdstanr **injected**.
-  The two are disjoint, because cmdstanr injects only what the caller did not
-  supply, and origin is what decides whether an option can force a rebuild (§4).
-  Everything else is stored once, in the form the build used: a caller who passes
-  no `include_paths` on a program with `#include` has `dirname(stan_file)` recorded
-  (§6). These fields **explain** a build rather than replay one — `make/local`
+- **`request`** — the build configuration, with `stanc_options` stored twice: what
+  the caller **supplied**, and what cmdstanr **injected**. The two are disjoint,
+  because cmdstanr injects only what the caller did not supply, and origin is what
+  decides whether an option can force a rebuild (§4). Everything else is stored
+  once, in the form the build used: `cpp_options`, which cmdstanr adds nothing to
+  (§4), and the effective `include_paths`, so a caller who passes none on a program
+  with `#include` has `dirname(stan_file)` recorded (§6). These fields **explain** a
+  build rather than replay one — `make/local`
   contributes to the same stanc invocation and appears in none of them, being
   covered by its own hash. Feeding them back is not a supported operation and no
   rule here depends on it.
@@ -408,9 +409,9 @@ back from `$cpp_options()`. Wired to `cpp_options_supplied` with that line still
 place, the accessor would report a field the caller never passed, holding a path they
 never wrote. What survives is only the Make flag: CmdStan reads `-include $(USER_HEADER)`
 (`make/program:41`), so `USER_HEADER=` still has to reach `make`.
-**It reaches it as a flag built with the others, not as an entry in `cpp_options_injected`.**
-Injected options are recorded (§4), so the other reading puts the header's path in
-`request` as well as in `dependencies` (§8) — and under WSL not even in the same
+**It reaches it as a flag built with the others, not as a recorded `cpp_options` entry.**
+A recorded option would put the header's path in `request` as well as in
+`dependencies` (§8) — and under WSL not even in the same
 spelling, since the Make side is `wsl_safe_path()`-transformed (`R/utils.R:627`) and
 `built_from` is not. `resolved_header$spelling` goes with the line — `:709` is its only
 consumer, and one channel has one spelling — alongside the `previous` parameter §8
@@ -637,7 +638,7 @@ way, so the dot costs nothing there.
 
 JSON earns its place, though not because users read it — they should not have to.
 Rather: `jsonlite` is already
-an import, a parse failure hands us §4's "unreadable" case for free, and a
+an import, a parse failure hands us one of §4's "unreadable" cases for free, and a
 text format makes bug reports, golden fixtures and our own debugging tractable. The
 name also stays clear of `.dep` and `.d`, which `make` and the C++ toolchain already
 claim in that directory.
@@ -671,9 +672,8 @@ must not restate it — a rule written in two places is a future inconsistency.
 |---|---|---|---|
 | `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
 | `request.stanc_options_supplied` | yes | yes | as above |
-| `request.cpp_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction |
-| `request.stanc_options_injected` | yes | **no** | as above, with the model name the one exception, which has its own row below. `make/local`'s `STANCFLAGS` reach the same stanc invocation and appear in neither field, being covered by `make/local`'s hash |
-| `request.model_name` | yes | **yes** | the effective `--name` stanc receives, whether the caller supplied it or `R/model.R:835` derived it from the file name. It meets this column's own criterion: the build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its one visible effect is the CSV header (`R/csv.R:873`) |
+| `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction, with the model name the one exception, which has its own row below. `make/local`'s `STANCFLAGS` reach the same stanc invocation and appear in neither field, being covered by `make/local`'s hash |
+| `request.stanc_name` | yes | **yes** | the effective `--name` stanc receives, whether the caller supplied it or `R/model.R:835` derived it from the file name. It meets this column's own criterion: the build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its one visible effect is the CSV header (`R/csv.R:873`) |
 | `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is provenance |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
 | `dependencies[].hash` | yes | yes | content hash — this is what identity means |
@@ -687,8 +687,8 @@ must not restate it — a rule written in two places is a future inconsistency.
 
 Three consequences, each of which has been got wrong at least once:
 
-**Recorded-but-not-compared is the ordinary case, not a list of exceptions.** Six of
-the fifteen rows are in it. The default is *not* "everything in `request` is
+**Recorded-but-not-compared is the ordinary case, not a list of exceptions.** Five of
+the fourteen rows are in it. The default is *not* "everything in `request` is
 compared," and reasoning from that default is what produced the errors.
 
 **Origin is stored, not inferred.** The verdict compares only what the caller supplied,
@@ -712,11 +712,18 @@ builder all match, and the supplied options are empty on both sides. No rebuild.
 object's `$model_name()` then reads `survival` while the binary goes on stamping
 `--name=bernoulli_model` into every CSV. Unlike `--filename-in-msg`, which describes a
 build that really happened, this is two live answers to one question, and both are
-visible inside R: `R/csv.R:873` maps the CSV header onto `fit$metadata()$model_name`,
-and `check_csv_metadata_matches()` (`:948-951`) then rejects runs from either side of
-the rename as "not generated with the same model". Comparing the *effective* name
-covers the supplied case as well; overlapping with `stanc_options_supplied` there is
-two routes agreeing, not a contradiction.
+visible inside R, since `R/csv.R:873` maps the CSV header onto
+`fit$metadata()$model_name`. Comparing the *effective* name covers the supplied case as
+well; overlapping with `stanc_options_supplied` there is two routes agreeing, not a
+contradiction.
+
+**Comparing the name does not avoid a CSV boundary; it decides where the boundary falls.**
+Uncompared, the binary goes on stamping `bernoulli_model`, so runs from either side of
+the rename still combine — until some later unrelated edit triggers a rebuild, the stamp
+becomes `survival_model`, and `check_csv_metadata_matches()` (`:948-951`) rejects the
+mixture as "not generated with the same model". Nothing about that edit explains it.
+Compared, the rename is the rebuild, the same rejection lands there, and
+`$model_name()` and the binary never disagree in between.
 
 Two limits belong here rather than waiting to be rediscovered. The rename has to carry
 the executable and the record with it, since otherwise cmdstanr looks for an executable
@@ -742,6 +749,11 @@ a bump an executable built before it goes on matching its record indefinitely an
 naming a deleted tempfile in every exception it throws. **One bump covers a development
 window, not one per change** — these stages are merges rather than releases, and
 per-change bumps would mint versions nothing ever reads.
+
+The same paragraph settles why only `stanc_options` has an injected row. With the user
+header built as a flag (§3), cmdstanr injects no C++ option at all, so a
+`cpp_options_injected` would be empty in every record 1.0 writes. If one ever appears it
+arrives with the field, on the bump this paragraph already requires.
 
 **An injected option still applies; not comparing it only means it cannot force a
 rebuild.** The invariant this obliges is narrower than "a diagnostic always re-emits":
@@ -946,16 +958,22 @@ are per field.
 
 The two are separable concerns, worth keeping separable. The object model is what
 delivers the comparison and the reasons; the format is only how bytes reach disk.
-JSON earns its place there on different grounds — a parse failure is exactly the
-"unreadable" case §4 needs, and getting it from `jsonlite` leaves the
-`format_version` check and the reader's own field checks to write by hand.
+JSON earns its place there on different grounds — a parse failure is one of the
+"unreadable" cases §4 needs, and getting it from `jsonlite` leaves the
+`format_version` check and the reader's own field checks to write by hand. RDS would
+round-trip R types exactly, which would remove the tri-state hazard in §10 for free, but
+at the cost of an opaque binary beside the user's model and a second
+forward-compatibility surface under our own. Not worth it while the tri-state property
+is testable.
+
 **What the reader cannot use, it rejects as unreadable rather than working with** — a
-file that parses as JSON is not yet a record (§6). Requirement, not mechanism: how much
-structure is checked is the implementation's to choose, and the test is that a record
-with a mangled field never reaches a comparison. RDS would round-trip R types exactly, which
-would remove the tri-state hazard in §10 for free, but at the cost of an opaque
-binary beside the user's model and a second forward-compatibility surface under our
-own. Not worth it while the tri-state property is testable.
+file that parses as JSON is not yet a record (§6). Every field the format requires is
+checked for type and shape before the record is accepted, and a record failing any of
+those checks is unreadable whole: nothing in it is used and nothing in it is reported,
+including a `format_version` that parsed perfectly well. How that checking is written is
+the implementation's to choose; how far it reaches is not. Checking only the fields the
+caller at hand happens to need is what leaves one record adoptable by `cmdstan_model()`
+and unavailable to `stan_build_info()`.
 
 ### Canonicalization is per-field
 
@@ -1798,7 +1816,13 @@ asked for", and adoption simply sources that answer from the record instead of f
 the current call. Since adoption hydrates from a hash-matched record without
 launching the binary (§4), this costs nothing.
 
-**Executable without a usable record** — missing, corrupt, hash mismatch, or written
+**Adoption establishes what the artifact is, not that it runs.** A hash-matched record
+is read and nothing executes the binary, so an executable that cannot run on this
+machine adopts successfully and fails when something first runs it. The alternative is
+spawning a process on every adoption to learn something the first fit establishes
+anyway — which is the cost `instantiate` pays per fit rather than once at install (§9).
+
+**Executable without a usable record** — missing, unreadable, hash mismatch, or written
 in a format version this cmdstanr does not read.
 Explicitly unprovenanced, which is a statement about *provenance* and must not
 suppress what the binary does report. `stan_build_info()` returns an explicit
@@ -2150,8 +2174,8 @@ that `stan_build_info()` is still a placeholder covers both.
 | field | present when | holds |
 |---|---|---|
 | `provenance` | always | `status` and `reason`, both always present |
-| `reported_features` | always | one entry per feature, `TRUE`, `FALSE` or `NA` |
-| `format_version` | the record parsed | which build-interpretation contract wrote it |
+| `reported_features` | always | one entry per feature: four logical flags, each `TRUE`, `FALSE` or `NA`, and `stan_version`, a character scalar or `NA_character_` |
+| `format_version` | the record was readable (§6) | which build-interpretation contract wrote it |
 | `request` | provenance available | the recorded build configuration of §1 |
 | `dependencies` | provenance available | every file whose content the build consumed |
 | `artifact` | provenance available | a hash of the executable, only useful for comparing against another one |
@@ -2186,10 +2210,9 @@ list(
   format_version = 1L,                    # a stand-in; §4 does not fix this number
   request = list(
     cpp_options_supplied   = list(STAN_THREADS = TRUE),
-    cpp_options_injected   = list(),
     stanc_options_supplied = list(),
     stanc_options_injected = list(name = "bernoulli_model"),
-    model_name             = "bernoulli_model",
+    stanc_name             = "bernoulli_model",
     include_paths          = "/proj"
   ),
   dependencies = list(
@@ -2208,7 +2231,7 @@ list(
 )
 ```
 
-Four points in that sketch need explaining, because in each the obvious shape is not
+Each of the rules below explains a place in that sketch where the obvious shape is not
 the one chosen.
 
 **The user header appears once, under `dependencies`.** It is a file the build read,
@@ -2219,16 +2242,16 @@ exists because carrying it in both is the natural thing to write, and it puts on
 normalised path in two public places that can never disagree — a second owner, in the
 API rather than in the prose.
 
-**`model_name` stays, even though `--name` also appears in the options lists.** This
-is not the same case. The options lists say who asked for the flag; `model_name` says
-what stanc received, which is the question §4 compares on and the one that cannot be
-answered by reading either list alone. `request.include_paths` is already the same
-kind of field, recording what the build resolved rather than what the caller typed.
-The value carries the `_model` suffix `R/model.R:835` appends, so it matches
-`fit$metadata()$model_name` and not `mod$model_name()`. That is the right one of the
-two: the failure this field exists to prevent is `check_csv_metadata_matches()`
-rejecting runs from either side of a rename (§4), and the value that error compares is
-the one CmdStan stamped.
+**The effective name is `stanc_name`, not `model_name`.** It earns a field of its own
+even though `--name` also appears in the options lists: those say who asked for the
+flag, this says what stanc received, which is the question §4 compares on and the one
+that cannot be answered by reading either list alone. `request.include_paths` is already
+the same kind of field, recording what the build resolved rather than what the caller
+typed. What the name avoids is a trap, since the value carries the `_model` suffix
+`R/model.R:835` appends: `mod$model_name()` returns `bernoulli` where this returns
+`bernoulli_model`, and two fields spelled alike with different values is worse than one
+named after the flag it holds. It is the value `fit$metadata()$model_name` reports, and
+§4 has why that is the one to compare.
 
 **`make_local` is `NULL` when the installation had none**, and that has to be
 distinguishable from a `make/local` that hashes to something, or creating the file
@@ -2248,6 +2271,14 @@ forbids for `request`. The difference is that this field is never compared (§4)
 copy cannot move a verdict, and an entry that names its own file is what lets the
 printer build its message from the entry alone.
 
+**One entry per distinct `(kind, detected_in)` pair, ordered by `kind` then `detected_in`.**
+Nothing in an entry says how many times the regex matched, so a header with two quoted
+includes would otherwise contribute two entries equal byte for byte. With one file per
+kind today the list is at most two entries long, but the rule is written on the pair
+rather than the kind, so a later kind that can match in more than one file needs no
+amendment. Fixing the order costs a line and makes the list comparable as a value, where
+leaving it unspecified pushes a sort into every test that touches it.
+
 **`reported_features` has fixed names, and unknown is `NA`.** §1 encodes unknown by
 omitting the key, which is right for the record and wrong here. Nothing in this result
 round-trips through a file, so `NA` keeps its type, and that is the whole of the
@@ -2266,9 +2297,9 @@ is that the collapse becomes the caller's to avoid rather than invisible to them
 that `names(reported_features)` is a fixed set a test can hold — the same property this
 section relies on for `names(provenance)`. The names are the four booleans
 `<exe> info` prints — `stan_threads`, `stan_mpi`, `stan_opencl`,
-`stan_no_range_checks` — plus `stan_version`, which is a string and is `NA_character_`
-when unknown. They are always all present. A flag CmdStan starts reporting gets added
-here deliberately rather than appearing on its own.
+`stan_no_range_checks` — plus `stan_version`, and the table above has their types. They
+are always all present. A flag CmdStan starts reporting gets added here deliberately
+rather than appearing on its own.
 
 **`provenance` carries why, not only whether.** §7 already enumerates four ways a
 record fails to describe an executable, and collapsing them to a bare "unavailable"
@@ -2294,7 +2325,7 @@ established one it can trust:
 | reason | `format_version` | |
 |---|---|---|
 | `record_missing` | absent | nothing to read it from |
-| `record_unreadable` | absent | no version the reader can trust, which is one of the ways a record is unreadable (§6) |
+| `record_unreadable` | absent | an unreadable record is withheld whole (§4), even where its version parsed |
 | `unsupported_format` | present | a version was read and this cmdstanr does not interpret it |
 | `artifact_mismatch` | present | the record parsed and its version is one we read; only its binding to this executable is wrong |
 
