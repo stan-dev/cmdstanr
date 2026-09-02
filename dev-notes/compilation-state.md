@@ -112,8 +112,8 @@ That distinction is load-bearing because these are genuinely different facts:
   never that the record is complete.
 - **`format_version`** — which fields the record carries and how they read, not the
   JSON shape. A version this cmdstanr does not support, in either direction, is
-  reported and rebuilt; bumps are additive or interpretive, and only the second can
-  leave an older record unreadable (§4).
+  reported and rebuilt. 1.0 reads one format, and what a later release can still read
+  is that pair of versions' question (§4).
 
 `reported_features` is **tri-state and best-effort**: each feature is *known
 enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan chooses
@@ -1087,38 +1087,46 @@ the staged rollout moves it: the one bump once scheduled there was for
 `--filename-in-msg`, which the rule above no longer counts as a reason to bump.
 
 **`format_version` says which fields a record carries and how they read**, not what
-the JSON looks like. So bumps come in two kinds, and only one of them strands anything.
+the JSON looks like. Whether a later cmdstanr can still read a record it did not write
+is then a question about that pair of versions rather than a property of the scheme,
+and 1.0 has no older format to face (above), so what this document owes is the test a
+later release applies rather than a verdict of its own.
 
-**An additive bump leaves older records readable.** New fields appear and the existing
-ones mean what they always meant, so a reader that knows the older version compares
-what is there and leaves out what that version never held. Nothing rebuilds. A field
-cmdstanr only started tracking later is a change to what cmdstanr does, which the
-injection rule above already refuses to charge to an executable that already exists.
+**An older record is read while it justifies reuse, and refused when it does not.**
+Two things stop a record justifying reuse, and the paragraphs below take them in turn:
+its fields stop meaning what they said, or the verdict stops following from what it
+carries.
 
-**An interpretive bump can strand them**, because an old value can no longer be
-compared against a new one. The hashing is the concrete case: §8 leaves the algorithm
-free to change at a bump, which is why two hashes mean anything only within one
-`format_version`. Across a change they never match, so without a bump every model
-would rebuild on every construction rather than once. Refusing the record is the honest
-answer there, and the rebuild follows from having no comparison rather than from
-anything we want to deliver.
+The second is the one that gets assumed away. A field an older record never carried is
+not compared for it, and not comparing is indistinguishable from agreeing, since
+either way the verdict is that nothing compared differs. So a record that cannot say
+whether its binary still matches the inputs this cmdstanr checks does not justify
+reusing that binary, however much of what it does carry still matches.
 
-Canonicalization is not the second kind, which is worth saying because it looks like
-it. The canonical form of an option *is* what the compiler receives (above), so a rules
-change makes an old record's value differ from a freshly computed one and you get a
-spurious rebuild, which is the safe direction. Getting a false *match* would need the
+The first is plainer, and hashing is the case §8 already leaves open: the algorithm is
+free to change at a bump, so across one, hashes computed under the two rules never
+match, and what is left is not a disagreement about the model but a comparison that
+cannot be run. It is worth pricing correctly, because the obvious argument for the
+bump is wrong. Without one the model rebuilds, the rebuild writes a record under the
+new algorithm, and every construction after that matches — one rebuild per model
+rather than an endless loop, and repeated only for someone alternating cmdstanr
+versions (below). What the bump buys is the diagnosis. Unbumped, the mismatch surfaces
+as "the Stan program changed" against a file nobody touched, and one `format_version`
+ends up naming two incompatible meanings for the same field.
+
+Canonicalization is not a change of that kind, which is worth saying because it looks
+like one. The canonical form of an option *is* what the compiler receives (above), so a
+rules change makes an old record's value differ from a freshly computed one and you get
+a spurious rebuild, which is the safe direction. Getting a false *match* would need the
 canonical form to stop being the compiler's input and become a token standing for it,
 which is the semantic-equivalence canonicalization this section already declines.
 
-Even an interpretive bump is a choice. A later cmdstanr could keep the old rules and
-compare under them, refusing only what it declines to go on implementing.
-So **whether an older format is still readable is decided per version pair** rather
-than fixed by the scheme: readable while the old record's fields still mean what they
-say, refused when this cmdstanr would otherwise have to guess.
-
-**A bump is never a way to push a change onto executables that already exist**, which
-is what the injection rule above refuses. Rebuilding is what happens when the
-comparison is unavailable, and nothing else reaches it.
+**Bumping is not how a change reaches an executable that already exists.** Rebuilding
+follows from a record this cmdstanr cannot use, never from wanting a binary to be
+different, and the line between those is the one the injection rule above draws. A
+record that still answers whether the binary matches its inputs is used and the binary
+is left alone, however differently a newer cmdstanr would have built it. A record that
+can no longer answer that is refused.
 
 Both directions occur, and only one is obvious. Forward is familiar: a newer
 cmdstanr wrote something this one cannot interpret. Backward arises because a
@@ -1486,8 +1494,7 @@ different messages.
 **Unreadable means the record could not be accepted as a record at all** — invalid JSON,
 a missing or unusable `format_version`, or a required field that is absent or the
 wrong shape. *Required* is relative to the record's own `format_version`: a field added
-in a later version is not required of a record written before it, or every older record
-would be unreadable and an additive bump would rebuild everything by the back door.
+in a later version is not required of a record written before it.
 Unsupported means a version was found, and read, and this cmdstanr does not interpret
 it. Same behaviour, different diagnosis — and the vocabulary is kept
 apart deliberately, since a record whose version we do support can still be corrupt.
@@ -2019,19 +2026,21 @@ executable, and the error says so, sharing #1246's message rather than inventing
 second one. Tests: an `info` result missing the version fields, and one printing a
 malformed value.
 
-Those two outcomes permit fitting and **never attempt an automatic rebuild** — there
-is no source to build from. They are the deliberate exception to §5's requirement
-that a model have a valid record before running.
+Both rows above that succeed — the usable hash-bound record, and the executable
+admitted on a valid version alone — permit fitting and **never attempt an automatic
+rebuild**, there being no source to build from. The second of them is the deliberate
+exception to §5's requirement that a model have a valid record before running. The
+first has one.
 
-**That exception is also who pays for an interpretive `format_version` bump** (§4),
-and it is worth pricing before treating one as routine. An additive bump costs nothing
-here, since the record stays readable. An ordinary model reads a version it does not
-support, rebuilds once, and is current again. An adopted one cannot rebuild, so it
-drops to the unprovenanced path above and stays there until whoever produced the
-executable rebuilds it — for a package that compiles at install time, until the user
-reinstalls it. Nothing breaks: fitting, the runtime validators and `reported_features`
-are all unaffected, and what remains is exactly the pre-record behaviour. What is lost
-is provenance, and the saving of not launching the binary to get it.
+**That exception is also who pays when a `format_version` stops being readable** (§4),
+which is worth pricing before treating a bump as routine. An ordinary model reads a
+version it does not support, rebuilds once, and is current again. An adopted one
+cannot rebuild, so it drops to the unprovenanced path above and stays there until
+whoever produced the executable rebuilds it — for a package that compiles at install
+time, until the user reinstalls it. Nothing breaks: fitting, the runtime validators
+and `reported_features` are all unaffected, and what remains is exactly the pre-record
+behaviour. What is lost is provenance, and the saving of not launching the binary to
+get it.
 
 **Adoption is silent.** Unknown provenance is a standing property of the executable,
 not a change, and cmdstanr must not announce it on every construction. The reason is
@@ -3232,16 +3241,12 @@ applies to a record whose format version this cmdstanr does not support, in eith
 direction: identical behaviour, different diagnosis, and the message has to say
 which happened.
 
-**Absence of evidence is not evidence of absence — three times.** `reported_features`
+**Absence of evidence is not evidence of absence — twice.** `reported_features`
 is tri-state (§1): a feature CmdStan does not report is *unknown*, and treating
 unknown as disabled reproduces #765 in a new place. `known_untracked_dependencies`
 (§6) is the same shape: an empty list means nothing was *detected*, never that the
-record is complete. And a compared field that an older `format_version` never carried
-is not compared at all for that record (§4) — giving it a default so the comparison
-has something to run against turns a field nobody recorded into a field that agrees,
-which is the false match rather than the spurious rebuild. Both drafts of this
-document got one of these wrong, so it is worth checking for deliberately rather than
-trusting the field names.
+record is complete. Both drafts of this document got one of these wrong, so it is
+worth checking for deliberately rather than trusting the field names.
 
 Serialization is where it gets lost in practice. `jsonlite` writes `NA` as `null` and
 reads it back as `NULL`, so an in-memory tri-state loses its R type on the way through a
