@@ -63,7 +63,7 @@ applied internally.
 | §5 | When an operation validates, what it does on failure, and the full classification of the public surface |
 | §6 | Every rebuild trigger, what identity means for each kind of dependency, and what is deliberately untracked |
 | §7 | Executable-only models: adoption, provenance, and what cannot be configured |
-| §8 | Removing deferred compilation, and the standalone functions that replace it |
+| §8 | Removing deferred compilation, the standalone functions that replace it, and the public result `stan_build_info()` returns |
 | §9 | Why the work is ordered as it is, and why an install-time build is adopted executable-only. **#1258 holds the work list itself** |
 | §10 | Traps for whoever implements this |
 
@@ -830,12 +830,13 @@ currently earns a row.
 
 **A change to which options cmdstanr injects does not rebuild anything already built.**
 An option a later cmdstanr adds can change the artifact while an old record's
-`_supplied` goes on matching, and nothing rebuilds. That is the intended answer rather than a gap
-to close: the caller asked for the same build they asked for before, and the new binary
-is theirs to ask for with `force_recompile = TRUE`. The scheduled case is
-`--filename-in-msg` (§9), which makes runtime exceptions name the real source rather
-than a deleted tempfile copy; an executable built before it goes on naming the tempfile
-until something else rebuilds it, which is the price of leaving working models alone.
+`_supplied` goes on matching, and nothing rebuilds. That is the intended answer rather
+than a gap to close: the caller asked for the same build they asked for before, and
+the new binary is theirs to ask for with `force_recompile = TRUE`. The scheduled case
+is `--filename-in-msg` (§9), which makes runtime exceptions name the real source
+rather than a deleted tempfile copy; an executable built before it goes on naming the
+tempfile until something else rebuilds it, which is the price of leaving working
+models alone.
 
 That is the general rule for cmdstanr's own changes, and CmdStan is not an exception
 to it. A CmdStan upgrade *does* rebuild, through `builder`, because the installation
@@ -2404,7 +2405,7 @@ the same rule as §5 — the constructor rebuilds, operations error.
 
 ---
 
-## 8. Removing deferred compilation
+## 8. Contract: the API that replaces deferred compilation
 
 `cmdstan_model(compile = FALSE)` goes. 96 uses in tests, 10 in `R/`, 9 in `man/`,
 5 in vignettes.
@@ -3251,7 +3252,8 @@ to whoever sees it first.
 
 **Adoption happens on every fit, not once at install.** `stan_package_compile()` runs
 from `src/install.libs.R` — instantiate ships no `configure` template at all — but
-`stan_package_model()` is called inside the user-facing model function — instantiate's own example package wraps it and `$sample()` together in
+`stan_package_model()` is called inside the user-facing model function —
+instantiate's own example package wraps it and `$sample()` together in
 `run_bernoulli_model()`. So anything cmdstanr prints at adoption prints on every fit,
 in every package built this way, through a function that does not look like it
 touches a compiler. That is the concrete case behind the silence rule in §7.
