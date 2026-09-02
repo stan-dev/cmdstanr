@@ -679,9 +679,19 @@ rejection has to land first.
 
 ## 4. Contract: the build record (#1238)
 
-A file beside the executable describing how it was built. JSON, named
-`.<model>.cmdstanr.json` — so `bernoulli.stan` compiled to `bernoulli` is described
-by `.bernoulli.cmdstanr.json` in the same directory.
+A file beside the executable describing how it was built. JSON, named for the
+executable's own file name with a leading dot and `.cmdstanr.json` appended — so
+`bernoulli` is described by `.bernoulli.cmdstanr.json` in the same directory, and
+`bernoulli.exe` by `.bernoulli.exe.cmdstanr.json`.
+
+**The name comes from the executable, not from `$model_name()`.** The two agree in the
+ordinary case, which is why the difference is easy to miss, but `$model_name()`
+substitutes underscores for spaces (`R/model.R:274`) and the executable path does not.
+Measured: `my model.stan` compiles to an executable named `my model` while
+`$model_name()` returns `my_model`, so a directory holding `my model.stan` and
+`my_model.stan` yields two executables and, under a model-name scheme, a single record
+that the second build overwrites. A record path that is a function of the executable
+path cannot collide, and adoption has nothing but that path to work from.
 
 **The leading dot is deliberate: this is not a file users are expected to open.**
 `stan_build_info()` is the supported way to ask what an executable is (§1), so the
@@ -3489,6 +3499,6 @@ recompilation this design removed.
 
 **Naming.** `stan_build_info()` and `check_syntax_stan_file()` are still
 placeholders, to be settled in the stage that implements each (§8).
-`.<model>.cmdstanr.json` is *decided* rather than open (§4) — build against it — but
+`.<exe>.cmdstanr.json` is *decided* rather than open (§4) — build against it — but
 it stays revisable until the release, after which changing it means migrating
 records that already exist.
