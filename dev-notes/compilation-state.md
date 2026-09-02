@@ -1412,10 +1412,7 @@ Or when the record cannot be used at all:
   does not read
 - the executable predates build records, so there is nothing to compare
 
-Or when the record is sound and the executable is not: the CmdStan installation it
-names is gone, so the binary may not launch (below).
-
-These are *artifact-side*: reasons the recorded pair cannot be relied on, rather than
+These are *artifact-side*: reasons the record cannot be relied on, rather than
 reasons the inputs changed. They belong in the same contract because the
 constructor's response is identical — rebuild, and say why.
 
@@ -1724,19 +1721,35 @@ and `cmdstan_path()` becomes the fallback for a model with no record rather than
 default for every model. `tbb_path()` already takes `dir` and `R/install.R:485` already
 calls it that way, so nothing is needed but passing it.
 
-**A missing builder is a rebuild trigger with a source, and a report without one.**
-Neither case is the record going bad: it parses, it hash-binds to this binary, and
-`stan_build_info()` answers out of it either way. With a Stan file the trigger above
-applies and the model is rebuilt against the current installation, because it can be.
-With only an executable (§7) there is nothing to rebuild from, so adoption keeps the
-record and reports. Refusing it would break a working setup, because a model built with
-`cpp_options = list(tbb_lib =, tbb_inc =)` against a system TBB has an rpath outside
-CmdStan entirely and runs with the builder tree deleted. On Windows the fallback applies
-for a second reason: putting a directory that is gone on `PATH` is worse than today's
-wrong-but-present one. `stan_build_info()` reports the builder with `exists = FALSE` —
-the treatment §7 already gives recorded sources that are gone, for the same reason —
-and a launch failure becomes an error naming the recorded installation, with
-reinstalling it or rebuilding from source as the two remedies.
+**A missing builder is reported, and is not itself a rebuild trigger.** It is not the
+record going bad: the record parses, it hash-binds to this binary, and
+`stan_build_info()` answers out of it. What it says is that the executable may not run,
+and whether anything can be done about that turns on the *selected* installation rather
+than the recorded one. Select a different one and `builder` differs, so the
+ordinary trigger above has already fired and the model rebuilds against a CmdStan that
+exists. Leave the selection alone and the gone installation is also the one a rebuild
+would run in, so making this a trigger buys a doomed compile in place of the honest
+failure below. With only an executable (§7) there is nothing to rebuild from at all.
+
+So the record is kept and reported in every case, and refusing it would break a working
+setup: a model built with `cpp_options = list(tbb_lib =, tbb_inc =)` against a system
+TBB has an rpath outside CmdStan entirely and runs with the builder tree deleted. On
+Windows the fallback applies for a second reason: putting a directory that is gone on
+`PATH` is worse than today's wrong-but-present one. `stan_build_info()` reports the
+builder with `exists = FALSE` — the treatment §7 already gives recorded sources that
+are gone, for the same reason — and a launch failure becomes an error naming the
+recorded installation, with reinstalling it or rebuilding from source as the two
+remedies.
+
+**A selected installation that is gone is its own error**, with or without a record,
+because both halves of the work are inside it: re-resolution invokes its stanc
+(below) and `make` runs in it. `set_cmdstan_path()` checks the directory once and
+caches the path and version (`R/path.R:69-77`), and `cmdstan_path()` hands back the
+cached value without rechecking (`R/path.R:93-100`), so a directory deleted or
+unmounted mid-session goes on being handed out. Measured, what that reaches is
+`cannot start processx process 'make' (system error 2, No such file or directory)`,
+which reads as a missing toolchain. Check the selected installation before using it,
+and name it.
 
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
@@ -1808,9 +1821,11 @@ free.
 **Invoke stanc from the recorded `builder`, not from whichever installation is
 selected now**, or a different stanc's resolution rules get applied to a model this
 one did not build. **Check builder identity first**: if the selected installation
-differs from `builder`, or the recorded installation no longer exists, that is
-already a rebuild trigger (above) and should be reported without attempting
-re-resolution at all.
+differs from `builder`, that is already a rebuild trigger (above) and should be
+reported without attempting re-resolution at all. That leaves one way for the
+recorded stanc to be missing — the selection is the recorded installation and it is
+gone — and there the model can be neither assessed nor rebuilt, which is the error
+above rather than a reason to re-resolve with some other installation's stanc.
 
 **Normalisation: normalised absolute paths, recorded but not compared.**
 `included_files` comes back from `stanc --info` as absolute paths. Each entry is
