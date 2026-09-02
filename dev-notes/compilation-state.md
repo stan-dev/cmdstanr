@@ -304,11 +304,11 @@ unconditionally. There is no `compile = FALSE` (§8), and **`$compile()` is remo
 is gone it has no unique public purpose, and `cmdstan_model(file,
 force_recompile = TRUE, ...)` covers every remaining use.
 
-Removing it rather than narrowing it also avoids a trust problem. A `$compile()`
-that rebuilds "as recorded" has to replay build arguments from a file, including
-opaque Make arguments, which means it needs a strictly validated record schema
-before it can be safe. Nothing replaces it internally either: the assessment never
-rebuilds (§5), and constructor compilation uses the explicit current request.
+Removing it rather than narrowing it also avoids a trust problem. A `$compile()` that
+rebuilds "as recorded" has to replay build arguments from a file, which means it needs
+a strictly validated record schema before it can be safe. Nothing replaces it
+internally either: the assessment never rebuilds (§5), and constructor compilation
+uses the explicit current request.
 
 Nothing structural blocks removal: fits do not hold model references
 (`R/fit.R:20-26` copies the model-methods environment rather than pointing at the
@@ -322,8 +322,8 @@ options will each rebuild to evict the other.
 
 **This does not fail loudly**, except for threading: `assert_valid_threads()` warns when `threads_per_chain` is set on an
 unthreaded model, but nothing warns about changed optimisation flags, range checks,
-a different user header, or opaque Make options. Most configuration changes have no
-runtime check at all.
+or a different user header. Most configuration changes have no runtime check at
+all.
 
 Single-configuration caching is an acceptable simplicity tradeoff for v1, but it
 needs a guard rather than a hope. The model object records the artifact identity it
@@ -568,7 +568,7 @@ header at all; only an exact-case raw assignment would do anything, and #1250 al
 rejects every assignment-shaped raw entry. What that rejection owes the reserved
 variables is guidance naming the argument that owns them, not a second occurrence test.
 
-### Assignments are named; everything else is opaque (#1250)
+### Only named assignments configure a build (#1250)
 
 Two verified defects. **Unnamed raw entries reach `make` but are invisible to
 everything keyed on names**, because an unnamed list entry's name is `""` while
@@ -585,7 +585,7 @@ The model *is* threaded — #765's symptom via a different spelling.
 **Names are lower-cased at `R/cpp_opts.R:100`**, so `foo=1` and `FOO=1` compare
 equal despite being different Make variables.
 
-**Raw `NAME+=`, `NAME?=` and `NAME:=` are assignments, not opaque arguments.**
+**Raw `NAME+=`, `NAME?=` and `NAME:=` are assignments, not Make flags.**
 `parsed_cpp_options()`'s `^[A-Za-z_][A-Za-z0-9_]*=` does not match them, so they
 fall through to `opaque`. But the collapse is only true of an assignment appearing
 **alone**. Two assignments to the same variable retain operator semantics
@@ -624,6 +624,36 @@ past it. Nothing is lost —
 named entries already emit `NAME=value` (`R/cpp_opts.R:141`), so the migration is a
 spelling change and the error can name the form to use.
 
+**Make's own flags are rejected as well, so nothing unnamed reaches the build.**
+`-j4`, `-f other.mk` and `--eval=...` are not assignments, and an earlier draft kept
+them as an opaque class preserved in order. They cannot be kept: `-f` sets any
+variable this section gives one channel, without looking like an assignment.
+
+```
+$ make -s show
+STAN_OPENCL=[unset] USER_HEADER=[unset]
+
+$ make -s -f Makefile -f other.mk show
+STAN_OPENCL=[from_other_mk] USER_HEADER=[/tmp/sneaky.hpp]
+```
+
+`--eval=` is the same route on Make 4.0 and newer, while 3.81 rejects the option
+outright — so which spellings reach a variable is a property of the user's toolchain
+rather than of this contract. This is not the reserved-variable guard #1250
+considered and rejected, and the difference is what makes it cheap: a guard has to
+know what each flag *does*, which is the maintenance that argument correctly refuses,
+while rejecting the whole shape needs to know nothing and closes the routes a guard
+would miss.
+
+**What it costs is one flag, and that flag is `-e`.** The others have makefile
+routes, which is where a build-wide policy belongs anyway: `include other.mk` for
+`-f`, a plain assignment for `--eval=`, `MAKEFLAGS += -j4` for `-j` — verified on
+3.81, where set inside an included makefile it still parallelises — and
+`force_recompile` for `-B`. Only `-e` has to be on the command line, and it hands
+the environment precedence over the `CXXFLAGS`, `CPPFLAGS` and `LDFLAGS` CmdStan's
+own makefiles assign, so it dismantles a build rather than configuring one. Nothing
+in the package passes an unnamed non-assignment entry today.
+
 **This applies to `cpp_options` on a build call** — `cmdstan_model()` or
 `compile_stan_file()`, which share one implementation (§8), so a rule that held for
 only one of them would be bypassable by choosing the other. The distinction is
@@ -639,12 +669,12 @@ cpp_options <- list("CXX" = "clang++", "CXXFLAGS+= -march=native", ...)
 
 That must keep working. `+=` there preserves an environment-provided `CXXFLAGS`
 where `=` discards it, and since `append = TRUE` is the default, repeated calls
-accumulate rather than clobber. The asymmetry is principled: on the command line
-named entries cover every case one-to-one, and in a makefile they do not.
+accumulate rather than clobber. The asymmetry is principled: on a build call every
+assignment is expressible as a named entry, and in a makefile `+=` is not.
 
-**This is a prerequisite for the record, not adjacent to it.** Per-field
-canonicalization (§4) cannot be implemented without a correct named/opaque
-classification, because the two kinds get different treatment.
+**This is a prerequisite for the record, not adjacent to it.** The
+canonicalization §4 specifies is sound only under the rejection above, so the
+rejection has to land first.
 
 ---
 
@@ -1059,8 +1089,6 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
 - **Named Make assignments** — canonical by the time anything compares them (§3), so
   comparison is a literal match rather than a case-folding one; last assignment wins,
   then sort by name.
-- **Opaque Make arguments** — preserve order exactly; later arguments can override
-  earlier ones.
 - **Include paths** — preserve order. Order controls shadowing, so a record that
   reordered them would misdescribe the build. A recording rule only; see §4's table
   for whether it is compared, and §6 for what the verdict resolves with.
@@ -1931,6 +1959,13 @@ dependency, without resolving anything. `sinclude` is GNU Make's silent-include
 spelling and costs one alternation rather than any Make parsing; verified on Make
 3.81, it loads the named file and stays quiet when that file is missing, exactly
 like `-include`.
+
+**A third route of this shape exists, and §3 closes it rather than detecting it.**
+A makefile named by `-f` on the build call changes the build, changes no recorded
+field, and is invisible to both regexes above, which scan `make/local` and the user
+header. It is not a third entry here because unnamed `cpp_options` entries are
+rejected (§3) — an option available for `-f`, which is reachable only through that
+channel, and not for a `make/local` include, which is not.
 
 **The field is `known_untracked_dependencies`, not `provenance_complete`.** A regex
 can establish that a gap exists; it cannot establish that none does. Make also has
