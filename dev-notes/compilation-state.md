@@ -528,9 +528,9 @@ These entries are rejected from an R option list that currently accepts them:
 `include-paths`, `warn-pedantic`, `allow-undefined`, `use-opencl` and `name` from
 `stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from `cpp_options`.
 **Every one is matched by where the option name occurs, never by enumerating accepted
-values.** (`--include-paths` inside `make/local`'s `STANCFLAGS` is rejected too, but
-that is text in CmdStan's own file rather than a list entry, so §6 gives it its own
-detection rule.)
+values.** (`--include-paths` in the effective `STANCFLAGS` is rejected too, but that
+is a value Make resolved rather than a list entry, so §6 gives it its own detection
+rule.)
 
 `stanc_options_to_args()` (`R/model.R:2598`) puts the flag name in a different slot
 depending on the entry's shape, so the rule has two arms:
@@ -1495,17 +1495,35 @@ of this design: a model built through `stanc_options` compiles and then fails on
 
 **`include_paths` is therefore the only accepted channel**, and the rest are rejected
 with an error naming it — `--include-paths` in `stanc_options`, matched on occurrence
-(§3); `--include-paths` in `make/local`'s `STANCFLAGS`, where the message names the
-file; and `STANCFLAGS` in `cpp_options` outright, since `stanc_options` is the channel
-for stanc flags and a raw make-variable passthrough only duplicates it. In the
-`make/local` case detection is a substring test on the flag, not a parse: we never
-interpret `--include-paths`'s comma lists, quoting or separator forms, only refuse them.
+(§3); `--include-paths` in the effective `STANCFLAGS`, below; and `STANCFLAGS` in
+`cpp_options` outright, since `stanc_options` is the channel for stanc flags and a raw
+make-variable passthrough only duplicates it. In the `STANCFLAGS` case detection is a
+substring test on the flag, not a parse: we never interpret `--include-paths`'s comma
+lists, quoting or separator forms, only refuse them.
+
+**The `STANCFLAGS` check reads what Make resolved, not what `make/local` says.**
+`make/local` may include another makefile — `make/local.example:36` ships
+`# -include $(HOME)/.config/stan/make.local` as a suggestion, and the
+untracked-dependency rule below reports the practice — so scanning the file misses
+any flag arriving that way, through a pattern this design recommends elsewhere.
+Measured, the file reads `include $(HOME)/.config/stan/extra.mk` while
+`make -s print-STANCFLAGS` returns `--include-paths=/sneaky/inc`. Asking costs nothing:
+`get_cmdstan_flags("STANCFLAGS")` already does it on every compile (`R/model.R:839`).
+The message therefore names `make/local` as where the chain starts rather than as where
+the flag sits, since sending the user to a file the flag does not appear in is worse
+than naming no file at all. Which makefile assigned it is the parse this rule declines.
+
+**The other scan of `make/local` below is deliberately not this one.** The
+`make_local_include` detector asks whether the file reaches beyond itself, so it reads
+the raw text; run against the effective value it would find nothing, because by then
+the include has already happened. One scan asks what Make ended up with, the other how
+it got there, and unifying them disables the detector.
 
 **The two rejections are deliberately different in scope, and should not be unified.**
 `cpp_options` is a cmdstanr argument, so the whole variable goes. `make/local` is
 CmdStan's own configuration file — `make/local.example:20` ships
 `STANCFLAGS+= --warn-pedantic` as a suggested line — so only the include-path flag is
-refused there, not the variable. The check on `cpp_options` belongs in
+refused from its `STANCFLAGS`, not the variable. The check on `cpp_options` belongs in
 `assert_valid_cpp_options()` (§3, #1250), which `cmdstan_make_local()` does not call
 (`R/install.R:324-338` builds its flags inline), so writing `STANCFLAGS` *into*
 `make/local` through the supported function stays possible. A `--warn-pedantic` left
