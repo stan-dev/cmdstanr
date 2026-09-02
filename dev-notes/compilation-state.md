@@ -2113,6 +2113,23 @@ compilation driver, not merely reading a file that is already there.
 - **Distrust of a *source*.** The artifact is now verifiable (§4); its inputs are
   only as trustworthy as the filesystem.
 
+**An executable that will not launch is an error, not a rebuild trigger.** A
+hash-matched record establishes that the executable is the one it describes, not that
+this machine can run it. Nothing the record compares moves when the execute bit is
+lost in a copy, when the binary was built for another platform, or when its recorded
+TBB is gone, so none of the reasons above fire and none should: a check on the one of
+those a `stat` can see would leave the rest to fail at launch anyway. The state is
+ordinary rather than exotic. Measured, R's own `utils::unzip()` extracts an executable
+without the execute bit where `untar()` and `file.copy()` keep it, so a project folder
+shared as a zip and unpacked from R arrives in it. What has to change is the failure
+text: today a lost bit reaches `cannot start processx process './bern' (system error
+13, Permission denied)`, the executable's basename in a relative path and an errno.
+#1246's error is the answer, and it belongs at every site that launches the model
+binary — the four sites the TBB rule enumerates above, not only the adoption
+fallback its own report covers. It names the executable, and for a source-backed model
+says that `force_recompile = TRUE` rebuilds it; with only an executable (§7) there is
+nothing to rebuild and it says so instead.
+
 `R/model.R:799` currently tells users to use `force_recompile = TRUE` to apply
 options. Under this design options apply on their own, so that message needs
 rewriting.
@@ -2183,9 +2200,10 @@ launching the binary (§4), this costs nothing.
 
 **Adoption establishes what the artifact is, not that it runs.** A hash-matched record
 is read and nothing executes the binary, so an executable that cannot run on this
-machine adopts successfully and fails when something first runs it. The alternative is
-spawning a process on every adoption to learn something the first fit establishes
-anyway — which is the cost `instantiate` pays per fit rather than once at install (§9).
+machine adopts successfully and fails when something first runs it, with the launch
+error §6 requires. The alternative is spawning a process on every adoption to learn
+something the first fit establishes anyway — which is the cost `instantiate` pays
+per fit rather than once at install (§9).
 
 **Executable without a usable record** — missing, unreadable (an unparseable `builder`
 version among the field checks that decide it, §4), hash mismatch, or written in a format
