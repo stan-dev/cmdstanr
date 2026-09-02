@@ -2275,8 +2275,9 @@ user chose the thing: including another makefile from `make/local` is entirely
 deliberate, and `make/local.example:36` ships it as a suggestion. The line is
 **whether the consequence follows from the action.**
 
-Passing `exe_file =` is itself a statement that cmdstanr did not build this, so
-answering that we do not know how it was built repeats what the caller just told us.
+Passing `exe_file =` is itself a choice to supply a finished binary rather than have
+one built, so answering that we do not know how it was built repeats what the caller
+just told us.
 The threading policy (§1) is the same: `STAN_THREADS` in `make/local` produces a
 threaded binary, which is the thing that was asked for. But writing an `-include`
 line says nothing about cmdstanr's staleness detection stopping at the first file.
