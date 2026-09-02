@@ -1705,12 +1705,14 @@ runtime dependency of the binary rather than a build-time locator. And
 `set_cmdstan_path()` is an explicit act of selecting a different toolchain, where
 renaming a working directory is not an act of selecting anything.
 
-**The recorded installation must still exist**, which is a separate rule with a
-concrete mechanism behind it. Stan Math links model executables against TBB at an
-absolute path inside the installation (`TBB_BIN_ABSOLUTE_PATH`,
-`stan/lib/stan_math/make/compiler_flags:279`), so a binary carries a hard reference
-to the installation that built it. If that installation is gone, the executable may
-not launch at all.
+**The executable carries a hard reference to the installation that built it**, which
+is a separate rule with a concrete mechanism behind it. Stan Math links model
+executables against TBB at an absolute path inside the installation
+(`TBB_BIN_ABSOLUTE_PATH`, `stan/lib/stan_math/make/compiler_flags:279`), so the
+recorded installation is a runtime dependency of the binary rather than a build-time
+locator. If it is gone the executable may not launch at all — *may*, because a model
+pointed at a TBB outside CmdStan is the exception, which is why the rule below reports
+a missing builder rather than treating it as fatal.
 
 **Which is why an executable is launched with its builder's TBB rather than the
 session's.** The two platforms fail in opposite directions, so it takes one rule to
@@ -1732,10 +1734,14 @@ previous path `on.exit`, so by the time the user samples the session points at a
 installation.
 
 So **cmdstanr supplies the TBB directory of the installation recorded as the
-builder**, falling back to `cmdstan_path()` where the recorded builder cannot supply
-one — there is no record, or the recorded directory is gone — rather than defaulting
-to it for every model. `tbb_path()` already takes `dir` and `R/install.R:485` already
-calls it that way, so nothing is needed but passing it.
+builder**, falling back to `cmdstan_path()` where the record cannot supply a directory
+to trust — there is no usable record, or the recorded directory is gone — rather
+than defaulting to it for every model. *Usable* is the operative word and not
+*present*: a record that does not hash-bind to this executable names the installation
+that built some other one, which may be in perfect health and is still the wrong TBB.
+The four forms that fail are §6's, and they fail here for the same reason they fail
+there. `tbb_path()` already takes `dir` and `R/install.R:485` already calls it that
+way, so nothing is needed but passing it.
 
 **A missing builder is reported, and is not itself a rebuild trigger.** It is not the
 record going bad: the record parses, it hash-binds to this binary, and
