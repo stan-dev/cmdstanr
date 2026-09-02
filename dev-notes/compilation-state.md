@@ -2552,28 +2552,27 @@ that `stan_build_info()` is still a placeholder covers both.
 |---|---|---|
 | `provenance` | always | `status` and `reason`, both always present |
 | `reported_features` | always | one entry per feature: four logical flags, each `TRUE`, `FALSE` or `NA`, and `stan_version`, a character scalar or `NA_character_` |
-| `format_version` | depends on the reason, not the status (below) | which contract wrote it: the fields it carries and how they read |
+| `format_version` | `unsupported_format` only (below) | which contract wrote it: the fields it carries and how they read |
 | `request` | provenance available | the recorded build configuration of §1 |
 | `dependencies` | provenance available | every file whose content the build consumed |
-| `artifact` | provenance available | a hash of the executable, only useful for comparing against another one |
 | `builder` | provenance available | installation path, version, `exists` |
 | `known_untracked_dependencies` | provenance available | §6's list; empty means nothing was detected |
 
-`artifact` and `format_version` are both public, and `format_version` is not the
-coupling this rule exists to prevent: exposing the *value* is not exposing the
-*layout*. The promise is one integer naming which contract wrote the record, and it
-survives any rearrangement of the JSON beneath it.
-
-**Every hash in the result is a token to compare, and nothing else** — `artifact`, and
-every `hash` under `dependencies`. No algorithm is named, because §4 lets the hashing
-change at a `format_version` bump, and naming one would put a guarantee users can act
-on behind a signal this section keeps private. That bound also limits the comparison:
-two hashes are comparable when they are the same field taken from records at the same
-`format_version`, and across two versions they say nothing, since the algorithm may
-have changed in between.
+**A field is public only if a caller can act on it.** The record stays comprehensive
+and the result is narrower than it, because a field can be added in a later release
+and cannot be removed or reshaped once it ships. Nothing has shipped yet, so the set
+can still be chosen freely; after 1.0 it cannot. The hashes fail that test. The
+artifact hash answers a question the caller can already answer by hashing the file
+whose path they just passed in, and the dependency hashes compare against nothing but
+another record's same field. So do `stanc_options_injected` and `stanc_name`, which
+say how cmdstanr assembled the stanc command line rather than what was asked of it.
+`tbb_dir` is out on the same test and was already absent here; the record keeps it
+because Windows needs it at launch (§4). `request` keeps `include_paths` even though
+it holds what the build resolved, because §6 rebuilds on it and a caller debugging an
+include has no other way to see it.
 
 **The nested names are settled here rather than by whoever implements it**, because a
-test for the public shape cannot be written from a list of eight top-level fields.
+test for the public shape cannot be written from a list of seven top-level fields.
 A source-backed model with one include, no user header, and a `make/local` that
 includes another makefile:
 
@@ -2584,23 +2583,19 @@ list(
     stan_threads = TRUE, stan_mpi = FALSE, stan_opencl = FALSE,
     stan_no_range_checks = FALSE, stan_version = "2.39.0"
   ),
-  format_version = 1L,                    # a stand-in; §4 does not fix this number
   request = list(
     cpp_options_supplied   = list(STAN_THREADS = TRUE),
     stanc_options_supplied = list(),
-    stanc_options_injected = list(name = "bernoulli_model"),
-    stanc_name             = "bernoulli_model",
     include_paths          = "/proj"
   ),
   dependencies = list(
-    stan_file      = list(hash = "a1b2…", built_from = "/proj/bernoulli.stan", exists = TRUE),
+    stan_file      = list(built_from = "/proj/bernoulli.stan", exists = TRUE),
     included_files = list(
-      list(hash = "c3d4…", built_from = "/proj/inc/half.stan", exists = TRUE)
+      list(built_from = "/proj/inc/half.stan", exists = TRUE)
     ),
     user_header    = NULL,
-    make_local     = list(hash = "e5f6…", built_from = "/cmdstan-2.39.0/make/local", exists = TRUE)
+    make_local     = list(built_from = "/cmdstan-2.39.0/make/local", exists = TRUE)
   ),
-  artifact = "9a8b…",
   builder  = list(path = "/cmdstan-2.39.0", version = "2.39.0", exists = TRUE),
   known_untracked_dependencies = list(
     list(kind = "make_local_include", detected_in = "/cmdstan-2.39.0/make/local")
@@ -2612,30 +2607,17 @@ Each of the rules below explains a place in that sketch where the obvious shape 
 the one chosen.
 
 **The user header appears once, under `dependencies`.** It is a file the build read,
-with a content hash, so it belongs beside the other files the build read rather than in
-`request` with the options. §4 compares it as `dependencies.user_header.built_from` and
-the record holds it in that one place too, so nothing is translated here. The rule
-exists because carrying it in both is the natural thing to write, and it puts one
-normalised path in two public places that can never disagree — a second owner, in the
-API rather than in the prose.
-
-**The effective name is `stanc_name`, not `model_name`.** It earns a field of its own
-even though `--name` also appears in `stanc_options_injected`: that list says who asked
-for the flag and is not compared, this says what stanc received and is, and a field is
-one or the other rather than both. `request.include_paths` is already the same kind of
-field, recording what the build resolved rather than what the caller typed. What the
-name avoids is a trap, since the value carries the `_model` suffix
-`R/model.R:835` appends: `mod$model_name()` returns `bernoulli` where this returns
-`bernoulli_model`, and two fields spelled alike with different values is worse than one
-named after the flag it holds. Each sampler output CSV carries it verbatim on a
-`stancflags` line, beside the `model =` line holding what stanc compiled — the same
-string unless the name needed mangling, which §4 prices along with why this is the one
-to compare.
+so it belongs beside the other files the build read rather than in `request` with the
+options. §4 compares it as `dependencies.user_header.built_from` and the record holds
+it in that one place too, so nothing is translated here. The rule exists because
+carrying it in both is the natural thing to write, and it puts one normalised path in
+two public places that can never disagree — a second owner, in the API rather than
+in the prose.
 
 **`make_local` is `NULL` when the installation had none**, and that has to be
-distinguishable from a `make/local` that hashes to something, or creating the file
-after a build would not trigger §6's rebuild. No unknown case arises: a record always
-knows whether the file was there.
+distinguishable from a `make/local` that is there, or creating the file after a build
+would not trigger §6's rebuild. No unknown case arises: a record always knows whether
+the file was there.
 
 **A known untracked dependency says which gap and where it was found, never what it points at.**
 Each entry is `list(kind, detected_in)`. `kind` is one of §6's two cases,
@@ -2698,15 +2680,13 @@ is what a test can hold. The enum is machine-readable and no free-form message i
 stored — the printer derives its prose from the reason, so the wording stays revisable
 and never becomes contract.
 
-Which of the four leaves a `format_version` behind follows from whether the reader
-established one it can trust:
-
-| reason | `format_version` | |
-|---|---|---|
-| `record_missing` | absent | nothing to read it from |
-| `record_unreadable` | absent | an unreadable record is withheld whole (§4), even where its version parsed |
-| `unsupported_format` | present | a version was read and this cmdstanr does not interpret it |
-| `artifact_mismatch` | present | the record parsed and its version is one we read; only its binding to this executable is wrong |
+**`format_version` is public only under `unsupported_format`.** There it is the
+printer's only input: the direction message below is promised behaviour and
+`print.stan_build_info(x)` receives nothing but `x`, so the version has to reach it
+through the result. That is a named consumer, and it is what the fields withheld
+above do not have. The other three reasons carry no version, and
+`record_unreadable` is the one worth saying out loud: an unreadable record is withheld
+whole (§4), so its version goes unreported even where it parsed perfectly well.
 
 **`unsupported_format` is not evidence that cmdstanr is old.** §4's format-version
 rule runs in both directions, and a downgrade regenerates old-format records, so the
@@ -2729,8 +2709,8 @@ that accessor reports what the caller asked for and nobody asked for anything.
 `stan_build_info()` reports what is known about the build, so it must say unknown.
 
 **A readable record whose hash does not match is read only to say why.**
-`artifact_mismatch` returns no record-derived field but the reason and
-`format_version`, even though `request`, `dependencies` and `builder` all parsed.
+`artifact_mismatch` returns no record-derived field at all, even though `request`,
+`dependencies` and `builder` all parsed.
 `reported_features` still comes back, read off the executable rather than the record,
 which is the general rule below and not an exception to this one. This is the one
 place the reader holds back data it can see, so it is worth saying why to whoever
