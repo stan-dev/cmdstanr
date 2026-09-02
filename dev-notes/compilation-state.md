@@ -1095,7 +1095,9 @@ later release applies rather than a verdict of its own.
 **An older record is read while it justifies reuse, and refused when it does not.**
 Two things stop a record justifying reuse, and the paragraphs below take them in turn:
 its fields stop meaning what they said, or the verdict stops following from what it
-carries.
+carries. What that decides is the *readable set*, so a refusal here reports
+`unsupported_format` and rebuilds — it is not a record that failed its field checks,
+and §6 keeps the two diagnoses apart.
 
 The second is the one that gets assumed away. A field an older record never carried is
 not compared for it, and not comparing is indistinguishable from agreeing, since
@@ -1658,7 +1660,8 @@ closure — `c++ -MM -MG` returns it in ~150 ms and `-MG` conveniently leaves
 CmdStan's own headers as unresolved names to discard. That is recorded on #1257 with
 the measurements, and deliberately not in v1: the cost is not the 150 ms but coupling
 record validation to compiler flag construction, which can drift quietly. When it
-does land, this path comparison is what it replaces.
+does land, this path comparison is what it replaces, and records written before it
+cannot answer the comparison that replaces it, so they are refused once (§4).
 
 ### Identity for the CmdStan installation
 
@@ -1742,14 +1745,14 @@ recorded installation, with reinstalling it or rebuilding from source as the two
 remedies.
 
 **A selected installation that is gone is its own error**, with or without a record,
-because both halves of the work are inside it: re-resolution invokes its stanc
-(below) and `make` runs in it. `set_cmdstan_path()` checks the directory once and
-caches the path and version (`R/path.R:69-77`), and `cmdstan_path()` hands back the
-cached value without rechecking (`R/path.R:93-100`), so a directory deleted or
-unmounted mid-session goes on being handed out. Measured, what that reaches is
-`cannot start processx process 'make' (system error 2, No such file or directory)`,
-which reads as a missing toolchain. Check the selected installation before using it,
-and name it.
+because a build runs `make` in it, and when it is also the recorded builder the
+assessment's stanc is inside it too (below). `set_cmdstan_path()` checks the
+directory once and caches the path and version (`R/path.R:69-77`), and
+`cmdstan_path()` hands back the cached value without rechecking (`R/path.R:93-100`),
+so a directory deleted or unmounted mid-session goes on being handed out. Measured,
+what that reaches is `cannot start processx process 'make' (system error 2, No such
+file or directory)`, which reads as a missing toolchain. Check the selected
+installation before using it, and name it.
 
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
