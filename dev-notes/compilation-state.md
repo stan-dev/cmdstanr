@@ -326,9 +326,8 @@ or a different user header. Most configuration changes have no runtime check at
 all.
 
 Single-configuration caching is an acceptable simplicity tradeoff for v1, but it
-needs a guard rather than a hope. The model object records the artifact identity it
-was constructed against, and §5's assessment detects that another call or process
-replaced it.
+needs a guard rather than a hope. §5 gives the assessment what it needs to detect
+that another call or process replaced the executable this object was built against.
 
 **Report what actually differs.** If the replacement carries a different
 configuration, name it. If another process installed an *equivalent* configuration
@@ -729,7 +728,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `request.stanc_options_supplied` | yes | yes | as above |
 | `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction. Never compared as a list; whether an injection's *effect* is compared is decided per field like every other row, and the model name is the one that earns its own, below. `make/local`'s `STANCFLAGS` reach the same stanc invocation and appear in neither field, being covered by `make/local`'s hash |
 | `request.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name — §3 rejects the `stanc_options` spelling, so this is the only source. It meets this column's own criterion: the build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`), which carries both the raw value stanc was passed and the mangled one stanc compiled |
-| `request.include_paths`, effective | yes | **no** | the *current* call's paths drive re-resolution (§6); the recorded value is provenance |
+| `request.include_paths`, effective | yes | **no** | the paths in force for the call drive re-resolution (§6): this call's at the constructor, the object's own at a guarded method, never the recorded ones (§5). The recorded value is provenance |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
 | `dependencies[].hash` | yes | yes | content hash — this is what identity means |
 | `dependencies[].built_from` | yes | no | where the file was at build time; provenance. The user header is the exception below |
@@ -1229,6 +1228,31 @@ One operation answers one question — *is this executable current?* — and it
 These are one assessment with two responses, not two contracts — stating them as one
 contract is what makes §5 and §6 look like they disagree.
 
+### What the assessment is given
+
+**Two arguments: what this caller expects, and what is on disk.** The expected side is
+where the callers differ, and that difference is what lets an object notice its
+executable was replaced (§2).
+
+| | at `cmdstan_model()` | at a guarded method |
+|---|---|---|
+| **expected** | the options this call supplied | the object's own snapshot: the options it was built with, and the artifact hash it was built against |
+| **observed** | the executable's hash, the record beside it, and the source hashes resolved with this call's include paths | the same, resolved with the object's construction-time paths (§4) |
+
+**Only the object's own snapshot catches a replaced executable.** §2's
+single-configuration cache lets the most recent compile own the executable *and* the
+record beside it, so once another call or process rebuilds, the pair on disk is
+self-consistent and describes a program this object never saw. The path is unchanged,
+the file exists, and the record's `artifact` hash matches the binary it now sits beside
+— that is the bond it exists to prove (§4). Nothing on disk disagrees, so the
+disagreement has to be carried in.
+
+**Resolving the sources is the caller's work.** The engine compiles nothing, reads
+nothing and mutates nothing, which is what lets §9 build and test it before anything
+calls it, so `observed` arrives already hashed. Note the ordering the table implies:
+the include paths come from the expected side, so `observed` cannot be assembled until
+the caller knows which column it is in.
+
 ### What the error says
 
 **Not `force_recompile = TRUE`.** Everything the assessment detects, the constructor
@@ -1351,10 +1375,12 @@ built it, which is not hypothetical: brms keeps a whole `CmdStanModel` in
 `attributes(fit$fit)`, so a saved `brmsfit` carries our object — and its recorded
 absolute paths — to wherever the fit is next opened.
 
-That case needs nothing extra. Where the executable is absent the assessment fails
-and the operation errors; where a *different* executable sits at the same path, the
-artifact hash (§4) catches it rather than running the wrong binary. Both fall out of
-the contract above.
+That case needs nothing extra beyond the arguments above. Where the executable is
+absent the assessment fails and the operation errors; where a *different* executable
+sits at the same path, the object's expected artifact hash catches it rather than
+running the wrong binary. Not the record's: that one proves the record and the
+executable belong together (§4), and after a rebuild they do. Both fall out of the
+contract above.
 
 What would break it is memoization. **~8.8 ms per operation is exactly the number
 someone later decides to cache on the object**, and a cached verdict is right within
@@ -3351,6 +3377,11 @@ up while Stage 0 is in review.
 whatever is at the executable path — that is what the artifact hash is for. Code
 that reads the record and proceeds without verifying the pair reintroduces exactly
 the class of bug this design exists to remove.
+
+**Updating the object's snapshot is the constructor's job, not the engine's.** §5's
+assessment never mutates state, so the artifact hash an object expects is stored by
+whoever rebuilt or verified, once the verdict is back. Doing it inside the engine is
+the natural place to reach for and costs the purity §9 builds the engine on.
 
 **The effective TBB directory must be asked for with the build's own flags.**
 `get_cmdstan_flags()` (`R/utils.R:862`) runs `make -s print-X` with no extra arguments,
