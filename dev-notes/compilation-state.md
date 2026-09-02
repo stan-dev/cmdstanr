@@ -1733,9 +1733,21 @@ guards that out on Windows. Measured on a compiled model, `otool` reports a sing
 `LC_RPATH` into the builder's `stan/lib/stan_math/lib/tbb`, with no fallback entry. So
 on macOS and Linux `tbb_path()` returns `NULL` (`R/run.R:1238-1248`), cmdstanr supplies
 nothing, and a missing builder means the loader refuses the binary. On Windows there is
-no rpath, `tbb_path()` defaults `dir` to `cmdstan_path()`, and every runtime call site
-takes it bare (`R/run.R:336`, `:422`, `:660`, `:782`), so the session's current
-installation supplies the TBB whatever built the binary.
+no rpath, `tbb_path()` defaults `dir` to `cmdstan_path()`, and every call site takes
+it bare, so the session's current installation supplies the TBB whatever built the
+binary.
+
+**Which TBB is right follows from the binary being run, not from the call site.** Bare
+is already the right answer wherever the program comes out of the selected
+installation, because there the session's installation is the one that owns the
+binary: `bin/stansummary` and `bin/diagnose` (`R/run.R:336`), the `make` that builds
+them on demand (`:422`), the model build (`R/model.R:859`) and the stanc invocations
+(`:1146`, `:1272`, `R/utils.R:1046`). It is wrong only where the *model* executable is
+launched, and that is four sites rather than the two that sample: `R/run.R:660` and
+`:782`, plus `run_info_cli()` (`R/cpp_opts.R:11`), which is the `<exe> info` call §7
+hydrates an adopted executable with, and `parse_cmdstan_args()` (`R/model.R:2750`),
+behind `$cmdstan_defaults()`. Those four are exhaustive: they are every invocation in
+the package whose command is the model binary.
 
 That second half is not an adoption problem, which is what makes this a general rule
 rather than an adoption one. Build a model, call `set_cmdstan_path()`, then sample: on
