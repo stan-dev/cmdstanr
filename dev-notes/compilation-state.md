@@ -2368,6 +2368,16 @@ forwards it. That is exactly the shape §8 introduces: `cmdstan_model()` and
 `compile_stan_file()` each declare `force_recompile = getOption(...)` and hand it to
 one shared implementation, at which point `missing()` is `FALSE` on every call.
 
+**Explicit `NULL` means omission for all six, so one sentinel covers them.**
+`user_header` is the one that looks like an exception, because `user_header = NULL`
+currently means compile without one. That meaning exists only because the header
+persisted: `resolve_user_header()`'s `supplied` flag decides precedence over the two
+`cpp_options` spellings and otherwise falls back to `previous`
+(`R/cpp_opts.R:189-245`). §3 rejects both spellings and §8 removes `previous`, so
+nothing is left for an explicit `NULL` to override, and under §2 omitting the
+argument already means no header. `supplied` leaves `resolve_user_header()` with the
+precedence chain it existed for.
+
 **`force_recompile` never enters the record.** It changes *whether* we build, never
 *what* we build, so it is a decision override rather than configuration. Two
 identical builds must produce identical records whether or not one of them was
