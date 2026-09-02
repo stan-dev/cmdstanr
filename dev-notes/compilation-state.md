@@ -1096,6 +1096,13 @@ is then a question about that pair of versions rather than a property of the sch
 and 1.0 has no older format to face (above), so what this document owes is the test a
 later release applies rather than a verdict of its own.
 
+**A record's meaning cannot change without its version changing.** A field the reader
+requires, what a recorded field means, or how a recorded value is computed for
+comparison — alter one of those and records written earlier no longer say what a
+reader of the new version would take them to say, so the change arrives with a new
+`format_version`. Whether the older format is then still readable is the next
+question, and the answer is not automatically yes.
+
 **An older record is read while it justifies reuse, and refused when it does not.**
 Two things stop a record justifying reuse, and the paragraphs below take them in turn:
 its fields stop meaning what they said, or the verdict stops following from what it
@@ -1110,9 +1117,9 @@ whether its binary still matches the inputs this cmdstanr checks does not justif
 reusing that binary, however much of what it does carry still matches.
 
 The first is plainer, and hashing is the case §8 already leaves open: the algorithm is
-free to change at a bump, so across one, hashes computed under the two rules never
-match, and what is left is not a disagreement about the model but a comparison that
-cannot be run. It is worth pricing correctly, because the obvious argument for the
+free to change, so across the bump that obliges, hashes computed under the two rules
+never match, and what is left is not a disagreement about the model but a comparison
+that cannot be run. It is worth pricing correctly, because the obvious argument for the
 bump is wrong. Without one the model rebuilds, the rebuild writes a record under the
 new algorithm, and every construction after that matches — one rebuild per model
 rather than an endless loop, and repeated only for someone alternating cmdstanr
@@ -1127,9 +1134,10 @@ a spurious rebuild, which is the safe direction. Getting a false *match* would n
 canonical form to stop being the compiler's input and become a token standing for it,
 which is the semantic-equivalence canonicalization this section already declines.
 
-**Bumping is not how a change reaches an executable that already exists.** Rebuilding
-follows from a record this cmdstanr cannot use, never from wanting a binary to be
-different, and the line between those is the one the injection rule above draws. A
+**Bumping is not how a change reaches an executable that already exists.** The
+*automatic* rebuild follows from a record this cmdstanr cannot use, and never from
+wanting a binary to be different — asking for that is what `force_recompile = TRUE` is
+for (§5), and the line between the two is the one the injection rule above draws. A
 record that still answers whether the binary matches its inputs is used and the binary
 is left alone, however differently a newer cmdstanr would have built it. A record that
 can no longer answer that is refused.
