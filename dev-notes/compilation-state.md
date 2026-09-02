@@ -737,6 +737,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
 | `artifact` | yes | yes | hash of the executable this record describes |
 | `builder` | yes | yes | normalized installation path and version |
+| `tbb_dir` | yes | **no** | the TBB directory the build resolved (§6). The one row recorded for neither provenance nor comparison but because Windows needs it at launch and only the build can determine it. Not compared: everything that moves it is compared already, through `cpp_options_supplied` or `make/local`'s hash |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: this call computes no format version to compare against. The reader either understands the record's version or does not, which is an artifact-side reason like unreadable JSON, and carries that class's outcome in either direction (§6). Equality would be the wrong test — a release that widens the readable set still reads records it no longer writes |
 
@@ -827,13 +828,13 @@ is theirs to ask for with `force_recompile = TRUE`. The scheduled case is
 than a deleted tempfile copy; an executable built before it goes on naming the tempfile
 until something else rebuilds it, which is the price of leaving working models alone.
 
-That is the general rule for cmdstanr's own changes, and CmdStan is not an exception to
-it. A CmdStan upgrade *does* rebuild, through `builder`, because the installation is a
-standing runtime dependency of the artifact rather than a fact about how it was built:
-the binary loads its TBB through an absolute rpath into that tree, and re-resolution
-invokes that installation's stanc (§6). cmdstanr appears nowhere in the executable. It
-drives builds rather than forming part of one, so changing it changes what happens next
-rather than invalidating what already exists.
+That is the general rule for cmdstanr's own changes, and CmdStan is not an exception
+to it. A CmdStan upgrade *does* rebuild, through `builder`, because the installation
+is a standing runtime dependency of the artifact rather than a fact about how it was
+built: the binary loads its TBB through an absolute rpath, by default into that tree
+(§6), and re-resolution invokes that installation's stanc (§6). cmdstanr appears
+nowhere in the executable. It drives builds rather than forming part of one, so
+changing it changes what happens next rather than invalidating what already exists.
 
 Only `stanc_options` has an injected row, and the reason stands on its own. With the
 user header built as a flag (§3), cmdstanr injects no C++ option at all, so a
@@ -1182,13 +1183,13 @@ longer read.
 
 Refusing to replace a forward-version record was considered and rejected. The record
 is entirely *derived* data and every field regenerates on a rebuild, so refusing
-protects nothing while costing one recompile (measured above) — paid with an error in
-the one situation where the rule actually arises. That situation is also not the one it
-was written for: passing an executable between machines barely works, since the
-binary links TBB at an absolute path inside the CmdStan installation that built it
-(§6). The realistic case is **one person on one machine downgrading cmdstanr**,
-where the installation, `make/local` and every path are unchanged and nothing else
-would trigger.
+protects nothing while costing one recompile (measured above) — paid with an error
+in the one situation where the rule actually arises. That situation is also not the
+one it was written for: passing an executable between machines barely works, since the
+binary links TBB at an absolute path fixed on the machine that built it (§6). The
+realistic case is **one person on one machine downgrading cmdstanr**, where the
+installation, `make/local` and every path are unchanged and nothing else would
+trigger.
 
 The real hazard was never the record. It is that the executable may have been built
 under option semantics this version does not implement, so rebuilding can produce a
@@ -1742,9 +1743,9 @@ of `builder`.
 **A different path at the same version is a rebuild reason.** Selecting another
 installation with `set_cmdstan_path()` is a deliberate act, and under a version-only
 rule it would have no effect at all: the executable would still be the one the old
-installation built, still linked against its TBB at an absolute path inside it
-(below), while validation ran the new installation's `stanc`. Rebuilding is what
-makes the selection mean something.
+installation built, still linked against the TBB that build resolved (below), while
+validation ran the new installation's `stanc`. Rebuilding is what makes the selection
+mean something.
 
 Version-only identity was tried and rejected. The argument for it was that nothing
 nameable distinguishes two same-version installations — which is nearly true, since
@@ -1757,31 +1758,33 @@ simpler rule to state.
 
 **Why this is path-sensitive when dependencies are not.** The asymmetry is deliberate.
 A dependency is a file whose *content* is the input; its location is incidental, and moving it
-changes nothing anyone can act on. An installation is not a file — the executable is
-linked against its TBB at an absolute path inside it, so where it lives is a standing
-runtime dependency of the binary rather than a build-time locator. And
+changes nothing anyone can act on. An installation is not a file — a build resolves
+stanc and, by default, TBB out of it at an absolute path (below), so where it lives is
+a standing runtime dependency of the binary rather than a build-time locator. And
 `set_cmdstan_path()` is an explicit act of selecting a different toolchain, where
 renaming a working directory is not an act of selecting anything.
 
-**The executable carries a hard reference to the installation that built it**, which
-is a separate rule with a concrete mechanism behind it. Stan Math links model
-executables against TBB at an absolute path inside the installation
-(`TBB_BIN_ABSOLUTE_PATH`, `stan/lib/stan_math/make/compiler_flags:279`), so the
-recorded installation is a runtime dependency of the binary rather than a build-time
-locator. If it is gone the executable may not launch at all — *may*, because a model
-pointed at a TBB outside CmdStan is the exception, which is why the rule below reports
-a missing builder rather than treating it as fatal.
+**The executable carries a hard reference to the TBB it was built against**, which
+is a separate rule with a concrete mechanism behind it. Stan Math bakes that path in
+absolutely, and *which* path depends on how the build was configured
+(`stan/lib/stan_math/make/compiler_flags:277-330`): `TBB_LIB` where the build named an
+external TBB, and `$(abspath $(TBB_BIN))` otherwise, where `TBB_BIN` defaults to the
+installation's own `lib/tbb` and is itself overridable. So the recorded installation is
+a runtime dependency of the binary in the default case and in no other, which is why
+the rule below reports a missing builder rather than treating it as fatal, and why the
+directory is recorded rather than derived.
 
-**Which is why an executable is launched with its builder's TBB rather than the
-session's.** The two platforms fail in opposite directions, so it takes one rule to
-cover both. `compiler_flags:329` bakes an absolute `-rpath` into the binary and `:327`
-guards that out on Windows. Measured on a compiled model, `otool` reports a single
-`LC_RPATH` into the builder's `stan/lib/stan_math/lib/tbb`, with no fallback entry. So
-on macOS and Linux `tbb_path()` returns `NULL` (`R/run.R:1238-1248`), cmdstanr supplies
-nothing, and a missing builder means the loader refuses the binary. On Windows there is
-no rpath, `tbb_path()` defaults `dir` to `cmdstan_path()`, and every call site takes
-it bare, so the session's current installation supplies the TBB whatever built the
-binary.
+**An executable is launched with the TBB it was built against, not the session's.**
+That follows from the mechanism above, and the two platforms fail in opposite
+directions, so it takes one rule to cover both. Both branches above bake an absolute
+`-rpath` into the binary (`compiler_flags:303`, `:329`) and both guard it out on
+Windows (`:302`, `:328`). Measured on a model built with the default layout, `otool`
+reports a single `LC_RPATH` into the builder's `stan/lib/stan_math/lib/tbb`, with no
+fallback entry. So on macOS and Linux `tbb_path()` returns `NULL`
+(`R/run.R:1238-1248`), cmdstanr supplies nothing, and the loader either finds that
+directory or refuses the binary. On Windows there is no rpath, `tbb_path()` defaults
+`dir` to `cmdstan_path()`, and every call site takes it bare, so the session's current
+installation supplies the TBB whatever built the binary.
 
 **Which TBB is right follows from the binary being run, not from the call site.** Bare
 is already the right answer wherever the program comes out of the selected
@@ -1795,6 +1798,12 @@ hydrates an adopted executable with, and `parse_cmdstan_args()` (`R/model.R:2750
 behind `$cmdstan_defaults()`. Those four are exhaustive: they are every invocation in
 the package whose command is the model binary.
 
+They do not all consult a record for it. `run_info_cli()` is reached only when there
+is no usable one, since §7 adopts a usable record *without* launching the binary, so
+that call takes the fallback by construction rather than by accident — except
+straight after a build, where the directory that build resolved is in hand and has not
+been written yet.
+
 That second half is not an adoption problem, which is what makes this a general rule
 rather than an adoption one. Build a model, call `set_cmdstan_path()`, then sample: on
 Windows a 2.39 binary runs against 2.40's TBB, in released cmdstanr, with no record
@@ -1803,15 +1812,23 @@ involved. `instantiate` reaches the same state by design rather than by accident
 previous path `on.exit`, so by the time the user samples the session points at a third
 installation.
 
-So **cmdstanr supplies the TBB directory of the installation recorded as the
-builder**, falling back to `cmdstan_path()` where the record cannot supply a directory
-to trust — there is no usable record, or the recorded directory is gone — rather
-than defaulting to it for every model. *Usable* is the operative word and not
-*present*: a record that does not hash-bind to this executable names the installation
-that built some other one, which may be in perfect health and is still the wrong TBB.
-The four forms that fail are §6's, and they fail here for the same reason they fail
-there. `tbb_path()` already takes `dir` and `R/install.R:485` already calls it that
-way, so nothing is needed but passing it.
+So **cmdstanr supplies the TBB directory the build itself resolved**, recorded at
+build time (§4), falling back to the selected installation's own where the record
+cannot supply a directory to trust — there is no usable record, or the recorded
+directory is gone — rather than defaulting to it for every model. *Usable* is the
+operative word and not *present*: a record that does not hash-bind to this executable
+names the TBB of some other binary, which may be in perfect health and is still the
+wrong one. The four forms that fail are §6's, and they fail here for the same reason
+they fail there. `tbb_path()` already takes `dir` and `R/install.R:485` already calls
+it that way, so nothing is needed but passing it.
+
+**Deriving it from the builder path would be wrong, and not in an exotic case.**
+`<builder>/stan/lib/stan_math/lib/tbb` is the answer only for a build that left
+`TBB_BIN` alone and named no `TBB_LIB`. A Windows user who built against their own TBB
+would get that directory prepended to `PATH` *ahead* of the one their binary is linked
+against, so the rule written to load the right TBB is what loads the wrong one.
+Recording is also the only answer that stays true: the value depends on `make/local` as
+it stood during that build, and a later derivation reads it as it stands now.
 
 **A missing builder is reported, and is not itself a rebuild trigger.** It is not the
 record going bad: the record parses, it hash-binds to this binary, and
@@ -3334,6 +3351,15 @@ up while Stage 0 is in review.
 whatever is at the executable path — that is what the artifact hash is for. Code
 that reads the record and proceeds without verifying the pair reintroduces exactly
 the class of bug this design exists to remove.
+
+**The effective TBB directory must be asked for with the build's own flags.**
+`get_cmdstan_flags()` (`R/utils.R:862`) runs `make -s print-X` with no extra arguments,
+so it sees `make/local` and everything `make/local` includes, but not a `TBB_LIB`
+arriving through `cpp_options` on the same build. That is right for §6's `STANCFLAGS`
+check, which wants only what the makefiles set, and wrong here: reusing it unchanged
+records the default directory for exactly the configuration the rule exists to handle.
+`make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB` returns both in one call, measured
+at 0.29 s against a 2.39.0 tree, against a compile of 6.7 s or 13.8 s (§9).
 
 **The `dirname(stan_file)` include default is behaviour, not scaffolding.** When a
 program contains `#include` and no `include_paths` are supplied, cmdstanr defaults
