@@ -845,6 +845,10 @@ built: the binary loads its TBB through an absolute rpath, by default into that 
 nowhere in the executable. It drives builds rather than forming part of one, so
 changing it changes what happens next rather than invalidating what already exists.
 
+**A release that changes what cmdstanr injects says so in NEWS.** Nothing else tells
+the caller: their models go on behaving as they did, and the entry says that
+`force_recompile = TRUE` is how to ask for the new build.
+
 Only `stanc_options` has an injected row, and the reason stands on its own. With the
 user header built as a flag (§3), cmdstanr injects no C++ option at all, so a
 `cpp_options_injected` would be empty in every record 1.0 writes. If one ever appears
@@ -2993,7 +2997,7 @@ something else triggers a rebuild. That is the conceded price of content identit
 Its own NEWS entry and its own test; it is small in code but it changes what a user
 reads in every runtime error from a model built after it lands. Executables built
 before it keep the tempfile path, since a change to which options cmdstanr injects
-rebuilds nothing already built (§4), and the NEWS entry should say so.
+rebuilds nothing already built, and the NEWS entry says so as §4 requires.
 
 For a model built at install time the recovered path is the staged build location
 (§9), so this makes the artifact describe where it was built — which is all it
