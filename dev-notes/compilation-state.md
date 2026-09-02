@@ -64,7 +64,7 @@ applied internally.
 | §6 | Every rebuild trigger, what identity means for each kind of dependency, and what is deliberately untracked |
 | §7 | Executable-only models: adoption, provenance, and what cannot be configured |
 | §8 | Removing deferred compilation, and the standalone functions that replace it |
-| §9 | Why the work is ordered as it is, the downstream packages, and the release candidate. **#1258 holds the work list itself** |
+| §9 | Why the work is ordered as it is, and why an install-time build is adopted executable-only. **#1258 holds the work list itself** |
 | §10 | Traps for whoever implements this |
 
 **Two things worth knowing before reading any of it.** Options are supplied on every
@@ -2891,7 +2891,7 @@ different statements of this order came to exist in an earlier draft of this sec
 One definition of ready removes the adjudication instead of getting it right each time.
 
 What downstream gives up by waiting is a tag, not a start. We open their pull requests
-ourselves (below), and the dev version supplies the boundary in the meantime: bumped **in
+ourselves (#1258), and the dev version supplies the boundary in the meantime: bumped **in
 the same pull request as each break**, it lets brms guard on `packageVersion("cmdstanr")`
 against master the day the break lands, which is finer-grained than a tag rather than a
 substitute for one. Bumping in a follow-up commit is worse than not bumping at all, since
@@ -3081,59 +3081,25 @@ for install-time builds.
 Deliberately not a message either — a relocation that costs nothing should not
 narrate itself on every construction, and this is reported only when asked.
 
-### Reconciling NEWS before the candidate
-
-`NEWS.md` accumulates entries describing behaviour that later stages remove, and by
-1.0 it would read as a changelog for methods that no longer exist. The unreleased
-section already carries fifteen-plus entries about `$compile()`, `compile = FALSE`
-and `dry_run`, all of which Stage 4 deletes, plus at least one — the
-`$format(overwrite_file = TRUE)` cache refresh (`NEWS.md:94-96`) — describing
-behaviour this document now reverses.
-
-**Entries are removed, not annotated.** An entry that no longer applies at 1.0 is
-noise for the reader it was written for, whichever release introduced it: a user
-upgrading from 0.9 to 1.0 never saw the intermediate behaviour and does not need to
-know it existed. This is a pass before the candidate, once the stages have settled,
-not something to do incrementally while the picture is still moving.
-
-**The pass covers inherited gaps, not only this design's.** Release notes belong to the
-release rather than to whoever caused each line, and the unreleased window already
-carries user-facing changes that were never written up: measured against merge subjects
-since `v0.9.0`, roughly a quarter of the merged pull requests that touch behaviour have
-no entry, among them a new exported function, two new public methods and a changed
-default on `loo()`. #1258 owns the method and the list.
-
 ### The release candidate
 
-The candidate ships after the NEWS reconciliation, per #1258, so downstream
-packages have something to migrate against rather than a release note. That is what
-makes §8's breaking change affordable.
+The candidate ships after the NEWS reconciliation, per #1258, so downstream packages
+have something to migrate against rather than a release note. That is what makes §8's
+breaking change affordable. #1258 carries the pull requests themselves, the NEWS pass
+and Air's whole-repo format, with the package-by-package surveys behind them.
 
-**brms**, **instantiate** and **rethinking** are the priorities. The first two are
-chokepoints rather than merely important packages: instantiate's own dependents call
-`instantiate::stan_package_model()` rather than cmdstanr directly, so fixing
-instantiate carries its dependency tree with it. rethinking is here for reach rather
-than fan-out — it is how most people first meet cmdstanr. Everyone else has the
-candidate period to adapt on their own.
+**The downstream surveys in #1258 are signals, not constraints.** brms and instantiate
+internals are ours to change, and what they do today shows what real callers need to
+be able to express rather than what has to keep working. Build what §8 describes,
+then make them use it. The only genuine obligation is negative: nothing here may leave
+a downstream package unable to express something it legitimately needs.
 
-brms uses `cmdstan_model(compile = FALSE)` in `.parse_model_cmdstanr()`
-(`brms/R/backends.R:23-34`) to build a throwaway object solely for `$check_syntax()`
-and `$code()` — precisely the case §8's standalone family replaces, and the clearest
-confirmation so far that the family is the right shape; the replacement removes
-lines rather than adding them. `.compile_model_cmdstanr()` needs no change at all,
-since it already supplies options on every construction, which is what §2 asks of
-every caller. brms does set `cpp_options$stan_threads` only when threading is
-requested, so its users meet §1's threading policy as a rebuild when they toggle it
-off.
+### Why an install-time build is adopted executable-only
 
-instantiate is smaller still. `stan_package_model()` adopts an existing executable
-with `cmdstan_model(exe_file = , compile = FALSE)`; dropping `compile` *and*
-`include_paths` from that call is the whole of the runtime change, since adoption
-never compiles. Its other branch fires on `!file.exists(exe_file) || isTRUE(compile)`
-and does supply `stan_file`, so it survives §8 unchanged for the explicit-compile
-case; the missing-executable case has no successor, but that state means a package
-was installed without its binary, so erroring is defensible.
-`stan_package_compile()` maps onto `compile_stan_file()` directly.
+§7 puts a whole class of package here by design and leaves the argument to this
+section. instantiate is the case it is drawn from: `stan_package_compile()` builds the
+model at installation and `stan_package_model()` adopts the executable on every fit, so
+both halves are visible in one package.
 
 **Its runtime model stays executable-only, and that is a choice — the staged build
 path is not the reason.** R installs packages in staged mode by default:
@@ -3279,117 +3245,6 @@ from `src/install.libs.R` — instantiate ships no `configure` template at all �
 in every package built this way, through a function that does not look like it
 touches a compiler. That is the concrete case behind the silence rule in §7.
 
-**Its `.gitignore` template needs the record, and will not get it by accident.** The
-example package ships:
-
-```
-inst/stan/**
-!inst/stan/**/*.*
-inst/stan/**/*.exe
-inst/stan/**/*.EXE
-```
-
-Ignore everything, re-include anything with a dot so `.stan` files survive, re-ignore
-Windows binaries. The rule is built on "extensionless means binary", and the record
-has an extension, so it is re-included. Verified with `git check-ignore`: the
-executable is ignored, `.bernoulli.cmdstanr.json` is not. Telling users to "ignore the
-record alongside the binary" does not help against a pattern that un-ignores it by
-construction, which is why §4 asks for an explicit `.*.cmdstanr.json` line. Updating
-this template is part of the instantiate pull request, alongside dropping
-`compile = FALSE` and deciding the missing-executable branch.
-
-rethinking is the smallest of the three. It reaches cmdstanr at four places — three
-in `ulam()` (`R/ulam-function.R:1424`, `:1455`, `:1493`) and one in `cstan()`
-(`R/cmdstan_support.r:32`), all of the form `cmdstan_model(stan_file, compile = ,
-cpp_options = , stanc_options = )` — and never reads build state back. No
-`$compile()`, no `dry_run`, no `exe_file` (commented out at all three sites), none of
-the §5 accessors. Everything else it touches is fit-side.
-
-§8 is therefore the only thing that reaches it. In `ulam()` the argument is
-`compile = filex[[3]]`, and `filex[[3]]` is hardcoded `TRUE` (`:1399`), so deleting
-the line is the whole fix. `cstan()` propagates to end users, because `compile` is
-rethinking's own documented argument (`R/cmdstan_support.r:17`), passed straight
-through.
-
-**brms and instantiate propagate too, through `...` rather than through a named
-argument.** `brm(stan_model_args = list(...))` becomes `compile_args` and reaches
-`do_call(cmdstanr::cmdstan_model, args)` inside `.compile_model_cmdstanr()`, and
-`instantiate::stan_compile_model()` and `stan_package_model()` both end their signature
-with `...` and forward it verbatim. So any argument removed from `cmdstan_model()`
-reaches users who never call cmdstanr directly, while the packages themselves need no
-change for it — which is what the migration note has to say, since "grep your own code"
-is easy advice to skip when you only ever call `brm()`. Neither package names
-`compile_model_methods` or `compile_standalone` anywhere, measured across both installed
-trees; rethinking cannot be reached this way at all, because its four call sites name
-every argument and forward no dots. brms already uses the replacement:
-`.expose_functions_cmdstanr()` calls `stanmodel$expose_functions()`, and
-`expose_functions.brmsfit` tests `"expose_functions" %in% names(stanmodel)`, so a
-downstream package inspects the R6 object for that method by name (§5).
-
-§1's threading policy leaves it unchanged: `ulam()` enables `stan_threads` and
-always supplies `threads_per_chain`, so it satisfies the rule both before and after.
-
-rethinking has no version-control exposure either: `tempdir()` means records never
-reach a repository.
-
-No survey proves there is no further caller, and instantiate reaches us through
-`eval(parse(text = paste0("cmdstanr::", name)))`, so no static check will find a
-break in it — ours or theirs. Run all three packages' test suites against the candidate
-rather than trusting a search.
-
-**These are signals, not constraints.** brms internals are ours to change, and the
-survey above is worth having because it shows what real callers need to express —
-not because their current code has to keep working. Build what §8 describes, then
-make brms use it. The only genuine obligation is negative: nothing here may leave a
-downstream package unable to express something it legitimately needs.
-
-We open those pull requests ourselves rather than waiting to be asked; the candidate
-is what they are written and tested against. They need to work against both the old
-and the new cmdstanr — brms is on CRAN and cmdstanr is not — so a version guard
-rather than a clean switch. rethinking is the exception: it is distributed from
-GitHub and already has cmdstanr in `Depends`, so it can require the new version
-outright.
-
-The formatting and linting work is scheduled around this, and the formatter and the
-linter go to different places.
-
-Air's one-time whole-repo format (#1153) is the **last** change before the release
-candidate, **and it is optional**. It goes before the tag rather than after because a
-candidate that is not the source we ship is not a candidate: the tag exists so people
-test what becomes 1.0, and a whole-repo automated rewrite afterwards leaves the tested
-tree and the released tree differing by a diff nobody reviewed against the release.
-Optionality does not answer that objection. It decides *whether* Air runs, not *when*,
-and the decision can be taken when the NEWS reconciliation lands.
-
-Three arguments that look like they belong here do not. Branch conflicts are real but
-choose no slot: eight open pull requests touch `R/` today, three of them untouched since
-2025, so the cost is whatever happens to be open when Air runs, which is much the same
-whenever that is. Whitespace-only determinism makes the change cheap in any slot.
-And the worry that a reformatting diff on top of the API removal would hide what broke
-does not survive Air being its own pull request, reviewed as whitespace-only with the
-suite green — nothing lands on top of anything.
-
-**One check when it runs.** Air reformats `#'` lines like any others, so a reflow that
-moves a roxygen tag regenerates `.Rd` and `NAMESPACE` differently and R CMD check will
-not notice. Re-run roxygen afterwards and confirm the generated files are unchanged.
-
-Its PR-review action is a separate thing:
-additive, conflicting with nothing, and most useful *during* the stages, since
-Stages 2 to 4 write a good deal of new code that would otherwise be formatted after
-the fact. Check first whether it comments on changed lines or on whole files; if the
-latter, it waits for the format.
-
-Jarl (#1172) does not travel with it. Adopting the linter is additive, but acting on
-its findings is semantic editing, and that must not land after the candidate — 1.0
-would then ship code in a form nobody tested. Those findings are ordinary reviewed
-changes, taken whenever, not a sweep.
-
-Neither is folded into Stage 4's own pull requests, where a reformatting or linting
-diff carried alongside the API removal would leave a downstream maintainer unable to
-see what actually broke. Air's slot after the NEWS reconciliation satisfies that on its
-own: the removal is reviewed and merged by then, and Air's diff sits beside that work
-rather than inside it.
-
 ### How the stages are executed
 
 One pull request per stage, merged to master, green and revertable on its own.
@@ -3411,7 +3266,7 @@ compiles: Stages 2 and 3b in their entirety, the downstream-usage inventory,
 documentation and test migration once the API commit exists, and adversarial review
 of a finished stage.
 That last is worth a reviewer rather than another implementer; this document
-reached its current form through five review rounds.
+reached its current form through many rounds of review.
 
 ### Independent, can land any time
 
