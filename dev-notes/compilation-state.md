@@ -1372,11 +1372,12 @@ handling for a case nobody arrives at.
 because it looks like a defect until it doesn't: `functions` is an environment
 (`R/model.R:264`) and there is no `deep_clone` method, so a clone *shares* that
 environment with the original and exposing functions on either is visible on both.
-That is safe precisely because §8 makes a model immutable after construction. Through
-the supported API the two objects describe the same executable permanently and cannot
-diverge, so a shared exposure is valid for both. A direct `$initialize()` call could
-retarget one of them — that is the unguarded case above, and it is not defended
-against here either.
+That is safe precisely because §8 makes the binding to the executable immutable, not
+the object itself — `$expose_functions()` is one of the things that goes on mutating
+state after construction. Through the supported API the two objects describe the same
+executable permanently and cannot diverge, so a shared exposure is valid for both. A
+direct `$initialize()` call could retarget one of them — that is the unguarded case
+above, and it is not defended against here either.
 
 **The `$exe_file(path)` setter is removed** (`R/model.R:365-370`). It assigns
 `private$exe_file_` with no validation, no snapshot refresh and no provenance
@@ -1446,10 +1447,10 @@ different versions of the program.
 
 **Construction is the right moment, and the call is already being made.** It is the
 one instant when the source and the executable are guaranteed to agree — the
-constructor has just either rebuilt or verified the hashes — and §8's immutability
-means the snapshot cannot go stale relative to the object afterwards. §6 also already
-invokes `stanc --info` there to re-resolve includes, and a single call returns both
-things:
+constructor has just either rebuilt or verified the hashes — and the object's
+binding to that executable cannot change afterwards (§8), so the snapshot cannot go
+stale relative to it. §6 also already invokes `stanc --info` there to re-resolve
+includes, and a single call returns both things:
 
 ```
 inputs, parameters, transformed parameters, generated quantities,
