@@ -85,15 +85,16 @@ That distinction is load-bearing because these are genuinely different facts:
 
 - **`request`** — the build configuration, with `stanc_options` stored twice: what
   the caller **supplied**, and what cmdstanr **injected**. The two are disjoint,
-  because cmdstanr injects only what the caller did not supply, and origin is what
-  decides whether an option can force a rebuild (§4). Everything else is stored
-  once, in the form the build used: `cpp_options`, which cmdstanr adds nothing to
-  (§4), and the effective `include_paths`, so a caller who passes none on a program
-  with `#include` has `dirname(stan_file)` recorded (§6). These fields **explain** a
-  build rather than replay one — `make/local`
-  contributes to the same stanc invocation and appears in none of them, being
-  covered by its own hash. Feeding them back is not a supported operation and no
-  rule here depends on it.
+  because cmdstanr injects only what the caller did not supply. Origin decides which
+  of the two lists a value lands in; whether the effect of one can force a rebuild is
+  §4's per-field question, and the model name is the injection that earns a yes.
+  Everything else is stored once, in the form the build used: `cpp_options`, which
+  cmdstanr adds nothing to (§4), and the effective `include_paths`, so a caller who
+  passes none on a program with `#include` has `dirname(stan_file)` recorded (§6).
+  These fields **explain** a build rather than replay one — `make/local` contributes
+  to the same stanc invocation and appears in none of them, being covered by its own
+  hash. Feeding them back is not a supported operation and no rule here depends on
+  it.
 - **`reported_features`** — what the binary itself reports as enabled. Distinct
   from `request` because `make/local` can enable threading or OpenCL that the user
   never mentioned. The line between the two is *when the fact was known*: `request`
@@ -714,11 +715,14 @@ Three consequences, each of which has been got wrong at least once:
 column says which, and it is not a short list. The default is *not* "everything in
 `request` is compared," and reasoning from that default is what produced the errors.
 
-**Origin is stored, not inferred.** The verdict compares only what the caller supplied,
-and a merged list cannot be split back apart without knowing this version's injection
-rules — which is the reconstruct-after-the-fact fragility this design removes
-everywhere else. That is the whole reason, and it holds even if no option can arrive
-by both routes.
+**Origin is stored, not inferred.** Within `stanc_options` the verdict compares the
+supplied list and not the injected one, and a merged list cannot be split back apart
+without knowing this version's injection rules — which is the
+reconstruct-after-the-fact fragility this design removes everywhere else. That is the
+whole reason, and it holds even if no option can arrive by both routes. It decides
+which list a value is recorded in and nothing beyond that: whether an injected value's
+*effect* is compared is this table's question, and `stanc_name` above is the row where
+the answer is yes.
 
 Options that *can* make the consequence visible: cmdstanr injects `--filename-in-msg`
 as the real source path, and a caller may supply their own value, which wins untouched
