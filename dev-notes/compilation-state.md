@@ -2117,10 +2117,28 @@ rewriting.
 
 ## 7. Executable-only models
 
-`cmdstan_model(exe_file = ...)` is a first-class workflow today, including with no
-Stan source at all (`R/model.R:156`). Three otherwise-general statements do not hold
-for it: that `cmdstan_model()` always compiles, that a missing record causes a
-rebuild, and that pre-record executables get a one-time rebuild.
+`cmdstan_model(exe_file = ...)` is a first-class workflow today, with no Stan source
+at all (`R/model.R:156`). Three otherwise-general statements do not hold for it: that
+`cmdstan_model()` always compiles, that a missing record causes a rebuild, and that
+pre-record executables get a one-time rebuild.
+
+**`stan_file` and `exe_file` together are an error.** Both are accepted today, and
+`exe_file` is not adoption there: it names the build destination, filename included,
+with `dir` overriding its directory while the basename survives (`R/model.R:2707`). A
+stale binary at that path is rebuilt over rather than adopted, so the combination was
+never a route to using an executable as it stands — only a way to choose its name.
+
+**`dir` replaces it and gives up nothing but the filename.** It places the binary in
+any directory, including one the source does not live in, and the model stays
+source-backed, so `$code()`, `$variables()`, `$check_syntax()` and `$format()` keep
+working — the four operations executable-only construction gives up. Two
+configurations of one program coexist under separate directories. The filename is
+already the caller's, from the `.stan` file's name or from
+`write_stan_file(basename = )` (`R/file.R:61`) for generated code. What goes is naming
+two builds inside one directory, and a subdirectory covers that. Rejecting the pair
+also retires a Windows asymmetry: `resolve_exe_path()` skips `cmdstan_ext()` on a
+supplied path while adoption asserts the `.exe` extension (`R/model.R:303`), so an
+executable cmdstanr itself built could not be read back.
 
 **A whole class of package belongs here by design, not by accident.** Anything that
 compiles at install time and ships the binary inside itself — instantiate and its
@@ -3191,9 +3209,10 @@ include paths, and the include did not resolve. Dropping `stan_file` was the
 workaround, and instantiate's present shape follows from it — losing `stan_file`
 (instantiate #28) and gaining an `include_paths` argument (#33) as separate changes.
 
-1.0 dissolves this structurally rather than by patching storage. With `compile = FALSE`
-gone there is exactly one build call per model, it carries `include_paths`, and they
-are therefore stored once and available to every later stanc invocation.
+1.0 dissolves this structurally rather than by patching storage. The construction it
+describes is twice unavailable — `compile = FALSE` is gone and §7 rejects `stan_file`
+beside `exe_file` — and with one build call per model, it carries `include_paths`, so
+they are stored once and available to every later stanc invocation.
 `precompile_include_paths_` exists only to bridge construction and a later
 `$compile()`; with no second call there is nothing to bridge.
 
