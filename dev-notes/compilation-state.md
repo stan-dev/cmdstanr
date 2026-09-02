@@ -110,9 +110,10 @@ That distinction is load-bearing because these are genuinely different facts:
 - **`known_untracked_dependencies`** — dependencies we can see exist but cannot
   resolve (§6). Named for what it is: an empty list means nothing was *detected*,
   never that the record is complete.
-- **`format_version`** — the version of the *build interpretation contract*, not of
-  the JSON shape. A version this cmdstanr does not support, in either direction, is
-  reported and rebuilt; a change in option or build semantics obliges a bump (§4).
+- **`format_version`** — which fields the record carries and how they read, not the
+  JSON shape. A version this cmdstanr does not support, in either direction, is
+  reported and rebuilt; bumps are additive or interpretive, and only the second can
+  leave an older record unreadable (§4).
 
 `reported_features` is **tri-state and best-effort**: each feature is *known
 enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan chooses
@@ -775,26 +776,36 @@ the injections themselves: whether the value an injection determines is compared
 table's question, decided per field on the criterion above, and `--name` is the one that
 currently earns a row.
 
-It still obliges a `format_version` bump (below): an option a later cmdstanr injects can
-change the artifact while an old record's `_supplied` goes on matching, so nothing would
-rebuild. The bump is what forces it. The first instance is already scheduled:
-`--filename-in-msg` (§9) arrives a stage after records start being written, so without
-a bump an executable built before it goes on matching its record indefinitely and keeps
-naming a deleted tempfile in every exception it throws. **One bump covers a development
-window, not one per change** — these stages are merges rather than releases, and
-per-change bumps would mint versions nothing ever reads.
+**A change to which options cmdstanr injects does not rebuild anything already built.**
+An option a later cmdstanr adds can change the artifact while an old record's
+`_supplied` goes on matching, and nothing rebuilds. That is the intended answer rather than a gap
+to close: the caller asked for the same build they asked for before, and the new binary
+is theirs to ask for with `force_recompile = TRUE`. The scheduled case is
+`--filename-in-msg` (§9), which makes runtime exceptions name the real source rather
+than a deleted tempfile copy; an executable built before it goes on naming the tempfile
+until something else rebuilds it, which is the price of leaving working models alone.
 
-The same paragraph settles why only `stanc_options` has an injected row. With the user
-header built as a flag (§3), cmdstanr injects no C++ option at all, so a
-`cpp_options_injected` would be empty in every record 1.0 writes. If one ever appears it
-arrives with the field, on the bump this paragraph already requires.
+That is the general rule for cmdstanr's own changes, and CmdStan is not an exception to
+it. A CmdStan upgrade *does* rebuild, through `builder`, because the installation is a
+standing runtime dependency of the artifact rather than a fact about how it was built:
+the binary loads its TBB through an absolute rpath into that tree, and re-resolution
+invokes that installation's stanc (§6). cmdstanr appears nowhere in the executable. It
+drives builds rather than forming part of one, so changing it changes what happens next
+rather than invalidating what already exists.
 
-**An injected option still applies; not comparing it only means it cannot force a
-rebuild.** The invariant this obliges is narrower than "a diagnostic always re-emits":
-*asking for something you did not have before never yields nothing.* A compared option
-satisfies it for free, since turning it on mismatches the record and rebuilds. An
-uncompared one cannot, and needs a mechanism of its own — for `--warn-pedantic`, the
-only current case, §8 runs the check on a model that is already up to date.
+Only `stanc_options` has an injected row, and the reason stands on its own. With the
+user header built as a flag (§3), cmdstanr injects no C++ option at all, so a
+`cpp_options_injected` would be empty in every record 1.0 writes. If one ever appears
+it arrives with the field.
+
+**An injection nothing compares still applies.** The qualifier earns its place:
+`--name` is injected too, and its value *is* compared through `stanc_name` (above), so
+renaming a source does rebuild. `--warn-pedantic` is what is left, and for it the
+invariant this obliges is narrower than "a diagnostic always re-emits": *asking for
+something you did not have before never yields nothing.* A compared option satisfies
+it for free, since turning it on mismatches the record and rebuilds. An uncompared one
+cannot, and needs a mechanism of its own — §8 runs the check on a model that is
+already up to date.
 
 `pedantic = TRUE` and a supplied `--warn-uninitialized` therefore behave differently on an
 identical repeat, and that is right rather than a compromise, because they are different
@@ -1054,19 +1065,45 @@ does not require `force_recompile`. **1.0 reads exactly the format it writes and
 nothing else**, so in practice any mismatch rebuilds; a later release may widen the set,
 which changes what is readable without changing this rule.
 
-The number is deliberately not written down here. Stage 3 starts writing records and
-Stage 4 bumps the format (below), so a literal in this section would have to be kept
-in step with a value only the merging pull request knows — the two-owner failure that
-§9 exists to avoid. It costs nothing to leave open: the pre-bump format is never
-released, so the only records written under it are on development branches, and they
-rebuild once.
+The number is deliberately not written down here. Stage 3 starts writing records, so a
+literal in this section would have to be kept in step with a value only the merging
+pull request knows — the two-owner failure that §9 exists to avoid. Nothing later in
+the staged rollout moves it: the one bump once scheduled there was for
+`--filename-in-msg`, which the rule above no longer counts as a reason to bump.
 
-**`format_version` versions the build interpretation contract, not the JSON shape.**
-If a later cmdstanr changes how `cpp_options` are canonicalised, identical bytes in a
-`request` field mean something different under the new rules, and reading an old
-record with them could conclude "unchanged" when the build would in fact differ —
-the silent wrong answer this design exists to remove. So **a change in option or
-build semantics obliges a version bump**, not only a change to the fields.
+**`format_version` says which fields a record carries and how they read**, not what
+the JSON looks like. So bumps come in two kinds, and only one of them strands anything.
+
+**An additive bump leaves older records readable.** New fields appear and the existing
+ones mean what they always meant, so a reader that knows the older version compares
+what is there and leaves out what that version never held. Nothing rebuilds. A field
+cmdstanr only started tracking later is a change to what cmdstanr does, which the
+injection rule above already refuses to charge to an executable that already exists.
+
+**An interpretive bump can strand them**, because an old value can no longer be
+compared against a new one. The hashing is the concrete case: §8 leaves the algorithm
+free to change at a bump, which is why two hashes mean anything only within one
+`format_version`. Across a change they never match, so without a bump every model
+would rebuild on every construction rather than once. Refusing the record is the honest
+answer there, and the rebuild follows from having no comparison rather than from
+anything we want to deliver.
+
+Canonicalization is not the second kind, which is worth saying because it looks like
+it. The canonical form of an option *is* what the compiler receives (above), so a rules
+change makes an old record's value differ from a freshly computed one and you get a
+spurious rebuild, which is the safe direction. Getting a false *match* would need the
+canonical form to stop being the compiler's input and become a token standing for it,
+which is the semantic-equivalence canonicalization this section already declines.
+
+Even an interpretive bump is a choice. A later cmdstanr could keep the old rules and
+compare under them, refusing only what it declines to go on implementing.
+So **whether an older format is still readable is decided per version pair** rather
+than fixed by the scheme: readable while the old record's fields still mean what they
+say, refused when this cmdstanr would otherwise have to guess.
+
+**A bump is never a way to push a change onto executables that already exist**, which
+is what the injection rule above refuses. Rebuilding is what happens when the
+comparison is unavailable, and nothing else reaches it.
 
 Both directions occur, and only one is obvious. Forward is familiar: a newer
 cmdstanr wrote something this one cannot interpret. Backward arises because a
@@ -1137,6 +1174,12 @@ toolchain drift, CmdStan or Stan Math modified in place, headers reached
 transitively through `USER_HEADER`, a `make/local` that includes another makefile.
 Those are the cases where the assessment is right that nothing it tracks has changed
 and wrong about the conclusion.
+
+It has one other legitimate use, and it is not of that kind. A cmdstanr release that
+changes what it injects deliberately leaves existing executables alone (§4), so the
+flag is how a caller opts into the new build. The assessment is not wrong there —
+not rebuilding is the intended answer — which is why this is stated separately rather
+than added to the list above.
 
 Erroring rather than rebuilding is deliberate. A compile appearing unexpectedly
 inside `$sample()` is worse than an actionable message *whatever it costs* — the
@@ -1345,12 +1388,13 @@ Or when the record cannot be used at all:
 - the record is missing, unreadable, or written in a format version this cmdstanr
   does not read
 - the executable predates build records, so there is nothing to compare
-- the CmdStan installation the record names is gone, so the binary may not launch
-  (below)
 
-These are *artifact-side*: reasons the record cannot be relied on, rather than reasons
-the inputs changed. They belong in the same contract because the constructor's response
-is identical — rebuild, and say why.
+Or when the record is sound and the executable is not: the CmdStan installation it
+names is gone, so the binary may not launch (below).
+
+These are *artifact-side*: reasons the recorded pair cannot be relied on, rather than
+reasons the inputs changed. They belong in the same contract because the
+constructor's response is identical — rebuild, and say why.
 
 **`include_paths` is absent from §4's compared column deliberately.** Comparing it *as a
 spelling* would reintroduce path sensitivity for every model that has an include —
@@ -1426,8 +1470,11 @@ It is still worth *distinguishing* from an unreadable record, because the two wa
 different messages.
 **Unreadable means the record could not be accepted as a record at all** — invalid JSON,
 a missing or unusable `format_version`, or a required field that is absent or the
-wrong shape. Unsupported means a version was found, and read, and this cmdstanr
-does not interpret it. Same behaviour, different diagnosis — and the vocabulary is kept
+wrong shape. *Required* is relative to the record's own `format_version`: a field added
+in a later version is not required of a record written before it, or every older record
+would be unreadable and an additive bump would rebuild everything by the back door.
+Unsupported means a version was found, and read, and this cmdstanr does not interpret
+it. Same behaviour, different diagnosis — and the vocabulary is kept
 apart deliberately, since a record whose version we do support can still be corrupt.
 
 **Dependencies are identified by content.** A dependency matches when its content hash
@@ -1629,7 +1676,7 @@ concrete mechanism behind it. Stan Math links model executables against TBB at a
 absolute path inside the installation (`TBB_BIN_ABSOLUTE_PATH`,
 `stan/lib/stan_math/make/compiler_flags:279`), so a binary carries a hard reference
 to the installation that built it. If that installation is gone, the executable may
-not launch at all, and the model is rebuilt against the current one.
+not launch at all.
 
 **Which is why an executable is launched with its builder's TBB rather than the
 session's.** The two platforms fail in opposite directions, so it takes one rule to
@@ -1655,16 +1702,19 @@ and `cmdstan_path()` becomes the fallback for a model with no record rather than
 default for every model. `tbb_path()` already takes `dir` and `R/install.R:485` already
 calls it that way, so nothing is needed but passing it.
 
-**A recorded builder that no longer exists is reported, not fatal.** Refusing adoption
-would break a working setup, because a model built with `cpp_options = list(tbb_lib =,
-tbb_inc =)` against a system TBB has an rpath outside CmdStan entirely and runs with the
-builder tree deleted. On Windows the fallback applies for a second reason: putting a
-directory that is gone on `PATH` is worse than today's wrong-but-present one.
-`stan_build_info()` reports the builder with `exists = FALSE` — the treatment §7
-already gives recorded sources that are gone, for the same reason — and a launch
-failure becomes an error
-naming the recorded installation, with reinstalling it or rebuilding from source as the
-two remedies.
+**A missing builder is a rebuild trigger with a source, and a report without one.**
+Neither case is the record going bad: it parses, it hash-binds to this binary, and
+`stan_build_info()` answers out of it either way. With a Stan file the trigger above
+applies and the model is rebuilt against the current installation, because it can be.
+With only an executable (§7) there is nothing to rebuild from, so adoption keeps the
+record and reports. Refusing it would break a working setup, because a model built with
+`cpp_options = list(tbb_lib =, tbb_inc =)` against a system TBB has an rpath outside
+CmdStan entirely and runs with the builder tree deleted. On Windows the fallback applies
+for a second reason: putting a directory that is gone on `PATH` is worse than today's
+wrong-but-present one. `stan_build_info()` reports the builder with `exists = FALSE` —
+the treatment §7 already gives recorded sources that are gone, for the same reason —
+and a launch failure becomes an error naming the recorded installation, with
+reinstalling it or rebuilding from source as the two remedies.
 
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
@@ -1951,9 +2001,10 @@ Those two outcomes permit fitting and **never attempt an automatic rebuild** —
 is no source to build from. They are the deliberate exception to §5's requirement
 that a model have a valid record before running.
 
-**That exception is also who pays for a `format_version` bump**, and it is worth
-pricing before treating a bump as routine. An ordinary model reads a version it does
-not support, rebuilds once, and is current again. An adopted one cannot rebuild, so it
+**That exception is also who pays for an interpretive `format_version` bump** (§4),
+and it is worth pricing before treating one as routine. An additive bump costs nothing
+here, since the record stays readable. An ordinary model reads a version it does not
+support, rebuilds once, and is current again. An adopted one cannot rebuild, so it
 drops to the unprovenanced path above and stays there until whoever produced the
 executable rebuilds it — for a package that compiles at install time, until the user
 reinstalls it. Nothing breaks: fitting, the runtime validators and `reported_features`
@@ -2232,9 +2283,10 @@ matching every argument at the cost of internal consistency is not worth it.
 that it returns "a parsed object" does not settle this: the obvious implementation is
 `jsonlite::fromJSON()` on the record, and then the returned object *is* the on-disk
 schema one deserialisation removed. That contradicts §4, which makes the format
-private and versions it so that it can change — a later cmdstanr that recanonicalises
-`cpp_options` bumps `format_version` and reshapes the field, and every script reading
-`info$request$cpp_options_supplied` breaks on a change §4 says is ours to make. So the
+private and versions it so that it can change — a later cmdstanr that stores
+`cpp_options_supplied` in a different shape bumps `format_version` and reshapes the
+field, and every script reading `info$request$cpp_options_supplied` breaks on a change
+§4 says is ours to make. So the
 reader **translates**: the public field names are the promise, and the record's layout
 is free underneath them.
 
@@ -2248,7 +2300,7 @@ that `stan_build_info()` is still a placeholder covers both.
 |---|---|---|
 | `provenance` | always | `status` and `reason`, both always present |
 | `reported_features` | always | one entry per feature: four logical flags, each `TRUE`, `FALSE` or `NA`, and `stan_version`, a character scalar or `NA_character_` |
-| `format_version` | depends on the reason, not the status (below) | which build-interpretation contract wrote it |
+| `format_version` | depends on the reason, not the status (below) | which contract wrote it: the fields it carries and how they read |
 | `request` | provenance available | the recorded build configuration of §1 |
 | `dependencies` | provenance available | every file whose content the build consumed |
 | `artifact` | provenance available | a hash of the executable, only useful for comparing against another one |
@@ -2706,8 +2758,10 @@ not compared, so a project that moves keeps the old embedded path in its binary 
 something else triggers a rebuild. That is the conceded price of content identity
 (§6), not an oversight.
 
-Its own NEWS entry and its own test; it is small in code but it changes what every
-user reads in every runtime error.
+Its own NEWS entry and its own test; it is small in code but it changes what a user
+reads in every runtime error from a model built after it lands. Executables built
+before it keep the tempfile path, since a change to which options cmdstanr injects
+rebuilds nothing already built (§4), and the NEWS entry should say so.
 
 For a model built at install time the recovered path is the staged build location
 (§9), so this makes the artifact describe where it was built — which is all it
@@ -2848,7 +2902,7 @@ Wednesday  somepkg::fit(...)            -> builder mismatch, rebuild inside the 
 ```
 
 `stan_package_model()` adopts on *every fit*, so this is the next fit rather than an
-eventual one. A `format_version` bump does the same for a cmdstanr upgrade.
+eventual one.
 
 **And that rebuild would be unnecessary**, which is what makes this decisive rather
 than merely awkward. The executable is self-contained apart from TBB, which it loads
@@ -3156,12 +3210,16 @@ applies to a record whose format version this cmdstanr does not support, in eith
 direction: identical behaviour, different diagnosis, and the message has to say
 which happened.
 
-**Absence of evidence is not evidence of absence — twice.** `reported_features` is
-tri-state (§1): a feature CmdStan does not report is *unknown*, and treating
+**Absence of evidence is not evidence of absence — three times.** `reported_features`
+is tri-state (§1): a feature CmdStan does not report is *unknown*, and treating
 unknown as disabled reproduces #765 in a new place. `known_untracked_dependencies`
 (§6) is the same shape: an empty list means nothing was *detected*, never that the
-record is complete. Both drafts of this document got one of these wrong, so it is
-worth checking for deliberately rather than trusting the field names.
+record is complete. And a compared field that an older `format_version` never carried
+is not compared at all for that record (§4) — giving it a default so the comparison
+has something to run against turns a field nobody recorded into a field that agrees,
+which is the false match rather than the spurious rebuild. Both drafts of this
+document got one of these wrong, so it is worth checking for deliberately rather than
+trusting the field names.
 
 Serialization is where it gets lost in practice. `jsonlite` writes `NA` as `null` and
 reads it back as `NULL`, so an in-memory tri-state loses its R type on the way through a
