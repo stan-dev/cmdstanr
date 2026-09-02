@@ -1731,9 +1731,10 @@ involved. `instantiate` reaches the same state by design rather than by accident
 previous path `on.exit`, so by the time the user samples the session points at a third
 installation.
 
-So **cmdstanr supplies the TBB directory of the installation recorded as the builder**,
-and `cmdstan_path()` becomes the fallback for a model with no record rather than the
-default for every model. `tbb_path()` already takes `dir` and `R/install.R:485` already
+So **cmdstanr supplies the TBB directory of the installation recorded as the
+builder**, falling back to `cmdstan_path()` where the recorded builder cannot supply
+one — there is no record, or the recorded directory is gone — rather than defaulting
+to it for every model. `tbb_path()` already takes `dir` and `R/install.R:485` already
 calls it that way, so nothing is needed but passing it.
 
 **A missing builder is reported, and is not itself a rebuild trigger.** It is not the
@@ -1746,25 +1747,41 @@ exists. Leave the selection alone and the gone installation is also the one a re
 would run in, so making this a trigger buys a doomed compile in place of the honest
 failure below. With only an executable (§7) there is nothing to rebuild from at all.
 
-So the record is kept and reported in every case, and refusing it would break a working
-setup: a model built with `cpp_options = list(tbb_lib =, tbb_inc =)` against a system
-TBB has an rpath outside CmdStan entirely and runs with the builder tree deleted. On
-Windows the fallback applies for a second reason: putting a directory that is gone on
-`PATH` is worse than today's wrong-but-present one. `stan_build_info()` reports the
-builder with `exists = FALSE` — the treatment §7 already gives recorded sources that
-are gone, for the same reason — and a launch failure becomes an error naming the
-recorded installation, with reinstalling it or rebuilding from source as the two
-remedies.
+So the record is kept and reported in every case, and refusing it would break a
+working setup: a model built with `cpp_options = list(tbb_lib =, tbb_inc =)` against a
+system TBB has an rpath outside CmdStan entirely and runs with the builder tree
+deleted. On Windows it is the second case the fallback above covers, since putting a
+directory that is gone on `PATH` is worse than today's wrong-but-present one.
+`stan_build_info()` reports the builder with `exists = FALSE` — the treatment §7
+already gives recorded sources that are gone, for the same reason — and a launch
+failure becomes an error naming the recorded installation, with reinstalling it or
+rebuilding from source as the two remedies.
 
-**A selected installation that is gone is its own error**, with or without a record,
-because a build runs `make` in it, and when it is also the recorded builder the
-assessment's stanc is inside it too (below). `set_cmdstan_path()` checks the
-directory once and caches the path and version (`R/path.R:69-77`), and
-`cmdstan_path()` hands back the cached value without rechecking (`R/path.R:93-100`),
-so a directory deleted or unmounted mid-session goes on being handed out. Measured,
-what that reaches is `cannot start processx process 'make' (system error 2, No such
-file or directory)`, which reads as a missing toolchain. Check the selected
-installation before using it, and name it.
+**A selected installation that is gone is its own error, checked where it is used.**
+`set_cmdstan_path()` checks the directory once and caches the path and version
+(`R/path.R:69-77`), and `cmdstan_path()` hands back the cached value without
+rechecking (`R/path.R:93-100`), so a directory deleted or unmounted mid-session goes
+on being handed out. Measured, what that reaches is `cannot start processx process
+'make' (system error 2, No such file or directory)`, which reads as a missing
+toolchain.
+
+What uses it is building and assessing a model that has source. `make` runs in the
+selected installation (`R/model.R:862-866`), so nothing can be built there; and when
+the selection is also the recorded builder, the stanc that re-resolves dependencies is
+inside it too (below), so nothing can be assessed either. Every route a source-backed
+call takes ends in one of those — a first compile, a rebuild on a `builder` trigger
+that has already fired, or an assessment with no stanc to run — and checking first is
+what turns all of them into one message that names the installation.
+
+**It is not a precondition on holding a model.** An executable-only model (§7) neither
+builds nor re-resolves: it hydrates from its record or from `<exe> info`, runs against
+its recorded builder's TBB (above), and `stan_build_info()` answers out of the record.
+Requiring an installation that none of that touches would refuse exactly the packaged
+models §7 exists to admit. The selection does reach one of them — the Windows TBB
+fallback, for an executable with no record to name a builder — and there it surfaces
+as the launch failure above rather than as a refusal to construct. Nor is it a third
+answer to the one question §5's assessment asks: checked before either use, it leaves
+no reachable state where an assessment begins and cannot finish for this reason.
 
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
