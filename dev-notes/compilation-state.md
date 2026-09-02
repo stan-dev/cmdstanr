@@ -259,12 +259,19 @@ STAN_NO_RANGE_CHECKS=false
 ```
 
 so exactly the features with runtime checks are the ones whose status is known, and
-every version from 2.27 up reports the same four. Unknown therefore does not arise from
-a binary this cmdstanr will talk to: `<exe> info` failing is no longer one of its
-sources, since §7 errors on that instead of constructing. It arises from a record, which
-is what the encoding rule above is for — a key absent because the CmdStan that built the
-artifact did not report that feature. The set does move, `STAN_CPP_OPTIMS` having been
-dropped at 2.38, so this is a standing case rather than a hypothetical one.
+every supported CmdStan reports the same four — `cmdstan_min_version()` is 2.35
+(`R/path.R:144`), and every version from 2.27 up reports them.
+
+**Unknown is not expected from a supported binary, not impossible from one.** §7 admits
+an executable on a valid version from `<exe> info` rather than on a full set of flags,
+so a future or custom CmdStan that reports its version and omits `STAN_THREADS`
+constructs with threading unknown, from a live call with no record in sight. An
+`<exe> info` that fails outright is a different thing and not a source at all, since §7
+errors on that instead of constructing. Records are the other source for a checked
+feature, which is what the encoding rule above is for — a key absent because the
+CmdStan that built the artifact did not report that feature. The set does move:
+`STAN_CPP_OPTIMS` was reported from 2.27 and dropped at 2.38, so both sources are
+standing cases rather than hypotheticals.
 
 **A model object is a handle on an executable plus its record.** It holds no
 durable configuration of its own.
@@ -995,11 +1002,13 @@ stat about six.
 ### The record is parsed into an object, and compared as one
 
 JSON is how the record is *stored*, not how it is reasoned about. Reading one yields
-a structured R object, and the request assembled at `cmdstan_model()` is built into
-the same shape, so deciding whether to rebuild is a field-by-field comparison of two
-objects rather than text matching or a single equality test. That is what lets §6
-report every applicable reason instead of the first, and it is why the rules below
-are per field.
+a structured R object, and the call assembles a second one from what it was asked
+for, so deciding whether to rebuild is a field-by-field comparison over the fields §4
+marks compared rather than text matching or a single equality test. The two are not
+the same shape and do not need to be: the record carries `format_version`, which the
+call has no counterpart for and never computes (§4). That is what lets §6 report
+every applicable reason instead of the first, wherever there is a usable record to
+compare against (§6), and it is why the rules below are per field.
 
 The two are separable concerns, worth keeping separable. The object model is what
 delivers the comparison and the reasons; the format is only how bytes reach disk.
@@ -1021,6 +1030,12 @@ parsed perfectly well. How that checking is written is the implementation's to c
 how far it reaches is not. Checking only the fields the caller at hand happens to need is
 what leaves one record adoptable by `cmdstan_model()` and unavailable to
 `stan_build_info()`.
+
+**`reported_features` is checked for shape and never for membership.** §1 makes an
+absent key mean unknown, so requiring the four flags CmdStan reports today would make a
+record written by a CmdStan that stopped reporting one unreadable, and rebuild every
+model it built. The set has already moved once (§1), and it is the one field whose
+contents are the binary's to decide rather than the format's.
 
 **The version is checked first, and on its own.** Reading a record has two steps, and
 the first decides whether the second means anything: `format_version` is validated by
@@ -1719,6 +1734,13 @@ reinstalling it or rebuilding from source as the two remedies.
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
 source and `make/local` should be told both.
+
+**The rule needs a usable record to be about anything.** With one, report every
+compared field that differs. Without one — the artifact-side reasons above — report
+why the record could not be used, and stop there: missing, unreadable and unsupported
+leave no baseline to measure the inputs against, and one bound to a different
+executable would supply the wrong baseline. This is the rule's precondition rather
+than an exception to it.
 
 ```
 #> Recompiling:
