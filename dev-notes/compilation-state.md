@@ -1411,7 +1411,7 @@ which was staleness after a **recompile**; a snapshot as of the last compile fix
 exactly that case.
 
 **The snapshot must be captured eagerly, or it is not a snapshot.** `$variables()`
-parses from disk on first call (`R/model.R:1032`), so an edit made before that first
+parses from disk on first call (`R/model.R:1041`), so an edit made before that first
 call would return information about the *new* source while claiming to describe the
 built one — the contract violated by the mechanism meant to implement it. Worse, the
 result depends on call history: the same object, after the same edit, answers
@@ -1887,31 +1887,39 @@ toolchain.
 What uses it is anything that runs a program out of it. `make` runs there
 (`R/model.R:862-866`), and so does stanc: `stanc_cmd()` is the relative path
 `bin/stanc` (`R/utils.R:123-129`), given the selected installation as its working
-directory by the build and by `$check_syntax()` (`R/model.R:1151`), `$format()`
-(`:1278`) and `$variables()` (`:2673`) alike. So the check goes immediately before
-`make` or a tool is invoked out of the installation. That covers the build, the
-re-resolution an assessment needs whenever the selection is also the recorded builder
-(below), and the source-only operations §8 gives standalone twins — a shorter rule
-than enumerating the routes, and one that does not go stale when a call site is added.
+directory by the build, by the construction-time `stanc --info` (`R/model.R:2673`),
+and by `$check_syntax()` (`:1151`) and `$format()` (`:1278`) alike. So the check goes
+immediately before `make` or a tool is invoked out of the installation. That covers
+the build, the re-resolution and snapshot construction takes in one call (§5), and
+the source-only operations §8 gives standalone twins — a shorter rule than
+enumerating the routes, and one that does not go stale when a call site is added.
+
+**`$variables()` is not on that list and `stan_variables()` is.** §5 captures the
+snapshot at construction, so the accessor answers from what it already holds and needs
+no installation at all, while the standalone function holds nothing and runs stanc on
+the spot. An implementation that left today's parse-on-first-call in place
+(`R/model.R:1041`) would put the method back on the list, and the list is the wrong
+place to discover that the snapshot was never made eager.
 
 **This is not the validation §5 withholds from them.** §5's table keeps
-`$check_syntax()`, `$format()` and `$variables()` clear of *staleness* checking, since
-a syntax check has no business demanding a current binary. Whether the installation
-about to run stanc is still there is a different question, and the one thing those
-three cannot do without: no installation, no stanc.
+`$check_syntax()` and `$format()` clear of *staleness* checking, since a syntax check
+has no business demanding a current binary. Whether the installation about to run stanc
+is still there is a different question, and the one thing they cannot do without: no
+installation, no stanc.
 
-**It is not a precondition on holding a model.** An executable-only model (§7) neither
-builds nor re-resolves: it hydrates from its record or from `<exe> info`, runs against
-its recorded builder's TBB (above), and `stan_build_info()` answers out of the record.
-The source-only operations are refused it for the missing source before any
-installation is reached (`R/model.R:1033`, `:1112`, `:1240`), which is §7's ordinary
-shape rather than a new exception. Requiring an installation that none of that touches
-would refuse exactly the packaged models §7 exists to admit. The selection does reach
-one of them — the Windows TBB fallback, for an executable with no usable record to
-name a builder — and there it surfaces as the launch failure above rather than as a
-refusal to construct. Nor is it a third answer to the one question §5's assessment
-asks: checked before every use, it leaves no reachable state where an assessment
-begins and cannot finish for this reason.
+**It is not a precondition on holding a model.** An executable-only model (§7)
+neither builds nor re-resolves: it hydrates from its record or from `<exe> info`, runs
+against the TBB directory its record names (above), and `stan_build_info()` answers
+out of it. The source-only operations refuse an executable-only model for the missing
+source before any installation is reached (`R/model.R:1033`, `:1112`, `:1240`), which
+is §7's ordinary shape rather than a new exception. Requiring an installation that
+none of that touches would refuse exactly the packaged models §7 exists to admit. The
+selection does reach one of them — the Windows TBB fallback, for an executable with
+no usable record to name a builder — and there it is not a precheck that refuses.
+The `<exe> info` fallback runs as it always does, and a failure is reported as §7's
+adoption error rather than as a missing installation. Nor is it a third answer to the
+one question §5's assessment asks: checked before every use, it leaves no reachable
+state where an assessment begins and cannot finish for this reason.
 
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
