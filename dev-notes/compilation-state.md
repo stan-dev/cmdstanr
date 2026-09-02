@@ -1106,15 +1106,26 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
 - **Include paths** — preserve order. Order controls shadowing, so a record that
   reordered them would misdescribe the build. A recording rule only; see §4's table
   for whether it is compared, and §6 for what the verdict resolves with.
-- **Stanc options** — compare the **sorted argument vector the options emit**, not the
-  R list. `stanc_options_to_args()` already computes it, and it collapses the two
+- **Stanc options** — compare the **sorted argument vector the options emit**, not
+  the R list. `stanc_options_to_args()` already computes it, and it collapses the two
   accepted spellings at no cost: `list("O1")` and `list("O1" = TRUE)` both become
-  `--O1`, so a model built one way is not rebuilt by the other. Sorting is safe
-  only because `--include-paths` — the one order-sensitive flag that could appear here
-  — is rejected from `stanc_options` (§6). What stays uncanonicalized is *semantic*
-  equivalence, two different flags meaning the same thing, and that would need the
-  semantics of every stanc option. Leave it: a spurious rebuild is the safe direction
-  and no one has reported hitting one.
+  `--O1`, so a model built one way is not rebuilt by the other.
+  Sorting is safe because nothing that can appear here is order-sensitive.
+  `--include-paths`, the one flag that accumulates rather than refusing a repeat, is
+  rejected from `stanc_options` (§6). Every other valued option stanc refuses
+  outright when repeated (`option --name cannot be repeated`), and it drops a
+  duplicated bare flag with a warning. And where two flags settle one setting between
+  them, position does not decide it: measured on 2.39.0, `--O1 --O0` and `--O0 --O1`
+  both generate the code plain `--O0` does. They differ only in the `stancflags`
+  string stanc stamps into the binary, which reaches each sampler CSV unparsed as the
+  recorded-value rule above describes. That string is what sorting costs: a caller who
+  reorders the same flags gets no rebuild, so the line goes on reporting the order the
+  first build used, and rebuilding to correct it would produce identical code. A later
+  stanc that made order matter would arrive in a CmdStan release, which rebuilds
+  through `builder` regardless. What stays uncanonicalized is *semantic* equivalence,
+  two different flags meaning the same thing, and that would need the semantics of
+  every stanc option. Leave it: a spurious rebuild is the safe direction and no one
+  has reported hitting one.
 - **User-header paths** — normalise. This is the one path that is *also* compared,
   because the C++ include closure beneath the header cannot be enumerated (§6), so
   normalisation here affects the verdict rather than only the record's readability.
