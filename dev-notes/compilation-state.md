@@ -1765,23 +1765,34 @@ on being handed out. Measured, what that reaches is `cannot start processx proce
 'make' (system error 2, No such file or directory)`, which reads as a missing
 toolchain.
 
-What uses it is building and assessing a model that has source. `make` runs in the
-selected installation (`R/model.R:862-866`), so nothing can be built there; and when
-the selection is also the recorded builder, the stanc that re-resolves dependencies is
-inside it too (below), so nothing can be assessed either. Every route a source-backed
-call takes ends in one of those — a first compile, a rebuild on a `builder` trigger
-that has already fired, or an assessment with no stanc to run — and checking first is
-what turns all of them into one message that names the installation.
+What uses it is anything that runs a program out of it. `make` runs there
+(`R/model.R:862-866`), and so does stanc: `stanc_cmd()` is the relative path
+`bin/stanc` (`R/utils.R:123-129`), given the selected installation as its working
+directory by the build and by `$check_syntax()` (`R/model.R:1151`), `$format()`
+(`:1278`) and `$variables()` (`:2673`) alike. So the check goes immediately before
+`make` or a tool is invoked out of the installation. That covers the build, the
+re-resolution an assessment needs whenever the selection is also the recorded builder
+(below), and the source-only operations §8 gives standalone twins — a shorter rule
+than enumerating the routes, and one that does not go stale when a call site is added.
+
+**This is not the validation §5 withholds from them.** §5's table keeps
+`$check_syntax()`, `$format()` and `$variables()` clear of *staleness* checking, since
+a syntax check has no business demanding a current binary. Whether the installation
+about to run stanc is still there is a different question, and the one thing those
+three cannot do without: no installation, no stanc.
 
 **It is not a precondition on holding a model.** An executable-only model (§7) neither
 builds nor re-resolves: it hydrates from its record or from `<exe> info`, runs against
 its recorded builder's TBB (above), and `stan_build_info()` answers out of the record.
-Requiring an installation that none of that touches would refuse exactly the packaged
-models §7 exists to admit. The selection does reach one of them — the Windows TBB
-fallback, for an executable with no record to name a builder — and there it surfaces
-as the launch failure above rather than as a refusal to construct. Nor is it a third
-answer to the one question §5's assessment asks: checked before either use, it leaves
-no reachable state where an assessment begins and cannot finish for this reason.
+The source-only operations are refused it for the missing source before any
+installation is reached (`R/model.R:1033`, `:1112`, `:1240`), which is §7's ordinary
+shape rather than a new exception. Requiring an installation that none of that touches
+would refuse exactly the packaged models §7 exists to admit. The selection does reach
+one of them — the Windows TBB fallback, for an executable with no usable record to
+name a builder — and there it surfaces as the launch failure above rather than as a
+refusal to construct. Nor is it a third answer to the one question §5's assessment
+asks: checked before every use, it leaves no reachable state where an assessment
+begins and cannot finish for this reason.
 
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
