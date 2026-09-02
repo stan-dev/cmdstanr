@@ -113,7 +113,8 @@ That distinction is load-bearing because these are genuinely different facts:
   never that the record is complete.
 - **`format_version`** — which fields the record carries and how they read, not the
   JSON shape. A version this cmdstanr does not support, in either direction, is
-  reported and rebuilt. 1.0 reads one format, and what a later release can still read
+  reported, and carries the outcome every artifact-side reason carries (§6). 1.0
+  reads one format, and what a later release can still read
   is that pair of versions' question (§4).
 
 `reported_features` is **tri-state and best-effort**: each feature is *known
@@ -707,7 +708,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `artifact` | yes | yes | hash of the executable this record describes |
 | `builder` | yes | yes | normalized installation path and version |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
-| `format_version` | yes | **no** | not a comparison: this call computes no format version to compare against. The reader either understands the record's version or does not, which is an artifact-side reason like unreadable JSON (§6), and rebuilds in either direction. Equality would be the wrong test — a release that widens the readable set still reads records it no longer writes |
+| `format_version` | yes | **no** | not a comparison: this call computes no format version to compare against. The reader either understands the record's version or does not, which is an artifact-side reason like unreadable JSON, and carries that class's outcome in either direction (§6). Equality would be the wrong test — a release that widens the readable set still reads records it no longer writes |
 
 Three consequences, each of which has been got wrong at least once:
 
@@ -1037,8 +1038,9 @@ what leaves one record adoptable by `cmdstan_model()` and unavailable to
 
 **`reported_features` is checked for shape and never for membership.** §1 makes an
 absent key mean unknown, so requiring the four flags CmdStan reports today would make a
-record written by a CmdStan that stopped reporting one unreadable, and rebuild every
-model it built. The set has already moved once (§1), and it is the one field whose
+record written by a CmdStan that stopped reporting one unreadable, rebuilding every
+model it built that has a source and stripping the provenance from every one that does
+not (§6). The set has already moved once (§1), and it is the one field whose
 contents are the binary's to decide rather than the format's.
 
 **The version is checked first, and on its own.** Reading a record has two steps, and
@@ -1078,11 +1080,13 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
 
 ### Format versions, in both directions
 
-A record whose `format_version` this cmdstanr does not read **rebuilds, and says
-so**, exactly like an executable that predates records (§7). It is not refused and
-does not require `force_recompile`. **1.0 reads exactly the format it writes and
-nothing else**, so in practice any mismatch rebuilds; a later release may widen the set,
-which changes what is readable without changing this rule.
+A record whose `format_version` this cmdstanr does not read **is an artifact-side
+reason, and says so**, exactly like an executable that predates records — a rebuild
+where there is a source to rebuild from and a loss of provenance where there is not,
+which is §6's split and not this rule's. It is not refused and does not require
+`force_recompile`. **1.0 reads exactly the format it writes and nothing else**, so in
+practice any mismatch is one of those reasons; a later release may widen the set, which
+changes what is readable without changing this rule.
 
 The number is deliberately not written down here. Stage 3 starts writing records, so a
 literal in this section would have to be kept in step with a value only the merging
@@ -1107,8 +1111,8 @@ question, and the answer is not automatically yes.
 Two things stop a record justifying reuse, and the paragraphs below take them in turn:
 its fields stop meaning what they said, or the verdict stops following from what it
 carries. What that decides is the *readable set*, so a refusal here reports
-`unsupported_format` and rebuilds — it is not a record that failed its field checks,
-and §6 keeps the two diagnoses apart.
+`unsupported_format` and takes the artifact-side outcome (§6) — it is not a record
+that failed its field checks, and §6 keeps the two diagnoses apart.
 
 The second is the one that gets assumed away. A field an older record never carried is
 not compared for it, and not comparing is indistinguishable from agreeing, since
@@ -1427,8 +1431,16 @@ Or when the record cannot be used at all:
 - the executable predates build records, so there is nothing to compare
 
 These are *artifact-side*: reasons the record cannot be relied on, rather than
-reasons the inputs changed. They belong in the same contract because the
-constructor's response is identical — rebuild, and say why.
+reasons the inputs changed. They belong in the same contract because the response
+does not turn on which of them fired — say why, and stop trusting the record.
+
+**Rebuilding takes a source, which is where the two model kinds part.** A
+source-backed model rebuilds on any of the reasons above, and it is the same rebuild
+whichever one fired. An executable-only model (§7) has nothing to rebuild from, so
+those same reasons leave it explicitly unprovenanced instead: it goes on running, and
+reports what the binary says about itself and nothing about how it was built. The
+split belongs to the class rather than to any member of it, so it is stated here and
+the individual reasons point at it rather than restating it.
 
 **`include_paths` is absent from §4's compared column deliberately.** Comparing it *as a
 spelling* would reintroduce path sensitivity for every model that has an include —
@@ -1497,9 +1509,9 @@ and nothing beneath them is tracked. Stated with its reasoning, and with the `-I
 flags that are the rule's other instance, in "Identity for C++ include resolution"
 below.
 
-**An unsupported format version is among those artifact-side reasons** — it rebuilds,
-with the reason stated (§4), whether the version is newer or older than what this
-cmdstanr supports.
+**An unsupported format version is among those artifact-side reasons** — it takes
+their outcome, with the reason stated (§4), whether the version is newer or older
+than what this cmdstanr supports.
 It is still worth *distinguishing* from an unreadable record, because the two warrant
 different messages.
 **Unreadable means the record could not be accepted as a record at all** — invalid JSON,
