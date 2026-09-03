@@ -78,18 +78,17 @@ the binary itself.
 
 That distinction is load-bearing because these are genuinely different facts:
 
-- **`request`** — the build configuration, with `stanc_options` stored twice: what
-  the caller **supplied**, and what cmdstanr **injected**. The two are disjoint,
-  because cmdstanr injects only what the caller did not supply. Origin decides which
-  of the two lists a value lands in; whether the effect of one can force a rebuild is
-  §4's per-field question, and the model name is the injection that earns a yes.
-  Everything else is stored once, in the form the build used: `cpp_options`, which
-  cmdstanr adds nothing to (§4), and the effective `include_paths`, so a caller who
-  passes none on a program with `#include` has `dirname(stan_file)` recorded (§6).
-  These fields **explain** a build rather than replay one — `make/local` contributes
-  to the same stanc invocation and appears in none of them, being covered by its own
-  hash. Feeding them back is not a supported operation and no rule here depends on
-  it.
+- **`request`** — the build configuration, with `stanc_options` stored three ways:
+  what the caller **supplied**, what cmdstanr **injected**, and what Make resolves
+  from outside both. The first two are disjoint, because cmdstanr injects only what
+  the caller did not supply. Origin decides which list a value lands in; whether the
+  effect of one can force a rebuild is §4's per-field question, and the model name is
+  the injection that earns a yes. Everything else is stored once, in the form the
+  build used: `cpp_options`, which cmdstanr adds nothing to (§4), and the effective
+  `include_paths`, so a caller who passes none on a program with `#include` has
+  `dirname(stan_file)` recorded (§6). These fields **explain** a build rather than
+  replay one. Feeding them back is not a supported operation and no rule here depends
+  on it.
 - **`reported_features`** — what the binary itself reports as enabled. Distinct
   from `request` because `make/local` can enable threading or OpenCL that the user
   never mentioned. The line between the two is *when the fact was known*: `request`
@@ -369,9 +368,10 @@ In `make/local` — a file — `+=` is real and appends. cmdstanr's own `+=` usa
 
 ### The user header is not a `cpp_options` entry
 
-`user_header` is currently reachable three ways: the dedicated argument,
-`cpp_options[["USER_HEADER"]]` and `cpp_options[["user_header"]]`, with the argument
-taking precedence over both (`R/model.R:512-513`). **Only the argument survives.**
+Through cmdstanr's own arguments, `user_header` is currently reachable three ways:
+the dedicated argument, `cpp_options[["USER_HEADER"]]` and
+`cpp_options[["user_header"]]`, with the argument taking precedence over both
+(`R/model.R:512-513`). **Only the argument survives.**
 The two `cpp_options` spellings are rejected, with an error naming it.
 
 This is the same rule as `include_paths`, `warn-pedantic` and `STANCFLAGS` (§6, §4):
@@ -731,7 +731,8 @@ must not restate it — a rule written in two places is a future inconsistency.
 |---|---|---|---|
 | `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
 | `request.stanc_options_supplied` | yes | yes | as above |
-| `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction. Never compared as a list; whether an injection's *effect* is compared is decided per field like every other row, and the model name is the one that earns its own, below. `make/local`'s `STANCFLAGS` reach the same stanc invocation and appear in neither field, being covered by `make/local`'s hash |
+| `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction. Never compared as a list; whether an injection's *effect* is compared is decided per field like every other row, and the model name is the one that earns its own, below. Flags that reach the same stanc invocation from outside cmdstanr are the next row's |
+| `request.stanc_options_external` | yes | **yes** | `STANCFLAGS` as Make resolves them, from the environment, `make/local`, and everything `make/local` includes — the third source of stanc flags and the only one neither the caller nor cmdstanr controls (§6). Compared because nothing else sees it: flags arriving from an included makefile leave `make/local`'s own hash untouched. One literal string, compared as one, since this design does not parse stanc flags anywhere (§6); `get_cmdstan_flags("STANCFLAGS")` already computes it on every build (`R/model.R:839`) |
 | `request.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name — §3 rejects the `stanc_options` spelling, so this is the only source. It meets this column's own criterion: the build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`), which carries both the raw value stanc was passed and the mangled one stanc compiled |
 | `request.include_paths`, effective | yes | **no** | the paths in force for the call drive re-resolution (§6): this call's at the constructor, the object's own at a guarded method, never the recorded ones (§5). The recorded value is provenance |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
@@ -1287,7 +1288,8 @@ rebuild from.
 Reserve `force_recompile` for what nothing we compare can see: **explicit distrust of
 the artifact**, and **a change to one of the untracked dependencies** below —
 toolchain drift, CmdStan or Stan Math modified in place, headers reached
-transitively through `USER_HEADER`, a `make/local` that includes another makefile.
+transitively through `USER_HEADER`, and everything but the `STANCFLAGS` of a
+`make/local` that includes another makefile.
 Those are the cases where the assessment is right that nothing it tracks has changed
 and wrong about the conclusion.
 
@@ -1560,7 +1562,8 @@ untracked-dependency rule below reports the practice — so scanning the file mi
 any flag arriving that way, through a pattern this design recommends elsewhere.
 Measured, the file reads `include $(HOME)/.config/stan/extra.mk` while
 `make -s print-STANCFLAGS` returns `--include-paths=/sneaky/inc`. Asking costs nothing:
-`get_cmdstan_flags("STANCFLAGS")` already does it on every compile (`R/model.R:839`).
+`get_cmdstan_flags("STANCFLAGS")` already does it on every compile (`R/model.R:839`),
+and §4 records the value it returns rather than discarding it.
 The message therefore names `make/local` as where the chain starts rather than as where
 the flag sits, since sending the user to a file the flag does not appear in is worse
 than naming no file at all. Which makefile assigned it is the parse this rule declines.
@@ -1588,6 +1591,28 @@ because it re-runs it, and a second spelling of the same configuration buys noth
 and costs the guarantee above. The cost is a `make/local` set for command-line
 CmdStan use now erroring even for programs with no `#include` — a configuration
 that is already broken for every program that has one.
+
+**`USER_HEADER` reaching the build from outside cmdstanr is refused.** §3 gives the
+header one channel and closes every route that runs through a cmdstanr argument: both
+`cpp_options` spellings, raw assignments, and the Make flags that set a variable
+without looking like one. What is left runs through no cmdstanr argument at all. GNU
+Make imports the environment without `-e`, so with no `user_header` supplied, a
+`USER_HEADER` left in a shell profile reaches the build and cmdstanr compiles a header
+that appears in no `dependencies` entry — edit it afterwards and every compared
+field is unchanged. Ask Make for the effective value and refuse a non-empty one,
+naming the path and the argument that replaces it. The raw `make -s print-USER_HEADER`
+value is what this wants: `get_cmdstan_flags()` post-processes for *flags*, splitting
+on spaces and rewriting `-I` prefixes (`R/utils.R:901-905`), which is wrong for a
+path.
+
+**One branch, not a comparison, and the query must not carry the build's own flags.**
+A supplied `user_header` reaches Make as a command-line assignment
+(`R/cpp_opts.R:210`), which beats both the environment and `make/local`, so a header
+that was supplied has already won and there is nothing to compare it against; only
+the unsupplied case is exposed. The same fact fixes how the query runs. Carry the
+build's flags and it returns cmdstanr's own assignment, so the check can never fire.
+§4's `tbb_dir` query has the opposite requirement — it asks what the build resolved,
+not what reached it from outside — and an implementation that unifies them breaks one.
 
 **Re-resolution uses the include paths supplied on the current call, not the
 recorded ones.** This is the single easiest thing in this document to get backwards,
@@ -2043,7 +2068,9 @@ the documentation:
 
 - **`make/local` including another makefile** (`make_local_include`). `make/local.example:36` ships with
   `# -include $(HOME)/.config/stan/make.local`, so it is a suggested pattern.
-  Parsing arbitrary Make syntax is not justified for v1.
+  Parsing arbitrary Make syntax is not justified for v1. `STANCFLAGS` arriving this
+  way is the exception and *is* compared, through `stanc_options_external` (§4); what
+  stays untracked is everything else the included file can set.
 - **Headers transitively included by `USER_HEADER`** (`user_header_include`). Hashing
   the top-level header misses them.
 
@@ -2118,6 +2145,16 @@ compilation driver, not merely reading a file that is already there.
   a quoted `#include` can resolve through one of them while no recorded field moves.
   Documented rather than detected: reading them establishes that they are set, never
   that this build used them. `force_recompile = TRUE` is the remedy (#1257).
+- **Make variables from the environment.** GNU Make imports the environment without
+  `-e`, so any variable the call leaves unset can be set there and the build uses it.
+  Measured on `USER_HEADER`, `STANCFLAGS`, `STAN_THREADS`, `STAN_OPENCL`, `TBB_BIN`
+  and `TBB_LIB`. A command-line assignment wins, so this reaches only what cmdstanr
+  does not supply. Everything that can change the artifact is handled elsewhere:
+  `USER_HEADER` is refused (§6), `STANCFLAGS` is compared and the TBB pair lands in
+  `tbb_dir` (§4), and the four flags `<exe> info` reports are in `reported_features`
+  (§4). What is left untracked is `STAN_CPP_OPTIMS`, `INTEGRATED_OPENCL` and
+  `TBB_INTERFACE_NEW`, which set compiler and preprocessor flags rather than changing
+  what code exists, so they belong with toolchain drift above.
 - **CmdStan or Stan Math modified in place.** A patch applied, or a checkout
   updated, at the same path and version. The version is unchanged, `make/local` is
   unchanged, and nothing else is recorded, so this is invisible and needs
@@ -2617,7 +2654,9 @@ say how cmdstanr assembled the stanc command line rather than what was asked of 
 `tbb_dir` is out on the same test and was already absent here; the record keeps it
 because Windows needs it at launch (§4). `request` keeps `include_paths` even though
 it holds what the build resolved, because §6 rebuilds on it and a caller debugging an
-include has no other way to see it.
+include has no other way to see it. `stanc_options_external` is in for both halves of
+that reason: it is compared, and a caller asking where a flag they never passed came
+from has nowhere else to look.
 
 **The nested names are settled here rather than by whoever implements it**, because a
 test for the public shape cannot be written from a list of seven top-level fields.
@@ -2634,6 +2673,7 @@ list(
   request = list(
     cpp_options_supplied   = list(STAN_THREADS = TRUE),
     stanc_options_supplied = list(),
+    stanc_options_external = "--warn-pedantic",
     include_paths          = "/proj"
   ),
   dependencies = list(
@@ -3305,14 +3345,17 @@ assessment never mutates state, so the artifact hash an object expects is stored
 whoever rebuilt or verified, once the verdict is back. Doing it inside the engine is
 the natural place to reach for and costs the purity §9 builds the engine on.
 
-**The effective TBB directory must be asked for with the build's own flags.**
-`get_cmdstan_flags()` (`R/utils.R:862`) runs `make -s print-X` with no extra arguments,
-so it sees `make/local` and everything `make/local` includes, but not a `TBB_LIB`
-arriving through `cpp_options` on the same build. That is right for §6's `STANCFLAGS`
-check, which wants only what the makefiles set, and wrong here: reusing it unchanged
-records the default directory for exactly the configuration the rule exists to handle.
-`make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB` returns both in one call, measured
-at 0.29 s against a 2.39.0 tree, against a compile of 6.7 s or 13.8 s (§9).
+**The effective TBB directory must be asked for with the build's own flags, and is the
+only one of these queries that is.** `get_cmdstan_flags()` (`R/utils.R:862`) runs
+`make -s print-X` with no extra arguments, so it sees `make/local` and everything
+`make/local` includes, but not a `TBB_LIB` arriving through `cpp_options` on the same
+build. That is right for everything else built on this call — §6's `STANCFLAGS`
+check and its `USER_HEADER` refusal, and the `stanc_options_external` they share a
+value with (§4) — since each wants only what reached the build from outside
+cmdstanr. It is wrong here: reusing it unchanged records the default directory for
+exactly the configuration the rule exists to handle.
+`make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB` returns both in one call,
+measured at 0.29 s against a 2.39.0 tree, against a compile of 6.7 s or 13.8 s (§9).
 
 **The `dirname(stan_file)` include default is behaviour, not scaffolding.** When a
 program contains `#include` and no `include_paths` are supplied, cmdstanr defaults
