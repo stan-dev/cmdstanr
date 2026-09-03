@@ -1832,7 +1832,7 @@ directions, so it takes one rule to cover both. Both branches above bake an abso
 Windows (`:302`, `:328`). Measured on a model built with the default layout, `otool`
 reports a single `LC_RPATH` into the builder's `stan/lib/stan_math/lib/tbb`, with no
 fallback entry. So on macOS and Linux `tbb_path()` returns `NULL`
-(`R/run.R:1238-1248`), cmdstanr supplies nothing, and the loader either finds that
+(`R/run.R:1238-1247`), cmdstanr supplies nothing, and the loader either finds that
 directory or refuses the binary. On Windows there is no rpath, `tbb_path()` defaults
 `dir` to `cmdstan_path()`, and every call site takes it bare, so the session's current
 installation supplies the TBB whatever built the binary.
@@ -2037,9 +2037,9 @@ impossible, no source at all, is covered by executable-only models (§7).
 
 ### Provenance we cannot complete
 
-Two dependencies cannot be tracked in v1, and both are **detected and recorded even
-though they are not resolved**, so the limitation reaches the users who actually
-hit it rather than only the documentation:
+Two untracked dependencies are **detected and recorded even though they are not
+resolved**, so the limitation reaches the users who actually hit it rather than only
+the documentation:
 
 - **`make/local` including another makefile** (`make_local_include`). `make/local.example:36` ships with
   `# -include $(HOME)/.config/stan/make.local`, so it is a suggested pattern.
