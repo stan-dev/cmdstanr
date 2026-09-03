@@ -38,11 +38,6 @@ is deliberately untracked (§6). The CmdStan installation *is* in scope: its
 normalised path and version together are `builder` identity, and whether that
 installation still exists is checked as well (§6).
 
-**Relation to the 1.0 milestone.** Every issue in this area is milestoned
-`v1.0.0 - release`, so the milestone is mostly this work — but not only: it also
-holds linting (#1172), formatting (#1153), interactive installation (#605) and the
-`num_chains` argument (#534), none of which touch these contracts.
-
 ---
 
 ## At a glance
@@ -986,13 +981,14 @@ non-fatal but visible would be incompatible with §5, since an executable withou
 valid record is immediately unusable.
 
 **Concurrency is out of scope for v1.** The hash fixes crash-created and sequential
-mismatches. It does **not** fix active concurrency: process A can validate
-executable A, process B can replace it, and A then launches B. That is a TOCTOU
-race, and no claim of correctness under concurrency is made here. Concurrent
-compilation or use of one destination is unsupported; locking is tracked
-separately. Note the project's existing answer to this shape of problem is
-workspace isolation (#1025), so a lock would be a second concurrency strategy
-alongside an existing one — worth deciding deliberately.
+mismatches. It does **not** fix active concurrency: process A can validate executable
+A, process B can replace it, and A then launches B. That is a TOCTOU race, and no
+claim of correctness under concurrency is made here. Concurrent compilation or use of
+one destination is unsupported; locking is tracked separately. Note #1025, a related
+proposal to give the unit tests independent workspaces. It is open rather than
+settled, and scoped to the test suite rather than to user models, so it does not
+answer this — but a lock would be a second concurrency strategy beside it, and the
+two are worth deciding together.
 
 ### The bug this fixes
 
