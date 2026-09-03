@@ -1600,7 +1600,7 @@ shadowing, so re-resolution must be given them in the order supplied. The record
 order is provenance (§4).
 
 **The user header's path *is* compared**, as one instance of a general rule:
-directories that participate in C++ include resolution are compared as spellings,
+directories supplied to cmdstanr for C++ include resolution are compared as spellings,
 and nothing beneath them is tracked. Stated with its reasoning, and with the `-I`
 flags that are the rule's other instance, in "Identity for C++ include resolution"
 below.
@@ -1715,7 +1715,7 @@ a lost record costs provenance rather than time.
 
 ### Identity for C++ include resolution
 
-**Every directory that participates in C++ include resolution is compared as a
+**Every directory supplied to cmdstanr for C++ include resolution is compared as a
 spelling, and nothing beneath it is tracked.** The `-I` flags a user puts in
 `cpp_options` are the explicit members of that set; the user header's own directory
 is the implicit one. The two are compared through different fields — the flags as
@@ -2111,6 +2111,11 @@ compilation driver, not merely reading a file that is already there.
 
 - **Toolchain drift.** A compiler upgrade, a changed system library. Deliberately
   outside the recorded set rather than chasing completeness.
+- **Compiler include-path environment variables.** `CPATH` and `CPLUS_INCLUDE_PATH`
+  add directories to the C++ search path without reaching cmdstanr as an argument, so
+  a quoted `#include` can resolve through one of them while no recorded field moves.
+  Documented rather than detected: reading them establishes that they are set, never
+  that this build used them. `force_recompile = TRUE` is the remedy (#1257).
 - **CmdStan or Stan Math modified in place.** A patch applied, or a checkout
   updated, at the same path and version. The version is unchanged, `make/local` is
   unchanged, and nothing else is recorded, so this is invisible and needs
