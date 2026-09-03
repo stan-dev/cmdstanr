@@ -2835,18 +2835,18 @@ model will be saved, and `:556` says `$expose_functions()` does the same job aft
 compilation. Both are public, both are tested, and neither depends on the reuse path,
 because they run when they are called.
 
-**`$expose_functions()` has to be fixed in the same change, since removal makes it the
-only route.** `expose_stan_functions()` refuses whenever `function_env$existing_exe` is
-`TRUE` (`R/utils.R:1217`), and the no-op path sets exactly that: `:267` initialises it
+**`$expose_functions()` is fixed here too, since removal makes it the only route.**
+`expose_stan_functions()` refuses whenever `function_env$existing_exe` is `TRUE`
+(`R/utils.R:1217`), and the no-op path sets exactly that: `:267` initialises it
 `TRUE`, `:299` sets `exe_file_` only when the caller passed `exe_file`, and `:786`
-branches on `length(private$exe_file_) == 0`, still true for a source-only construction.
-So `cmdstan_model("m.stan")` on an up-to-date executable, followed by
-`mod$expose_functions()`, errors with *"Exporting standalone functions is not possible
-with a pre-compiled Stan model!"* about a model that has a source sitting beside it.
-`existing_exe` should mean "this model has no source" rather than "this object did not
-personally run make", and the hpp should be generated on demand from the registered
-source the way `pedantic` re-runs stanc. The error stays for models that genuinely have
-no source (§7).
+branches on `length(private$exe_file_) == 0`, still true for a source-only
+construction. Measured on 2.39.0: `cmdstan_model("m.stan")` on an up-to-date
+executable, followed by `mod$expose_functions()`, errors with *"Exporting standalone
+functions is not possible with a pre-compiled Stan model!"* about a model that has a
+source sitting beside it. `existing_exe` should mean "this model has no source" rather
+than "this object did not personally run make", and the hpp should be generated on
+demand from the registered source the way `pedantic` re-runs stanc. The error stays
+for models that genuinely have no source (§7).
 
 Taken together, nothing is lost: on the reuse path today neither route works, one in
 silence and one with a message describing a different model.
