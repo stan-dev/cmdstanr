@@ -1383,7 +1383,9 @@ describes a *different* binary — the exact pairing §4 exists to prevent. The 
 stays and must keep not erroring (§1). Retargeting is done by constructing a new
 object, which is the same answer §8 gives to the rest of the mutable-configuration
 surface. Its only call site is `test-model-compile.R:1535`, in a test built on
-`compile = FALSE`, so it retires with that. Folded into #1253.
+`compile = FALSE`, so that call retires with it. The test covers a guard that stays,
+since `dir` still resolves onto a directory, so it is rewritten rather than dropped.
+Folded into #1253.
 
 Cost is **~8.8 ms**: source hashes plus the executable hash, which dominates — a
 figure counting only the sources comes out at 0.3 ms and understates it. If
