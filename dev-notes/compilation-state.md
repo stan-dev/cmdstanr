@@ -1161,10 +1161,9 @@ nothing rebuilds. Rebuilding would be wrong twice over: the build's own stanc ca
 fails at the same point, and a program stanc rejects is the user's to fix. Nor is it
 a third engine state. The engine sees resolved hashes or a statement that resolution
 was skipped (above), and a failed resolution is neither, because it never reaches
-the engine. #1237 asked that an unresolvable include fail toward rebuilding; raising
-stanc's message is that rule with the doomed compile removed. Tests: a constructor
-and one guarded method, each against a program whose include is missing, both
-erroring with stanc's message and neither rebuilding.
+the engine. Tests: a constructor and one guarded method, each against a program
+whose include is missing, both erroring with stanc's message and neither
+rebuilding.
 
 ### What the error says
 
@@ -2445,7 +2444,7 @@ so §10's note that `stan_build_info()` is still a placeholder covers both.
 |---|---|---|
 | `provenance` | always | `status` and `reason`, both always present |
 | `reported_features` | always | one entry per feature: four logical flags, each `TRUE`, `FALSE` or `NA`, and `stan_version`, a character scalar or `NA_character_` |
-| `format_version` | `unsupported_format` only (below) | which contract wrote it: the fields it carries and how they read |
+| `format_version` | `unsupported_format` only (below) | the format the record was written in |
 | `request` | provenance available | the recorded build configuration of §1 |
 | `dependencies` | provenance available | every file whose content the build consumed |
 | `builder` | provenance available | installation path, version, `exists` |
