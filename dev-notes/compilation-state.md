@@ -104,11 +104,9 @@ That distinction is load-bearing because these are genuinely different facts:
 - **`known_untracked_dependencies`** — dependencies we can see exist but cannot
   resolve (§6). Named for what it is: an empty list means nothing was *detected*,
   never that the record is complete.
-- **`format_version`** — which fields the record carries and how they read, not the
-  JSON shape. A version this cmdstanr does not support, in either direction, is
-  reported, and carries the outcome every artifact-side reason carries (§6). 1.0
-  reads one format, and what a later release can still read
-  is that pair of versions' question (§4).
+- **`format_version`** — which format the record is written in. 1.0 reads exactly
+  the format it writes; any other version is reported and carries the outcome every
+  artifact-side reason carries (§6).
 
 `reported_features` is **tri-state and best-effort**: each feature is *known
 enabled*, *known disabled*, or *unknown*. `<exe> info` reports what CmdStan chooses
@@ -759,7 +757,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `builder` | yes | yes | normalized installation path and version |
 | `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved: `make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB`, run with the build's own `cpp_options` so a `TBB_LIB` supplied on the call is seen (`get_cmdstan_flags()` runs flag-free and would miss it), with a relative `TBB_LIB` resolved against the directory `make` ran in. Recorded because Windows needs it at launch and only the build can determine it; the launch rule that consumes it lives in the TBB launch issue, and no verdict here turns on it. Not compared: every tracked route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash, and the untracked ones (§6) move this field with nothing else moving |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
-| `format_version` | yes | **no** | not a comparison: this call computes no format version to compare against. The reader either understands the record's version or does not, which is an artifact-side reason like unreadable JSON, and carries that class's outcome in either direction (§6). Equality would be the wrong test — a release that widens the readable set still reads records it no longer writes |
+| `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
 Three consequences, each of which has been got wrong at least once:
 
@@ -1152,100 +1150,26 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
   normalisation here affects the verdict rather than only the record's readability.
 - **`NULL` / `FALSE`** — preserve the explicit empty-assignment meaning (§3).
 
-### Format versions, in both directions
+### Format versions
 
-A record whose `format_version` this cmdstanr does not read **is an artifact-side
-reason, and says so**, exactly like an executable that predates records — a rebuild
-where there is a source to rebuild from and a loss of provenance where there is not,
-which is §6's split and not this rule's. It is not refused and does not require
-`force_recompile`. **1.0 reads exactly the format it writes and nothing else**, so in
-practice any mismatch is one of those reasons; a later release may widen the set, which
-changes what is readable without changing this rule.
-
-The number is deliberately not written down here. Stage 3 starts writing records, so a
-literal in this section would have to be kept in step with a value only the merging
-pull request knows — the two-owner failure that §9 exists to avoid. Nothing later in
-the staged rollout moves it: the one bump once scheduled there was for
-`--filename-in-msg`, which the rule above no longer counts as a reason to bump.
-
-**`format_version` says which fields a record carries and how they read**, not what
-the JSON looks like. Whether a later cmdstanr can still read a record it did not write
-is then a question about that pair of versions rather than a property of the scheme,
-and 1.0 has no older format to face (above), so what this document owes is the test a
-later release applies rather than a verdict of its own.
-
-**A record's meaning cannot change without its version changing.** A field the reader
-requires, what a recorded field means, or how a recorded value is computed for
-comparison — alter one of those and records written earlier no longer say what a
-reader of the new version would take them to say, so the change arrives with a new
-`format_version`. Whether the older format is then still readable is the next
-question, and the answer is not automatically yes.
-
-**An older record is read while it justifies reuse, and refused when it does not.**
-Two things stop a record justifying reuse, and the paragraphs below take them in turn:
-its fields stop meaning what they said, or the verdict stops following from what it
-carries. What that decides is the *readable set*, so a refusal here reports
-`unsupported_format` and takes the artifact-side outcome (§6) — it is not a record
-that failed its field checks, and §6 keeps the two diagnoses apart.
-
-The second is the one that gets assumed away. A field an older record never carried is
-not compared for it, and not comparing is indistinguishable from agreeing, since
-either way the verdict is that nothing compared differs. So a record that cannot say
-whether its binary still matches the inputs this cmdstanr checks does not justify
-reusing that binary, however much of what it does carry still matches.
-
-The first is plainer, and hashing is the case §8 already leaves open: the algorithm is
-free to change, so across the bump that obliges, hashes computed under the two rules
-never match, and what is left is not a disagreement about the model but a comparison
-that cannot be run. It is worth pricing correctly, because the obvious argument for the
-bump is wrong. Without one the model rebuilds, the rebuild writes a record under the
-new algorithm, and every construction after that matches — one rebuild per model
-rather than an endless loop, and repeated only for someone alternating cmdstanr
-versions (below). What the bump buys is the diagnosis. Unbumped, the mismatch surfaces
-as "the Stan program changed" against a file nobody touched, and one `format_version`
-ends up naming two incompatible meanings for the same field.
-
-Canonicalization is not a change of that kind, which is worth saying because it looks
-like one. The canonical form of an option *is* what the compiler receives (above), so a
-rules change makes an old record's value differ from a freshly computed one and you get
-a spurious rebuild, which is the safe direction. Getting a false *match* would need the
-canonical form to stop being the compiler's input and become a token standing for it,
-which is the semantic-equivalence canonicalization this section already declines.
-
-**Bumping is not how a change reaches an executable that already exists.** The
-*automatic* rebuild follows from a record this cmdstanr cannot use, and never from
-wanting a binary to be different — asking for that is what `force_recompile = TRUE` is
-for (§5), and the line between the two is the one the injection rule above draws. A
-record that still answers whether the binary matches its inputs is used and the binary
-is left alone, however differently a newer cmdstanr would have built it. A record that
-can no longer answer that is refused.
-
-Both directions occur, and only one is obvious. Forward is familiar: a newer
-cmdstanr wrote something this one cannot interpret. Backward arises because a
-downgrade *regenerates* old-format records — v3 writes format 3, the user reverts to
-v2 which rebuilds and writes format 2, and v3 then meets a format-2 record it may no
-longer read.
-
-Refusing to replace a forward-version record was considered and rejected. The record
-is entirely *derived* data and every field regenerates on a rebuild, so refusing
-protects nothing while costing one recompile (measured above) — paid with an error
-in the one situation where the rule actually arises. That situation is also not the
-one it was written for: passing an executable between machines barely works, since the
-binary links TBB at an absolute path fixed on the machine that built it (§6). The
-realistic case is **one person on one machine downgrading cmdstanr**, where the
-installation, `make/local` and every path are unchanged and nothing else would
-trigger.
-
-The real hazard was never the record. It is that the executable may have been built
-under option semantics this version does not implement, so rebuilding can produce a
-*differently built* binary. That is an argument for saying loudly what happened, not
-for refusing:
+**1.0 reads exactly the format it writes.** A record carrying any other
+`format_version` is an artifact-side reason, and says so, exactly like an executable
+that predates records: a rebuild where there is a source to rebuild from and a loss
+of provenance where there is not, which is §6's split and not this rule's. It is not
+refused and does not require `force_recompile`. The reason is reported as
+`unsupported_format`, kept distinct from an unreadable record (§6), and the message
+says which way the mismatch runs, since a downgrade regenerates old-format records
+and a later cmdstanr can then meet one it no longer reads:
 
 ```
 #> Recompiling: this model's build record was written by a newer version of
 #>   cmdstanr (format 3; this version understands 2), so how the existing
 #>   executable was built cannot be verified.
 ```
+
+The number is deliberately not written down here. Stage 3 starts writing records, so
+a literal in this section would have to be kept in step with a value only the merging
+pull request knows (§9).
 
 **Executable-only models are the exception**, because §7 forbids rebuilding them.
 The record is not replaced there: an unsupported version joins missing, unreadable and
@@ -2296,8 +2220,8 @@ rebuild**, there being no source to build from. The second of them is the delibe
 exception to §5's requirement that a model have a valid record before running. The
 first has one.
 
-**That exception is also who pays when a `format_version` stops being readable** (§4),
-which is worth pricing before treating a bump as routine. An ordinary model reads a
+**That exception is also who pays when a `format_version` is not readable** (§4).
+An ordinary model reads a
 version it does not support, rebuilds once, and is current again. An adopted one
 cannot rebuild, so it drops to the unprovenanced path above and stays there until
 whoever produced the executable rebuilds it — for a package that compiles at install
@@ -2755,9 +2679,9 @@ above do not have. The other three reasons carry no version, and
 `record_unreadable` is the one worth saying out loud: an unreadable record is withheld
 whole (§4), so its version goes unreported even where it parsed perfectly well.
 
-**`unsupported_format` is not evidence that cmdstanr is old.** §4's format-version
-rule runs in both directions, and a downgrade regenerates old-format records, so the
-record may be either side of the readable set. The printer reads the direction off the
+**`unsupported_format` is not evidence that cmdstanr is old.** §4's rule refuses any
+version but its own, and a downgrade regenerates old-format records, so the record
+may be newer or older than what this cmdstanr writes. The printer reads the direction off the
 reported `format_version` and says the corresponding thing: upgrade cmdstanr for a
 newer record, rebuild or obtain a newly produced artifact for an older one.
 
