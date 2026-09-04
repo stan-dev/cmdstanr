@@ -1345,11 +1345,11 @@ toward none of them.
 
 The completeness claim is enforceable rather than merely asserted, and should be
 enforced: `CmdStanModel$public_methods` and `$public_fields` enumerate the live surface,
-so a test can compare it against the twenty-seven non-removed rows and fail on any member
-that appears without a classification, asserting `$compile()`'s absence separately rather
-than as an exception to the comparison. Otherwise this table decays the first time someone
-adds a method, which is the failure the `$initialize()` and `$clone()` entries below
-already guard against by hand.
+so a test can compare it against the twenty-seven non-removed method rows and the one
+field, and fail on any member that appears without a classification, asserting
+`$compile()`'s absence separately rather than as an exception to the comparison.
+Otherwise this table decays the first time someone adds a method, which is the failure
+the `$initialize()` and `$clone()` entries below already guard against by hand.
 
 **Every member is exercised, not one per class.** A representative passing proves nothing
 about the other nine guarded methods, each of which can be classified correctly here and
@@ -1894,8 +1894,8 @@ list below.
 
 **An executable is launched with the TBB it was built against, not the session's.**
 That follows from the mechanism above, and the two platforms fail in opposite
-directions, so it takes one rule to cover both. Both branches above bake an absolute
-`-rpath` into the binary (`compiler_flags:303`, `:329`) and both guard it out on
+directions, so it takes one rule to cover both. Both branches above bake an `-rpath`
+into the binary (`compiler_flags:303`, `:329`) and both guard it out on
 Windows (`:302`, `:328`). Measured on a model built with the default layout, `otool`
 reports a single `LC_RPATH` into the builder's `stan/lib/stan_math/lib/tbb`, with no
 fallback entry. So on macOS and Linux `tbb_path()` returns `NULL`
