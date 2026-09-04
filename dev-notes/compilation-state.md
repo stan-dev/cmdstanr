@@ -781,48 +781,16 @@ injection would reintroduce path sensitivity, a user-typed string is a fixed val
 any other. It is not load-bearing: the rule does not depend on it existing, and a future
 rejection that removes it takes nothing with it.
 
-**`--name` had the same shape and now has its own compared row**, because leaving it
-inside the injected field was unsound. `R/model.R:835` derives it from the file name, so
-move a source, its executable and its record together under a new name and nothing
-compared changes: content hash, artifact hash and builder all match, and the supplied
-options are empty on both sides. No rebuild. The
-object's `$model_name()` then reads `survival` while the binary goes on stamping
-`bernoulli_model` into every CSV it writes. Unlike `--filename-in-msg`, which describes a
-build that really happened, this is two live answers to one question, and both are
-visible inside R, since `R/csv.R:873` maps the CSV header onto
-`fit$metadata()$model_name`.
-
-**Comparing the name does not avoid a CSV boundary; it decides where the boundary falls.**
-Uncompared, the binary goes on stamping `bernoulli_model`, so runs from either side of
-the rename still combine — until some later unrelated rebuild makes the stamp
-`survival_model`, and `check_csv_metadata_matches()` (`:948-951`) rejects the mixture as
-"not generated with the same model". A CmdStan upgrade is enough to trigger that, and
-nothing about upgrading CmdStan explains it. Compared, the rename is the rebuild and the
-same rejection lands on the act that caused it. The whole chain reproduces in released
-cmdstanr, whose mtime check (`R/model.R:733`) a coordinated rename passes untouched.
-
-**The recorded value is what stanc is passed, not what stanc compiles.** A name that is
-not a legal C++ identifier is mangled, and not by a rule worth reimplementing: measured
-identical at 2.35, 2.36 and 2.39, `--name=my-model_model` compiles to `my_model_model`,
-while `my.model_model` becomes `myx46model_model` and `my+model_model` becomes
-`myx43model_model` — hex escapes rather than substitutions. Comparing the raw value costs
-two things and is still right. A punctuation-only rename rebuilds although the compiled
-name is unchanged, and even there the artifact differs: the raw string is embedded
-verbatim, and CmdStan writes it onto a `stancflags` line in each sampler output CSV
-(`command.hpp:294` through `write_config.hpp`) that cmdstanr does not parse. Diagnostic
-CSVs get the compiled name and not that line, their writers being given `write_model`
-without `write_config` (`command.hpp:295-297`).
-Second, `$model_name()` still will not match the compiled name for a file stanc mangles,
-which is true today and is not something this comparison sets out to fix. The alternative
-is reproducing a compiler's internal mangling in R, where drift fails silently in the
-direction that does not rebuild.
-
-Two limits belong here rather than waiting to be rediscovered. The rename has to carry
-the executable and the record with it, since otherwise cmdstanr looks for an executable
-that is not there and builds one. And it does nothing for executable-only models, which
-§7 forbids from rebuilding at all. So the row covers one route rather than a class of
-them, and what earns it a place is the criterion rather than how often it fires:
-dropping it would put an exception inside the rule that decides every other row.
+**`--name` is compared as its own row because the build bakes it into the binary and
+nothing else compared pins it down.** Rename a source, its executable and its record
+together and every content hash still matches, while the binary goes on stamping the
+old name into every CSV it writes (`R/csv.R:873` maps that onto
+`fit$metadata()$model_name`), so the rename has to be a rebuild. The recorded value is
+the raw string stanc was passed, not the identifier stanc mangles it to (measured on
+2.35 through 2.39, `my-model_model` compiles to `my_model_model` and `my.model_model`
+to `myx46model_model`), since reproducing a compiler's mangling in R would drift in
+the direction that does not rebuild. It does nothing for executable-only models, which
+§7 forbids from rebuilding.
 
 The two fields are built side by side rather than one recovered from the other:
 `R/model.R:673`, `:677`, `:693` and `:835` currently write into a single
