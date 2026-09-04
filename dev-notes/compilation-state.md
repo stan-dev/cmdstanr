@@ -1621,28 +1621,6 @@ and costs the guarantee above. The cost is a `make/local` set for command-line
 CmdStan use now erroring even for programs with no `#include` — a configuration
 that is already broken for every program that has one.
 
-**`USER_HEADER` reaching the build from outside cmdstanr is refused.** §3 gives the
-header one channel and closes every route that runs through a cmdstanr argument: both
-`cpp_options` spellings, raw assignments, and the Make flags that set a variable
-without looking like one. What is left runs through no cmdstanr argument at all. GNU
-Make imports the environment without `-e`, so with no `user_header` supplied, a
-`USER_HEADER` left in a shell profile reaches the build and cmdstanr compiles a header
-that appears in no `dependencies` entry — edit it afterwards and every compared
-field is unchanged. Ask Make for the effective value and refuse a non-empty one,
-naming the path and the argument that replaces it. The raw `make -s print-USER_HEADER`
-value is what this wants: `get_cmdstan_flags()` post-processes for *flags*, splitting
-on spaces and rewriting `-I` prefixes (`R/utils.R:901-905`), which is wrong for a
-path.
-
-**One branch, not a comparison, and the query must not carry the build's own flags.**
-A supplied `user_header` reaches Make as a command-line assignment
-(`R/cpp_opts.R:210`), which beats both the environment and `make/local`, so a header
-that was supplied has already won and there is nothing to compare it against; only
-the unsupplied case is exposed. The same fact fixes how the query runs. Carry the
-build's flags and it returns cmdstanr's own assignment, so the check can never fire.
-§4's `tbb_dir` query has the opposite requirement — it asks what the build resolved,
-not what reached it from outside — and an implementation that unifies them breaks one.
-
 **Re-resolution uses the include paths supplied on the current call, not the
 recorded ones.** This is the single easiest thing in this document to get backwards,
 and backwards it is inert. Resolving with the *recorded* paths can only ever confirm
@@ -2232,8 +2210,9 @@ compilation driver, not merely reading a file that is already there.
   environment appears in neither: the four flags `<exe> info` reports land in
   `reported_features`, which describes the binary and is never a trigger (§4), and
   `TBB_BIN` and `TBB_LIB` move `tbb_dir`, which is recorded so the launch finds the
-  right directory and is not compared. `USER_HEADER` is the one exception, refused
-  at build time (§6). For the rest, `force_recompile = TRUE` is the remedy.
+  right directory and is not compared. A `USER_HEADER` set there compiles a header
+  that appears in no `dependencies` entry. `force_recompile = TRUE` is the remedy,
+  as for the rest of this list.
 - **CmdStan or Stan Math modified in place.** A patch applied, or a checkout
   updated, at the same path and version. The version is unchanged, `make/local` is
   unchanged, and nothing else is recorded, so this is invisible and needs
@@ -3441,8 +3420,8 @@ the natural place to reach for and costs the purity §9 builds the engine on.
 `get_cmdstan_flags()` (`R/utils.R:862`) runs `make -s print-X` with no extra
 arguments, so it sees `make/local` and everything `make/local` includes, but not a
 `TBB_LIB` arriving through `cpp_options` on the same build. That is right for
-§6's `STANCFLAGS` check and its `USER_HEADER` refusal, since each wants only what
-reached the build from outside cmdstanr. It is wrong here: reusing it
+§6's `STANCFLAGS` check, which wants only what reached the build from outside
+cmdstanr. It is wrong here: reusing it
 unchanged records the default directory for exactly the configuration the rule exists
 to handle.
 `make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB` returns both in one call,
