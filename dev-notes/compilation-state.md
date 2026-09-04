@@ -759,7 +759,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
 | `artifact` | yes | yes | hash of the executable this record describes |
 | `builder` | yes | yes | normalized installation path and version |
-| `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved (§6). The one row recorded for neither provenance nor comparison but because Windows needs it at launch and only the build can determine it. Not compared: every *tracked* route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash. §6 names the untracked routes, and a change arriving by one of those moves this field with nothing else moving |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved (§6). Recorded neither for provenance nor for comparison, but because Windows needs it at launch and only the build can determine it. Not compared: every *tracked* route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash. §6 names the untracked routes, and a change arriving by one of those moves this field with nothing else moving |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: this call computes no format version to compare against. The reader either understands the record's version or does not, which is an artifact-side reason like unreadable JSON, and carries that class's outcome in either direction (§6). Equality would be the wrong test — a release that widens the readable set still reads records it no longer writes |
 
@@ -1339,8 +1339,9 @@ table. `CmdStanModel` carries **twenty-seven public methods and one public field
 and **twenty-seven** at 1.0 — §3 adds `$user_header()`, §8 removes `$compile()` — while
 the table below has **twenty-eight** method rows, being the union of both. It classifies
 the removed member rather than omitting it, so no count is wrong; they answer different
-questions and the test below depends on which one it asks. `cmdstan_model()` is listed as
-the builder but is not itself a member, so it counts toward none of them.
+questions and the test below depends on which one it asks. The two build entry points
+are listed for their behaviour and neither is a member of the class, so they count
+toward none of them.
 
 The completeness claim is enforceable rather than merely asserted, and should be
 enforced: `CmdStanModel$public_methods` and `$public_fields` enumerate the live surface,
