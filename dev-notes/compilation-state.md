@@ -742,7 +742,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
 | `artifact` | yes | yes | hash of the executable this record describes |
 | `builder` | yes | yes | normalized installation path and version |
-| `tbb_dir` | yes | **no** | the TBB directory the build resolved (§6). The one row recorded for neither provenance nor comparison but because Windows needs it at launch and only the build can determine it. Not compared: everything that moves it is compared already, through `cpp_options_supplied` or `make/local`'s hash |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved (§6). The one row recorded for neither provenance nor comparison but because Windows needs it at launch and only the build can determine it. Not compared: every *tracked* route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash. §6 names the untracked routes, and a change arriving by one of those moves this field with nothing else moving |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: this call computes no format version to compare against. The reader either understands the record's version or does not, which is an artifact-side reason like unreadable JSON, and carries that class's outcome in either direction (§6). Equality would be the wrong test — a release that widens the readable set still reads records it no longer writes |
 
@@ -1850,6 +1850,18 @@ a runtime dependency of the binary in the default case and in no other, which is
 the rule below reports a missing builder rather than treating it as fatal, and why the
 directory is recorded rather than derived.
 
+**`tbb_dir` is recorded absolute, and two routes to the TBB are untracked.** The
+makefile absolutizes `TBB_BIN` and uses `TBB_LIB` literally (`compiler_flags:303`):
+`make -s TBB_LIB=relative-tbb print-TBB_LIB` returns `relative-tbb` unchanged, so the
+query's answer is resolved against the directory `make` ran in before being recorded.
+A directory recorded relative to something is one the launch cannot use. Untracked are
+a `TBB_LIB` or `TBB_BIN` arriving from the environment (below), and a direct
+`LDFLAGS_TBB` override, which wins because `:306` assigns it with `?=`, while
+`TBB_LIB` reads empty and `TBB_BIN_ABSOLUTE_PATH` stays at its default, so recovering
+the directory from it would mean parsing arbitrary linker flags. Both are low-level
+configuration, out of scope for 1.0 on the same terms as the rest of the untracked
+list below.
+
 **An executable is launched with the TBB it was built against, not the session's.**
 That follows from the mechanism above, and the two platforms fail in opposite
 directions, so it takes one rule to cover both. Both branches above bake an absolute
@@ -1876,7 +1888,7 @@ the package whose command is the model binary.
 
 They do not all consult a record for it. `run_info_cli()` is reached only when there
 is no usable one, since §7 adopts a usable record *without* launching the binary, so
-that call takes the fallback by construction rather than by accident — except
+that call takes the table's last row by construction rather than by accident — except
 straight after a build, where the directory that build resolved is in hand and has not
 been written yet.
 
@@ -1889,14 +1901,32 @@ previous path `on.exit`, so by the time the user samples the session points at a
 installation.
 
 So **cmdstanr supplies the TBB directory the build itself resolved**, recorded at
-build time (§4), falling back to the selected installation's own where the record
-cannot supply a directory to trust — there is no usable record, or the recorded
-directory is gone — rather than defaulting to it for every model. *Usable* is the
-operative word and not *present*: a record that does not hash-bind to this executable
-names the TBB of some other binary, which may be in perfect health and is still the
-wrong one. The four forms that fail are §6's, and they fail here for the same reason
-they fail there. `tbb_path()` already takes `dir` and `R/install.R:485` already calls
-it that way, so nothing is needed but passing it.
+build time (§4), rather than defaulting to the selected installation's for every
+model. What it supplies at each of the four sites is this table, and nowhere else:
+
+| the record in hand | what goes on `PATH` |
+| --- | --- |
+| usable, and the directory it names exists | that directory |
+| usable, and the directory it names is gone | nothing |
+| no usable record | the selected installation's own |
+
+*Usable* is the operative word and not *present*: a record that does not hash-bind to
+this executable names the TBB of some other binary, which may be in perfect health and
+is still the wrong one. The four forms that fail are §7's, and they fail here for the
+same reason they fail there.
+
+**A gone directory is not a reason to substitute another.** The table's middle row is
+the one that can undo the rule, since substituting the selected installation there is
+the derivation the paragraph below rejects, reached by a second route. For a
+default-layout build the recorded directory sits *inside* the builder tree, so gone
+and builder-gone are one event and the substitute is the 2.39 binary on 2.40's TBB
+above, which is the case this whole rule was written to stop. For a build that named
+its own TBB the substitute either lacks the library the binary imports, changing
+nothing, or supplies a different build of it under the same name, which loads.
+`withr::with_path()` prefixes (`R/run.R:657`), so it would also outrank a working TBB
+the user already has on `PATH`. Supplying nothing is not a new failure mode: it is
+what macOS and Linux do on every call today, and what it leaves behind is the launch
+error below, which is already written to cover a recorded TBB that is gone.
 
 **Deriving it from the builder path would be wrong, and not in an exotic case.**
 `<builder>/stan/lib/stan_math/lib/tbb` is the answer only for a build that left
@@ -1905,6 +1935,14 @@ would get that directory prepended to `PATH` *ahead* of the one their binary is 
 against, so the rule written to load the right TBB is what loads the wrong one.
 Recording is also the only answer that stays true: the value depends on `make/local` as
 it stood during that build, and a later derivation reads it as it stands now.
+
+**`tbb_path()` is not the helper for this.** Its `dir` means an installation *root*
+and it appends `stan/lib/stan_math/lib/tbb` (`R/run.R:1238-1247`), so a resolved
+`C:/opt/tbb/lib` comes back as `C:/opt/tbb/lib/stan/lib/stan_math/lib/tbb`, and
+`R/install.R:485`, `:510` and `:532` depend on the root meaning. The four launch sites
+take a second helper that accepts the recorded directory and holds the three rows
+above, including the Windows guard. Nine call sites keep `tbb_path()` untouched: the
+three above and the six bare ones that run a program out of the selected installation.
 
 **A missing builder is reported, and is not itself a rebuild trigger.** It is not the
 record going bad: the record parses, it hash-binds to this binary, and
@@ -1919,12 +1957,12 @@ failure below. With only an executable (§7) there is nothing to rebuild from at
 So the record is kept and reported in every case, and refusing it would break a
 working setup: a model built with `cpp_options = list(tbb_lib =, tbb_inc =)` against a
 system TBB has an rpath outside CmdStan entirely and runs with the builder tree
-deleted. On Windows it is the second case the fallback above covers, since putting a
-directory that is gone on `PATH` is worse than today's wrong-but-present one.
-`stan_build_info()` reports the builder with `exists = FALSE` — the treatment §7
-already gives recorded sources that are gone, for the same reason — and a launch
-failure becomes an error naming the recorded installation, with reinstalling it or
-rebuilding from source as the two remedies.
+deleted. On Windows it is the table's first row, not its second — recording the TBB
+separately is what makes a gone builder and a gone TBB two events, and that build's
+TBB is still there. `stan_build_info()` reports the builder with `exists = FALSE` —
+the treatment §7 already gives recorded sources that are gone, for the same reason
+— and a launch failure becomes an error naming the recorded installation, with
+reinstalling it or rebuilding from source as the two remedies.
 
 **A selected installation that is gone is its own error, checked where it is used.**
 `set_cmdstan_path()` checks the directory once and caches the path and version
@@ -1958,18 +1996,19 @@ is still there is a different question, and the one thing they cannot do without
 installation, no stanc.
 
 **It is not a precondition on holding a model.** An executable-only model (§7)
-neither builds nor re-resolves: it hydrates from its record or from `<exe> info`, runs
-against the TBB directory its record names (above), and `stan_build_info()` answers
-out of it. The source-only operations refuse an executable-only model for the missing
-source before any installation is reached (`R/model.R:1033`, `:1112`, `:1240`), which
-is §7's ordinary shape rather than a new exception. Requiring an installation that
-none of that touches would refuse exactly the packaged models §7 exists to admit. The
-selection does reach one of them — the Windows TBB fallback, for an executable with
-no usable record to name a builder — and there it is not a precheck that refuses.
-The `<exe> info` fallback runs as it always does, and a failure is reported as §7's
-adoption error rather than as a missing installation. Nor is it a third answer to the
-one question §5's assessment asks: checked before every use, it leaves no reachable
-state where an assessment begins and cannot finish for this reason.
+neither builds nor re-resolves: it hydrates from its record or from `<exe> info`, and
+the TBB it launches with comes from that record rather than the session (above), while
+`stan_build_info()` answers out of it. The source-only operations refuse an
+executable-only model for the missing source before any installation is reached
+(`R/model.R:1033`, `:1112`, `:1240`), which is §7's ordinary shape rather than a new
+exception. Requiring an installation that none of that touches would refuse exactly
+the packaged models §7 exists to admit. The selection does reach one of them — the
+Windows TBB fallback, for an executable with no usable record to name a builder —
+and there it is not a precheck that refuses. The `<exe> info` fallback runs as it
+always does, and a failure is reported as §7's adoption error rather than as a
+missing installation. Nor is it a third answer to the one question §5's assessment
+asks: checked before every use, it leaves no reachable state where an assessment
+begins and cannot finish for this reason.
 
 **Report every applicable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
@@ -2149,11 +2188,13 @@ compilation driver, not merely reading a file that is already there.
   `-e`, so any variable the call leaves unset can be set there and the build uses it.
   Measured on `USER_HEADER`, `STANCFLAGS`, `STAN_THREADS`, `STAN_OPENCL`, `TBB_BIN`
   and `TBB_LIB`. A command-line assignment wins, so this reaches only what cmdstanr
-  does not supply. Everything that can change the artifact is handled elsewhere:
-  `USER_HEADER` is refused (§6), `STANCFLAGS` is compared and the TBB pair lands in
-  `tbb_dir` (§4), and the four flags `<exe> info` reports are in `reported_features`
-  (§4). What is left untracked is `STAN_CPP_OPTIMS`, `INTEGRATED_OPENCL` and
-  `TBB_INTERFACE_NEW`, which set compiler and preprocessor flags rather than changing
+  does not supply. What can change the generated code is handled elsewhere:
+  `USER_HEADER` is refused (§6), `STANCFLAGS` is compared, and the four flags
+  `<exe> info` reports are in `reported_features` (§4). The rest is genuinely
+  untracked. `TBB_BIN` and `TBB_LIB` move `tbb_dir`, which is recorded and not
+  compared, so the launch gets the right directory (§6) while a change between
+  builds triggers no rebuild. `STAN_CPP_OPTIMS`, `INTEGRATED_OPENCL` and
+  `TBB_INTERFACE_NEW` set compiler and preprocessor flags rather than changing
   what code exists, so they belong with toolchain drift above.
 - **CmdStan or Stan Math modified in place.** A patch applied, or a checkout
   updated, at the same path and version. The version is unchanged, `make/local` is
@@ -3345,15 +3386,15 @@ assessment never mutates state, so the artifact hash an object expects is stored
 whoever rebuilt or verified, once the verdict is back. Doing it inside the engine is
 the natural place to reach for and costs the purity §9 builds the engine on.
 
-**The effective TBB directory must be asked for with the build's own flags, and is the
-only one of these queries that is.** `get_cmdstan_flags()` (`R/utils.R:862`) runs
-`make -s print-X` with no extra arguments, so it sees `make/local` and everything
-`make/local` includes, but not a `TBB_LIB` arriving through `cpp_options` on the same
-build. That is right for everything else built on this call — §6's `STANCFLAGS`
-check and its `USER_HEADER` refusal, and the `stanc_options_external` they share a
-value with (§4) — since each wants only what reached the build from outside
-cmdstanr. It is wrong here: reusing it unchanged records the default directory for
-exactly the configuration the rule exists to handle.
+**The `tbb_dir` query must carry the build's own flags, and is the only one that does.**
+`get_cmdstan_flags()` (`R/utils.R:862`) runs `make -s print-X` with no extra
+arguments, so it sees `make/local` and everything `make/local` includes, but not a
+`TBB_LIB` arriving through `cpp_options` on the same build. That is right for
+everything else built on this call — §6's `STANCFLAGS` check and its `USER_HEADER`
+refusal, and the `stanc_options_external` they share a value with (§4) — since each
+wants only what reached the build from outside cmdstanr. It is wrong here: reusing it
+unchanged records the default directory for exactly the configuration the rule exists
+to handle.
 `make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB` returns both in one call,
 measured at 0.29 s against a 2.39.0 tree, against a compile of 6.7 s or 13.8 s (§9).
 
