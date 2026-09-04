@@ -95,10 +95,7 @@ That distinction is load-bearing because these are genuinely different facts:
   be discovered afterward.
 - **`dependencies`** — the sources consumed, and enough about how they were
   resolved to re-resolve them. Identified by content; each also records the
-  `built_from` path it had at build time, which is provenance. That path is not
-  compared, with one deliberate exception — the user header, whose directory is an
-  input to a C++ include closure we cannot enumerate (§6). §4's table is the
-  authority on which fields are compared.
+  `built_from` path it had at build time (§4).
 - **`artifact`** — which executable this record describes, by hash (§4).
 - **`builder`** — which CmdStan installation produced it.
 - **`known_untracked_dependencies`** — dependencies we can see exist but cannot
@@ -1098,9 +1095,9 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
   recorded-value rule above describes. A spurious rebuild is the safe direction, and
   nothing in cmdstanr reorders a caller's list, so this one is reached only by a
   deliberate reorder.
-- **User-header paths** — normalise. This is the one path that is *also* compared,
-  because the C++ include closure beneath the header cannot be enumerated (§6), so
-  normalisation here affects the verdict rather than only the record's readability.
+- **User-header paths** — normalise. This is the one path that is *also* compared
+  (§6), so normalisation here affects the verdict rather than only the record's
+  readability.
 - **`NULL` / `FALSE`** — preserve the explicit empty-assignment meaning (§3).
 
 ### Format versions
@@ -1521,14 +1518,7 @@ would silently keep the `v1` binary, which is the same class of failure as the u
 header below.
 
 **Order matters on the current call, for the same reason.** Include paths control
-shadowing, so re-resolution must be given them in the order supplied. The recorded
-order is provenance (§4).
-
-**The user header's path *is* compared**, as one instance of a general rule:
-directories supplied to cmdstanr for C++ include resolution are compared as spellings,
-and nothing beneath them is tracked. Stated with its reasoning, and with the `-I`
-flags that are the rule's other instance, in "Identity for C++ include resolution"
-below.
+shadowing, so re-resolution must be given them in the order supplied.
 
 **An unsupported format version is among those artifact-side reasons** — it takes
 their outcome, with the reason stated (§4), whether the version is newer or older
@@ -1553,14 +1543,7 @@ compiler input, since `R/model.R:835` passes it to stanc as `--name` and §3 mak
 file name the only way to set that flag. So moving a project costs nothing while renaming
 `bernoulli.stan` to `survival.stan` costs a compile, for the same reason a changed
 `stanc_options` entry does. §4's `request.stanc_name` row carries the argument. The user
-header is the one dependency whose directory *is* compared, for an unrelated reason
-given below, so neither statement is the general rule about paths.
-
-The record still stores the absolute path each dependency had **at build time**, as
-`built_from`. That field is provenance, not identity: it records where the artifact
-was actually built, and is never rewritten. Its immutability needs no mechanism, since
-records are replaced whole on every build (§4). It is not compared either, with the
-single exception of the user header below.
+header's directory is the exception, for the reason given below.
 
 **Path-and-content identity is rejected, and it is the closest call here.** The
 argument for it is real: stanc compiles absolute source paths into the generated
@@ -1973,13 +1956,11 @@ compilation driver, not merely reading a file that is already there.
   `-e`, so any variable the call leaves unset can be set there and the build uses it.
   Measured on `USER_HEADER`, `STANCFLAGS`, `STAN_THREADS`, `STAN_OPENCL`, `TBB_BIN`
   and `TBB_LIB`. A command-line assignment wins, so this reaches only what cmdstanr
-  does not supply. None of it is compared. The record holds what the caller passed
-  and what the built binary reports, and a variable that arrived from the
-  environment appears in neither: the four flags `<exe> info` reports land in
-  `reported_features`, which describes the binary and is never a trigger (§4), and
-  `TBB_BIN` and `TBB_LIB` move `tbb_dir`, which is recorded so the launch finds the
-  right directory and is not compared. A `USER_HEADER` set there compiles a header
-  that appears in no `dependencies` entry. `force_recompile = TRUE` is the remedy,
+  does not supply. None of it is compared: a variable that arrived from the
+  environment appears in no compared field. The four flags `<exe> info` reports land
+  in `reported_features`, `TBB_BIN` and `TBB_LIB` move `tbb_dir`, and §4's table says
+  neither is a trigger. A `USER_HEADER` set there compiles a header that appears in
+  no `dependencies` entry. `force_recompile = TRUE` is the remedy,
   as for the rest of this list.
 - **CmdStan or Stan Math modified in place.** A patch applied, or a checkout
   updated, at the same path and version. The version is unchanged, `make/local` is
@@ -2501,9 +2482,8 @@ another record's same field. So do `stanc_options_injected` and `stanc_name`, wh
 say how cmdstanr assembled the stanc command line rather than what was asked of it.
 `tbb_dir` is out on the same test and was already absent here; the record keeps it
 because Windows needs it at launch (§4). `request` keeps `include_paths` for
-diagnosis alone. It is not compared (§4), and re-resolution runs with the paths in
-force for the call rather than the recorded ones, so no verdict turns on it — but a
-caller debugging an include has no other way to see where the build searched.
+diagnosis alone: a caller debugging an include has no other way to see where the
+build searched.
 
 **The nested names are settled here rather than by whoever implements it**, because a
 test for the public shape cannot be written from a list of seven top-level fields.
@@ -2902,10 +2882,9 @@ unconditionally with no version guard.
 **Precedence is settled, not left to implementation.** Absent, cmdstanr injects the
 real source path. Supplied by the caller in `stanc_options`, that value wins
 untouched — existing cmdstanr already accepts it there, so overriding it would break
-§2's rule that supplied options apply, and would do so silently. The injected value
-is recorded and not compared; a caller-supplied one is compared like anything else
-the user puts in `stanc_options` (§4). A user-typed value is a fixed string, so it
-introduces no path sensitivity.
+§2's rule that supplied options apply, and would do so silently. Which list the
+value lands in, and so whether it is compared, is §4's. A user-typed value is a
+fixed string, so it introduces no path sensitivity.
 
 **Only the two build entry points inject it.** `check_syntax_stan_file()`,
 `format_stan_file()` and `stan_variables()` run stanc against the real file already —
