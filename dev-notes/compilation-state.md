@@ -755,7 +755,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
 | `artifact` | yes | yes | hash of the executable this record describes |
 | `builder` | yes | yes | normalized installation path and version |
-| `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved: `make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB`, run with the build's own `cpp_options` so a `TBB_LIB` supplied on the call is seen (`get_cmdstan_flags()` runs flag-free and would miss it), with a relative `TBB_LIB` resolved against the directory `make` ran in. Recorded because Windows needs it at launch and only the build can determine it; the launch rule that consumes it lives in the TBB launch issue, and no verdict here turns on it. Not compared: every tracked route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash, and the untracked ones (§6) move this field with nothing else moving |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved: `make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB`, run with the build's own `cpp_options` so a `TBB_LIB` supplied on the call is seen (`get_cmdstan_flags()` runs flag-free and would miss it), with a relative `TBB_LIB` resolved against the directory `make` ran in. Recorded because Windows needs it at launch and only the build can determine it; the launch rule that consumes it is #1261's, and no verdict here turns on it. Not compared: every tracked route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash, and the untracked ones (§6) move this field with nothing else moving |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
@@ -1753,7 +1753,7 @@ one.** On macOS and Linux the rpath settles it. On Windows there is no rpath and
 cmdstanr supplies the directory on `PATH`, today the selected installation's rather
 than the builder's (`R/run.R:1238-1247`), which is wrong as soon as the two differ.
 The fix reads `tbb_dir` from the record at the sites that launch the model binary and
-lives in the TBB launch issue. It lands after Stage 3, needs no format change because
+is #1261. It lands after Stage 3, needs no format change because
 the field is already recorded, and changes no verdict here.
 
 **A missing builder is reported, and is not itself a rebuild trigger.** It is not the
@@ -2039,7 +2039,7 @@ shared as a zip and unpacked from R arrives in it. What has to change is the fai
 text: today a lost bit reaches `cannot start processx process './bern' (system error
 13, Permission denied)`, the executable's basename in a relative path and an errno.
 #1246's error is the answer, and it belongs at every site that launches the model
-binary (the TBB launch issue enumerates the four), not only the adoption fallback its
+binary (#1261 enumerates the four), not only the adoption fallback its
 own report covers. It names the executable, and for a source-backed model
 says that `force_recompile = TRUE` rebuilds it; with only an executable (§7) there is
 nothing to rebuild and it says so instead.
@@ -3205,8 +3205,8 @@ reports the installed CmdStan, not the one that built the executable — caused 
 `R/model.R:318`, not `dry_run`). Small, user-visible, and the natural work to pick
 up while Stage 0 is in review.
 
-The TBB launch issue (launch the model executable with the TBB its build resolved)
-is gated only on Stage 3 having written `tbb_dir`, and lands any time after it.
+**#1261** (launch the model executable with the TBB its build resolved) is gated only
+on Stage 3 having written `tbb_dir`, and lands any time after it.
 
 ---
 
