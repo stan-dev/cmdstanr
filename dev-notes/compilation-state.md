@@ -21,9 +21,8 @@ settles them.
 
 What this note adds beyond the contracts themselves is the part no issue can carry:
 why they are what they are, why the work is ordered this way, and which tempting
-alternatives were rejected. Those rejected-alternative passages are kept
-deliberately. They are longer than a summary would be, and they are what stops the
-same rejected idea being proposed again each round.
+alternatives were rejected. The appendix lists the rejected alternatives one line
+each, so the same idea is not proposed again.
 
 The work is tracked in #1238 (the record), #1255 (rebuild decisions), #1256
 (removing deferred compilation), #1257 (untracked dependencies), #1237 (includes),
@@ -61,6 +60,7 @@ applied internally.
 | §8 | Removing deferred compilation, the standalone functions that replace it, and the public result `stan_build_info()` returns |
 | §9 | Why the work is ordered as it is, and why an install-time build is adopted executable-only. **#1258 holds the work list itself** |
 | §10 | Traps for whoever implements this |
+| Appendix | Rejected alternatives, one line each |
 
 **Two things worth knowing before reading any of it.** Options are supplied on every
 build call and never accumulate on the object (§2). And a model either has a current
@@ -276,18 +276,12 @@ durable configuration of its own.
 > Every call that builds specifies the configuration it wants. Omitting an option
 > means you are not asking for it.
 
-**Persistent options were proposed and rejected (#1248).** Recorded here because it
-is the most tempting alternative in this design and will be proposed again. The
-case for it was not convenience: once cmdstanr rebuilds on its own initiative it
-has to build with *something*, and under one-shot semantics the previous compile
-consumed the options, so an automatic rebuild would silently drop the user's
-threading.
-
-That is answered by removing the premise rather than by persisting. An unrequested
-rebuild never replays stored configuration — the constructor builds from the
-request in front of it, and anything that would run a stale executable errors
-instead (§5). There is no point at which cmdstanr needs configuration it was not
-just given.
+**An automatic rebuild never replays stored configuration.** The constructor builds
+from the request in front of it, and anything that would run a stale executable
+errors instead (§5), so there is no point at which cmdstanr needs configuration it
+was not just given. That is what closes the case for persistent options (#1248,
+appendix): the previous compile consumed its options, and nothing has to remember
+them for a rebuild that never happens on its own.
 
 `cmdstan_model()` **ensures a current compiled executable** when given a Stan file
 — it reuses one that is up to date and builds when it is not; it does not compile
@@ -295,11 +289,8 @@ unconditionally. There is no `compile = FALSE` (§8), and **`$compile()` is remo
 is gone it has no unique public purpose, and `cmdstan_model(file,
 force_recompile = TRUE, ...)` covers every remaining use.
 
-Removing it rather than narrowing it also avoids a trust problem. A `$compile()` that
-rebuilds "as recorded" has to replay build arguments from a file, which means it needs
-a strictly validated record schema before it can be safe. Nothing replaces it
-internally either: the assessment never rebuilds (§5), and constructor compilation
-uses the explicit current request.
+Nothing replaces it internally either: the assessment never rebuilds (§5), and
+constructor compilation uses the explicit current request.
 
 Nothing structural blocks removal: fits do not hold model references
 (`R/fit.R:20-26` copies the model-methods environment rather than pointing at the
@@ -597,13 +588,11 @@ make 'FOO+=x'   'FOO:=y'    -> FOO=[y]
 make 'FOO=a'    'FOO=b'     -> FOO=[b]
 ```
 
-**So raw assignment-shaped entries are rejected, not reclassified.** A previous
-draft of this section said `list("FOO+=x")` and `list(foo = "x")` "must classify
-identically", reasoning from the single-assignment collapse alone. That is false
-whenever a second assignment to the same variable exists, and supporting these
-correctly would mean preserving and interpreting an ordered assignment program —
-real complexity for no user benefit. #1250 already specifies the rejection; this
-section was the stale half.
+**So raw assignment-shaped entries are rejected, not reclassified.** Treating
+`list("FOO+=x")` as `list(foo = "x")` is wrong whenever a second assignment to the
+same variable exists, and supporting these correctly would mean preserving and
+interpreting an ordered assignment program — real complexity for no user benefit.
+#1250 specifies the rejection.
 
 **Rejection is what makes §4's canonicalization sound.** With only named entries
 reachable, only `=` is ever emitted, so "last assignment wins" is correct. The two
@@ -633,8 +622,8 @@ named entries already emit `NAME=value` (`R/cpp_opts.R:141`), so the migration i
 spelling change and the error can name the form to use.
 
 **Make's own flags are rejected as well, so nothing unnamed reaches the build.**
-`-j4`, `-f other.mk` and `--eval=...` are not assignments, and an earlier draft kept
-them as an opaque class preserved in order. They cannot be kept: `-f` sets any
+`-j4`, `-f other.mk` and `--eval=...` are not assignments, and keeping them as an
+opaque class preserved in order does not work: `-f` sets any
 variable this section gives one channel, without looking like an assignment.
 
 ```
@@ -647,11 +636,9 @@ STAN_OPENCL=[from_other_mk] USER_HEADER=[/tmp/sneaky.hpp]
 
 `--eval=` is the same route on Make 4.0 and newer, while 3.81 rejects the option
 outright — so which spellings reach a variable is a property of the user's toolchain
-rather than of this contract. This is not the reserved-variable guard #1250
-considered and rejected, and the difference is what makes it cheap: a guard has to
-know what each flag *does*, which is the maintenance that argument correctly refuses,
-while rejecting the whole shape needs to know nothing and closes the routes a guard
-would miss.
+rather than of this contract. This is not a reserved-variable guard (appendix): a
+guard has to know what each flag *does*, while rejecting the whole shape needs to
+know nothing and closes the routes a guard would miss.
 
 **What it costs is one flag, and that flag is `-e`.** The others have makefile
 routes, which is where a build-wide policy belongs anyway: `include other.mk` for
@@ -759,7 +746,7 @@ must not restate it — a rule written in two places is a future inconsistency.
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
-Three consequences, each of which has been got wrong at least once:
+Three consequences:
 
 **Recorded-but-not-compared is the ordinary case, not a list of exceptions.** The
 column says which, and it is not a short list. The default is *not* "everything in
@@ -858,15 +845,13 @@ it is asked for, and the way to stop the warnings is to stop asking for them.
 happens and is otherwise quiet, which is what a C compiler does with `-W` flags against an
 up-to-date object file.
 
-The record makes a third policy available — run the check only when the recorded
-injections show pedantic was not already applied — and it is rejected. It would make two
-identical calls behave differently on the strength of a file the caller cannot see, with
-no obvious way to ask for the output back, and it would defeat the main reason to put
-`pedantic` in a script, which is to have the check run on every execution. Suppressing a
-request because it was satisfied once is not a saving when the request costs 30 ms.
-Output the caller asked for runs whenever they ask, while output they did not ask for
-picks its moment — which is why §6's untracked-provenance note fires on writing a record
-rather than on every construction, and is not this decision taken the other way.
+A third policy, running the check only when the recorded injections show pedantic
+was not already applied, is rejected (appendix): two identical calls would behave
+differently on the strength of a file the caller cannot see, and the reason to put
+`pedantic` in a script is to have the check run every time. Output the caller asked
+for runs whenever they ask, while output they did not ask for picks its moment, which
+is why §6's untracked-provenance note fires on writing a record rather than on every
+construction.
 
 **A general diagnostic classifier is refused.** Rerunning supplied `stanc_options`
 diagnostics on an up-to-date model would need cmdstanr to know which stanc flags are
@@ -1411,9 +1396,8 @@ so removing it changes *released* behaviour and owes an entry of its own. `NEWS.
 describes both in one sentence, which is how deleting it as a stale unreleased entry
 would silently take the released half down with it.
 
-Removing those lines is the whole fix. **`$format()` is kept, overwriting included** —
-a reviewer proposed removing the method, but rewriting the file is the useful part
-and is not what breaks anything. With the refresh gone: the file changes, the
+Removing those lines is the whole fix. **`$format()` is kept, overwriting included**:
+rewriting the file is the useful part and is not what breaks anything. With the refresh gone: the file changes, the
 snapshot keeps describing the built source, the Stan file's content hash no longer
 matches, and the next operation that runs the binary errors and points at
 `cmdstan_model()`. So **reformatting forces a recompile**, which is correct rather
@@ -1578,19 +1562,11 @@ was actually built, and is never rewritten. Its immutability needs no mechanism,
 records are replaced whole on every build (§4). It is not compared either, with the
 single exception of the user header below.
 
-**Path-and-content identity was considered and rejected. This is the closest call in
-the document**, so the reasoning is recorded in full rather than summarised.
-
-The argument for including path is real and survives scrutiny: stanc compiles absolute
-source paths into the generated C++ `locations_array__` — every resolved include
-today, and the program itself once Stage 4 passes `--filename-in-msg` (§9). Two builds
-at two paths produce genuinely different binaries, so a cache reporting "up to date"
-is reporting on an artifact that differs from what a fresh build would make. On that
-view the path is a build input like any other and needs no special rule.
-
-**It was rejected because the difference is one string, and no user benefits from
-correcting it.** What a relocated executable actually costs is a stale directory
-prefix in an exception message:
+**Path-and-content identity is rejected, and it is the closest call here.** The
+argument for it is real: stanc compiles absolute source paths into the generated
+C++ `locations_array__`, so two builds at two paths are genuinely different
+binaries. What the difference buys is a stale directory prefix in an exception
+message:
 
 ```
 Exception: normal_lpdf: Scale parameter is 0, but must be positive!
@@ -1598,31 +1574,16 @@ Exception: normal_lpdf: Scale parameter is 0, but must be positive!
 ```
 
 Correct line, correct column, and whoever moved the project knows where it went.
-Against that, the everyday case — renaming a working directory from `docs/A` to
-`docs/B` — pays a full recompile for a benefit its user never receives. Nobody models
-a directory name as a compiler input, so the rebuild does not follow from the action,
-which is the test §7 applies to messages and which applies at least as strongly to
-something that costs a full recompile.
-
-Nor is it rescued by the exotic cases. Cross-machine scenarios almost always rebuild
-on **builder** identity anyway, since CmdStan is identified by installation path and
-version, so path identity is the sole trigger only when the project moved and the
-installation did not. That is the folder rename, and nothing else of consequence.
-
-**This is the rule the rest of the section already uses:** rebuild when the artifact
-would differ in a way the caller can observe and care about. It is why dependencies
-are hashed rather than trusted by mtime, and why `make/local` rebuilds even on an edit
-that changes nothing — there we cannot tell whether it matters. Here we can.
-
-Outside precedent agrees. ccache meets this exactly, with absolute paths baked into
-debug information, and ships `base_dir` and `-fdebug-prefix-map` so users can defeat
-path-induced cache misses. The mature tools in this space treat "moved the tree, lost
-the cache" as a defect to work around rather than a property to preserve.
-
-**Provenance argues for neither side**, though it has been cited for both. A manifest
-recording where equivalent inputs are *now* rather than where the artifact was built
-is not a provenance manifest — but that is a constraint on what the record *stores*,
-which `built_from` satisfies, and no rebuild policy either repairs or requires it.
+Against that, renaming a working directory from `docs/A` to `docs/B` would pay a
+full recompile for a benefit its user never receives, and nobody models a directory
+name as a compiler input. Cross-machine moves almost always rebuild on `builder`
+identity anyway, so path identity would be the sole trigger only for the folder
+rename. The rule the rest of this section uses is: rebuild when the artifact would
+differ in a way the caller can observe and care about. It is why dependencies are
+hashed rather than trusted by mtime, and why `make/local` rebuilds even on an edit
+that changes nothing, since there we cannot tell whether it matters. Here we can.
+ccache reaches the same conclusion, shipping `base_dir` and `-fdebug-prefix-map` so
+users can defeat path-induced cache misses.
 
 **Comparison is positional.** The verdict compares the recorded sequence of content
 hashes against a freshly resolved one, element by element, preserving order and
@@ -1644,9 +1605,7 @@ would name every subsequent file as changed. Report a length change as "the
 included-file sequence changed" and walk positions only when the lengths match. The verdict
 is correct either way; this is about the message.
 
-Defining project roots, symlink behaviour and out-of-project paths stays rejected, and
-under content identity there is nothing left to define — normalisation now matters
-only for `built_from`, which is recorded rather than compared.
+Normalisation matters only for `built_from`, which is recorded rather than compared.
 
 **Moving everything except the record is fine.** The record is hidden (§4), so a
 `cp *` or a drag-select will leave it behind. Where source is available that is a
@@ -1736,15 +1695,6 @@ rule it would have no effect at all: the executable would still be the one the o
 installation built, still linked against the TBB that build resolved (below), while
 validation ran the new installation's `stanc`. Rebuilding is what makes the selection
 mean something.
-
-Version-only identity was tried and rejected. The argument for it was that nothing
-nameable distinguishes two same-version installations — which is nearly true, since
-`make/local` lives inside the installation and is hashed separately, so switching
-usually rebuilds on that alone. But that makes comparing the installation path nearly
-free rather than unnecessary. It adds a rebuild only when both installations are
-configured identically, which is precisely the case where the user's explicit choice
-would otherwise be ignored silently. "The installation that built it" is also the
-simpler rule to state.
 
 **Why this is path-sensitive when dependencies are not.** The asymmetry is deliberate.
 A dependency is a file whose *content* is the input; its location is incidental, and moving it
@@ -2034,11 +1984,7 @@ compilation driver, not merely reading a file that is already there.
 - **CmdStan or Stan Math modified in place.** A patch applied, or a checkout
   updated, at the same path and version. The version is unchanged, `make/local` is
   unchanged, and nothing else is recorded, so this is invisible and needs
-  `force_recompile = TRUE` (#1257). Tracking a git identity was considered and
-  rejected: `install_cmdstan()` unpacks a tarball, so a typical installation is not
-  a repository at all, and a check that works only for developers running from a
-  checkout would report "unchanged" for everyone else — the absence-of-evidence
-  failure §10 warns about, in a new place.
+  `force_recompile = TRUE` (#1257). A git identity would not help (appendix).
 - **Distrust of a *source*.** The artifact is now verifiable (§4); its inputs are
   only as trustworthy as the filesystem.
 
@@ -2835,15 +2781,11 @@ separates cleanly and is Stage 3b.
 **#1258 states the release order; this section states the constraints behind it.** The
 split follows the boundary already set under Purpose and scope, and it has a test: if
 the order changes, the work list is what you edit; if the *reason* changes, this is.
-Both printing it is how four different statements of it came to exist in an earlier
-draft.
 
 The candidate ships when everything is ready rather than at the earliest defensible
 moment, and that is a structural choice rather than a preference. The moment an item can
 be adjudicated safe-before or safe-after the tag, every item needs adjudicating, and the
-answers settle into separate paragraphs that drift apart — which is exactly how four
-different statements of this order came to exist in an earlier draft of this section.
-One definition of ready removes the adjudication instead of getting it right each time.
+answers settle into separate paragraphs that drift apart. One definition of ready removes the adjudication instead of getting it right each time.
 
 What downstream gives up by waiting is a tag, not a start. We open their pull requests
 ourselves (#1258), and the dev version supplies the boundary in the meantime: bumped **in
@@ -2907,12 +2849,10 @@ on Stage 2's fixtures, compiles nothing, and can be worked alongside Stage 3.
 The reason to separate it is that **it is what makes this section's contract
 checkable**. §6's triggers are prose, and prose gives consistency only if a reader
 notices two statements disagreeing. As a decision table with a fixture per row, a
-contradiction is a red suite instead. This document has already paid for the
-difference: §6 held "`include_paths` is not compared as a spelling" and
-"re-resolution uses the recorded paths" eight lines apart for a full review round,
-and a single test asserting that `v1/` → `v2/` rebuilds would have failed against
-the second the day it was written. Landing the engine early moves that check ahead
-of Stage 4 rather than arriving with it.
+contradiction is a red suite instead. A single test asserting that `v1/` → `v2/`
+rebuilds catches "re-resolution uses the recorded paths" the day it is written.
+Landing the engine early moves that check ahead of Stage 4 rather than arriving
+with it.
 
 It does not weaken the argument below that the API change and the decision engine
 ship together. That argument is about the engine being *live* while `$compile()` is
@@ -3224,8 +3164,7 @@ next run snapshots as its baseline. What does parallelise is the work that never
 compiles: Stages 2 and 3b in their entirety, the downstream-usage inventory,
 documentation and test migration once the API commit exists, and adversarial review
 of a finished stage.
-That last is worth a reviewer rather than another implementer; this document
-reached its current form through many rounds of review.
+That last is worth a reviewer rather than another implementer.
 
 ### Independent, can land any time
 
@@ -3343,3 +3282,54 @@ placeholders, to be settled in the stage that implements each (§8).
 `.<exe>.cmdstanr.json` is *decided* rather than open (§4) — build against it — but
 it stays revisable until the release, after which changing it means migrating
 records that already exist.
+
+---
+
+## Appendix: rejected alternatives
+
+One line each: the idea, and why it lost. The section named holds the rule that
+replaced it.
+
+- **Persistent options** (#1248, §2). An automatic rebuild never replays stored
+  configuration, so nothing has to remember them.
+- **`$compile()` narrowed to "rebuild as recorded"** (§2). Replaying build arguments
+  from a file needs a strictly validated schema before it is safe; `cmdstan_model(force_recompile = TRUE)` covers every use.
+- **Reclassifying raw assignments** such as `list("FOO+=x")` as named entries (§3).
+  Wrong whenever a second assignment to the same variable exists.
+- **Keeping Make's own flags as an opaque ordered class** (§3). `-f` and `--eval=`
+  set variables without looking like assignments.
+- **A reserved-variable guard** on `cpp_options` (§3, #1250). Has to know what each
+  flag does; rejecting the whole unnamed shape needs to know nothing.
+- **Running `pedantic` only when the record shows it was not already applied** (§4).
+  Two identical calls would differ on the strength of a file the caller cannot see.
+- **A general diagnostic classifier** re-running diagnostic-only `stanc_options` (§4).
+  Needs per-option semantics per CmdStan version, to re-emit warnings for a build
+  nobody asked to repeat.
+- **`NA` for an unknown reported feature in the record** (§1). Does not survive
+  `jsonlite`; presence of the key encodes the state instead.
+- **Path-and-content identity for Stan sources** (§6). A folder rename would pay a
+  full recompile to fix a directory prefix in an exception message.
+- **Version-only builder identity** (§6). Rebuilds only when two installations are
+  configured identically, which is exactly when a user's `set_cmdstan_path()` would
+  otherwise be ignored.
+- **A git identity for the CmdStan installation** (§6). A typical installation is an
+  unpacked tarball, not a repository, so the check would report unchanged for
+  everyone but developers.
+- **Relocatable records** storing paths relative to a root (§6). Needs a root,
+  symlink rules and out-of-project handling; content identity removes the reason
+  anyone wanted them.
+- **Recording each include's search roots and re-resolving the mapping** (§6).
+  `stanc --info` returns the resolved set directly.
+- **Removing `$format()`** (§5). Rewriting the file is the useful part; the cache
+  refresh beside it was what broke things.
+- **Refusing to replace a record written by a newer cmdstanr** (§4). The record is
+  derived data, so refusing protects nothing and costs an error in the one case it
+  arises, a downgrade on one machine.
+- **A third engine state for a failed re-resolution** (§5). Resolving is the
+  caller's job, so the failure is raised before the engine is called.
+- **Deriving the TBB directory from the builder path** (#1261). Wrong for any build
+  that named its own TBB.
+- **`missing()` to learn whether `force_recompile` was supplied** (§7). Breaks as soon
+  as a wrapper declares its own default and forwards it.
+- **Caching the assessment's verdict on the object** (§5). Right within a session and
+  wrong the moment the object is deserialized somewhere else.
