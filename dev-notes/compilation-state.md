@@ -407,13 +407,13 @@ only the Make flag: CmdStan reads `-include $(USER_HEADER)` (`make/program:41`),
 others, not as a recorded `cpp_options` entry.** A recorded option would put the
 header's path in `request` as well as in `dependencies` (§8), and under WSL not
 even in the same spelling, since the Make side is `wsl_safe_path()`-transformed
-(`R/utils.R:627`) and `built_from` is not. `resolved_header$spelling` goes with the
-line, since `:709` is its only consumer and one channel has one spelling, alongside
-the `previous` parameter §8 removes.
+(`R/utils.R:627`) and `built_from` is not. `resolved_header$spelling` goes with
+the line, since `R/model.R:709` is its only consumer and one channel has one
+spelling, alongside the `previous` parameter §8 removes.
 
 ### One canonical spelling, established on entry
 
-`cpp_options_to_compile_flags()` (`R/cpp_opts.R:129`) uppercases every named entry,
+`cpp_options_to_compile_flags()` (`R/cpp_opts.R:131`) uppercases every named entry,
 so `list(USER_HEADER = h)`, `list(user_header = h)` and `list(User_Header = h)` are
 one variable to `make` and three values to R. The code reconciles that three times
 in two directions today: `toupper()` on the way out to `make`, `tolower()` in
@@ -462,12 +462,12 @@ treatment is the same: recorded, compared, and able to trigger a rebuild. Exclud
 it would silently drop a supplied entry that can change the artifact.
 
 That leaves the parser with one caller, because the other is **deleted**.
-`exe_info_reflects_cpp_options()` (`:327`) exists to diff supplied `cpp_options`
-against an adopted binary, and §7 makes supplying them there an error, so it has no
-input left. The question it asks survives where it belongs: `assert_valid_threads()`
-and `assert_valid_opencl()` put it to `reported_features` at the moment the feature
-is used, rather than at construction against a request that could never have been
-applied.
+`exe_info_reflects_cpp_options()` (`R/cpp_opts.R:327`) exists to diff supplied
+`cpp_options` against an adopted binary, and §7 makes supplying them there an
+error, so it has no input left. The question it asks survives where it belongs:
+`assert_valid_threads()` and `assert_valid_opencl()` put it to
+`reported_features` at the moment the feature is used, rather than at
+construction against a request that could never have been applied.
 
 **Its deletion is sequenced with this rule, not after it.** The function matches the
 parser's names against `tolower(names(exe_info))`, one side folded and the other
@@ -667,7 +667,7 @@ executable's own file name with a leading dot and `.cmdstanr.json` appended, so
 
 **The name comes from the executable, not from `$model_name()`.** The two agree in
 the ordinary case, which is why the difference is easy to miss, but `$model_name()`
-substitutes underscores for spaces (`R/model.R:274`) and the executable path does
+substitutes underscores for spaces (`R/model.R:273`) and the executable path does
 not. Measured: `my model.stan` compiles to an executable named `my model` while
 `$model_name()` returns `my_model`, so a directory holding `my model.stan` and
 `my_model.stan` yields two executables and, under a model-name scheme, a single
@@ -1434,7 +1434,7 @@ embedded `stancflags` string). Only the first reaches `model_variables()`
 through any of the others resolves for the build and nowhere else. That is a live
 defect in released cmdstanr, independent of this design: a model built through
 `stanc_options` compiles and then fails on `$sample()`, which calls `$variables()`
-unconditionally (`:1410`).
+for every source-backed model (`:1410`).
 
 **`include_paths` is therefore the only accepted channel**, and the rest are
 rejected with an error naming it: `--include-paths` in `stanc_options`, matched on
@@ -2680,15 +2680,16 @@ that has been wrong since before 0.9.0.
 
 **The replacements are the ones their own documentation already names.**
 `R/model.R:551` tells the caller to use `fit$init_model_methods()` instead when the
-model will be saved, and `:556` says `$expose_functions()` does the same job after
+model will be saved, and `:557` says `$expose_functions()` does the same job after
 compilation. Both are public, both are tested, and neither depends on the reuse
 path, because they run when they are called.
 
 **`$expose_functions()` is fixed here too, since removal makes it the only route.**
 `expose_stan_functions()` refuses whenever `function_env$existing_exe` is `TRUE`
-(`R/utils.R:1217`), and the no-op path sets that: `:267` initialises it `TRUE`,
-`:299` sets `exe_file_` only when the caller passed `exe_file`, and `:786` branches
-on `length(private$exe_file_) == 0`, still true for a source-only construction.
+(`R/utils.R:1217`), and the no-op path sets that: `R/model.R:267` initialises it
+`TRUE`, `:299` sets `exe_file_` only when the caller passed `exe_file`, and
+`:786` branches on `length(private$exe_file_) == 0`, still true for a
+source-only construction.
 Measured on 2.39.0: `cmdstan_model("m.stan")` on an up-to-date executable, followed
 by `mod$expose_functions()`, errors with *"Exporting standalone functions is not
 possible with a pre-compiled Stan model!"* about a model that has a source sitting
