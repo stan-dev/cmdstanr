@@ -1071,7 +1071,7 @@ for, so deciding whether to rebuild is a field-by-field comparison over the fiel
 marks compared rather than text matching or a single equality test. The two are not
 the same shape and do not need to be: the record carries `format_version`, which the
 call has no counterpart for and never computes (§4). That is what lets §6 report
-every applicable reason instead of the first, wherever there is a usable record to
+every evaluable reason instead of the first, wherever there is a usable record to
 compare against (§6), and it is why the rules below are per field.
 
 The two are separable concerns, worth keeping separable. The object model is what
@@ -1276,19 +1276,20 @@ executable was replaced (§2).
 | | at `cmdstan_model()` | at a guarded method |
 |---|---|---|
 | **expected** | the options this call supplied | the object's own snapshot: the options it was built with, and the artifact hash it was built against |
-| **observed** | the executable's hash, the record beside it, and the source hashes resolved with this call's include paths | the same, resolved with the object's construction-time paths (§4) |
+| **observed** | the executable's hash, the record beside it, and either the source hashes resolved with this call's include paths or a statement that they were not resolved | the same, resolved with the object's construction-time paths (§4) |
 
 **Only the object's own snapshot catches a replaced executable.** §2's
 single-configuration cache lets the most recent compile own the executable *and* the
 record beside it, so once another call or process rebuilds, the pair on disk is
 self-consistent and describes a program this object never saw. The path is unchanged,
 the file exists, and the record's `artifact` hash matches the binary it now sits beside
-— that is the bond it exists to prove (§4). Nothing on disk disagrees, so the
-disagreement has to be carried in.
+— that is the bond it exists to prove (§4).
+Nothing on disk disagrees, so the disagreement has to be carried in.
 
 **Resolving the sources is the caller's work.** The engine compiles nothing, reads
 nothing and mutates nothing, which is what lets §9 build and test it before anything
-calls it, so `observed` arrives already hashed. Note the ordering the table implies:
+calls it, so `observed` arrives already hashed — or, on the one path §6 skips
+re-resolution, saying so. Note the ordering the table implies:
 the include paths come from the expected side, so `observed` cannot be assembled until
 the caller knows which column it is in.
 
@@ -2026,16 +2027,25 @@ missing installation. Nor is it a third answer to the one question §5's assessm
 asks: checked before every use, it leaves no reachable state where an assessment
 begins and cannot finish for this reason.
 
-**Report every applicable trigger, not whichever branch is checked first.** Today's
+**Report every evaluable trigger, not whichever branch is checked first.** Today's
 `if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
-source and `make/local` should be told both.
+source and `make/local` should be told both. *Evaluable* rather than *applicable*
+because two of `observed`'s parts can be absent, and each is a precondition on the
+rule rather than an exception to it.
 
 **The rule needs a usable record to be about anything.** With one, report every
 compared field that differs. Without one — the artifact-side reasons above — report
 why the record could not be used, and stop there: missing, unreadable and unsupported
 leave no baseline to measure the inputs against, and one bound to a different
-executable would supply the wrong baseline. This is the rule's precondition rather
-than an exception to it.
+executable would supply the wrong baseline.
+
+**It also needs the sources to have been resolved**, and `observed` says whether they
+were, so that an unresolved set is never read as an empty one. That is the difference
+between a program that includes nothing and one nobody looked at, and reading the
+second as the first reports an included file as changed when nothing touched it. One
+path reaches it: re-resolution is skipped when the selected installation differs from
+`builder` (below). That difference is itself a trigger, so the verdict is the same
+either way and only the reason list is shorter.
 
 ```
 #> Recompiling:
