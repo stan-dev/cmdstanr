@@ -2424,12 +2424,12 @@ to report, so the guarantee that it produces diagnostics on every call cannot be
 quietly. For both, the reason is the missing source, not the missing build.
 
 **The check is on whether the argument was supplied, not on what it resolves to**,
-and `force_recompile` is why. Its default is `getOption("cmdstanr_force_recompile")`
-(`R/model.R:621`), so a check written as `isTRUE(force_recompile)` would error for
-every adoption performed by anyone who has that option set — including every
-`instantiate` fit (§9), from inside a package the user never chose to look at. The
-option was set for *their* models; adoption is a third party's implementation
-detail.
+and `force_recompile` is why. Its default today is
+`getOption("cmdstanr_force_recompile")` (`R/model.R:621`), so a check written as
+`isTRUE(force_recompile)` would error for every adoption performed by anyone who has
+that option set — including every `instantiate` fit (§9), from inside a package the
+user never chose to look at. The option was set for *their* models; adoption is a
+third party's implementation detail.
 
 That difference is the §7 line applied to provenance rather than to content. Writing
 `force_recompile = TRUE` beside `exe_file =` is a per-call request we cannot honour,
@@ -2438,16 +2438,25 @@ ignored. Document that on the option's help page — it has no effect on
 executable-only models — so the advice arrives as documentation rather than as a
 runtime failure in somebody else's code.
 
-Prefer a `NULL` sentinel to `missing()`: resolve the option inside the body after the
-check, so omission survives both public build entry points and the shared
-implementation without a separate `force_recompile_supplied` flag.
+**No signature resolves the `cmdstanr_force_recompile` option.** The shared
+implementation does, after the check, and every public function that forwards
+`force_recompile` declares it `NULL` — `cmdstan_model()`, `compile_stan_file()` and
+`cmdstanr_example()`, which resolves it in its own signature today (`R/example.R:62`)
+and hands the answer on. A signature default cannot work: once it has been evaluated,
+an option-supplied `TRUE` and an argument-supplied `TRUE` are one value, and the check
+has nothing left to read. The sentinel carries omission through every entry point and
+into the shared implementation with no separate `force_recompile_supplied` flag, and
+on the adoption path nothing resolves the option at all, so the rule above holds by
+construction rather than by being remembered.
 
-The fragility is ours, not a caller's. `missing()` survives dynamic dispatch and `...`
-forwarding — including instantiate's `eval(parse(text = paste0("cmdstanr::", name)))`,
-measured — and breaks only when an intermediate layer declares its own default and
-forwards it. That is exactly the shape §8 introduces: `cmdstan_model()` and
-`compile_stan_file()` each declare `force_recompile = getOption(...)` and hand it to
-one shared implementation, at which point `missing()` is `FALSE` on every call.
+The alternative is `missing()`, and its fragility is ours rather than a caller's. It
+survives dynamic dispatch and `...` forwarding — including instantiate's
+`eval(parse(text = paste0("cmdstanr::", name)))`, measured — and breaks only when an
+intermediate layer declares its own default and forwards it. That is the shape §8
+introduces, and the shared implementation is where provenance is still wanted: it is
+what names the option in the rebuild reason below. By then `missing()` is `FALSE` on
+every call whatever the wrapper declared, since an explicit `NULL` default breaks it
+just as well.
 
 **Explicit `NULL` means omission for all six, so one sentinel covers them.**
 `user_header` is the one that looks like an exception, because `user_header = NULL`
@@ -2627,6 +2636,12 @@ compile_impl(stan_file, cpp_options, stanc_options, include_paths,
 compile_stan_file(...)   # exported: compile_impl(...)$path
 cmdstan_model(...)       # exported: R6 object built from all four
 ```
+
+The `...` abbreviates the named arguments each wrapper takes. It is not R's `...`,
+which matters here because today's `cmdstan_model()` really does declare one and
+forward it (`R/model.R:156`). One default it hides is already settled:
+`force_recompile` is `NULL` in both, as §7 requires of every entry point that
+forwards it.
 
 This is a lift of today's `$compile()` rather than a rewrite — the stanc and make
 invocation moves unchanged, and 12 of its 31 `private$` touches are `precompile_*`
