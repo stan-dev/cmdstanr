@@ -863,6 +863,15 @@ changing it changes what happens next rather than invalidating what already exis
 the caller: their models go on behaving as they did, and the entry says that
 `force_recompile = TRUE` is how to ask for the new build.
 
+**An injection that would make an existing artifact incorrect is outside both rules
+above rather than an exception to them.** Nothing cmdstanr injects is of that kind,
+and the scheduled addition is not either — `--filename-in-msg` changes which file a
+runtime exception names. What keeps the class closed is the argument above: a
+correctness fix to generated code belongs to stanc, and a CmdStan upgrade already
+rebuilds through `builder`. If a release ever needs one anyway, these are the rules
+it has to reopen, because a NEWS entry cannot make incorrect reuse safe and nothing
+here asks it to.
+
 Only `stanc_options` has an injected row, and the reason stands on its own. With the
 user header built as a flag (§3), cmdstanr injects no C++ option at all, so a
 `cpp_options_injected` would be empty in every record 1.0 writes. If one ever appears
@@ -1536,10 +1545,13 @@ does not turn on which of them fired — say why, and stop trusting the record.
 **Rebuilding takes a source, which is where the two model kinds part.** A
 source-backed model rebuilds on any of the reasons above, and it is the same rebuild
 whichever one fired. An executable-only model (§7) has nothing to rebuild from, so
-those same reasons leave it explicitly unprovenanced instead: it goes on running, and
-reports what the binary says about itself and nothing about how it was built. The
-split belongs to the class rather than to any member of it, so it is stated here and
-the individual reasons point at it rather than restating it.
+the same reasons put it on §7's adoption path instead, and what happens there is not
+settled by the record having failed: with a valid version from `<exe> info` it
+constructs explicitly unprovenanced, reporting what the binary says about itself and
+nothing about how it was built, and without one adoption errors. Those are the second
+and third rows of §7's table. The split belongs to the class rather than to any
+member of it, so it is stated here and the individual reasons point at it rather than
+restating it.
 
 **`include_paths` is absent from §4's compared column deliberately.** Comparing it *as a
 spelling* would reintroduce path sensitivity for every model that has an include —
@@ -2417,14 +2429,11 @@ user chose the thing: including another makefile from `make/local` is entirely
 deliberate, and `make/local.example:36` ships it as a suggestion. The line is
 **whether the consequence follows from the action.**
 
-Passing `exe_file =` is itself a choice to supply a finished binary rather than have
-one built, so answering that we do not know how it was built repeats what the caller
-just told us.
-The threading policy (§1) is the same: `STAN_THREADS` in `make/local` produces a
-threaded binary, which is the thing that was asked for. But writing an `-include`
-line says nothing about cmdstanr's staleness detection stopping at the first file.
-That is a limitation of ours, invisible from where the user stands, and no amount of
-deliberateness on their part reveals it.
+The threading policy (§1) is the case where it does: `STAN_THREADS` in `make/local`
+produces a threaded binary, which is the thing that was asked for. But writing an
+`-include` line says nothing about cmdstanr's staleness detection stopping at the
+first file. That is a limitation of ours, invisible from where the user stands, and
+no amount of deliberateness on their part reveals it.
 
 **Say something when the user asks for what we cannot deliver.** That is about their
 argument rather than the artifact, and nothing they did implies it.
@@ -2734,11 +2743,12 @@ whose path they just passed in, and the dependency hashes compare against nothin
 another record's same field. So do `stanc_options_injected` and `stanc_name`, which
 say how cmdstanr assembled the stanc command line rather than what was asked of it.
 `tbb_dir` is out on the same test and was already absent here; the record keeps it
-because Windows needs it at launch (§4). `request` keeps `include_paths` even though
-it holds what the build resolved, because §6 rebuilds on it and a caller debugging an
-include has no other way to see it. `stanc_options_external` is in for both halves of
-that reason: it is compared, and a caller asking where a flag they never passed came
-from has nowhere else to look.
+because Windows needs it at launch (§4). `request` keeps `include_paths` for
+diagnosis alone. It is not compared (§4), and re-resolution runs with the paths in
+force for the call rather than the recorded ones, so no verdict turns on it — but a
+caller debugging an include has no other way to see where the build searched.
+`stanc_options_external` is in twice over: it is compared, and a caller asking where a
+flag they never passed came from has nowhere else to look.
 
 **The nested names are settled here rather than by whoever implements it**, because a
 test for the public shape cannot be written from a list of seven top-level fields.
@@ -3324,7 +3334,10 @@ will be compiled.
 with a source registered, `$sample()` reached `$variables()`, stanc ran with no
 include paths, and the include did not resolve. Dropping `stan_file` was the
 workaround, and instantiate's present shape follows from it — losing `stan_file`
-(instantiate #28) and gaining an `include_paths` argument (#33) as separate changes.
+([instantiate discussion 28](https://github.com/wlandau/instantiate/discussions/28))
+and gaining an `include_paths` argument
+([instantiate issue 33](https://github.com/wlandau/instantiate/issues/33)) as
+separate changes.
 
 1.0 dissolves this structurally rather than by patching storage. The construction it
 describes is twice unavailable — `compile = FALSE` is gone and §7 rejects `stan_file`
