@@ -1183,7 +1183,8 @@ record beside it, so once another call or process rebuilds, the pair on disk is
 self-consistent and describes a program this object never saw. The path is unchanged,
 the file exists, and the record's `artifact` hash matches the binary it now sits beside
 — that is the bond it exists to prove (§4).
-Nothing on disk disagrees, so the disagreement has to be carried in.
+Nothing on disk disagrees, so the disagreement has to be carried in. For an
+executable-only object that carried-in hash is the whole check (§7).
 
 **Resolving the sources is the caller's work.** The engine compiles nothing, reads
 nothing and mutates nothing, which is what lets §9 build and test it before anything
@@ -2201,6 +2202,20 @@ admitted on a valid version alone — permit fitting and **never attempt an auto
 rebuild**, there being no source to build from. The second of them is the deliberate
 exception to §5's requirement that a model have a valid record before running. The
 first has one.
+
+**A guarded method on an executable-only model checks the artifact hash alone.**
+Whether the object was adopted with a record or without one, the check at every
+guarded method compares the executable's current hash to the one the object was
+constructed with, and nothing else: no record is read, no source is resolved, no
+configuration is compared. A replaced executable errors, an unchanged one proceeds,
+and a record deleted or rewritten after construction changes nothing, since the
+object holds its snapshot. That is §5's expected-side check with everything that
+needs a source removed. The record-backed row is not a source-backed model with the
+source missing: its record proves what the binary is (§4) and provenance is reported
+from the snapshot, but with nothing to rebuild from there is nothing for a later call
+to compare the record against. Tests: adopt a recordless executable, replace it at
+the same path, and a guarded method refuses; an unchanged recordless executable
+still runs.
 
 **That exception is also who pays when a `format_version` is not readable** (§4).
 An ordinary model reads a
