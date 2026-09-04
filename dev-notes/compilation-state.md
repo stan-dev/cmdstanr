@@ -126,7 +126,7 @@ settable there (§3). `stan_build_info()` reports what the binary says, with its
 provenance. And runtime validators read `reported_features` directly, never a merged
 list. A merged list answers neither question: it looks complete but is not, and it
 cannot represent unknown, so a requested `TRUE` sitting over an unknown reading
-survives as a plain `TRUE` and the validator is bypassed.
+survives as a plain `TRUE` and the table below is bypassed.
 
 `merge_exe_info_cpp_options()` (`R/cpp_opts.R:78`) is what this replaces, and it
 already shows the failure. It drops `FALSE` values, because passing `FLAG=FALSE` back
@@ -715,7 +715,7 @@ must not restate it. A rule written in two places is a future inconsistency.
 | `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
 | `request.stanc_options_supplied` | yes | yes | as above |
 | `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction. Never compared as a list; whether an injection's effect is compared is decided per field like every other row, and the model name is the one that earns its own, below |
-| `request.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name; §3 rejects the `stanc_options` spelling, so this is the only source. The build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`) |
+| `request.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name; §3 rejects the `stanc_options` spelling, so this is the only source. The build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`), which carries both the raw value stanc was passed and the mangled one stanc compiled |
 | `request.include_paths`, effective | yes | **no** | the paths in force for the call drive re-resolution (§6): this call's at the constructor, the object's own at a guarded method, never the recorded ones (§5). The recorded value is provenance |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
 | `dependencies[].hash` | yes | yes | content hash; this is what identity means |
@@ -2001,8 +2001,9 @@ package owns when its model is built, and registering source hands that decision
 the session. This section is their normal case rather than their fallback, and §9
 carries the argument.
 
-**Adoption has three outcomes.** Calling every adopted executable unprovenanced
-would discard information we may have written ourselves: `compile_stan_file()`
+**Executable-only models are kept, and adoption has three outcomes.** Calling every
+adopted executable unprovenanced would discard information we may have written
+ourselves: `compile_stan_file()`
 followed by `cmdstan_model(exe_file = path)` is a first-class flow under this
 design, and it produces an executable with a record.
 
