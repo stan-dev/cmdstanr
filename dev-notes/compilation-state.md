@@ -1298,8 +1298,8 @@ object's expected artifact hash catches it rather than running the wrong binary.
 the record's hash: that one proves the record and the executable belong together
 (§4), and after a rebuild they do. Both fall out of the contract above.
 
-What would break it is memoization. 8.8 ms per operation is the number someone
-later decides to cache on the object, and a cached verdict is right within a
+What would break it is memoization. The cost above is the number someone later
+decides to cache on the object, and a cached verdict is right within a
 session and wrong the moment the object is deserialized somewhere else. That failure
 is silent and looks like a caching bug rather than a violated contract, so it is
 prohibited here while the reason is still visible.
@@ -1446,9 +1446,9 @@ interpret `--include-paths`'s comma lists, quoting or separator forms, only refu
 them.
 
 **The `STANCFLAGS` check reads what Make resolved, not what `make/local` says, and
-runs at build time only.** `make/local` may include another makefile
-(`make/local.example:36` ships `# -include $(HOME)/.config/stan/make.local` as a
-suggestion), so scanning the file misses any flag arriving that way. Measured, the
+runs at build time only.** `make/local` may include another makefile, a pattern
+CmdStan's own `make/local.example` suggests (below), so scanning the file misses
+any flag arriving that way. Measured, the
 file reads `include $(HOME)/.config/stan/extra.mk` while `make -s print-STANCFLAGS`
 returns `--include-paths=/sneaky/inc`. `get_cmdstan_flags("STANCFLAGS")` already
 asks Make on every compile (`R/model.R:839`); the check reads that value and
@@ -1815,8 +1815,8 @@ stanc --info      : 29.9 ms
 exe info          : 32.2 ms
 ```
 
-Against 8.8 ms of hashing and a compile measured in seconds (§4), a stanc call is
-free.
+Against the hashing cost in §5 and a compile measured in seconds (§4), a stanc call
+is free.
 
 **Invoke stanc from the recorded `builder`, not from whichever installation is
 selected now**, or a different stanc's resolution rules get applied to a model this
@@ -2064,10 +2064,10 @@ usable record; on the fallback, `<exe> info` must report complete version fields
 
 Failing both means the executable did not identify itself as a supported CmdStan
 executable, which is a weaker claim than "it did not run" and is the one to make. A
-two-line shell script that exits 0 reaches the same place, since
-`model_compile_info()` then synthesises `".."` from three absent fields. What it
-does not reach is a CmdStan binary that could have sampled: `info` has printed
-`stan_version_*` unconditionally since CmdStan 2.27 (`write_stan.hpp`), eight
+two-line shell script that exits 0 reaches the same place, having no version
+fields to report. What it does not reach is a CmdStan binary that could have
+sampled: `info` has printed `stan_version_*` unconditionally since CmdStan 2.27
+(`write_stan.hpp`), eight
 releases below cmdstanr's own floor of 2.35 (`R/path.R:145`). The error refuses
 artifacts that could not have sampled either, not ones we merely cannot identify.
 
@@ -2139,8 +2139,8 @@ caller asks.
 The line is not "standing properties are silent", since §6 does surface
 `known_untracked_dependencies` at construction, and should. Nor is it whether the
 user chose the thing: including another makefile from `make/local` is deliberate,
-and `make/local.example:36` ships it as a suggestion. The line is whether the
-consequence follows from the action.
+and CmdStan's own `make/local.example` ships it as a suggestion (§6). The line is
+whether the consequence follows from the action.
 
 The threading policy (§1) is the case where it does: `STAN_THREADS` in `make/local`
 produces a threaded binary, which is the thing that was asked for. But writing an
