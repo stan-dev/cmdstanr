@@ -1192,6 +1192,20 @@ re-resolution, saying so. Note the ordering the table implies:
 the include paths come from the expected side, so `observed` cannot be assembled until
 the caller knows which column it is in.
 
+**A re-resolution that fails is an error, not a verdict.** `stanc --info` can fail: a
+syntax error in the program, an include that does not resolve under the paths in
+force, a stanc that will not run. The caller then has nothing to hand the engine, and
+the engine is not called. At `cmdstan_model()` and at every guarded method alike the
+failure is raised as an error carrying stanc's own message, so nothing runs and
+nothing rebuilds. Rebuilding would be wrong twice over: the build's own stanc call
+fails at the same point, and a program stanc rejects is the user's to fix rather than
+a reason to compile toward. Nor is it a third engine state. The engine sees resolved
+hashes or a statement that resolution was skipped (above), and a failed resolution
+is neither, because it never reaches the engine. #1237 asked that an unresolvable
+include fail toward rebuilding; raising stanc's message is that rule with the doomed
+compile removed. Tests: a constructor and one guarded method, each against a program
+whose include is missing, both erroring with stanc's message and neither rebuilding.
+
 ### What the error says
 
 **Not `force_recompile = TRUE`.** Everything the assessment detects, the constructor
