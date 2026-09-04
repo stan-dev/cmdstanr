@@ -559,8 +559,10 @@ with no case folding inside the matcher.
 Unnamed entries need a message rather than a matcher. They skip the uppercasing and reach
 `make` verbatim, so `list("User_Header=h")` assigns an unrelated variable and sets no
 header at all; only an exact-case raw assignment would do anything, and #1250 already
-rejects every assignment-shaped raw entry. What that rejection owes the reserved
+rejects every assignment-shaped raw entry. What a rejection on shape owes the reserved
 variables is guidance naming the argument that owns them, not a second occurrence test.
+That covers the name grammar below as well: `USER_HEADER+` is refused for its shape,
+and the caller still needs pointing at `user_header`.
 
 ### Only named assignments configure a build (#1250)
 
@@ -610,6 +612,21 @@ section was the stale half.
 reachable, only `=` is ever emitted, so "last assignment wins" is correct. The two
 rules are not independent: accepting raw operators would invalidate the
 canonicalization rule as well.
+
+**After normalization, a name must match `^[A-Za-z_][A-Za-z0-9_]*$`.** Without that,
+the sentence above is not true, because an operator arrives through the named door
+instead. `cpp_options_to_compile_flags()` builds each argument as
+`paste0(toupper(option_name), "=", value)` (`R/cpp_opts.R:141`) and `toupper()` leaves
+`+` alone, so `list("FOO+" = "x")` reaches `make` as `FOO+=x`. The grammar is the one
+`parsed_cpp_options()` already applies above, where all it decides is how a flag is
+classified. Nothing consults it before the flag is handed to `make`.
+
+The reserved-variable rule is what shows this is not only about operators.
+`USER_HEADER+` is not `USER_HEADER`, so the matcher that rejects the two `cpp_options`
+spellings of the user header passes it, and `make 'USER_HEADER+=/tmp/x.hpp'` sets
+`USER_HEADER` to that path — measured, since a lone `+=` on the command line
+overrides rather than appends. Until names are constrained, the one channel that rule
+gives the user header has a second one behind it.
 
 **Plain `NAME=value` is rejected too**, though it is unambiguous, because accepting
 raw `=` means re-implementing every special-cased variable on the raw path: a raw
