@@ -461,19 +461,25 @@ and change `CXXFLAGS` with it. Verified. That is the position `FOO` is in, so th
 treatment is the same: recorded, compared, and able to trigger a rebuild. Excluding
 it would silently drop a supplied entry that can change the artifact.
 
-That leaves the parser with one caller, because the other is **deleted**.
-`exe_info_reflects_cpp_options()` (`R/cpp_opts.R:327`) exists to diff supplied
-`cpp_options` against an adopted binary, and §7 makes supplying them there an
-error, so it has no input left. The question it asks survives where it belongs:
-`assert_valid_threads()` and `assert_valid_opencl()` put it to
-`reported_features` at the moment the feature is used, rather than at
-construction against a request that could never have been applied.
+That leaves the parser with one caller, because the other is **deleted in Stage 4**.
+`exe_info_reflects_cpp_options()` (`R/cpp_opts.R:327`) diffs supplied `cpp_options`
+against what a binary found on disk reports, and its caller is the reuse branch of
+`$compile()` (`R/model.R:777`), which every fresh session reaches when it constructs
+a source-backed model whose executable already exists. Today that is the only check
+there is: `cmdstan_model(f, cpp_options = list(stan_threads = TRUE))` against an
+unthreaded executable warns from it, and twelve assertions in three test files expect
+the warning. From Stage 4 the engine compares the request against the record's
+`cpp_options_supplied` and rebuilds on a difference (§6), so a request-against-report
+diff has no job left, and with only an executable §7 makes the request an error. The
+helper goes in the pull request that wires the engine (#1255), with its branch and
+its tests, which turn from expecting the warning into expecting the rebuild.
 
-**Its deletion is sequenced with this rule, not after it.** The function matches the
+**Its key fold is changed with this rule, not after it.** The function matches the
 parser's names against `tolower(names(exe_info))`, one side folded and the other
-inherited from the parser. Canonicalizing while it still exists empties that
-intersection for every option, and the check silently stops checking: no error, no
-mismatch ever reported, just a validator that always agrees.
+inherited from the parser. Canonicalizing while that stands empties the intersection
+for every option, and the check silently stops checking: no error, no mismatch ever
+reported, just a validator that always agrees. Stage 1 drops the fold, so both sides
+carry the `make` spelling, and the check keeps working until Stage 4 removes it.
 
 **One function owns normalize-then-check.** `assert_valid_cpp_options()` (#1250) does
 both, called from the single build implementation §8 leaves behind, so the ordering
