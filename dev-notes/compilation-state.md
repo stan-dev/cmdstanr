@@ -508,6 +508,19 @@ depending on the entry's shape, so the rule has two arms:
 - Unnamed entry: reject if the value is the flag, or begins with the flag followed
   by `=`.
 
+**A named entry's name may not contain `=`.** The named arm is sound only while the
+name slot holds a flag name, and `=` is the character that moves it.
+`list("include-paths=/b" = TRUE)` has a name that is not `include-paths`, so the arm
+passes it, and the converter's logical branch emits `--include-paths=/b`. With
+`include_paths = "/a"` as well, `stanc --info` searches `/a` alone while the build
+searches both, and which file a shadowed include compiles from is then a stanc
+version question. Measured with a `par.stan` in each directory: 2.35 and 2.36 take
+`/b`, 2.38 and 2.39 take `/a`, and 2.37 refuses the repeated flag outright. None of
+it reaches the record. The check is a shape check like the one
+`assert_valid_stanc_options()` (`R/model.R:2562`) already makes for a leading `--`,
+lands beside it, and shows the legal spelling the same way. The `cpp_options` name
+grammar below closes the same door for `+`.
+
 Enumerating values does not terminate. `warn-pedantic` alone has six spellings that
 `stanc_options_to_args()` treats differently:
 
@@ -1424,7 +1437,9 @@ not.
 
 **That argument requires `include_paths` to be the only way paths reach stanc, so
 it is made the only way.** stanc accepts `--include-paths` repeatedly and
-accumulates them, and four cmdstanr channels reach the build's stanc invocation:
+accumulates the paths on every supported version but 2.37, which refuses the repeat
+(§3 measures the search order), and four cmdstanr channels reach the build's stanc
+invocation:
 the `include_paths` argument (`R/model.R:832`), `stanc_options` (`:837`),
 `make/local`'s `STANCFLAGS` (`:839`), and `STANCFLAGS` set through `cpp_options`,
 which arrives as a `make` command-line assignment that cmdstanr's own
