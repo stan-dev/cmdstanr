@@ -1245,7 +1245,7 @@ excluded for the reason given below; `$clone()` is called and asserted not to er
 | **Snapshot of the built model; no validation** | `$code()`, `$variables()`, `$print()`, `$functions` |
 | **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()`, `$user_header()` |
 | **Operates on source, not the binary; no validation** | `$check_syntax()`, `$format()` |
-| **Generated C++; no validation** | `$hpp_file()`, `$save_hpp_file()` |
+| **Generated C++, part of the snapshot; no validation** | `$hpp_file()`, `$save_hpp_file()` |
 | **R6 plumbing; no validation** | `$initialize()`, `$clone()` |
 | **Removed** | `$compile()` (§8) |
 
@@ -1363,6 +1363,26 @@ would otherwise have paid on first `$variables()`: earlier, not extra, and anyon
 who samples pays it regardless, since `$sample()` calls `$variables()` to validate
 data (`R/model.R:1409-1412`).
 
+**The model's generated C++ is part of the snapshot, for the same reason.** The build
+runs stanc a second time, without make, to produce it (`R/model.R:848`), and that
+text is what `fit$init_model_methods()` compiles the model methods from and what
+`$hpp_file()` points at. Neither consumer can validate: a fit copies the text at its
+own construction and has no engine, and the file is a path. Today neither exists on
+the reuse path. `fit$init_model_methods()` errors "cannot be used with a pre-compiled
+Stan executable", asserted by `test-model-methods.R:108`, `$hpp_file()` errors
+"Please (re)compile", and the roxygen for both names `force_recompile = TRUE` as the
+way round. Under this design the constructor generates the C++ on both paths, from
+the source it has just verified and with the include paths and stanc flags it has
+just compared, so a fit from a reused executable holds the same text a fit from a
+fresh build holds, and an edit after construction cannot reach it. It is the call the
+build branch already makes, made before the branch instead of inside it. The reuse
+path pays one more stanc run, measured on 2.39.0 as a median of five: 28 ms against
+28 ms for `--info` on the 11-line bernoulli model, 112 ms against 54 ms on an
+807-line model with 400 parameters. With only an executable (§7) there is no source
+to generate from, and `$hpp_file()` says so, like `$code()`. The standalone-functions
+C++ is not in the snapshot: its one consumer, `$expose_functions()`, is guarded and
+validates at the moment of use, so §8 has it generated on demand.
+
 **`$format(overwrite_file = TRUE)` must stop refreshing the cache**
 (`R/model.R:1308-1312`). It rewrites the Stan file and then reassigns `stan_code_`
 and clears `variables_`, which makes both accessors describe a source the executable
@@ -1388,10 +1408,11 @@ unaffected cannot be known without doing it. No warning is needed, because §5
 already says this about external edits and formatting is only an edit cmdstanr
 performs on the user's behalf.
 
-Capture costs nothing extra: the assessment already invokes `stanc --info` for
-include resolution (§6), and the same output carries the variables. The assessment
-returns parsed source information; the constructor commits it as the object's
-snapshot after a successful validation or rebuild.
+Capturing the source information costs nothing extra: the assessment already
+invokes `stanc --info` for include resolution (§6), and the same output carries the
+variables. The assessment returns parsed source information; the constructor commits
+it as the object's snapshot after a successful validation or rebuild, alongside the
+generated C++ above.
 
 ---
 
@@ -1997,8 +2018,9 @@ name.
 
 **`dir` replaces it and gives up nothing but the filename.** It places the binary in
 any directory, including one the source does not live in, and the model stays
-source-backed, so `$code()`, `$variables()`, `$check_syntax()` and `$format()` keep
-working, the four operations executable-only construction gives up. Two
+source-backed, so `$code()`, `$variables()`, `$check_syntax()`, `$format()`,
+`$hpp_file()` and `$expose_functions()` keep working, along with model methods on
+its fits, which is what executable-only construction gives up. Two
 configurations of one program coexist under separate directories. The filename is
 already the caller's, from the `.stan` file's name or from
 `write_stan_file(basename = )` (`R/file.R:61`) for generated code. What goes is
@@ -2423,9 +2445,11 @@ Four constraints:
   record and re-runs stanc. It needs `record` for `$cpp_options()` and
   `$cmdstan_version()`, and `src_info` for the eager `$code()`/`$variables()`
   snapshot (§5), which is the `stanc --info` call the build already makes.
-- `hpp_code` answers #1245's discriminator. Populated when a build ran, absent when
-  an executable was reused, which is the "is there generated C++?" half of the two
-  independent questions that issue needs.
+- `hpp_code` is the model's generated C++, produced on both paths (§5), which the
+  constructor hands to fits and writes to the file `$hpp_file()` returns. #1245's
+  discriminator dissolves with it: a source-backed model always has generated C++
+  and an executable-only model (§7) never does, so every consumer that needs it
+  fails for one reason, no source, rather than for whether this object ran make.
 - `dry_run` lives on the internal only. It is the single argument the public
   wrapper omits, which makes `compile_stan_file()` a wrapper rather than a
   re-export, though a three-line one.
@@ -2696,8 +2720,11 @@ that has been wrong since before 0.9.0.
 **The replacements are the ones their own documentation already names.**
 `R/model.R:551` tells the caller to use `fit$init_model_methods()` instead when the
 model will be saved, and `:557` says `$expose_functions()` does the same job after
-compilation. Both are public, both are tested, and neither depends on the reuse
-path, because they run when they are called.
+compilation. Both are public and both are tested. `fit$init_model_methods()`
+compiles from the model C++ the fit copied at construction, which §5 puts in the
+snapshot on both paths; today that text is absent on reuse and the method errors
+there, one more consumer of the defect fixed below. `$expose_functions()` runs when
+it is called, and needs the fix below.
 
 **`$expose_functions()` is fixed here too, since removal makes it the only route.**
 `expose_stan_functions()` refuses whenever `function_env$existing_exe` is `TRUE`
@@ -2713,8 +2740,9 @@ object did not personally run make", and the hpp should be generated on demand f
 the registered source the way `pedantic` re-runs stanc. The error stays for models
 that have no source (§7).
 
-Nothing is lost: on the reuse path today neither route works, one in silence and
-one with a message describing a different model.
+Nothing is lost: on the reuse path today none of these works, the two arguments in
+silence, `fit$init_model_methods()` with a message blaming a pre-compiled
+executable, and `$expose_functions()` with a message describing a different model.
 
 ### What this dissolves
 
