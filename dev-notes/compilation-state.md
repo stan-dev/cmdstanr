@@ -177,8 +177,30 @@ costs a user who wants to run unthreaded nothing. They stop passing
 
 **A separate policy, not an instance of the table above.** A threading-enabled
 binary run with no `threads` argument is not a mismatch. The artifact exceeds the
-request and the run is correct, only serial. cmdstanr errors on this today
+request and the run is correct, on CmdStan's default of one thread unless the user's
+own environment sets `STAN_NUM_THREADS`. cmdstanr errors on this today
 (`R/cpp_opts.R:297-303`), and **that error is removed.**
+
+**Removing the error exposes a leak, and the count moves to the child process.**
+cmdstanr never puts `num_threads=` on the command line. At four launch sites
+(`R/run.R:478`, `:545`, `:591`, `:648`) it runs `Sys.setenv("STAN_NUM_THREADS" = n)`
+when threads were supplied and nothing when they were not, and CmdStan's default for
+`num_threads` is "1 or the value of the STAN_NUM_THREADS environment variable if
+set" (`src/cmdstan/arguments/arg_num_threads.hpp:17`). The variable stays in the R
+session, so a call that omits the argument inherits the last call that gave it:
+`threads_per_chain = 4` and then four parallel chains with no argument is sixteen
+threads. Today the error masks that; thirteen assertions in `test-threads.R` check
+the session variable after each run and so encode the leak. The variable is scoped
+to the child instead, through the `env` argument of `processx::process$new()`, which
+`wsl_compatible_process_new()` (`R/utils.R:689`) already forwards: set for that run
+when threads are supplied, absent otherwise, so the omitted call sees the user's own
+environment and nothing cmdstanr wrote. That is the treatment §6 gives Make
+variables from the environment: honoured, not managed. Passing `num_threads=` on the
+command line instead would be wrong, because CmdStan refuses to start when the
+argument and a set `STAN_NUM_THREADS` disagree (`src/cmdstan/command.hpp:137-146`),
+so a user with the variable in `.Renviron` would be refused the first time they
+passed `threads_per_chain`. The WSL export through `WSLENV` moves into the same
+argument. Lands with the error removal (Stage 4).
 
 The rule is asymmetric, because the two directions are not equally expensive:
 
@@ -220,8 +242,11 @@ that constant initialization and its implied speedup"
 users choose whether to enable threading globally. Anyone who put it in
 `make/local` chose it, and `stan_build_info()` reports it on demand.
 
-Five assertion sites in `test-threads.R`, plus snapshots, encode the old behaviour
-and will change.
+Five assertion sites in `test-threads.R`, plus snapshots, encode the old error and
+will change; its thirteen `Sys.getenv("STAN_NUM_THREADS")` assertions turn into one
+that the session variable is untouched, and one consecutive-call test asserts
+`metadata()$threads_per_chain` is 1 on an omitted call that follows a
+`threads_per_chain = 4` call.
 
 **Scope this to features an operation actually requires.** For arbitrary options
 such as `CXXFLAGS` or a user header, status is permanently unknown, because CmdStan
