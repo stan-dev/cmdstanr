@@ -1545,6 +1545,35 @@ left there is fine and is not the case §4 rejects: it asks to warn whenever Cmd
 builds, and that is what it does. §4 refuses the per-call spelling, where silence on
 an up-to-date model would contradict the request.
 
+**A flag the call emits wins over the same flag in `make/local`'s `STANCFLAGS`.**
+cmdstanr reads the resolved value itself and appends it to its own flags for the
+make invocation and the direct stanc calls alike (`R/model.R:839-843`), so every
+flag reaches stanc through one vector cmdstanr assembles, and a flag present in the
+call and in `make/local` is a repeat cmdstanr created. What stanc does with a repeat
+depends on the version, so it cannot be left to stanc. Measured:
+
+| stanc | valued flag repeated (`--name`, `--filename-in-msg`) | boolean flag repeated (`--O1`, `--warn-pedantic`) |
+|---|---|---|
+| 2.35, 2.36 | accepted; `--name` last wins, `--filename-in-msg` puts both names in the C++ | accepted silently |
+| 2.37 | refused, `option '--name' cannot be repeated` | refused |
+| 2.38, 2.39 | refused | warning, duplicate ignored |
+
+The `--warn-pedantic` line above against `pedantic = TRUE` is a repeat, and so is a
+`make/local` `--O1` against `list("O1")`; today both fail the build on 2.37. The rule
+is the one §3 states for `cpp_options`, that the call overrides `make/local` because
+it is the more specific of the two: before either stanc invocation, every element of
+the resolved `STANCFLAGS` that is a flag the call emits, supplied or injected, is
+dropped, matched the way §3 matches an unnamed entry, the flag itself or the flag
+followed by `=`. `make/local` supplies defaults for what the call does not say. This
+is an occurrence test on a character vector, not the parse of the file declined
+above. The include-path rejection is unchanged and is not an instance of this rule:
+it exists so that the build and `stanc --info` resolve the same files, and dropping
+the flag only when the call also supplies paths would leave the defect in place when
+it does not. Nothing recorded moves, since the call's options are in
+`stanc_options_supplied` and `make/local` is hashed whole. Lands in Stage 1, where
+the boolean repeats already exist; the `--filename-in-msg` injection (§9) relies on
+it.
+
 This narrows what CmdStan accepts. cmdstanr owns source resolution because it
 re-runs it, and a second spelling of the same configuration buys nothing and costs
 the guarantee above. The cost is a `make/local` set for command-line CmdStan use now
@@ -2932,9 +2961,12 @@ injected unconditionally with no version guard.
 **Precedence is settled, not left to implementation.** Absent, cmdstanr injects the
 real source path. Supplied by the caller in `stanc_options`, that value wins
 untouched; existing cmdstanr already accepts it there, so overriding it would break
-§2's rule that supplied options apply, and would do so silently. Which list the
-value lands in, and so whether it is compared, is §4's. A user-typed value is a
-fixed string, so it introduces no path sensitivity.
+§2's rule that supplied options apply, and would do so silently. Either way the
+call's value wins over one in `make/local`'s `STANCFLAGS`, whose occurrence is
+dropped under §6's rule for a flag the call emits; 2.38 and 2.39 refuse the repeat
+outright, so without that rule a `make/local` carrying the flag would fail every
+build. Which list the value lands in, and so whether it is compared, is §4's. A
+user-typed value is a fixed string, so it introduces no path sensitivity.
 
 **Only the two build entry points inject it.** `check_syntax_stan_file()`,
 `format_stan_file()` and `stan_variables()` run stanc against the real file
