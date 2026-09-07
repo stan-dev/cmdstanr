@@ -2788,8 +2788,8 @@ paragraphs that drift apart. One definition of ready removes the adjudication.
 What downstream gives up by waiting is a tag, not a start. We open their pull
 requests ourselves (#1258), and the dev version supplies the boundary in the
 meantime: bumped in the same pull request as each break, it lets brms guard on
-`packageVersion("cmdstanr")` against master the day the break lands, which is
-finer-grained than a tag rather than a substitute for one. Bumping in a follow-up
+`packageVersion("cmdstanr")` against the `v1.0` branch the day the break lands
+there, which is finer-grained than a tag rather than a substitute for one. Bumping in a follow-up
 commit is worse than not bumping at all, since a guard written against the new
 number then takes the old branch and calls a method that has already gone.
 
@@ -3145,10 +3145,14 @@ it touches a compiler. That is the concrete case behind the silence rule in §7.
 
 ### How the stages are executed
 
-One pull request per stage, merged to master, green and revertable on its own.
-Long-lived integration branches are the wrong unit here. #1235 alone ran to sixty
-commits across weeks of review, and a branch held open across two stages spends
-more time being rebased than reviewed.
+One pull request per stage, merged into a `v1.0` integration branch, each green and
+revertable on its own. The branch merges to master at the release candidate and not
+before: enough people install cmdstanr from GitHub master that a sequence of breaking
+stages landing there over weeks would reach them one break at a time. The rebase
+cost of a long-lived branch is what that trades against, and it is small. Master is
+quiet apart from bug fixes while the work is under way, each stage is still one pull
+request reviewed on its own, and what gets rebased is the branch onto those fixes
+rather than a stage onto a moving master.
 
 Stage 4 ships as one pull request, but with the engine already built and tested in
 Stage 3b what remains is the wiring and the API removal. Most of the risk is
