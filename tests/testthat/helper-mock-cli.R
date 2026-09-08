@@ -1,17 +1,33 @@
 real_wcr <- wsl_compatible_run
 
+# Use distinct contents so tests can tell successive builds apart.
+mock_exe_contents <- local({
+  n <- 0L
+  function() {
+    n <<- n + 1L
+    paste0("mock executable ", n)
+  }
+})
+
 with_mocked_cli <- function(code, compile_ret, info_ret) {
   code <- substitute(code)
   caller <- parent.frame()
   local_mocked_bindings(
     wsl_compatible_run = function(command, args, ...) {
       if (
+        # Match the configured make command.
         !is.null(command)
-        && command == "make"
+        && command == make_cmd()
         && !is.null(args)
         && startsWith(basename(args[1]), "model-")
       ) {
         message("mock-compile-was-called")
+        # Successful builds create an executable artifact, just like make.
+        if (isTRUE(compile_ret$status == 0)) {
+          mock_exe <- wsl_safe_path(args[1], revert = TRUE)
+          writeLines(mock_exe_contents(), mock_exe)
+          Sys.chmod(mock_exe, "0755", use_umask = FALSE)
+        }
         compile_ret
       } else if (!is.null(args) && args[1] == "info") {
         info_ret

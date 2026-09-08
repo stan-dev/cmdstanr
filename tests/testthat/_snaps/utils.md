@@ -28,3 +28,74 @@
       Error:
       ! Failed to move files: one or more files could not be copied. No original files were removed.
 
+# install_executable() leaves the destination alone if staging fails
+
+    Code
+      install_executable(fixture$from, fixture$to)
+    Condition
+      Error:
+      ! Could not stage the compiled executable at '<dir>/exe-new-<random>'. The model executable at '<dir>/model-exe' was not modified.
+
+# install_executable() leaves the destination alone if the backup fails
+
+    Code
+      install_executable(fixture$from, fixture$to)
+    Condition
+      Error:
+      ! Could not move the existing executable '<dir>/model-exe' aside. It was not modified.
+
+# install_executable() restores the backup if the install fails
+
+    Code
+      install_executable(fixture$from, fixture$to)
+    Condition
+      Error:
+      ! Could not install the compiled executable at '<dir>/model-exe'. The previously compiled executable has been restored.
+
+# install_executable() keeps the backup if it cannot be restored
+
+    Code
+      install_executable(fixture$from, fixture$to)
+    Condition
+      Error:
+      ! Could not install the compiled executable at '<dir>/model-exe' and the previously compiled executable could not be restored. It has been kept at '<dir>/exe-old-<random>'.
+
+# local_make_local_backup() stops when file backup creation fails
+
+    Code
+      local({
+        local_make_local_backup()
+      })
+    Condition
+      Error:
+      ! Could not create a verified recovery backup of CmdStan's 'make/local' at '<fake-cmdstan>/make/local.cmdstanr-test-backup'. 'make/local' was not modified.
+
+# local_make_local_backup() stops when sentinel creation fails
+
+    Code
+      local({
+        local_make_local_backup()
+      })
+    Condition
+      Error:
+      ! Could not create a verified recovery backup of CmdStan's 'make/local' at '<fake-cmdstan>/make/local.cmdstanr-test-backup'. 'make/local' was not modified.
+
+# local_make_local_backup() retains a failed recovery backup
+
+    Code
+      local({
+        local_make_local_backup()
+        writeLines("MUTATED=true", make_local_path)
+      })
+    Condition
+      Error:
+      ! Could not restore CmdStan's 'make/local'. The recovery backup has been retained at '<fake-cmdstan>/make/local.cmdstanr-test-backup'.
+
+# restore_cmdstan_make_local() preserves the backup when verification fails
+
+    Code
+      restore_cmdstan_make_local()
+    Condition
+      Error:
+      ! Could not restore CmdStan's 'make/local'. The recovery backup has been retained at '<fake-cmdstan>/make/local.cmdstanr-test-backup'.
+

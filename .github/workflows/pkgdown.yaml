@@ -34,7 +34,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::., stan-dev/pkgdown-config, qs2=?source, stringfish=?source
+          extra-packages: any::pkgdown, local::., stan-dev/pkgdown-config
 
       - name: Install CmdStan
         run: Rscript -e "cmdstanr::install_cmdstan()"

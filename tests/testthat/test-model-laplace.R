@@ -76,11 +76,11 @@ test_that("laplace() avoids output_basename conflict with internal optimize()", 
     )
   )
 
-  expect_equal(basename(fit$output_files()), "custom-laplace-1.csv")
-  expect_equal(basename(fit$mode()$output_files()), "custom-laplace-mode-1.csv")
+  expect_equal(basename(fit$output_files()), "custom-laplace-01.csv")
+  expect_equal(basename(fit$mode()$output_files()), "custom-laplace-mode-01.csv")
   expect_setequal(
     list.files(output_dir, pattern = "\\.csv$"),
-    c("custom-laplace-1.csv", "custom-laplace-mode-1.csv")
+    c("custom-laplace-01.csv", "custom-laplace-mode-01.csv")
   )
 })
 

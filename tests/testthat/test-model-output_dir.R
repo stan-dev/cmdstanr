@@ -47,7 +47,7 @@ test_that("WSL output paths stay host-native until command composition", {
           output_basename = "model"
         )
       })
-      output_files <- file.path(host_dirs, "model-1.csv")
+      output_files <- file.path(host_dirs, "model-01.csv")
       expect_equal(
         vapply(args, function(x) x$output_dir, character(1)),
         host_dirs
@@ -62,15 +62,15 @@ test_that("WSL output paths stay host-native until command composition", {
         )
         sub("file=", "", command_args[grepl("^file=", command_args)], fixed = TRUE)
       }, character(1))
-      expect_equal(cmdstan_output_files, file.path(wsl_dirs, "model-1.csv"))
+      expect_equal(cmdstan_output_files, file.path(wsl_dirs, "model-01.csv"))
 
       command_args <- args[[1]]$compose_all_args(
         output_file = output_files[1],
-        profile_file = file.path(host_dirs[1], "model-profile-1.csv"),
-        latent_dynamics_file = file.path(host_dirs[1], "model-diagnostic-1.csv")
+        profile_file = file.path(host_dirs[1], "model-profile-01.csv"),
+        latent_dynamics_file = file.path(host_dirs[1], "model-diagnostic-01.csv")
       )
-      expect_in("diagnostic_file=/mnt/c/output/model-diagnostic-1.csv", command_args)
-      expect_in("profile_file=/mnt/c/output/model-profile-1.csv", command_args)
+      expect_in("diagnostic_file=/mnt/c/output/model-diagnostic-01.csv", command_args)
+      expect_in("profile_file=/mnt/c/output/model-profile-01.csv", command_args)
 
       # Omitting output_dir must still use the faster WSL-native temp directory.
       default_args <- CmdStanArgs$new(
@@ -82,7 +82,7 @@ test_that("WSL output paths stay host-native until command composition", {
       )
       expect_equal(default_args$output_dir, "//wsl$/Ubuntu/tmp/cmdstanr")
       expect_in(
-        "file=/tmp/cmdstanr/model-1.csv",
+        "file=/tmp/cmdstanr/model-01.csv",
         default_args$compose_all_args(
           output_file = default_args$new_files("output")
         )
@@ -145,7 +145,7 @@ test_that("all fitting methods work with output_dir", {
     fit <- testing_fit("bernoulli", method = method, seed = 123,
                        output_basename = "custom")
     n_files <- length(fit$output_files())
-    files <- paste0("custom-", 1:n_files, ".csv")
+    files <- sprintf("custom-%02d.csv", seq_len(n_files))
     expect_equal(basename(fit$output_files()), files)
   }
 

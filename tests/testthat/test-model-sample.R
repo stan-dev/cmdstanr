@@ -120,7 +120,7 @@ test_that("sample() method runs when the stan file is removed", {
   )
 })
 
-test_that("sample() prints informational messages depening on show_exceptions", {
+test_that("sample() prints informational messages depending on show_exceptions", {
   mod_info_msg <- testing_model("info_message")
   expect_sample_output(
     expect_message(

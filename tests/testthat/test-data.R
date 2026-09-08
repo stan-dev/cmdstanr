@@ -327,7 +327,7 @@ test_that("process_data() errors on missing variables", {
   expect_type(v, "character")
 })
 
-test_that("process_data() corrrectly casts integers and floating point numbers", {
+test_that("process_data() correctly casts integers and floating point numbers", {
   stan_file <- write_stan_file("
   data {
     int a;
