@@ -492,9 +492,9 @@ writes the header back into `cpp_options` under whichever spelling was used, and
 as an argument and never touched `cpp_options` gets
 `USER_HEADER = "/abs/path/inc/mine.hpp"` back from `$cpp_options()`. Wired to
 `cpp_options_supplied` with that line still in place, the accessor would report a
-field the caller never passed, holding a path they never wrote. What survives is
+field the caller never passed, holding a path they never wrote. <!-- contract -->What survives is
 only the Make flag: CmdStan reads `-include $(USER_HEADER)` (`make/program:41`), so
-`USER_HEADER=` still has to reach `make`. <!-- contract -->**It reaches it as a flag built with the
+`USER_HEADER=` still has to reach `make`. **It reaches it as a flag built with the
 others, not as a recorded `cpp_options` entry.** <!-- /contract --> A recorded option would put the
 header's path in `request` as well as in `dependencies` (§8), and under WSL not
 even in the same spelling, since the Make side is `wsl_safe_path()`-transformed
@@ -1223,11 +1223,11 @@ whose contents are the binary's to decide rather than the format's.
 
 <!-- contract -->
 
-**The version is checked first, and on its own.** <!-- /contract --> Reading a record has two steps,
+**The version is checked first, and on its own.** Reading a record has two steps,
 and the first decides whether the second means anything: `format_version` is
 validated by itself, and only a version this cmdstanr reads sends the reader on to
 the remaining fields. A record written in a format we do not read is never measured
-against the current schema, because we do not know what that version required. <!-- contract -->It
+against the current schema, because we do not know what that version required. It
 reports `unsupported_format` and the version it read, and nothing else from the
 record. The executable's own `reported_features` still come back, as §8 requires of
 every unavailable provenance. <!-- /contract --> The rule above governs the records we claim to
