@@ -1565,12 +1565,17 @@ it is the more specific of the two: before either stanc invocation, every elemen
 the resolved `STANCFLAGS` that is a flag the call emits, supplied or injected, is
 dropped, matched the way §3 matches an unnamed entry, the flag itself or the flag
 followed by `=`. When the match is the bare flag, the element after it goes too if
-it does not begin with `--`, because it is the flag's value given separately: stanc
+it does not begin with `-`, because it is the flag's value given separately: stanc
 accepts `--filename-in-msg published-model.stan` as two arguments on every
-supported version, and an element of `STANCFLAGS` without `--` can be nothing but
-such a value, since a second positional argument fails stanc with `too many
-arguments` (measured 2.35, 2.37, 2.39). Dropping the flag alone would leave the
-value behind as that second positional. `make/local` supplies defaults for what
+supported version, and an element of `STANCFLAGS` that does not start with a
+hyphen can be nothing but such a value, since a second positional argument fails
+stanc with `too many arguments` (measured 2.35, 2.37, 2.39). Dropping the flag
+alone would leave the value behind as that second positional. The test is for one
+hyphen, not two, because stanc has single-hyphen options: `-fno-soa` after a
+`--warn-pedantic` in `make/local` is the next flag, not a value, and consuming it
+would silently change the generated C++. A value never starts with a hyphen, since
+2.37 and 2.39 read any hyphen-led token as an option (`unknown option -x` for
+`--filename-in-msg -x.stan`). `make/local` supplies defaults for what
 the call does not say. This is an occurrence test on a character vector, not the
 parse of the file declined above, and it needs no knowledge of which flags take a
 value. The include-path rejection is unchanged and is not an instance of this rule:
