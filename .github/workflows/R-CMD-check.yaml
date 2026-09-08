@@ -11,6 +11,7 @@ name: Unit tests
   pull_request:
     branches:
       - master
+      - v1.0
   workflow_dispatch:
     inputs:
       tarball_url:
