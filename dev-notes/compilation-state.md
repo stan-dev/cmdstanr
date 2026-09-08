@@ -1564,9 +1564,16 @@ is the one §3 states for `cpp_options`, that the call overrides `make/local` be
 it is the more specific of the two: before either stanc invocation, every element of
 the resolved `STANCFLAGS` that is a flag the call emits, supplied or injected, is
 dropped, matched the way §3 matches an unnamed entry, the flag itself or the flag
-followed by `=`. `make/local` supplies defaults for what the call does not say. This
-is an occurrence test on a character vector, not the parse of the file declined
-above. The include-path rejection is unchanged and is not an instance of this rule:
+followed by `=`. When the match is the bare flag, the element after it goes too if
+it does not begin with `--`, because it is the flag's value given separately: stanc
+accepts `--filename-in-msg published-model.stan` as two arguments on every
+supported version, and an element of `STANCFLAGS` without `--` can be nothing but
+such a value, since a second positional argument fails stanc with `too many
+arguments` (measured 2.35, 2.37, 2.39). Dropping the flag alone would leave the
+value behind as that second positional. `make/local` supplies defaults for what
+the call does not say. This is an occurrence test on a character vector, not the
+parse of the file declined above, and it needs no knowledge of which flags take a
+value. The include-path rejection is unchanged and is not an instance of this rule:
 it exists so that the build and `stanc --info` resolve the same files, and dropping
 the flag only when the call also supplies paths would leave the defect in place when
 it does not. Nothing recorded moves, since the call's options are in
