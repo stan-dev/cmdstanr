@@ -196,6 +196,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
 #'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version associated with the model. |
 #'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
+#'  [`$user_header()`][model-method-model-info] | Return the path to the user header, if the model has one. |
 #'
 #'  ## Compilation
 #'
@@ -272,24 +273,14 @@ CmdStanModel <- R6::R6Class(
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
-        # Resolve headers here so compile = FALSE preserves an explicit NULL.
-        # names(args) distinguishes NULL from an omitted argument.
-        resolved_header <- resolve_user_header(
-          user_header = args$user_header,
-          supplied = "user_header" %in% names(args),
-          cpp_options = args$cpp_options %||% list()
-        )
-        if (!compile) {
-          # compile() reports this conflict when compilation is requested.
-          warn_user_header_conflict(resolved_header$conflict)
-        }
-        # Keep only the host path here. Persisting the WSL path would break reuse
-        # on WSL1.
-        private$precompile_cpp_options_ <- resolved_header$cpp_options
+        private$precompile_cpp_options_ <- assert_valid_cpp_options(args$cpp_options)
+        checkmate::assert_string(args$user_header, null.ok = TRUE,
+                                 .var.name = "user_header")
         # Use the header supplied to cmdstan_model() as the baseline for change
-        # detection.
-        private$user_header_ <- resolve_path(resolved_header$user_header)
-        private$using_user_header_ <- !is.null(resolved_header$user_header)
+        # detection. Keep only the host path here. Persisting the WSL path would
+        # break reuse on WSL1.
+        private$user_header_ <- resolve_path(args$user_header)
+        private$using_user_header_ <- !is.null(args$user_header)
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
@@ -374,6 +365,9 @@ CmdStanModel <- R6::R6Class(
     cpp_options = function() {
       private$cpp_options_
     },
+    user_header = function() {
+      private$user_header_
+    },
     hpp_file = function() {
       if (!length(private$hpp_file_)) {
         stop("The .hpp file does not exist. Please (re)compile the model.", call. = FALSE)
@@ -417,6 +411,7 @@ CmdStanModel <- R6::R6Class(
 #'   include_paths()
 #'   cmdstan_version()
 #'   cpp_options()
+#'   user_header()
 #'   hpp_file()
 #'   save_hpp_file(dir = NULL)
 #'   ```
@@ -443,6 +438,8 @@ CmdStanModel <- R6::R6Class(
 #' * `$include_paths()` returns a character vector of absolute paths or `NULL`.
 #' * `$cmdstan_version()` returns a CmdStan version as a string.
 #' * `$cpp_options()` returns a named list of C++ options.
+#' * `$user_header()` returns the absolute path to the user header as a string,
+#'   or `NULL` if the model has no user header.
 #' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
 #'   was generated while compiling this model object. It errors if no `.hpp`
 #'   path is available, such as when an up-to-date executable was reused.
@@ -509,8 +506,6 @@ NULL
 #'   to compile with the Stan model. If `$compile()` is called again without
 #'   `user_header`, the most recently supplied header is reused, and changing
 #'   it forces recompilation. Pass `user_header = NULL` to compile without one.
-#'   A header can also be supplied via `cpp_options` as `USER_HEADER` or
-#'   `user_header`; the `user_header` argument takes precedence over both.
 #'   See `force_recompile` for the case of a header supplied for a program
 #'   whose executable is already up to date.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
@@ -632,8 +627,9 @@ compile <- function(quiet = TRUE,
   assert_stan_file_exists(self$stan_file())
   # missing() distinguishes an omitted header from user_header = NULL.
   user_header_supplied <- !missing(user_header)
-  cpp_options_supplied <- length(cpp_options) > 0
-  if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
+  if (length(cpp_options) > 0) {
+    cpp_options <- assert_valid_cpp_options(cpp_options)
+  } else if (!is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
   # Precompile options still need mismatch checks even though they were not
@@ -677,16 +673,11 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
 
-  resolved_header <- resolve_user_header(
-    user_header = user_header,
-    supplied = user_header_supplied,
-    cpp_options = cpp_options,
-    cpp_options_supplied = cpp_options_supplied,
-    previous = private$user_header_
-  )
-  warn_user_header_conflict(resolved_header$conflict)
-  user_header <- resolved_header$user_header
-  cpp_options <- resolved_header$cpp_options
+  if (!user_header_supplied) {
+    user_header <- private$user_header_
+  }
+  checkmate::assert_string(user_header, null.ok = TRUE,
+                           .var.name = "user_header")
 
   using_user_header <- !is.null(user_header)
   if (using_user_header) {
@@ -702,11 +693,8 @@ compile <- function(quiet = TRUE,
   private$user_header_ <- user_header
   private$using_user_header_ <- using_user_header
 
-  if (using_user_header) {
-    if (!file.exists(user_header)) {
-      stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
-    }
-    cpp_options[[resolved_header$spelling]] <- wsl_safe_path(user_header)
+  if (using_user_header && !file.exists(user_header)) {
+    stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
   }
 
   # Do not adopt an executable from a new destination. Its generated C++ and
@@ -851,6 +839,12 @@ compile <- function(quiet = TRUE,
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
+  # CmdStan reads the header from the USER_HEADER make variable.
+  user_header_flag <- NULL
+  if (using_user_header) {
+    user_header_flag <- paste0("USER_HEADER=", wsl_safe_path(user_header))
+  }
+
   if (!dry_run) {
 
     withr::with_envvar(
@@ -864,6 +858,7 @@ compile <- function(quiet = TRUE,
           command = make_cmd(),
           args = c(wsl_safe_path(repair_path(tmp_exe)),
                   cpp_options_to_compile_flags(cpp_options),
+                  user_header_flag,
                   stancflags_val),
           wd = cmdstan_path(),
           echo = !quiet || is_verbose_mode(),

@@ -37,6 +37,33 @@ test_that("validate_cpp_options works", {
   expect_warning(validate_cpp_options(list(STAN_OPENCL = FALSE)))
 })
 
+test_that("assert_valid_cpp_options passes options through", {
+  expect_equal(assert_valid_cpp_options(NULL), list())
+  options <- list(stan_threads = TRUE, STAN_OPENCL = NULL)
+  expect_identical(assert_valid_cpp_options(options), options)
+})
+
+test_that("assert_valid_cpp_options rejects a user header", {
+  for (option_name in c("USER_HEADER", "user_header", "User_Header")) {
+    expect_error(
+      assert_valid_cpp_options(setNames(list("header.hpp"), option_name)),
+      paste0(
+        "The user header cannot be set through `cpp_options`. ",
+        "Pass it with the `user_header` argument: `user_header = \"header.hpp\"`."
+      ),
+      fixed = TRUE
+    )
+    expect_error(
+      assert_valid_cpp_options(setNames(list(c("a.hpp", "b.hpp")), option_name)),
+      paste0(
+        "The user header cannot be set through `cpp_options`. ",
+        "Pass it with the `user_header` argument."
+      ),
+      fixed = TRUE
+    )
+  }
+})
+
 test_that("cpp option lookup is exact and case-insensitive", {
   cpp_options <- list(STAN_THREADS = TRUE)
   expect_identical(cpp_option_value(cpp_options, "stan_threads"), TRUE)

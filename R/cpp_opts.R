@@ -181,76 +181,30 @@ validate_cpp_options <- function(cpp_options) {
   cpp_options
 }
 
-# user headers ---------------------------------------------------------
-# Resolve one header and remove both header spellings from cpp_options.
-# Precedence is explicit user_header (including NULL), USER_HEADER,
-# user_header, then previous. `supplied` distinguishes NULL from omission.
-# `cpp_options_supplied` limits conflict warnings to this call.
-resolve_user_header <- function(user_header,
-                                supplied,
-                                cpp_options,
-                                cpp_options_supplied = TRUE,
-                                previous = NULL) {
-  # Use positions so duplicate options follow make's last-value-wins behavior.
-  upper_at <- which(names(cpp_options) == "USER_HEADER")
-  lower_at <- which(names(cpp_options) == "user_header")
-  last_of <- function(positions) {
-    if (length(positions) == 0) {
-      NULL
-    } else {
-      cpp_options[[positions[[length(positions)]]]]
-    }
+#' Check the `cpp_options` a caller supplied and return them
+#'
+#' The user header has its own argument, so a header here is an error.
+#'
+#' @noRd
+assert_valid_cpp_options <- function(cpp_options) {
+  if (is.null(cpp_options)) {
+    return(list())
   }
-  # NULL is still present here because it emits an empty USER_HEADER= assignment.
-  has_upper <- length(upper_at) > 0
-  has_lower <- length(lower_at) > 0
-  from_upper <- last_of(upper_at)
-  from_lower <- last_of(lower_at)
-  conflict <- NULL
-  spelling <- "USER_HEADER"
-
-  if (supplied) {
-    if (cpp_options_supplied && (has_upper || has_lower)) {
-      conflict <- "argument"
-    }
-    header <- user_header
-  } else if (has_upper) {
-    if (has_lower) {
-      conflict <- "cpp_options"
-    }
-    header <- from_upper
-  } else if (has_lower) {
-    header <- from_lower
-    spelling <- "user_header"
-  } else {
-    header <- previous
-  }
-
-  # Validate the value now and check file existence when compiling.
-  if (!is.null(header)) {
-    checkmate::assert_string(header, .var.name = "user_header")
-  }
-  # Guarded because x[-integer(0)] is empty.
-  header_at <- c(upper_at, lower_at)
+  checkmate::assert_list(cpp_options, .var.name = "cpp_options")
+  header_at <- which(toupper(names(cpp_options)) == "USER_HEADER")
   if (length(header_at) > 0) {
-    cpp_options <- cpp_options[-header_at]
+    value <- cpp_options[[header_at[[1]]]]
+    example <- ""
+    if (checkmate::test_string(value)) {
+      example <- paste0(": `user_header = \"", value, "\"`")
+    }
+    stop(
+      "The user header cannot be set through `cpp_options`. ",
+      "Pass it with the `user_header` argument", example, ".",
+      call. = FALSE
+    )
   }
-
-  list(
-    user_header = header,
-    spelling = spelling,
-    cpp_options = cpp_options,
-    conflict = conflict
-  )
-}
-
-warn_user_header_conflict <- function(conflict) {
-  if (identical(conflict, "argument")) {
-    warning("User header specified both via user_header argument and via cpp_options arguments")
-  } else if (identical(conflict, "cpp_options")) {
-    warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
-  }
-  invisible(NULL)
+  cpp_options
 }
 
 # check specific options for validity ---------------------------------

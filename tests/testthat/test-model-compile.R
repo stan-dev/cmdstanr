@@ -1091,14 +1091,16 @@ test_that("cmdstan_model works with user_header", {
       stan_file = testing_stan_file("bernoulli_external"),
       user_header = tmpfile
   ))
+  expect_equal(mod$user_header(), resolve_path(tmpfile))
+  expect_false("USER_HEADER" %in% names(mod$cpp_options()))
   file.remove(mod$exe_file())
 
-  # No stanc_options here: a user header supplied via cpp_options must enable
-  # allow-undefined on its own (#1227)
+  # No stanc_options here: the user header argument must enable allow-undefined
+  # on its own (#1227)
   expect_call_compilation(
     mod_2 <- cmdstan_model(
       stan_file = testing_stan_file("bernoulli_external"),
-      cpp_options=list(USER_HEADER=tmpfile)
+      user_header = tmpfile
     )
   )
 
@@ -1108,35 +1110,13 @@ test_that("cmdstan_model works with user_header", {
   Sys.setFileTime(tmpfile, Sys.time() + 1) #touch file to trigger recompile
   expect_compilation(mod, quiet = TRUE, user_header = tmpfile)
 
-  # Alternative spec of user header
-  expect_no_recompilation(mod,
-    quiet = TRUE,
-    cpp_options = list(user_header = tmpfile),
-    dry_run = TRUE
-  )
-
-  # Error/warning messages
+  # Error messages
   expect_error(
     cmdstan_model(
       stan_file = testing_stan_file("bernoulli_external"),
-      cpp_options = list(USER_HEADER = "non_existent.hpp"),
-      stanc_options = list("allow-undefined")
+      user_header = "non_existent.hpp"
     ),
     "header file '[^']*' does not exist"
-  )
-
-  expect_warning(cmdstan_model(
-    stan_file = testing_stan_file("bernoulli_external"),
-    cpp_options = list(USER_HEADER = tmpfile, user_header = tmpfile),
-    dry_run = TRUE),
-    "User header specified both"
-  )
-  expect_warning(cmdstan_model(
-    stan_file = testing_stan_file("bernoulli_external"),
-    user_header = tmpfile,
-    cpp_options = list(USER_HEADER = tmpfile),
-    dry_run = TRUE),
-    "User header specified both"
   )
 })
 

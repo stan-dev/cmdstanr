@@ -437,11 +437,12 @@ spellings are rejected, with an error naming it.
 
 This is the same rule as for `include_paths`, `warn-pedantic` and `STANCFLAGS` (§6,
 §4): one setting, one channel. It is stated separately because of what it deletes.
-`resolve_user_header()` (`R/cpp_opts.R:189-245`) exists almost entirely to reconcile
-the three, tracking positions of both casings so duplicates follow make's last-wins
-rule, walking a four-level precedence chain, and raising two distinct conflict
-warnings. §8 removes its `previous` parameter along with deferred compilation, and
-what remains is resolving a path and setting `USER_HEADER` for `make`.
+`resolve_user_header()` existed almost entirely to reconcile the three, tracking
+positions of both casings so duplicates followed make's last-wins rule, walking a
+four-level precedence chain, and raising two distinct conflict warnings. Stage 1
+deleted it. What remains, inline in `$compile()`, is resolving a path, falling back
+to the previous header, and passing `USER_HEADER` to `make`. §8 removes the fallback
+along with deferred compilation.
 
 The code already treats the header as not belonging here: `parsed_cpp_options()`
 skips `user_header` when canonicalizing (`R/cpp_opts.R:101`), because it is not an
@@ -2675,12 +2676,11 @@ explicit `NULL` default breaks it just as well.
 **Explicit `NULL` means omission for all six, so one sentinel covers them.** <!-- /contract -->
 `user_header` is the one that looks like an exception, because `user_header = NULL`
 currently means compile without one. That meaning exists only because the header
-persisted: `resolve_user_header()`'s `supplied` flag decides precedence over the two
-`cpp_options` spellings and otherwise falls back to `previous`
-(`R/cpp_opts.R:189-245`). §3 rejects both spellings and §8 removes `previous`, so
+persists: `$compile()` tells an omitted `user_header` from an explicit `NULL` with
+`missing()` and falls back to the previous header when it is omitted. §3 rejected
+the two `cpp_options` spellings (done in Stage 1) and §8 removes the fallback, so
 nothing is left for an explicit `NULL` to override, and under §2 omitting the
-argument already means no header. `supplied` leaves `resolve_user_header()` with the
-precedence chain it existed for.
+argument already means no header.
 
 <!-- contract -->
 
