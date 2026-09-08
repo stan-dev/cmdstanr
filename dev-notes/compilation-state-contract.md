@@ -61,8 +61,6 @@ list.
 ### [What consumers do with each state](compilation-state.md#what-consumers-do-with-each-state)
 
 **This table covers one case only: a runtime argument asks for a build feature.**
-The converse, an artifact that has a feature nobody asked to use, is a separate
-policy below, and the two are easy to conflate.
 
 | State, *when the feature was requested at runtime* | Behaviour |
 |---|---|
@@ -92,9 +90,9 @@ The rule is asymmetric, because the two directions are not equally expensive:
 | `threads == 1` | proceed | proceed |
 | no `threads` argument | proceed | proceed |
 
-**Scope this to features an operation actually requires.** For arbitrary options
-such as `CXXFLAGS` or a user header, status is permanently unknown, because CmdStan
-never reports them; erroring on those would error on everything. It applies where a
+**Scope this to features an operation actually requires.**
+
+It applies where a
 runtime argument depends on a build feature: `threads_per_chain` on `STAN_THREADS`,
 OpenCL device selection on `STAN_OPENCL`.
 
@@ -111,10 +109,7 @@ durable configuration of its own.
 > Every call that builds specifies the configuration it wants. Omitting an option
 > means you are not asking for it.
 
-**An automatic rebuild never replays stored configuration.** The constructor builds
-from the request in front of it, and anything that would run a stale executable
-errors instead (§5), so there is no point at which cmdstanr needs configuration it
-was not just given.
+**An automatic rebuild never replays stored configuration.**
 
 `cmdstan_model()` **ensures a current compiled executable** when given a Stan file.
 It reuses one that is up to date and builds when it is not; it does not compile
@@ -208,10 +203,7 @@ as literals with no case folding inside the matcher.
 
 **After normalization, a name must match `^[A-Za-z_][A-Za-z0-9_]*$`.**
 
-**Plain `NAME=value` is rejected too**, though it is unambiguous, because accepting
-raw `=` means re-implementing every special-cased variable on the raw path: a raw
-`USER_HEADER=my.hpp` reaches `make` while everything keyed on names looks straight
-past it.
+**Plain `NAME=value` is rejected too**
 
 **Make's own flags are rejected as well, so nothing unnamed reaches the build.**
 
@@ -235,14 +227,7 @@ contains.**
 
 ### [What is recorded, and what is compared](compilation-state.md#what-is-recorded-and-what-is-compared)
 
-These are two different questions. **Recording** serves provenance and diagnosis:
-the record should describe the build completely enough to explain it, which is a
-weaker bar than reproducing it (§1). **Comparison** serves the rebuild verdict (§6),
-and a field belongs there only if it determines the artifact's observable behaviour
-and is not already determined by another compared field.
-
-**This table is the single statement of both.** Prose elsewhere refers to it and
-must not restate it. A rule written in two places is a future inconsistency.
+**This table is the single statement of both.**
 
 | Field | Recorded | Compared | Notes |
 |---|---|---|---|
@@ -262,10 +247,7 @@ must not restate it. A rule written in two places is a future inconsistency.
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
-**Origin is stored, not inferred.** Within `stanc_options` the verdict compares the
-supplied list and not the injected one, and a merged list cannot be split back apart
-without knowing this version's injection rules, which is the reconstruct-after-the-
-fact fragility this design removes everywhere else.
+**Origin is stored, not inferred.**
 
 **A change to which options cmdstanr injects does not rebuild anything already
 built.** An option a later cmdstanr adds can change the artifact while an old
@@ -322,10 +304,9 @@ successful record install whose pair verification then fails, restores both the
 previous executable and the previous record**, leaving a consistent pair rather
 than a new artifact with old provenance.
 
-**Concurrency is out of scope for v1.** The hash fixes crash-created and sequential
-mismatches. It does not fix active concurrency: process A can validate executable
-A, process B can replace it, and A then launches B. That is a TOCTOU race, and no
-claim of correctness under concurrency is made here. Concurrent compilation or use
+**Concurrency is out of scope for v1.**
+
+Concurrent compilation or use
 of one destination is unsupported; locking is tracked separately.
 
 ### [The record is parsed into an object, and compared as one](compilation-state.md#the-record-is-parsed-into-an-object-and-compared-as-one)
@@ -340,11 +321,9 @@ unreadable whole: nothing in it is used and nothing in it is reported, including
 
 **`reported_features` is checked for shape and never for membership.**
 
-**The version is checked first, and on its own.** Reading a record has two steps,
-and the first decides whether the second means anything: `format_version` is
-validated by itself, and only a version this cmdstanr reads sends the reader on to
-the remaining fields. A record written in a format we do not read is never measured
-against the current schema, because we do not know what that version required. It
+**The version is checked first, and on its own.**
+
+It
 reports `unsupported_format` and the version it read, and nothing else from the
 record. The executable's own `reported_features` still come back, as §8 requires of
 every unavailable provenance.
@@ -363,19 +342,8 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
   `stanc_options_to_args()` already computes it, and it collapses the two accepted
   spellings at no cost: `list("O1")` and `list("O1" = TRUE)` both become `--O1`, so a
   model built one way is not rebuilt by the other. Order is preserved, so a
-  reordered list rebuilds. This rule declines per-option semantics in both
-  directions: normalizing the order away would need to know that no two flags settle
-  one setting between them, and canonicalizing semantic equivalence would need to
-  know which two flags mean the same thing. stanc has a live instance, `--O` being an
-  alias for `--O1` from 2.37 on, so `list("O")` and `list("O1")` rebuild each other
-  for nothing. The Make assignments above sort for a reason that needs neither: once
-  §3 leaves only `=` reachable, order decides duplicates and nothing else, and
-  last-wins resolves that without consulting any variable's meaning. What declining
-  the sort costs is small: on 2.39.0 `--O1 --O0` and `--O0 --O1` both generate the
-  code plain `--O0` does, so a reorder rebuilds to produce identical C++ but for the
-  `stancflags` string stanc stamps into the binary. A spurious rebuild is the safe
-  direction, and nothing in cmdstanr reorders a caller's list, so this one is
-  reached only by a deliberate reorder.
+  reordered list rebuilds.
+
 - User-header paths: normalise. This is the one path that is also compared (§6), so
   normalisation here affects the verdict rather than only the record's readability.
 - `NULL` / `FALSE`: preserve the explicit empty-assignment meaning (§3).
@@ -415,21 +383,16 @@ compiles and never mutates state.** Callers differ:
 
 ### [What the assessment is given](compilation-state.md#what-the-assessment-is-given)
 
-**Two arguments: what this caller expects, and what is on disk.** The expected side
-is where the callers differ, and that difference is what lets an object notice its
-executable was replaced (§2).
+**Two arguments: what this caller expects, and what is on disk.**
 
 | | at `cmdstan_model()` | at a guarded method |
 |---|---|---|
 | **expected** | the options this call supplied | the object's own snapshot: the options it was built with, and the artifact hash it was built against |
 | **observed** | the executable's hash, the record beside it, and either the source hashes resolved with this call's include paths or a statement that they were not resolved | the same, resolved with the object's construction-time paths (§4) |
 
-**Only the object's own snapshot catches a replaced executable.** §2's
-single-configuration cache lets the most recent compile own the executable and the
-record beside it, so once another call or process rebuilds, the pair on disk is
-self-consistent and describes a program this object never saw. The path is
-unchanged, the file exists, and the record's `artifact` hash matches the binary it
-now sits beside, which is the bond it exists to prove (§4). Nothing on disk
+**Only the object's own snapshot catches a replaced executable.**
+
+Nothing on disk
 disagrees, so the disagreement has to be carried in. For an executable-only object
 that carried-in hash is the whole check (§7).
 
@@ -474,10 +437,9 @@ the fitting methods.
 | **R6 plumbing; no validation** | `$initialize()`, `$clone()` |
 | **Removed** | `$compile()` (§8) |
 
-**Functions exposed by `$expose_functions()` are a snapshot, like `$code()`.** The
-validation happens at exposure; the resulting entries in `$functions` are plain R
-bindings over separately compiled code, not the CmdStan binary, and re-validating
-on every call is neither practical nor meaningful. A recompile drops them and they
+**Functions exposed by `$expose_functions()` are a snapshot, like `$code()`.**
+
+A recompile drops them and they
 must be exposed again, which is the behaviour #1228 established.
 
 **The `$exe_file(path)` setter is removed** (`R/model.R:365-370`).
@@ -518,11 +480,9 @@ validates at the moment of use, so §8 has it generated on demand.
 **`$format(overwrite_file = TRUE)` must stop refreshing the cache**
 (`R/model.R:1308-1312`).
 
-**`$format()` is kept, overwriting included**:
-rewriting the file is the useful part and is not what breaks anything. With the
-refresh gone, the file changes, the snapshot keeps describing the built source, the
-Stan file's content hash no longer matches, and the next operation that runs the
-binary errors and points at `cmdstan_model()`. So **reformatting forces a
+**`$format()` is kept, overwriting included**
+
+So **reformatting forces a
 recompile**, which is correct: the bytes changed, and whether the build is
 unaffected cannot be known without doing it.
 
@@ -530,9 +490,7 @@ unaffected cannot be known without doing it.
 
 A rebuild is triggered by `force_recompile = TRUE`, or when any field §4's table
 marks **compared** differs from what this call computes. Which fields those are is
-§4's to say. The dependencies among them are the Stan program, its resolved
-includes, the user header and `make/local` (§8 carries the shape), named here only
-so this section can be read without holding the table open.
+§4's to say.
 
 Or when the record cannot be used at all:
 
@@ -549,10 +507,7 @@ settled by the record having failed: with a valid version from `<exe> info` it
 constructs explicitly unprovenanced, reporting what the binary says about itself and
 nothing about how it was built, and without one adoption errors.
 
-**`include_paths` is absent from §4's compared column on purpose.** Comparing it as
-a spelling would reintroduce path sensitivity for every model that has an include:
-renaming a working directory would rebuild through a different field, for the
-population content identity exists to serve.
+**`include_paths` is absent from §4's compared column on purpose.**
 
 It does not need comparing, because its whole effect is which files it resolves,
 and that is checked directly: re-resolution runs `stanc --info` and compares the
@@ -576,10 +531,7 @@ runs at build time only.**
 a cmdstanr argument, so the whole variable goes. `make/local` is CmdStan's own
 configuration file (`make/local.example:20` ships `STANCFLAGS+= --warn-pedantic` as
 a suggested line), so only the include-path flag is refused from its `STANCFLAGS`,
-not the variable. The check on `cpp_options` belongs in
-`assert_valid_cpp_options()` (§3, #1250), which `cmdstan_make_local()` does not call
-(`R/install.R:324-338` builds its flags inline), so writing `STANCFLAGS` into
-`make/local` through the supported function stays possible.
+not the variable.
 
 **A flag the call emits wins over the same flag in `make/local`'s `STANCFLAGS`.**
 
@@ -597,12 +549,10 @@ stanc with `too many arguments` (measured 2.35, 2.37, 2.39). Dropping the flag
 alone would leave the value behind as that second positional. The test is for one
 hyphen, not two, because stanc has single-hyphen options: `-fno-soa` after a
 `--warn-pedantic` in `make/local` is the next flag, not a value, and consuming it
-would silently change the generated C++. A value never starts with a hyphen, since
-2.37 and 2.39 read any hyphen-led token as an option (`unknown option -x` for
-`--filename-in-msg -x.stan`). `make/local` supplies defaults for what
-the call does not say. This is an occurrence test on a character vector, not the
-parse of the file declined above, and it needs no knowledge of which flags take a
-value.
+would silently change the generated C++.
+
+`make/local` supplies defaults for what
+the call does not say.
 
 The include-path rejection is unchanged and is not an instance of this rule:
 it exists so that the build and `stanc --info` resolve the same files, and dropping
@@ -615,16 +565,13 @@ recorded ones.**
 **Order matters on the current call, for the same reason.** Include paths control
 shadowing, so re-resolution must be given them in the order supplied.
 
-**An unsupported format version is among those artifact-side reasons.** It takes
-their outcome, with the reason stated (§4), whether the version is newer or older
-than what this cmdstanr supports. It is still distinguished from an unreadable
-record, because the two warrant different messages. Unreadable means the record
+**An unsupported format version is among those artifact-side reasons.**
+
+Unreadable means the record
 could not be accepted as a record at all: invalid JSON, a missing or unusable
 `format_version`, or a required field that is absent or the wrong shape. Required
 is relative to the record's own `format_version`. Unsupported means a version was
-found, and read, and this cmdstanr does not interpret it. Same behaviour, different
-diagnosis, and the vocabulary is kept apart because a record whose version we do
-support can still be corrupt.
+found, and read, and this cmdstanr does not interpret it.
 
 **Dependencies are identified by content.** A dependency matches when its content
 hash matches what the record holds, wherever it now lives. Moving a project does not
@@ -650,10 +597,7 @@ a lost record costs provenance rather than time.
 **Every directory supplied to cmdstanr for C++ include resolution is compared as a
 spelling, and nothing beneath it is tracked.** The `-I` flags a user puts in
 `cpp_options` are the explicit members of that set; the user header's own directory
-is the implicit one. The two are compared through different fields, the flags as
-part of `request.cpp_options_supplied` and the header's path as the one dependency
-whose recorded path is compared (§4), but this is one rule with two instances, not a
-rule plus an exception.
+is the implicit one.
 
 **The user header is therefore matched on normalised path and content.**
 
@@ -700,10 +644,9 @@ unsupported leave no baseline to measure the inputs against, and one bound to a
 different executable would supply the wrong baseline.
 
 **It also needs the sources to have been resolved**, and `observed` says whether
-they were, so that an unresolved set is never read as an empty one. That is the
-difference between a program that includes nothing and one nobody looked at, and
-reading the second as the first reports an included file as changed when nothing
-touched it. One path reaches it: re-resolution is skipped when the selected
+they were, so that an unresolved set is never read as an empty one.
+
+One path reaches it: re-resolution is skipped when the selected
 installation differs from `builder` (below). That difference is itself a trigger,
 so the verdict is the same either way and only the reason list is shorter.
 
@@ -726,11 +669,7 @@ provenance (§4).
 selected now**, or a different stanc's resolution rules get applied to a model this
 one did not build. **Check builder identity first**: if the selected installation
 differs from `builder`, that is already a rebuild trigger (above) and should be
-reported without attempting re-resolution at all. That leaves one way for the
-recorded stanc to be missing, the selection being the recorded installation and it
-being gone, and there the model can be neither assessed nor rebuilt, which is the
-error above rather than a reason to re-resolve with some other installation's
-stanc.
+reported without attempting re-resolution at all.
 
 **Normalisation: normalised absolute paths, recorded but not compared.**
 `included_files` comes back from `stanc --info` as absolute paths. Each entry is
@@ -754,15 +693,11 @@ documentation:
 
 In both cases a regex, `^\s*(?:-?include|sinclude)\b` for `make/local` and
 `^\s*#\s*include\s*"` for the user header, tells us there is an untracked
-dependency, without resolving anything. `sinclude` is GNU Make's silent-include
-spelling and costs one alternation rather than any Make parsing; verified on Make
-3.81, it loads the named file and stays quiet when that file is missing, like
-`-include`.
+dependency, without resolving anything.
 
-**The field is `known_untracked_dependencies`, not `provenance_complete`.** A regex
-can establish that a gap exists; it cannot establish that none does. Make also has
-variable expansion and `eval`; C++ has angle-bracket local headers, macro-expanded
-includes, line continuations and conditional inclusion. **No match means "no known
+**The field is `known_untracked_dependencies`, not `provenance_complete`.**
+
+**No match means "no known
 gap", never "complete".**
 
 **Surface it when the record is written, and through `stan_build_info()`. Not in
@@ -796,9 +731,7 @@ pre-operation validation, and not on every construction.**
 
 **An executable that will not launch is an error, not a rebuild trigger.**
 
-#1246's error is the answer, and it belongs at every site that
-launches the model binary (#1261 enumerates the four), not only the adoption
-fallback its own report covers. It names the executable, and for a source-backed
+It names the executable, and for a source-backed
 model says that `force_recompile = TRUE` rebuilds it; with only an executable (§7)
 there is nothing to rebuild and it says so instead.
 
@@ -935,13 +868,10 @@ than symmetry.
 ### [One resolver produces the effective include paths](compilation-state.md#one-resolver-produces-the-effective-include-paths)
 
 **It runs before the request is recorded**, so the record holds the effective value
-(§4). Recording the caller's `NULL` would store something true about the user and
-useless to the machine.
+(§4).
 
 **It is not what the verdict re-resolves with.** The verdict uses the effective
-paths of the current call (§6); the recorded ones are provenance. Those are the
-same value on the call that builds and can differ on any later one, which is the
-point.
+paths of the current call (§6); the recorded ones are provenance.
 
 ### [An option that only produces output still has to produce it](compilation-state.md#an-option-that-only-produces-output-still-has-to-produce-it)
 
@@ -958,7 +888,7 @@ way to ask for it.
 
 `--allow-undefined` suppresses one error: a function declared and never defined. A
 call to something never declared at all is still not in scope and still fails, flag
-or no flag. Verified on CmdStan 2.39.
+or no flag.
 
 **So the source-only operations always set it**, whether reached as a method or as
 a standalone function: `$format()`, `$check_syntax()`, `$variables()`,
@@ -983,18 +913,12 @@ compile_stan_file(...)   # exported: compile_impl(...)$path
 cmdstan_model(...)       # exported: R6 object built from all four
 ```
 
-- The internal returns more than a path. Otherwise `cmdstan_model()` re-reads the
-  record and re-runs stanc. It needs `record` for `$cpp_options()` and
-  `$cmdstan_version()`, and `src_info` for the eager `$code()`/`$variables()`
-  snapshot (§5), which is the `stanc --info` call the build already makes.
 - `hpp_code` is the model's generated C++, produced on both paths (§5), which the
   constructor hands to fits and writes to the file `$hpp_file()` returns. #1245's
   discriminator dissolves with it: a source-backed model always has generated C++
   and an executable-only model (§7) never does, so every consumer that needs it
   fails for one reason, no source, rather than for whether this object ran make.
-- `dry_run` lives on the internal only. It is the single argument the public
-  wrapper omits, which makes `compile_stan_file()` a wrapper rather than a
-  re-export, though a three-line one.
+
 - `compile_stan_file()` performs the same up-to-date check, reusing a current
   executable rather than always compiling. The verb suggests otherwise, so this
   needs documenting; one operation behaving two ways depending on entry point is
@@ -1098,9 +1022,9 @@ direction off the reported `format_version` and says the corresponding thing:
 upgrade cmdstanr for a newer record, rebuild or obtain a newly produced artifact
 for an older one.
 
-**Unknown and empty must never render alike, anywhere in the result.** This is §6's
-`known_untracked_dependencies` rule and §1's absence-of-evidence rule stated once as
-a property of the whole object rather than per field. An empty
+**Unknown and empty must never render alike, anywhere in the result.**
+
+An empty
 `known_untracked_dependencies` means the scan detected nothing; no record to scan
 means the field is absent. A recorded builder whose path is gone is
 `exists = FALSE`; an absent `builder` means there was no usable record to read one
@@ -1118,12 +1042,13 @@ reasons are §7's "executable without a usable record", so all four read
 `reported_features` off the executable; an available one reads them from the
 record.
 
-**The `exe_file` argument has two failure modes and both are errors.** The name
-matches `cmdstan_model(exe_file = )` and `$exe_file()` rather than inventing a
-third spelling for the same thing. A path that is missing or is not a file errors.
+**The `exe_file` argument has two failure modes and both are errors.**
+
+A path that is missing or is not a file errors.
 Otherwise, a valid hash-matched record is answered from the record alone, without
-launching the binary. §4's adoption rule already works this way, and it is what
-keeps a cross-platform artifact fully reported. Only an executable with no usable
+launching the binary.
+
+Only an executable with no usable
 record is launched for `<exe> info`, and if that fails the function errors rather
 than returning an all-unknown result: with neither a record nor an info response
 there is nothing to report, and an object of unknowns would be zero information
@@ -1174,9 +1099,8 @@ until something else triggers a rebuild.
 
 ### [Stage 5: public build-record inspection](compilation-state.md#stage-5-public-build-record-inspection)
 
-**It must ship in 1.0**, despite looking purely additive. Because §1 keeps the
-request separate from what the binary reports, this is the only way to ask what an
-executable is, and the only answer available at all for an unprovenanced one (§7).
+**It must ship in 1.0**, despite looking purely additive.
+
 From the candidate onward its output may gain fields (the dependency reporting is
 expected to) but may not rename or remove one.
 

@@ -166,9 +166,11 @@ Recording three states is useless unless downstream code acts on three.
 
 <!-- contract -->
 
-**This table covers one case only: a runtime argument asks for a build feature.**
+**This table covers one case only: a runtime argument asks for a build feature.** <!-- /contract -->
 The converse, an artifact that has a feature nobody asked to use, is a separate
 policy below, and the two are easy to conflate.
+
+<!-- contract -->
 
 | State, *when the feature was requested at runtime* | Behaviour |
 |---|---|
@@ -280,9 +282,9 @@ that the session variable is untouched, and one consecutive-call test asserts
 
 <!-- contract -->
 
-**Scope this to features an operation actually requires.** For arbitrary options
+**Scope this to features an operation actually requires.** <!-- /contract --> For arbitrary options
 such as `CXXFLAGS` or a user header, status is permanently unknown, because CmdStan
-never reports them; erroring on those would error on everything. It applies where a
+never reports them; erroring on those would error on everything. <!-- contract -->It applies where a
 runtime argument depends on a build feature: `threads_per_chain` on `STAN_THREADS`,
 OpenCL device selection on `STAN_OPENCL`.
 
@@ -334,10 +336,10 @@ durable configuration of its own.
 
 <!-- contract -->
 
-**An automatic rebuild never replays stored configuration.** The constructor builds
+**An automatic rebuild never replays stored configuration.** <!-- /contract --> The constructor builds
 from the request in front of it, and anything that would run a stale executable
 errors instead (§5), so there is no point at which cmdstanr needs configuration it
-was not just given. <!-- /contract --> That is what closes the case for persistent options (#1248,
+was not just given. That is what closes the case for persistent options (#1248,
 appendix): the previous compile consumed its options, and nothing has to remember
 them for a rebuild that never happens on its own.
 
@@ -729,10 +731,10 @@ header has a second one behind it.
 
 <!-- contract -->
 
-**Plain `NAME=value` is rejected too**, though it is unambiguous, because accepting
+**Plain `NAME=value` is rejected too**<!-- /contract -->, though it is unambiguous, because accepting
 raw `=` means re-implementing every special-cased variable on the raw path: a raw
 `USER_HEADER=my.hpp` reaches `make` while everything keyed on names looks straight
-past it. <!-- /contract --> Nothing is lost. Named entries already emit `NAME=value`
+past it. Nothing is lost. Named entries already emit `NAME=value`
 (`R/cpp_opts.R:141`), so the migration is a spelling change and the error can name
 the form to use.
 
@@ -843,16 +845,18 @@ reader and the writer should depend on either.
 
 ### What is recorded, and what is compared
 
-<!-- contract -->
-
 These are two different questions. **Recording** serves provenance and diagnosis:
 the record should describe the build completely enough to explain it, which is a
 weaker bar than reproducing it (§1). **Comparison** serves the rebuild verdict (§6),
 and a field belongs there only if it determines the artifact's observable behaviour
 and is not already determined by another compared field.
 
-**This table is the single statement of both.** Prose elsewhere refers to it and
+<!-- contract -->
+
+**This table is the single statement of both.** <!-- /contract --> Prose elsewhere refers to it and
 must not restate it. A rule written in two places is a future inconsistency.
+
+<!-- contract -->
 
 | Field | Recorded | Compared | Notes |
 |---|---|---|---|
@@ -882,10 +886,10 @@ column says which, and it is not a short list. The default is not "everything in
 
 <!-- contract -->
 
-**Origin is stored, not inferred.** Within `stanc_options` the verdict compares the
+**Origin is stored, not inferred.** <!-- /contract --> Within `stanc_options` the verdict compares the
 supplied list and not the injected one, and a merged list cannot be split back apart
 without knowing this version's injection rules, which is the reconstruct-after-the-
-fact fragility this design removes everywhere else. <!-- /contract --> That holds even if no option can
+fact fragility this design removes everywhere else. That holds even if no option can
 arrive by both routes. Origin decides which list a value is recorded in and nothing
 beyond that: whether an injected value's effect is compared is this table's
 question, and `stanc_name` above is the row where the answer is yes.
@@ -1110,10 +1114,10 @@ valid record is immediately unusable.
 
 <!-- contract -->
 
-**Concurrency is out of scope for v1.** The hash fixes crash-created and sequential
+**Concurrency is out of scope for v1.** <!-- /contract --> The hash fixes crash-created and sequential
 mismatches. It does not fix active concurrency: process A can validate executable
 A, process B can replace it, and A then launches B. That is a TOCTOU race, and no
-claim of correctness under concurrency is made here. Concurrent compilation or use
+claim of correctness under concurrency is made here. <!-- contract -->Concurrent compilation or use
 of one destination is unsupported; locking is tracked separately. <!-- /contract --> #1025 is a related
 proposal to give the unit tests independent workspaces. It is open, and scoped to
 the test suite rather than to user models, so it does not answer this, but a lock
@@ -1219,11 +1223,11 @@ whose contents are the binary's to decide rather than the format's.
 
 <!-- contract -->
 
-**The version is checked first, and on its own.** Reading a record has two steps,
+**The version is checked first, and on its own.** <!-- /contract --> Reading a record has two steps,
 and the first decides whether the second means anything: `format_version` is
 validated by itself, and only a version this cmdstanr reads sends the reader on to
 the remaining fields. A record written in a format we do not read is never measured
-against the current schema, because we do not know what that version required. It
+against the current schema, because we do not know what that version required. <!-- contract -->It
 reports `unsupported_format` and the version it read, and nothing else from the
 record. The executable's own `reported_features` still come back, as §8 requires of
 every unavailable provenance. <!-- /contract --> The rule above governs the records we claim to
@@ -1245,7 +1249,7 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
   `stanc_options_to_args()` already computes it, and it collapses the two accepted
   spellings at no cost: `list("O1")` and `list("O1" = TRUE)` both become `--O1`, so a
   model built one way is not rebuilt by the other. Order is preserved, so a
-  reordered list rebuilds. This rule declines per-option semantics in both
+  reordered list rebuilds. <!-- /contract --> This rule declines per-option semantics in both
   directions: normalizing the order away would need to know that no two flags settle
   one setting between them, and canonicalizing semantic equivalence would need to
   know which two flags mean the same thing. stanc has a live instance, `--O` being an
@@ -1257,7 +1261,7 @@ A single "sort and last-wins-deduplicate" rule is wrong. The correct rules diffe
   code plain `--O0` does, so a reorder rebuilds to produce identical C++ but for the
   `stancflags` string stanc stamps into the binary. A spurious rebuild is the safe
   direction, and nothing in cmdstanr reorders a caller's list, so this one is
-  reached only by a deliberate reorder.
+  reached only by a deliberate reorder. <!-- contract -->
 - User-header paths: normalise. This is the one path that is also compared (§6), so
   normalisation here affects the verdict rather than only the record's readability.
 - `NULL` / `FALSE`: preserve the explicit empty-assignment meaning (§3).
@@ -1328,9 +1332,11 @@ contract is what makes §5 and §6 look like they disagree.
 
 <!-- contract -->
 
-**Two arguments: what this caller expects, and what is on disk.** The expected side
+**Two arguments: what this caller expects, and what is on disk.** <!-- /contract --> The expected side
 is where the callers differ, and that difference is what lets an object notice its
 executable was replaced (§2).
+
+<!-- contract -->
 
 | | at `cmdstan_model()` | at a guarded method |
 |---|---|---|
@@ -1341,12 +1347,12 @@ executable was replaced (§2).
 
 <!-- contract -->
 
-**Only the object's own snapshot catches a replaced executable.** §2's
+**Only the object's own snapshot catches a replaced executable.** <!-- /contract --> §2's
 single-configuration cache lets the most recent compile own the executable and the
 record beside it, so once another call or process rebuilds, the pair on disk is
 self-consistent and describes a program this object never saw. The path is
 unchanged, the file exists, and the record's `artifact` hash matches the binary it
-now sits beside, which is the bond it exists to prove (§4). Nothing on disk
+now sits beside, which is the bond it exists to prove (§4). <!-- contract -->Nothing on disk
 disagrees, so the disagreement has to be carried in. For an executable-only object
 that carried-in hash is the whole check (§7).
 
@@ -1467,10 +1473,10 @@ executable is stale fail for the wrong reason.
 
 <!-- contract -->
 
-**Functions exposed by `$expose_functions()` are a snapshot, like `$code()`.** The
+**Functions exposed by `$expose_functions()` are a snapshot, like `$code()`.** <!-- /contract --> The
 validation happens at exposure; the resulting entries in `$functions` are plain R
 bindings over separately compiled code, not the CmdStan binary, and re-validating
-on every call is neither practical nor meaningful. A recompile drops them and they
+on every call is neither practical nor meaningful. <!-- contract -->A recompile drops them and they
 must be exposed again, which is the behaviour #1228 established. <!-- /contract --> The `$functions`
 field itself is classified with them, for the same reason.
 
@@ -1625,11 +1631,11 @@ through 0.9.0, so removing it changes released behaviour and owes an entry of it
 own. `NEWS.md:94` describes both in one sentence, so deleting it as a stale
 unreleased entry would take the released half down with it.
 
-Removing those lines is the whole fix. <!-- contract -->**`$format()` is kept, overwriting included**:
+Removing those lines is the whole fix. <!-- contract -->**`$format()` is kept, overwriting included**<!-- /contract -->:
 rewriting the file is the useful part and is not what breaks anything. With the
 refresh gone, the file changes, the snapshot keeps describing the built source, the
 Stan file's content hash no longer matches, and the next operation that runs the
-binary errors and points at `cmdstan_model()`. So **reformatting forces a
+binary errors and points at `cmdstan_model()`. <!-- contract -->So **reformatting forces a
 recompile**, which is correct: the bytes changed, and whether the build is
 unaffected cannot be known without doing it. <!-- /contract --> No warning is needed, because §5
 already says this about external edits and formatting is only an edit cmdstanr
@@ -1649,9 +1655,11 @@ generated C++ above.
 
 A rebuild is triggered by `force_recompile = TRUE`, or when any field §4's table
 marks **compared** differs from what this call computes. Which fields those are is
-§4's to say. The dependencies among them are the Stan program, its resolved
+§4's to say. <!-- /contract --> The dependencies among them are the Stan program, its resolved
 includes, the user header and `make/local` (§8 carries the shape), named here only
 so this section can be read without holding the table open.
+
+<!-- contract -->
 
 Or when the record cannot be used at all:
 
@@ -1680,10 +1688,12 @@ any member of it, so it is stated here and the individual reasons point at it.
 
 <!-- contract -->
 
-**`include_paths` is absent from §4's compared column on purpose.** Comparing it as
+**`include_paths` is absent from §4's compared column on purpose.** <!-- /contract --> Comparing it as
 a spelling would reintroduce path sensitivity for every model that has an include:
 renaming a working directory would rebuild through a different field, for the
 population content identity exists to serve.
+
+<!-- contract -->
 
 It does not need comparing, because its whole effect is which files it resolves,
 and that is checked directly: re-resolution runs `stanc --info` and compares the
@@ -1751,10 +1761,10 @@ and unifying them disables the detector.
 a cmdstanr argument, so the whole variable goes. `make/local` is CmdStan's own
 configuration file (`make/local.example:20` ships `STANCFLAGS+= --warn-pedantic` as
 a suggested line), so only the include-path flag is refused from its `STANCFLAGS`,
-not the variable. The check on `cpp_options` belongs in
+not the variable. <!-- /contract --> The check on `cpp_options` belongs in
 `assert_valid_cpp_options()` (§3, #1250), which `cmdstan_make_local()` does not call
 (`R/install.R:324-338` builds its flags inline), so writing `STANCFLAGS` into
-`make/local` through the supported function stays possible. <!-- /contract --> A `--warn-pedantic`
+`make/local` through the supported function stays possible. A `--warn-pedantic`
 left there is fine and is not the case §4 rejects: it asks to warn whenever CmdStan
 builds, and that is what it does. §4 refuses the per-call spelling, where silence on
 an up-to-date model would contradict the request.
@@ -1789,12 +1799,12 @@ stanc with `too many arguments` (measured 2.35, 2.37, 2.39). Dropping the flag
 alone would leave the value behind as that second positional. The test is for one
 hyphen, not two, because stanc has single-hyphen options: `-fno-soa` after a
 `--warn-pedantic` in `make/local` is the next flag, not a value, and consuming it
-would silently change the generated C++. A value never starts with a hyphen, since
+would silently change the generated C++. <!-- /contract --> A value never starts with a hyphen, since
 2.37 and 2.39 read any hyphen-led token as an option (`unknown option -x` for
-`--filename-in-msg -x.stan`). `make/local` supplies defaults for what
-the call does not say. This is an occurrence test on a character vector, not the
+`--filename-in-msg -x.stan`). <!-- contract -->`make/local` supplies defaults for what
+the call does not say. <!-- /contract --> This is an occurrence test on a character vector, not the
 parse of the file declined above, and it needs no knowledge of which flags take a
-value. <!-- /contract --> <!-- contract -->The include-path rejection is unchanged and is not an instance of this rule:
+value. <!-- contract -->The include-path rejection is unchanged and is not an instance of this rule:
 it exists so that the build and `stanc --info` resolve the same files, and dropping
 the flag only when the call also supplies paths would leave the defect in place when
 it does not. <!-- /contract --> Nothing recorded moves, since the call's options are in
@@ -1827,18 +1837,16 @@ shadowing, so re-resolution must be given them in the order supplied.
 
 <!-- contract -->
 
-**An unsupported format version is among those artifact-side reasons.** It takes
+**An unsupported format version is among those artifact-side reasons.** <!-- /contract --> It takes
 their outcome, with the reason stated (§4), whether the version is newer or older
 than what this cmdstanr supports. It is still distinguished from an unreadable
-record, because the two warrant different messages. Unreadable means the record
+record, because the two warrant different messages. <!-- contract -->Unreadable means the record
 could not be accepted as a record at all: invalid JSON, a missing or unusable
 `format_version`, or a required field that is absent or the wrong shape. Required
 is relative to the record's own `format_version`. Unsupported means a version was
-found, and read, and this cmdstanr does not interpret it. Same behaviour, different
+found, and read, and this cmdstanr does not interpret it. <!-- /contract --> Same behaviour, different
 diagnosis, and the vocabulary is kept apart because a record whose version we do
 support can still be corrupt.
-
-<!-- /contract -->
 
 <!-- contract -->
 
@@ -1921,12 +1929,10 @@ a lost record costs provenance rather than time.
 **Every directory supplied to cmdstanr for C++ include resolution is compared as a
 spelling, and nothing beneath it is tracked.** The `-I` flags a user puts in
 `cpp_options` are the explicit members of that set; the user header's own directory
-is the implicit one. The two are compared through different fields, the flags as
+is the implicit one. <!-- /contract --> The two are compared through different fields, the flags as
 part of `request.cpp_options_supplied` and the header's path as the one dependency
 whose recorded path is compared (§4), but this is one rule with two instances, not a
 rule plus an exception.
-
-<!-- /contract -->
 
 <!-- contract -->
 
@@ -2133,10 +2139,10 @@ different executable would supply the wrong baseline.
 <!-- contract -->
 
 **It also needs the sources to have been resolved**, and `observed` says whether
-they were, so that an unresolved set is never read as an empty one. That is the
+they were, so that an unresolved set is never read as an empty one. <!-- /contract --> That is the
 difference between a program that includes nothing and one nobody looked at, and
 reading the second as the first reports an included file as changed when nothing
-touched it. One path reaches it: re-resolution is skipped when the selected
+touched it. <!-- contract -->One path reaches it: re-resolution is skipped when the selected
 installation differs from `builder` (below). That difference is itself a trigger,
 so the verdict is the same either way and only the reason list is shorter.
 
@@ -2210,13 +2216,11 @@ is free.
 selected now**, or a different stanc's resolution rules get applied to a model this
 one did not build. **Check builder identity first**: if the selected installation
 differs from `builder`, that is already a rebuild trigger (above) and should be
-reported without attempting re-resolution at all. That leaves one way for the
+reported without attempting re-resolution at all. <!-- /contract --> That leaves one way for the
 recorded stanc to be missing, the selection being the recorded installation and it
 being gone, and there the model can be neither assessed nor rebuilt, which is the
 error above rather than a reason to re-resolve with some other installation's
 stanc.
-
-<!-- /contract -->
 
 <!-- contract -->
 
@@ -2253,12 +2257,10 @@ documentation:
 
 In both cases a regex, `^\s*(?:-?include|sinclude)\b` for `make/local` and
 `^\s*#\s*include\s*"` for the user header, tells us there is an untracked
-dependency, without resolving anything. `sinclude` is GNU Make's silent-include
+dependency, without resolving anything. <!-- /contract --> `sinclude` is GNU Make's silent-include
 spelling and costs one alternation rather than any Make parsing; verified on Make
 3.81, it loads the named file and stays quiet when that file is missing, like
 `-include`.
-
-<!-- /contract -->
 
 **A third route of this shape exists, and §3 closes it rather than detecting it.**
 A makefile named by `-f` on the build call changes the build, changes no recorded
@@ -2269,10 +2271,10 @@ channel, and not for a `make/local` include, which is not.
 
 <!-- contract -->
 
-**The field is `known_untracked_dependencies`, not `provenance_complete`.** A regex
+**The field is `known_untracked_dependencies`, not `provenance_complete`.** <!-- /contract --> A regex
 can establish that a gap exists; it cannot establish that none does. Make also has
 variable expansion and `eval`; C++ has angle-bracket local headers, macro-expanded
-includes, line continuations and conditional inclusion. **No match means "no known
+includes, line continuations and conditional inclusion. <!-- contract -->**No match means "no known
 gap", never "complete".** <!-- /contract --> Until compiler depfiles exist, any user header potentially
 carries untracked transitive dependencies. The regex improves the message, not the
 guarantee. Naming it `provenance_complete` would repeat the error §10 warns about
@@ -2360,9 +2362,9 @@ without the execute bit where `untar()` and `file.copy()` keep it, so a project
 folder shared as a zip and unpacked from R arrives in it. What has to change is the
 failure text: today a lost bit reaches `cannot start processx process './bern'
 (system error 13, Permission denied)`, the executable's basename in a relative path
-and an errno. <!-- contract -->#1246's error is the answer, and it belongs at every site that
+and an errno. #1246's error is the answer, and it belongs at every site that
 launches the model binary (#1261 enumerates the four), not only the adoption
-fallback its own report covers. It names the executable, and for a source-backed
+fallback its own report covers. <!-- contract -->It names the executable, and for a source-backed
 model says that `force_recompile = TRUE` rebuilds it; with only an executable (§7)
 there is nothing to rebuild and it says so instead.
 
@@ -2783,15 +2785,15 @@ Mostly a move rather than new logic. Two constraints on it:
 <!-- contract -->
 
 **It runs before the request is recorded**, so the record holds the effective value
-(§4). Recording the caller's `NULL` would store something true about the user and
+(§4). <!-- /contract --> Recording the caller's `NULL` would store something true about the user and
 useless to the machine.
 
+<!-- contract -->
+
 **It is not what the verdict re-resolves with.** The verdict uses the effective
-paths of the current call (§6); the recorded ones are provenance. Those are the
+paths of the current call (§6); the recorded ones are provenance. <!-- /contract --> Those are the
 same value on the call that builds and can differ on any later one, which is the
 point.
-
-<!-- /contract -->
 
 The default is user-visible behaviour and belongs in the public documentation for
 `include_paths`, not only in §10's implementation notes.
@@ -2829,7 +2831,9 @@ way to ask for it.
 
 `--allow-undefined` suppresses one error: a function declared and never defined. A
 call to something never declared at all is still not in scope and still fails, flag
-or no flag. Verified on CmdStan 2.39.
+or no flag. <!-- /contract --> Verified on CmdStan 2.39.
+
+<!-- contract -->
 
 **So the source-only operations always set it**, whether reached as a method or as
 a standalone function: `$format()`, `$check_syntax()`, `$variables()`,
@@ -2893,20 +2897,18 @@ values out.
 
 Four constraints:
 
-<!-- contract -->
-
 - The internal returns more than a path. Otherwise `cmdstan_model()` re-reads the
   record and re-runs stanc. It needs `record` for `$cpp_options()` and
   `$cmdstan_version()`, and `src_info` for the eager `$code()`/`$variables()`
-  snapshot (§5), which is the `stanc --info` call the build already makes.
+  snapshot (§5), which is the `stanc --info` call the build already makes. <!-- contract -->
 - `hpp_code` is the model's generated C++, produced on both paths (§5), which the
   constructor hands to fits and writes to the file `$hpp_file()` returns. #1245's
   discriminator dissolves with it: a source-backed model always has generated C++
   and an executable-only model (§7) never does, so every consumer that needs it
-  fails for one reason, no source, rather than for whether this object ran make.
+  fails for one reason, no source, rather than for whether this object ran make. <!-- /contract -->
 - `dry_run` lives on the internal only. It is the single argument the public
   wrapper omits, which makes `compile_stan_file()` a wrapper rather than a
-  re-export, though a three-line one.
+  re-export, though a three-line one. <!-- contract -->
 - `compile_stan_file()` performs the same up-to-date check, reusing a current
   executable rather than always compiling. The verb suggests otherwise, so this
   needs documenting; one operation behaving two ways depending on entry point is
@@ -3121,9 +3123,9 @@ for an older one.
 
 <!-- contract -->
 
-**Unknown and empty must never render alike, anywhere in the result.** This is §6's
+**Unknown and empty must never render alike, anywhere in the result.** <!-- /contract --> This is §6's
 `known_untracked_dependencies` rule and §1's absence-of-evidence rule stated once as
-a property of the whole object rather than per field. An empty
+a property of the whole object rather than per field. <!-- contract -->An empty
 `known_untracked_dependencies` means the scan detected nothing; no record to scan
 means the field is absent. A recorded builder whose path is gone is
 `exists = FALSE`; an absent `builder` means there was no usable record to read one
@@ -3170,12 +3172,12 @@ make `<exe> info` say `false`, and require `FALSE`.
 
 <!-- contract -->
 
-**The `exe_file` argument has two failure modes and both are errors.** The name
+**The `exe_file` argument has two failure modes and both are errors.** <!-- /contract --> The name
 matches `cmdstan_model(exe_file = )` and `$exe_file()` rather than inventing a
-third spelling for the same thing. A path that is missing or is not a file errors.
+third spelling for the same thing. <!-- contract -->A path that is missing or is not a file errors.
 Otherwise, a valid hash-matched record is answered from the record alone, without
-launching the binary. §4's adoption rule already works this way, and it is what
-keeps a cross-platform artifact fully reported. Only an executable with no usable
+launching the binary. <!-- /contract --> §4's adoption rule already works this way, and it is what
+keeps a cross-platform artifact fully reported. <!-- contract -->Only an executable with no usable
 record is launched for `<exe> info`, and if that fails the function errors rather
 than returning an all-unknown result: with neither a record nor an info response
 there is nothing to report, and an object of unknowns would be zero information
@@ -3474,9 +3476,9 @@ cover does not exist. It ships before the candidate, per #1258.
 
 <!-- contract -->
 
-**It must ship in 1.0**, despite looking purely additive. Because §1 keeps the
+**It must ship in 1.0**, despite looking purely additive. <!-- /contract --> Because §1 keeps the
 request separate from what the binary reports, this is the only way to ask what an
-executable is, and the only answer available at all for an unprovenanced one (§7).
+executable is, and the only answer available at all for an unprovenanced one (§7). <!-- contract -->
 From the candidate onward its output may gain fields (the dependency reporting is
 expected to) but may not rename or remove one. <!-- /contract --> That is ordinary candidate
 discipline for any published API.
