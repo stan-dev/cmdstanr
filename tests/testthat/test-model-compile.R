@@ -936,6 +936,33 @@ test_that("include_paths_stanc3_args() works", {
     ),
     c("--include-paths", paste0(path_1_compare, ",", path_2_compare))
   )
+
+  # Make expands the flag before the shell splits it, so a quote in the path is
+  # quoted for the shell and a dollar sign is doubled for Make (#1230). Direct
+  # calls still get the path as it is.
+  path_3 <- file.path(tempdir(), "the model's includes")
+  path_4 <- file.path(tempdir(), "costs $5")
+  for (p in c(path_3, path_4)) {
+    if (!dir.exists(p)) {
+      dir.create(p)
+    }
+  }
+  path_3 <- repair_path(path_3)
+  path_4 <- repair_path(path_4)
+  path_3_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_3), path_3)
+  path_4_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_4), path_4)
+  expect_equal(
+    include_paths_stanc3_args(c(path_3, path_4)),
+    paste0(
+      "--include-paths=",
+      "\"", path_3_compare, "\"", ",",
+      "'", sub("$5", "$$5", path_4_compare, fixed = TRUE), "'"
+    )
+  )
+  expect_equal(
+    include_paths_stanc3_args(c(path_3, path_4), direct_call = TRUE),
+    c("--include-paths", paste0(path_3_compare, ",", path_4_compare))
+  )
 })
 
 test_that("cpp_options work with settings in make/local", {
@@ -1345,6 +1372,28 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
     out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
+})
+
+test_that("quoted make/local STANCFLAGS values reach stanc as one argument (#1232)", {
+  # Nothing is mocked: the direct stanc call would fail with "too many
+  # arguments" if the value split at the space, and the make recipe echoes the
+  # requoted flag.
+  local_reproducible_output()
+  local_cmdstan_make_local(
+    cpp_options = list("STANCFLAGS += --filename-in-msg='/my dir/model.stan'")
+  )
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--filename-in-msg=/my dir/model.stan")
+
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(stan_program, stan_file)
+  mod_local <- cmdstan_model(stan_file, compile = FALSE)
+  out <- utils::capture.output(mod_local$compile(quiet = FALSE, force_recompile = TRUE))
+  expect_true(file.exists(mod_local$exe_file()))
+  expect_output(
+    print(out),
+    "'--filename-in-msg=/my dir/model.stan'",
+    fixed = TRUE
+  )
 })
 
 test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {

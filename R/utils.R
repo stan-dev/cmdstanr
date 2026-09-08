@@ -859,8 +859,81 @@ parse_make_print_flag <- function(flag_name, stdout) {
   sub(pattern, "", trimws(lines[matches]), perl = TRUE)
 }
 
+#' Ask Make for `STANCFLAGS`, one argument per line
+#'
+#' CmdStan's `print-%` rule echoes a variable through the shell, which strips the
+#' quotes, so `make print-STANCFLAGS` returns `--filename-in-msg='/my dir'` as
+#' two words (#1232). This rule hands `$(STANCFLAGS)` to the shell the way the
+#' stanc recipe does and prints what the shell delivers, so the result holds
+#' exactly the arguments stanc gets from make. Each line carries a prefix that
+#' tells it apart from other make output. The rule lives in a temporary makefile
+#' rather than an `--eval` argument because users may have a make too old for
+#' `--eval`; the one Apple ships with macOS is.
+#'
+#' @param cmdstan_path (string) The CmdStan directory.
+#' @return A character vector, one element per argument, `character(0)` when the
+#'   variable is empty. An empty argument (`''`) is dropped.
+#' @noRd
+stancflags_from_make <- function(cmdstan_path) {
+  rule_file <- withr::local_tempfile(pattern = "cmdstanr-stancflags-", fileext = ".mk")
+  # Binary mode keeps the line endings LF; under WSL a Linux make reads a file
+  # written on Windows.
+  con <- file(rule_file, open = "wb")
+  writeLines(
+    c(
+      ".PHONY: cmdstanr-print-stancflags",
+      "cmdstanr-print-stancflags: ; @printf 'cmdstanr-stancflag=%s\\n' $(STANCFLAGS)"
+    ),
+    con,
+    sep = "\n"
+  )
+  close(con)
+  # The recipe needs sh, which on Windows comes from the toolchain
+  withr::with_path(
+    toolchain_PATH_env_var(),
+    withr::with_envvar(
+      c("HOME" = short_path(Sys.getenv("HOME"))),
+      stdout <- wsl_compatible_run(
+        command = "make",
+        args = c(
+          "-s", "-f", "makefile", "-f", wsl_safe_path(rule_file),
+          "cmdstanr-print-stancflags"
+        ),
+        wd = cmdstan_path
+      )$stdout
+    )
+  )
+  lines <- strsplit(stdout, "\r?\n")[[1]]
+  flags <- grep("^cmdstanr-stancflag=", lines, value = TRUE)
+  flags <- sub("^cmdstanr-stancflag=", "", flags)
+  flags[nzchar(flags)]
+}
+
+#' Quote words for a `STANCFLAGS` value handed to Make
+#'
+#' Make expands the value and the shell splits it, so this doubles `$` for Make
+#' and single-quotes any word holding a character the shell could interpret
+#' (#1230). A word made only of characters neither touches stays as it is.
+#'
+#' @param x (character) Words, one per element.
+#' @return `x` with each element quoted as needed.
+#' @noRd
+make_shell_quote <- function(x) {
+  needs_quote <- grepl("[^A-Za-z0-9_./:=+@%,-]", x)
+  # shQuote() switches the whole vector to double quotes if any element holds
+  # a single quote, so quote one element at a time
+  x[needs_quote] <- vapply(
+    x[needs_quote], shQuote, character(1), type = "sh", USE.NAMES = FALSE
+  )
+  gsub("$", "$$", x, fixed = TRUE)
+}
+
 get_cmdstan_flags <- function(flag_name) {
   cmdstan_path <- cmdstanr::cmdstan_path()
+  if (flag_name == "STANCFLAGS") {
+    # stanc flags are returned as a character vector, one element per argument
+    return(stancflags_from_make(cmdstan_path))
+  }
   withr::with_envvar(
     c("HOME" = short_path(Sys.getenv("HOME"))),
     flags_stdout <- wsl_compatible_run(
@@ -870,15 +943,6 @@ get_cmdstan_flags <- function(flag_name) {
     )$stdout
   )
   flags <- parse_make_print_flag(flag_name, flags_stdout)
-
-  if (flag_name == "STANCFLAGS") {
-    # StanC flags need to be returned as a character vector
-    if (!nzchar(flags)) {
-      return(character())
-    }
-    flags_vec <- strsplit(x = trimws(flags), split = "\\s+", perl = TRUE)[[1]]
-    return(flags_vec[nzchar(flags_vec)])
-  }
 
   if (!nzchar(flags)) {
     return(flags)

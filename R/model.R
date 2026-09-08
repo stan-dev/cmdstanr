@@ -838,7 +838,9 @@ compile <- function(quiet = TRUE,
   stancflags_direct <- stanc_options_to_args(stanc_options)
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
   if (length(stancflags_local) > 0) {
-    stancflags_combined <- c(stancflags_combined, stancflags_local)
+    # get_cmdstan_flags() split the local flags into words. Requote them for
+    # the STANCFLAGS value handed back to make.
+    stancflags_combined <- c(stancflags_combined, make_shell_quote(stancflags_local))
     stancflags_direct <- c(stancflags_direct, stancflags_local)
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
@@ -2620,10 +2622,11 @@ stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
 
 #' Build stanc include-path arguments
 #'
-#' Make receives include paths through `STANCFLAGS` and needs paths containing
-#' spaces to be shell-quoted within a single `--include-paths=` flag. Direct
-#' calls through processx instead need the flag and comma-separated paths as
-#' separate, unquoted arguments.
+#' Make receives include paths through `STANCFLAGS`, expands the value and hands
+#' it to the shell, so `make_shell_quote()` quotes each path for both (#1230)
+#' inside a single `--include-paths=` flag. Direct calls through processx
+#' instead need the flag and comma-separated paths as separate, unquoted
+#' arguments.
 #'
 #' @param include_paths A character vector of directories containing files used
 #'   in Stan `#include` directives, or `NULL`.
@@ -2640,8 +2643,7 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
     # Calling stanc3 directly through processx::run does not need quoting
     if (!isTRUE(direct_call)) {
-      paths_w_space <- grep(" ", include_paths)
-      include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
+      include_paths <- make_shell_quote(include_paths)
     }
     include_paths <- paste0(include_paths, collapse = ",")
     include_paths_flag <- "--include-paths="
