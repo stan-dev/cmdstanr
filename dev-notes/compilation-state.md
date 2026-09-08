@@ -1889,17 +1889,15 @@ directly:
 }
 ```
 
-So: **store the normalised `included_files` vector at build time and compare it
-against fresh `stanc --info` output.** Recording each include's spelling, its
-ordered search roots and the selected path, then re-resolving that mapping, is
-unnecessary, and it would need parsing that stanc does for us.
+So: **record the files `stanc --info` reports at build time, hash them, and compare
+the hashes positionally against a fresh `stanc --info` resolution**, the comparison
+defined above. Recording each include's spelling, its ordered search roots and the
+selected path, then re-resolving that mapping, is unnecessary, and it would need
+parsing that stanc does for us.
 
-**The search configuration for that fresh call is the effective `include_paths` of
-the current call, not the one in `request`.** Using the recorded value would make
-changing `include_paths` a no-op: stanc would be pointed at the old directories,
-find the old files, report matching hashes, and reuse a binary the caller did not
-ask for. The recorded value exists for provenance (§4); the verdict is about what
-this call would build.
+The fresh call takes the current call's effective `include_paths`, in the order
+supplied, never the recorded ones, for the reason given above; the recorded value is
+provenance (§4).
 
 **Re-resolve by invoking stanc, never by reimplementing its rules.** Reproducing
 stanc's resolution semantics in R is a correctness hazard, and getting it subtly
@@ -3274,11 +3272,8 @@ to survive in whatever replaces it. With one build call the natural form is to
 resolve the default where include paths are resolved for that build, with no
 second variable. Requirement, not mechanism; it needs a test either way.
 
-**Whatever resolves that default must do so before the request is recorded**, so
-the record holds the effective value rather than the caller's empty one (§4).
-`$include_paths()` already reports the defaulted value today, so this is consistent
-rather than a new disclosure. The verdict does not depend on it, since §6
-re-resolves with the current call's paths, but provenance does.
+The default resolves before the request is recorded (§8), and `$include_paths()`
+already reports the defaulted value today, so the record and the accessor agree.
 
 **Stop merging the injected options into the user's list in place.**
 `R/model.R:673`, `:677`, `:693` and `:835` all write into the same `stanc_options`
