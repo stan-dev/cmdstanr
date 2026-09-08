@@ -290,7 +290,7 @@ test_that("$compile() doesn't reuse cpp and stanc options from the previous comp
       force_recompile = TRUE
     )
   )
-  expect_true(model$cpp_options()[["stan_threads"]])
+  expect_true(model$cpp_options()[["STAN_THREADS"]])
   expect_equal(
     vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
     rep(TRUE, 2)
@@ -303,7 +303,7 @@ test_that("$compile() doesn't reuse cpp and stanc options from the previous comp
     code = model$compile(force_recompile = TRUE)
   )
 
-  expect_null(model$cpp_options()[["stan_threads"]])
+  expect_null(model$cpp_options()[["STAN_THREADS"]])
   expect_equal(
     vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
     rep(FALSE, 2)
@@ -336,7 +336,7 @@ test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_mo
     info_ret = list(status = 1),
     code = model$compile(force_recompile = TRUE)
   )
-  expect_true(model$cpp_options()[["stan_threads"]])
+  expect_true(model$cpp_options()[["STAN_THREADS"]])
   expect_equal(
     vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
     rep(TRUE, 2)
@@ -349,7 +349,7 @@ test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_mo
     code = model$compile(force_recompile = TRUE)
   )
 
-  expect_null(model$cpp_options()[["stan_threads"]])
+  expect_null(model$cpp_options()[["STAN_THREADS"]])
   expect_equal(
     vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
     rep(FALSE, 2)
@@ -565,7 +565,7 @@ expect_describes_new_program <- function(model) {
   expect_equal(model$variables()$parameters$beta$dimensions, 0)
   expect_match(paste(private$model_methods_env_$hpp_code_, collapse = "\n"), "beta")
   expect_match(paste(readLines(model$hpp_file()), collapse = "\n"), "beta")
-  expect_true(model$cpp_options()$stan_threads)
+  expect_true(model$cpp_options()$STAN_THREADS)
   expect_match(readLines(model$exe_file()), "^mock executable ")
 }
 
@@ -890,16 +890,35 @@ test_that("compilation errors if folder with the model name exists", {
 
 test_that("cpp_options_to_compile_flags() works", {
   options = list(
-    stan_threads = TRUE
+    STAN_THREADS = TRUE
   )
   expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE")
   options = list(
-    stan_threads = TRUE,
-    stanc2 = TRUE
+    STAN_THREADS = TRUE,
+    STANC2 = TRUE
   )
   expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=TRUE", "STANC2=TRUE"))
   options = list()
   expect_equal(cpp_options_to_compile_flags(options), NULL)
+
+  # FALSE and NULL both ask for the option off, which make spells as an empty
+  # assignment. The string "FALSE" is a value like any other.
+  expect_equal(
+    cpp_options_to_compile_flags(list(STAN_THREADS = FALSE)),
+    "STAN_THREADS="
+  )
+  expect_equal(
+    cpp_options_to_compile_flags(list(STAN_THREADS = NULL)),
+    "STAN_THREADS="
+  )
+  expect_equal(
+    cpp_options_to_compile_flags(list(STAN_THREADS = "FALSE")),
+    "STAN_THREADS=FALSE"
+  )
+  expect_equal(
+    cpp_options_to_compile_flags(list(STAN_THREADS = c(TRUE, FALSE))),
+    c("STAN_THREADS=TRUE", "STAN_THREADS=")
+  )
 })
 
 test_that("include_paths_stanc3_args() works", {
@@ -1120,17 +1139,28 @@ test_that("cmdstan_model works with user_header", {
   )
 })
 
-test_that("cmdstan_model cpp_options dont capitalize cxxflags ", {
+test_that("cpp_options names reach make uppercased and values verbatim", {
   file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
-  cpp_options <- list(
-    "CXXFLAGS_OPTIM += -Dsomething_not_used"
+  expect_error(
+    cmdstan_model(
+      file,
+      cpp_options = list("CXXFLAGS_OPTIM += -Dsomething_not_used"),
+      force_recompile = TRUE
+    ),
+    "cmdstan_make_local(cpp_options = list(\"CXXFLAGS_OPTIM += -Dsomething_not_used\"))",
+    fixed = TRUE
   )
+
   withr::with_options(list("cmdstanr_verbose" = TRUE),
     out <- utils::capture.output(
-      mod <- cmdstan_model(file, cpp_options = cpp_options, force_recompile = TRUE)
+      mod <- cmdstan_model(
+        file,
+        cpp_options = list(CXXFLAGS_OPTIM = "-Dsomething_not_used"),
+        force_recompile = TRUE
+      )
     )
   )
-  expect_output(print(out), "-Dsomething_not_used")
+  expect_output(print(out), "CXXFLAGS_OPTIM=-Dsomething_not_used", fixed = TRUE)
 })
 
 test_that("format(overwrite_file = TRUE) refreshes cached variables", {

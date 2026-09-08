@@ -50,7 +50,7 @@ test_that("a no-op compile preserves what the previous compilation recorded", {
       force_recompile = TRUE
     )
   )
-  expect_true(mod$cpp_options()$stan_threads)
+  expect_true(mod$cpp_options()$STAN_THREADS)
   expect_false(mod$functions$existing_exe)
 
   # A no-op must preserve build options and local-build provenance.
@@ -59,7 +59,7 @@ test_that("a no-op compile preserves what the previous compilation recorded", {
     info_ret = list(status = 1),
     code = expect_no_mock_compile(mod$compile())
   )
-  expect_true(mod$cpp_options()$stan_threads)
+  expect_true(mod$cpp_options()$STAN_THREADS)
   expect_false(mod$functions$existing_exe)
 })
 
@@ -76,7 +76,7 @@ test_that("a no-op compile does not record cpp_options the executable lacks", {
   )
 
   # The unapplied threading request must not affect ordinary sampling (#1019).
-  expect_false(isTRUE(mod$cpp_options()$stan_threads))
+  expect_false(isTRUE(mod$cpp_options()$STAN_THREADS))
   expect_no_error(
     mod$sample(
       data = testing_data("bernoulli"),
@@ -267,7 +267,7 @@ test_that("adopting an executable describes the binary, not the request", {
     )
   )
 
-  expect_null(mod$cpp_options()$stan_threads)
+  expect_null(mod$cpp_options()$STAN_THREADS)
   expect_true(mod$functions$existing_exe)
 })
 
@@ -280,7 +280,7 @@ test_that("a no-op compile does not adopt options the executable lacks", {
     info_ret = list(status = 1),
     code = cmdstan_model(stan_file)
   )
-  expect_null(mod$cpp_options()$stan_threads)
+  expect_null(mod$cpp_options()$STAN_THREADS)
 
   # A no-op warns without changing the options recorded for the executable.
   with_mocked_cli(
@@ -296,7 +296,7 @@ test_that("a no-op compile does not adopt options the executable lacks", {
       )
     )
   )
-  expect_null(mod$cpp_options()$stan_threads)
+  expect_null(mod$cpp_options()$STAN_THREADS)
 })
 
 test_that("a no-op compile warns about options the executable cannot report", {
@@ -443,9 +443,9 @@ test_that("option comparison follows what make is actually given", {
   }
   quietly <- function(requested) no_op(requested, expect_no_warning)
 
-  # FALSE is not omission. It reaches make as STAN_CPP_OPTIMS=FALSE, and CmdStan
-  # enables some options whenever their make variable is non-empty, so asking
-  # for it would build a different executable than the recorded TRUE did.
+  # FALSE is not omission. It reaches make as an empty STAN_CPP_OPTIMS=, which
+  # asks for the option off, so it still describes a different executable than
+  # the recorded TRUE built.
   warns(list(stan_cpp_optims = FALSE))
   warns(list(stan_cpp_optims = TRUE, stan_threads = FALSE))
 
@@ -453,51 +453,28 @@ test_that("option comparison follows what make is actually given", {
   quietly(list(stan_cpp_optims = FALSE, stan_cpp_optims = TRUE))
   warns(list(stan_cpp_optims = TRUE, stan_cpp_optims = FALSE))
 
-  # An unnamed entry is a raw make argument rather than something to skip.
-  warns(list("STAN_THREADS=TRUE"))
-
-  # Order survives normalization: these reach make as the same two assignments
-  # in opposite orders, so exactly one of them matches the recorded TRUE.
-  quietly(list("STAN_CPP_OPTIMS=FALSE", "STAN_CPP_OPTIMS=TRUE"))
-  warns(list("STAN_CPP_OPTIMS=TRUE", "STAN_CPP_OPTIMS=FALSE"))
-
-  # The same, across the boundary between a named entry and a raw one.
-  quietly(structure(
-    list(FALSE, "STAN_CPP_OPTIMS=TRUE"),
-    names = c("stan_cpp_optims", "")
-  ))
-  warns(structure(
-    list("STAN_CPP_OPTIMS=TRUE", FALSE),
-    names = c("", "stan_cpp_optims")
-  ))
-
   # A vector value expands into one assignment per element, so it is the last
   # element that decides, not the vector as a whole.
   quietly(list(stan_cpp_optims = c(FALSE, TRUE)))
   warns(list(stan_cpp_optims = c(TRUE, FALSE)))
 })
 
-test_that("a raw make argument round-trips through the option comparison", {
+test_that("stan_threads = FALSE asks for threading off without a warning", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
 
-  mod <- with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = cmdstan_model(
-      stan_file,
-      cpp_options = list("STAN_CPP_OPTIMS=TRUE"),
-      force_recompile = TRUE
-    )
-  )
-
+  mod <- cmdstan_model(stan_file, compile = FALSE)
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
-    code = expect_no_mock_compile(
-      expect_no_warning(mod$compile(cpp_options = list("STAN_CPP_OPTIMS=TRUE")))
+    code = expect_no_warning(
+      mod$compile(
+        cpp_options = list(stan_threads = FALSE),
+        force_recompile = TRUE
+      )
     )
   )
+  expect_identical(mod$cpp_options()$STAN_THREADS, FALSE)
 })
 
 test_that("a successful compile records options only the executable reports", {
@@ -675,7 +652,7 @@ test_that("options inherited from make/local are learned, not warned about", {
   )
 })
 
-test_that("an explicitly passed raw assignment is not taken for make/local", {
+test_that("an explicitly passed option is not taken for make/local", {
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
   threaded <- paste0(
@@ -688,15 +665,12 @@ test_that("an explicitly passed raw assignment is not taken for make/local", {
     compile_ret = list(status = 0),
     info_ret = list(status = 0, stdout = threaded),
     code = mod$compile(
-      cpp_options = structure(
-        list("STAN_THREADS=TRUE", TRUE),
-        names = c("", "stan_cpp_optims")
-      ),
+      cpp_options = list(stan_threads = TRUE, stan_cpp_optims = TRUE),
       force_recompile = TRUE
     )
   )
 
-  # Raw STAN_THREADS=TRUE is explicit, not inherited from make/local.
+  # An explicit STAN_THREADS=TRUE is not inherited from make/local.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 0, stdout = threaded),
@@ -786,7 +760,7 @@ test_that("an adopted executable stays silent about options it cannot report", {
       )
     )
   )
-  expect_null(mod$cpp_options()$stan_cpp_optims)
+  expect_null(mod$cpp_options()$STAN_CPP_OPTIMS)
 })
 
 test_that("no mismatch warning when the executable already has the options", {

@@ -437,7 +437,8 @@ CmdStanModel <- R6::R6Class(
 #'   executable path is set.
 #' * `$include_paths()` returns a character vector of absolute paths or `NULL`.
 #' * `$cmdstan_version()` returns a CmdStan version as a string.
-#' * `$cpp_options()` returns a named list of C++ options.
+#' * `$cpp_options()` returns a named list of C++ options, with names in their
+#'   `make` spelling.
 #' * `$user_header()` returns the absolute path to the user header as a string,
 #'   or `NULL` if the model has no user header.
 #' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
@@ -513,13 +514,10 @@ NULL
 #'   otherwise write in the `make/local` file. For an example of using threading
 #'   see the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
-#'   **Note:** For historical reasons, CmdStan treats some options as enabled
-#'   whenever their `Make` variable is non-empty. In particular, setting
-#'   `stan_threads` to `FALSE` passes `STAN_THREADS=FALSE` to `Make`, which
-#'   still enables threading! To leave threading disabled, either omit
-#'   `stan_threads` entirely, which leaves any setting in `make/local` in
-#'   place, or set it to `NULL`, which passes an empty `STAN_THREADS=` and so
-#'   overrides `make/local` too.
+#'   Every entry must be named with a `Make` variable name, in any casing, which
+#'   [`$cpp_options()`][model-method-model-info] reports back in upper case.
+#'   Setting an option to `FALSE` or `NULL` passes an empty assignment, which
+#'   disables the option and overrides `make/local`.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   [`stanc` chapter of the CmdStan User's
@@ -754,9 +752,10 @@ compile <- function(quiet = TRUE,
         # from make/local, so a rebuild would inherit them again.
         built_options <- private$built_cpp_options_
         inherited <- merge_exe_info_cpp_options(list(), exe_info)
-        # Parse make flags so unnamed assignments also count as explicit.
-        explicit <- names(parsed_cpp_options(built_options)$assignments)
-        inherited <- inherited[!tolower(names(inherited)) %in% explicit]
+        # Parse make flags because a vector value expands into one assignment
+        # per element.
+        explicit <- names(parsed_cpp_options(built_options))
+        inherited <- inherited[!names(inherited) %in% explicit]
         # Command-line options override make/local.
         options_mismatch <- cpp_options_disagree(
           c(inherited, cpp_options),
