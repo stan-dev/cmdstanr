@@ -1726,9 +1726,11 @@ rejected with an error naming it: `--include-paths` in `stanc_options`, matched 
 occurrence (§3); `--include-paths` in the effective `STANCFLAGS`, below; and
 `STANCFLAGS` in `cpp_options` outright, since `stanc_options` is the channel for
 stanc flags and a raw make-variable passthrough only duplicates it. In the
-`STANCFLAGS` case detection is a substring test on the flag, not a parse: we never
-interpret `--include-paths`'s comma lists, quoting or separator forms, only refuse
-them.
+`STANCFLAGS` case detection is a substring test, not a parse: an element containing
+`--include-paths`, or beginning with `-I`, the flag's short spelling from 2.38 on
+(`-I DIR` and `-IDIR` both resolve, measured on 2.39, and no other stanc option
+begins with `-I`). We never interpret the comma lists, quoting or separator forms,
+only refuse them.
 
 <!-- /contract -->
 
@@ -1804,7 +1806,10 @@ would silently change the generated C++. <!-- /contract --> A value never starts
 `--filename-in-msg -x.stan`). <!-- contract -->`make/local` supplies defaults for what
 the call does not say. <!-- /contract --> This is an occurrence test on a character vector, not the
 parse of the file declined above, and it needs no knowledge of which flags take a
-value. <!-- contract -->The include-path rejection is unchanged and is not an instance of this rule:
+value. <!-- contract -->The match is on the spelling the call emits. <!-- /contract --> 2.39 accepts no
+abbreviated spellings, and a repeat in another spelling is stanc's to refuse, which
+it does by name: `option -o cannot be repeated` for a `make/local` `-o` beside the
+`--o` every stanc call carries. <!-- contract -->The include-path rejection is unchanged and is not an instance of this rule:
 it exists so that the build and `stanc --info` resolve the same files, and dropping
 the flag only when the call also supplies paths would leave the defect in place when
 it does not. <!-- /contract --> Nothing recorded moves, since the call's options are in
@@ -2249,8 +2254,8 @@ documentation:
 - `make/local` including another makefile (`make_local_include`).
   `make/local.example:36` ships with `# -include $(HOME)/.config/stan/make.local`, so
   it is a suggested pattern. Parsing arbitrary Make syntax is not justified for v1.
-  Everything the included file sets is untracked. The one thing still caught is
-  `--include-paths` in the effective `STANCFLAGS`, which the build-time check above
+  Everything the included file sets is untracked. The one thing still caught is an
+  include-path flag in the effective `STANCFLAGS`, which the build-time check above
   reads from Make rather than from the file.
 - Headers transitively included by `USER_HEADER` (`user_header_include`). Hashing
   the top-level header misses them.
