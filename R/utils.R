@@ -870,8 +870,8 @@ parse_make_print_flag <- function(flag_name, stdout) {
 #' rather than an `--eval` argument because users may have a make too old for
 #' `--eval`; the one Apple ships with macOS is. The fragment's first line removes
 #' the fragment from `MAKEFILE_LIST` so a value that reads the list sees the same
-#' makefiles the real build does. The call's `cpp_options` go in `make_args` so
-#' the answer is the one the build will see.
+#' makefiles the real build does. The call's `cpp_options` and `user_header` go
+#' in `make_args` so the answer is the one the build will see.
 #'
 #' @param cmdstan_path (string) The CmdStan directory.
 #' @param make_args (character) Command-line variable assignments (`NAME=value`)

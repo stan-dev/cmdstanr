@@ -154,10 +154,10 @@ others, not as a recorded `cpp_options` entry.**
 ### [One canonical spelling, established on entry](compilation-state.md#one-canonical-spelling-established-on-entry)
 
 **Named `cpp_options` entries are normalized to their `make` spelling once, on entry
-to the build call, ahead of validation.**
+to the build call.**
 
-After that point one spelling is in play, and validation,
-comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
+After that point one spelling is in play, and the reserved-name
+checks, comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
 keeps working.
 
 **The `stanc_options` side is not symmetric.** `stanc_options_to_args()` passes names
@@ -533,7 +533,7 @@ begins with `-I`). We never interpret the comma lists, quoting or separator form
 only refuse them.
 
 **The `STANCFLAGS` check reads what Make resolves for this build, with the call's
-`cpp_options` applied, not what `make/local` says, and runs at build time only.**
+`cpp_options` and `user_header` applied, not what `make/local` says, and runs at build time only.**
 
 **The two rejections differ in scope, and should not be unified.** `cpp_options` is
 a cmdstanr argument, so the whole variable goes. `make/local` is CmdStan's own

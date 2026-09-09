@@ -516,10 +516,10 @@ dormant `validate_cpp_options()`.
 <!-- contract -->
 
 **Named `cpp_options` entries are normalized to their `make` spelling once, on entry
-to the build call, ahead of validation.** <!-- /contract --> Uppercase is the canonical direction
+to the build call.** <!-- /contract --> Uppercase is the canonical direction
 because it is what `make` receives and what a compile log shows; lowercase is an R
-naming convention. <!-- contract -->After that point one spelling is in play, and validation,
-comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
+naming convention. <!-- contract -->After that point one spelling is in play, and the reserved-name
+checks, comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
 keeps working. <!-- /contract --> It is normalized immediately instead of at three later points.
 
 This is what makes the reserved-variable rejection below exact, but the rejection is
@@ -1742,7 +1742,7 @@ only refuse them.
 <!-- contract -->
 
 **The `STANCFLAGS` check reads what Make resolves for this build, with the call's
-`cpp_options` applied, not what `make/local` says, and runs at build time only.** <!-- /contract --> `make/local` may include another makefile, a pattern
+`cpp_options` and `user_header` applied, not what `make/local` says, and runs at build time only.** <!-- /contract --> `make/local` may include another makefile, a pattern
 CmdStan's own `make/local.example` suggests (below), so scanning the file misses
 any flag arriving that way. Measured, the
 file reads `include $(HOME)/.config/stan/extra.mk` while `make -s print-STANCFLAGS`

@@ -1891,6 +1891,38 @@ test_that("compile() resolves make/local STANCFLAGS with the call's cpp_options 
   expect_equal(opencl_count(), c(1L, 1L))
 })
 
+test_that("compile() resolves make/local STANCFLAGS with the call's user_header applied", {
+  local_cmdstan_make_local(list(
+    "ifeq ($(origin USER_HEADER),command line)",
+    "STANCFLAGS += --O1",
+    "else",
+    "STANCFLAGS += --O0",
+    "endif"
+  ), append = FALSE)
+  stan_file <- testing_stan_file("bernoulli")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  header <- withr::local_tempfile(fileext = ".hpp")
+  writeLines("", header)
+  received <- list()
+  local_mocked_bindings(
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received <<- append(received, list(stancflags))
+      ""
+    }
+  )
+
+  model$compile(user_header = header, force_recompile = TRUE, dry_run = TRUE)
+  expect_length(received, 2)
+  expect_true(all(vapply(received, function(x) "--O1" %in% x, logical(1))))
+  expect_false(any(vapply(received, function(x) "--O0" %in% x, logical(1))))
+
+  received <- list()
+  model$compile(user_header = NULL, force_recompile = TRUE, dry_run = TRUE)
+  expect_length(received, 2)
+  expect_true(all(vapply(received, function(x) "--O0" %in% x, logical(1))))
+  expect_false(any(vapply(received, function(x) "--O1" %in% x, logical(1))))
+})
+
 test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {
   withr::local_envvar(MAKEFLAGS = "-w -j 4")
   expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)

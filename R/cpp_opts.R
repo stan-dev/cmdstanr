@@ -248,9 +248,9 @@ unnamed_cpp_option_message <- function(value) {
       paste0(
         "Make flags cannot be passed through `cpp_options`. ",
         "To read another makefile add `include %s` to `make/local`, for example ",
-        "`cmdstan_make_local(cpp_options = list(\"include %s\"))`."
+        "`cmdstan_make_local(cpp_options = list(%s))`."
       ),
-      path, path
+      path, encodeString(paste0("include ", path), quote = '"')
     ))
   }
   if (startsWith(entry, "-")) {
