@@ -54,6 +54,36 @@ test_that("assert_valid_cpp_options rejects a user header", {
   }
 })
 
+test_that("assert_valid_cpp_options points an empty user header at NULL", {
+  expected_null <- paste0(
+    "The user header cannot be set through `cpp_options`. ",
+    "Pass it with the `user_header` argument: `user_header = NULL`."
+  )
+  expect_error(
+    assert_valid_cpp_options(list("USER_HEADER=")),
+    expected_null,
+    fixed = TRUE
+  )
+  expect_error(
+    assert_valid_cpp_options(list(USER_HEADER = FALSE)),
+    expected_null,
+    fixed = TRUE
+  )
+  expect_error(
+    assert_valid_cpp_options(list(USER_HEADER = NULL)),
+    expected_null,
+    fixed = TRUE
+  )
+  expect_error(
+    assert_valid_cpp_options(list("USER_HEADER=C:\\h\\f.hpp")),
+    paste0(
+      "The user header cannot be set through `cpp_options`. ",
+      "Pass it with the `user_header` argument: `user_header = \"C:\\\\h\\\\f.hpp\"`."
+    ),
+    fixed = TRUE
+  )
+})
+
 test_that("assert_valid_cpp_options rejects an unnamed assignment", {
   expect_error(
     assert_valid_cpp_options(list("FOO=1")),
@@ -101,7 +131,7 @@ test_that("assert_valid_cpp_options sends makefile syntax to make/local", {
       fixed = TRUE
     )
   }
-  for (entry in c("-j4", "-f other.mk", "--eval=STAN_OPENCL=1")) {
+  for (entry in c("-j4", "--eval=STAN_OPENCL=1")) {
     expect_error(
       assert_valid_cpp_options(list(entry)),
       paste0(
@@ -115,6 +145,50 @@ test_that("assert_valid_cpp_options sends makefile syntax to make/local", {
   expect_error(
     assert_valid_cpp_options(list(1)),
     "`cpp_options` entries must be named: `list(NAME = value)`.",
+    fixed = TRUE
+  )
+})
+
+test_that("assert_valid_cpp_options rejects an unnamed assignment quoted as an R literal", {
+  expect_error(
+    assert_valid_cpp_options(list('CXXFLAGS=-DVERSION="foo"')),
+    '`cpp_options` entries must be named. Write `list(CXXFLAGS = "-DVERSION=\\"foo\\"")` instead of `"CXXFLAGS=-DVERSION=\\"foo\\""`.',
+    fixed = TRUE
+  )
+})
+
+test_that("assert_valid_cpp_options rejects -B and --always-make", {
+  for (entry in c("-B", "--always-make")) {
+    expect_error(
+      assert_valid_cpp_options(list(entry)),
+      paste0(
+        "Make flags cannot be passed through `cpp_options`. `", entry,
+        "` rebuilds everything; pass `force_recompile = TRUE` instead."
+      ),
+      fixed = TRUE
+    )
+  }
+})
+
+test_that("assert_valid_cpp_options sends -f entries to make/local's include", {
+  for (entry in c("-f other.mk", "-fother.mk", "--file=other.mk", "--makefile=other.mk")) {
+    expect_error(
+      assert_valid_cpp_options(list(entry)),
+      paste0(
+        "Make flags cannot be passed through `cpp_options`. To read another ",
+        "makefile add `include other.mk` to `make/local`, for example ",
+        "`cmdstan_make_local(cpp_options = list(\"include other.mk\"))`."
+      ),
+      fixed = TRUE
+    )
+  }
+  expect_error(
+    assert_valid_cpp_options(list("-f")),
+    paste0(
+      "Make flags cannot be passed through `cpp_options`. Set them in ",
+      "`make/local` with `cmdstan_make_local()`, for example ",
+      "`MAKEFLAGS += -j4`."
+    ),
     fixed = TRUE
   )
 })

@@ -214,21 +214,43 @@ unnamed_cpp_option_message <- function(value) {
     return(stancflags_cpp_option_message())
   }
   if (is_assignment) {
+    value <- trimws(sub(assignment, "\\2", entry))
     return(sprintf(
       paste0(
         "`cpp_options` entries must be named. ",
-        "Write `list(%s = \"%s\")` instead of `\"%s\"`."
+        "Write `list(%s = %s)` instead of `%s`."
       ),
-      option_name, trimws(sub(assignment, "\\2", entry)), entry
+      option_name, encodeString(value, quote = '"'), encodeString(entry, quote = '"')
     ))
   }
   if (is_operator) {
     return(sprintf(
       paste0(
-        "`\"%s\"` is makefile syntax and cannot be passed through `cpp_options`. ",
-        "To set it in `make/local` use `cmdstan_make_local(cpp_options = list(\"%s\"))`."
+        "`%s` is makefile syntax and cannot be passed through `cpp_options`. ",
+        "To set it in `make/local` use `cmdstan_make_local(cpp_options = list(%s))`."
       ),
-      entry, entry
+      encodeString(entry, quote = '"'), encodeString(entry, quote = '"')
+    ))
+  }
+  if (grepl("^(-B|--always-make)$", entry)) {
+    return(sprintf(
+      paste0(
+        "Make flags cannot be passed through `cpp_options`. ",
+        "`%s` rebuilds everything; pass `force_recompile = TRUE` instead."
+      ),
+      entry
+    ))
+  }
+  makefile_flag_pattern <- "^(?:-f[ \t]*|--(?:file|makefile)=)(.+)$"
+  if (grepl(makefile_flag_pattern, entry)) {
+    path <- sub(makefile_flag_pattern, "\\1", entry)
+    return(sprintf(
+      paste0(
+        "Make flags cannot be passed through `cpp_options`. ",
+        "To read another makefile add `include %s` to `make/local`, for example ",
+        "`cmdstan_make_local(cpp_options = list(\"include %s\"))`."
+      ),
+      path, path
     ))
   }
   if (startsWith(entry, "-")) {
@@ -245,9 +267,13 @@ unnamed_cpp_option_message <- function(value) {
 #'
 #' @noRd
 user_header_cpp_option_message <- function(value) {
-  example <- ""
-  if (checkmate::test_string(value)) {
-    example <- paste0(": `user_header = \"", value, "\"`")
+  is_empty_string <- checkmate::test_string(value) && !nzchar(trimws(value))
+  if (is.null(value) || isFALSE(value) || is_empty_string) {
+    example <- ": `user_header = NULL`"
+  } else if (checkmate::test_string(value)) {
+    example <- paste0(": `user_header = ", encodeString(value, quote = '"'), "`")
+  } else {
+    example <- ""
   }
   paste0(
     "The user header cannot be set through `cpp_options`. ",

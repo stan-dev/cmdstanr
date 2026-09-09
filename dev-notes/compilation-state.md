@@ -719,7 +719,7 @@ raw operators would invalidate the canonicalization rule as well.
 
 <!-- contract -->
 
-**After normalization, a name must match `^[A-Za-z_][A-Za-z0-9_]*$`.** <!-- /contract --> Without that,
+**A name must match `^[A-Za-z_][A-Za-z0-9_]*$` as written; matching names are then uppercased.** <!-- /contract --> Without that,
 the sentence above is not true, because an operator arrives through the named door
 instead. Before Stage 1, `cpp_options_to_compile_flags()` built each argument as
 `paste0(toupper(option_name), "=", value)` and `toupper()` leaves `+` alone, so

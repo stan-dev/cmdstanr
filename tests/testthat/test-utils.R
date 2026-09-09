@@ -789,6 +789,11 @@ test_that("get_cmdstan_flags() returns an unset STANCFLAGS as character(0)", {
   expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
 })
 
+test_that("get_cmdstan_flags() keeps the rule file out of MAKEFILE_LIST", {
+  local_mini_make_local("STANCFLAGS = --filename-in-msg=$(lastword $(MAKEFILE_LIST))")
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--filename-in-msg=local")
+})
+
 test_that("make_shell_quote() survives Make expansion and shell splitting (#1230)", {
   words <- c(
     "--O1",

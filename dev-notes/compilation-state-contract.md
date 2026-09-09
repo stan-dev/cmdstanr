@@ -205,7 +205,7 @@ as literals with no case folding inside the matcher.
 
 **So raw assignment-shaped entries are rejected, not reclassified.**
 
-**After normalization, a name must match `^[A-Za-z_][A-Za-z0-9_]*$`.**
+**A name must match `^[A-Za-z_][A-Za-z0-9_]*$` as written; matching names are then uppercased.**
 
 **Plain `NAME=value` is rejected too**
 

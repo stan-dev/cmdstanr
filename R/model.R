@@ -19,7 +19,8 @@
 #'   omitted some `CmdStanModel` methods like `$code()` and `$print()` will not
 #'   work). If `stan_file` is omitted, the executable is used as it is:
 #'   `cpp_options`, `stanc_options`, `include_paths`, `user_header`,
-#'   `force_recompile` and `pedantic` cannot be supplied.
+#'   `force_recompile` and `pedantic` cannot be supplied, and passing `NULL`
+#'   counts as omitting them.
 #' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -516,8 +517,9 @@ NULL
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #'   Every entry must be named with a `Make` variable name, in any casing, which
 #'   [`$cpp_options()`][model-method-model-info] reports back in upper case.
-#'   Setting an option to `FALSE` or `NULL` passes an empty assignment, which
-#'   disables the option and overrides `make/local`.
+#'   Setting an option to `FALSE` or `NULL` passes an empty assignment such as
+#'   `STAN_THREADS=`. That empties the variable for this build, which turns a
+#'   switch off, and overrides whatever `make/local` sets.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   [`stanc` chapter of the CmdStan User's

@@ -868,7 +868,9 @@ parse_make_print_flag <- function(flag_name, stdout) {
 #' exactly the arguments stanc gets from make. Each line carries a prefix that
 #' tells it apart from other make output. The rule lives in a temporary makefile
 #' rather than an `--eval` argument because users may have a make too old for
-#' `--eval`; the one Apple ships with macOS is.
+#' `--eval`; the one Apple ships with macOS is. The fragment's first line removes
+#' the fragment from `MAKEFILE_LIST` so a value that reads the list sees the same
+#' makefiles the real build does.
 #'
 #' @param cmdstan_path (string) The CmdStan directory.
 #' @return A character vector, one element per argument, `character(0)` when the
@@ -881,6 +883,7 @@ stancflags_from_make <- function(cmdstan_path) {
   con <- file(rule_file, open = "wb")
   writeLines(
     c(
+      "MAKEFILE_LIST := $(filter-out $(lastword $(MAKEFILE_LIST)),$(MAKEFILE_LIST))",
       ".PHONY: cmdstanr-print-stancflags",
       "cmdstanr-print-stancflags: ; @printf 'cmdstanr-stancflag=%s\\n' $(STANCFLAGS)"
     ),

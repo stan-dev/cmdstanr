@@ -17,7 +17,8 @@ be provided instead of or in addition to \code{stan_file} (if \code{stan_file} i
 omitted some \code{CmdStanModel} methods like \verb{$code()} and \verb{$print()} will not
 work). If \code{stan_file} is omitted, the executable is used as it is:
 \code{cpp_options}, \code{stanc_options}, \code{include_paths}, \code{user_header},
-\code{force_recompile} and \code{pedantic} cannot be supplied.}
+\code{force_recompile} and \code{pedantic} cannot be supplied, and passing \code{NULL}
+counts as omitting them.}
 
 \item{compile}{(logical) Do compilation? The default is \code{TRUE}. If \code{FALSE}
 compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}

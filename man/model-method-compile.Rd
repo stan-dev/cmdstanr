@@ -58,8 +58,9 @@ otherwise write in the \code{make/local} file. For an example of using threading
 see the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
 Every entry must be named with a \code{Make} variable name, in any casing, which
 \code{\link[=model-method-model-info]{$cpp_options()}} reports back in upper case.
-Setting an option to \code{FALSE} or \code{NULL} passes an empty assignment, which
-disables the option and overrides \code{make/local}.}
+Setting an option to \code{FALSE} or \code{NULL} passes an empty assignment such as
+\verb{STAN_THREADS=}. That empties the variable for this build, which turns a
+switch off, and overrides whatever \code{make/local} sets.}
 
 \item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
 when compiling the model. See the \strong{Examples} section below as well as the

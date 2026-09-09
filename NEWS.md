@@ -38,8 +38,10 @@ Previously both reached `stanc`. (#1258)
 quoted value with a space, such as `--filename-in-msg='/my dir/model.stan'`,
 reaches `stanc` as one argument. Previously the direct `stanc` calls in
 `$compile()` received it as two and stanc refused the second. (#1232)
-* Include paths passed to `make` are now shell-quoted, so a quote or a dollar
-sign in a path no longer breaks the build. (#1230)
+* Include paths handed to `make` are now quoted for Make and the shell, so a
+quote or a dollar sign in a path no longer splits or expands inside the
+`STANCFLAGS` value. On WSL a dollar sign is still lost before `make` runs.
+(#1230)
 * `cmdstan_model(exe_file = )` with no `stan_file` now rejects `cpp_options`,
 `stanc_options`, `include_paths`, `user_header`, `force_recompile` and
 `pedantic`. With no Stan file there is nothing to build, so the executable is
