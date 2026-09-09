@@ -730,11 +730,21 @@ test_that("get_cmdstan_flags() preserves empty non-STANCFLAGS values", {
 # minimal `makefile` that includes `local`, as CmdStan's does.
 local_mini_make_local <- function(local_lines, envir = parent.frame()) {
   tmpdir <- withr::local_tempdir(.local_envir = envir)
-  writeLines("-include local", file.path(tmpdir, "makefile"))
-  writeLines(local_lines, file.path(tmpdir, "local"))
+  # Binary mode keeps the line endings LF; under WSL a Linux make reads files
+  # written on Windows.
+  write_lf <- function(lines, path) {
+    con <- file(path, open = "wb")
+    on.exit(close(con))
+    writeLines(lines, con, sep = "\n")
+  }
+  write_lf("-include local", file.path(tmpdir, "makefile"))
+  write_lf(local_lines, file.path(tmpdir, "local"))
+  # Keep the real runner so the call still goes through wsl under WSL, where
+  # the rule file path is already converted to /mnt/.
+  run <- wsl_compatible_run
   local_mocked_bindings(
     wsl_compatible_run = function(command, args, ...) {
-      processx::run(command = command, args = args, wd = tmpdir)
+      run(command = command, args = args, wd = tmpdir)
     },
     .env = envir
   )

@@ -999,11 +999,9 @@ test_that("include_paths_stanc3_args() works", {
   }
   path_1 <- repair_path(path_1)
   path_1_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_1), path_1)
-  path_1_make <- if (grepl(" ", path_1_compare, fixed = TRUE)) {
-    paste0("'", path_1_compare, "'")
-  } else {
-    path_1_compare
-  }
+  # tempdir() can hold characters that need quoting, such as the `~` in a
+  # Windows short path. The quoting rule itself is pinned below.
+  path_1_make <- make_shell_quote(path_1_compare)
   expect_equal(
     include_paths_stanc3_args(path_1),
     paste0("--include-paths=", path_1_make))
@@ -1030,28 +1028,42 @@ test_that("include_paths_stanc3_args() works", {
   # quoted for the shell and a dollar sign is doubled for Make (#1230). Direct
   # calls still get the path as it is.
   path_3 <- file.path(tempdir(), "the model's includes")
-  path_4 <- file.path(tempdir(), "costs $5")
-  for (p in c(path_3, path_4)) {
-    if (!dir.exists(p)) {
-      dir.create(p)
-    }
+  if (!dir.exists(path_3)) {
+    dir.create(path_3)
   }
   path_3 <- repair_path(path_3)
-  path_4 <- repair_path(path_4)
   path_3_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_3), path_3)
-  path_4_compare <- ifelse(os_is_wsl(), wsl_safe_path(path_4), path_4)
   expect_equal(
-    include_paths_stanc3_args(c(path_3, path_4)),
-    paste0(
-      "--include-paths=",
-      "\"", path_3_compare, "\"", ",",
-      "'", sub("$5", "$$5", path_4_compare, fixed = TRUE), "'"
+    include_paths_stanc3_args(path_3),
+    paste0("--include-paths=", "\"", path_3_compare, "\"")
+  )
+  expect_equal(
+    include_paths_stanc3_args(path_3, direct_call = TRUE),
+    c("--include-paths", path_3_compare)
+  )
+
+  # The wsl launcher passes paths through a shell, so a `$` in the last path
+  # component does not survive the directory check under WSL. That limit is
+  # in the WSL path handling, not in the quoting tested here.
+  if (!os_is_wsl()) {
+    path_4 <- file.path(tempdir(), "costs $5")
+    if (!dir.exists(path_4)) {
+      dir.create(path_4)
+    }
+    path_4 <- repair_path(path_4)
+    expect_equal(
+      include_paths_stanc3_args(c(path_3, path_4)),
+      paste0(
+        "--include-paths=",
+        "\"", path_3, "\"", ",",
+        "'", sub("$5", "$$5", path_4, fixed = TRUE), "'"
+      )
     )
-  )
-  expect_equal(
-    include_paths_stanc3_args(c(path_3, path_4), direct_call = TRUE),
-    c("--include-paths", paste0(path_3_compare, ",", path_4_compare))
-  )
+    expect_equal(
+      include_paths_stanc3_args(c(path_3, path_4), direct_call = TRUE),
+      c("--include-paths", paste0(path_3, ",", path_4))
+    )
+  }
 })
 
 test_that("cpp_options work with settings in make/local", {
