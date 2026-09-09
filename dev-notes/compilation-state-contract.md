@@ -167,13 +167,15 @@ than anything we would write.
 
 ### [Rejection matches the option, not the spelling](compilation-state.md#rejection-matches-the-option-not-the-spelling)
 
-These entries are rejected from an R option list that currently accepts them:
-`include-paths`, `warn-pedantic`, `allow-undefined`, `use-opencl` and `name` from
-`stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from
+These entries are rejected from the R option lists that accepted them before
+Stage 1: `include-paths`, `warn-pedantic`, `allow-undefined`, `use-opencl` and
+`name` from `stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from
 `cpp_options`. **Every one is matched by where the option name occurs, never by
-enumerating accepted values.** (`--include-paths` in the effective `STANCFLAGS` is
-rejected too, but that is a value Make resolved rather than a list entry, so §6
-gives it its own detection rule.)
+enumerating accepted values.** The `stanc_options` rule covers every
+`stanc_options` list a method accepts, so `$check_syntax()`'s own argument is
+checked the same way as the constructor's. (`--include-paths` in the effective
+`STANCFLAGS` is rejected too, but that is a value Make resolved rather than a list
+entry, so §6 gives it its own detection rule.)
 
 `stanc_options_to_args()` (`R/model.R:2598`) puts the flag name in a different slot
 depending on the entry's shape, so the rule has two arms:

@@ -55,14 +55,14 @@ test_that("compile() reuses the user header from the previous compilation", {
     }
   )
   model <- cmdstan_model(stan_file, compile = FALSE)
-  expect_false(model$.__enclos_env__$private$using_user_header_)
+  expect_null(model$user_header())
 
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 0),
     code = model$compile(user_header = user_header, force_recompile = TRUE)
   )
-  expect_true(model$.__enclos_env__$private$using_user_header_)
+  expect_equal(model$user_header(), resolve_path(user_header))
 
   received_stancflags <- list()
   with_mocked_cli(
@@ -70,7 +70,6 @@ test_that("compile() reuses the user header from the previous compilation", {
     info_ret = list(status = 0),
     code = model$compile(force_recompile = TRUE)
   )
-  expect_true(model$.__enclos_env__$private$using_user_header_)
   expect_equal(model$user_header(), resolve_path(user_header))
   expect_false("USER_HEADER" %in% names(model$cpp_options()))
   expect_equal(
@@ -160,8 +159,6 @@ test_that("a header configured over a current executable does not rebuild", {
     code = expect_no_mock_compile(model$compile())
   )
   expect_equal(model$user_header(), resolve_path(header))
-  # Stanc still uses the configured header.
-  expect_true(model$.__enclos_env__$private$using_user_header_)
 })
 
 test_that("cmdstan_model() records a user header", {
@@ -174,7 +171,6 @@ test_that("cmdstan_model() records a user header", {
   )
   private <- model$.__enclos_env__$private
   expect_equal(private$user_header_, resolve_path(header))
-  expect_true(private$using_user_header_)
   expect_false(private$user_header_dirty_)
 })
 
@@ -186,7 +182,6 @@ test_that("cmdstan_model() honours an explicit user_header = NULL", {
   )
 
   expect_null(model$user_header())
-  expect_false(model$.__enclos_env__$private$using_user_header_)
 })
 
 test_that("cmdstan_model() rejects an empty user header", {
@@ -272,7 +267,6 @@ test_that("a header that does not exist is still recorded as the request", {
     "does not exist"
   )
   expect_equal(private$user_header_, resolve_path(header))
-  expect_true(private$using_user_header_)
   expect_true(private$user_header_dirty_)
 
   # A bare retry once the header exists must build against it.
@@ -314,13 +308,12 @@ test_that("user_header = NULL clears a compiled header", {
   local_mocked_stanc()
 
   model <- cmdstan_model(local_external_model(), compile = FALSE)
-  private <- model$.__enclos_env__$private
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
     code = model$compile(user_header = header, force_recompile = TRUE)
   )
-  expect_true(private$using_user_header_)
+  expect_equal(model$user_header(), resolve_path(header))
 
   # Clearing a compiled header must force a rebuild.
   with_mocked_cli(
@@ -329,7 +322,6 @@ test_that("user_header = NULL clears a compiled header", {
     code = expect_mock_compile(model$compile(user_header = NULL))
   )
   expect_null(model$user_header())
-  expect_false(private$using_user_header_)
 })
 
 skip_if(os_is_macos())

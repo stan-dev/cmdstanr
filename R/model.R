@@ -244,7 +244,6 @@ CmdStanModel <- R6::R6Class(
     stanc_options_ = list(),
     include_paths_ = NULL,
     user_header_ = NULL,
-    using_user_header_ = FALSE,
     # Build inputs that have changed since the current executable was produced.
     user_header_dirty_ = FALSE,
     include_paths_dirty_ = FALSE,
@@ -280,7 +279,6 @@ CmdStanModel <- R6::R6Class(
         # detection. Keep only the host path here. Persisting the WSL path would
         # break reuse on WSL1.
         private$user_header_ <- resolve_path(args$user_header)
-        private$using_user_header_ <- !is.null(args$user_header)
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
@@ -522,7 +520,11 @@ NULL
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   [`stanc` chapter of the CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for more details
-#'   on available options.
+#'   on available options. Options that cmdstanr sets from its own arguments
+#'   cannot be passed here: `include-paths` (use `include_paths`),
+#'   `warn-pedantic` (`pedantic`), `allow-undefined` (`user_header`),
+#'   `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`) and `name` (taken
+#'   from the name of the Stan file).
 #' @param force_recompile (logical) Should the model be recompiled even if it
 #'   has not been modified since it was last compiled? The default is `FALSE`.
 #'   Can also be set via a global `cmdstanr_force_recompile` option.
@@ -689,7 +691,6 @@ compile <- function(quiet = TRUE,
   private$user_header_dirty_ <- isTRUE(private$user_header_dirty_) ||
     !same_path(user_header, private$user_header_)
   private$user_header_ <- user_header
-  private$using_user_header_ <- using_user_header
 
   if (using_user_header && !file.exists(user_header)) {
     stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
@@ -818,9 +819,7 @@ compile <- function(quiet = TRUE,
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  }
+  stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
   stancflags_direct <- stanc_options_to_args(stanc_options)
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
@@ -1037,8 +1036,7 @@ variables <- function() {
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
     private$variables_ <- model_variables(
       stan_file = self$stan_file(),
-      include_paths = self$include_paths(),
-      allow_undefined = private$using_user_header_
+      include_paths = self$include_paths()
     )
   }
   private$variables_
@@ -1109,15 +1107,15 @@ check_syntax <- function(pedantic = FALSE,
     stop("'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
-  if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
+  if (length(stanc_options) > 0) {
+    stanc_options <- assert_valid_stanc_options(stanc_options)
+  } else if (!is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
   if (is.null(include_paths) && !is.null(self$include_paths())) {
     include_paths <- self$include_paths()
   }
-  if (private$using_user_header_) {
-    stanc_options[["allow-undefined"]] <- TRUE
-  }
+  stanc_options[["allow-undefined"]] <- TRUE
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- wsl_safe_path(temp_hpp_file)
@@ -1131,9 +1129,7 @@ check_syntax <- function(pedantic = FALSE,
     direct_call = TRUE
   )
 
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  }
+  stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   stanc_built_options <- stanc_options_to_args(stanc_options)
 
   withr::with_path(
@@ -1249,9 +1245,7 @@ format <- function(overwrite_file = FALSE,
     self$include_paths(),
     direct_call = TRUE
   )
-  if (private$using_user_header_) {
-    stanc_options[["allow-undefined"]] <- TRUE
-  }
+  stanc_options[["allow-undefined"]] <- TRUE
   stanc_options[["auto-format"]] <- TRUE
   if (!is.null(max_line_length)) {
     stanc_options[["max-line-length"]] <- max_line_length
@@ -2555,11 +2549,49 @@ CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 
 
 # internal ----------------------------------------------------------------
+#' The error for a stanc flag cmdstanr sets from one of its own arguments
+#'
+#' Returns `NULL` for any other flag. The five names live here so that the
+#' matcher and the messages cannot drift apart.
+#'
+#' @noRd
+derived_stanc_option_message <- function(flag) {
+  messages <- c(
+    "include-paths" = paste0(
+      "`include-paths` cannot be set through `stanc_options`. ",
+      "Pass the directories with the `include_paths` argument."
+    ),
+    "warn-pedantic" = paste0(
+      "`warn-pedantic` cannot be set through `stanc_options`. ",
+      "Use `pedantic = TRUE`."
+    ),
+    "allow-undefined" = paste0(
+      "`allow-undefined` cannot be set through `stanc_options`. ",
+      "Builds turn it on when a `user_header` is supplied, and ",
+      "`$check_syntax()`, `$format()` and `$variables()` always use it."
+    ),
+    "use-opencl" = paste0(
+      "`use-opencl` cannot be set through `stanc_options`. ",
+      "Use `cpp_options = list(stan_opencl = TRUE)`, which turns it on."
+    ),
+    "name" = paste0(
+      "`name` cannot be set through `stanc_options`. ",
+      "The model name comes from the name of the Stan file."
+    )
+  )
+  if (flag %in% names(messages)) {
+    messages[[flag]]
+  } else {
+    NULL
+  }
+}
+
 assert_valid_stanc_options <- function(stanc_options) {
   i <- 1
   names <- names(stanc_options)
   for (s in stanc_options) {
-    if (!is.null(names[i]) && nzchar(names[i])) {
+    named <- !is.null(names[i]) && nzchar(names[i])
+    if (named) {
       name <- names[i]
     } else {
       name <- s
@@ -2567,8 +2599,27 @@ assert_valid_stanc_options <- function(stanc_options) {
     if (startsWith(name, "--")) {
       stop("No leading hyphens allowed in stanc options (", name, "). ",
            "Use options without leading hyphens, for example ",
-           "`stanc_options = list('allow-undefined')`",
+           "`stanc_options = list('warn-uninitialized')`",
            call. = FALSE)
+    }
+    # The flag is the part before the first `=`, wherever the name occurs.
+    flag <- sub("=.*$", "", name)
+    derived <- derived_stanc_option_message(flag)
+    if (!is.null(derived)) {
+      stop(derived, call. = FALSE)
+    }
+    if (named && grepl("=", name, fixed = TRUE)) {
+      stop(
+        sprintf(
+          paste0(
+            "`stanc_options` names cannot contain `=`. ",
+            "Write the value after the name: `list(\"%s\" = \"%s\")` ",
+            "instead of `list(\"%s\" = ...)`."
+          ),
+          flag, sub("^[^=]*=", "", name), name
+        ),
+        call. = FALSE
+      )
     }
     i <- i + 1
   }
@@ -2597,7 +2648,7 @@ stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
     option_name <- names(stanc_options)[i]
     option_value <- stanc_options[[i]]
     if (is.null(option_name) || !nzchar(option_name)) {
-      # Unnamed options are already flag names, e.g. list("allow-undefined")
+      # Unnamed options are already flag names, e.g. list("O1")
       args <- c(args, paste0("--", option_value))
     } else if (is.logical(option_value)) {
       # TRUE emits a bare flag, FALSE leaves the flag out entirely
@@ -2650,12 +2701,7 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
   stancflags
 }
 
-model_variables <- function(stan_file, include_paths = NULL, allow_undefined = FALSE) {
-  if (allow_undefined) {
-    allow_undefined_arg <- "--allow-undefined"
-  } else {
-    allow_undefined_arg <- NULL
-  }
+model_variables <- function(stan_file, include_paths = NULL) {
   out_file <- tempfile(fileext = ".json")
   run_log <- wsl_compatible_run(
     command = stanc_cmd(),
@@ -2665,7 +2711,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
                 include_paths,
                 direct_call = TRUE
               ),
-              allow_undefined_arg),
+              "--allow-undefined"),
     wd = cmdstan_path(),
     echo = FALSE,
     echo_cmd = FALSE,

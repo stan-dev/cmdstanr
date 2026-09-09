@@ -286,13 +286,13 @@ test_that("$compile() doesn't reuse cpp and stanc options from the previous comp
     info_ret = list(status = 1),
     code = model$compile(
       cpp_options = list(stan_threads = TRUE),
-      stanc_options = list("warn-pedantic" = TRUE),
+      stanc_options = list("warn-uninitialized" = TRUE),
       force_recompile = TRUE
     )
   )
   expect_true(model$cpp_options()[["STAN_THREADS"]])
   expect_equal(
-    vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
+    vapply(received_stancflags, function(x) "--warn-uninitialized" %in% x, logical(1)),
     rep(TRUE, 2)
   )
 
@@ -305,7 +305,7 @@ test_that("$compile() doesn't reuse cpp and stanc options from the previous comp
 
   expect_null(model$cpp_options()[["STAN_THREADS"]])
   expect_equal(
-    vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
+    vapply(received_stancflags, function(x) "--warn-uninitialized" %in% x, logical(1)),
     rep(FALSE, 2)
   )
 })
@@ -320,7 +320,7 @@ test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_mo
     stan_file,
     compile = FALSE,
     cpp_options = list(stan_threads = TRUE),
-    stanc_options = list("warn-pedantic" = TRUE)
+    stanc_options = list("warn-uninitialized" = TRUE)
   )
   received_stancflags <- list()
   local_mocked_bindings(
@@ -338,7 +338,7 @@ test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_mo
   )
   expect_true(model$cpp_options()[["STAN_THREADS"]])
   expect_equal(
-    vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
+    vapply(received_stancflags, function(x) "--warn-uninitialized" %in% x, logical(1)),
     rep(TRUE, 2)
   )
 
@@ -351,31 +351,26 @@ test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_mo
 
   expect_null(model$cpp_options()[["STAN_THREADS"]])
   expect_equal(
-    vapply(received_stancflags, function(x) "--warn-pedantic" %in% x, logical(1)),
+    vapply(received_stancflags, function(x) "--warn-uninitialized" %in% x, logical(1)),
     rep(FALSE, 2)
   )
 })
 
-test_that("name in STANCFLAGS is set correctly", {
+test_that("the model name stanc receives comes from the file name", {
   local_reproducible_output()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
     out_no_name <- "bin/stanc.exe --name=bernoulli_model --o"
-    out_name <- "bin/stanc.exe --name=bernoulli2_model --o"
   } else {
     out_no_name <- "bin/stanc --name=bernoulli_model --o"
-    out_name <- "bin/stanc --name=bernoulli2_model --o"
   }
   expect_output(print(out), out_no_name)
 
-  out <- utils::capture.output(
-    mod$compile(
-      quiet = FALSE,
-      force_recompile = TRUE,
-      stanc_options = list(name = "bernoulli2_model")
-    )
+  expect_error(
+    mod$compile(force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")),
+    "The model name comes from the name of the Stan file.",
+    fixed = TRUE
   )
-  expect_output(print(out), out_name)
 })
 
 
@@ -633,40 +628,105 @@ test_that("compiling stops on hyphens in stanc_options", {
   stan_file <- testing_stan_file("bernoulli")
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens, compile = FALSE),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
   )
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens2, compile = FALSE),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
   )
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens3, compile = FALSE),
-    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
   )
   mod <- cmdstan_model(stan_file, compile = FALSE)
   expect_error(
     mod$compile(stanc_options = hyphens),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
   )
   expect_error(
     mod$compile(stanc_options = hyphens2),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
   )
   expect_error(
     mod$compile(stanc_options = hyphens3),
-    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('allow-undefined')`",
+    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
+  )
+})
+
+test_that("compiling stops on stanc options cmdstanr sets itself", {
+  stan_file <- testing_stan_file("bernoulli")
+  mod <- cmdstan_model(stan_file, compile = FALSE)
+  fragments <- list(
+    "include-paths" = "Pass the directories with the `include_paths` argument.",
+    "warn-pedantic" = "Use `pedantic = TRUE`.",
+    "allow-undefined" = "Builds turn it on when a `user_header` is supplied",
+    "use-opencl" = "Use `cpp_options = list(stan_opencl = TRUE)`, which turns it on.",
+    "name" = "The model name comes from the name of the Stan file."
+  )
+  for (flag in names(fragments)) {
+    fragment <- fragments[[flag]]
+    spellings <- list(
+      list(flag),
+      list(paste0(flag, "=yes")),
+      setNames(list(TRUE), flag),
+      setNames(list(FALSE), flag),
+      setNames(list(NA), flag),
+      setNames(list(NULL), flag),
+      setNames(list("yes"), flag)
+    )
+    for (spelling in spellings) {
+      expect_error(
+        cmdstan_model(stan_file, stanc_options = spelling, compile = FALSE),
+        fragment,
+        fixed = TRUE
+      )
+      expect_error(
+        mod$compile(stanc_options = spelling),
+        fragment,
+        fixed = TRUE
+      )
+    }
+  }
+
+  # A named entry carrying its own value still matches on the flag name.
+  expect_error(
+    cmdstan_model(stan_file, stanc_options = list("include-paths=/b" = TRUE), compile = FALSE),
+    "Pass the directories with the `include_paths` argument.",
+    fixed = TRUE
+  )
+})
+
+test_that("stanc_options names cannot carry their own value", {
+  expect_error(
+    cmdstan_model(
+      testing_stan_file("bernoulli"),
+      stanc_options = list("max-line-length=78" = TRUE),
+      compile = FALSE
+    ),
+    "`list(\"max-line-length\" = \"78\")`",
+    fixed = TRUE
+  )
+})
+
+test_that("stanc options without a dedicated argument are left alone", {
+  options <- list("filename-in-msg" = "x.stan")
+  expect_equal(assert_valid_stanc_options(options), options)
+  expect_equal(assert_valid_stanc_options(list("O1")), list("O1"))
+  expect_equal(
+    assert_valid_stanc_options(list("warn-uninitialized" = TRUE)),
+    list("warn-uninitialized" = TRUE)
   )
 })
 
 test_that("compiling works with only names in list", {
   stan_file <- testing_stan_file("bernoulli")
-  expect_call_compilation(mod <- cmdstan_model(stan_file, stanc_options = list("warn-pedantic"), force_recompile = TRUE))
+  expect_call_compilation(mod <- cmdstan_model(stan_file, stanc_options = list("warn-uninitialized"), force_recompile = TRUE))
   checkmate::expect_r6(
     mod,
     "CmdStanModel"
@@ -732,13 +792,23 @@ test_that("check_syntax() works", {
     regexp = NA
   )
   expect_message(
-    mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic")),
+    mod_ok$check_syntax(stanc_options = list("warn-uninitialized")),
     "Stan program is syntactically correct",
     fixed = TRUE
   )
   expect_message(
-    mod_ok$check_syntax(stanc_options = list("allow-undefined", "warn-pedantic"), quiet = TRUE),
+    mod_ok$check_syntax(stanc_options = list("warn-uninitialized"), quiet = TRUE),
     regexp = NA
+  )
+  expect_error(
+    mod_ok$check_syntax(stanc_options = list("warn-pedantic")),
+    "Use `pedantic = TRUE`.",
+    fixed = TRUE
+  )
+  expect_error(
+    mod_ok$check_syntax(stanc_options = list("allow-undefined")),
+    "Builds turn it on when a `user_header` is supplied",
+    fixed = TRUE
   )
 
   code <- "
@@ -789,10 +859,10 @@ test_that("check_syntax() works with pedantic=TRUE", {
     fixed = TRUE
   )
 
-  # should also still work if specified via stanc_options
-  expect_message(
+  # pedantic mode has one channel here as well
+  expect_error(
     mod_pedantic_warn$check_syntax(stanc_options = list("warn-pedantic" = TRUE)),
-    "The parameter x was declared but was not used",
+    "Use `pedantic = TRUE`.",
     fixed = TRUE
   )
 
@@ -1210,16 +1280,11 @@ test_that("format() works", {
   )
 
   stan_file <- testing_stan_file("bernoulli_external")
-  mod_2 <- cmdstan_model(stan_file, compile = FALSE, stanc_options = list("allow-undefined"))
+  mod_2 <- cmdstan_model(stan_file, compile = FALSE)
   expect_output(
     mod_2$format(),
     "make_odds(theta);",
     fixed = TRUE
-  )
-  mod_3 <- cmdstan_model(
-    stan_file,
-    compile = FALSE,
-    stanc_options = list("allow-undefined", "warn-pedantic")
   )
   expect_output(
     expect_message(
@@ -1252,6 +1317,20 @@ test_that("format() works", {
     "'$format()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
+})
+
+test_that("source-only operations do not need a user header to allow undefined functions", {
+  mod <- cmdstan_model(testing_stan_file("bernoulli_external"), compile = FALSE)
+  expect_message(
+    expect_true(mod$check_syntax()),
+    "Stan program is syntactically correct"
+  )
+  expect_output(
+    mod$format(),
+    "make_odds(theta);",
+    fixed = TRUE
+  )
+  expect_equal(names(mod$variables()$parameters), "theta")
 })
 
 test_that("format() works with include_paths", {
