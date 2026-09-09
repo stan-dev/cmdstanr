@@ -1473,6 +1473,21 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
     out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
+
+  # The call emits --warn-pedantic, so make/local's copy is dropped and the
+  # stanc command line make prints holds the flag once.
+  out <- utils::capture.output(
+    mod$compile(pedantic = TRUE, quiet = FALSE, force_recompile = TRUE)
+  )
+  stanc_lines <- out[grepl("bin/stanc", out)]
+  expect_gt(length(stanc_lines), 0)
+  expect_equal(
+    lengths(regmatches(
+      stanc_lines,
+      gregexpr("--warn-pedantic", stanc_lines, fixed = TRUE)
+    )),
+    rep(1L, length(stanc_lines))
+  )
 })
 
 test_that("quoted make/local STANCFLAGS values reach stanc as one argument (#1232)", {
@@ -1495,6 +1510,105 @@ test_that("quoted make/local STANCFLAGS values reach stanc as one argument (#123
     "'--filename-in-msg=/my dir/model.stan'",
     fixed = TRUE
   )
+})
+
+test_that("include paths in make/local STANCFLAGS stop the build", {
+  # Use a temporary copy because mocked compiles install executables.
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  local_flags <- NULL
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) {
+      if (identical(flag_name, "STANCFLAGS")) local_flags else character()
+    },
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  for (flags in list("--include-paths=/b", c("-I", "/b"), "-I/b")) {
+    local_flags <- flags
+    received_stancflags <- list()
+    model <- cmdstan_model(stan_file, compile = FALSE)
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = expect_error(
+        model$compile(force_recompile = TRUE),
+        "pass the directories with the `include_paths` argument",
+        fixed = TRUE
+      )
+    )
+    # The build stops before stanc is called at all.
+    expect_length(received_stancflags, 0)
+  }
+})
+
+test_that("a flag the call emits reaches stanc once when make/local sets it too", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  local_flags <- NULL
+  received_stancflags <- list()
+  local_mocked_bindings(
+    get_cmdstan_flags = function(flag_name) {
+      if (identical(flag_name, "STANCFLAGS")) local_flags else character()
+    },
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received_stancflags <<- append(received_stancflags, list(stancflags))
+      ""
+    }
+  )
+
+  # The next word is another flag, so it survives the drop.
+  local_flags <- c("--warn-pedantic", "-fno-soa")
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(pedantic = TRUE, force_recompile = TRUE)
+  )
+  expect_equal(
+    vapply(received_stancflags, function(x) sum(x == "--warn-pedantic"), integer(1)),
+    rep(1L, 2)
+  )
+  expect_true(all(vapply(
+    received_stancflags,
+    function(x) "-fno-soa" %in% x,
+    logical(1)
+  )))
+
+  local_flags <- "--O1"
+  received_stancflags <- list()
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(stanc_options = list("O1"), force_recompile = TRUE)
+  )
+  expect_equal(
+    vapply(received_stancflags, function(x) sum(x == "--O1"), integer(1)),
+    rep(1L, 2)
+  )
+
+  # The value given as a separate word goes with the flag it belongs to.
+  local_flags <- c("--filename-in-msg", "published.stan")
+  received_stancflags <- list()
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = model$compile(
+      stanc_options = list("filename-in-msg" = "x.stan"),
+      force_recompile = TRUE
+    )
+  )
+  expect_true(all(vapply(
+    received_stancflags,
+    function(x) "--filename-in-msg=x.stan" %in% x && !("published.stan" %in% x),
+    logical(1)
+  )))
 })
 
 test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
@@ -1533,6 +1647,45 @@ test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
 
   expect_equal(stanc_options_to_args(list()), NULL)
   expect_equal(stanc_options_to_args(NULL), NULL)
+})
+
+test_that("a flag the call emits drops the make/local copy", {
+  expect_equal(
+    drop_overridden_stancflags(c("--warn-pedantic"), c("--warn-pedantic")),
+    character(0)
+  )
+  expect_equal(drop_overridden_stancflags(c("--O1"), c("--O1")), character(0))
+
+  # One hyphen, not two: the next word is a flag of its own
+  expect_equal(
+    drop_overridden_stancflags(c("--warn-pedantic", "-fno-soa"), c("--warn-pedantic")),
+    "-fno-soa"
+  )
+
+  # A value given as a separate word goes with the flag
+  expect_equal(
+    drop_overridden_stancflags(
+      c("--filename-in-msg", "published.stan"),
+      c("--filename-in-msg=x.stan")
+    ),
+    character(0)
+  )
+  expect_equal(
+    drop_overridden_stancflags(
+      c("--filename-in-msg=published.stan"),
+      c("--filename-in-msg=x.stan")
+    ),
+    character(0)
+  )
+
+  expect_equal(
+    drop_overridden_stancflags(c("--O1", "--warn-pedantic"), c("--name=bernoulli_model")),
+    c("--O1", "--warn-pedantic")
+  )
+  expect_equal(
+    drop_overridden_stancflags(character(0), c("--name=bernoulli_model")),
+    character(0)
+  )
 })
 
 test_that("compile() passes unquoted named stanc options to direct calls", {

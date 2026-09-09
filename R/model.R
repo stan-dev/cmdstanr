@@ -823,6 +823,20 @@ compile <- function(quiet = TRUE,
   stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
   stancflags_direct <- stanc_options_to_args(stanc_options)
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
+  is_include_path <- grepl("--include-paths", stancflags_local, fixed = TRUE) |
+    startsWith(stancflags_local, "-I")
+  if (any(is_include_path)) {
+    stop(
+      paste0(
+        "`make/local` sets an include path in `STANCFLAGS` (`",
+        stancflags_local[is_include_path][1],
+        "`). Include paths cannot be set there. Remove it from `make/local` ",
+        "and pass the directories with the `include_paths` argument."
+      ),
+      call. = FALSE
+    )
+  }
+  stancflags_local <- drop_overridden_stancflags(stancflags_local, stancflags_direct)
   if (length(stancflags_local) > 0) {
     # get_cmdstan_flags() split the local flags into words. Requote them for
     # the STANCFLAGS value handed back to make.
@@ -2663,6 +2677,38 @@ stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
     }
   }
   args
+}
+
+#' Drop the `make/local` stanc flags that the call sets itself
+#'
+#' A flag is the text before the first `=`. An element of `local_flags` whose
+#' flag is one the call emits is dropped. When that element is a bare flag and
+#' the next element does not start with a hyphen, the next element is the value
+#' given separately and goes with it.
+#'
+#' @param local_flags (character) The `STANCFLAGS` words from `make/local`, one
+#'   argument per element.
+#' @param call_args (character) The arguments the call emits, one per element,
+#'   each starting with `--`.
+#' @return `local_flags` without the overridden elements, the rest in order.
+#' @noRd
+drop_overridden_stancflags <- function(local_flags, call_args) {
+  call_flags <- sub("=.*$", "", call_args)
+  keep <- rep(TRUE, length(local_flags))
+  i <- 1
+  while (i <= length(local_flags)) {
+    if (sub("=.*$", "", local_flags[i]) %in% call_flags) {
+      keep[i] <- FALSE
+      if (!grepl("=", local_flags[i], fixed = TRUE) &&
+          i < length(local_flags) &&
+          !startsWith(local_flags[i + 1], "-")) {
+        keep[i + 1] <- FALSE
+        i <- i + 1
+      }
+    }
+    i <- i + 1
+  }
+  local_flags[keep]
 }
 
 #' Build stanc include-path arguments
