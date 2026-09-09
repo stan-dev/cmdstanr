@@ -21,10 +21,12 @@ test_that("a user header in cpp_options is rejected", {
   stan_file <- testing_stan_file("bernoulli_external")
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   model <- cmdstan_model(stan_file, compile = FALSE)
+  # The message writes the path as an R literal, so a Windows path shows its
+  # backslashes doubled.
   expected <- paste0(
     "The user header cannot be set through `cpp_options`. ",
-    "Pass it with the `user_header` argument: `user_header = \"",
-    user_header, "\"`."
+    "Pass it with the `user_header` argument: `user_header = ",
+    encodeString(user_header, quote = '"'), "`."
   )
 
   for (option_name in c("USER_HEADER", "user_header", "User_Header")) {
