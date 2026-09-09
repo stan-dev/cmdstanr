@@ -197,24 +197,26 @@ test_that("threading works with generate_quantities()", {
   expect_equal(f_gq$metadata()$threads_per_chain, 4)
 })
 
-test_that("executable metadata takes precedence over compile options", {
+test_that("stan_threads = FALSE builds an executable without threading", {
   mod <- cmdstan_model(
     stan_program,
     cpp_options = list(stan_threads = FALSE),
     force_recompile = TRUE
   )
-  expect_snapshot(
-    error = TRUE,
-    mod$sample(data = data_file_json, chains = 1)
-  )
+  expect_false(mod$cpp_options()$STAN_THREADS)
   expect_output(
-    fit <- mod$sample(
-      data = data_file_json,
-      chains = 1,
-      threads_per_chain = 2
-    ),
-    "with 2 thread(s) per chain",
+    fit <- mod$sample(data = data_file_json, chains = 1),
+    "Running MCMC with 1 chain",
     fixed = TRUE
   )
-  expect_equal(fit$metadata()$threads_per_chain, 2)
+  expect_equal(fit$metadata()$threads_per_chain, 1)
+  expect_warning(
+    expect_output(
+      mod$sample(data = data_file_json, chains = 1, threads_per_chain = 2),
+      "Running MCMC with 1 chain",
+      fixed = TRUE
+    ),
+    "'threads_per_chain' will have no effect!",
+    fixed = TRUE
+  )
 })
