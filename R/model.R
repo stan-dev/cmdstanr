@@ -17,7 +17,9 @@
 #' @param exe_file (string) The path to an existing Stan model executable. Can
 #'   be provided instead of or in addition to `stan_file` (if `stan_file` is
 #'   omitted some `CmdStanModel` methods like `$code()` and `$print()` will not
-#'   work).
+#'   work). If `stan_file` is omitted, the executable is used as it is:
+#'   `cpp_options`, `stanc_options`, `include_paths`, `user_header`,
+#'   `force_recompile` and `pedantic` cannot be supplied.
 #' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -289,11 +291,11 @@ CmdStanModel <- R6::R6Class(
         ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
         private$exe_file_ <- resolve_path(exe_file)
         if (is.null(stan_file)) {
+          assert_no_build_args_for_exe_only(args)
           assert_file_exists(private$exe_file_, access = "r", extension = ext)
           private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
-        private$include_paths_ <-
-          private$precompile_include_paths_ %||% resolve_path(args$include_paths)
+        private$include_paths_ <- private$precompile_include_paths_
       }
       compiled_here <- !is.null(stan_file) && compile
       if (compiled_here) {
@@ -2563,6 +2565,53 @@ CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 
 
 # internal ----------------------------------------------------------------
+#' The error for a build argument supplied with no `stan_file`
+#'
+#' With no `stan_file` there is nothing to build, so the executable is used
+#' as it is and none of these six arguments apply. Checked in the order
+#' `cpp_options`, `stanc_options`, `include_paths`, `user_header`,
+#' `force_recompile`, `pedantic`, stopping at the first one supplied.
+#'
+#' @noRd
+assert_no_build_args_for_exe_only <- function(args) {
+  build_message <- function(arg) {
+    sprintf(
+      paste0(
+        "`%s` cannot be supplied for a model created from an executable alone. ",
+        "With no Stan file there is nothing to build, so the executable is used as it is."
+      ),
+      arg
+    )
+  }
+  if (!is.null(args$cpp_options)) {
+    stop(build_message("cpp_options"), call. = FALSE)
+  }
+  if (!is.null(args$stanc_options)) {
+    stop(build_message("stanc_options"), call. = FALSE)
+  }
+  if (!is.null(args$include_paths)) {
+    stop(
+      "`include_paths` cannot be supplied for a model created from an executable alone. ",
+      "Include paths resolve `#include` lines in a Stan file, and there is none.",
+      call. = FALSE
+    )
+  }
+  if (!is.null(args$user_header)) {
+    stop(build_message("user_header"), call. = FALSE)
+  }
+  if (!is.null(args$force_recompile)) {
+    stop(build_message("force_recompile"), call. = FALSE)
+  }
+  if (!is.null(args$pedantic)) {
+    stop(
+      "`pedantic` cannot be supplied for a model created from an executable alone. ",
+      "Pedantic mode checks a Stan program, and there is none.",
+      call. = FALSE
+    )
+  }
+  invisible(args)
+}
+
 #' The error for a stanc flag cmdstanr sets from one of its own arguments
 #'
 #' Returns `NULL` for any other flag. The five names live here so that the

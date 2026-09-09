@@ -1138,6 +1138,69 @@ test_that("cmdstan_model works with exe_file", {
   )
 })
 
+test_that("build configuration cannot accompany an executable-only model", {
+  if (length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
+    mod$compile()
+  }
+  exe <- mod$exe_file()
+
+  expect_error(
+    cmdstan_model(exe_file = exe, cpp_options = list(stan_threads = TRUE)),
+    "`cpp_options` cannot be supplied",
+    fixed = TRUE
+  )
+  expect_error(
+    cmdstan_model(exe_file = exe, stanc_options = list("O1")),
+    "`stanc_options` cannot be supplied",
+    fixed = TRUE
+  )
+  expect_error(
+    cmdstan_model(exe_file = exe, include_paths = tempdir()),
+    "`include_paths` cannot be supplied",
+    fixed = TRUE
+  )
+  expect_error(
+    cmdstan_model(exe_file = exe, user_header = tempfile(fileext = ".hpp")),
+    "`user_header` cannot be supplied",
+    fixed = TRUE
+  )
+  expect_error(
+    cmdstan_model(exe_file = exe, force_recompile = TRUE),
+    "`force_recompile` cannot be supplied",
+    fixed = TRUE
+  )
+  expect_error(
+    cmdstan_model(exe_file = exe, force_recompile = FALSE),
+    "`force_recompile` cannot be supplied",
+    fixed = TRUE
+  )
+  expect_error(
+    cmdstan_model(exe_file = exe, pedantic = TRUE),
+    "`pedantic` cannot be supplied",
+    fixed = TRUE
+  )
+
+  mod_exe <- cmdstan_model(
+    exe_file = exe,
+    cpp_options = NULL,
+    stanc_options = NULL,
+    include_paths = NULL,
+    user_header = NULL,
+    force_recompile = NULL,
+    pedantic = NULL
+  )
+  expect_false(mod_exe$has_stan_file())
+
+  withr::local_options(cmdstanr_force_recompile = TRUE)
+  expect_no_error(cmdstan_model(exe_file = exe))
+
+  expect_error(
+    cmdstan_model(exe_file = file.path(tempdir(), "missing"), pedantic = TRUE),
+    "`pedantic` cannot be supplied",
+    fixed = TRUE
+  )
+})
+
 test_that("cmdstan_model created only with exe_file errors for check_syntax, code, ... ", {
   mod <- testing_model("bernoulli")
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
