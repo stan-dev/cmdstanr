@@ -25,8 +25,8 @@ names. An unnamed entry gets an error naming the route for what was written:
 `list(NAME = value)` for a plain assignment, `cmdstan_make_local()` for `+=` and
 the other makefile operators. Previously unnamed entries reached `make` but were
 invisible to everything that keys on names. (#1250)
-* `cpp_options = list(stan_threads = FALSE)` now disables threading. A logical
-`FALSE` reaches `make` as `STAN_THREADS=`, which also overrides `make/local`.
+* `cpp_options = list(stan_threads = FALSE)` now disables threading, and a
+`FALSE` for any option turns it off even when `make/local` turns it on.
 Previously `FALSE` was passed as a value and enabled the option. (#1251)
 * `$cpp_options()` now reports names in their Make spelling, so
 `list(stan_threads = TRUE)` comes back as `STAN_THREADS`. (#1258)

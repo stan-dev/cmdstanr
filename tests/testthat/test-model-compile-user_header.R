@@ -1,6 +1,6 @@
 local_mocked_stanc <- function(.local_envir = parent.frame()) {
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) "",
     .env = .local_envir
   )
@@ -48,7 +48,7 @@ test_that("compile() reuses the user header from the previous compilation", {
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
@@ -83,7 +83,7 @@ test_that("a no-op compile preserves the user header", {
   file.copy(testing_stan_file("bernoulli_external"), stan_file)
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) ""
   )
   model <- cmdstan_model(stan_file, compile = FALSE)
@@ -107,7 +107,7 @@ test_that("compile() uses a user header supplied to cmdstan_model()", {
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""

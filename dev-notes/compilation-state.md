@@ -1741,8 +1741,8 @@ only refuse them.
 
 <!-- contract -->
 
-**The `STANCFLAGS` check reads what Make resolved, not what `make/local` says, and
-runs at build time only.** <!-- /contract --> `make/local` may include another makefile, a pattern
+**The `STANCFLAGS` check reads what Make resolves for this build, with the call's
+`cpp_options` applied, not what `make/local` says, and runs at build time only.** <!-- /contract --> `make/local` may include another makefile, a pattern
 CmdStan's own `make/local.example` suggests (below), so scanning the file misses
 any flag arriving that way. Measured, the
 file reads `include $(HOME)/.config/stan/extra.mk` while `make -s print-STANCFLAGS`

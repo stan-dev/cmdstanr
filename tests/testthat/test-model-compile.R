@@ -229,7 +229,7 @@ test_that("$compile() reuses include paths from the previous compilation", {
 
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
@@ -273,7 +273,7 @@ test_that("$compile() doesn't reuse cpp and stanc options from the previous comp
   model <- cmdstan_model(stan_file, compile = FALSE)
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
@@ -324,7 +324,7 @@ test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_mo
   )
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
@@ -443,7 +443,7 @@ test_that("compile() with dry_run = TRUE doesn't refresh cached model state", {
   code_before <- model$code()
   variables_before <- model$variables()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) ""
   )
 
@@ -1521,11 +1521,11 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
   local_reproducible_output()
   real_get_cmdstan_flags <- get_cmdstan_flags
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) {
+    get_cmdstan_flags = function(flag_name, ...) {
       if (identical(flag_name, "STANCFLAGS")) {
         c("--O1", "--warn-pedantic")
       } else {
-        real_get_cmdstan_flags(flag_name)
+        real_get_cmdstan_flags(flag_name, ...)
       }
     }
   )
@@ -1583,7 +1583,7 @@ test_that("include paths in make/local STANCFLAGS stop the build", {
   local_flags <- NULL
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) {
+    get_cmdstan_flags = function(flag_name, ...) {
       if (identical(flag_name, "STANCFLAGS")) local_flags else character()
     },
     get_standalone_hpp = function(stan_file, stancflags) {
@@ -1618,7 +1618,7 @@ test_that("a flag the call emits reaches stanc once when make/local sets it too"
   local_flags <- NULL
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) {
+    get_cmdstan_flags = function(flag_name, ...) {
       if (identical(flag_name, "STANCFLAGS")) local_flags else character()
     },
     get_standalone_hpp = function(stan_file, stancflags) {
@@ -1756,7 +1756,7 @@ test_that("compile() passes unquoted named stanc options to direct calls", {
   model <- cmdstan_model(stan_file, compile = FALSE)
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
@@ -1822,7 +1822,7 @@ test_that("compile() detects stan_opencl without case or partial matching", {
   model <- cmdstan_model(stan_file, compile = FALSE)
   received_stancflags <- list()
   local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name) character(),
+    get_cmdstan_flags = function(flag_name, ...) character(),
     get_standalone_hpp = function(stan_file, stancflags) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
@@ -1859,6 +1859,36 @@ test_that("compile() detects stan_opencl without case or partial matching", {
     ),
     rep(FALSE, length(received_stancflags))
   )
+})
+
+test_that("compile() resolves make/local STANCFLAGS with the call's cpp_options applied", {
+  local_cmdstan_make_local(list(STAN_OPENCL = TRUE))
+  stan_file <- testing_stan_file("bernoulli")
+  model <- cmdstan_model(stan_file, compile = FALSE)
+  received <- list()
+  local_mocked_bindings(
+    get_standalone_hpp = function(stan_file, stancflags) {
+      received <<- append(received, list(stancflags))
+      ""
+    }
+  )
+  opencl_count <- function() {
+    vapply(received, function(x) sum(x == "--use-opencl"), integer(1))
+  }
+
+  model$compile(cpp_options = list(stan_opencl = FALSE), force_recompile = TRUE, dry_run = TRUE)
+  expect_length(received, 2)
+  expect_equal(opencl_count(), c(0L, 0L))
+
+  received <- list()
+  model$compile(cpp_options = list(stan_opencl = TRUE), force_recompile = TRUE, dry_run = TRUE)
+  expect_length(received, 2)
+  expect_equal(opencl_count(), c(1L, 1L))
+
+  received <- list()
+  model$compile(force_recompile = TRUE, dry_run = TRUE)
+  expect_length(received, 2)
+  expect_equal(opencl_count(), c(1L, 1L))
 })
 
 test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {

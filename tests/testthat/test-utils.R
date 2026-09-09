@@ -794,6 +794,28 @@ test_that("get_cmdstan_flags() keeps the rule file out of MAKEFILE_LIST", {
   expect_equal(get_cmdstan_flags("STANCFLAGS"), "--filename-in-msg=local")
 })
 
+test_that("get_cmdstan_flags() resolves STANCFLAGS with the call's cpp_options applied", {
+  local_mini_make_local(c(
+    "ifdef STAN_OPENCL",
+    "STANCFLAGS += --use-opencl",
+    "endif"
+  ))
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
+  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL=TRUE"), "--use-opencl")
+  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL="), character(0))
+})
+
+test_that("the call's cpp_options override make/local when STANCFLAGS are resolved", {
+  local_mini_make_local(c(
+    "STAN_OPENCL=true",
+    "ifdef STAN_OPENCL",
+    "STANCFLAGS += --use-opencl",
+    "endif"
+  ))
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--use-opencl")
+  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL="), character(0))
+})
+
 test_that("make_shell_quote() survives Make expansion and shell splitting (#1230)", {
   words <- c(
     "--O1",

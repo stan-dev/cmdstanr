@@ -532,8 +532,8 @@ stanc flags and a raw make-variable passthrough only duplicates it. In the
 begins with `-I`). We never interpret the comma lists, quoting or separator forms,
 only refuse them.
 
-**The `STANCFLAGS` check reads what Make resolved, not what `make/local` says, and
-runs at build time only.**
+**The `STANCFLAGS` check reads what Make resolves for this build, with the call's
+`cpp_options` applied, not what `make/local` says, and runs at build time only.**
 
 **The two rejections differ in scope, and should not be unified.** `cpp_options` is
 a cmdstanr argument, so the whole variable goes. `make/local` is CmdStan's own

@@ -826,7 +826,10 @@ compile <- function(quiet = TRUE,
   stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
   stancflags_direct <- stanc_options_to_args(stanc_options)
-  stancflags_local <- get_cmdstan_flags("STANCFLAGS")
+  cpp_flags <- cpp_options_to_compile_flags(cpp_options)
+  # CmdStan's makefiles add stanc flags such as --use-opencl when a variable is
+  # set, so the query has to see this build's variables.
+  stancflags_local <- get_cmdstan_flags("STANCFLAGS", cpp_flags)
   is_include_path <- grepl("--include-paths", stancflags_local, fixed = TRUE) |
     startsWith(stancflags_local, "-I")
   if (any(is_include_path)) {
@@ -873,7 +876,7 @@ compile <- function(quiet = TRUE,
         run_log <- wsl_compatible_run(
           command = make_cmd(),
           args = c(wsl_safe_path(repair_path(tmp_exe)),
-                  cpp_options_to_compile_flags(cpp_options),
+                  cpp_flags,
                   user_header_flag,
                   stancflags_val),
           wd = cmdstan_path(),

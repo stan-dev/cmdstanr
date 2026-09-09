@@ -870,13 +870,16 @@ parse_make_print_flag <- function(flag_name, stdout) {
 #' rather than an `--eval` argument because users may have a make too old for
 #' `--eval`; the one Apple ships with macOS is. The fragment's first line removes
 #' the fragment from `MAKEFILE_LIST` so a value that reads the list sees the same
-#' makefiles the real build does.
+#' makefiles the real build does. The call's `cpp_options` go in `make_args` so
+#' the answer is the one the build will see.
 #'
 #' @param cmdstan_path (string) The CmdStan directory.
+#' @param make_args (character) Command-line variable assignments (`NAME=value`)
+#'   for the make call.
 #' @return A character vector, one element per argument, `character(0)` when the
 #'   variable is empty. An empty argument (`''`) is dropped.
 #' @noRd
-stancflags_from_make <- function(cmdstan_path) {
+stancflags_from_make <- function(cmdstan_path, make_args = character()) {
   rule_file <- withr::local_tempfile(pattern = "cmdstanr-stancflags-", fileext = ".mk")
   # Binary mode keeps the line endings LF; under WSL a Linux make reads a file
   # written on Windows.
@@ -899,7 +902,7 @@ stancflags_from_make <- function(cmdstan_path) {
       stdout <- wsl_compatible_run(
         command = "make",
         args = c(
-          "-s", "-f", "makefile", "-f", wsl_safe_path(rule_file),
+          "-s", make_args, "-f", "makefile", "-f", wsl_safe_path(rule_file),
           "cmdstanr-print-stancflags"
         ),
         wd = cmdstan_path
@@ -931,17 +934,17 @@ make_shell_quote <- function(x) {
   gsub("$", "$$", x, fixed = TRUE)
 }
 
-get_cmdstan_flags <- function(flag_name) {
+get_cmdstan_flags <- function(flag_name, make_args = character()) {
   cmdstan_path <- cmdstanr::cmdstan_path()
   if (flag_name == "STANCFLAGS") {
     # stanc flags are returned as a character vector, one element per argument
-    return(stancflags_from_make(cmdstan_path))
+    return(stancflags_from_make(cmdstan_path, make_args))
   }
   withr::with_envvar(
     c("HOME" = short_path(Sys.getenv("HOME"))),
     flags_stdout <- wsl_compatible_run(
       command = "make",
-      args = c("-s", paste0("print-", flag_name)),
+      args = c("-s", make_args, paste0("print-", flag_name)),
       wd = cmdstan_path
     )$stdout
   )
