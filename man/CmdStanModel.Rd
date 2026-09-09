@@ -30,6 +30,7 @@ methods, many of which have their own (linked) documentation pages:
    \code{\link[=model-method-model-info]{$include_paths()}} \tab Return the Stan include paths. \cr
    \code{\link[=model-method-model-info]{$cmdstan_version()}} \tab Return the CmdStan version associated with the model. \cr
    \code{\link[=model-method-model-info]{$cpp_options()}} \tab Return the C++ options associated with the model. \cr
+   \code{\link[=model-method-model-info]{$user_header()}} \tab Return the path to the user header, if the model has one. \cr
 }
 
 }

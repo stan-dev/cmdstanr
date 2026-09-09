@@ -1,5 +1,50 @@
 # cmdstanr (development version)
 
+* `include_paths` is now the only way to give `stanc` include paths. An
+`include-paths` entry in `stanc_options`, a `STANCFLAGS` entry in `cpp_options`
+and an include path in `make/local`'s `STANCFLAGS` are all errors that point at
+the argument. (#1258)
+* `user_header` is now the only way to supply a user header. A `USER_HEADER` or
+`user_header` entry in `cpp_options` is an error that points at the argument.
+The header no longer appears in `$cpp_options()`; the new `$user_header()`
+method returns its path. (#1258)
+* `stanc_options` now rejects the flags cmdstanr sets from its own arguments:
+`include-paths` (`include_paths`), `warn-pedantic` (`pedantic`),
+`allow-undefined` (`user_header`), `use-opencl`
+(`cpp_options = list(stan_opencl = TRUE)`) and `name`, which comes from the name
+of the Stan file. Every spelling is caught, named or unnamed, with or without a
+value. `$check_syntax()` checks its own `stanc_options` the same way; it
+previously did not check them at all. (#1258)
+* `$check_syntax()`, `$format()` and `$variables()` now always pass
+`--allow-undefined` to `stanc`. They read a program and link nothing, so whether
+an external function has a definition is a question for `$compile()`. Previously
+a model with an external function and no header could not be checked or
+formatted without passing the flag by hand. (#1258)
+* Every `cpp_options` entry must now be named, and names must be Make variable
+names. An unnamed entry gets an error naming the route for what was written:
+`list(NAME = value)` for a plain assignment, `cmdstan_make_local()` for `+=` and
+the other makefile operators. Previously unnamed entries reached `make` but were
+invisible to everything that keys on names. (#1250)
+* `cpp_options = list(stan_threads = FALSE)` now disables threading. A logical
+`FALSE` reaches `make` as `STAN_THREADS=`, which also overrides `make/local`.
+Previously `FALSE` was passed as a value and enabled the option. (#1251)
+* `$cpp_options()` now reports names in their Make spelling, so
+`list(stan_threads = TRUE)` comes back as `STAN_THREADS`. (#1258)
+* When a `$compile()` call sets a `stanc` flag that `make/local`'s `STANCFLAGS`
+also sets, the call's flag wins. The flag from `make/local` is dropped before
+`stanc` runs, together with any value written after it as a separate word.
+Previously both reached `stanc`. (#1258)
+* `make/local`'s `STANCFLAGS` are now read the way the shell splits them, so a
+quoted value with a space, such as `--filename-in-msg='/my dir/model.stan'`,
+reaches `stanc` as one argument. Previously the direct `stanc` calls in
+`$compile()` received it as two and stanc refused the second. (#1232)
+* Include paths passed to `make` are now shell-quoted, so a quote or a dollar
+sign in a path no longer breaks the build. (#1230)
+* `cmdstan_model(exe_file = )` with no `stan_file` now rejects `cpp_options`,
+`stanc_options`, `include_paths`, `user_header`, `force_recompile` and
+`pedantic`. With no Stan file there is nothing to build, so the executable is
+used as it is. The `cmdstanr_force_recompile` option has no effect on such a
+model. (#1258)
 * Chain IDs in generated filenames are now zero-padded to at least two digits, 
 for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
@@ -24,10 +69,6 @@ as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `$compile()` now works with named `stanc_options` values such as
 `canonicalize`. The values were shell-quoted for Make and the same quoted
 strings were also passed to `stanc` directly, which rejected them. (#1227)
-* `$compile()` now enables `allow-undefined` for user headers supplied through
-`cpp_options`, not just through the `user_header` argument. `$check_syntax()`
-and `$format()` also now correctly enable `allow-undefined` for models that use
-a user header. (#1227, #1234)
 * `stanc` failures during `$compile()` are now reported immediately, with the
 `stanc` error message. Previously they surfaced several steps later. (#1227)
 * Errors for include paths that do not exist now report the resolved absolute
@@ -54,9 +95,6 @@ immediately. (#1234)
 header. Previously a header, once supplied, could not be removed. (#1235)
 * `$compile()` now recompiles when the user header changes. Previously a
 different header was ignored if the executable was otherwise up to date. (#1235)
-* `$compile()` now reduces duplicate `USER_HEADER`/`user_header` entries in
-`cpp_options` to the one actually used, so `$cpp_options()` no longer reports
-the ignored spelling after a successful compilation. (#1235)
 * A `$compile()` call that finds the executable up to date no longer erases
 `$cpp_options()`. (#1235)
 * `$expose_functions()` now works after a `$compile()` call that found the
@@ -105,14 +143,6 @@ its place. (#1235)
 * `$compile()` now checks that it can record the compiled model before replacing
 the executable, so a failure at that point can no longer leave a new executable
 on disk that the model object knows nothing about. (#1235)
-* A duplicated `USER_HEADER` or `user_header` entry in `cpp_options` now selects
-the last one, matching what `Make` does with repeated assignments. Previously
-the first was compiled with and the rest were left in `cpp_options`. (#1235)
-* A `USER_HEADER` or `user_header` entry in `cpp_options` set to `NULL` now
-clears a previously configured user header instead of being ignored. It stands
-for an explicit `USER_HEADER=`, which `Make` takes as clearing anything set
-before it, so the model previously compiled with no header while continuing to
-report the old one. (#1235)
 * A `$compile()` that fails because the user header does not exist now still
 records the header. Previously the request was discarded, so `$check_syntax()`
 and `$format()` reported the model's own undefined functions as errors and a

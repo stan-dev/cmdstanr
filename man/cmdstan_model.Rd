@@ -15,7 +15,9 @@ it is more convenient to specify the Stan program as a string. If
 \item{exe_file}{(string) The path to an existing Stan model executable. Can
 be provided instead of or in addition to \code{stan_file} (if \code{stan_file} is
 omitted some \code{CmdStanModel} methods like \verb{$code()} and \verb{$print()} will not
-work).}
+work). If \code{stan_file} is omitted, the executable is used as it is:
+\code{cpp_options}, \code{stanc_options}, \code{include_paths}, \code{user_header},
+\code{force_recompile} and \code{pedantic} cannot be supplied.}
 
 \item{compile}{(logical) Do compilation? The default is \code{TRUE}. If \code{FALSE}
 compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}

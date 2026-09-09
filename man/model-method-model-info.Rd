@@ -28,7 +28,10 @@ code, or \code{NULL} if the model was created without a Stan file.
 executable path is set.
 \item \verb{$include_paths()} returns a character vector of absolute paths or \code{NULL}.
 \item \verb{$cmdstan_version()} returns a CmdStan version as a string.
-\item \verb{$cpp_options()} returns a named list of C++ options.
+\item \verb{$cpp_options()} returns a named list of C++ options, with names in their
+\code{make} spelling.
+\item \verb{$user_header()} returns the absolute path to the user header as a string,
+or \code{NULL} if the model has no user header.
 \item \verb{$hpp_file()} returns the path to the \code{.hpp} file as a string when C++ code
 was generated while compiling this model object. It errors if no \code{.hpp}
 path is available, such as when an up-to-date executable was reused.
@@ -50,6 +53,7 @@ exe_file(path = NULL)
 include_paths()
 cmdstan_version()
 cpp_options()
+user_header()
 hpp_file()
 save_hpp_file(dir = NULL)
 }\if{html}{\out{</div>}}
