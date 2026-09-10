@@ -36,6 +36,26 @@ hash_file <- function(path) {
 # Shapes are as jsonlite::fromJSON(simplifyVector = FALSE) returns them. An
 # object is a named list, an array is an unnamed list, and a scalar is an atomic
 # vector of length one that is not NA.
+is_json_object <- function(x) {
+  is.list(x) && !is.null(names(x)) && all(nzchar(names(x)))
+}
+
+is_json_array <- function(x) {
+  is.list(x) && is.null(names(x))
+}
+
+record_shapes <- list(
+  string = list(
+    test = checkmate::test_string, requirement = "must be a string"
+  ),
+  flag = list(
+    test = checkmate::test_flag, requirement = "must be true or false"
+  ),
+  object = list(test = is_json_object, requirement = "must be a JSON object"),
+  array = list(test = is_json_array, requirement = "must be a JSON array")
+)
+
+cmdstan_version_pattern <- "^[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?$"
 
 #' Reject a build record, naming the field that failed
 #'
@@ -44,65 +64,37 @@ stop_build_record_field <- function(field, requirement) {
   stop("build record field `", field, "` ", requirement, ".", call. = FALSE)
 }
 
-#' Fetch a member the schema requires
-#'
-#' @noRd
-record_member <- function(x, name, field) {
-  if (!name %in% names(x)) {
+# `field` is the path the error names, such as "dependencies.stan_file.hash".
+# A missing member and an explicit JSON null both arrive as NULL.
+record_shape <- function(value, shape, field) {
+  if (is.null(value)) {
     stop_build_record_field(field, "is missing")
   }
-  x[[name]]
-}
-
-#' @noRd
-require_record_object <- function(value, field) {
-  if (!is.list(value) || is.null(names(value)) || !all(nzchar(names(value)))) {
-    stop_build_record_field(field, "must be a JSON object")
+  if (!record_shapes[[shape]]$test(value)) {
+    stop_build_record_field(field, record_shapes[[shape]]$requirement)
   }
+  invisible(value)
 }
 
-#' @noRd
-require_record_array <- function(value, field) {
-  if (!is.list(value) || !is.null(names(value))) {
-    stop_build_record_field(field, "must be a JSON array")
-  }
+record_member <- function(x, name, shape, field = name) {
+  record_shape(x[[name]], shape, field)
 }
 
-#' @noRd
-require_record_string <- function(value, field) {
-  if (!checkmate::test_string(value)) {
-    stop_build_record_field(field, "must be a string")
-  }
-}
-
-#' @noRd
-require_record_flag <- function(value, field) {
-  if (!checkmate::test_flag(value)) {
-    stop_build_record_field(field, "must be true or false")
-  }
-}
-
-#' @noRd
-require_record_string_array <- function(value, field) {
-  require_record_array(value, field)
+record_string_array <- function(x, name, field) {
+  value <- record_member(x, name, "array", field)
   for (i in seq_along(value)) {
-    require_record_string(value[[i]], paste0(field, "[[", i, "]]"))
+    record_shape(value[[i]], "string", paste0(field, "[[", i, "]]"))
   }
+  invisible(value)
 }
 
 #' A file the build consumed, identified by content and by where it then was
 #'
 #' @noRd
-require_dependency_entry <- function(value, field) {
-  require_record_object(value, field)
-  require_record_string(
-    record_member(value, "hash", paste0(field, ".hash")),
-    paste0(field, ".hash")
-  )
-  require_record_string(
-    record_member(value, "built_from", paste0(field, ".built_from")),
-    paste0(field, ".built_from")
-  )
+record_dependency_entry <- function(value, field) {
+  record_shape(value, "object", field)
+  record_member(value, "hash", "string", paste0(field, ".hash"))
+  record_member(value, "built_from", "string", paste0(field, ".built_from"))
 }
 
 #' Check a build record against the format version 1 schema
@@ -119,133 +111,91 @@ require_dependency_entry <- function(value, field) {
 validate_build_record <- function(record) {
   checkmate::assert_list(record, .var.name = "record")
 
-  format_version <- record_member(record, "format_version", "format_version")
+  format_version <- record[["format_version"]]
   if (!checkmate::test_int(format_version) ||
       format_version != build_record_format_version) {
     stop_build_record_field(
-      "format_version",
-      paste0("must be ", build_record_format_version)
+      "format_version", paste0("must be ", build_record_format_version)
     )
   }
 
-  request <- record_member(record, "request", "request")
-  require_record_object(request, "request")
-
+  request <- record_member(record, "request", "object")
   cpp_options <- record_member(
-    request, "cpp_options_supplied", "request.cpp_options_supplied"
+    request, "cpp_options_supplied", "object", "request.cpp_options_supplied"
   )
-  require_record_object(cpp_options, "request.cpp_options_supplied")
   for (i in seq_along(cpp_options)) {
     option_name <- names(cpp_options)[[i]]
     field <- paste0("request.cpp_options_supplied.", option_name)
     if (!grepl(paste0("^", make_variable_name_pattern, "$"), option_name)) {
       stop_build_record_field(field, "must be named for a Make variable")
     }
-    require_record_string(cpp_options[[i]], field)
+    record_shape(cpp_options[[i]], "string", field)
   }
-
-  require_record_string_array(
-    record_member(
-      request, "stanc_options_supplied", "request.stanc_options_supplied"
-    ),
-    "request.stanc_options_supplied"
+  record_string_array(
+    request, "stanc_options_supplied", "request.stanc_options_supplied"
   )
-  require_record_string_array(
-    record_member(
-      request, "stanc_options_injected", "request.stanc_options_injected"
-    ),
-    "request.stanc_options_injected"
+  record_string_array(
+    request, "stanc_options_injected", "request.stanc_options_injected"
   )
-
-  stanc_name <- record_member(request, "stanc_name", "request.stanc_name")
-  require_record_string(stanc_name, "request.stanc_name")
+  stanc_name <- record_member(
+    request, "stanc_name", "string", "request.stanc_name"
+  )
   if (!nzchar(stanc_name)) {
     stop_build_record_field("request.stanc_name", "must not be empty")
   }
+  record_string_array(request, "include_paths", "request.include_paths")
 
-  require_record_string_array(
-    record_member(request, "include_paths", "request.include_paths"),
-    "request.include_paths"
-  )
-
-  reported_features <- record_member(
-    record, "reported_features", "reported_features"
-  )
-  require_record_object(reported_features, "reported_features")
+  reported_features <- record_member(record, "reported_features", "object")
   for (i in seq_along(reported_features)) {
     feature_name <- names(reported_features)[[i]]
-    field <- paste0("reported_features.", feature_name)
-    if (feature_name == "stan_version") {
-      require_record_string(reported_features[[i]], field)
-    } else {
-      require_record_flag(reported_features[[i]], field)
-    }
+    shape <- if (feature_name == "stan_version") "string" else "flag"
+    record_shape(
+      reported_features[[i]], shape, paste0("reported_features.", feature_name)
+    )
   }
 
-  dependencies <- record_member(record, "dependencies", "dependencies")
-  require_record_object(dependencies, "dependencies")
-  require_dependency_entry(
-    record_member(dependencies, "stan_file", "dependencies.stan_file"),
-    "dependencies.stan_file"
-  )
+  dependencies <- record_member(record, "dependencies", "object")
   # An absent user header or make/local means there was none.
-  for (optional in c("user_header", "make_local")) {
-    if (optional %in% names(dependencies)) {
-      require_dependency_entry(
-        dependencies[[optional]], paste0("dependencies.", optional)
-      )
-    }
+  optional <- intersect(c("user_header", "make_local"), names(dependencies))
+  for (name in c("stan_file", optional)) {
+    record_dependency_entry(dependencies[[name]], paste0("dependencies.", name))
   }
   included_files <- record_member(
-    dependencies, "included_files", "dependencies.included_files"
+    dependencies, "included_files", "array", "dependencies.included_files"
   )
-  require_record_array(included_files, "dependencies.included_files")
   for (i in seq_along(included_files)) {
-    require_dependency_entry(
+    record_dependency_entry(
       included_files[[i]], paste0("dependencies.included_files[[", i, "]]")
     )
   }
 
-  require_record_string(
-    record_member(record, "artifact", "artifact"), "artifact"
-  )
+  record_member(record, "artifact", "string")
 
-  builder <- record_member(record, "builder", "builder")
-  require_record_object(builder, "builder")
-  require_record_string(
-    record_member(builder, "path", "builder.path"), "builder.path"
-  )
-  builder_version <- record_member(builder, "version", "builder.version")
-  require_record_string(builder_version, "builder.version")
+  builder <- record_member(record, "builder", "object")
+  record_member(builder, "path", "string", "builder.path")
+  version <- record_member(builder, "version", "string", "builder.version")
   # A string that is not a CmdStan version is the wrong shape, not an odd value.
-  if (!grepl("^[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?$", builder_version)) {
+  if (!grepl(cmdstan_version_pattern, version)) {
     stop_build_record_field(
       "builder.version", "must be a CmdStan version such as \"2.39.0\""
     )
   }
 
-  require_record_string(record_member(record, "tbb_dir", "tbb_dir"), "tbb_dir")
+  record_member(record, "tbb_dir", "string")
 
-  untracked <- record_member(
-    record, "known_untracked_dependencies", "known_untracked_dependencies"
-  )
-  require_record_array(untracked, "known_untracked_dependencies")
+  untracked <- record_member(record, "known_untracked_dependencies", "array")
   for (i in seq_along(untracked)) {
     field <- paste0("known_untracked_dependencies[[", i, "]]")
-    require_record_object(untracked[[i]], field)
-    kind <- record_member(untracked[[i]], "kind", paste0(field, ".kind"))
-    require_record_string(kind, paste0(field, ".kind"))
+    entry <- record_shape(untracked[[i]], "object", field)
+    kind <- record_member(entry, "kind", "string", paste0(field, ".kind"))
     if (!kind %in% c("make_local_include", "user_header_include")) {
       stop_build_record_field(
         paste0(field, ".kind"),
         "must be \"make_local_include\" or \"user_header_include\""
       )
     }
-    require_record_string(
-      record_member(
-        untracked[[i]], "detected_in", paste0(field, ".detected_in")
-      ),
-      paste0(field, ".detected_in")
+    record_member(
+      entry, "detected_in", "string", paste0(field, ".detected_in")
     )
   }
 
@@ -282,11 +232,11 @@ new_build_record <- function(request, reported_features, dependencies, artifact,
 #'
 #' Staged in the same directory and renamed into place so a reader never meets
 #' a half-written record. A failed rename warns, and the warning is suppressed
-#' so that `warn = 2` cannot pre-empt the error below. `auto_unbox` writes a length-one vector as a JSON
-#' scalar, which is why the schema holds every array as a list and every scalar
-#' as a length-one vector: a one-element `included_files` still writes as an
-#' array. Nothing is ever `NULL` or `NA`, since an unknown state is an absent
-#' key.
+#' so that `warn = 2` cannot pre-empt the error below. `auto_unbox` writes a
+#' length-one vector as a JSON scalar, which is why the schema holds every
+#' array as a list and every scalar as a length-one vector: a one-element
+#' `included_files` still writes as an array. Nothing is ever `NULL` or `NA`,
+#' since an unknown state is an absent key.
 #'
 #' @noRd
 write_build_record <- function(record, exe_file) {
@@ -357,72 +307,35 @@ read_build_record <- function(exe_file) {
 #' Compare a recorded build against the current one
 #'
 #' Returns the name of every compared field whose value differs between the
-#' two records, in the order the schema's comparison table lists them. Every
-#' field is checked, and nothing stops at the first difference, so a caller
-#' who changed more than one thing is told about all of them.
+#' two records, in the order the design's table lists them. Every field is
+#' checked, and nothing stops at the first difference, so a caller who changed
+#' more than one thing is told about all of them. Each entry below extracts
+#' the value a row compares, so the list is the table.
 #'
 #' @noRd
 compare_build_records <- function(recorded, current) {
-  differences <- character()
-  sort_by_name <- function(x) x[order(names(x))]
-
-  if (!identical(
-    sort_by_name(recorded$request$cpp_options_supplied),
-    sort_by_name(current$request$cpp_options_supplied)
-  )) {
-    differences <- c(differences, "cpp_options")
+  sorted <- function(x) x[order(names(x))]
+  optional_dependency <- function(record, name, fields) {
+    record$dependencies[[name]][fields]
   }
-
-  if (!identical(
-    recorded$request$stanc_options_supplied,
-    current$request$stanc_options_supplied
-  )) {
-    differences <- c(differences, "stanc_options")
-  }
-
-  if (!identical(recorded$request$stanc_name, current$request$stanc_name)) {
-    differences <- c(differences, "stanc_name")
-  }
-
-  if (!identical(
-    recorded$dependencies$stan_file$hash,
-    current$dependencies$stan_file$hash
-  )) {
-    differences <- c(differences, "stan_file")
-  }
-
-  included_hashes <- function(record) {
-    vapply(record$dependencies$included_files, `[[`, character(1), "hash")
-  }
-  if (!identical(included_hashes(recorded), included_hashes(current))) {
-    differences <- c(differences, "included_files")
-  }
-
-  recorded_header <- recorded$dependencies$user_header
-  current_header <- current$dependencies$user_header
-  header_differs <- is.null(recorded_header) != is.null(current_header) || (
-    !is.null(recorded_header) && (
-      !identical(recorded_header$hash, current_header$hash) ||
-      !identical(recorded_header$built_from, current_header$built_from)
-    )
+  compared <- list(
+    cpp_options = function(x) sorted(x$request$cpp_options_supplied),
+    stanc_options = function(x) x$request$stanc_options_supplied,
+    stanc_name = function(x) x$request$stanc_name,
+    stan_file = function(x) x$dependencies$stan_file$hash,
+    included_files = function(x) {
+      lapply(x$dependencies$included_files, `[[`, "hash")
+    },
+    user_header = function(x) {
+      optional_dependency(x, "user_header", c("hash", "built_from"))
+    },
+    make_local = function(x) optional_dependency(x, "make_local", "hash"),
+    builder = function(x) x$builder[c("path", "version")]
   )
-  if (header_differs) {
-    differences <- c(differences, "user_header")
-  }
-
-  recorded_local <- recorded$dependencies$make_local
-  current_local <- current$dependencies$make_local
-  local_differs <- is.null(recorded_local) != is.null(current_local) || (
-    !is.null(recorded_local) && !identical(recorded_local$hash, current_local$hash)
+  differs <- vapply(
+    compared,
+    function(value) !identical(value(recorded), value(current)),
+    logical(1)
   )
-  if (local_differs) {
-    differences <- c(differences, "make_local")
-  }
-
-  if (!identical(recorded$builder$path, current$builder$path) ||
-      !identical(recorded$builder$version, current$builder$version)) {
-    differences <- c(differences, "builder")
-  }
-
-  differences
+  names(compared)[differs]
 }
