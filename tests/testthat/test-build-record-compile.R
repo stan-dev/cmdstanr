@@ -103,24 +103,64 @@ test_that("cpp_options_supplied holds what the caller passed", {
 })
 
 test_that("included files are recorded in stanc's order with content hashes", {
-  included <- testing_stan_file("divide_real_by_two")
+  dir <- withr::local_tempdir()
+  note <- file.path(dir, "note.stan")
+  zz <- file.path(dir, "zz.stan")
+  aa <- file.path(dir, "aa.stan")
+  writeLines("// nothing here", note)
+  writeLines("real f_zz(real x) { return x; }", zz)
+  writeLines("real f_aa(real x) { return x; }", aa)
+  stan_file <- file.path(dir, "model.stan")
+  writeLines(c(
+    "functions {", "#include note.stan", "#include zz.stan",
+    "#include note.stan", "#include aa.stan", "}",
+    "parameters { real y; }",
+    "model { y ~ normal(f_zz(0), f_aa(1)); }"
+  ), stan_file)
+  mod <- mock_compile(stan_file)
+
+  record <- read_build_record(mod$exe_file())$record
+  included <- record$dependencies$included_files
+  expect_length(included, 4)
+  expected <- list(note, zz, note, aa)
+  for (i in seq_along(expected)) {
+    expect_equal(included[[i]]$hash, hash_file(expected[[i]]))
+    expect_true(
+      same_path(included[[i]]$built_from, resolve_path(expected[[i]]))
+    )
+  }
+  # The constructor defaults include_paths to the stan file's own directory.
+  expect_equal(
+    record$request$include_paths,
+    list(resolve_path(dirname(stan_file)))
+  )
+})
+
+test_that("the other injection sites land in the injected list", {
+  user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
+  local_mocked_bindings(
+    get_standalone_hpp = function(stan_file, stancflags) ""
+  )
+  stan_file <- local_bernoulli()
   mod <- mock_compile(
-    testing_stan_file("bernoulli_include"),
-    include_paths = test_path("resources", "stan")
+    stan_file,
+    cpp_options = list(stan_opencl = TRUE),
+    user_header = user_header
   )
 
   record <- read_build_record(mod$exe_file())$record
-  expect_length(record$dependencies$included_files, 1)
-  entry <- record$dependencies$included_files[[1]]
-  expect_equal(entry$hash, hash_file(included))
-  # stanc reports the path in its own spelling.
-  expect_true(same_path(entry$built_from, resolve_path(included)))
+  expect_equal(
+    record$request$stanc_options_injected,
+    list("--use-opencl", "--allow-undefined", "--name=bernoulli_model")
+  )
+  expect_equal(record$request$stanc_options_supplied, list())
 })
 
 test_that("make/local is a dependency only when present", {
   local_cmdstan_make_local(cpp_options = list("CXXFLAGS += -O1"))
   make_local <- file.path(cmdstan_path(), "make", "local")
-  mod <- mock_compile(testing_stan_file("bernoulli"))
+  stan_file <- local_bernoulli()
+  mod <- mock_compile(stan_file)
 
   record <- read_build_record(mod$exe_file())$record
   expect_equal(record$dependencies$make_local$built_from, make_local)
@@ -198,6 +238,20 @@ test_that("the note fires on a write and not otherwise", {
     info_ret = default_info_ret,
     code = expect_no_message(
       expect_no_mock_compile(cmdstan_model(stan_file)),
+      message = "does not track"
+    )
+  )
+
+  # Nothing is written on a dry run or a failed build, so nothing is said.
+  expect_no_message(
+    cmdstan_model(stan_file, dry_run = TRUE, force_recompile = TRUE),
+    message = "does not track"
+  )
+  with_mocked_cli(
+    compile_ret = list(status = 1),
+    info_ret = default_info_ret,
+    code = expect_no_message(
+      expect_error(cmdstan_model(stan_file, force_recompile = TRUE)),
       message = "does not track"
     )
   )
