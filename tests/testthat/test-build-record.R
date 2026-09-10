@@ -124,6 +124,36 @@ test_that("a record with a field of the wrong type is unreadable", {
   expect_false("format_version" %in% names(result))
 })
 
+test_that("a dependency missing its hash is unreadable", {
+  exe <- local_fake_exe()
+  record <- example_record(exe)
+  record$dependencies$stan_file$hash <- NULL
+  jsonlite::write_json(
+    record, build_record_path(exe),
+    auto_unbox = TRUE, pretty = TRUE, digits = NA
+  )
+
+  result <- read_build_record(exe)
+  expect_equal(result$reason, "unreadable")
+  expect_false("record" %in% names(result))
+  expect_false("format_version" %in% names(result))
+})
+
+test_that("a feature written as null is unreadable", {
+  exe <- local_fake_exe()
+  record <- example_record(exe)
+  record$reported_features$stan_threads <- NA
+  jsonlite::write_json(
+    record, build_record_path(exe),
+    auto_unbox = TRUE, pretty = TRUE, digits = NA
+  )
+
+  result <- read_build_record(exe)
+  expect_equal(result$reason, "unreadable")
+  expect_false("record" %in% names(result))
+  expect_false("format_version" %in% names(result))
+})
+
 test_that("a record in a format we do not read is checked on its version alone", {
   exe <- local_fake_exe()
   record <- example_record(exe)
@@ -163,6 +193,7 @@ test_that("a record whose hash does not match the executable is a mismatch", {
   result <- read_build_record(exe)
   expect_equal(result$reason, "artifact_mismatch")
   expect_false("record" %in% names(result))
+  expect_false("format_version" %in% names(result))
 })
 
 test_that("reported features keep enabled, disabled and unknown apart", {
@@ -347,11 +378,28 @@ test_that("a user_header with the same hash but a different built_from differs a
   expect_equal(compare_build_records(recorded, current), "user_header")
 })
 
+test_that("a changed user_header hash at the same built_from differs as user_header", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$dependencies$user_header <- list(hash = "cccc", built_from = "header.hpp")
+  current$dependencies$user_header <- list(hash = "dddd", built_from = "header.hpp")
+  expect_equal(compare_build_records(recorded, current), "user_header")
+})
+
 test_that("a make_local present on only one side differs as make_local", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
   current$dependencies$make_local <- NULL
+  expect_equal(compare_build_records(recorded, current), "make_local")
+})
+
+test_that("a changed make_local hash differs as make_local", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$dependencies$make_local$hash <- "ffff"
   expect_equal(compare_build_records(recorded, current), "make_local")
 })
 
