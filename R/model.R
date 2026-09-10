@@ -1019,6 +1019,11 @@ compile <- function(quiet = TRUE,
     private$cpp_options_ <-
       merge_exe_info_cpp_options(private$cpp_options_, exe_info)
 
+    # Said once, when the record is written, and never on a no-op.
+    if (length(record$known_untracked_dependencies) > 0) {
+      message(untracked_dependencies_note(record$known_untracked_dependencies))
+    }
+
     # Run optional exposure only after executable state is committed.
     if (compile_standalone) {
       expose_stan_functions(self$functions, verbose = !quiet)

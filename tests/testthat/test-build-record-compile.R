@@ -174,3 +174,18 @@ test_that("a build with an untracked dependency records it", {
     list(list(kind = "make_local_include", detected_in = make_local))
   )
 })
+
+test_that("the note fires on a write and not otherwise", {
+  local_cmdstan_make_local(cpp_options = list("-include other.mk"))
+  stan_file <- testing_stan_file("bernoulli")
+
+  expect_message(mock_compile(stan_file), "does not track")
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = default_info_ret,
+    code = expect_no_message(
+      expect_no_mock_compile(cmdstan_model(stan_file)),
+      message = "does not track"
+    )
+  )
+})

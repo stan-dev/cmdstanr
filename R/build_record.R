@@ -311,6 +311,23 @@ untracked_dependencies <- function(make_local = NULL, user_header = NULL) {
   detected
 }
 
+untracked_dependency_descriptions <- c(
+  make_local_include = "make/local includes another makefile",
+  user_header_include = "the user header includes other headers"
+)
+
+#' The one line a build prints when it has dependencies we cannot track
+#'
+#' @noRd
+untracked_dependencies_note <- function(untracked) {
+  kinds <- vapply(untracked, `[[`, character(1), "kind")
+  paste0(
+    "Note: this model has dependencies cmdstanr does not track: ",
+    paste(untracked_dependency_descriptions[kinds], collapse = ", "),
+    ". If those files change, rebuild with force_recompile = TRUE."
+  )
+}
+
 
 # writing and reading -----------------------------------------------------
 
