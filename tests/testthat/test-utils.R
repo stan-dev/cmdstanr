@@ -272,7 +272,7 @@ exe_path_transform <- function(fixture) {
     for (dir in dirs) {
       lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
     }
-    gsub("exe-(new|old)-[0-9a-f]+", "exe-\\1-<random>", lines)
+    gsub("(exe-new|exe-old|record-old)-[0-9a-f]+", "\\1-<random>", lines)
   }
 }
 
@@ -348,7 +348,8 @@ test_that("install_executable() leaves the destination alone if staging fails", 
 
 test_that("install_executable() leaves the destination alone if the backup fails", {
   fixture <- local_exe_fixture()
-  local_failing_file_rename(fail_on = 1)
+  # The first rename is the record's own staging write.
+  local_failing_file_rename(fail_on = 2)
 
   expect_snapshot(
     error = TRUE,
@@ -362,8 +363,9 @@ test_that("install_executable() leaves the destination alone if the backup fails
 
 test_that("install_executable() restores the backup if the install fails", {
   fixture <- local_exe_fixture()
-  # The renames are the executable backup, the record backup, then the install.
-  local_failing_file_rename(fail_on = 3)
+  # The renames are the record's staging write, the executable backup, the
+  # record backup, then the install.
+  local_failing_file_rename(fail_on = 4)
 
   expect_snapshot(
     error = TRUE,
@@ -378,7 +380,7 @@ test_that("install_executable() restores the backup if the install fails", {
 test_that("install_executable() keeps the backup if it cannot be restored", {
   fixture <- local_exe_fixture()
   # The install fails, the record goes back, and the executable cannot follow.
-  local_failing_file_rename(fail_on = c(3, 5))
+  local_failing_file_rename(fail_on = c(4, 6))
 
   expect_snapshot(
     error = TRUE,
@@ -395,12 +397,12 @@ test_that("install_executable() keeps the backup if it cannot be restored", {
 test_that("install_executable() rolls back when warnings are errors", {
   fixture <- local_exe_fixture()
   # file.rename() warnings must not interrupt rollback when warn = 2.
-  local_failing_file_rename(fail_on = 3, warn = TRUE)
+  local_failing_file_rename(fail_on = 4, warn = TRUE)
   withr::local_options(warn = 2)
 
   expect_error(
     install_executable(fixture$from, fixture$to, fixture$record),
-    "previously compiled executable has been restored",
+    "are as they were",
     fixed = TRUE
   )
   expect_identical(readLines(fixture$to), "old executable")

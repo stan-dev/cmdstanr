@@ -515,3 +515,20 @@ test_that("both detectors fire on their patterns and on nothing else", {
 
   expect_equal(untracked_dependencies(), list())
 })
+
+test_that("a failed write leaves no staging file behind", {
+  exe <- local_fake_exe()
+  local_mocked_bindings(
+    write_json = function(x, path, ...) {
+      writeLines("{", path)
+      stop("disk full")
+    },
+    .package = "jsonlite"
+  )
+
+  expect_error(write_build_record(example_record(exe), exe), "disk full")
+  expect_equal(
+    list.files(dirname(exe), all.files = TRUE, no.. = TRUE),
+    basename(exe)
+  )
+})

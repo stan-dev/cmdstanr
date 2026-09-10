@@ -42,7 +42,7 @@
       install_executable(fixture$from, fixture$to, fixture$record)
     Condition
       Error:
-      ! Could not move the existing executable '<dir>/model-exe' aside. It was not modified.
+      ! Could not install the compiled executable at '<dir>/model-exe': Could not move '<dir>/model-exe' to '<dir>/exe-old-<random>'. The executable and build record there are as they were.
 
 # install_executable() restores the backup if the install fails
 
@@ -50,7 +50,7 @@
       install_executable(fixture$from, fixture$to, fixture$record)
     Condition
       Error:
-      ! Could not install the compiled executable at '<dir>/model-exe'. The previously compiled executable has been restored.
+      ! Could not install the compiled executable at '<dir>/model-exe': Could not move '<dir>/exe-new-<random>' to '<dir>/model-exe'. The executable and build record there are as they were.
 
 # install_executable() keeps the backup if it cannot be restored
 
@@ -58,7 +58,7 @@
       install_executable(fixture$from, fixture$to, fixture$record)
     Condition
       Error:
-      ! Could not install the compiled executable at '<dir>/model-exe' and the previously compiled executable could not be restored. It has been kept at '<dir>/exe-old-<random>'.
+      ! Could not install the compiled executable at '<dir>/model-exe': Could not move '<dir>/exe-new-<random>' to '<dir>/model-exe'. The previous executable and build record could not all be put back. Files left behind: '<dir>/exe-old-<random>'.
 
 # local_make_local_backup() stops when file backup creation fails
 

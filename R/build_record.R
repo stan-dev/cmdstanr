@@ -334,7 +334,8 @@ untracked_dependencies_note <- function(untracked) {
 #' Write a build record beside its executable
 #'
 #' Staged in the same directory and renamed into place so a reader never meets
-#' a half-written record. A failed rename warns, and the warning is suppressed
+#' a half-written record, and the staging file is removed on the way out whether
+#' or not it got that far. A failed rename warns, and the warning is suppressed
 #' so that `warn = 2` cannot pre-empt the error below. `auto_unbox` writes a
 #' length-one vector as a JSON scalar, which is why the schema holds every
 #' array as a list and every scalar as a length-one vector: a one-element
@@ -346,11 +347,11 @@ write_build_record <- function(record, exe_file) {
   validate_build_record(record)
   path <- build_record_path(exe_file)
   staged <- tempfile(pattern = basename(path), tmpdir = dirname(path))
+  withr::defer(unlink(staged, expand = FALSE))
   jsonlite::write_json(
     record, staged, auto_unbox = TRUE, pretty = TRUE, digits = NA
   )
   if (!isTRUE(suppressWarnings(file.rename(staged, path)))) {
-    unlink(staged)
     stop("Could not write the build record to ", path, ".", call. = FALSE)
   }
   invisible(path)
