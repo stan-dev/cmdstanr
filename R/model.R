@@ -984,8 +984,7 @@ compile <- function(quiet = TRUE,
       )
     )
 
-    leftover_backup <- install_executable(tmp_exe, exe)
-    write_build_record(record, exe)
+    leftover_backup <- install_executable(tmp_exe, exe, record)
 
     # Commit executable-derived state only after installation succeeds.
     rm(list = ls(self$functions, all.names = TRUE), envir = self$functions)
@@ -1030,8 +1029,8 @@ compile <- function(quiet = TRUE,
     if (!is.null(leftover_backup)) {
       # Warn last because warn = 2 aborts the remaining work.
       warning(
-        "The previously compiled executable could not be removed. ",
-        "It has been left at '", leftover_backup, "'.",
+        "Files left over from the previous build could not be removed: '",
+        paste(leftover_backup, collapse = "', '"), "'.",
         call. = FALSE
       )
     }

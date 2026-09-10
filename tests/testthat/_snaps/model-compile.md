@@ -7,5 +7,5 @@
       mock-compile-was-called
     Condition
       Error:
-      ! (converted from warning) The previously compiled executable could not be removed. It has been left at '<dir>/exe-old-<random>'.
+      ! (converted from warning) Files left over from the previous build could not be removed: '<dir>/exe-old-<random>', '<dir>/record-old-<random>'.
 

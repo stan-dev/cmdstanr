@@ -274,9 +274,10 @@ copy_temp_files <-
 #' @noRd
 #' @param from Path to the newly compiled executable.
 #' @param to Path the executable should be installed at.
-#' @return NULL after a clean install, or the leftover backup path if cleanup
-#'   fails. The new executable is installed in either case.
-install_executable <- function(from, to) {
+#' @param record The build record to install beside the executable.
+#' @return NULL after a clean install, or the backup paths that cleanup could
+#'   not remove. The new executable and its record are installed in either case.
+install_executable <- function(from, to, record) {
   if (dir.exists(to)) {
     stop(
       "Cannot install the compiled executable at '", to,
@@ -292,6 +293,9 @@ install_executable <- function(from, to) {
     } else {
       paste0(" The staged copy has been left at '", candidate, "'.")
     }
+  }
+  restore <- function(backup, path) {
+    is.null(backup) || isTRUE(suppressWarnings(file.rename(backup, path)))
   }
 
   if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
@@ -330,8 +334,26 @@ install_executable <- function(from, to) {
     }
   }
 
+  record_path <- build_record_path(to)
+  record_backup <- NULL
+  if (file.exists(record_path)) {
+    record_backup <- repair_path(
+      tempfile(pattern = "record-old-", tmpdir = dirname(to))
+    )
+    if (!isTRUE(suppressWarnings(file.rename(record_path, record_backup)))) {
+      restore(backup, to)
+      stop(
+        "Could not move the existing build record '", record_path, "' aside. ",
+        "The model executable at '", to, "' was not modified.",
+        discard_candidate(),
+        call. = FALSE
+      )
+    }
+  }
+
   if (!isTRUE(suppressWarnings(file.rename(candidate, to)))) {
     leftover_candidate <- discard_candidate()
+    restore(record_backup, record_path)
     if (is.null(backup)) {
       stop(
         "Could not install the compiled executable at '", to, "'.",
@@ -356,10 +378,30 @@ install_executable <- function(from, to) {
     )
   }
 
-  if (!is.null(backup) && unlink(backup, expand = FALSE) != 0L) {
-    return(backup)
+  failure <- tryCatch({
+    write_build_record(record, to)
+    verify_build_record(to)
+    NULL
+  }, error = function(e) e)
+  if (!is.null(failure)) {
+    unlink(c(to, record_path), expand = FALSE)
+    restore(backup, to)
+    restore(record_backup, record_path)
+    stop(
+      "Could not install the build record for '", to, "': ",
+      conditionMessage(failure), " ",
+      if (is.null(backup)) {
+        "Nothing is installed at that path."
+      } else {
+        "The previously compiled executable and its record have been restored."
+      },
+      call. = FALSE
+    )
   }
-  NULL
+
+  backups <- c(backup, record_backup)
+  failed <- vapply(backups, unlink, integer(1), expand = FALSE) != 0L
+  if (any(failed)) backups[failed] else NULL
 }
 
 # generate new file names

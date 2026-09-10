@@ -244,8 +244,10 @@ local_exe_fixture <- function(destination_exists = TRUE,
   writeLines("new executable", fixture$from)
   # Compiled by make, so executable. Installation has to preserve that.
   Sys.chmod(fixture$from, "0755", use_umask = FALSE)
+  fixture$record <- example_record(fixture$from)
   if (destination_exists) {
     writeLines("old executable", fixture$to)
+    write_build_record(example_record(fixture$to), fixture$to)
   }
   fixture
 }
@@ -297,7 +299,7 @@ local_failing_file_rename <- function(fail_on,
 test_that("install_executable() installs when there is no existing executable", {
   fixture <- local_exe_fixture(destination_exists = FALSE)
 
-  expect_null(install_executable(fixture$from, fixture$to))
+  expect_null(install_executable(fixture$from, fixture$to, fixture$record))
   expect_installed_executable(fixture$to)
   expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
 })
@@ -305,7 +307,7 @@ test_that("install_executable() installs when there is no existing executable", 
 test_that("install_executable() replaces an executable and removes the backup", {
   fixture <- local_exe_fixture()
 
-  expect_null(install_executable(fixture$from, fixture$to))
+  expect_null(install_executable(fixture$from, fixture$to, fixture$record))
   expect_installed_executable(fixture$to)
   expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
 })
@@ -318,7 +320,7 @@ test_that("install_executable() refuses to install over a directory", {
   # Directories satisfy file.exists(), so reject them before staging or renaming.
   # Both $exe_file(path) and exe_file= can pass a directory here.
   expect_error(
-    install_executable(fixture$from, fixture$to),
+    install_executable(fixture$from, fixture$to, fixture$record),
     "is a directory",
     fixed = TRUE
   )
@@ -336,10 +338,11 @@ test_that("install_executable() leaves the destination alone if staging fails", 
 
   expect_snapshot(
     error = TRUE,
-    install_executable(fixture$from, fixture$to),
+    install_executable(fixture$from, fixture$to, fixture$record),
     transform = exe_path_transform(fixture)
   )
   expect_identical(readLines(fixture$to), "old executable")
+  expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
   expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
 })
 
@@ -349,33 +352,37 @@ test_that("install_executable() leaves the destination alone if the backup fails
 
   expect_snapshot(
     error = TRUE,
-    install_executable(fixture$from, fixture$to),
+    install_executable(fixture$from, fixture$to, fixture$record),
     transform = exe_path_transform(fixture)
   )
   expect_identical(readLines(fixture$to), "old executable")
+  expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
   expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
 })
 
 test_that("install_executable() restores the backup if the install fails", {
   fixture <- local_exe_fixture()
-  local_failing_file_rename(fail_on = 2)
+  # The renames are the executable backup, the record backup, then the install.
+  local_failing_file_rename(fail_on = 3)
 
   expect_snapshot(
     error = TRUE,
-    install_executable(fixture$from, fixture$to),
+    install_executable(fixture$from, fixture$to, fixture$record),
     transform = exe_path_transform(fixture)
   )
   expect_identical(readLines(fixture$to), "old executable")
+  expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
   expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
 })
 
 test_that("install_executable() keeps the backup if it cannot be restored", {
   fixture <- local_exe_fixture()
-  local_failing_file_rename(fail_on = c(2, 3))
+  # The install fails, the record goes back, and the executable cannot follow.
+  local_failing_file_rename(fail_on = c(3, 5))
 
   expect_snapshot(
     error = TRUE,
-    install_executable(fixture$from, fixture$to),
+    install_executable(fixture$from, fixture$to, fixture$record),
     transform = exe_path_transform(fixture)
   )
   # The destination is gone, so the error has to name a real recovery path.
@@ -388,26 +395,90 @@ test_that("install_executable() keeps the backup if it cannot be restored", {
 test_that("install_executable() rolls back when warnings are errors", {
   fixture <- local_exe_fixture()
   # file.rename() warnings must not interrupt rollback when warn = 2.
-  local_failing_file_rename(fail_on = 2, warn = TRUE)
+  local_failing_file_rename(fail_on = 3, warn = TRUE)
   withr::local_options(warn = 2)
 
   expect_error(
-    install_executable(fixture$from, fixture$to),
+    install_executable(fixture$from, fixture$to, fixture$record),
     "previously compiled executable has been restored",
     fixed = TRUE
   )
   expect_identical(readLines(fixture$to), "old executable")
+  expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
 })
 
-test_that("install_executable() reports a backup it could not remove", {
+test_that("install_executable() reports every backup it could not remove", {
   fixture <- local_exe_fixture()
   local_mocked_bindings(unlink = function(...) 1L, .package = "base")
 
-  # Return the backup without warning so the caller can commit state first.
-  expect_no_warning(leftover <- install_executable(fixture$from, fixture$to))
+  # Return the backups without warning so the caller can commit state first.
+  expect_no_warning(
+    leftover <- install_executable(fixture$from, fixture$to, fixture$record)
+  )
   expect_identical(readLines(fixture$to), "new executable")
-  expect_true(file.exists(leftover))
-  expect_identical(readLines(leftover), "old executable")
+  expect_equal(read_build_record(fixture$to)$record, fixture$record)
+  expect_length(leftover, 2)
+  expect_match(basename(leftover[1]), "^exe-old-")
+  expect_match(basename(leftover[2]), "^record-old-")
+  expect_identical(readLines(leftover[1]), "old executable")
+})
+
+test_that("install_executable() writes the record beside a fresh install", {
+  fixture <- local_exe_fixture(destination_exists = FALSE)
+
+  expect_null(install_executable(fixture$from, fixture$to, fixture$record))
+  expect_equal(read_build_record(fixture$to)$status, "available")
+  expect_setequal(
+    list.files(fixture$dir, all.files = TRUE, no.. = TRUE),
+    basename(c(fixture$from, fixture$to, build_record_path(fixture$to)))
+  )
+})
+
+test_that("install_executable() replaces the record with the executable", {
+  fixture <- local_exe_fixture()
+
+  expect_null(install_executable(fixture$from, fixture$to, fixture$record))
+  expect_equal(read_build_record(fixture$to)$record, fixture$record)
+  expect_setequal(
+    list.files(fixture$dir, all.files = TRUE, no.. = TRUE),
+    basename(c(fixture$from, fixture$to, build_record_path(fixture$to)))
+  )
+})
+
+test_that("install_executable() restores both files if the record cannot be written", {
+  fixture <- local_exe_fixture()
+  local_mocked_bindings(write_build_record = function(...) stop("disk full"))
+
+  expect_error(
+    install_executable(fixture$from, fixture$to, fixture$record),
+    "disk full",
+    fixed = TRUE
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+  expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
+  expect_setequal(
+    list.files(fixture$dir, all.files = TRUE, no.. = TRUE),
+    basename(c(fixture$from, fixture$to, build_record_path(fixture$to)))
+  )
+})
+
+test_that("install_executable() restores both files if the pair fails verification", {
+  fixture <- local_exe_fixture()
+  # A record that describes some other executable still writes, so only the
+  # verification at the end of the transaction can catch it.
+  fixture$record$artifact <- "deadbeef"
+
+  expect_error(
+    install_executable(fixture$from, fixture$to, fixture$record),
+    "artifact_mismatch",
+    fixed = TRUE
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+  expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
+  expect_setequal(
+    list.files(fixture$dir, all.files = TRUE, no.. = TRUE),
+    basename(c(fixture$from, fixture$to, build_record_path(fixture$to)))
+  )
 })
 
 test_that("repair_path() fixes slashes", {

@@ -390,6 +390,24 @@ read_build_record <- function(exe_file) {
   list(status = "available", record = record)
 }
 
+#' Check that the record beside an executable describes it
+#'
+#' The check the install transaction ends with. The test for interleaved writes
+#' runs it on its own.
+#'
+#' @noRd
+verify_build_record <- function(exe_file) {
+  result <- read_build_record(exe_file)
+  if (result$status != "available") {
+    stop(
+      "The build record beside '", exe_file, "' does not describe it (",
+      result$reason, ").",
+      call. = FALSE
+    )
+  }
+  invisible(result$record)
+}
+
 #' Compare a recorded build against the current one
 #'
 #' Returns the name of every compared field whose value differs between the

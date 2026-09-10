@@ -1,42 +1,3 @@
-local_fake_exe <- function(name = "bernoulli") {
-  path <- file.path(
-    withr::local_tempdir(.local_envir = parent.frame()),
-    name
-  )
-  writeBin(as.raw(c(0x7f, 0x45, 0x4c, 0x46)), path)
-  path
-}
-
-example_record <- function(exe_file) {
-  new_build_record(
-    request = list(
-      cpp_options_supplied = list(STAN_THREADS = "true"),
-      stanc_options_supplied = list("--O1"),
-      stanc_options_injected = list("--name=bernoulli_model"),
-      stanc_name = "bernoulli",
-      include_paths = list(dirname(exe_file))
-    ),
-    reported_features = list(
-      stan_threads = TRUE,
-      stan_opencl = FALSE,
-      stan_version = "2.39.0"
-    ),
-    dependencies = list(
-      stan_file = list(hash = "0f1e", built_from = "bernoulli.stan"),
-      included_files = list(
-        list(hash = "2d3c", built_from = "helpers.stan")
-      ),
-      make_local = list(hash = "4b5a", built_from = "make/local")
-    ),
-    artifact = hash_file(exe_file),
-    builder = list(path = "/opt/cmdstan-2.39.0", version = "2.39.0"),
-    tbb_dir = "/opt/cmdstan-2.39.0/stan/lib/stan_math/lib/tbb",
-    known_untracked_dependencies = list(
-      list(kind = "make_local_include", detected_in = "make/local")
-    )
-  )
-}
-
 test_that("build_record_path names the record after the executable file", {
   exe <- local_fake_exe()
   expect_equal(
@@ -318,6 +279,27 @@ test_that("a record carrying a member the schema does not name still reads", {
   )
 
   expect_equal(read_build_record(exe)$status, "available")
+})
+
+test_that("the hash catches what ordering cannot", {
+  path <- local_fake_exe()
+  exe_a <- as.raw(c(0x7f, 0x45, 0x4c, 0x46))
+  exe_b <- as.raw(c(0x4d, 0x5a, 0x90, 0x00))
+  writeBin(exe_a, path)
+  record_a <- example_record(path)
+  writeBin(exe_b, path)
+  record_b <- example_record(path)
+
+  # Two builds reach one path, each writing its executable before its record.
+  # Every write lands in an order the transaction allows, and the build that
+  # wrote the last executable is not the one that wrote the last record.
+  writeBin(exe_a, path)
+  writeBin(exe_b, path)
+  write_build_record(record_b, path)
+  write_build_record(record_a, path)
+
+  expect_error(verify_build_record(path), "artifact_mismatch", fixed = TRUE)
+  expect_equal(read_build_record(path)$reason, "artifact_mismatch")
 })
 
 test_that("two identical build records compare with no differences", {
