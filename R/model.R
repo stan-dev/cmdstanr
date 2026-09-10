@@ -17,7 +17,10 @@
 #' @param exe_file (string) The path to an existing Stan model executable. Can
 #'   be provided instead of or in addition to `stan_file` (if `stan_file` is
 #'   omitted some `CmdStanModel` methods like `$code()` and `$print()` will not
-#'   work).
+#'   work). If `stan_file` is omitted, the executable is used as it is:
+#'   `cpp_options`, `stanc_options`, `include_paths`, `user_header`,
+#'   `force_recompile` and `pedantic` cannot be supplied, and passing `NULL`
+#'   counts as omitting them.
 #' @param compile (logical) Do compilation? The default is `TRUE`. If `FALSE`
 #'   compilation can be done later via the [`$compile()`][model-method-compile]
 #'   method.
@@ -196,6 +199,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
 #'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version associated with the model. |
 #'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
+#'  [`$user_header()`][model-method-model-info] | Return the path to the user header, if the model has one. |
 #'
 #'  ## Compilation
 #'
@@ -243,7 +247,6 @@ CmdStanModel <- R6::R6Class(
     stanc_options_ = list(),
     include_paths_ = NULL,
     user_header_ = NULL,
-    using_user_header_ = FALSE,
     # Build inputs that have changed since the current executable was produced.
     user_header_dirty_ = FALSE,
     include_paths_dirty_ = FALSE,
@@ -272,24 +275,13 @@ CmdStanModel <- R6::R6Class(
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
-        # Resolve headers here so compile = FALSE preserves an explicit NULL.
-        # names(args) distinguishes NULL from an omitted argument.
-        resolved_header <- resolve_user_header(
-          user_header = args$user_header,
-          supplied = "user_header" %in% names(args),
-          cpp_options = args$cpp_options %||% list()
-        )
-        if (!compile) {
-          # compile() reports this conflict when compilation is requested.
-          warn_user_header_conflict(resolved_header$conflict)
-        }
-        # Keep only the host path here. Persisting the WSL path would break reuse
-        # on WSL1.
-        private$precompile_cpp_options_ <- resolved_header$cpp_options
+        private$precompile_cpp_options_ <- assert_valid_cpp_options(args$cpp_options)
+        checkmate::assert_string(args$user_header, null.ok = TRUE,
+                                 .var.name = "user_header")
         # Use the header supplied to cmdstan_model() as the baseline for change
-        # detection.
-        private$user_header_ <- resolve_path(resolved_header$user_header)
-        private$using_user_header_ <- !is.null(resolved_header$user_header)
+        # detection. Keep only the host path here. Persisting the WSL path would
+        # break reuse on WSL1.
+        private$user_header_ <- resolve_path(args$user_header)
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
           private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
@@ -300,11 +292,11 @@ CmdStanModel <- R6::R6Class(
         ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
         private$exe_file_ <- resolve_path(exe_file)
         if (is.null(stan_file)) {
+          assert_no_build_args_for_exe_only(args)
           assert_file_exists(private$exe_file_, access = "r", extension = ext)
           private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
-        private$include_paths_ <-
-          private$precompile_include_paths_ %||% resolve_path(args$include_paths)
+        private$include_paths_ <- private$precompile_include_paths_
       }
       compiled_here <- !is.null(stan_file) && compile
       if (compiled_here) {
@@ -374,6 +366,9 @@ CmdStanModel <- R6::R6Class(
     cpp_options = function() {
       private$cpp_options_
     },
+    user_header = function() {
+      private$user_header_
+    },
     hpp_file = function() {
       if (!length(private$hpp_file_)) {
         stop("The .hpp file does not exist. Please (re)compile the model.", call. = FALSE)
@@ -417,6 +412,7 @@ CmdStanModel <- R6::R6Class(
 #'   include_paths()
 #'   cmdstan_version()
 #'   cpp_options()
+#'   user_header()
 #'   hpp_file()
 #'   save_hpp_file(dir = NULL)
 #'   ```
@@ -442,7 +438,10 @@ CmdStanModel <- R6::R6Class(
 #'   executable path is set.
 #' * `$include_paths()` returns a character vector of absolute paths or `NULL`.
 #' * `$cmdstan_version()` returns a CmdStan version as a string.
-#' * `$cpp_options()` returns a named list of C++ options.
+#' * `$cpp_options()` returns a named list of C++ options, with names in their
+#'   `make` spelling.
+#' * `$user_header()` returns the absolute path to the user header as a string,
+#'   or `NULL` if the model has no user header.
 #' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
 #'   was generated while compiling this model object. It errors if no `.hpp`
 #'   path is available, such as when an up-to-date executable was reused.
@@ -509,8 +508,6 @@ NULL
 #'   to compile with the Stan model. If `$compile()` is called again without
 #'   `user_header`, the most recently supplied header is reused, and changing
 #'   it forces recompilation. Pass `user_header = NULL` to compile without one.
-#'   A header can also be supplied via `cpp_options` as `USER_HEADER` or
-#'   `user_header`; the `user_header` argument takes precedence over both.
 #'   See `force_recompile` for the case of a header supplied for a program
 #'   whose executable is already up to date.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
@@ -518,18 +515,20 @@ NULL
 #'   otherwise write in the `make/local` file. For an example of using threading
 #'   see the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
-#'   **Note:** For historical reasons, CmdStan treats some options as enabled
-#'   whenever their `Make` variable is non-empty. In particular, setting
-#'   `stan_threads` to `FALSE` passes `STAN_THREADS=FALSE` to `Make`, which
-#'   still enables threading! To leave threading disabled, either omit
-#'   `stan_threads` entirely, which leaves any setting in `make/local` in
-#'   place, or set it to `NULL`, which passes an empty `STAN_THREADS=` and so
-#'   overrides `make/local` too.
+#'   Every entry must be named with a `Make` variable name, in any casing, which
+#'   [`$cpp_options()`][model-method-model-info] reports back in upper case.
+#'   Setting an option to `FALSE` or `NULL` passes an empty assignment such as
+#'   `STAN_THREADS=`. That empties the variable for this build, which turns a
+#'   switch off, and overrides whatever `make/local` sets.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
 #'   [`stanc` chapter of the CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for more details
-#'   on available options.
+#'   on available options. Options that cmdstanr sets from its own arguments
+#'   cannot be passed here: `include-paths` (use `include_paths`),
+#'   `warn-pedantic` (`pedantic`), `allow-undefined` (`user_header`),
+#'   `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`) and `name` (taken
+#'   from the name of the Stan file).
 #' @param force_recompile (logical) Should the model be recompiled even if it
 #'   has not been modified since it was last compiled? The default is `FALSE`.
 #'   Can also be set via a global `cmdstanr_force_recompile` option.
@@ -632,8 +631,9 @@ compile <- function(quiet = TRUE,
   assert_stan_file_exists(self$stan_file())
   # missing() distinguishes an omitted header from user_header = NULL.
   user_header_supplied <- !missing(user_header)
-  cpp_options_supplied <- length(cpp_options) > 0
-  if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
+  if (length(cpp_options) > 0) {
+    cpp_options <- assert_valid_cpp_options(cpp_options)
+  } else if (!is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
   # Precompile options still need mismatch checks even though they were not
@@ -677,16 +677,11 @@ compile <- function(quiet = TRUE,
     stanc_options[["use-opencl"]] <- TRUE
   }
 
-  resolved_header <- resolve_user_header(
-    user_header = user_header,
-    supplied = user_header_supplied,
-    cpp_options = cpp_options,
-    cpp_options_supplied = cpp_options_supplied,
-    previous = private$user_header_
-  )
-  warn_user_header_conflict(resolved_header$conflict)
-  user_header <- resolved_header$user_header
-  cpp_options <- resolved_header$cpp_options
+  if (!user_header_supplied) {
+    user_header <- private$user_header_
+  }
+  checkmate::assert_string(user_header, null.ok = TRUE,
+                           .var.name = "user_header")
 
   using_user_header <- !is.null(user_header)
   if (using_user_header) {
@@ -700,13 +695,9 @@ compile <- function(quiet = TRUE,
   private$user_header_dirty_ <- isTRUE(private$user_header_dirty_) ||
     !same_path(user_header, private$user_header_)
   private$user_header_ <- user_header
-  private$using_user_header_ <- using_user_header
 
-  if (using_user_header) {
-    if (!file.exists(user_header)) {
-      stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
-    }
-    cpp_options[[resolved_header$spelling]] <- wsl_safe_path(user_header)
+  if (using_user_header && !file.exists(user_header)) {
+    stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
   }
 
   # Do not adopt an executable from a new destination. Its generated C++ and
@@ -766,9 +757,10 @@ compile <- function(quiet = TRUE,
         # from make/local, so a rebuild would inherit them again.
         built_options <- private$built_cpp_options_
         inherited <- merge_exe_info_cpp_options(list(), exe_info)
-        # Parse make flags so unnamed assignments also count as explicit.
-        explicit <- names(parsed_cpp_options(built_options)$assignments)
-        inherited <- inherited[!tolower(names(inherited)) %in% explicit]
+        # Parse make flags because a vector value expands into one assignment
+        # per element.
+        explicit <- names(parsed_cpp_options(built_options))
+        inherited <- inherited[!names(inherited) %in% explicit]
         # Command-line options override make/local.
         options_mismatch <- cpp_options_disagree(
           c(inherited, cpp_options),
@@ -831,14 +823,39 @@ compile <- function(quiet = TRUE,
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  }
+  stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
   stancflags_direct <- stanc_options_to_args(stanc_options)
-  stancflags_local <- get_cmdstan_flags("STANCFLAGS")
+  cpp_flags <- cpp_options_to_compile_flags(cpp_options)
+
+  # CmdStan reads the header from the USER_HEADER make variable.
+  user_header_flag <- NULL
+  if (using_user_header) {
+    user_header_flag <- paste0("USER_HEADER=", wsl_safe_path(user_header))
+  }
+
+  make_vars <- c(cpp_flags, user_header_flag)
+  # CmdStan's makefiles add stanc flags such as --use-opencl when a variable is
+  # set, so the query has to see every variable this build passes to make.
+  stancflags_local <- get_cmdstan_flags("STANCFLAGS", make_vars)
+  is_include_path <- grepl("--include-paths", stancflags_local, fixed = TRUE) |
+    startsWith(stancflags_local, "-I")
+  if (any(is_include_path)) {
+    stop(
+      paste0(
+        "`make/local` sets an include path in `STANCFLAGS` (`",
+        stancflags_local[is_include_path][1],
+        "`). Include paths cannot be set there. Remove it from `make/local` ",
+        "and pass the directories with the `include_paths` argument."
+      ),
+      call. = FALSE
+    )
+  }
+  stancflags_local <- drop_overridden_stancflags(stancflags_local, stancflags_direct)
   if (length(stancflags_local) > 0) {
-    stancflags_combined <- c(stancflags_combined, stancflags_local)
+    # get_cmdstan_flags() split the local flags into words. Requote them for
+    # the STANCFLAGS value handed back to make.
+    stancflags_combined <- c(stancflags_combined, make_shell_quote(stancflags_local))
     stancflags_direct <- c(stancflags_direct, stancflags_local)
   }
   stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
@@ -861,7 +878,7 @@ compile <- function(quiet = TRUE,
         run_log <- wsl_compatible_run(
           command = make_cmd(),
           args = c(wsl_safe_path(repair_path(tmp_exe)),
-                  cpp_options_to_compile_flags(cpp_options),
+                  make_vars,
                   stancflags_val),
           wd = cmdstan_path(),
           echo = !quiet || is_verbose_mode(),
@@ -1041,8 +1058,7 @@ variables <- function() {
   if (is.null(private$variables_) && file.exists(self$stan_file())) {
     private$variables_ <- model_variables(
       stan_file = self$stan_file(),
-      include_paths = self$include_paths(),
-      allow_undefined = private$using_user_header_
+      include_paths = self$include_paths()
     )
   }
   private$variables_
@@ -1113,15 +1129,15 @@ check_syntax <- function(pedantic = FALSE,
     stop("'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
-  if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
+  if (length(stanc_options) > 0) {
+    stanc_options <- assert_valid_stanc_options(stanc_options)
+  } else if (!is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
   if (is.null(include_paths) && !is.null(self$include_paths())) {
     include_paths <- self$include_paths()
   }
-  if (private$using_user_header_) {
-    stanc_options[["allow-undefined"]] <- TRUE
-  }
+  stanc_options[["allow-undefined"]] <- TRUE
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- wsl_safe_path(temp_hpp_file)
@@ -1135,9 +1151,7 @@ check_syntax <- function(pedantic = FALSE,
     direct_call = TRUE
   )
 
-  if (is.null(stanc_options[["name"]])) {
-    stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  }
+  stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   stanc_built_options <- stanc_options_to_args(stanc_options)
 
   withr::with_path(
@@ -1253,9 +1267,7 @@ format <- function(overwrite_file = FALSE,
     self$include_paths(),
     direct_call = TRUE
   )
-  if (private$using_user_header_) {
-    stanc_options[["allow-undefined"]] <- TRUE
-  }
+  stanc_options[["allow-undefined"]] <- TRUE
   stanc_options[["auto-format"]] <- TRUE
   if (!is.null(max_line_length)) {
     stanc_options[["max-line-length"]] <- max_line_length
@@ -2559,11 +2571,96 @@ CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 
 
 # internal ----------------------------------------------------------------
+#' The error for a build argument supplied with no `stan_file`
+#'
+#' With no `stan_file` there is nothing to build, so the executable is used
+#' as it is and none of these six arguments apply. Checked in the order
+#' `cpp_options`, `stanc_options`, `include_paths`, `user_header`,
+#' `force_recompile`, `pedantic`, stopping at the first one supplied.
+#'
+#' @noRd
+assert_no_build_args_for_exe_only <- function(args) {
+  build_message <- function(arg) {
+    sprintf(
+      paste0(
+        "`%s` cannot be supplied for a model created from an executable alone. ",
+        "With no Stan file there is nothing to build, so the executable is used as it is."
+      ),
+      arg
+    )
+  }
+  if (!is.null(args$cpp_options)) {
+    stop(build_message("cpp_options"), call. = FALSE)
+  }
+  if (!is.null(args$stanc_options)) {
+    stop(build_message("stanc_options"), call. = FALSE)
+  }
+  if (!is.null(args$include_paths)) {
+    stop(
+      "`include_paths` cannot be supplied for a model created from an executable alone. ",
+      "Include paths resolve `#include` lines in a Stan file, and there is none.",
+      call. = FALSE
+    )
+  }
+  if (!is.null(args$user_header)) {
+    stop(build_message("user_header"), call. = FALSE)
+  }
+  if (!is.null(args$force_recompile)) {
+    stop(build_message("force_recompile"), call. = FALSE)
+  }
+  if (!is.null(args$pedantic)) {
+    stop(
+      "`pedantic` cannot be supplied for a model created from an executable alone. ",
+      "Pedantic mode checks a Stan program, and there is none.",
+      call. = FALSE
+    )
+  }
+  invisible(args)
+}
+
+#' The error for a stanc flag cmdstanr sets from one of its own arguments
+#'
+#' Returns `NULL` for any other flag. The five names live here so that the
+#' matcher and the messages cannot drift apart.
+#'
+#' @noRd
+derived_stanc_option_message <- function(flag) {
+  messages <- c(
+    "include-paths" = paste0(
+      "`include-paths` cannot be set through `stanc_options`. ",
+      "Pass the directories with the `include_paths` argument."
+    ),
+    "warn-pedantic" = paste0(
+      "`warn-pedantic` cannot be set through `stanc_options`. ",
+      "Use `pedantic = TRUE`."
+    ),
+    "allow-undefined" = paste0(
+      "`allow-undefined` cannot be set through `stanc_options`. ",
+      "Builds turn it on when a `user_header` is supplied, and ",
+      "`$check_syntax()`, `$format()` and `$variables()` always use it."
+    ),
+    "use-opencl" = paste0(
+      "`use-opencl` cannot be set through `stanc_options`. ",
+      "Use `cpp_options = list(stan_opencl = TRUE)`, which turns it on."
+    ),
+    "name" = paste0(
+      "`name` cannot be set through `stanc_options`. ",
+      "The model name comes from the name of the Stan file."
+    )
+  )
+  if (flag %in% names(messages)) {
+    messages[[flag]]
+  } else {
+    NULL
+  }
+}
+
 assert_valid_stanc_options <- function(stanc_options) {
   i <- 1
   names <- names(stanc_options)
   for (s in stanc_options) {
-    if (!is.null(names[i]) && nzchar(names[i])) {
+    named <- !is.null(names[i]) && nzchar(names[i])
+    if (named) {
       name <- names[i]
     } else {
       name <- s
@@ -2571,8 +2668,27 @@ assert_valid_stanc_options <- function(stanc_options) {
     if (startsWith(name, "--")) {
       stop("No leading hyphens allowed in stanc options (", name, "). ",
            "Use options without leading hyphens, for example ",
-           "`stanc_options = list('allow-undefined')`",
+           "`stanc_options = list('warn-uninitialized')`",
            call. = FALSE)
+    }
+    # The flag is the part before the first `=`, wherever the name occurs.
+    flag <- sub("=.*$", "", name)
+    derived <- derived_stanc_option_message(flag)
+    if (!is.null(derived)) {
+      stop(derived, call. = FALSE)
+    }
+    if (named && grepl("=", name, fixed = TRUE)) {
+      stop(
+        sprintf(
+          paste0(
+            "`stanc_options` names cannot contain `=`. ",
+            "Write the value after the name: `list(\"%s\" = \"%s\")` ",
+            "instead of `list(\"%s\" = ...)`."
+          ),
+          flag, sub("^[^=]*=", "", name), name
+        ),
+        call. = FALSE
+      )
     }
     i <- i + 1
   }
@@ -2601,7 +2717,7 @@ stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
     option_name <- names(stanc_options)[i]
     option_value <- stanc_options[[i]]
     if (is.null(option_name) || !nzchar(option_name)) {
-      # Unnamed options are already flag names, e.g. list("allow-undefined")
+      # Unnamed options are already flag names, e.g. list("O1")
       args <- c(args, paste0("--", option_value))
     } else if (is.logical(option_value)) {
       # TRUE emits a bare flag, FALSE leaves the flag out entirely
@@ -2618,12 +2734,45 @@ stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
   args
 }
 
+#' Drop the `make/local` stanc flags that the call sets itself
+#'
+#' A flag is the text before the first `=`. An element of `local_flags` whose
+#' flag is one the call emits is dropped. When that element is a bare flag and
+#' the next element does not start with a hyphen, the next element is the value
+#' given separately and goes with it.
+#'
+#' @param local_flags (character) The `STANCFLAGS` words from `make/local`, one
+#'   argument per element.
+#' @param call_args (character) The arguments the call emits, one per element,
+#'   each starting with `--`.
+#' @return `local_flags` without the overridden elements, the rest in order.
+#' @noRd
+drop_overridden_stancflags <- function(local_flags, call_args) {
+  call_flags <- sub("=.*$", "", call_args)
+  keep <- rep(TRUE, length(local_flags))
+  i <- 1
+  while (i <= length(local_flags)) {
+    if (sub("=.*$", "", local_flags[i]) %in% call_flags) {
+      keep[i] <- FALSE
+      if (!grepl("=", local_flags[i], fixed = TRUE) &&
+          i < length(local_flags) &&
+          !startsWith(local_flags[i + 1], "-")) {
+        keep[i + 1] <- FALSE
+        i <- i + 1
+      }
+    }
+    i <- i + 1
+  }
+  local_flags[keep]
+}
+
 #' Build stanc include-path arguments
 #'
-#' Make receives include paths through `STANCFLAGS` and needs paths containing
-#' spaces to be shell-quoted within a single `--include-paths=` flag. Direct
-#' calls through processx instead need the flag and comma-separated paths as
-#' separate, unquoted arguments.
+#' Make receives include paths through `STANCFLAGS`, expands the value and hands
+#' it to the shell, so `make_shell_quote()` quotes each path for both (#1230)
+#' inside a single `--include-paths=` flag. Direct calls through processx
+#' instead need the flag and comma-separated paths as separate, unquoted
+#' arguments.
 #'
 #' @param include_paths A character vector of directories containing files used
 #'   in Stan `#include` directives, or `NULL`.
@@ -2640,8 +2789,7 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
     # Calling stanc3 directly through processx::run does not need quoting
     if (!isTRUE(direct_call)) {
-      paths_w_space <- grep(" ", include_paths)
-      include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
+      include_paths <- make_shell_quote(include_paths)
     }
     include_paths <- paste0(include_paths, collapse = ",")
     include_paths_flag <- "--include-paths="
@@ -2654,12 +2802,7 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
   stancflags
 }
 
-model_variables <- function(stan_file, include_paths = NULL, allow_undefined = FALSE) {
-  if (allow_undefined) {
-    allow_undefined_arg <- "--allow-undefined"
-  } else {
-    allow_undefined_arg <- NULL
-  }
+model_variables <- function(stan_file, include_paths = NULL) {
   out_file <- tempfile(fileext = ".json")
   run_log <- wsl_compatible_run(
     command = stanc_cmd(),
@@ -2669,7 +2812,7 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
                 include_paths,
                 direct_call = TRUE
               ),
-              allow_undefined_arg),
+              "--allow-undefined"),
     wd = cmdstan_path(),
     echo = FALSE,
     echo_cmd = FALSE,

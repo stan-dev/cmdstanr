@@ -693,7 +693,24 @@ test_that("get_cmdstan_flags() returns empty STANCFLAGS as character(0)", {
       expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
     },
     wsl_compatible_run = function(...) {
-      list(stdout = "STANCFLAGS =\n")
+      list(stdout = "cmdstanr-stancflag=\n")
+    }
+  )
+})
+
+test_that("get_cmdstan_flags() ignores unrelated output around STANCFLAGS", {
+  with_mocked_bindings(
+    {
+      expect_equal(get_cmdstan_flags("STANCFLAGS"), c("--O1", "--warn-pedantic"))
+    },
+    wsl_compatible_run = function(...) {
+      list(stdout = paste(
+        "make[1]: Entering directory '/tmp/cmdstan'",
+        "cmdstanr-stancflag=--O1",
+        "cmdstanr-stancflag=--warn-pedantic",
+        "make[1]: Leaving directory '/tmp/cmdstan'",
+        sep = "\n"
+      ))
     }
   )
 })
@@ -709,27 +726,122 @@ test_that("get_cmdstan_flags() preserves empty non-STANCFLAGS values", {
   )
 })
 
-test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/local", {
-  tmpdir <- withr::local_tempdir()
-  # Build a minimal make setup so we can exercise real make line continuations.
-  writeLines(
-    c(
-      "print-%: ; @echo $* = $($*)",
-      "-include local"
-    ),
-    file.path(tmpdir, "Makefile")
+# Run get_cmdstan_flags()'s own make call against a directory holding a
+# minimal `makefile` that includes `local`, as CmdStan's does.
+local_mini_make_local <- function(local_lines, envir = parent.frame()) {
+  tmpdir <- withr::local_tempdir(.local_envir = envir)
+  # Binary mode keeps the line endings LF; under WSL a Linux make reads files
+  # written on Windows.
+  write_lf <- function(lines, path) {
+    con <- file(path, open = "wb")
+    on.exit(close(con))
+    writeLines(lines, con, sep = "\n")
+  }
+  write_lf("-include local", file.path(tmpdir, "makefile"))
+  write_lf(local_lines, file.path(tmpdir, "local"))
+  # Keep the real runner so the call still goes through wsl under WSL, where
+  # the rule file path is already converted to /mnt/.
+  run <- wsl_compatible_run
+  local_mocked_bindings(
+    wsl_compatible_run = function(command, args, ...) {
+      run(command = command, args = args, wd = tmpdir)
+    },
+    .env = envir
   )
+  invisible(tmpdir)
+}
+
+test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/local", {
+  local_mini_make_local(c(
+    "STANCFLAGS += --O1 \\",
+    "  --warn-pedantic \\",
+    "  --allow-undefined"
+  ))
+  expect_equal(
+    get_cmdstan_flags("STANCFLAGS"),
+    c("--O1", "--warn-pedantic", "--allow-undefined")
+  )
+})
+
+test_that("get_cmdstan_flags() keeps quoted STANCFLAGS values whole (#1232)", {
+  local_mini_make_local("STANCFLAGS += --O1 --filename-in-msg='/my dir/model.stan'")
+  expect_equal(
+    get_cmdstan_flags("STANCFLAGS"),
+    c("--O1", "--filename-in-msg=/my dir/model.stan")
+  )
+})
+
+test_that("get_cmdstan_flags() splits STANCFLAGS the way the shell does", {
+  local_mini_make_local(c(
+    'STANCFLAGS += --filename-in-msg="/my dir/model.stan"',
+    "STANCFLAGS += 'a b'\"c d\"e",
+    "STANCFLAGS += x\\ y",
+    "STANCFLAGS +=   --O1  "
+  ))
+  expect_equal(
+    get_cmdstan_flags("STANCFLAGS"),
+    c("--filename-in-msg=/my dir/model.stan", "a bc de", "x y", "--O1")
+  )
+})
+
+test_that("get_cmdstan_flags() returns an unset STANCFLAGS as character(0)", {
+  local_mini_make_local("CXXFLAGS += -O3")
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
+})
+
+test_that("get_cmdstan_flags() keeps the rule file out of MAKEFILE_LIST", {
+  local_mini_make_local("STANCFLAGS = --filename-in-msg=$(lastword $(MAKEFILE_LIST))")
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--filename-in-msg=local")
+})
+
+test_that("get_cmdstan_flags() resolves STANCFLAGS with the call's cpp_options applied", {
+  local_mini_make_local(c(
+    "ifdef STAN_OPENCL",
+    "STANCFLAGS += --use-opencl",
+    "endif"
+  ))
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
+  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL=TRUE"), "--use-opencl")
+  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL="), character(0))
+})
+
+test_that("the call's cpp_options override make/local when STANCFLAGS are resolved", {
+  local_mini_make_local(c(
+    "STAN_OPENCL=true",
+    "ifdef STAN_OPENCL",
+    "STANCFLAGS += --use-opencl",
+    "endif"
+  ))
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--use-opencl")
+  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL="), character(0))
+})
+
+test_that("make_shell_quote() survives Make expansion and shell splitting (#1230)", {
+  words <- c(
+    "--O1",
+    "--filename-in-msg=/my dir/model.stan",
+    "/the model's includes",
+    "/costs $5",
+    "/the model's $5",
+    "C:/Users/me/inc",
+    "*"
+  )
+  quoted <- make_shell_quote(words)
+  # Words the shell and Make leave alone are not touched
+  expect_equal(quoted[c(1, 6)], words[c(1, 6)])
+  expect_equal(quoted[2], "'--filename-in-msg=/my dir/model.stan'")
+  expect_equal(quoted[4], "'/costs $$5'")
+
+  # Oracle: hand the quoted words to make the way $compile() does and read
+  # back what the shell delivers to the recipe, one argument per line.
+  tmpdir <- withr::local_tempdir()
   writeLines(
-    c(
-      "STANCFLAGS += --O1 \\",
-      "  --warn-pedantic \\",
-      "  --allow-undefined"
-    ),
-    file.path(tmpdir, "local")
+    "args: ; @printf '%s\\n' $(STANCFLAGS)",
+    file.path(tmpdir, "Makefile")
   )
   make_run <- processx::run(
     command = "make",
-    args = c("-s", "print-STANCFLAGS"),
+    args = c("-s", "args", paste0("STANCFLAGS += ", paste(quoted, collapse = " "))),
     wd = tmpdir,
     error_on_status = FALSE
   )
@@ -747,18 +859,7 @@ test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/loca
     )
     return(invisible())
   }
-
-  with_mocked_bindings(
-    {
-      expect_equal(
-        get_cmdstan_flags("STANCFLAGS"),
-        c("--O1", "--warn-pedantic", "--allow-undefined")
-      )
-    },
-    wsl_compatible_run = function(...) {
-      list(stdout = make_run$stdout)
-    }
-  )
+  expect_equal(strsplit(make_run$stdout, "\n")[[1]], words)
 })
 
 test_that("local_make_local_backup() heals residue and nests", {

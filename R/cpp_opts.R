@@ -73,12 +73,12 @@ model_compile_info <- function(exe_file, version) {
   info
 }
 
-# Merge build options reported by the executable. Ignore STAN_VERSION and false
-# flags (passing FLAG=FALSE back to CmdStan can enable the flag).
+# Merge build options reported by the executable. Skip STAN_VERSION and the
+# flags reported off, so only the options the build turned on are recorded.
 merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
   for (option_name in names(exe_info)) {
     value <- exe_info[[option_name]]
-    if (tolower(option_name) != "stan_version" &&
+    if (option_name != "STAN_VERSION" &&
         (!is.logical(value) || isTRUE(value))) {
       cpp_options[[option_name]] <- value
     }
@@ -86,36 +86,27 @@ merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
   cpp_options
 }
 
-# Normalize the flags sent to make. Assignment names are case-insensitive and
-# the last value wins. Nonassignments keep their order. Headers are handled
-# separately.
+# Normalize the flags sent to make. The last value for a name wins. Go through
+# the emitted flags rather than the list because a vector value expands into one
+# assignment per element.
 parsed_cpp_options <- function(cpp_options) {
   assignments <- list()
-  opaque <- character()
   for (flag in cpp_options_to_compile_flags(cpp_options)) {
-    if (!grepl("^[A-Za-z_][A-Za-z0-9_]*=", flag)) {
-      opaque <- c(opaque, flag)
-      next
-    }
-    option_name <- tolower(sub("=.*$", "", flag))
-    if (option_name %in% c("user_header", "stan_version")) {
-      next
-    }
+    option_name <- sub("=.*$", "", flag)
     assignments[[option_name]] <- sub("^[^=]*=", "", flag)
   }
-  list(assignments = assignments, opaque = opaque)
+  assignments
 }
 
 normalized_cpp_options <- function(cpp_options) {
-  parsed <- parsed_cpp_options(cpp_options)
-  reduced <- character()
-  if (length(parsed$assignments) > 0) {
-    reduced <- paste0(
-      names(parsed$assignments), "=",
-      unlist(parsed$assignments, use.names = FALSE)
-    )
+  assignments <- parsed_cpp_options(cpp_options)
+  if (length(assignments) == 0) {
+    return(character())
   }
-  c(sort(reduced), parsed$opaque)
+  sort(paste0(
+    names(assignments), "=",
+    unlist(assignments, use.names = FALSE)
+  ))
 }
 
 # Omitted recorded options count as changes because cpp_options are one-shot.
@@ -127,130 +118,177 @@ cpp_options_disagree <- function(requested, recorded) {
 }
 
 # convert to compile flags --------------------
-# from list(flag1=TRUE, flag2=FALSE) to "FLAG1=TRUE\nFLAG2=FALSE"
+# from list(FLAG1 = TRUE, FLAG2 = FALSE) to c("FLAG1=TRUE", "FLAG2=")
 cpp_options_to_compile_flags <- function(cpp_options) {
   if (length(cpp_options) == 0) {
     return(NULL)
   }
   cpp_built_options <- c()
   for (i in seq_along(cpp_options)) {
-    option_name <- names(cpp_options)[i]
-    if (is.null(option_name) || !nzchar(option_name)) {
-      cpp_built_options <- c(cpp_built_options, cpp_options[[i]])
-    } else {
-      cpp_built_options <- c(cpp_built_options, paste0(toupper(option_name), "=", cpp_options[[i]]))
+    value <- cpp_options[[i]]
+    # FALSE asks for the option off, which make spells as an empty assignment.
+    if (is.logical(value)) {
+      value <- as.character(value)
+      value[value %in% "FALSE"] <- ""
     }
+    cpp_built_options <- c(
+      cpp_built_options,
+      paste0(names(cpp_options)[i], "=", value)
+    )
   }
   cpp_built_options
 }
 
 
 # check options overall for validity ---------------------------------
-# takes list of options as input and returns list of options
-# returns list with names standardized to lowercase
-validate_cpp_options <- function(cpp_options) {
-  if (is.null(cpp_options) || length(cpp_options) == 0) return(list())
+make_variable_name_pattern <- "[A-Za-z_][A-Za-z0-9_]*"
 
-  if (
-    !is.null(cpp_options[["user_header"]]) &&
-      !is.null(cpp_options[["USER_HEADER"]])
-  ) {
-    warning(
-      "User header specified both via cpp_options[[\"USER_HEADER\"]] ",
-      "and cpp_options[[\"user_header\"]]. Please only specify your user header in one location",
+#' Check the `cpp_options` a caller supplied and return them
+#'
+#' Every entry must be named and every name must be a Make variable name. The
+#' names are uppercased here so that one spelling reaches everything downstream.
+#' The user header and the stanc flags have their own arguments, so setting them
+#' here is an error.
+#'
+#' @noRd
+assert_valid_cpp_options <- function(cpp_options) {
+  if (is.null(cpp_options)) {
+    return(list())
+  }
+  checkmate::assert_list(cpp_options, .var.name = "cpp_options")
+  option_names <- names(cpp_options)
+  for (i in seq_along(cpp_options)) {
+    if (is.null(option_names) || !nzchar(option_names[[i]])) {
+      stop(unnamed_cpp_option_message(cpp_options[[i]]), call. = FALSE)
+    }
+    if (!grepl(paste0("^", make_variable_name_pattern, "$"), option_names[[i]])) {
+      stop(
+        "`cpp_options` names must be Make variable names, made of letters, ",
+        "digits and underscores and not starting with a digit. `",
+        option_names[[i]], "` is not one.",
+        call. = FALSE
+      )
+    }
+  }
+  if (!is.null(option_names)) {
+    names(cpp_options) <- toupper(option_names)
+  }
+  header_at <- which(names(cpp_options) == "USER_HEADER")
+  if (length(header_at) > 0) {
+    stop(
+      user_header_cpp_option_message(cpp_options[[header_at[[1]]]]),
       call. = FALSE
     )
   }
-
-  names(cpp_options) <- tolower(names(cpp_options))
-  flags_set_if_defined <- c(
-    # cmdstan
-    "stan_threads", "stan_mpi", "stan_opencl",
-    "stan_no_range_checks", "stan_cpp_optims",
-    # stan math
-    "integrated_opencl", "tbb_lib", "tbb_inc", "tbb_interface_new"
-  )
-  for (flag in flags_set_if_defined)   {
-    if (isFALSE(cpp_options[[flag]])) warning(
-      toupper(flag), " set to ", cpp_options[flag],
-      " Since this is a non-empty value, ",
-      "it will result in the corresponding ccp option being turned ON. To turn this",
-      " option off, use cpp_options = list(", flag, " = NULL)."
-    )
+  if ("STANCFLAGS" %in% names(cpp_options)) {
+    stop(stancflags_cpp_option_message(), call. = FALSE)
   }
   cpp_options
 }
 
-# user headers ---------------------------------------------------------
-# Resolve one header and remove both header spellings from cpp_options.
-# Precedence is explicit user_header (including NULL), USER_HEADER,
-# user_header, then previous. `supplied` distinguishes NULL from omission.
-# `cpp_options_supplied` limits conflict warnings to this call.
-resolve_user_header <- function(user_header,
-                                supplied,
-                                cpp_options,
-                                cpp_options_supplied = TRUE,
-                                previous = NULL) {
-  # Use positions so duplicate options follow make's last-value-wins behavior.
-  upper_at <- which(names(cpp_options) == "USER_HEADER")
-  lower_at <- which(names(cpp_options) == "user_header")
-  last_of <- function(positions) {
-    if (length(positions) == 0) {
-      NULL
-    } else {
-      cpp_options[[positions[[length(positions)]]]]
-    }
+#' Explain why an unnamed `cpp_options` entry cannot be used
+#'
+#' Callers reach for makefile syntax here, so name the route that accepts the
+#' entry they wrote rather than repeating the rule.
+#'
+#' @noRd
+unnamed_cpp_option_message <- function(value) {
+  entry <- if (checkmate::test_string(value)) trimws(value) else ""
+  assignment <- paste0("^(", make_variable_name_pattern, ")[ \t]*=(.*)$")
+  operator <- paste0(
+    "^(", make_variable_name_pattern, ")[ \t]*(\\+=|\\?=|::=|:=|!=).*$"
+  )
+  is_assignment <- grepl(assignment, entry)
+  is_operator <- !is_assignment && grepl(operator, entry)
+  option_name <- ""
+  if (is_assignment) {
+    option_name <- toupper(sub(assignment, "\\1", entry))
+  } else if (is_operator) {
+    option_name <- toupper(sub(operator, "\\1", entry))
   }
-  # NULL is still present here because it emits an empty USER_HEADER= assignment.
-  has_upper <- length(upper_at) > 0
-  has_lower <- length(lower_at) > 0
-  from_upper <- last_of(upper_at)
-  from_lower <- last_of(lower_at)
-  conflict <- NULL
-  spelling <- "USER_HEADER"
+  if (option_name == "USER_HEADER") {
+    header <- if (is_assignment) trimws(sub(assignment, "\\2", entry)) else NULL
+    return(user_header_cpp_option_message(header))
+  }
+  if (option_name == "STANCFLAGS") {
+    return(stancflags_cpp_option_message())
+  }
+  if (is_assignment) {
+    value <- trimws(sub(assignment, "\\2", entry))
+    return(sprintf(
+      paste0(
+        "`cpp_options` entries must be named. ",
+        "Write `list(%s = %s)` instead of `%s`."
+      ),
+      option_name, encodeString(value, quote = '"'), encodeString(entry, quote = '"')
+    ))
+  }
+  if (is_operator) {
+    return(sprintf(
+      paste0(
+        "`%s` is makefile syntax and cannot be passed through `cpp_options`. ",
+        "To set it in `make/local` use `cmdstan_make_local(cpp_options = list(%s))`."
+      ),
+      encodeString(entry, quote = '"'), encodeString(entry, quote = '"')
+    ))
+  }
+  if (grepl("^(-B|--always-make)$", entry)) {
+    return(sprintf(
+      paste0(
+        "Make flags cannot be passed through `cpp_options`. ",
+        "`%s` rebuilds everything; pass `force_recompile = TRUE` instead."
+      ),
+      entry
+    ))
+  }
+  makefile_flag_pattern <- "^(?:-f[ \t]*|--(?:file|makefile)=)(.+)$"
+  if (grepl(makefile_flag_pattern, entry)) {
+    path <- sub(makefile_flag_pattern, "\\1", entry)
+    return(sprintf(
+      paste0(
+        "Make flags cannot be passed through `cpp_options`. ",
+        "To read another makefile add `include %s` to `make/local`, for example ",
+        "`cmdstan_make_local(cpp_options = list(%s))`."
+      ),
+      path, encodeString(paste0("include ", path), quote = '"')
+    ))
+  }
+  if (startsWith(entry, "-")) {
+    return(paste0(
+      "Make flags cannot be passed through `cpp_options`. ",
+      "Set them in `make/local` with `cmdstan_make_local()`, ",
+      "for example `MAKEFLAGS += -j4`."
+    ))
+  }
+  "`cpp_options` entries must be named: `list(NAME = value)`."
+}
 
-  if (supplied) {
-    if (cpp_options_supplied && (has_upper || has_lower)) {
-      conflict <- "argument"
-    }
-    header <- user_header
-  } else if (has_upper) {
-    if (has_lower) {
-      conflict <- "cpp_options"
-    }
-    header <- from_upper
-  } else if (has_lower) {
-    header <- from_lower
-    spelling <- "user_header"
+#' The error for a user header supplied through `cpp_options`
+#'
+#' @noRd
+user_header_cpp_option_message <- function(value) {
+  is_empty_string <- checkmate::test_string(value) && !nzchar(trimws(value))
+  if (is.null(value) || isFALSE(value) || is_empty_string) {
+    example <- ": `user_header = NULL`"
+  } else if (checkmate::test_string(value)) {
+    example <- paste0(": `user_header = ", encodeString(value, quote = '"'), "`")
   } else {
-    header <- previous
+    example <- ""
   }
-
-  # Validate the value now and check file existence when compiling.
-  if (!is.null(header)) {
-    checkmate::assert_string(header, .var.name = "user_header")
-  }
-  # Guarded because x[-integer(0)] is empty.
-  header_at <- c(upper_at, lower_at)
-  if (length(header_at) > 0) {
-    cpp_options <- cpp_options[-header_at]
-  }
-
-  list(
-    user_header = header,
-    spelling = spelling,
-    cpp_options = cpp_options,
-    conflict = conflict
+  paste0(
+    "The user header cannot be set through `cpp_options`. ",
+    "Pass it with the `user_header` argument", example, "."
   )
 }
 
-warn_user_header_conflict <- function(conflict) {
-  if (identical(conflict, "argument")) {
-    warning("User header specified both via user_header argument and via cpp_options arguments")
-  } else if (identical(conflict, "cpp_options")) {
-    warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
-  }
-  invisible(NULL)
+#' The error for STANCFLAGS supplied through `cpp_options`
+#'
+#' @noRd
+stancflags_cpp_option_message <- function() {
+  paste0(
+    "`STANCFLAGS` cannot be set through `cpp_options`. ",
+    "Pass stanc flags with the `stanc_options` argument."
+  )
 }
 
 # check specific options for validity ---------------------------------
@@ -305,16 +343,15 @@ assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) 
 }
 
 # For two functions below
-# both styles are lists which should have flag names in lower case as names of the list
 # cpp_options style means is NULL or empty string
 # exe_info style means off is FALSE
 
 exe_info_style_cpp_options <- function(cpp_options) {
   if (is.null(cpp_options)) cpp_options <- list()
-  names(cpp_options) <- tolower(names(cpp_options))
+  names(cpp_options) <- toupper(names(cpp_options))
   flags_reported_in_exe_info <- c(
-    "stan_threads", "stan_mpi", "stan_opencl",
-    "stan_no_range_checks", "stan_cpp_optims"
+    "STAN_THREADS", "STAN_MPI", "STAN_OPENCL",
+    "STAN_NO_RANGE_CHECKS", "STAN_CPP_OPTIMS"
   )
   for (flag in flags_reported_in_exe_info) {
     cpp_options[[flag]] <- !(
@@ -332,9 +369,9 @@ exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
   if (is.null(cpp_options)) return(TRUE)
 
   # Compare only options reported by the executable. Other options are unknown.
-  # Parse the emitted flags so duplicates and unnamed assignments match make.
-  assignments <- parsed_cpp_options(cpp_options)$assignments
-  reported <- intersect(names(assignments), tolower(names(exe_info)))
+  # Parse the emitted flags so duplicates and vector values match make.
+  assignments <- parsed_cpp_options(cpp_options)
+  reported <- intersect(names(assignments), names(exe_info))
 
   for (option_name in reported) {
     # CmdStan treats any nonempty make value as enabled.

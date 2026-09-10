@@ -49,8 +49,6 @@ recompilation. Edits to the included files themselves do not; see
 to compile with the Stan model. If \verb{$compile()} is called again without
 \code{user_header}, the most recently supplied header is reused, and changing
 it forces recompilation. Pass \code{user_header = NULL} to compile without one.
-A header can also be supplied via \code{cpp_options} as \code{USER_HEADER} or
-\code{user_header}; the \code{user_header} argument takes precedence over both.
 See \code{force_recompile} for the case of a header supplied for a program
 whose executable is already up to date.}
 
@@ -58,18 +56,20 @@ whose executable is already up to date.}
 model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would
 otherwise write in the \code{make/local} file. For an example of using threading
 see the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
-\strong{Note:} For historical reasons, CmdStan treats some options as enabled
-whenever their \code{Make} variable is non-empty. In particular, setting
-\code{stan_threads} to \code{FALSE} passes \code{STAN_THREADS=FALSE} to \code{Make}, which
-still enables threading! To leave threading disabled, either omit
-\code{stan_threads} entirely, which leaves any setting in \code{make/local} in
-place, or set it to \code{NULL}, which passes an empty \verb{STAN_THREADS=} and so
-overrides \code{make/local} too.}
+Every entry must be named with a \code{Make} variable name, in any casing, which
+\code{\link[=model-method-model-info]{$cpp_options()}} reports back in upper case.
+Setting an option to \code{FALSE} or \code{NULL} passes an empty assignment such as
+\verb{STAN_THREADS=}. That empties the variable for this build, which turns a
+switch off, and overrides whatever \code{make/local} sets.}
 
 \item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
 when compiling the model. See the \strong{Examples} section below as well as the
 \href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{\code{stanc} chapter of the CmdStan User's Guide} for more details
-on available options.}
+on available options. Options that cmdstanr sets from its own arguments
+cannot be passed here: \code{include-paths} (use \code{include_paths}),
+\code{warn-pedantic} (\code{pedantic}), \code{allow-undefined} (\code{user_header}),
+\code{use-opencl} (\code{cpp_options = list(stan_opencl = TRUE)}) and \code{name} (taken
+from the name of the Stan file).}
 
 \item{force_recompile}{(logical) Should the model be recompiled even if it
 has not been modified since it was last compiled? The default is \code{FALSE}.

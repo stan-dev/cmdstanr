@@ -437,15 +437,17 @@ spellings are rejected, with an error naming it.
 
 This is the same rule as for `include_paths`, `warn-pedantic` and `STANCFLAGS` (§6,
 §4): one setting, one channel. It is stated separately because of what it deletes.
-`resolve_user_header()` (`R/cpp_opts.R:189-245`) exists almost entirely to reconcile
-the three, tracking positions of both casings so duplicates follow make's last-wins
-rule, walking a four-level precedence chain, and raising two distinct conflict
-warnings. §8 removes its `previous` parameter along with deferred compilation, and
-what remains is resolving a path and setting `USER_HEADER` for `make`.
+`resolve_user_header()` existed almost entirely to reconcile the three, tracking
+positions of both casings so duplicates followed make's last-wins rule, walking a
+four-level precedence chain, and raising two distinct conflict warnings. Stage 1
+deleted it. What remains, inline in `$compile()`, is resolving a path, falling back
+to the previous header, and passing `USER_HEADER` to `make`. §8 removes the fallback
+along with deferred compilation.
 
-The code already treats the header as not belonging here: `parsed_cpp_options()`
-skips `user_header` when canonicalizing (`R/cpp_opts.R:101`), because it is not an
-ordinary Make assignment to compare.
+Before Stage 1 the code already treated the header as not belonging here:
+`parsed_cpp_options()` skipped `user_header` when canonicalizing, because it was not
+an ordinary Make assignment to compare. With the header gone from `cpp_options`,
+Stage 1 dropped that exclusion.
 
 <!-- contract -->
 
@@ -504,20 +506,20 @@ spelling, alongside the `previous` parameter §8 removes.
 
 ### One canonical spelling, established on entry
 
-`cpp_options_to_compile_flags()` (`R/cpp_opts.R:131`) uppercases every named entry,
-so `list(USER_HEADER = h)`, `list(user_header = h)` and `list(User_Header = h)` are
-one variable to `make` and three values to R. The code reconciles that three times
-in two directions today: `toupper()` on the way out to `make`, `tolower()` in
-`parsed_cpp_options()` (`:100`) on the way into comparison, and `tolower()` again in
-the dormant `validate_cpp_options()` (`:165`).
+Before Stage 1, `cpp_options_to_compile_flags()` uppercased every named entry, so
+`list(USER_HEADER = h)`, `list(user_header = h)` and `list(User_Header = h)` were
+one variable to `make` and three values to R. The code reconciled that three times
+in two directions: `toupper()` on the way out to `make`, `tolower()` in
+`parsed_cpp_options()` on the way into comparison, and `tolower()` again in the
+dormant `validate_cpp_options()`.
 
 <!-- contract -->
 
 **Named `cpp_options` entries are normalized to their `make` spelling once, on entry
-to the build call, ahead of validation.** <!-- /contract --> Uppercase is the canonical direction
+to the build call.** <!-- /contract --> Uppercase is the canonical direction
 because it is what `make` receives and what a compile log shows; lowercase is an R
-naming convention. <!-- contract -->After that point one spelling is in play, and validation,
-comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
+naming convention. <!-- contract -->After that point one spelling is in play, and the reserved-name
+checks, comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
 keeps working. <!-- /contract --> It is normalized immediately instead of at three later points.
 
 This is what makes the reserved-variable rejection below exact, but the rejection is
@@ -537,13 +539,13 @@ working and changes meaning, from a value the binary confirmed to one the caller
 asked for; `stan_build_info()` is where the confirmed value went (§1). Tested on
 ordinary construction and on record-backed adoption.
 
-It also retires `parsed_cpp_options()`'s exclusion list (`:101`), for a different
-reason on each entry. Both are there because that function is fed a merged list of
+Stage 1 also retired `parsed_cpp_options()`'s exclusion list, for a different
+reason on each entry. Both were there because that function is fed a merged list of
 request and binary report (`R/model.R:774`); §1 stops merging those, so the only
 input left to parse is a supplied list.
 
 `user_header` cannot appear in one, since the named spelling is rejected above and
-cmdstanr's own injection is not supplied. `stan_version` can, and should. Nothing
+cmdstanr no longer puts the header into the list. `stan_version` can, and should. Nothing
 in CmdStan reads `STAN_VERSION`: cmdstanr synthesizes the name at `R/cpp_opts.R:68`
 from the three `stan_version_*` fields `<exe> info` prints, and CmdStan's own
 version variable is `CMDSTAN_VERSION` (`makefile:151`). A supplied one is still an
@@ -567,22 +569,22 @@ diff has no job left, and with only an executable §7 makes the request an error
 helper goes in the pull request that wires the engine (#1255), with its branch and
 its tests, which turn from expecting the warning into expecting the rebuild.
 
-**Its key fold is changed with this rule, not after it.** The function matches the
+**Its key fold was changed with this rule, not after it.** The function matched the
 parser's names against `tolower(names(exe_info))`, one side folded and the other
-inherited from the parser. Canonicalizing while that stands empties the intersection
-for every option, and the check silently stops checking: no error, no mismatch ever
-reported, just a validator that always agrees. Stage 1 drops the fold, so both sides
-carry the `make` spelling, and the check keeps working until Stage 4 removes it.
+inherited from the parser. Canonicalizing while that stood would have emptied the
+intersection for every option, and the check would have silently stopped checking:
+no error, no mismatch ever reported, just a validator that always agrees. Stage 1
+dropped the fold in the same commit, so both sides carry the `make` spelling, and
+the check keeps working until Stage 4 removes it.
 
 **One function owns normalize-then-check.** `assert_valid_cpp_options()` (#1250) does
 both, called from the single build implementation §8 leaves behind, so the ordering
 is built in rather than a convention a later contributor has to know. It pairs with
 `assert_valid_stanc_options()` (`R/model.R:2562`), which already does this job for
-the other list. `validate_cpp_options()` (`R/cpp_opts.R:151`) is **deleted** rather
-than left dormant: its one substantive behaviour is a warning that a logical `FALSE`
-will turn an option on, which #1251 reverses, so leaving it in the file would
-document the opposite of v1.0's semantics to whoever reads it next. Its tests go
-with it (`test-cpp_opts.R:24-37`).
+the other list. Stage 1 **deleted** `validate_cpp_options()` rather than leaving it
+dormant: its one substantive behaviour was a warning that a logical `FALSE` will turn
+an option on, which #1251 reverses, so leaving it in the file would have documented
+the opposite of v1.0's semantics to whoever read it next. Its tests went with it.
 
 <!-- contract -->
 
@@ -596,13 +598,15 @@ not exist.
 
 <!-- contract -->
 
-These entries are rejected from an R option list that currently accepts them:
-`include-paths`, `warn-pedantic`, `allow-undefined`, `use-opencl` and `name` from
-`stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from
+These entries are rejected from the R option lists that accepted them before
+Stage 1: `include-paths`, `warn-pedantic`, `allow-undefined`, `use-opencl` and
+`name` from `stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from
 `cpp_options`. **Every one is matched by where the option name occurs, never by
-enumerating accepted values.** (`--include-paths` in the effective `STANCFLAGS` is
-rejected too, but that is a value Make resolved rather than a list entry, so §6
-gives it its own detection rule.)
+enumerating accepted values.** The `stanc_options` rule covers every
+`stanc_options` list a method accepts, so `$check_syntax()`'s own argument is
+checked the same way as the constructor's. (`--include-paths` in the effective
+`STANCFLAGS` is rejected too, but that is a value Make resolved rather than a list
+entry, so §6 gives it its own detection rule.)
 
 `stanc_options_to_args()` (`R/model.R:2598`) puts the flag name in a different slot
 depending on the entry's shape, so the rule has two arms:
@@ -666,9 +670,10 @@ is refused for its shape, and the caller still needs pointing at `user_header`.
 
 ### Only named assignments configure a build (#1250)
 
-Two verified defects. **Unnamed raw entries reach `make` but are invisible to
-everything keyed on names**, because an unnamed list entry's name is `""` while
-`cpp_options_to_compile_flags()` passes it straight through (`R/cpp_opts.R:139`):
+Two defects, verified before Stage 1 closed them. **Unnamed raw entries reached
+`make` but were invisible to everything keyed on names**, because an unnamed list
+entry's name is `""` while `cpp_options_to_compile_flags()` passed it straight
+through:
 
 ```r
 mod <- cmdstan_model(f, cpp_options = list("STAN_THREADS=TRUE"))
@@ -678,12 +683,12 @@ mod$sample(threads_per_chain = 4)
 
 The model *is* threaded. This is #765's symptom via a different spelling.
 
-**Names are lower-cased at `R/cpp_opts.R:100`**, so `foo=1` and `FOO=1` compare
+**Names were lower-cased in `parsed_cpp_options()`**, so `foo=1` and `FOO=1` compared
 equal despite being different Make variables.
 
 **Raw `NAME+=`, `NAME?=` and `NAME:=` are assignments, not Make flags.**
-`parsed_cpp_options()`'s `^[A-Za-z_][A-Za-z0-9_]*=` does not match them, so they
-fall through to `opaque`. The collapse to `=` is only true of an assignment
+`parsed_cpp_options()`'s `^[A-Za-z_][A-Za-z0-9_]*=` did not match them, so they
+fell through to its `opaque` class. The collapse to `=` is only true of an assignment
 appearing alone. Two assignments to the same variable retain operator semantics
 (GNU Make 3.81):
 
@@ -714,13 +719,13 @@ raw operators would invalidate the canonicalization rule as well.
 
 <!-- contract -->
 
-**After normalization, a name must match `^[A-Za-z_][A-Za-z0-9_]*$`.** <!-- /contract --> Without that,
+**A name must match `^[A-Za-z_][A-Za-z0-9_]*$` as written; matching names are then uppercased.** <!-- /contract --> Without that,
 the sentence above is not true, because an operator arrives through the named door
-instead. `cpp_options_to_compile_flags()` builds each argument as
-`paste0(toupper(option_name), "=", value)` (`R/cpp_opts.R:141`) and `toupper()`
-leaves `+` alone, so `list("FOO+" = "x")` reaches `make` as `FOO+=x`. The grammar is
-the one `parsed_cpp_options()` already applies above, where all it decides is how a
-flag is classified. Nothing consults it before the flag is handed to `make`.
+instead. Before Stage 1, `cpp_options_to_compile_flags()` built each argument as
+`paste0(toupper(option_name), "=", value)` and `toupper()` leaves `+` alone, so
+`list("FOO+" = "x")` reached `make` as `FOO+=x`. The grammar was the one
+`parsed_cpp_options()` applied above, where all it decided was how a flag is
+classified. Nothing consulted it before the flag was handed to `make`.
 
 The reserved-variable rule shows this is not only about operators. `USER_HEADER+` is
 not `USER_HEADER`, so the matcher that rejects the two `cpp_options` spellings of
@@ -1736,8 +1741,8 @@ only refuse them.
 
 <!-- contract -->
 
-**The `STANCFLAGS` check reads what Make resolved, not what `make/local` says, and
-runs at build time only.** <!-- /contract --> `make/local` may include another makefile, a pattern
+**The `STANCFLAGS` check reads what Make resolves for this build, with the call's
+`cpp_options` and `user_header` applied, not what `make/local` says, and runs at build time only.** <!-- /contract --> `make/local` may include another makefile, a pattern
 CmdStan's own `make/local.example` suggests (below), so scanning the file misses
 any flag arriving that way. Measured, the
 file reads `include $(HOME)/.config/stan/extra.mk` while `make -s print-STANCFLAGS`
@@ -2675,12 +2680,11 @@ explicit `NULL` default breaks it just as well.
 **Explicit `NULL` means omission for all six, so one sentinel covers them.** <!-- /contract -->
 `user_header` is the one that looks like an exception, because `user_header = NULL`
 currently means compile without one. That meaning exists only because the header
-persisted: `resolve_user_header()`'s `supplied` flag decides precedence over the two
-`cpp_options` spellings and otherwise falls back to `previous`
-(`R/cpp_opts.R:189-245`). §3 rejects both spellings and §8 removes `previous`, so
+persists: `$compile()` tells an omitted `user_header` from an explicit `NULL` with
+`missing()` and falls back to the previous header when it is omitted. §3 rejected
+the two `cpp_options` spellings (done in Stage 1) and §8 removes the fallback, so
 nothing is left for an explicit `NULL` to override, and under §2 omitting the
-argument already means no header. `supplied` leaves `resolve_user_header()` with the
-precedence chain it existed for.
+argument already means no header.
 
 <!-- contract -->
 

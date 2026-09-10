@@ -154,10 +154,10 @@ others, not as a recorded `cpp_options` entry.**
 ### [One canonical spelling, established on entry](compilation-state.md#one-canonical-spelling-established-on-entry)
 
 **Named `cpp_options` entries are normalized to their `make` spelling once, on entry
-to the build call, ahead of validation.**
+to the build call.**
 
-After that point one spelling is in play, and validation,
-comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
+After that point one spelling is in play, and the reserved-name
+checks, comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
 keeps working.
 
 **The `stanc_options` side is not symmetric.** `stanc_options_to_args()` passes names
@@ -167,13 +167,15 @@ than anything we would write.
 
 ### [Rejection matches the option, not the spelling](compilation-state.md#rejection-matches-the-option-not-the-spelling)
 
-These entries are rejected from an R option list that currently accepts them:
-`include-paths`, `warn-pedantic`, `allow-undefined`, `use-opencl` and `name` from
-`stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from
+These entries are rejected from the R option lists that accepted them before
+Stage 1: `include-paths`, `warn-pedantic`, `allow-undefined`, `use-opencl` and
+`name` from `stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from
 `cpp_options`. **Every one is matched by where the option name occurs, never by
-enumerating accepted values.** (`--include-paths` in the effective `STANCFLAGS` is
-rejected too, but that is a value Make resolved rather than a list entry, so §6
-gives it its own detection rule.)
+enumerating accepted values.** The `stanc_options` rule covers every
+`stanc_options` list a method accepts, so `$check_syntax()`'s own argument is
+checked the same way as the constructor's. (`--include-paths` in the effective
+`STANCFLAGS` is rejected too, but that is a value Make resolved rather than a list
+entry, so §6 gives it its own detection rule.)
 
 `stanc_options_to_args()` (`R/model.R:2598`) puts the flag name in a different slot
 depending on the entry's shape, so the rule has two arms:
@@ -203,7 +205,7 @@ as literals with no case folding inside the matcher.
 
 **So raw assignment-shaped entries are rejected, not reclassified.**
 
-**After normalization, a name must match `^[A-Za-z_][A-Za-z0-9_]*$`.**
+**A name must match `^[A-Za-z_][A-Za-z0-9_]*$` as written; matching names are then uppercased.**
 
 **Plain `NAME=value` is rejected too**
 
@@ -530,8 +532,8 @@ stanc flags and a raw make-variable passthrough only duplicates it. In the
 begins with `-I`). We never interpret the comma lists, quoting or separator forms,
 only refuse them.
 
-**The `STANCFLAGS` check reads what Make resolved, not what `make/local` says, and
-runs at build time only.**
+**The `STANCFLAGS` check reads what Make resolves for this build, with the call's
+`cpp_options` and `user_header` applied, not what `make/local` says, and runs at build time only.**
 
 **The two rejections differ in scope, and should not be unified.** `cpp_options` is
 a cmdstanr argument, so the whole variable goes. `make/local` is CmdStan's own
