@@ -110,7 +110,7 @@ record_dependency_entry <- function(value, field) {
 #'
 #' @noRd
 validate_build_record <- function(record) {
-  checkmate::assert_list(record, .var.name = "record")
+  record_shape(record, "object", "record")
 
   format_version <- record[["format_version"]]
   if (!checkmate::test_int(format_version, tol = 0) ||

@@ -124,6 +124,20 @@ test_that("a record with a field of the wrong type is unreadable", {
   expect_false("format_version" %in% names(result))
 })
 
+test_that("a record repeating a member at its top level is unreadable", {
+  exe <- local_fake_exe()
+  json <- jsonlite::toJSON(example_record(exe), auto_unbox = TRUE, digits = NA)
+  writeLines(
+    sub("}$", ",\"artifact\":\"different\"}", json),
+    build_record_path(exe)
+  )
+
+  result <- read_build_record(exe)
+  expect_equal(result$reason, "unreadable")
+  expect_false("record" %in% names(result))
+  expect_false("format_version" %in% names(result))
+})
+
 test_that("a dependency missing its hash is unreadable", {
   exe <- local_fake_exe()
   record <- example_record(exe)
@@ -173,7 +187,7 @@ test_that("a record in a format we do not read is checked on its version alone",
 test_that("a record whose format_version is not an integer is unreadable", {
   exe <- local_fake_exe()
   record <- example_record(exe)
-  record$format_version <- 1.5
+  record$format_version <- 1.000000001
   jsonlite::write_json(
     record, build_record_path(exe),
     auto_unbox = TRUE, pretty = TRUE, digits = NA
