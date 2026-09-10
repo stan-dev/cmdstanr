@@ -668,13 +668,16 @@ compile <- function(quiet = TRUE,
 
   exe <- resolve_exe_path(dir, private$dir_, self$exe_file(), self$stan_file())
 
-  # Resolve stanc and cpp options
+  # Options cmdstanr adds go in their own list, kept apart from the caller's so
+  # that the record can hold each as it was, and are merged only when they
+  # become arguments.
+  stanc_injected <- list()
   if (pedantic) {
-    stanc_options[["warn-pedantic"]] <- TRUE
+    stanc_injected[["warn-pedantic"]] <- TRUE
   }
 
   if (isTRUE(cpp_option_value(cpp_options, "stan_opencl"))) {
-    stanc_options[["use-opencl"]] <- TRUE
+    stanc_injected[["use-opencl"]] <- TRUE
   }
 
   if (!user_header_supplied) {
@@ -685,7 +688,7 @@ compile <- function(quiet = TRUE,
 
   using_user_header <- !is.null(user_header)
   if (using_user_header) {
-    stanc_options[["allow-undefined"]] <- TRUE
+    stanc_injected[["allow-undefined"]] <- TRUE
     # Keep user_header as a host path for the WSL1 file check below.
     user_header <- resolve_path(user_header)
   }
@@ -823,9 +826,10 @@ compile <- function(quiet = TRUE,
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
-  stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
-  stancflags_direct <- stanc_options_to_args(stanc_options)
+  stanc_injected[["name"]] <- paste0(self$model_name(), "_model")
+  stanc_args <- c(stanc_options, stanc_injected)
+  stancflags_combined <- stanc_options_to_args(stanc_args, quote_values = TRUE)
+  stancflags_direct <- stanc_options_to_args(stanc_args)
   cpp_flags <- cpp_options_to_compile_flags(cpp_options)
 
   # CmdStan reads the header from the USER_HEADER make variable.
