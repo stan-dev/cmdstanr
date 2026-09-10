@@ -260,10 +260,11 @@ reported_features_from_exe <- function(exe_file) {
 
 #' The TBB directory this build resolved
 #'
-#' Asked of Make with the build's own variables, because a `TBB_LIB` supplied
-#' on the call is invisible to the flag-free query `get_cmdstan_flags()` runs.
-#' Make returns `TBB_LIB` as it was written, so a relative one is resolved
-#' against the directory Make ran in.
+#' Asked of Make with the build's own variables, so a `TBB_LIB` supplied on the
+#' call is seen, and for both variables in one call. Make returns `TBB_LIB` as it
+#' was written, so a relative one is resolved against the directory Make ran in,
+#' and as the shell prints it, so repeated spaces and glob characters in it are
+#' not preserved.
 #'
 #' @noRd
 tbb_dir_from_make <- function(make_vars) {
