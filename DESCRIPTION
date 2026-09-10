@@ -47,7 +47,7 @@ Imports:
     R6 (>= 2.4.0),
     vctrs,
     withr (>= 2.5.0),
-    rlang (>= 0.4.7)
+    rlang (>= 1.0.0)
 Suggests:
     bayesplot,
     fs,

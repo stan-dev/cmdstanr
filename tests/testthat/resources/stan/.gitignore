@@ -1,16 +1,6 @@
-/bernoulli
-/bernoulli_external
-/bernoulli_fp
-/bernoulli_include
-/bernoulli_log_lik
-/bernoulli_ppc
-/bernoulli_threads
-/chain_fails
-/divide_real_by_two
-/fail
-/info_message
-/init_warnings
-/logistic
-/logistic_profiling
-/schools
-
+# Everything compiled beside a test model is a build product: the executable,
+# which has no extension, the C++ it was generated from, and the build record
+# cmdstanr writes next to it. Ignore all of it and keep only the sources.
+*
+!.gitignore
+!*.stan

@@ -14,3 +14,4 @@
 ^release-prep\.R$
 ^\.vscode$
 ^dev-notes$
+^tests/testthat/resources/stan/\..*\.cmdstanr\.json$
