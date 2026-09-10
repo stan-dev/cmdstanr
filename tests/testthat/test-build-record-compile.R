@@ -25,8 +25,19 @@ mock_compile <- function(stan_file, ..., info_ret = default_info_ret) {
   mod
 }
 
+# A copy of the program in its own directory. The mock writes a text file where
+# the executable goes, which must never be the one the other test files share.
+local_bernoulli <- function(.local_envir = parent.frame()) {
+  stan_file <- file.path(
+    withr::local_tempdir(.local_envir = .local_envir), "bernoulli.stan"
+  )
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  stan_file
+}
+
 test_that("a build writes a record that reads back available", {
-  mod <- mock_compile(testing_stan_file("bernoulli"))
+  stan_file <- local_bernoulli()
+  mod <- mock_compile(stan_file)
 
   result <- read_build_record(mod$exe_file())
   expect_equal(result$status, "available")
@@ -55,8 +66,9 @@ test_that("the recorded stanc name is the raw string stanc was passed", {
 })
 
 test_that("supplied and injected stanc options are recorded apart", {
+  stan_file <- local_bernoulli()
   mod <- mock_compile(
-    testing_stan_file("bernoulli"),
+    stan_file,
     pedantic = TRUE,
     stanc_options = list("O1")
   )
@@ -70,8 +82,7 @@ test_that("supplied and injected stanc options are recorded apart", {
 })
 
 test_that("cpp_options_supplied holds what the caller passed", {
-  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file)
+  stan_file <- local_bernoulli()
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   local_mocked_bindings(
     get_standalone_hpp = function(stan_file, stancflags) ""
@@ -117,7 +128,8 @@ test_that("make/local is a dependency only when present", {
 })
 
 test_that("reported features are what the binary reports, by presence", {
-  mod <- mock_compile(testing_stan_file("bernoulli"))
+  stan_file <- local_bernoulli()
+  mod <- mock_compile(stan_file)
 
   record <- read_build_record(mod$exe_file())$record
   expect_mapequal(
@@ -127,7 +139,7 @@ test_that("reported features are what the binary reports, by presence", {
 
   # An executable that cannot report leaves every feature unknown.
   mod <- mock_compile(
-    testing_stan_file("bernoulli"),
+    stan_file,
     info_ret = list(status = 1)
   )
 
@@ -140,7 +152,7 @@ test_that("reported features are what the binary reports, by presence", {
 })
 
 test_that("tbb_dir is the directory this build resolved", {
-  stan_file <- testing_stan_file("bernoulli")
+  stan_file <- local_bernoulli()
   mod <- mock_compile(stan_file)
   record <- read_build_record(mod$exe_file())$record
   expect_true(same_path(
@@ -166,7 +178,8 @@ test_that("a build with an untracked dependency records it", {
   local_cmdstan_make_local(cpp_options = list("-include other.mk"))
   make_local <- file.path(cmdstan_path(), "make", "local")
   expect_true("-include other.mk" %in% readLines(make_local, warn = FALSE))
-  mod <- mock_compile(testing_stan_file("bernoulli"))
+  stan_file <- local_bernoulli()
+  mod <- mock_compile(stan_file)
 
   record <- read_build_record(mod$exe_file())$record
   expect_equal(
@@ -177,7 +190,7 @@ test_that("a build with an untracked dependency records it", {
 
 test_that("the note fires on a write and not otherwise", {
   local_cmdstan_make_local(cpp_options = list("-include other.mk"))
-  stan_file <- testing_stan_file("bernoulli")
+  stan_file <- local_bernoulli()
 
   expect_message(mock_compile(stan_file), "does not track")
   with_mocked_cli(
