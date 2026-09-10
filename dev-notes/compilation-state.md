@@ -1078,11 +1078,11 @@ all three.
 **cmdstanr writes neither ignore file itself.** <!-- /contract --> Compiling a model should not modify
 a user's repository configuration; the recommendation belongs in documentation.
 
-**This repository needs the patterns too, before Stage 3 writes anything.**
-`tests/testthat/resources/stan/.gitignore` enumerates fifteen compiled binaries by
-hand and is already behind; four models there have no entry. Every compiled test
-model will add a record, so replace the enumeration with patterns rather than
-extending it.
+**This repository carries the patterns itself.**
+`tests/testthat/resources/stan/.gitignore` ignores everything in that directory
+but the Stan sources, since every compiled test model adds a record beside its
+executable, and `.Rbuildignore` keeps those records out of a tarball built from
+the source tree. Stage 2 put both in place before anything wrote a record.
 
 ### Binding the record to its executable
 
@@ -3356,8 +3356,9 @@ fixtures.
 record beside a user's Stan program until Stage 3. Name, format and the
 version-control story are decided (§4), settled enough to build against and
 revisable until the release. What this stage owes is the groundwork that has to be
-in place before Stage 3 creates a file: ignore patterns in this repository, and the
-user-facing wording to ship with the writer.
+in place before Stage 3 creates a file: ignore patterns in this repository. The
+user-facing wording about the record's lifecycle ships with the writer in Stage 3,
+where #1258 lists it.
 
 ### Stage 3: transactional record writing
 
