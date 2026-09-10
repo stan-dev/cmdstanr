@@ -234,9 +234,10 @@ new_build_record <- function(request, reported_features, dependencies, artifact,
 
 #' The build features the executable reports
 #'
-#' Keeps the entries reported as a single logical, plus `stan_version`, so a
-#' key CmdStan later reports in some other form cannot fail the writer. Any
-#' failure leaves every feature unknown rather than failing the build.
+#' Keeps the entries reported as a single logical under a name, plus a
+#' `stan_version` of three dotted integers, so output the record cannot hold
+#' cannot fail the writer. Any failure leaves every feature unknown rather than
+#' failing the build.
 #'
 #' @noRd
 reported_features_from_exe <- function(exe_file) {
@@ -247,8 +248,11 @@ reported_features_from_exe <- function(exe_file) {
       unknown
     } else {
       info <- parse_exe_info_string(result$stdout)
-      keep <- vapply(info, checkmate::test_flag, logical(1)) |
-        names(info) == "stan_version"
+      version <- grepl("^[0-9]+\\.[0-9]+\\.[0-9]+$", info[["stan_version"]])
+      keep <- nzchar(names(info)) & (
+        vapply(info, checkmate::test_flag, logical(1)) |
+          (names(info) == "stan_version" & version)
+      )
       info[keep]
     }
   }, error = function(e) unknown)

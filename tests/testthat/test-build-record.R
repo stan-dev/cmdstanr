@@ -532,3 +532,15 @@ test_that("a failed write leaves no staging file behind", {
     basename(exe)
   )
 })
+
+test_that("reported features the record cannot hold are left unknown", {
+  exe <- local_fake_exe()
+  # A nameless entry and a missing version are both dropped, not written.
+  local_mocked_bindings(
+    run_info_cli = function(...) {
+      list(status = 0, stdout = " = true\nSTAN_THREADS=true\n")
+    }
+  )
+
+  expect_equal(reported_features_from_exe(exe), list(stan_threads = TRUE))
+})

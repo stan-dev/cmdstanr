@@ -952,11 +952,15 @@ compile <- function(quiet = TRUE,
     dependency <- function(path, hashed = path) {
       list(hash = hash_file(hashed), built_from = resolve_path(path))
     }
-    # The copy is what make compiled, so its hash is what the record describes.
+    # The copy is what make compiled, so the record describes it, hash and
+    # includes alike. Under WSL stanc reports the includes in its own spelling.
     dependencies <- list(
       stan_file = dependency(self$stan_file(), temp_stan_file),
       included_files = lapply(
-        unlist(stanc_info(self$stan_file(), include_paths)$included_files),
+        wsl_safe_path(
+          unlist(stanc_info(temp_stan_file, include_paths)$included_files),
+          revert = TRUE
+        ),
         dependency
       )
     )
