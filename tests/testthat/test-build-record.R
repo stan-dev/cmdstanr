@@ -498,3 +498,38 @@ test_that("differences outside the comparison table never count", {
   )
   expect_equal(compare_build_records(recorded, current), character(0))
 })
+
+test_that("both detectors fire on their patterns and on nothing else", {
+  dir <- withr::local_tempdir()
+  make_local <- file.path(dir, "local")
+  user_header <- file.path(dir, "user.hpp")
+  from_make_local <- function(line) {
+    writeLines(line, make_local)
+    untracked_dependencies(make_local = make_local)
+  }
+  from_user_header <- function(line) {
+    writeLines(line, user_header)
+    untracked_dependencies(user_header = user_header)
+  }
+  make_local_hit <- list(
+    list(kind = "make_local_include", detected_in = make_local)
+  )
+  user_header_hit <- list(
+    list(kind = "user_header_include", detected_in = user_header)
+  )
+
+  expect_equal(from_make_local("include other.mk"), make_local_hit)
+  expect_equal(from_make_local("-include other.mk"), make_local_hit)
+  expect_equal(from_make_local("sinclude other.mk"), make_local_hit)
+  expect_equal(from_make_local(" include other.mk"), make_local_hit)
+  expect_equal(from_make_local("# include other.mk"), list())
+  expect_equal(from_make_local("INCLUDE_DIR = x"), list())
+  expect_equal(from_make_local("CXXFLAGS += -include foo.h"), list())
+
+  expect_equal(from_user_header("#include \"a.hpp\""), user_header_hit)
+  expect_equal(from_user_header("  #  include   \"a.hpp\""), user_header_hit)
+  expect_equal(from_user_header("#include <vector>"), list())
+  expect_equal(from_user_header("// #include \"a.hpp\""), list())
+
+  expect_equal(untracked_dependencies(), list())
+})

@@ -945,7 +945,47 @@ compile <- function(quiet = TRUE,
       )
     }
 
+    make_local <- file.path(cmdstan_path(), "make", "local")
+    if (!file.exists(make_local)) {
+      make_local <- NULL
+    }
+    dependency <- function(path, hashed = path) {
+      list(hash = hash_file(hashed), built_from = resolve_path(path))
+    }
+    # The copy is what make compiled, so its hash is what the record describes.
+    dependencies <- list(
+      stan_file = dependency(self$stan_file(), temp_stan_file),
+      included_files = lapply(
+        unlist(stanc_info(self$stan_file(), include_paths)$included_files),
+        dependency
+      )
+    )
+    if (using_user_header) {
+      dependencies$user_header <- dependency(user_header)
+    }
+    if (!is.null(make_local)) {
+      dependencies$make_local <- dependency(make_local)
+    }
+    record <- new_build_record(
+      request = list(
+        cpp_options_supplied = parsed_cpp_options(cpp_options),
+        stanc_options_supplied = as.list(stanc_options_to_args(stanc_options)),
+        stanc_options_injected = as.list(stanc_options_to_args(stanc_injected)),
+        stanc_name = stanc_injected[["name"]],
+        include_paths = as.list(include_paths)
+      ),
+      reported_features = reported_features_from_exe(tmp_exe),
+      dependencies = dependencies,
+      artifact = hash_file(tmp_exe),
+      builder = list(path = cmdstan_path(), version = compiled_cmdstan_version),
+      tbb_dir = tbb_dir_from_make(make_vars),
+      known_untracked_dependencies = untracked_dependencies(
+        make_local, if (using_user_header) user_header
+      )
+    )
+
     leftover_backup <- install_executable(tmp_exe, exe)
+    write_build_record(record, exe)
 
     # Commit executable-derived state only after installation succeeds.
     rm(list = ls(self$functions, all.names = TRUE), envir = self$functions)
@@ -2806,7 +2846,13 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
   stancflags
 }
 
-model_variables <- function(stan_file, include_paths = NULL) {
+#' What stanc reports about a Stan program
+#'
+#' The parsed `stanc --info` output, holding the program's variables and the
+#' files it included.
+#'
+#' @noRd
+stanc_info <- function(stan_file, include_paths = NULL) {
   out_file <- tempfile(fileext = ".json")
   run_log <- wsl_compatible_run(
     command = stanc_cmd(),
@@ -2823,7 +2869,11 @@ model_variables <- function(stan_file, include_paths = NULL) {
     stdout = out_file,
     error_on_status = TRUE
   )
-  variables <- jsonlite::read_json(out_file, na = "null")
+  jsonlite::read_json(out_file, na = "null")
+}
+
+model_variables <- function(stan_file, include_paths = NULL) {
+  variables <- stanc_info(stan_file, include_paths)
   variables$data <- variables$inputs
   variables$inputs <- NULL
   variables$transformed_parameters <- variables[["transformed parameters"]]

@@ -230,6 +230,88 @@ new_build_record <- function(request, reported_features, dependencies, artifact,
 }
 
 
+# building a record at compile time ---------------------------------------
+
+#' The build features the executable reports
+#'
+#' Keeps the entries reported as a single logical, plus `stan_version`, so a
+#' key CmdStan later reports in some other form cannot fail the writer. Any
+#' failure leaves every feature unknown rather than failing the build.
+#'
+#' @noRd
+reported_features_from_exe <- function(exe_file) {
+  unknown <- structure(list(), names = character())
+  tryCatch({
+    result <- run_info_cli(exe_file)
+    if (result$status != 0) {
+      unknown
+    } else {
+      info <- parse_exe_info_string(result$stdout)
+      keep <- vapply(info, checkmate::test_flag, logical(1)) |
+        names(info) == "stan_version"
+      info[keep]
+    }
+  }, error = function(e) unknown)
+}
+
+#' The TBB directory this build resolved
+#'
+#' Asked of Make with the build's own variables, because a `TBB_LIB` supplied
+#' on the call is invisible to the flag-free query `get_cmdstan_flags()` runs.
+#' Make returns `TBB_LIB` as it was written, so a relative one is resolved
+#' against the directory Make ran in.
+#'
+#' @noRd
+tbb_dir_from_make <- function(make_vars) {
+  withr::with_envvar(
+    c(HOME = short_path(Sys.getenv("HOME"))),
+    stdout <- wsl_compatible_run(
+      command = "make",
+      args = c("-s", make_vars, "print-TBB_BIN_ABSOLUTE_PATH", "print-TBB_LIB"),
+      wd = cmdstan_path()
+    )$stdout
+  )
+  tbb_lib <- parse_make_print_flag("TBB_LIB", stdout)
+  if (!nzchar(tbb_lib)) {
+    parse_make_print_flag("TBB_BIN_ABSOLUTE_PATH", stdout)
+  } else if (grepl("^(/|[A-Za-z]:)", tbb_lib)) {
+    tbb_lib
+  } else {
+    repair_path(file.path(cmdstan_path(), tbb_lib))
+  }
+}
+
+#' Dependencies the build can see exist but cannot resolve
+#'
+#' A `make/local` that includes another makefile, and a user header that
+#' includes another header, both pull in files nothing here can enumerate. An
+#' empty list means nothing was detected, never that the record is complete.
+#'
+#' @noRd
+untracked_dependencies <- function(make_local = NULL, user_header = NULL) {
+  detectors <- list(
+    make_local_include = list(
+      path = make_local, pattern = "^\\s*(?:-?include|sinclude)\\b"
+    ),
+    user_header_include = list(
+      path = user_header, pattern = "^\\s*#\\s*include\\s*\""
+    )
+  )
+  detected <- list()
+  for (kind in names(detectors)) {
+    path <- detectors[[kind]]$path
+    if (is.null(path)) {
+      next
+    }
+    lines <- readLines(path, warn = FALSE)
+    if (any(grepl(detectors[[kind]]$pattern, lines, perl = TRUE))) {
+      detected[[length(detected) + 1]] <- list(kind = kind, detected_in = path)
+    }
+  }
+  detected
+}
+
+
 # writing and reading -----------------------------------------------------
 
 #' Write a build record beside its executable
