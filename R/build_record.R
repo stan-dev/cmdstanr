@@ -34,10 +34,11 @@ hash_file <- function(path) {
 # schema ------------------------------------------------------------------
 
 # Shapes are as jsonlite::fromJSON(simplifyVector = FALSE) returns them. An
-# object is a named list, an array is an unnamed list, and a scalar is an atomic
-# vector of length one that is not NA.
+# object is a named list with no name repeated, an array is an unnamed list, and
+# a scalar is an atomic vector of length one that is not NA.
 is_json_object <- function(x) {
-  is.list(x) && !is.null(names(x)) && all(nzchar(names(x)))
+  is.list(x) && !is.null(names(x)) && all(nzchar(names(x))) &&
+    !anyDuplicated(names(x))
 }
 
 is_json_array <- function(x) {
@@ -112,7 +113,7 @@ validate_build_record <- function(record) {
   checkmate::assert_list(record, .var.name = "record")
 
   format_version <- record[["format_version"]]
-  if (!checkmate::test_int(format_version) ||
+  if (!checkmate::test_int(format_version, tol = 0) ||
       format_version != build_record_format_version) {
     stop_build_record_field(
       "format_version", paste0("must be ", build_record_format_version)
@@ -206,6 +207,9 @@ validate_build_record <- function(record) {
 #'
 #' The one place a record is built. `format_version` comes first and the rest
 #' follow the schema's order, so the written JSON reads in that order too.
+#' `request` arrives in the forms the record compares: `cpp_options_supplied`
+#' as canonical Make assignments, one per name, and the two stanc option lists
+#' as the argument vectors stanc receives.
 #'
 #' @noRd
 new_build_record <- function(request, reported_features, dependencies, artifact,
@@ -235,8 +239,8 @@ new_build_record <- function(request, reported_features, dependencies, artifact,
 #' so that `warn = 2` cannot pre-empt the error below. `auto_unbox` writes a
 #' length-one vector as a JSON scalar, which is why the schema holds every
 #' array as a list and every scalar as a length-one vector: a one-element
-#' `included_files` still writes as an array. Nothing is ever `NULL` or `NA`,
-#' since an unknown state is an absent key.
+#' `included_files` still writes as an array. No field the schema names is ever
+#' `NULL` or `NA`, since an unknown state is an absent key.
 #'
 #' @noRd
 write_build_record <- function(record, exe_file) {
@@ -279,7 +283,7 @@ read_build_record <- function(exe_file) {
     return(unreadable)
   }
   format_version <- record[["format_version"]]
-  if (!checkmate::test_int(format_version)) {
+  if (!checkmate::test_int(format_version, tol = 0)) {
     return(unreadable)
   }
   if (format_version != build_record_format_version) {
@@ -330,6 +334,7 @@ compare_build_records <- function(recorded, current) {
       optional_dependency(x, "user_header", c("hash", "built_from"))
     },
     make_local = function(x) optional_dependency(x, "make_local", "hash"),
+    artifact = function(x) x$artifact,
     builder = function(x) x$builder[c("path", "version")]
   )
   differs <- vapply(

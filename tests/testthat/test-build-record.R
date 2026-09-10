@@ -140,6 +140,21 @@ test_that("a record in a format we do not read is checked on its version alone",
   expect_false("record" %in% names(result))
 })
 
+test_that("a record whose format_version is not an integer is unreadable", {
+  exe <- local_fake_exe()
+  record <- example_record(exe)
+  record$format_version <- 1.5
+  jsonlite::write_json(
+    record, build_record_path(exe),
+    auto_unbox = TRUE, pretty = TRUE, digits = NA
+  )
+
+  result <- read_build_record(exe)
+  expect_equal(result$reason, "unreadable")
+  expect_false("record" %in% names(result))
+  expect_false("format_version" %in% names(result))
+})
+
 test_that("a record whose hash does not match the executable is a mismatch", {
   exe <- local_fake_exe()
   write_build_record(example_record(exe), exe)
@@ -202,6 +217,14 @@ test_that("the validator names the field that fails", {
     rebuild(logical_option),
     "`request.cpp_options_supplied.STAN_THREADS`",
     fixed = TRUE
+  )
+
+  repeated_option <- base
+  repeated_option$request$cpp_options_supplied <- list(
+    STAN_THREADS = "false", STAN_THREADS = "true"
+  )
+  expect_error(
+    rebuild(repeated_option), "`request.cpp_options_supplied`", fixed = TRUE
   )
 
   unknown_kind <- base
@@ -332,6 +355,14 @@ test_that("a make_local present on only one side differs as make_local", {
   expect_equal(compare_build_records(recorded, current), "make_local")
 })
 
+test_that("a changed artifact differs as artifact", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$artifact <- "deadbeef"
+  expect_equal(compare_build_records(recorded, current), "artifact")
+})
+
 test_that("a changed builder version differs as builder", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
@@ -403,6 +434,5 @@ test_that("differences outside the comparison table never count", {
   current$known_untracked_dependencies <- list(
     list(kind = "user_header_include", detected_in = "other.hpp")
   )
-  current$artifact <- "deadbeef"
   expect_equal(compare_build_records(recorded, current), character(0))
 })
