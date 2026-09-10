@@ -251,3 +251,158 @@ test_that("a record carrying a member the schema does not name still reads", {
 
   expect_equal(read_build_record(exe)$status, "available")
 })
+
+test_that("two identical build records compare with no differences", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  expect_equal(compare_build_records(recorded, current), character(0))
+})
+
+test_that("a changed cpp option value differs as cpp_options", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$request$cpp_options_supplied <- list(STAN_THREADS = "false")
+  expect_equal(compare_build_records(recorded, current), "cpp_options")
+})
+
+test_that("a reordered stanc_options_supplied differs as stanc_options", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$request$stanc_options_supplied <- list("--O0", "--O1")
+  current$request$stanc_options_supplied <- list("--O1", "--O0")
+  expect_equal(compare_build_records(recorded, current), "stanc_options")
+})
+
+test_that("a changed stanc_name differs as stanc_name", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$request$stanc_name <- "other_model"
+  expect_equal(compare_build_records(recorded, current), "stanc_name")
+})
+
+test_that("a changed stan_file hash differs as stan_file", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$dependencies$stan_file$hash <- "ffff"
+  expect_equal(compare_build_records(recorded, current), "stan_file")
+})
+
+test_that("a reordered included_files differs as included_files", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$dependencies$included_files <- list(
+    list(hash = "aaaa", built_from = "one.stan"),
+    list(hash = "bbbb", built_from = "two.stan")
+  )
+  current$dependencies$included_files <- list(
+    list(hash = "bbbb", built_from = "two.stan"),
+    list(hash = "aaaa", built_from = "one.stan")
+  )
+  expect_equal(compare_build_records(recorded, current), "included_files")
+})
+
+test_that("a user_header present on only one side differs as user_header", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$dependencies$user_header <- list(hash = "cccc", built_from = "header.hpp")
+  expect_equal(compare_build_records(recorded, current), "user_header")
+})
+
+test_that("a user_header with the same hash but a different built_from differs as user_header", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$dependencies$user_header <- list(hash = "cccc", built_from = "header.hpp")
+  current$dependencies$user_header <- list(hash = "cccc", built_from = "other/header.hpp")
+  expect_equal(compare_build_records(recorded, current), "user_header")
+})
+
+test_that("a make_local present on only one side differs as make_local", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$dependencies$make_local <- NULL
+  expect_equal(compare_build_records(recorded, current), "make_local")
+})
+
+test_that("a changed builder version differs as builder", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$builder$version <- "2.40.0"
+  expect_equal(compare_build_records(recorded, current), "builder")
+})
+
+test_that("a changed builder path differs as builder", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$builder$path <- "/opt/cmdstan-2.40.0"
+  expect_equal(compare_build_records(recorded, current), "builder")
+})
+
+test_that("two differences are both reported, in table order", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$dependencies$stan_file$hash <- "ffff"
+  current$builder$version <- "2.40.0"
+  expect_equal(compare_build_records(recorded, current), c("stan_file", "builder"))
+})
+
+test_that("the same cpp options in a different assignment order do not differ", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$request$cpp_options_supplied <- list(
+    STAN_THREADS = "true", STAN_NO_RANGE_CHECKS = "true"
+  )
+  current$request$cpp_options_supplied <- list(
+    STAN_NO_RANGE_CHECKS = "true", STAN_THREADS = "true"
+  )
+  expect_equal(compare_build_records(recorded, current), character(0))
+})
+
+test_that("an included file with the same hash and a different built_from does not differ", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$dependencies$included_files <- list(
+    list(hash = "aaaa", built_from = "one.stan")
+  )
+  current$dependencies$included_files <- list(
+    list(hash = "aaaa", built_from = "elsewhere/one.stan")
+  )
+  expect_equal(compare_build_records(recorded, current), character(0))
+})
+
+test_that("a make_local with the same hash and a different built_from does not differ", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$dependencies$make_local <- list(hash = "4b5a", built_from = "make/local")
+  current$dependencies$make_local <- list(hash = "4b5a", built_from = "other/make/local")
+  expect_equal(compare_build_records(recorded, current), character(0))
+})
+
+test_that("differences outside the comparison table never count", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$request$stanc_options_injected <- list("--name=other_model")
+  current$request$include_paths <- list("/some/other/path")
+  current$reported_features$stan_opencl <- TRUE
+  current$tbb_dir <- "/opt/other/tbb"
+  current$known_untracked_dependencies <- list(
+    list(kind = "user_header_include", detected_in = "other.hpp")
+  )
+  current$artifact <- "deadbeef"
+  expect_equal(compare_build_records(recorded, current), character(0))
+})

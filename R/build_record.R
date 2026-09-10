@@ -353,3 +353,76 @@ read_build_record <- function(exe_file) {
 
   list(status = "available", record = record)
 }
+
+#' Compare a recorded build against the current one
+#'
+#' Returns the name of every compared field whose value differs between the
+#' two records, in the order the schema's comparison table lists them. Every
+#' field is checked, and nothing stops at the first difference, so a caller
+#' who changed more than one thing is told about all of them.
+#'
+#' @noRd
+compare_build_records <- function(recorded, current) {
+  differences <- character()
+  sort_by_name <- function(x) x[order(names(x))]
+
+  if (!identical(
+    sort_by_name(recorded$request$cpp_options_supplied),
+    sort_by_name(current$request$cpp_options_supplied)
+  )) {
+    differences <- c(differences, "cpp_options")
+  }
+
+  if (!identical(
+    recorded$request$stanc_options_supplied,
+    current$request$stanc_options_supplied
+  )) {
+    differences <- c(differences, "stanc_options")
+  }
+
+  if (!identical(recorded$request$stanc_name, current$request$stanc_name)) {
+    differences <- c(differences, "stanc_name")
+  }
+
+  if (!identical(
+    recorded$dependencies$stan_file$hash,
+    current$dependencies$stan_file$hash
+  )) {
+    differences <- c(differences, "stan_file")
+  }
+
+  included_hashes <- function(record) {
+    vapply(record$dependencies$included_files, `[[`, character(1), "hash")
+  }
+  if (!identical(included_hashes(recorded), included_hashes(current))) {
+    differences <- c(differences, "included_files")
+  }
+
+  recorded_header <- recorded$dependencies$user_header
+  current_header <- current$dependencies$user_header
+  header_differs <- is.null(recorded_header) != is.null(current_header) || (
+    !is.null(recorded_header) && (
+      !identical(recorded_header$hash, current_header$hash) ||
+      !identical(recorded_header$built_from, current_header$built_from)
+    )
+  )
+  if (header_differs) {
+    differences <- c(differences, "user_header")
+  }
+
+  recorded_local <- recorded$dependencies$make_local
+  current_local <- current$dependencies$make_local
+  local_differs <- is.null(recorded_local) != is.null(current_local) || (
+    !is.null(recorded_local) && !identical(recorded_local$hash, current_local$hash)
+  )
+  if (local_differs) {
+    differences <- c(differences, "make_local")
+  }
+
+  if (!identical(recorded$builder$path, current$builder$path) ||
+      !identical(recorded$builder$version, current$builder$version)) {
+    differences <- c(differences, "builder")
+  }
+
+  differences
+}
