@@ -667,14 +667,17 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
     ))
   }
   if (revert) {
-    if (!grepl("^/mnt/", path)) {
-      return(path)
+    if (grepl("^/mnt/", path)) {
+      strip_mnt <- gsub("^/mnt/", "", path)
+      drive_letter <- strtrim(strip_mnt, 1)
+      path <- gsub(paste0("^/mnt/", drive_letter),
+                    paste0(toupper(drive_letter), ":"),
+                    path)
+    } else if (grepl("^/[^/]", path)) {
+      # A file on the distribution's own filesystem, which Windows reaches
+      # through the //wsl$ share. Host paths already carry a drive or a share.
+      path <- paste0(wsl_dir_prefix(), path)
     }
-    strip_mnt <- gsub("^/mnt/", "", path)
-    drive_letter <- strtrim(strip_mnt, 1)
-    path <- gsub(paste0("^/mnt/", drive_letter),
-                  paste0(toupper(drive_letter), ":"),
-                  path)
   } else if (grepl("^//wsl", path)) {
     path <- gsub(wsl_dir_prefix(), "", path, fixed = TRUE)
   } else {

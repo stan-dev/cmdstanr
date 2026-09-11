@@ -507,14 +507,18 @@ test_that("wsl_safe_path() works with multiple paths", {
           c(
             "/mnt/c/project/init-1.json",
             "/mnt/d/project/init-2.json",
-            "relative/init-3.json"
+            "relative/init-3.json",
+            "/home/me/project/init-4.json",
+            "//wsl$/Ubuntu/tmp/init-5.json"
           ),
           revert = TRUE
         ),
         c(
           "C:/project/init-1.json",
           "D:/project/init-2.json",
-          "relative/init-3.json"
+          "relative/init-3.json",
+          "//wsl$/Ubuntu/home/me/project/init-4.json",
+          "//wsl$/Ubuntu/tmp/init-5.json"
         )
       )
       expect_equal(

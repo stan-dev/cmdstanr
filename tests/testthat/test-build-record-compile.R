@@ -136,6 +136,32 @@ test_that("included files are recorded in stanc's order with content hashes", {
   )
 })
 
+test_that("an include on the WSL filesystem is recorded by its share path", {
+  skip_if_not(os_is_wsl())
+  # stanc reports this include as /tmp/..., a path only the distribution can
+  # open, so the record has to hold the spelling Windows opens it by. No mock:
+  # the point is that the host hashes the real file.
+  include_dir <- repair_path(file.path(wsl_dir_prefix(), wsl_tempdir()))
+  withr::defer(unlink(include_dir, recursive = TRUE))
+  include <- file.path(include_dir, "f.stan")
+  writeLines("real f(real x) { return x; }", include)
+  stan_file <- file.path(withr::local_tempdir(), "model.stan")
+  writeLines(c(
+    "functions {", "#include f.stan", "}",
+    "parameters { real y; }",
+    "model { y ~ normal(f(0), 1); }"
+  ), stan_file)
+  mod <- cmdstan_model(
+    stan_file, include_paths = include_dir, force_recompile = TRUE
+  )
+
+  record <- read_build_record(mod$exe_file())$record
+  included <- record$dependencies$included_files
+  expect_length(included, 1)
+  expect_equal(included[[1]]$hash, hash_file(include))
+  expect_equal(included[[1]]$built_from, resolve_path(include))
+})
+
 test_that("the other injection sites land in the injected list", {
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   local_mocked_bindings(
