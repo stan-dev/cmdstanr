@@ -364,9 +364,12 @@ install_executable <- function(from, to, record) {
     NULL
   }, error = function(e) e)
   if (!is.null(failure)) {
+    # A later undo can put the old file back over one that would not move.
     stuck <- character()
     for (move in rev(done)) {
-      if (!rename(move[2], move[1])) {
+      if (rename(move[2], move[1])) {
+        stuck <- setdiff(stuck, move[1])
+      } else {
         stuck <- c(stuck, move[2])
       }
     }
