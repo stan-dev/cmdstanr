@@ -310,6 +310,141 @@ test_that("check_cmdstan_toolchain(fix = TRUE) is deprecated", {
   )
 })
 
+# Reusing the previous installation's make/local -----------------------------
+
+# A directory that looks enough like a CmdStan installation for
+# cmdstan_make_local() to write into it.
+fake_cmdstan_dir <- function(contents = NULL, envir = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = envir)
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  if (!is.null(contents)) {
+    writeLines(contents, file.path(dir, "make", "local"))
+  }
+  dir
+}
+
+test_that("maybe_copy_make_local() copies the previous flags when asked to", {
+  new_dir <- fake_cmdstan_dir()
+  previous <- c("CXXFLAGS += -march=native", "STAN_THREADS=true")
+
+  expect_message(
+    expect_true(
+      maybe_copy_make_local(new_dir, previous, "/old/cmdstan", copy_make_local = TRUE)
+    ),
+    "Copied make/local from /old/cmdstan",
+    fixed = TRUE
+  )
+  expect_equal(cmdstan_make_local(dir = new_dir), previous)
+})
+
+test_that("maybe_copy_make_local() does nothing when told not to copy", {
+  new_dir <- fake_cmdstan_dir()
+
+  expect_false(
+    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan",
+                          copy_make_local = FALSE)
+  )
+  expect_false(file.exists(file.path(new_dir, "make", "local")))
+})
+
+test_that("maybe_copy_make_local() does not prompt in a non-interactive session", {
+  new_dir <- fake_cmdstan_dir()
+  rlang::local_interactive(FALSE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt when not interactive")
+  )
+
+  expect_false(
+    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan",
+                          copy_make_local = NULL)
+  )
+  expect_false(file.exists(file.path(new_dir, "make", "local")))
+})
+
+test_that("maybe_copy_make_local() follows the answer to the prompt", {
+  rlang::local_interactive(TRUE)
+
+  yes_dir <- fake_cmdstan_dir()
+  local({
+    local_mocked_bindings(prompt_copy_make_local = function(...) TRUE)
+    expect_message(
+      expect_true(
+        maybe_copy_make_local(yes_dir, "STAN_THREADS=true", "/old/cmdstan",
+                              copy_make_local = NULL)
+      ),
+      "Copied make/local",
+      fixed = TRUE
+    )
+  })
+  expect_equal(cmdstan_make_local(dir = yes_dir), "STAN_THREADS=true")
+
+  no_dir <- fake_cmdstan_dir()
+  local({
+    local_mocked_bindings(prompt_copy_make_local = function(...) FALSE)
+    expect_false(
+      maybe_copy_make_local(no_dir, "STAN_THREADS=true", "/old/cmdstan",
+                            copy_make_local = NULL)
+    )
+  })
+  expect_false(file.exists(file.path(no_dir, "make", "local")))
+})
+
+test_that("maybe_copy_make_local() ignores a missing or empty make/local", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt without flags to copy")
+  )
+
+  # cmdstan_make_local() returns NULL when there is no file and "" when the
+  # file is empty.
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), NULL, "/old/cmdstan"))
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), "", "/old/cmdstan"))
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), character(0), "/old/cmdstan"))
+})
+
+test_that("copied flags are written before cpp_options, which win", {
+  # Order matters: an inherited assignment must not override what the user
+  # asked install_cmdstan() for, and make takes the last assignment.
+  new_dir <- fake_cmdstan_dir()
+  suppressMessages(
+    maybe_copy_make_local(new_dir, "STANCFLAGS=--O1", "/old/cmdstan",
+                          copy_make_local = TRUE)
+  )
+  cmdstan_make_local(
+    dir = new_dir,
+    cpp_options = list(STANCFLAGS = "--Oexperimental"),
+    append = TRUE
+  )
+
+  expect_equal(
+    cmdstan_make_local(dir = new_dir),
+    c("STANCFLAGS=--O1", "STANCFLAGS=--Oexperimental")
+  )
+})
+
+test_that("prompt_copy_make_local() shows the flags and reads the answer", {
+  local_mocked_bindings(read_line = function(...) "y")
+  expect_message(
+    expect_true(prompt_copy_make_local("STAN_THREADS=true", "/old/cmdstan")),
+    "STAN_THREADS=true",
+    fixed = TRUE
+  )
+
+  local_mocked_bindings(read_line = function(...) "")
+  expect_message(
+    expect_false(prompt_copy_make_local("STAN_THREADS=true", "/old/cmdstan")),
+    "/old/cmdstan",
+    fixed = TRUE
+  )
+})
+
+test_that("install_cmdstan() rejects a non-logical copy_make_local", {
+  expect_error(
+    install_cmdstan(copy_make_local = "yes", check_toolchain = FALSE),
+    "copy_make_local"
+  )
+})
+
 # Windows toolchain discovery tests ----------------------------------------
 
 test_that("toolchain_PATH_env_var() returns NULL on non-Windows", {

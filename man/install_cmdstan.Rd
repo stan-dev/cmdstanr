@@ -18,7 +18,8 @@ install_cmdstan(
   release_file = NULL,
   cpp_options = list(),
   check_toolchain = TRUE,
-  wsl = FALSE
+  wsl = FALSE,
+  copy_make_local = NULL
 )
 
 rebuild_cmdstan(
@@ -86,6 +87,14 @@ default is \code{TRUE}.}
 \item{wsl}{(logical) Should CmdStan be installed and run through the Windows
 Subsystem for Linux (WSL). The default is \code{FALSE}.}
 
+\item{copy_make_local}{(logical) Should the \code{make/local} file of the CmdStan
+installation currently in use be copied to the new installation? The copy
+happens before CmdStan is built, so the flags are already in effect for
+that build. The default is \code{NULL}, which shows the previous \code{make/local}
+and asks in an interactive session, and copies nothing otherwise.
+Use \code{TRUE} or \code{FALSE} to decide without being asked. Flags given in
+\code{cpp_options} are written after the copied ones and therefore take precedence.}
+
 \item{append}{(logical) For \code{cmdstan_make_local()}, should the listed
 makefile flags be appended to the end of the existing \code{make/local} file?
 The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
@@ -109,6 +118,11 @@ by specifying the \code{version} or \code{release_url} argument.
 See the first few sections of the CmdStan
 \href{https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html}{installation guide}
 for details on the C++ toolchain required for installing CmdStan.
+If the CmdStan installation currently in use has a non-empty \code{make/local}
+file, the flags in it can be copied to the new installation before
+it is built, so that no rebuild is needed afterwards. In an interactive
+session \code{install_cmdstan()} shows the file and asks. See the
+\code{copy_make_local} argument to decide without being asked.
 
 The \code{rebuild_cmdstan()} function cleans and rebuilds the CmdStan
 installation. Use this function in case of any issues when compiling models.
