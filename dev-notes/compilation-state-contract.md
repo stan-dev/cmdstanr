@@ -247,7 +247,7 @@ contains.**
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
 | `artifact` | yes | yes | hash of the executable this record describes |
 | `builder` | yes | yes | normalized installation path and version |
-| `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved, from one `make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB` run with the build's own `cpp_options`, so a `TBB_LIB` supplied on the call is seen; a relative `TBB_LIB` is resolved against the directory `make` ran in. Make prints through the shell, so repeated spaces and glob characters in a `TBB_LIB` are recorded as the shell prints them, as in every make query cmdstanr runs. Recorded because Windows needs it at launch and only the build can determine it (#1261 consumes it; no verdict here turns on it). Not compared: every tracked route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash, and the untracked ones (§6) move this field with nothing else moving |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the call named: `TBB_LIB` from the call's `cpp_options`, resolved against the installation when relative, and the installation's own `lib/tbb` when the call named none. Filled from the call, not asked of `make`: a `TBB_LIB` or `TBB_BIN` set in `make/local`, `~/.config/stan/make.local` or the environment moves the TBB the binary links against and not this field (§6). Recorded because Windows needs it at launch and a later `set_cmdstan_path()` must not move it (#1261 consumes it; no verdict here turns on it). Not compared: both routes it sees are compared already, through `cpp_options_supplied` and `builder` |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
@@ -728,10 +728,11 @@ pre-operation validation, and not on every construction.**
   `TBB_BIN` and `TBB_LIB`. A command-line assignment wins, so this reaches only what
   cmdstanr does not supply. None of it is compared: a variable that arrived from
   the environment appears in no compared field. The four flags `<exe> info` reports
-  land in `reported_features`, `TBB_BIN` and `TBB_LIB` move `tbb_dir`, and §4's
-  table says neither is a trigger. A `USER_HEADER` set there compiles a header that
-  appears in no `dependencies` entry. `force_recompile = TRUE` is the remedy, as for
-  the rest of this list.
+  land in `reported_features`, which §4's table says is not a trigger. `TBB_BIN`
+  and `TBB_LIB` move the TBB the binary links against and no field, so `tbb_dir`
+  names the default for such a build. A `USER_HEADER` set there compiles a header
+  that appears in no `dependencies` entry. `force_recompile = TRUE` is the remedy,
+  as for the rest of this list.
 - CmdStan or Stan Math modified in place. A patch applied, or a checkout updated,
   at the same path and version. The version is unchanged, `make/local` is unchanged,
   and nothing else is recorded, so this is invisible and needs

@@ -982,7 +982,7 @@ compile <- function(quiet = TRUE,
       dependencies = dependencies,
       artifact = hash_file(tmp_exe),
       builder = list(path = cmdstan_path(), version = compiled_cmdstan_version),
-      tbb_dir = tbb_dir_from_make(make_vars),
+      tbb_dir = tbb_dir_from_options(cpp_options),
       known_untracked_dependencies = untracked_dependencies(
         make_local, if (using_user_header) user_header
       )

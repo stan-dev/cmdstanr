@@ -13,7 +13,7 @@ default_info_ret <- list(
 )
 
 # No C++ is compiled here: the mock writes a text file where make would have
-# left the executable. stanc, the tbb_dir query and make/local are real.
+# left the executable. stanc and make/local are real.
 mock_compile <- function(stan_file, ..., info_ret = default_info_ret) {
   with_mocked_cli(
     compile_ret = list(status = 0),
@@ -217,7 +217,7 @@ test_that("reported features are what the binary reports, by presence", {
   )
 })
 
-test_that("tbb_dir is the directory this build resolved", {
+test_that("tbb_dir is the directory the call named or the installation's", {
   stan_file <- local_bernoulli()
   mod <- mock_compile(stan_file)
   record <- read_build_record(mod$exe_file())$record
@@ -226,15 +226,16 @@ test_that("tbb_dir is the directory this build resolved", {
     file.path(cmdstan_path(), "stan/lib/stan_math/lib/tbb")
   ))
 
+  # Supplied in the spelling the build takes, which under WSL is the mount's.
   tbb <- withr::local_tempdir()
   mod <- mock_compile(
     stan_file,
-    cpp_options = list(tbb_lib = tbb, tbb_inc = tbb)
+    cpp_options = list(tbb_lib = wsl_safe_path(tbb))
   )
   record <- read_build_record(mod$exe_file())$record
-  expect_equal(record$tbb_dir, tbb)
+  expect_true(same_path(record$tbb_dir, tbb))
 
-  # Make hands a relative TBB_LIB back unchanged, so the record resolves it.
+  # A relative TBB_LIB is resolved against the installation.
   mod <- mock_compile(stan_file, cpp_options = list(tbb_lib = "relative-tbb"))
   record <- read_build_record(mod$exe_file())$record
   expect_equal(record$tbb_dir, file.path(cmdstan_path(), "relative-tbb"))

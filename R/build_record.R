@@ -258,32 +258,30 @@ reported_features_from_exe <- function(exe_file) {
   }, error = function(e) unknown)
 }
 
-#' The TBB directory this build resolved
+#' Where the record says the TBB is
 #'
-#' Asked of Make with the build's own variables, so a `TBB_LIB` supplied on the
-#' call is seen, and for both variables in one call. Make returns `TBB_LIB` as it
-#' was written, so a relative one is resolved against the directory Make ran in,
-#' and as the shell prints it, so repeated spaces and glob characters in it are
-#' not preserved.
+#' If the call's `cpp_options` set `TBB_LIB`, that directory, relative to the
+#' installation unless absolute. Otherwise the installation's own copy.
+#'
+#' Make can also pick up `TBB_LIB` from `make/local`,
+#' `~/.config/stan/make.local` or the environment. The record does not look
+#' there, so a build configured that way links against one TBB while the
+#' record names the installation's. On Windows the launch puts the recorded
+#' directory on PATH, so such a build runs with the installation's TBB first,
+#' which is what happens today anyway. Asking make for the real answer is a
+#' rejected alternative in `dev-notes/compilation-state.md`.
 #'
 #' @noRd
-tbb_dir_from_make <- function(make_vars) {
-  withr::with_envvar(
-    c(HOME = short_path(Sys.getenv("HOME"))),
-    stdout <- wsl_compatible_run(
-      command = "make",
-      args = c("-s", make_vars, "print-TBB_BIN_ABSOLUTE_PATH", "print-TBB_LIB"),
-      wd = cmdstan_path()
-    )$stdout
-  )
-  tbb_lib <- parse_make_print_flag("TBB_LIB", stdout)
-  if (!nzchar(tbb_lib)) {
-    parse_make_print_flag("TBB_BIN_ABSOLUTE_PATH", stdout)
+tbb_dir_from_options <- function(cpp_options) {
+  tbb_lib <- cpp_options[["TBB_LIB"]]
+  tbb <- if (is.null(tbb_lib) || identical(tbb_lib, "")) {
+    file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
   } else if (grepl("^(/|[A-Za-z]:)", tbb_lib)) {
     tbb_lib
   } else {
-    repair_path(file.path(cmdstan_path(), tbb_lib))
+    file.path(cmdstan_path(), tbb_lib)
   }
+  repair_path(wsl_safe_path(tbb, revert = TRUE))
 }
 
 #' Dependencies the build can see exist but cannot resolve

@@ -877,7 +877,7 @@ must not restate it. A rule written in two places is a future inconsistency.
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
 | `artifact` | yes | yes | hash of the executable this record describes |
 | `builder` | yes | yes | normalized installation path and version |
-| `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved, from one `make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB` run with the build's own `cpp_options`, so a `TBB_LIB` supplied on the call is seen; a relative `TBB_LIB` is resolved against the directory `make` ran in. Make prints through the shell, so repeated spaces and glob characters in a `TBB_LIB` are recorded as the shell prints them, as in every make query cmdstanr runs. Recorded because Windows needs it at launch and only the build can determine it (#1261 consumes it; no verdict here turns on it). Not compared: every tracked route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash, and the untracked ones (§6) move this field with nothing else moving |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the call named: `TBB_LIB` from the call's `cpp_options`, resolved against the installation when relative, and the installation's own `lib/tbb` when the call named none. Filled from the call, not asked of `make`: a `TBB_LIB` or `TBB_BIN` set in `make/local`, `~/.config/stan/make.local` or the environment moves the TBB the binary links against and not this field (§6). Recorded because Windows needs it at launch and a later `set_cmdstan_path()` must not move it (#1261 consumes it; no verdict here turns on it). Not compared: both routes it sees are compared already, through `cpp_options_supplied` and `builder` |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
@@ -2042,7 +2042,7 @@ build named an external TBB, and `$(abspath $(TBB_BIN))` otherwise, where `TBB_B
 defaults to the installation's own `lib/tbb`. So the recorded installation is a
 runtime dependency of the binary in the default case and in no other, which is why
 the rule below reports a missing builder rather than treating it as fatal, and why
-the directory is recorded rather than derived (§4).
+the directory is written at build time rather than derived at launch (§4).
 
 **Which TBB the executable is launched with is a launch-side rule, not an
 assessment one.** On macOS and Linux the rpath settles it. On Windows there is no
@@ -2346,10 +2346,11 @@ compilation driver, not merely reading a file that is already there.
   `TBB_BIN` and `TBB_LIB`. A command-line assignment wins, so this reaches only what
   cmdstanr does not supply. None of it is compared: a variable that arrived from
   the environment appears in no compared field. The four flags `<exe> info` reports
-  land in `reported_features`, `TBB_BIN` and `TBB_LIB` move `tbb_dir`, and §4's
-  table says neither is a trigger. A `USER_HEADER` set there compiles a header that
-  appears in no `dependencies` entry. `force_recompile = TRUE` is the remedy, as for
-  the rest of this list.
+  land in `reported_features`, which §4's table says is not a trigger. `TBB_BIN`
+  and `TBB_LIB` move the TBB the binary links against and no field, so `tbb_dir`
+  names the default for such a build. A `USER_HEADER` set there compiles a header
+  that appears in no `dependencies` entry. `force_recompile = TRUE` is the remedy,
+  as for the rest of this list.
 - CmdStan or Stan Math modified in place. A patch applied, or a checkout updated,
   at the same path and version. The version is unchanged, `make/local` is unchanged,
   and nothing else is recorded, so this is invisible and needs
@@ -3884,8 +3885,16 @@ replaced it.
   arises, a downgrade on one machine.
 - **A third engine state for a failed re-resolution** (§5). Resolving is the
   caller's job, so the failure is raised before the engine is called.
-- **Deriving the TBB directory from the builder path** (#1261). Wrong for any build
-  that named its own TBB.
+- **Deriving the TBB directory at launch from the selected installation** (#1261).
+  Wrong for any build whose call named its own TBB, and for every build once
+  another installation is selected.
+- **Asking `make` for the TBB directory the build resolved** (§4). It would see a
+  `TBB_LIB` from `make/local` or the environment, which `tbb_dir` misses. But
+  CmdStan's `print-%` rule answers through a shell echo, which on Windows spells a
+  drive as `/c/` and drops the backslashes of a supplied path, and printing with
+  `$(info)` from a fragment makefile instead is a second make-query mechanism for
+  a corner the Windows launch has never handled. Tried in Stage 3 and dropped; it
+  can return without a format change if that corner is ever reported.
 - **`missing()` to learn whether `force_recompile` was supplied** (§7). Breaks as soon
   as a wrapper declares its own default and forwards it.
 - **Caching the assessment's verdict on the object** (§5). Right within a session and
