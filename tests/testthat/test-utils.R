@@ -545,6 +545,77 @@ test_that("cmdstan_make_local() reads back written make flags", {
   )
 })
 
+test_that("cmdstan_make_local() does not append flags that are already present", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  make_local_path <- file.path(dir, "make", "local")
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false"),
+    make_local_path
+  )
+
+  # A flag already in the file is not written again.
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false")
+  )
+
+  # Copying the make/local of a previous installation, as suggested by
+  # install_cmdstan(), adds only the flags that are new.
+  previous_install <- c(
+    "CXXFLAGS += -Wno-deprecated-declarations",
+    "PRECOMPILED_HEADERS=false",
+    "O = 3"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = as.list(previous_install)),
+    c(previous_install[1:2], "O = 3")
+  )
+
+  # Leading/trailing whitespace does not defeat the check.
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("  O = 3  ")),
+    c(previous_install[1:2], "O = 3")
+  )
+})
+
+test_that("cmdstan_make_local() writes repeated flags in cpp_options once", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list(STAN_THREADS = TRUE, "STAN_THREADS" = TRUE)
+    ),
+    "STAN_THREADS=true"
+  )
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -O1", "CXXFLAGS += -O1"),
+      append = FALSE
+    ),
+    "CXXFLAGS += -O1"
+  )
+})
+
+test_that("cmdstan_make_local() still appends a new value for a known variable", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STANCFLAGS=--O1", file.path(dir, "make", "local"))
+
+  # Same variable, different value: make lets the last assignment win, so this
+  # must not be treated as a duplicate.
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STANCFLAGS = "--Oexperimental")),
+    c("STANCFLAGS=--O1", "STANCFLAGS=--Oexperimental")
+  )
+})
+
 test_that("matching_variables() works", {
   ret <- matching_variables(c("beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
   expect_equal(

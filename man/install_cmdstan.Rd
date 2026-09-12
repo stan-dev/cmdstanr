@@ -88,7 +88,9 @@ Subsystem for Linux (WSL). The default is \code{FALSE}.}
 
 \item{append}{(logical) For \code{cmdstan_make_local()}, should the listed
 makefile flags be appended to the end of the existing \code{make/local} file?
-The default is \code{TRUE}. If \code{FALSE} the file is overwritten.}
+The default is \code{TRUE}. If \code{FALSE} the file is overwritten. Appending is
+idempotent: a flag that is already present in \code{make/local} is not written
+a second time, and repeated flags in \code{cpp_options} are written once.}
 
 \item{fix}{Deprecated and will be removed in a future release. This argument
 is ignored and retained only for compatibility.}

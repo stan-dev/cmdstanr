@@ -314,7 +314,9 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @export
 #' @param append (logical) For `cmdstan_make_local()`, should the listed
 #'   makefile flags be appended to the end of the existing `make/local` file?
-#'   The default is `TRUE`. If `FALSE` the file is overwritten.
+#'   The default is `TRUE`. If `FALSE` the file is overwritten. Appending is
+#'   idempotent: a flag that is already present in `make/local` is not written
+#'   a second time, and repeated flags in `cpp_options` are written once.
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -336,7 +338,20 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
         }
       }
     }
-    write(built_flags, file = make_local_path, append = append)
+    if (append) {
+      # Don't write a flag that is already in the file.
+      existing <- tryCatch(
+        suppressWarnings(readLines(make_local_path, warn = FALSE)),
+        error = function(e) character(0)
+      )
+      built_flags <- built_flags[!trimws(built_flags) %in% trimws(existing)]
+    }
+    built_flags <- unique(built_flags)
+    # Skip the write if there is nothing left to add and the file is
+    # already there.
+    if (length(built_flags) > 0 || !append || !file.exists(make_local_path)) {
+      write(built_flags, file = make_local_path, append = append)
+    }
   }
   make_local_contents <- tryCatch(
     suppressWarnings(readLines(make_local_path, warn = FALSE)),
