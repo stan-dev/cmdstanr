@@ -697,7 +697,7 @@ fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
 #> Path [10] : Iter      log prob        ||dx||      ||grad||     alpha      alpha0      # evals       ELBO    Best ELBO        Notes  
 #>               5      -6.748e+00      1.792e-03   5.330e-05    1.000e+00  1.000e+00       156 -6.186e+00 -6.271e+00                   
 #> Path [10] :Best Iter: [3] ELBO (-6.185507) evaluations: (156) 
-#> Finished in  0.1 seconds.
+#> Finished in  0.2 seconds.
 
 # Specifying initial values as a function
 fit_mcmc_w_init_fun <- mod$sample(
@@ -765,7 +765,7 @@ fit_mcmc_w_init_list <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_optim_w_init_list <- mod$optimize(
   data = stan_data,

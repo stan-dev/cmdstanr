@@ -295,7 +295,7 @@ fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
 #>        5      -6.74802    0.00118079   3.00586e-05           1           1        8    
 #> Optimization terminated normally:  
 #>   Convergence detected: relative gradient magnitude is below tolerance 
-#> Finished in  0.1 seconds.
+#> Finished in  0.3 seconds.
 fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
 #> Calculating Hessian 
 #> Calculating inverse of Cholesky factor 
@@ -477,7 +477,7 @@ fit_mcmc_w_init_fun_2 <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit_mcmc_w_init_fun_2$init()
 #> [[1]]
