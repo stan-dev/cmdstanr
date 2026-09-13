@@ -260,10 +260,13 @@ reported_features_from_exe <- function(exe_file) {
 
 #' Where the record says the TBB is
 #'
-#' If the call's `cpp_options` set `TBB_LIB`, that directory, relative to the
-#' installation unless absolute. Otherwise the installation's own copy.
+#' The first non-empty of `TBB_LIB` and `TBB_BIN` from the call's
+#' `cpp_options`, then the installation's own copy, which is the order the
+#' makefile links in. The options are read as make receives them: the last
+#' assignment wins and `FALSE` is an empty one. A relative directory is
+#' resolved against the installation, where make runs.
 #'
-#' Make can also pick up `TBB_LIB` from `make/local`,
+#' Make can also pick up both variables from `make/local`,
 #' `~/.config/stan/make.local` or the environment. The record does not look
 #' there, so a build configured that way links against one TBB while the
 #' record names the installation's. On Windows the launch puts the recorded
@@ -274,13 +277,13 @@ reported_features_from_exe <- function(exe_file) {
 #'
 #' @noRd
 tbb_dir_from_options <- function(cpp_options) {
-  tbb_lib <- cpp_options[["TBB_LIB"]]
-  tbb <- if (is.null(tbb_lib) || identical(tbb_lib, "")) {
-    file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
-  } else if (grepl("^(/|[A-Za-z]:)", tbb_lib)) {
-    tbb_lib
-  } else {
-    file.path(cmdstan_path(), tbb_lib)
+  assigned <- parsed_cpp_options(cpp_options)
+  candidates <- c(
+    assigned[["TBB_LIB"]], assigned[["TBB_BIN"]], "stan/lib/stan_math/lib/tbb"
+  )
+  tbb <- candidates[nzchar(candidates)][1]
+  if (!grepl("^(/|[A-Za-z]:)", tbb)) {
+    tbb <- file.path(cmdstan_path(), tbb)
   }
   repair_path(wsl_safe_path(tbb, revert = TRUE))
 }

@@ -239,6 +239,22 @@ test_that("tbb_dir is the directory the call named or the installation's", {
   mod <- mock_compile(stan_file, cpp_options = list(tbb_lib = "relative-tbb"))
   record <- read_build_record(mod$exe_file())$record
   expect_equal(record$tbb_dir, file.path(cmdstan_path(), "relative-tbb"))
+
+  # Read as make receives the options: the last assignment wins, FALSE is an
+  # empty one, and TBB_BIN stands in when TBB_LIB is empty.
+  relative <- file.path(cmdstan_path(), "relative-tbb")
+  expect_equal(
+    tbb_dir_from_options(list(TBB_LIB = c("first", "relative-tbb"))),
+    relative
+  )
+  expect_equal(
+    tbb_dir_from_options(list(TBB_LIB = FALSE, TBB_BIN = "relative-tbb")),
+    relative
+  )
+  expect_true(same_path(
+    tbb_dir_from_options(list(TBB_LIB = FALSE)),
+    file.path(cmdstan_path(), "stan/lib/stan_math/lib/tbb")
+  ))
 })
 
 test_that("a build with an untracked dependency records it", {

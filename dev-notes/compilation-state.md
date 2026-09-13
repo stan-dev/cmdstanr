@@ -877,7 +877,7 @@ must not restate it. A rule written in two places is a future inconsistency.
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
 | `artifact` | yes | yes | hash of the executable this record describes |
 | `builder` | yes | yes | normalized installation path and version |
-| `tbb_dir` | yes | **no** | the absolute TBB directory the call named: `TBB_LIB` from the call's `cpp_options`, resolved against the installation when relative, and the installation's own `lib/tbb` when the call named none. Filled from the call, not asked of `make`: a `TBB_LIB` or `TBB_BIN` set in `make/local`, `~/.config/stan/make.local` or the environment moves the TBB the binary links against and not this field (§6). Recorded because Windows needs it at launch and a later `set_cmdstan_path()` must not move it (#1261 consumes it; no verdict here turns on it). Not compared: both routes it sees are compared already, through `cpp_options_supplied` and `builder` |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the call named, read as `make` receives the call's `cpp_options` (§3: last assignment wins, `FALSE` is an empty one): `TBB_LIB`, or `TBB_BIN` when `TBB_LIB` is empty, which is the order `compiler_flags` uses; resolved against the installation when relative, since `make` runs there; and the installation's own `lib/tbb` when the call named neither. Filled from the call, not asked of `make`: a `TBB_LIB` or `TBB_BIN` set in `make/local`, `~/.config/stan/make.local` or the environment moves the TBB the binary links against and not this field (§6). Recorded because Windows needs it at launch and a later `set_cmdstan_path()` must not move it (#1261 consumes it; no verdict here turns on it). Not compared: both routes it sees are compared already, through `cpp_options_supplied` and `builder` |
 | `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
@@ -3889,12 +3889,13 @@ replaced it.
   Wrong for any build whose call named its own TBB, and for every build once
   another installation is selected.
 - **Asking `make` for the TBB directory the build resolved** (§4). It would see a
-  `TBB_LIB` from `make/local` or the environment, which `tbb_dir` misses. But
-  CmdStan's `print-%` rule answers through a shell echo, which on Windows spells a
-  drive as `/c/` and drops the backslashes of a supplied path, and printing with
-  `$(info)` from a fragment makefile instead is a second make-query mechanism for
-  a corner the Windows launch has never handled. Tried in Stage 3 and dropped; it
-  can return without a format change if that corner is ever reported.
+  `TBB_LIB` or `TBB_BIN` from `make/local` or the environment, which `tbb_dir`
+  misses. But CmdStan's `print-%` rule answers through a shell echo, which on
+  Windows spells a drive as `/c/` and drops the backslashes of a supplied path,
+  and printing with `$(info)` from a fragment makefile instead is a second
+  make-query mechanism for a corner the Windows launch has never handled. Tried
+  in Stage 3 and dropped; it can return without a format change if that corner
+  is ever reported.
 - **`missing()` to learn whether `force_recompile` was supplied** (§7). Breaks as soon
   as a wrapper declares its own default and forwards it.
 - **Caching the assessment's verdict on the object** (§5). Right within a session and
