@@ -1328,6 +1328,10 @@ compiles and never mutates state.** Callers differ:
 | `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
 | any operation that runs or derives state from the binary | **errors** |
 
+The assessment returns its reasons as names, one per trigger that fired or the one
+reason the record could not be used, and the caller words them (§6). Nothing is
+current when the list is empty.
+
 <!-- /contract -->
 
 These are one assessment with two responses, not two contracts. Stating them as one
@@ -1346,7 +1350,7 @@ executable was replaced (§2).
 | | at `cmdstan_model()` | at a guarded method |
 |---|---|---|
 | **expected** | the options this call supplied | the object's own snapshot: the options it was built with, and the artifact hash it was built against |
-| **observed** | the executable's hash, the record beside it, and either the source hashes resolved with this call's include paths or a statement that they were not resolved | the same, resolved with the object's construction-time paths (§4) |
+| **observed** | the record beside the executable, hash-bound to it (§4) so the executable's hash arrives inside it; the installation selected now; and either the source hashes resolved with this call's include paths or a statement that they were not resolved | the same, resolved with the object's construction-time paths (§4) |
 
 <!-- /contract -->
 
