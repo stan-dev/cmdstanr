@@ -90,7 +90,7 @@ merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
 # the emitted flags rather than the list because a vector value expands into one
 # assignment per element.
 parsed_cpp_options <- function(cpp_options) {
-  assignments <- list()
+  assignments <- structure(list(), names = character())
   for (flag in cpp_options_to_compile_flags(cpp_options)) {
     option_name <- sub("=.*$", "", flag)
     assignments[[option_name]] <- sub("^[^=]*=", "", flag)

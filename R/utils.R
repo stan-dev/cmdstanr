@@ -264,19 +264,23 @@ copy_temp_files <-
     absolute_path(destinations)
   }
 
-#' Replace a model executable while preserving the previous one
+#' Install a model executable and its build record as a pair
 #'
-#' Stage the new executable, move the old one aside, and attempt to restore it
-#' if installation fails. Suppress file.copy() and file.rename() warnings so
-#' warn = 2 cannot interrupt rollback. A crash between renames may leave only
-#' the backup.
+#' Both files are staged beside the destination first, so nothing there changes
+#' until both are ready. The moves that follow, the old pair aside and the new
+#' pair in, are kept in a list and undone in reverse if a later one fails or the
+#' installed pair does not read back, so any failure leaves the previous pair in
+#' place or names the files it could not put back. file.copy() and
+#' file.rename() warnings are suppressed so warn = 2 cannot interrupt the undo.
+#' A crash between renames may leave only the backup.
 #'
 #' @noRd
 #' @param from Path to the newly compiled executable.
 #' @param to Path the executable should be installed at.
-#' @return NULL after a clean install, or the leftover backup path if cleanup
-#'   fails. The new executable is installed in either case.
-install_executable <- function(from, to) {
+#' @param record The build record to install beside the executable.
+#' @return NULL after a clean install, or the backup paths that cleanup could
+#'   not remove. The new executable and its record are installed in either case.
+install_executable <- function(from, to, record) {
   if (dir.exists(to)) {
     stop(
       "Cannot install the compiled executable at '", to,
@@ -285,81 +289,105 @@ install_executable <- function(from, to) {
     )
   }
   # Normalize mixed Windows separators before converting the path for WSL.
-  candidate <- repair_path(tempfile(pattern = "exe-new-", tmpdir = dirname(to)))
-  discard_candidate <- function() {
-    if (unlink(candidate, expand = FALSE) == 0L) {
+  stage <- function(pattern) {
+    repair_path(tempfile(pattern = pattern, tmpdir = dirname(to)))
+  }
+  rename <- function(from, to) {
+    isTRUE(suppressWarnings(file.rename(from, to)))
+  }
+  # The paths that are still there after trying to remove them.
+  remove <- function(paths) {
+    paths <- Filter(file.exists, paths)
+    paths[vapply(paths, unlink, integer(1), expand = FALSE) != 0L]
+  }
+  left_behind <- function(paths) {
+    if (length(paths) == 0) {
       ""
     } else {
-      paste0(" The staged copy has been left at '", candidate, "'.")
+      paste0(" Files left behind: '", paste(paths, collapse = "', '"), "'.")
     }
   }
 
-  if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
+  # Nothing at the destination changes until both files are staged beside it.
+  candidate <- stage("exe-new-")
+  staged_record <- build_record_path(candidate)
+  staging <- tryCatch({
+    if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
+      stop(
+        "Could not stage the compiled executable at '", candidate, "'.",
+        call. = FALSE
+      )
+    }
+    if (os_is_wsl()) {
+      chmod <- processx::run(
+        command = "wsl",
+        args = c("chmod", "+x", wsl_safe_path(candidate)),
+        error_on_status = FALSE
+      )
+      if (is.na(chmod$status) || chmod$status != 0) {
+        stop("Could not make the compiled executable executable.", call. = FALSE)
+      }
+    }
+    write_build_record(record, candidate)
+    NULL
+  }, error = function(e) e)
+  if (!is.null(staging)) {
     stop(
-      "Could not stage the compiled executable at '", candidate, "'. ",
-      "The model executable at '", to, "' was not modified.",
-      call. = FALSE
-    )
-  }
-  if (os_is_wsl()) {
-    chmod <- processx::run(
-      command = "wsl",
-      args = c("chmod", "+x", wsl_safe_path(candidate)),
-      error_on_status = FALSE
-    )
-    if (is.na(chmod$status) || chmod$status != 0) {
-      stop(
-        "Could not make the compiled executable executable. ",
-        "The model executable at '", to, "' was not modified.",
-        discard_candidate(),
-        call. = FALSE
-      )
-    }
-  }
-
-  backup <- NULL
-  if (file.exists(to)) {
-    backup <- repair_path(tempfile(pattern = "exe-old-", tmpdir = dirname(to)))
-    if (!isTRUE(suppressWarnings(file.rename(to, backup)))) {
-      stop(
-        "Could not move the existing executable '", to, "' aside. ",
-        "It was not modified.",
-        discard_candidate(),
-        call. = FALSE
-      )
-    }
-  }
-
-  if (!isTRUE(suppressWarnings(file.rename(candidate, to)))) {
-    leftover_candidate <- discard_candidate()
-    if (is.null(backup)) {
-      stop(
-        "Could not install the compiled executable at '", to, "'.",
-        leftover_candidate,
-        call. = FALSE
-      )
-    }
-    if (!isTRUE(suppressWarnings(file.rename(backup, to)))) {
-      stop(
-        "Could not install the compiled executable at '", to, "' and the ",
-        "previously compiled executable could not be restored. It has been ",
-        "kept at '", backup, "'.",
-        leftover_candidate,
-        call. = FALSE
-      )
-    }
-    stop(
-      "Could not install the compiled executable at '", to, "'. ",
-      "The previously compiled executable has been restored.",
-      leftover_candidate,
+      conditionMessage(staging),
+      " The model executable at '", to, "' was not modified.",
+      left_behind(remove(c(candidate, staged_record))),
       call. = FALSE
     )
   }
 
-  if (!is.null(backup) && unlink(backup, expand = FALSE) != 0L) {
-    return(backup)
+  # The old pair aside, then the new pair in. A move with nothing to back up
+  # drops out.
+  record_path <- build_record_path(to)
+  exe_backup <- if (file.exists(to)) stage("exe-old-")
+  record_backup <- if (file.exists(record_path)) stage("record-old-")
+  moves <- list(
+    c(to, exe_backup),
+    c(record_path, record_backup),
+    c(candidate, to),
+    c(staged_record, record_path)
+  )
+  moves <- moves[lengths(moves) == 2]
+  done <- list()
+  failure <- tryCatch({
+    for (move in moves) {
+      if (!rename(move[1], move[2])) {
+        stop("Could not move '", move[1], "' to '", move[2], "'.", call. = FALSE)
+      }
+      done <- c(done, list(move))
+    }
+    verify_build_record(to)
+    NULL
+  }, error = function(e) e)
+  if (!is.null(failure)) {
+    # A later undo can put the old file back over one that would not move.
+    stuck <- character()
+    for (move in rev(done)) {
+      if (rename(move[2], move[1])) {
+        stuck <- setdiff(stuck, move[1])
+      } else {
+        stuck <- c(stuck, move[2])
+      }
+    }
+    stop(
+      "Could not install the compiled executable at '", to, "': ",
+      conditionMessage(failure),
+      if (length(stuck) == 0) {
+        " The executable and build record there are as they were."
+      } else {
+        " The previous executable and build record could not all be put back."
+      },
+      left_behind(c(stuck, remove(c(candidate, staged_record)))),
+      call. = FALSE
+    )
   }
-  NULL
+
+  leftover <- remove(c(exe_backup, record_backup))
+  if (length(leftover) == 0) NULL else leftover
 }
 
 # generate new file names
@@ -639,14 +667,17 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
     ))
   }
   if (revert) {
-    if (!grepl("^/mnt/", path)) {
-      return(path)
+    if (grepl("^/mnt/", path)) {
+      strip_mnt <- gsub("^/mnt/", "", path)
+      drive_letter <- strtrim(strip_mnt, 1)
+      path <- gsub(paste0("^/mnt/", drive_letter),
+                    paste0(toupper(drive_letter), ":"),
+                    path)
+    } else if (grepl("^/[^/]", path)) {
+      # A file on the distribution's own filesystem, which Windows reaches
+      # through the //wsl$ share. Host paths already carry a drive or a share.
+      path <- paste0(wsl_dir_prefix(), path)
     }
-    strip_mnt <- gsub("^/mnt/", "", path)
-    drive_letter <- strtrim(strip_mnt, 1)
-    path <- gsub(paste0("^/mnt/", drive_letter),
-                  paste0(toupper(drive_letter), ":"),
-                  path)
   } else if (grepl("^//wsl", path)) {
     path <- gsub(wsl_dir_prefix(), "", path, fixed = TRUE)
   } else {

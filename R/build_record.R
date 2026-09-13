@@ -230,12 +230,119 @@ new_build_record <- function(request, reported_features, dependencies, artifact,
 }
 
 
+# building a record at compile time ---------------------------------------
+
+#' The build features the executable reports
+#'
+#' Keeps the entries reported as a single logical under a name, plus a
+#' `stan_version` of three dotted integers, so output the record cannot hold
+#' cannot fail the writer. Any failure leaves every feature unknown rather than
+#' failing the build.
+#'
+#' @noRd
+reported_features_from_exe <- function(exe_file) {
+  unknown <- structure(list(), names = character())
+  tryCatch({
+    result <- run_info_cli(exe_file)
+    if (result$status != 0) {
+      unknown
+    } else {
+      info <- parse_exe_info_string(result$stdout)
+      version <- grepl("^[0-9]+\\.[0-9]+\\.[0-9]+$", info[["stan_version"]])
+      keep <- nzchar(names(info)) & (
+        vapply(info, checkmate::test_flag, logical(1)) |
+          (names(info) == "stan_version" & version)
+      )
+      info[keep]
+    }
+  }, error = function(e) unknown)
+}
+
+#' Where the record says the TBB is
+#'
+#' The first non-empty of `TBB_LIB` and `TBB_BIN` from the call's
+#' `cpp_options`, then the installation's own copy, which is the order the
+#' makefile links in. The options are read as make receives them: the last
+#' assignment wins and `FALSE` is an empty one. A relative directory is
+#' resolved against the installation, where make runs.
+#'
+#' Make can also pick up both variables from `make/local`,
+#' `~/.config/stan/make.local` or the environment. The record does not look
+#' there, so a build configured that way links against one TBB while the
+#' record names the installation's. On Windows the launch puts the recorded
+#' directory on PATH, so such a build runs with the installation's TBB first,
+#' which is what happens today anyway. Asking make for the real answer is a
+#' rejected alternative in `dev-notes/compilation-state.md`, although could be
+#' reconsidered.
+#'
+#' @noRd
+tbb_dir_from_options <- function(cpp_options) {
+  assigned <- parsed_cpp_options(cpp_options)
+  candidates <- c(
+    assigned[["TBB_LIB"]], assigned[["TBB_BIN"]], "stan/lib/stan_math/lib/tbb"
+  )
+  tbb <- candidates[nzchar(candidates)][1]
+  if (!grepl("^(/|[A-Za-z]:)", tbb)) {
+    tbb <- file.path(cmdstan_path(), tbb)
+  }
+  repair_path(wsl_safe_path(tbb, revert = TRUE))
+}
+
+#' Dependencies the build can see exist but cannot resolve
+#'
+#' A `make/local` that includes another makefile, and a user header that
+#' includes another header, both pull in files nothing here can enumerate. An
+#' empty list means nothing was detected, never that the record is complete.
+#'
+#' @noRd
+untracked_dependencies <- function(make_local = NULL, user_header = NULL) {
+  detectors <- list(
+    make_local_include = list(
+      path = make_local, pattern = "^\\s*(?:-?include|sinclude)\\b"
+    ),
+    user_header_include = list(
+      path = user_header, pattern = "^\\s*#\\s*include\\s*\""
+    )
+  )
+  detected <- list()
+  for (kind in names(detectors)) {
+    path <- detectors[[kind]]$path
+    if (is.null(path)) {
+      next
+    }
+    lines <- readLines(path, warn = FALSE)
+    if (any(grepl(detectors[[kind]]$pattern, lines, perl = TRUE))) {
+      detected[[length(detected) + 1]] <- list(kind = kind, detected_in = path)
+    }
+  }
+  detected
+}
+
+untracked_dependency_descriptions <- c(
+  make_local_include = "make/local includes another makefile",
+  user_header_include = "the user header includes other headers"
+)
+
+#' The one line a build prints when it has dependencies we cannot track
+#'
+#' @noRd
+untracked_dependencies_note <- function(untracked) {
+  kinds <- vapply(untracked, `[[`, character(1), "kind")
+  paste0(
+    "Note: this model has dependencies cmdstanr does not track: ",
+    paste(untracked_dependency_descriptions[kinds], collapse = ", "),
+    ". If those files change, rebuild with force_recompile = TRUE."
+  )
+}
+
+
 # writing and reading -----------------------------------------------------
 
 #' Write a build record beside its executable
 #'
 #' Staged in the same directory and renamed into place so a reader never meets
-#' a half-written record. A failed rename warns, and the warning is suppressed
+#' a half-written record, and the staging file is removed on the way out whether
+#' or not it got that far. A failed rename warns, and the warning is suppressed
 #' so that `warn = 2` cannot pre-empt the error below. `auto_unbox` writes a
 #' length-one vector as a JSON scalar, which is why the schema holds every
 #' array as a list and every scalar as a length-one vector: a one-element
@@ -247,11 +354,11 @@ write_build_record <- function(record, exe_file) {
   validate_build_record(record)
   path <- build_record_path(exe_file)
   staged <- tempfile(pattern = basename(path), tmpdir = dirname(path))
+  withr::defer(unlink(staged, expand = FALSE))
   jsonlite::write_json(
     record, staged, auto_unbox = TRUE, pretty = TRUE, digits = NA
   )
   if (!isTRUE(suppressWarnings(file.rename(staged, path)))) {
-    unlink(staged)
     stop("Could not write the build record to ", path, ".", call. = FALSE)
   }
   invisible(path)
@@ -306,6 +413,24 @@ read_build_record <- function(exe_file) {
   }
 
   list(status = "available", record = record)
+}
+
+#' Check that the record beside an executable describes it
+#'
+#' The check the install transaction ends with. The test for interleaved writes
+#' runs it on its own.
+#'
+#' @noRd
+verify_build_record <- function(exe_file) {
+  result <- read_build_record(exe_file)
+  if (result$status != "available") {
+    stop(
+      "The build record beside '", exe_file, "' does not describe it (",
+      result$reason, ").",
+      call. = FALSE
+    )
+  }
+  invisible(result$record)
 }
 
 #' Compare a recorded build against the current one

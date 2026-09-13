@@ -578,12 +578,13 @@ test_that("a leftover backup doesn't unwind a compile when warnings are errors",
         list(warn = 2),
         model$compile(cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
       ),
-      # Normalize Windows separators and the random backup name.
+      # Normalize Windows separators and the random backup names.
       transform = function(lines) {
         for (dir in unique(c(model_dir, repair_path(model_dir)))) {
           lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
         }
-        gsub("exe-old-[0-9a-f]+", "exe-old-<random>", lines)
+        lines <- gsub("exe-old-[0-9a-f]+", "exe-old-<random>", lines)
+        gsub("record-old-[0-9a-f]+", "record-old-<random>", lines)
       }
     )
   )
