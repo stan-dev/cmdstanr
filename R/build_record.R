@@ -432,39 +432,83 @@ verify_build_record <- function(exe_file) {
   invisible(result$record)
 }
 
-#' Compare a recorded build against the current one
+#' The rows of the comparison table
 #'
-#' Returns the name of every compared field whose value differs between the
-#' two records, in the order the design's table lists them. Every field is
-#' checked, and nothing stops at the first difference, so a caller who changed
-#' more than one thing is told about all of them. Each entry below extracts
-#' the value a row compares, so the list is the table.
+#' One entry per compared row, in table order, each extracting the value the
+#' row compares from a record or from the current side `assess_build()`
+#' assembles. The list is the table.
 #'
 #' @noRd
-compare_build_records <- function(recorded, current) {
-  sorted <- function(x) x[order(names(x))]
-  optional_dependency <- function(record, name, fields) {
-    record$dependencies[[name]][fields]
-  }
-  compared <- list(
-    cpp_options = function(x) sorted(x$request$cpp_options_supplied),
-    stanc_options = function(x) x$request$stanc_options_supplied,
-    stanc_name = function(x) x$request$stanc_name,
-    stan_file = function(x) x$dependencies$stan_file$hash,
-    included_files = function(x) {
-      lapply(x$dependencies$included_files, `[[`, "hash")
-    },
-    user_header = function(x) {
-      optional_dependency(x, "user_header", c("hash", "built_from"))
-    },
-    make_local = function(x) optional_dependency(x, "make_local", "hash"),
-    artifact = function(x) x$artifact,
-    builder = function(x) x$builder[c("path", "version")]
-  )
+build_record_comparisons <- list(
+  cpp_options = function(x) {
+    supplied <- x$request$cpp_options_supplied
+    supplied[order(names(supplied))]
+  },
+  stanc_options = function(x) x$request$stanc_options_supplied,
+  stanc_name = function(x) x$request$stanc_name,
+  stan_file = function(x) x$dependencies$stan_file$hash,
+  included_files = function(x) {
+    lapply(x$dependencies$included_files, `[[`, "hash")
+  },
+  user_header = function(x) {
+    x$dependencies$user_header[c("hash", "built_from")]
+  },
+  make_local = function(x) x$dependencies$make_local["hash"],
+  artifact = function(x) x$artifact,
+  builder = function(x) x$builder[c("path", "version")]
+)
+
+#' Compare a recorded build against the current one
+#'
+#' Returns the name of every row in `rows` whose value differs between the
+#' two, in table order. Every row is checked, and nothing stops at the first
+#' difference, so a caller who changed more than one thing is told about all
+#' of them.
+#'
+#' @noRd
+compare_build_records <- function(recorded, current,
+                                  rows = names(build_record_comparisons)) {
   differs <- vapply(
-    compared,
+    build_record_comparisons[rows],
     function(value) !identical(value(recorded), value(current)),
     logical(1)
   )
-  names(compared)[differs]
+  rows[differs]
+}
+
+#' Decide whether an executable is current
+#'
+#' `expected` is what the caller asks for: the `request` it would record, and
+#' at a guarded method the `artifact` hash the object was built against, the
+#' only thing that catches an executable another process replaced together
+#' with its record. `observed` is what is there now: the `record` as
+#' `read_build_record()` returned it, the `dependencies` hashed as the writer
+#' hashes them or `NULL` when they were not resolved, and the `builder`
+#' selected now.
+#'
+#' Returns the reasons to rebuild, empty when there are none. Without a usable
+#' record that is the reason it could not be used and nothing more, since
+#' there is nothing to compare against. With one it is every compared row
+#' that differs. Unresolved dependencies are left out of the comparison rather
+#' than read as an empty set. Reads no file and runs nothing.
+#'
+#' @noRd
+assess_build <- function(expected, observed) {
+  if (observed$record$status != "available") {
+    return(observed$record$reason)
+  }
+  recorded <- observed$record$record
+  current <- list(
+    request = expected$request,
+    dependencies = observed$dependencies,
+    artifact = expected$artifact %||% recorded$artifact,
+    builder = observed$builder
+  )
+  rows <- names(build_record_comparisons)
+  if (is.null(observed$dependencies)) {
+    rows <- setdiff(
+      rows, c("stan_file", "included_files", "user_header", "make_local")
+    )
+  }
+  compare_build_records(recorded, current, rows)
 }
