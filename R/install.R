@@ -149,11 +149,14 @@ install_cmdstan <- function(dir = NULL,
   previous_make_local <- NULL
   old_cmdstan_path <- NULL
   if (!is.null(cmdstan_version(error_on_NA = FALSE))) {
+    old_cmdstan_path <- cmdstan_path()
     current_make_local_contents <- cmdstan_make_local()
-    if (length(current_make_local_contents) > 0) {
-      old_cmdstan_path <- cmdstan_path()
+    # cmdstan_make_local() returns "" for a make/local that exists but is
+    # empty, which carries no flags and is not worth reporting either
+    if (length(current_make_local_contents) > 0 &&
+        !identical(current_make_local_contents, "")) {
       previous_make_local <- current_make_local_contents
-      make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", cmdstan_path(), "\"))")
+      make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", old_cmdstan_path, "\"))")
     }
   }
   if (is.null(dir)) {
@@ -216,7 +219,9 @@ install_cmdstan <- function(dir = NULL,
   if (!check_install_dir(dir_cmdstan, overwrite)) {
     return(invisible(NULL))
   }
-  # Ask before downloading
+  # Ask before downloading. Argument or answer decides whether the
+  # post-build message below is shown.
+  copy_make_local_decided <- !is.null(copy_make_local) || rlang::is_interactive()
   copy_make_local <- resolve_copy_make_local(
     previous_make_local,
     old_cmdstan_path,
@@ -272,10 +277,8 @@ install_cmdstan <- function(dir = NULL,
   # Carry the previous installation's makefile flags over before the build, so
   # that the build already uses them. Written first, so that cpp_options and
   # the platform flags below take precedence over an inherited assignment.
-  if (maybe_copy_make_local(dir_cmdstan, previous_make_local, old_cmdstan_path,
-                            copy_make_local)) {
-    make_local_msg <- NULL
-  }
+  maybe_copy_make_local(dir_cmdstan, previous_make_local, old_cmdstan_path,
+                        copy_make_local)
 
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   # Setting up native M1 compilation of CmdStan and its downstream libraries
@@ -322,15 +325,16 @@ install_cmdstan <- function(dir = NULL,
 
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
   set_cmdstan_path(dir_cmdstan)
-  if (!is.null(make_local_msg) && !identical(old_cmdstan_path, cmdstan_path())) {
+  if (report_uncopied_make_local(make_local_msg, copy_make_local_decided,
+                                 old_cmdstan_path, cmdstan_path())) {
     message(
       "\nThe previous installation of CmdStan had a non-empty make/local file.\n",
       "If you wish to copy the file to the new installation, run the following commands:\n",
       "\n",
       make_local_msg,
       "\nrebuild_cmdstan(cores = ...)",
-      "\n\nTo copy the flags before the build instead, and avoid the rebuild, use\n",
-      "install_cmdstan(copy_make_local = TRUE)."
+      "\n\nNext time, install_cmdstan(copy_make_local = TRUE) copies the flags\n",
+      "before the build, so that no rebuild is needed."
     )
   }
   if (isTRUE(wsl)) {
@@ -426,6 +430,23 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 
 # internal ----------------------------------------------------------------
 
+#' Should the finished installation point out the `make/local` left behind?
+#'
+#' An explicit `copy_make_local`, or a prompt they answered, has
+#' settled it already. Reinstalling over the same path is excluded
+#' too: the `make/local` the message tells them to read has been
+#' overwritten by then.
+#'
+#' @noRd
+#' @param make_local_msg (string or `NULL`) The suggested command, `NULL` when
+#'   the previous installation had no flags.
+#' @param decided (logical) Was the copy question settled during the install?
+#' @param old_path,new_path (string or `NULL`) Previous and new installation.
+#' @return `TRUE` if the message should be shown.
+report_uncopied_make_local <- function(make_local_msg, decided, old_path, new_path) {
+  !is.null(make_local_msg) && !isTRUE(decided) && !identical(old_path, new_path)
+}
+
 #' Decide whether the previous installation's makefile flags should be reused
 #'
 #' Asked before the download starts. The flags themselves can
@@ -438,11 +459,22 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 #' @param copy_make_local (logical or `NULL`) `TRUE`/`FALSE` decide directly.
 #'   `NULL` asks in an interactive session and declines otherwise, so that
 #'   scripts, R CMD check and CI never block on a prompt.
-#' @return `TRUE` if the flags should be copied.
+#' @return `TRUE` if the flags should be copied. An explicit `TRUE` with
+#'   nothing to copy returns `FALSE` and reports why.
 resolve_copy_make_local <- function(previous_contents,
                                     previous_path,
                                     copy_make_local = NULL) {
   if (length(previous_contents) == 0 || identical(previous_contents, "")) {
+    if (isTRUE(copy_make_local)) {
+      # An explicit request that cannot be honoured
+      if (is.null(previous_path)) {
+        message("* copy_make_local = TRUE, but no CmdStan installation is ",
+                "currently in use, so there are no makefile flags to copy.")
+      } else {
+        message("* copy_make_local = TRUE, but ", previous_path,
+                " has an empty or missing make/local, so there is nothing to copy.")
+      }
+    }
     return(FALSE)
   }
   if (!is.null(copy_make_local)) {

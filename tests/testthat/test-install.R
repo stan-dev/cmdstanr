@@ -409,9 +409,55 @@ test_that("resolve_copy_make_local() does not ask when there is nothing to copy"
     prompt_copy_make_local = function(...) stop("must not prompt without flags to copy")
   )
 
-  expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", NULL))
-  expect_false(resolve_copy_make_local("", "/old/cmdstan", NULL))
-  expect_false(resolve_copy_make_local(character(0), "/old/cmdstan", NULL))
+  # Nothing was requested, so a make/local with no flags is a non-event
+  expect_no_message(expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", NULL)))
+  expect_no_message(expect_false(resolve_copy_make_local("", "/old/cmdstan", NULL)))
+  expect_no_message(
+    expect_false(resolve_copy_make_local(character(0), "/old/cmdstan", NULL))
+  )
+  expect_no_message(expect_false(resolve_copy_make_local("", "/old/cmdstan", FALSE)))
+})
+
+test_that("resolve_copy_make_local() reports an explicit TRUE it cannot honour", {
+  # Otherwise the flags silently fail to arrive and the user finds out weeks
+  # later, from a model that compiles differently.
+
+  # An installation is in use, but it has no flags to copy: name it, because
+  # that is what reveals a cmdstan_path() pointing somewhere unexpected.
+  expect_message(
+    expect_false(resolve_copy_make_local("", "/old/cmdstan", TRUE)),
+    "/old/cmdstan has an empty or missing make/local",
+    fixed = TRUE
+  )
+  expect_message(
+    expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", TRUE)),
+    "nothing to copy",
+    fixed = TRUE
+  )
+
+  # No installation in use at all: there is no path to name
+  expect_message(
+    expect_false(resolve_copy_make_local(NULL, NULL, TRUE)),
+    "no CmdStan installation is currently in use",
+    fixed = TRUE
+  )
+})
+
+test_that("report_uncopied_make_local() only reports an unanswered question", {
+  msg <- "cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"/old\"))"
+
+  # Non-interactive with copy_make_local = NULL: nobody was ever asked
+  expect_true(report_uncopied_make_local(msg, FALSE, "/old", "/new"))
+
+  # Answered, by argument or by prompt: saying it again would suggest a
+  # rebuild the user has already declined
+  expect_false(report_uncopied_make_local(msg, TRUE, "/old", "/new"))
+
+  # Previous installation had no flags
+  expect_false(report_uncopied_make_local(NULL, FALSE, "/old", "/new"))
+
+  # Reinstall over the same path: the file the message points at is gone
+  expect_false(report_uncopied_make_local(msg, FALSE, "/old", "/old"))
 })
 
 test_that("copied flags are written before cpp_options, which win", {
