@@ -1329,8 +1329,8 @@ compiles and never mutates state.** Callers differ:
 | any operation that runs or derives state from the binary | **errors** |
 
 The assessment returns its reasons as names, one per trigger that fired or the one
-reason the record could not be used, and the caller words them (§6). Nothing is
-current when the list is empty.
+reason the record could not be used, and the caller words them (§6). The executable
+is current when the vector is empty.
 
 <!-- /contract -->
 
@@ -1650,11 +1650,11 @@ unaffected cannot be known without doing it. <!-- /contract --> No warning is ne
 already says this about external edits and formatting is only an edit cmdstanr
 performs on the user's behalf.
 
-Capturing the source information costs nothing extra: the assessment already
-invokes `stanc --info` for include resolution (§6), and the same output carries the
-variables. The assessment returns parsed source information; the constructor commits
-it as the object's snapshot after a successful validation or rebuild, alongside the
-generated C++ above.
+Capturing the source information costs nothing extra: the constructor already
+invokes `stanc --info` to resolve the includes it hands the assessment (§5), and the
+same output carries the variables. The constructor keeps them and commits them as
+the object's snapshot after a clean assessment or a rebuild, alongside the generated
+C++ above. The assessment itself returns only its reasons.
 
 ---
 

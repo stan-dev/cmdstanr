@@ -388,8 +388,8 @@ compiles and never mutates state.** Callers differ:
 | any operation that runs or derives state from the binary | **errors** |
 
 The assessment returns its reasons as names, one per trigger that fired or the one
-reason the record could not be used, and the caller words them (§6). Nothing is
-current when the list is empty.
+reason the record could not be used, and the caller words them (§6). The executable
+is current when the vector is empty.
 
 ### [What the assessment is given](compilation-state.md#what-the-assessment-is-given)
 
