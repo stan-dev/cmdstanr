@@ -78,7 +78,9 @@
 #'   installation currently in use be copied to the new installation? The copy
 #'   happens before CmdStan is built, so the flags are already in effect for
 #'   that build. The default is `NULL`, which shows the previous `make/local`
-#'   and asks in an interactive session, and copies nothing otherwise.
+#'   and asks in an interactive session, and copies nothing otherwise. The
+#'   question comes before the download, so that the rest of the installation
+#'   runs unattended.
 #'   Use `TRUE` or `FALSE` to decide without being asked. Flags given in
 #'   `cpp_options` are written after the copied ones and therefore take precedence.
 #'
@@ -214,6 +216,12 @@ install_cmdstan <- function(dir = NULL,
   if (!check_install_dir(dir_cmdstan, overwrite)) {
     return(invisible(NULL))
   }
+  # Ask before downloading
+  copy_make_local <- resolve_copy_make_local(
+    previous_make_local,
+    old_cmdstan_path,
+    copy_make_local
+  )
   if (is.null(release_file)) {
     tar_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
     if (inherits(tar_downloaded, "try-error")) {
@@ -418,6 +426,31 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 
 # internal ----------------------------------------------------------------
 
+#' Decide whether the previous installation's makefile flags should be reused
+#'
+#' Asked before the download starts. The flags themselves can
+#' only be written once the new installation has been unpacked.
+#'
+#' @noRd
+#' @param previous_contents (character vector) `make/local` of the installation
+#'   that was in use, as returned by `cmdstan_make_local()`.
+#' @param previous_path (string) Where those contents came from.
+#' @param copy_make_local (logical or `NULL`) `TRUE`/`FALSE` decide directly.
+#'   `NULL` asks in an interactive session and declines otherwise, so that
+#'   scripts, R CMD check and CI never block on a prompt.
+#' @return `TRUE` if the flags should be copied.
+resolve_copy_make_local <- function(previous_contents,
+                                    previous_path,
+                                    copy_make_local = NULL) {
+  if (length(previous_contents) == 0 || identical(previous_contents, "")) {
+    return(FALSE)
+  }
+  if (!is.null(copy_make_local)) {
+    return(isTRUE(copy_make_local))
+  }
+  rlang::is_interactive() && prompt_copy_make_local(previous_contents, previous_path)
+}
+
 #' Carry the makefile flags of the previous CmdStan installation over to a
 #' freshly unpacked one, before it is built.
 #'
@@ -426,22 +459,15 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 #' @param previous_contents (character vector) `make/local` of the installation
 #'   that was in use, as returned by `cmdstan_make_local()`.
 #' @param previous_path (string) Where those contents came from.
-#' @param copy_make_local (logical or `NULL`) `TRUE`/`FALSE` decide directly.
-#'   `NULL` asks in an interactive session and declines otherwise, so that
-#'   scripts, R CMD check and CI never block on a prompt.
+#' @param copy_make_local (logical) The resolved answer.
 #' @return `TRUE` if the flags were written to the new installation.
 maybe_copy_make_local <- function(dir_cmdstan,
                                   previous_contents,
                                   previous_path,
-                                  copy_make_local = NULL) {
-  if (length(previous_contents) == 0 || identical(previous_contents, "")) {
-    return(FALSE)
-  }
-  if (is.null(copy_make_local)) {
-    copy_make_local <- rlang::is_interactive() &&
-      prompt_copy_make_local(previous_contents, previous_path)
-  }
-  if (!isTRUE(copy_make_local)) {
+                                  copy_make_local) {
+  if (!isTRUE(copy_make_local) ||
+      length(previous_contents) == 0 ||
+      identical(previous_contents, "")) {
     return(FALSE)
   }
   cmdstan_make_local(
@@ -454,7 +480,7 @@ maybe_copy_make_local <- function(dir_cmdstan,
 }
 
 # Show the previous make/local and ask whether to reuse it. Separate from
-# maybe_copy_make_local() so that tests can mock the answer.
+# resolve_copy_make_local() so that tests can mock the answer.
 prompt_copy_make_local <- function(previous_contents, previous_path) {
   message(
     "\nThe CmdStan installation in ", previous_path,

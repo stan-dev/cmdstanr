@@ -347,59 +347,71 @@ test_that("maybe_copy_make_local() does nothing when told not to copy", {
   expect_false(file.exists(file.path(new_dir, "make", "local")))
 })
 
-test_that("maybe_copy_make_local() does not prompt in a non-interactive session", {
+test_that("maybe_copy_make_local() never asks anything", {
+  # The question is asked by resolve_copy_make_local() before the download.
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt after the download")
+  )
+
   new_dir <- fake_cmdstan_dir()
+  expect_false(
+    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan", NULL)
+  )
+  expect_false(file.exists(file.path(new_dir, "make", "local")))
+})
+
+test_that("maybe_copy_make_local() ignores a missing or empty make/local", {
+  # cmdstan_make_local() returns NULL when there is no file and "" when the
+  # file is empty.
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), NULL, "/old/cmdstan", TRUE))
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), "", "/old/cmdstan", TRUE))
+  expect_false(
+    maybe_copy_make_local(fake_cmdstan_dir(), character(0), "/old/cmdstan", TRUE)
+  )
+})
+
+test_that("resolve_copy_make_local() takes an explicit answer without asking", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt when told what to do")
+  )
+
+  expect_true(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", TRUE))
+  expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", FALSE))
+})
+
+test_that("resolve_copy_make_local() does not prompt in a non-interactive session", {
   rlang::local_interactive(FALSE)
   local_mocked_bindings(
     prompt_copy_make_local = function(...) stop("must not prompt when not interactive")
   )
 
-  expect_false(
-    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan",
-                          copy_make_local = NULL)
-  )
-  expect_false(file.exists(file.path(new_dir, "make", "local")))
+  expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
 })
 
-test_that("maybe_copy_make_local() follows the answer to the prompt", {
+test_that("resolve_copy_make_local() follows the answer to the prompt", {
   rlang::local_interactive(TRUE)
 
-  yes_dir <- fake_cmdstan_dir()
   local({
     local_mocked_bindings(prompt_copy_make_local = function(...) TRUE)
-    expect_message(
-      expect_true(
-        maybe_copy_make_local(yes_dir, "STAN_THREADS=true", "/old/cmdstan",
-                              copy_make_local = NULL)
-      ),
-      "Copied make/local",
-      fixed = TRUE
-    )
+    expect_true(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
   })
-  expect_equal(cmdstan_make_local(dir = yes_dir), "STAN_THREADS=true")
-
-  no_dir <- fake_cmdstan_dir()
   local({
     local_mocked_bindings(prompt_copy_make_local = function(...) FALSE)
-    expect_false(
-      maybe_copy_make_local(no_dir, "STAN_THREADS=true", "/old/cmdstan",
-                            copy_make_local = NULL)
-    )
+    expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
   })
-  expect_false(file.exists(file.path(no_dir, "make", "local")))
 })
 
-test_that("maybe_copy_make_local() ignores a missing or empty make/local", {
+test_that("resolve_copy_make_local() does not ask when there is nothing to copy", {
   rlang::local_interactive(TRUE)
   local_mocked_bindings(
     prompt_copy_make_local = function(...) stop("must not prompt without flags to copy")
   )
 
-  # cmdstan_make_local() returns NULL when there is no file and "" when the
-  # file is empty.
-  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), NULL, "/old/cmdstan"))
-  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), "", "/old/cmdstan"))
-  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), character(0), "/old/cmdstan"))
+  expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", NULL))
+  expect_false(resolve_copy_make_local("", "/old/cmdstan", NULL))
+  expect_false(resolve_copy_make_local(character(0), "/old/cmdstan", NULL))
 })
 
 test_that("copied flags are written before cpp_options, which win", {
@@ -436,6 +448,33 @@ test_that("prompt_copy_make_local() shows the flags and reads the answer", {
     "/old/cmdstan",
     fixed = TRUE
   )
+})
+
+test_that("install_cmdstan() asks about make/local before downloading", {
+  rlang::local_interactive(TRUE)
+  events <- character()
+  local_mocked_bindings(
+    cmdstan_version = function(...) "2.36.0",
+    cmdstan_make_local = function(...) "STAN_THREADS=true",
+    cmdstan_path = function(...) "/old/cmdstan",
+    prompt_copy_make_local = function(...) {
+      events <<- c(events, "prompt")
+      FALSE
+    },
+    download_with_retries = function(...) {
+      events <<- c(events, "download")
+      try(stop("no downloads in tests"), silent = TRUE)
+    }
+  )
+
+  expect_error(
+    suppressMessages(
+      install_cmdstan(dir = withr::local_tempdir(), version = "2.36.0",
+                      check_toolchain = FALSE)
+    ),
+    "Download of CmdStan failed"
+  )
+  expect_equal(events, c("prompt", "download"))
 })
 
 test_that("install_cmdstan() rejects a non-logical copy_make_local", {

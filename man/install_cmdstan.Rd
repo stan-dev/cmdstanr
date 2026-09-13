@@ -91,7 +91,9 @@ Subsystem for Linux (WSL). The default is \code{FALSE}.}
 installation currently in use be copied to the new installation? The copy
 happens before CmdStan is built, so the flags are already in effect for
 that build. The default is \code{NULL}, which shows the previous \code{make/local}
-and asks in an interactive session, and copies nothing otherwise.
+and asks in an interactive session, and copies nothing otherwise. The
+question comes before the download, so that the rest of the installation
+runs unattended.
 Use \code{TRUE} or \code{FALSE} to decide without being asked. Flags given in
 \code{cpp_options} are written after the copied ones and therefore take precedence.}
 
