@@ -478,19 +478,24 @@ compare_build_records <- function(recorded, current,
 
 #' Decide whether an executable is current
 #'
-#' `expected` is what the caller asks for: the `request` it would record, and
-#' at a guarded method the `artifact` hash the object was built against, the
-#' only thing that catches an executable another process replaced together
-#' with its record. `observed` is what is there now: the `record` as
-#' `read_build_record()` returned it, the `dependencies` hashed as the writer
-#' hashes them or `NULL` when they were not resolved, and the `builder`
-#' selected now.
+#' Takes two lists and compares them. `expected` is what the caller wants
+#' the executable to have been built from. Its `request` holds the options
+#' this call would record. Its `artifact` is the hash the object was built
+#' against, or `NULL` at the constructor, which has no expectation yet.
+#' `observed` is what is there now. Its `record` is what
+#' `read_build_record()` returned. Its `dependencies` are the current files
+#' hashed the way the writer hashes them, or `NULL` when nobody resolved
+#' them. Its `builder` is the installation selected now.
 #'
-#' Returns the reasons to rebuild, empty when there are none. Without a usable
-#' record that is the reason it could not be used and nothing more, since
-#' there is nothing to compare against. With one it is every compared row
-#' that differs. Unresolved dependencies are left out of the comparison rather
-#' than read as an empty set. Reads no file and runs nothing.
+#' Returns a character vector of reasons to rebuild, empty when the
+#' executable is current. When the record cannot be used the vector holds
+#' that one reason and nothing else, because there is no baseline to compare
+#' the rest against. Otherwise it names every compared row that differs.
+#' The dependency rows are skipped when nobody resolved them, so an
+#' unresolved set is never mistaken for an empty one. The expected artifact
+#' hash is what catches an executable another process rebuilt, since the
+#' record beside it then matches it and nothing on disk disagrees. Reads no
+#' file and runs nothing.
 #'
 #' @noRd
 assess_build <- function(expected, observed) {
