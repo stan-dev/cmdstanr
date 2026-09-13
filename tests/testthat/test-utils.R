@@ -582,24 +582,28 @@ test_that("cmdstan_make_local() does not append flags that are already present",
   )
 })
 
-test_that("cmdstan_make_local() writes repeated flags in cpp_options once", {
+test_that("cmdstan_make_local() appends a flag that a later line has overridden", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
 
   expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list(STAN_THREADS = TRUE, "STAN_THREADS" = TRUE)
-    ),
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
     "STAN_THREADS=true"
   )
   expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list("CXXFLAGS += -O1", "CXXFLAGS += -O1"),
-      append = FALSE
-    ),
-    "CXXFLAGS += -O1"
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = FALSE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false")
+  )
+  # make applies the last assignment, so threading is off at this point and
+  # turning it back on is a real change rather than a duplicate
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
+  )
+  # ... and now it is the last assignment again
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
   )
 })
 
