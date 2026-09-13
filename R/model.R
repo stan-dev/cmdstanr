@@ -668,13 +668,16 @@ compile <- function(quiet = TRUE,
 
   exe <- resolve_exe_path(dir, private$dir_, self$exe_file(), self$stan_file())
 
-  # Resolve stanc and cpp options
+  # Options cmdstanr adds go in their own list, kept apart from the caller's so
+  # that the record can hold each as it was, and are merged only when they
+  # become arguments.
+  stanc_injected <- list()
   if (pedantic) {
-    stanc_options[["warn-pedantic"]] <- TRUE
+    stanc_injected[["warn-pedantic"]] <- TRUE
   }
 
   if (isTRUE(cpp_option_value(cpp_options, "stan_opencl"))) {
-    stanc_options[["use-opencl"]] <- TRUE
+    stanc_injected[["use-opencl"]] <- TRUE
   }
 
   if (!user_header_supplied) {
@@ -685,7 +688,7 @@ compile <- function(quiet = TRUE,
 
   using_user_header <- !is.null(user_header)
   if (using_user_header) {
-    stanc_options[["allow-undefined"]] <- TRUE
+    stanc_injected[["allow-undefined"]] <- TRUE
     # Keep user_header as a host path for the WSL1 file check below.
     user_header <- resolve_path(user_header)
   }
@@ -823,9 +826,10 @@ compile <- function(quiet = TRUE,
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
-  stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
-  stancflags_direct <- stanc_options_to_args(stanc_options)
+  stanc_injected[["name"]] <- paste0(self$model_name(), "_model")
+  stanc_args <- c(stanc_options, stanc_injected)
+  stancflags_combined <- stanc_options_to_args(stanc_args, quote_values = TRUE)
+  stancflags_direct <- stanc_options_to_args(stanc_args)
   cpp_flags <- cpp_options_to_compile_flags(cpp_options)
 
   # CmdStan reads the header from the USER_HEADER make variable.
@@ -941,7 +945,50 @@ compile <- function(quiet = TRUE,
       )
     }
 
-    leftover_backup <- install_executable(tmp_exe, exe)
+    make_local <- file.path(cmdstan_path(), "make", "local")
+    if (!file.exists(make_local)) {
+      make_local <- NULL
+    }
+    dependency <- function(path, hashed = path) {
+      list(hash = hash_file(hashed), built_from = resolve_path(path))
+    }
+    # The copy is what make compiled, so the record describes it, hash and
+    # includes alike. Under WSL stanc reports the includes in its own spelling.
+    dependencies <- list(
+      stan_file = dependency(self$stan_file(), temp_stan_file),
+      included_files = lapply(
+        wsl_safe_path(
+          unlist(stanc_info(temp_stan_file, include_paths)$included_files),
+          revert = TRUE
+        ),
+        dependency
+      )
+    )
+    if (using_user_header) {
+      dependencies$user_header <- dependency(user_header)
+    }
+    if (!is.null(make_local)) {
+      dependencies$make_local <- dependency(make_local)
+    }
+    record <- new_build_record(
+      request = list(
+        cpp_options_supplied = parsed_cpp_options(cpp_options),
+        stanc_options_supplied = as.list(stanc_options_to_args(stanc_options)),
+        stanc_options_injected = as.list(stanc_options_to_args(stanc_injected)),
+        stanc_name = stanc_injected[["name"]],
+        include_paths = as.list(include_paths)
+      ),
+      reported_features = reported_features_from_exe(tmp_exe),
+      dependencies = dependencies,
+      artifact = hash_file(tmp_exe),
+      builder = list(path = cmdstan_path(), version = compiled_cmdstan_version),
+      tbb_dir = tbb_dir_from_options(cpp_options),
+      known_untracked_dependencies = untracked_dependencies(
+        make_local, if (using_user_header) user_header
+      )
+    )
+
+    leftover_backup <- install_executable(tmp_exe, exe, record)
 
     # Commit executable-derived state only after installation succeeds.
     rm(list = ls(self$functions, all.names = TRUE), envir = self$functions)
@@ -976,6 +1023,11 @@ compile <- function(quiet = TRUE,
     private$cpp_options_ <-
       merge_exe_info_cpp_options(private$cpp_options_, exe_info)
 
+    # Said once, when the record is written, and never on a no-op.
+    if (length(record$known_untracked_dependencies) > 0) {
+      message(untracked_dependencies_note(record$known_untracked_dependencies))
+    }
+
     # Run optional exposure only after executable state is committed.
     if (compile_standalone) {
       expose_stan_functions(self$functions, verbose = !quiet)
@@ -986,8 +1038,8 @@ compile <- function(quiet = TRUE,
     if (!is.null(leftover_backup)) {
       # Warn last because warn = 2 aborts the remaining work.
       warning(
-        "The previously compiled executable could not be removed. ",
-        "It has been left at '", leftover_backup, "'.",
+        "Files left over from the previous build could not be removed: '",
+        paste(leftover_backup, collapse = "', '"), "'.",
         call. = FALSE
       )
     }
@@ -2802,7 +2854,13 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
   stancflags
 }
 
-model_variables <- function(stan_file, include_paths = NULL) {
+#' What stanc reports about a Stan program
+#'
+#' The parsed `stanc --info` output, holding the program's variables and the
+#' files it included.
+#'
+#' @noRd
+stanc_info <- function(stan_file, include_paths = NULL) {
   out_file <- tempfile(fileext = ".json")
   run_log <- wsl_compatible_run(
     command = stanc_cmd(),
@@ -2819,7 +2877,11 @@ model_variables <- function(stan_file, include_paths = NULL) {
     stdout = out_file,
     error_on_status = TRUE
   )
-  variables <- jsonlite::read_json(out_file, na = "null")
+  jsonlite::read_json(out_file, na = "null")
+}
+
+model_variables <- function(stan_file, include_paths = NULL) {
+  variables <- stanc_info(stan_file, include_paths)
   variables$data <- variables$inputs
   variables$inputs <- NULL
   variables$transformed_parameters <- variables[["transformed parameters"]]

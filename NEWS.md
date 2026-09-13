@@ -1,5 +1,16 @@
 # cmdstanr (development version)
 
+* Every compiled model now has a build record beside its executable, a hidden
+JSON file named after the executable: `bernoulli` is described by
+`.bernoulli.cmdstanr.json` and `bernoulli.exe` by
+`.bernoulli.exe.cmdstanr.json`. It records how the executable was built. It
+belongs with the executable, not in version control: add `.*.cmdstanr.json` to
+`.gitignore` wherever the executable is already ignored. The vignette on
+CmdStanR internals has the details. (#1238)
+* When a build depends on files cmdstanr cannot track, a `make/local` that
+includes another makefile or a user header that includes other headers, the
+build now says so in a one-line note and names `force_recompile = TRUE` as the
+way to pick up changes to them. (#1257)
 * `include_paths` is now the only way to give `stanc` include paths. An
 `include-paths` entry in `stanc_options`, a `STANCFLAGS` entry in `cpp_options`
 and an include path in `make/local`'s `STANCFLAGS` are all errors that point at

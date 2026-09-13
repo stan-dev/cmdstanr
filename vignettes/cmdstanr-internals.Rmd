@@ -235,6 +235,30 @@ containing the Stan program. You can also specify a different location with the
 mod <- cmdstan_model(stan_file, dir = "path/to/directory/for/executable")
 ```
 
+### The build record
+
+CmdStanR writes a hidden JSON file next to the executable that records how the
+executable was built: the Stan file and the files it includes, the options
+passed to `stanc` and `make`, the CmdStan installation, and a hash of the
+executable itself. The file is named after the executable, so `bernoulli` is
+described by `.bernoulli.cmdstanr.json`.
+
+```{r build-record}
+list.files(dirname(mod$exe_file()), pattern = "cmdstanr.json", all.files = TRUE)
+```
+
+If the directory is under version control, we recommend adding the record file
+beside whatever already excludes the executable in `.gitignore` (the leading dot
+doesn't hide the file from git). You can ignore all record files using
+`.*.cmdstanr.json` or ignore them individually by name.
+
+If the directory is inside an R package, we recommend adding a matching regular
+expression to `.Rbuildignore`, such as `\..*\.cmdstanr\.json$`.
+
+In general, if you move the executable somewhere move the build record with it.
+If a build step copies the executable somewhere else, such as a CI artifact, a
+container image or a shared build directory, copy the record with it.
+
 ## Processing data
 
 There are three data formats that CmdStanR allows when fitting a model:
