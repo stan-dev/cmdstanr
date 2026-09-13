@@ -1686,6 +1686,10 @@ test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
   # Logical values mark boolean flags
   expect_equal(stanc_options_to_args(list("warn-pedantic" = TRUE)), "--warn-pedantic")
   expect_equal(stanc_options_to_args(list("warn-pedantic" = FALSE)), NULL)
+  expect_equal(
+    stanc_options_to_args(list("O1")),
+    stanc_options_to_args(list(O1 = TRUE))
+  )
 
   # Values are quoted only for Make (#1227)
   expect_equal(
