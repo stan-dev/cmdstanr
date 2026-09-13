@@ -314,7 +314,8 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @export
 #' @param append (logical) For `cmdstan_make_local()`, should the listed
 #'   makefile flags be appended to the end of the existing `make/local` file?
-#'   The default is `TRUE`. If `FALSE` the file is overwritten.
+#'   The default is `TRUE`. If `FALSE` the file is overwritten. A flag that is
+#'   already present in `make/local` is not written a second time.
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -336,7 +337,15 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
         }
       }
     }
-    write(built_flags, file = make_local_path, append = append)
+    if (append && file.exists(make_local_path)) {
+      # Don't write a flag that make would already apply anyway.
+      existing <- suppressWarnings(readLines(make_local_path, warn = FALSE))
+      built_flags <- built_flags[!make_flag_already_applies(built_flags, existing)]
+    }
+    # Skip the write if there is nothing left to add.
+    if (length(built_flags) > 0 || !append) {
+      write(built_flags, file = make_local_path, append = append)
+    }
   }
   make_local_contents <- tryCatch(
     suppressWarnings(readLines(make_local_path, warn = FALSE)),
@@ -385,6 +394,43 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 
 
 # internal ----------------------------------------------------------------
+
+#' Would make already apply these flags, given the current `make/local`?
+#'
+#' Follows what make does with the file rather than just looking for the same
+#' text: `+=` accumulates, so a second identical line adds nothing wherever it
+#' sits, but a plain assignment is only in force while it is the last one for
+#' that variable. Writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
+#' further down is therefore a real change, not a duplicate.
+#'
+#' @noRd
+#' @param flags (character vector) Flags about to be appended.
+#' @param existing (character vector) Current contents of `make/local`.
+#' @return A logical vector of the same length as `flags`.
+make_flag_already_applies <- function(flags, existing) {
+  flags <- trimws(flags)
+  existing <- trimws(existing)
+  existing_variable <- make_assignment_part(existing, "\\1")
+  flag_variable <- make_assignment_part(flags, "\\1")
+  flag_operator <- make_assignment_part(flags, "\\2")
+
+  vapply(seq_along(flags), function(i) {
+    if (is.na(flag_variable[i]) || flag_operator[i] == "+=") {
+      return(flags[i] %in% existing)
+    }
+    assignments <- which(!is.na(existing_variable) &
+                           existing_variable == flag_variable[i])
+    length(assignments) > 0 &&
+      identical(existing[max(assignments)], flags[i])
+  }, logical(1))
+}
+
+# Variable name ("\\1") or operator ("\\2") of a makefile assignment, NA for
+# lines that do not assign anything, such as comments and blanks.
+make_assignment_part <- function(lines, part) {
+  pattern <- "^([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*(\\+=|:=|\\?=|=).*$"
+  ifelse(grepl(pattern, lines), sub(pattern, part, lines), NA_character_)
+}
 
 check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
   if (dir.exists(dir_cmdstan)) {
