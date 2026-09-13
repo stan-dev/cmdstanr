@@ -441,21 +441,21 @@ verify_build_record <- function(exe_file) {
 #' @noRd
 build_record_comparisons <- list(
   cpp_options = function(x) {
-    supplied <- x$request$cpp_options_supplied
+    supplied <- x[["request"]][["cpp_options_supplied"]]
     supplied[order(names(supplied))]
   },
-  stanc_options = function(x) x$request$stanc_options_supplied,
-  stanc_name = function(x) x$request$stanc_name,
-  stan_file = function(x) x$dependencies$stan_file$hash,
+  stanc_options = function(x) x[["request"]][["stanc_options_supplied"]],
+  stanc_name = function(x) x[["request"]][["stanc_name"]],
+  stan_file = function(x) x[["dependencies"]][["stan_file"]][["hash"]],
   included_files = function(x) {
-    lapply(x$dependencies$included_files, `[[`, "hash")
+    lapply(x[["dependencies"]][["included_files"]], `[[`, "hash")
   },
   user_header = function(x) {
-    x$dependencies$user_header[c("hash", "built_from")]
+    x[["dependencies"]][["user_header"]][c("hash", "built_from")]
   },
-  make_local = function(x) x$dependencies$make_local["hash"],
-  artifact = function(x) x$artifact,
-  builder = function(x) x$builder[c("path", "version")]
+  make_local = function(x) x[["dependencies"]][["make_local"]]["hash"],
+  artifact = function(x) x[["artifact"]],
+  builder = function(x) x[["builder"]][c("path", "version")]
 )
 
 #' Compare a recorded build against the current one

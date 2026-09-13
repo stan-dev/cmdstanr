@@ -499,6 +499,16 @@ test_that("differences outside the comparison table never count", {
   expect_equal(compare_build_records(recorded, current), character(0))
 })
 
+test_that("an absent optional dependency is not read from a longer name", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  recorded$dependencies$make_local <- NULL
+  current <- recorded
+  recorded$dependencies$user_header_note <- list(hash = "cccc", built_from = "note.hpp")
+  recorded$dependencies$make_local_note <- list(hash = "ffff", built_from = "note")
+  expect_equal(compare_build_records(recorded, current), character(0))
+})
+
 test_that("both detectors fire on their patterns and on nothing else", {
   dir <- withr::local_tempdir()
   make_local <- file.path(dir, "local")
