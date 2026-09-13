@@ -271,9 +271,8 @@ reported_features_from_exe <- function(exe_file) {
 #' there, so a build configured that way links against one TBB while the
 #' record names the installation's. On Windows the launch puts the recorded
 #' directory on PATH, so such a build runs with the installation's TBB first,
-#' which is what happens today anyway. Asking make for the real answer is a
-#' rejected alternative in `dev-notes/compilation-state.md`, although could be
-#' reconsidered.
+#' which is what happens today anyway. We decided not to ask make for the real
+#' answer for now, and could reconsider if there is demand for it.
 #'
 #' @noRd
 tbb_dir_from_options <- function(cpp_options) {
