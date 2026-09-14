@@ -49,7 +49,7 @@ parse_exe_info_string <- function(ret_stdout) {
 }
 
 # old (current) parser
-model_compile_info <- function(exe_file, version) {
+model_compile_info <- function(exe_file) {
   info <- NULL
   ret <- run_info_cli(exe_file)
   if (ret$status == 0) {
@@ -71,6 +71,21 @@ model_compile_info <- function(exe_file, version) {
     info[["STAN_VERSION_PATCH"]] <- NULL
   }
   info
+}
+
+#' The version an executable's `info` output reports, or NULL
+#'
+#' `info` prints the Stan version, which has matched the CmdStan version in
+#' every release, so it stands in for the CmdStan that built the executable.
+#' Missing fields synthesise to "..", which is not a version.
+#'
+#' @noRd
+exe_info_version <- function(exe_info) {
+  version <- exe_info[["STAN_VERSION"]]
+  if (is.null(version) || !grepl(cmdstan_version_pattern, version)) {
+    return(NULL)
+  }
+  version
 }
 
 # Merge build options reported by the executable. Skip STAN_VERSION and the

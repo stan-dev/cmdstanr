@@ -1109,6 +1109,42 @@ test_that("cpp_options() excludes the Stan version reported by the executable", 
   expect_equal(mod$cmdstan_version(), cmdstan_version())
 })
 
+test_that("cmdstan_version() reports the version that built an adopted executable", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  older <- paste0(
+    "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"
+  )
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = older),
+    code = mod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+  # Built here, so the session's CmdStan built it whatever info reports.
+  expect_equal(mod$cmdstan_version(), cmdstan_version())
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = older),
+    code = adopted <- cmdstan_model(exe_file = mod$exe_file())
+  )
+  expect_equal(adopted$cmdstan_version(), "2.35.0")
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = older),
+    code = reused <- cmdstan_model(stan_file)
+  )
+  expect_equal(reused$cmdstan_version(), "2.35.0")
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = "STAN_THREADS=false"),
+    code = unversioned <- cmdstan_model(exe_file = mod$exe_file())
+  )
+  expect_equal(unversioned$cmdstan_version(), cmdstan_version())
+})
+
 test_that("cmdstan_model works with exe_file", {
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(stan_file, dry_run = TRUE)

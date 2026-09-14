@@ -27,7 +27,8 @@ code, or \code{NULL} if the model was created without a Stan file.
 \item \verb{$exe_file()} returns a path as a string, or \code{character(0)} if no
 executable path is set.
 \item \verb{$include_paths()} returns a character vector of absolute paths or \code{NULL}.
-\item \verb{$cmdstan_version()} returns a CmdStan version as a string.
+\item \verb{$cmdstan_version()} returns the version of CmdStan that built the
+executable, as a string.
 \item \verb{$cpp_options()} returns a named list of C++ options, with names in their
 \code{make} spelling.
 \item \verb{$user_header()} returns the absolute path to the user header as a string,

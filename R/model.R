@@ -197,7 +197,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  |:----------|:---------------|
 #'  [`$model_name()`][model-method-model-info] | Return the model name. |
 #'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
-#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version associated with the model. |
+#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version that built the executable. |
 #'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
 #'  [`$user_header()`][model-method-model-info] | Return the path to the user header, if the model has one. |
 #'
@@ -298,22 +298,20 @@ CmdStanModel <- R6::R6Class(
         }
         private$include_paths_ <- private$precompile_include_paths_
       }
+      private$cmdstan_version_ <- cmdstan_version()
       compiled_here <- !is.null(stan_file) && compile
       if (compiled_here) {
         self$compile(...)
       }
 
-      # for now, set this based on current version
-      # at initialize so its never null
-      # in the future, will be set only if/when we have a binary
-      # as the version the model was compiled with
-      private$cmdstan_version_ <- cmdstan_version()
       # compile() reads the metadata itself on both of its exits.
       if (!compiled_here &&
           length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
+        exe_info <- model_compile_info(self$exe_file())
+        private$cmdstan_version_ <-
+          exe_info_version(exe_info) %||% private$cmdstan_version_
         private$cpp_options_ <- merge_exe_info_cpp_options(
-          private$cpp_options_,
-          model_compile_info(self$exe_file(), self$cmdstan_version())
+          private$cpp_options_, exe_info
         )
       }
       invisible(self)
@@ -437,7 +435,8 @@ CmdStanModel <- R6::R6Class(
 #' * `$exe_file()` returns a path as a string, or `character(0)` if no
 #'   executable path is set.
 #' * `$include_paths()` returns a character vector of absolute paths or `NULL`.
-#' * `$cmdstan_version()` returns a CmdStan version as a string.
+#' * `$cmdstan_version()` returns the version of CmdStan that built the
+#'   executable, as a string.
 #' * `$cpp_options()` returns a named list of C++ options, with names in their
 #'   `make` spelling.
 #' * `$user_header()` returns the absolute path to the user header as a string,
@@ -742,9 +741,12 @@ compile <- function(quiet = TRUE,
 
     # Treat unreadable executable metadata as unavailable.
     exe_info <- tryCatch(
-      model_compile_info(exe, self$cmdstan_version()),
+      model_compile_info(exe),
       error = function(e) NULL
     )
+
+    private$cmdstan_version_ <-
+      exe_info_version(exe_info) %||% private$cmdstan_version_
 
     # Add options reported as enabled by the executable and keep recorded values
     # for anything it cannot report.
@@ -1017,7 +1019,7 @@ compile <- function(quiet = TRUE,
     # Learn options the executable reports that were never passed, such as ones
     # inherited from make/local. Ahead of the exposures, which can fail.
     exe_info <- tryCatch(
-      model_compile_info(exe, self$cmdstan_version()),
+      model_compile_info(exe),
       error = function(e) NULL
     )
     private$cpp_options_ <-
