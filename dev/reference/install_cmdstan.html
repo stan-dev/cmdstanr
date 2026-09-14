@@ -7,6 +7,11 @@ by specifying the version or release_url argument.
 See the first few sections of the CmdStan
 installation guide
 for details on the C++ toolchain required for installing CmdStan.
+If the CmdStan installation currently in use has a non-empty make/local
+file, the flags in it can be copied to the new installation before
+it is built, so that no rebuild is needed afterwards. In an interactive
+session install_cmdstan() shows the file and asks. See the
+copy_make_local argument to decide without being asked.
 The rebuild_cmdstan() function cleans and rebuilds the CmdStan
 installation. Use this function in case of any issues when compiling models.
 The cmdstan_make_local() function is used to read/write makefile flags
@@ -27,6 +32,11 @@ by specifying the version or release_url argument.
 See the first few sections of the CmdStan
 installation guide
 for details on the C++ toolchain required for installing CmdStan.
+If the CmdStan installation currently in use has a non-empty make/local
+file, the flags in it can be copied to the new installation before
+it is built, so that no rebuild is needed afterwards. In an interactive
+session install_cmdstan() shows the file and asks. See the
+copy_make_local argument to decide without being asked.
 The rebuild_cmdstan() function cleans and rebuilds the CmdStan
 installation. Use this function in case of any issues when compiling models.
 The cmdstan_make_local() function is used to read/write makefile flags
@@ -108,7 +118,12 @@ Installing a previous release or a new release candidate is also possible
 by specifying the <code>version</code> or <code>release_url</code> argument.
 See the first few sections of the CmdStan
 <a href="https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html" class="external-link">installation guide</a>
-for details on the C++ toolchain required for installing CmdStan.</p>
+for details on the C++ toolchain required for installing CmdStan.
+If the CmdStan installation currently in use has a non-empty <code>make/local</code>
+file, the flags in it can be copied to the new installation before
+it is built, so that no rebuild is needed afterwards. In an interactive
+session <code>install_cmdstan()</code> shows the file and asks. See the
+<code>copy_make_local</code> argument to decide without being asked.</p>
 <p>The <code>rebuild_cmdstan()</code> function cleans and rebuilds the CmdStan
 installation. Use this function in case of any issues when compiling models.</p>
 <p>The <code>cmdstan_make_local()</code> function is used to read/write makefile flags
@@ -138,7 +153,8 @@ CmdStanR release from GitHub.</p>
 <span>  release_file <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  check_toolchain <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  wsl <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  wsl <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  copy_make_local <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">rebuild_cmdstan</span><span class="op">(</span></span>
@@ -230,6 +246,18 @@ default is <code>TRUE</code>.</p></dd>
 <dt id="arg-wsl">wsl<a class="anchor" aria-label="anchor" href="#arg-wsl"></a></dt>
 <dd><p>(logical) Should CmdStan be installed and run through the Windows
 Subsystem for Linux (WSL). The default is <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-copy-make-local">copy_make_local<a class="anchor" aria-label="anchor" href="#arg-copy-make-local"></a></dt>
+<dd><p>(logical) Should the <code>make/local</code> file of the CmdStan
+installation currently in use be copied to the new installation? The copy
+happens before CmdStan is built, so the flags are already in effect for
+that build. The default is <code>NULL</code>, which shows the previous <code>make/local</code>
+and asks in an interactive session, and copies nothing otherwise. The
+question comes before the download, so that the rest of the installation
+runs unattended.
+Use <code>TRUE</code> or <code>FALSE</code> to decide without being asked. Flags given in
+<code>cpp_options</code> are written after the copied ones and therefore take precedence.</p></dd>
 
 
 <dt id="arg-append">append<a class="anchor" aria-label="anchor" href="#arg-append"></a></dt>

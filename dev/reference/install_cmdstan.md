@@ -7,7 +7,12 @@ Installing a previous release or a new release candidate is also
 possible by specifying the `version` or `release_url` argument. See the
 first few sections of the CmdStan [installation
 guide](https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html)
-for details on the C++ toolchain required for installing CmdStan.
+for details on the C++ toolchain required for installing CmdStan. If the
+CmdStan installation currently in use has a non-empty `make/local` file,
+the flags in it can be copied to the new installation before it is
+built, so that no rebuild is needed afterwards. In an interactive
+session `install_cmdstan()` shows the file and asks. See the
+`copy_make_local` argument to decide without being asked.
 
 The `rebuild_cmdstan()` function cleans and rebuilds the CmdStan
 installation. Use this function in case of any issues when compiling
@@ -42,7 +47,8 @@ install_cmdstan(
   release_file = NULL,
   cpp_options = list(),
   check_toolchain = TRUE,
-  wsl = FALSE
+  wsl = FALSE,
+  copy_make_local = NULL
 )
 
 rebuild_cmdstan(
@@ -134,6 +140,18 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
   (logical) Should CmdStan be installed and run through the Windows
   Subsystem for Linux (WSL). The default is `FALSE`.
+
+- copy_make_local:
+
+  (logical) Should the `make/local` file of the CmdStan installation
+  currently in use be copied to the new installation? The copy happens
+  before CmdStan is built, so the flags are already in effect for that
+  build. The default is `NULL`, which shows the previous `make/local`
+  and asks in an interactive session, and copies nothing otherwise. The
+  question comes before the download, so that the rest of the
+  installation runs unattended. Use `TRUE` or `FALSE` to decide without
+  being asked. Flags given in `cpp_options` are written after the copied
+  ones and therefore take precedence.
 
 - append:
 

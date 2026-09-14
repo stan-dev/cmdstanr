@@ -2,6 +2,14 @@
 
 ## cmdstanr (development version)
 
+- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
+  now offers to copy the `make/local` flags of the current installation
+  into the new one before building it, so the new CmdStan is built with
+  the same flags. In an interactive session it shows the previous
+  `make/local` and asks if the `copy_make_local` argument isn’t set to
+  `TRUE` or `FALSE`.
+  ([\#1267](https://github.com/stan-dev/cmdstanr/issues/1267))
+
 - [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
   now skips flags that are already in `make/local`. Previously copying
   the flags of a previous installation after every upgrade added the
