@@ -360,9 +360,9 @@ test_that("the model name stanc receives comes from the file name", {
   local_reproducible_output()
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
-    out_no_name <- "bin/stanc.exe --name=bernoulli_model --o"
+    out_no_name <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--o"
   } else {
-    out_no_name <- "bin/stanc --name=bernoulli_model --o"
+    out_no_name <- "bin/stanc --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--o"
   }
   expect_output(print(out), out_no_name)
 
@@ -1570,9 +1570,9 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
   )
   out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
   if(os_is_windows() && !os_is_wsl()) {
-    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   } else {
-    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
 
@@ -1592,10 +1592,10 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
   )
 })
 
-test_that("quoted make/local STANCFLAGS values reach stanc as one argument (#1232)", {
-  # Nothing is mocked: the direct stanc call would fail with "too many
-  # arguments" if the value split at the space, and the make recipe echoes the
-  # requoted flag.
+test_that("a quoted make/local flag the call emits is dropped whole (#1232)", {
+  # Nothing is mocked. The call always emits --filename-in-msg, so the
+  # make/local copy is dropped, and it has to go as one argument: a split at
+  # the space would leave a stray "model.stan'" word for stanc to choke on.
   local_reproducible_output()
   local_cmdstan_make_local(
     cpp_options = list("STANCFLAGS += --filename-in-msg='/my dir/model.stan'")
@@ -1607,11 +1607,11 @@ test_that("quoted make/local STANCFLAGS values reach stanc as one argument (#123
   mod_local <- cmdstan_model(stan_file, compile = FALSE)
   out <- utils::capture.output(mod_local$compile(quiet = FALSE, force_recompile = TRUE))
   expect_true(file.exists(mod_local$exe_file()))
-  expect_output(
-    print(out),
-    "'--filename-in-msg=/my dir/model.stan'",
-    fixed = TRUE
-  )
+  stanc_line <- grep("bin/stanc", out, value = TRUE)
+  expect_length(stanc_line, 1)
+  expect_match(stanc_line, mod_local$stan_file(), fixed = TRUE)
+  expect_false(grepl("my dir", stanc_line, fixed = TRUE))
+  expect_false(grepl("model.stan'", stanc_line, fixed = TRUE))
 })
 
 test_that("include paths in make/local STANCFLAGS stop the build", {
@@ -1711,6 +1711,32 @@ test_that("a flag the call emits reaches stanc once when make/local sets it too"
     function(x) "--filename-in-msg=x.stan" %in% x && !("published.stan" %in% x),
     logical(1)
   )))
+})
+
+test_that("the generated C++ names the source, not the copy stanc compiled", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+  hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
+  expect_match(hpp, mod$stan_file(), fixed = TRUE)
+  expect_no_match(hpp, "model-[0-9a-f]+\\.stan")
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod <- cmdstan_model(
+      stan_file,
+      stanc_options = list("filename-in-msg" = "published.stan"),
+      force_recompile = TRUE
+    )
+  )
+  hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
+  expect_match(hpp, "published.stan", fixed = TRUE)
+  expect_no_match(hpp, mod$stan_file(), fixed = TRUE)
 })
 
 test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {

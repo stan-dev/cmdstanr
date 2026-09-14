@@ -499,6 +499,17 @@ test_that("differences outside the comparison table never count", {
   expect_equal(compare_build_records(recorded, current), character(0))
 })
 
+test_that("an injection added after the build does not rebuild", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  current$request$stanc_options_injected <- c(
+    recorded$request$stanc_options_injected,
+    list("--filename-in-msg=/home/me/bernoulli.stan")
+  )
+  expect_equal(compare_build_records(recorded, current), character(0))
+})
+
 test_that("an absent optional dependency is not read from a longer name", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
