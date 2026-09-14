@@ -314,7 +314,8 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @export
 #' @param append (logical) For `cmdstan_make_local()`, should the listed
 #'   makefile flags be appended to the end of the existing `make/local` file?
-#'   The default is `TRUE`. If `FALSE` the file is overwritten.
+#'   The default is `TRUE`. If `FALSE` the file is overwritten. When appending,
+#'   a flag that is already in `make/local` is not written again.
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -336,7 +337,13 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
         }
       }
     }
-    write(built_flags, file = make_local_path, append = append)
+    if (append && file.exists(make_local_path)) {
+      existing <- suppressWarnings(readLines(make_local_path, warn = FALSE))
+      built_flags <- built_flags[!make_flag_already_applies(built_flags, existing)]
+    }
+    if (length(built_flags) > 0 || !append) {
+      write(built_flags, file = make_local_path, append = append)
+    }
   }
   make_local_contents <- tryCatch(
     suppressWarnings(readLines(make_local_path, warn = FALSE)),
@@ -348,7 +355,9 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
   if (length(make_local_contents) == 0) {
     return("")
   }
-  trimws(strsplit(trimws(paste(make_local_contents, collapse = "\n")), "\n", fixed = TRUE)[[1]])
+  trimws(strsplit(trimws(
+    paste(make_local_contents, collapse = "\n")
+  ), "\n", fixed = TRUE)[[1]])
 }
 
 #' @rdname install_cmdstan
@@ -385,6 +394,74 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 
 
 # internal ----------------------------------------------------------------
+
+#' Would make already apply these flags, given the current `make/local`?
+#'
+#' Lines are compared as text, following the two rules of make that matter
+#' here. A plain assignment only counts while it is the last one for that
+#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
+#' further down is a real change, not a duplicate. `+=` accumulates, so a
+#' second identical `+=` line adds nothing, unless a plain assignment in
+#' between has reset the variable and dropped what the first one added.
+#'
+#' A line ending in a backslash and the lines it continues are one assignment
+#' to make, so they are written as they are rather than checked line by line.
+#' The file's own last line can be the one being continued.
+#'
+#' @noRd
+#' @param flags (character vector) Flags about to be appended.
+#' @param existing (character vector) Current contents of `make/local`.
+#' @return A logical vector of the same length as `flags`.
+make_flag_already_applies <- function(flags, existing) {
+  flags <- trimws(flags)
+  existing <- trimws(existing)
+  continued <- endsWith(flags, "\\") |
+    utils::tail(continues_previous(c(existing, flags)), length(flags))
+  applies <- logical(length(flags))
+  for (i in seq_along(flags)) {
+    applies[i] <- !continued[i] && make_line_already_applies(flags[i], existing)
+    if (!applies[i]) {
+      existing <- c(existing, flags[i])
+    }
+  }
+  applies
+}
+
+# Would make already apply this one line, given the current make/local?
+# Same rules as above.
+make_line_already_applies <- function(line, existing) {
+  variable <- make_assignment_part(line, "\\1")
+  if (is.na(variable)) {
+    return(line %in% existing)
+  }
+  existing_variable <- make_assignment_part(existing, "\\1")
+  assignments <- which(!is.na(existing_variable) & existing_variable == variable)
+  if (make_assignment_part(line, "\\2") == "+=") {
+    # A plain assignment drops what earlier += lines added, so only the
+    # lines after the last one count.
+    existing_operator <- make_assignment_part(existing, "\\2")
+    resets <- assignments[existing_operator[assignments] %in% c("=", ":=")]
+    if (length(resets) > 0) {
+      assignments <- assignments[assignments > max(resets)]
+    }
+    return(line %in% existing[assignments])
+  }
+  length(assignments) > 0 && identical(existing[max(assignments)], line)
+}
+
+# Variable name ("\\1") or operator ("\\2") of a makefile assignment, NA for
+# lines that do not assign anything, such as comments, blanks, and the rest of
+# a continued line.
+make_assignment_part <- function(lines, part) {
+  pattern <- "^([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*(\\+=|:=|\\?=|=).*$"
+  assigns <- grepl(pattern, lines) & !continues_previous(lines)
+  ifelse(assigns, sub(pattern, part, lines), NA_character_)
+}
+
+# TRUE for a line that continues the one before it
+continues_previous <- function(lines) {
+  c(FALSE, endsWith(lines, "\\"))[seq_along(lines)]
+}
 
 check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
   if (dir.exists(dir_cmdstan)) {

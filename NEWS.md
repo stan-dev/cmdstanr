@@ -1,5 +1,8 @@
 # cmdstanr (development version)
 
+* `cmdstan_make_local()` now skips flags that are already in `make/local`.
+Previously copying the flags of a previous installation after every upgrade
+added the same lines again each time. (#1266)
 * Chain IDs in generated filenames are now zero-padded to at least two digits, 
 for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
