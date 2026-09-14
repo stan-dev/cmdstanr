@@ -338,11 +338,9 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
       }
     }
     if (append && file.exists(make_local_path)) {
-      # Don't write a flag that make would already apply anyway.
       existing <- suppressWarnings(readLines(make_local_path, warn = FALSE))
       built_flags <- built_flags[!make_flag_already_applies(built_flags, existing)]
     }
-    # Skip the write if there is nothing left to add.
     if (length(built_flags) > 0 || !append) {
       write(built_flags, file = make_local_path, append = append)
     }
@@ -357,7 +355,9 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
   if (length(make_local_contents) == 0) {
     return("")
   }
-  trimws(strsplit(trimws(paste(make_local_contents, collapse = "\n")), "\n", fixed = TRUE)[[1]])
+  trimws(strsplit(trimws(
+    paste(make_local_contents, collapse = "\n")
+  ), "\n", fixed = TRUE)[[1]])
 }
 
 #' @rdname install_cmdstan
@@ -404,6 +404,10 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 #' second identical `+=` line adds nothing, unless a plain assignment in
 #' between has reset the variable and dropped what the first one added.
 #'
+#' A line ending in a backslash and the lines it continues are one assignment
+#' to make, so they are written as they are rather than checked line by line.
+#' The file's own last line can be the one being continued.
+#'
 #' @noRd
 #' @param flags (character vector) Flags about to be appended.
 #' @param existing (character vector) Current contents of `make/local`.
@@ -411,14 +415,9 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 make_flag_already_applies <- function(flags, existing) {
   flags <- trimws(flags)
   existing <- trimws(existing)
-  # A line ending in a backslash and the lines it continues are one assignment
-  # to make, so they are written as they are rather than checked line by line.
-  # The file's own last line can be the one being continued.
   continued <- endsWith(flags, "\\") |
     utils::tail(continues_previous(c(existing, flags)), length(flags))
   applies <- logical(length(flags))
-  # Check in order, adding each line that will be written to `existing`, so
-  # that later flags see the file as it is going to be.
   for (i in seq_along(flags)) {
     applies[i] <- !continued[i] && make_line_already_applies(flags[i], existing)
     if (!applies[i]) {
