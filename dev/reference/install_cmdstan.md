@@ -139,7 +139,8 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
   (logical) For `cmdstan_make_local()`, should the listed makefile flags
   be appended to the end of the existing `make/local` file? The default
-  is `TRUE`. If `FALSE` the file is overwritten.
+  is `TRUE`. If `FALSE` the file is overwritten. When appending, a flag
+  that is already in `make/local` is not written again.
 
 - fix:
 

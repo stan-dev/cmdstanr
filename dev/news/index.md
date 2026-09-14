@@ -2,6 +2,12 @@
 
 ## cmdstanr (development version)
 
+- [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
+  now skips flags that are already in `make/local`. Previously copying
+  the flags of a previous installation after every upgrade added the
+  same lines again each time.
+  ([\#1266](https://github.com/stan-dev/cmdstanr/issues/1266))
+
 - Chain IDs in generated filenames are now zero-padded to at least two
   digits, for example `01` instead of `1`.
   ([\#1244](https://github.com/stan-dev/cmdstanr/issues/1244))
