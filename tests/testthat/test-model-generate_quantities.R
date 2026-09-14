@@ -55,24 +55,19 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
   )
-  # The existing executable is unthreaded and is not rebuilt, so do not report
-  # the requested thread count (#1019).
+  # The existing executable is unthreaded and is not rebuilt, so asking for
+  # threads is refused (#1019).
   expect_warning(
     mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE)),
     "do not match the ones requested"
   )
-  threads_output <- capture.output(
-    expect_warning(
-      mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
-      "'threads_per_chain' is set but the model was not compiled with"
-    )
-  )
-  expect_match(
-    paste(threads_output, collapse = "\n"),
-    "Running standalone generated quantities after ",
+  expect_error(
+    mod_gq$generate_quantities(
+      data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2
+    ),
+    "does not report threading as enabled",
     fixed = TRUE
   )
-  expect_false(any(grepl("thread(s) per chain", threads_output, fixed = TRUE)))
 })
 
 test_that("generate_quantities works with draws_array", {
@@ -172,16 +167,14 @@ test_that("generate_quantities works with CmdStanPathfinder", {
   )
 })
 
-test_that("generate_quantities() warns if threads specified but not enabled", {
-  expect_warning(
-    expect_gq_output(
-      fit_gq <- mod_gq$generate_quantities(
-        data = data_list,
-        fitted_params = fit,
-        threads_per_chain = 4
-      )
+test_that("generate_quantities() errors if threads specified but not enabled", {
+  expect_error(
+    mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit,
+      threads_per_chain = 4
     ),
-    "'threads_per_chain' will have no effect"
+    "does not report threading as enabled", fixed = TRUE
   )
 })
 

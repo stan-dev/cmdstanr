@@ -494,7 +494,9 @@ test_that("a successful compile records options only the executable reports", {
     code = mod$compile(force_recompile = TRUE)
   )
   expect_true(cpp_option_value(mod$cpp_options(), "stan_threads"))
-  expect_silent(assert_valid_threads(2, mod$cpp_options(), multiple_chains = TRUE))
+  expect_silent(assert_valid_threads(
+    2, mod$.__enclos_env__$private$reported_features_, multiple_chains = TRUE
+  ))
 
   # What was passed to Make keeps only the request, so a later no-op can tell
   # inherited options from explicit ones.
@@ -563,14 +565,11 @@ test_that("cmdstan_model() reads the executable metadata once, whatever the path
   expect_equal(reads, 1L)
   expect_true(mod_explicit$cpp_options()$STAN_THREADS)
   expect_true(mod_explicit$cpp_options()$STAN_OPENCL)
+  explicit_features <- mod_explicit$.__enclos_env__$private$reported_features_
   expect_silent(
-    assert_valid_threads(
-      2,
-      mod_explicit$cpp_options(),
-      multiple_chains = TRUE
-    )
+    assert_valid_threads(2, explicit_features, multiple_chains = TRUE)
   )
-  expect_silent(assert_valid_opencl(c(0, 0), mod_explicit$cpp_options()))
+  expect_silent(assert_valid_opencl(c(0, 0), explicit_features))
 
   # Executable adopted without a Stan file.
   reads <- 0L

@@ -318,43 +318,44 @@ cpp_option_value <- function(cpp_options, option) {
   cpp_options[[matches[[length(matches)]]]]
 }
 
-# no type checking for opencl_ids
-# cpp_options must be a list
-# opencl_ids returned unchanged
-assert_valid_opencl <- function(opencl_ids, cpp_options) {
-  if (is.null(cpp_option_value(cpp_options, "stan_opencl"))
-      && !is.null(opencl_ids)) {
-    stop("'opencl_ids' is set but the model was not compiled for use with OpenCL.",
-         "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
-         call. = FALSE)
-  }
-  invisible(opencl_ids)
-}
-
-# cpp_options must be a list
-assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
+# check runtime requests against what the executable reports ------------
+#' Check a thread request against the features the executable reports
+#'
+#' `features` is what the executable said about its own build: each feature
+#' is known on, known off, or absent when unknown. More than one thread needs
+#' threading known on. One thread, or no request, asks for no parallelism and
+#' so needs nothing, whatever the executable was built with.
+#'
+#' @noRd
+assert_valid_threads <- function(threads, features, multiple_chains = FALSE) {
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)
-  stan_threads <- cpp_option_value(cpp_options, "stan_threads")
-  if (is.null(stan_threads) || !isTRUE(stan_threads)) {
-    if (!is.null(threads)) {
-      warning(
-        "'", threads_arg, "' is set but the model was not compiled with ",
-        "'cpp_options = list(stan_threads = TRUE)' ",
-        "so '", threads_arg, "' will have no effect!",
-        call. = FALSE
-      )
-      threads <- NULL
-    }
-  } else if (isTRUE(stan_threads) && is.null(threads)) {
+  threaded <- isTRUE(features[["stan_threads"]])
+  if (!is.null(threads) && threads > 1 && !threaded) {
     stop(
-      "The model executable was built with threading enabled but '",
-      threads_arg, "' was not set!",
+      "'", threads_arg, "' is set but the executable does not report ",
+      "threading as enabled.\nRecompile the model with ",
+      "'cpp_options = list(stan_threads = TRUE)'.",
       call. = FALSE
     )
   }
   invisible(threads)
+}
+
+#' Check an OpenCL device request against the features the executable reports
+#'
+#' @noRd
+assert_valid_opencl <- function(opencl_ids, features) {
+  if (!is.null(opencl_ids) && !isTRUE(features[["stan_opencl"]])) {
+    stop(
+      "'opencl_ids' is set but the executable does not report OpenCL as ",
+      "enabled.\nRecompile the model with ",
+      "'cpp_options = list(stan_opencl = TRUE)'.",
+      call. = FALSE
+    )
+  }
+  invisible(opencl_ids)
 }
 
 # For two functions below

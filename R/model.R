@@ -257,7 +257,10 @@ CmdStanModel <- R6::R6Class(
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
     variables_ = NULL,
-    cmdstan_version_ = NULL
+    cmdstan_version_ = NULL,
+    # What the executable reports about its build. A feature absent here is
+    # unknown, not off.
+    reported_features_ = NULL
   ),
   public = list(
     functions = NULL,
@@ -308,6 +311,8 @@ CmdStanModel <- R6::R6Class(
       if (!compiled_here &&
           length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
         exe_info <- model_compile_info(self$exe_file())
+        private$reported_features_ <-
+          reported_features_from_exe(self$exe_file())
         private$cmdstan_version_ <-
           exe_info_version(exe_info) %||% private$cmdstan_version_
         private$cpp_options_ <- merge_exe_info_cpp_options(
@@ -748,6 +753,8 @@ compile <- function(quiet = TRUE,
     private$cmdstan_version_ <-
       exe_info_version(exe_info) %||% private$cmdstan_version_
 
+    private$reported_features_ <- reported_features_from_exe(exe)
+
     # Add options reported as enabled by the executable and keep recorded values
     # for anything it cannot report.
     recorded_cpp_options <-
@@ -1006,6 +1013,7 @@ compile <- function(quiet = TRUE,
     private$model_methods_env_ <- model_methods_env
     private$cpp_options_ <- cpp_options
     private$built_cpp_options_ <- cpp_options
+    private$reported_features_ <- record$reported_features
     private$precompile_cpp_options_ <- NULL
     private$precompile_stanc_options_ <- NULL
     private$precompile_include_paths_ <- NULL
@@ -1468,7 +1476,9 @@ sample <- function(data = NULL,
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
+    threads_per_proc = assert_valid_threads(
+      threads_per_chain, private$reported_features_, multiple_chains = TRUE
+    ),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -1512,7 +1522,7 @@ sample <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -1775,7 +1785,7 @@ optimize <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, private$reported_features_)
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1810,7 +1820,7 @@ optimize <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -1919,7 +1929,7 @@ laplace <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, private$reported_features_)
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1984,7 +1994,7 @@ laplace <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -2083,7 +2093,7 @@ variational <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, private$reported_features_)
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2118,7 +2128,7 @@ variational <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -2262,7 +2272,7 @@ pathfinder <- function(data = NULL,
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, private$reported_features_)
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -2302,7 +2312,7 @@ pathfinder <- function(data = NULL,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
   )
@@ -2413,7 +2423,9 @@ generate_quantities <- function(fitted_params,
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
-    threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
+    threads_per_proc = assert_valid_threads(
+      threads_per_chain, private$reported_features_, multiple_chains = TRUE
+    ),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
   )
@@ -2436,7 +2448,7 @@ generate_quantities <- function(fitted_params,
     output_dir = output_dir,
     output_basename = output_basename,
     sig_figs = sig_figs,
-    opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
+    opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables
   )
   runset <- CmdStanRun$new(args, procs)

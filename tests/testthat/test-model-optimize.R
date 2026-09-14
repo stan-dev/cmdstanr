@@ -53,11 +53,10 @@ test_that("optimize() method runs when arguments are specified in scientific not
   expect_s3_class(fit1, "CmdStanMLE")
 })
 
-test_that("optimize() warns if threads specified but not enabled", {
-  expect_warning(
-    expect_optim_output(fit <- mod$optimize(data = data_list, threads = 2,
-                                            seed = 123)),
-    "'threads' will have no effect"
+test_that("optimize() errors if threads specified but not enabled", {
+  expect_error(
+    mod$optimize(data = data_list, threads = 2, seed = 123),
+    "does not report threading as enabled", fixed = TRUE
   )
 })
 

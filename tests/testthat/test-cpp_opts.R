@@ -248,62 +248,55 @@ test_that("cpp option lookup is exact and case-insensitive", {
   expect_null(cpp_option_value(list(stan_opencl_x = TRUE), "stan_opencl"))
 })
 
-test_that("cpp option checks are case-insensitive", {
-  expect_identical(
-    assert_valid_threads(2L, list(STAN_THREADS = TRUE)),
-    2L
+test_that("a thread request needs threading reported on", {
+  on <- list(stan_threads = TRUE)
+  off <- list(stan_threads = FALSE)
+  unknown <- list()
+
+  expect_identical(assert_valid_threads(2L, on), 2L)
+  expect_error(
+    assert_valid_threads(2L, off),
+    "does not report threading as enabled", fixed = TRUE
   )
-  expect_identical(
-    assert_valid_threads(2L, list(stan_threads = TRUE)),
-    2L
+  expect_error(
+    assert_valid_threads(2L, unknown),
+    "does not report threading as enabled", fixed = TRUE
   )
-  expect_identical(
-    assert_valid_opencl(c(0L, 0L), list(STAN_OPENCL = TRUE)),
-    c(0L, 0L)
+  expect_error(
+    assert_valid_threads(2L, off, multiple_chains = TRUE),
+    "'threads_per_chain'", fixed = TRUE
   )
+
+  for (features in list(on, off, unknown)) {
+    expect_identical(assert_valid_threads(1L, features), 1L)
+    expect_null(assert_valid_threads(NULL, features))
+  }
+})
+
+test_that("an OpenCL device request needs OpenCL reported on", {
   expect_identical(
     assert_valid_opencl(c(0L, 0L), list(stan_opencl = TRUE)),
     c(0L, 0L)
   )
-})
-
-test_that("lowercase stan_threads behavior remains unchanged", {
-  expect_null(assert_valid_threads(NULL, list(stan_threads = FALSE)))
-  expect_null(assert_valid_threads(NULL, list(stan_threads = "dummy string")))
-  expect_snapshot({
-    assert_valid_threads(2L, list(stan_threads = FALSE))
-    assert_valid_threads(2L, list(stan_threads = "dummy string"))
-  })
-})
-
-test_that("cpp option checks prefer the last case-insensitive match", {
-  expect_identical(
-    assert_valid_threads(
-      2L,
-      list(stan_threads = FALSE, STAN_THREADS = TRUE)
-    ),
-    2L
+  expect_error(
+    assert_valid_opencl(c(0L, 0L), list(stan_opencl = FALSE)),
+    "does not report OpenCL as enabled", fixed = TRUE
   )
-  expect_identical(
-    assert_valid_opencl(
-      c(0L, 0L),
-      list(stan_opencl = NULL, STAN_OPENCL = TRUE)
-    ),
-    c(0L, 0L)
+  expect_error(
+    assert_valid_opencl(c(0L, 0L), list()),
+    "does not report OpenCL as enabled", fixed = TRUE
   )
+  expect_null(assert_valid_opencl(NULL, list()))
 })
 
-test_that("uppercase stan_threads requires a thread count", {
-  expect_snapshot(
-    error = TRUE,
-    assert_valid_threads(NULL, list(STAN_THREADS = TRUE))
+test_that("feature lookups do not use partial matching", {
+  expect_error(
+    assert_valid_opencl(c(0L, 0L), list(stan_opencl_x = TRUE)),
+    "does not report OpenCL as enabled", fixed = TRUE
   )
-})
-
-test_that("cpp option checks do not use partial matching", {
-  expect_snapshot(
-    error = TRUE,
-    assert_valid_opencl(c(0L, 0L), list(stan_opencl_x = TRUE))
+  expect_error(
+    assert_valid_threads(2L, list(stan_threads_x = TRUE)),
+    "does not report threading as enabled", fixed = TRUE
   )
 })
 

@@ -51,10 +51,10 @@ test_that("variational() method runs when all arguments specified validly", {
   expect_s3_class(fit2, "CmdStanVB")
 })
 
-test_that("variational() warns if threads specified but not enabled", {
-  expect_warning(
-    expect_vb_output(fit <- mod$variational(data = data_list, threads = 2, seed = 123)),
-    "'threads' will have no effect"
+test_that("variational() errors if threads specified but not enabled", {
+  expect_error(
+    mod$variational(data = data_list, threads = 2, seed = 123),
+    "does not report threading as enabled", fixed = TRUE
   )
 })
 

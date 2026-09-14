@@ -1100,7 +1100,9 @@ test_that("a recompile records options inherited from make/local", {
 
   # Nothing was passed to $compile(), so only the binary can report threading.
   expect_true(cpp_option_value(mod$cpp_options(), "stan_threads"))
-  expect_silent(assert_valid_threads(2, mod$cpp_options(), multiple_chains = TRUE))
+  expect_silent(assert_valid_threads(
+    2, mod$.__enclos_env__$private$reported_features_, multiple_chains = TRUE
+  ))
 })
 
 test_that("cpp_options() excludes the Stan version reported by the executable", {

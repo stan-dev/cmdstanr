@@ -5,26 +5,22 @@ data_file_gq_json <- testing_data("bernoulli_ppc")
 data_file_json <- test_path("resources", "data", "bernoulli.data.json")
 
 
-test_that("using threads_per_chain without stan_threads set in compile() warns", {
+test_that("threads_per_chain on an executable without threading errors", {
   mod <- cmdstan_model(stan_program)
-  expect_warning(
-    expect_output(
-      mod$sample(data = data_file_json, threads_per_chain = 4),
-      "Running MCMC with 4 sequential chains",
-      fixed = TRUE
-    ),
-    "'threads_per_chain' is set but the model was not compiled with 'cpp_options = list(stan_threads = TRUE)' so 'threads_per_chain' will have no effect!",
-    fixed = TRUE)
+  expect_error(
+    mod$sample(data = data_file_json, threads_per_chain = 4),
+    "does not report threading as enabled",
+    fixed = TRUE
+  )
+  expect_output(
+    mod$sample(data = data_file_json, chains = 1, threads_per_chain = 1),
+    "Running MCMC with 1 chain",
+    fixed = TRUE
+  )
 })
 
 test_that("threading works with sample()", {
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
-
-  expect_error(
-    mod$sample(data = data_file_json),
-    "The model executable was built with threading enabled but 'threads_per_chain' was not set!",
-    fixed = TRUE
-  )
 
   expect_output(
     f <- mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
@@ -53,12 +49,6 @@ test_that("threading works with sample()", {
 test_that("threading works with optimize()", {
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
-  expect_error(
-    mod$optimize(data = data_file_json),
-    "The model executable was built with threading enabled but 'threads' was not set!",
-    fixed = TRUE
-  )
-
   expect_output(
     f <- mod$optimize(data = data_file_json, threads = 1, seed = 123),
     "Optimization terminated normally",
@@ -86,12 +76,6 @@ test_that("threading works with optimize()", {
 
 test_that("threading works with variational()", {
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
-
-  expect_error(
-    mod$variational(data = data_file_json),
-    "The model executable was built with threading enabled but 'threads' was not set!",
-    fixed = TRUE
-  )
 
   expect_output(
     f <- mod$variational(data = data_file_json, threads = 1, seed = 123),
@@ -132,12 +116,6 @@ test_that("threading works with pathfinder()", {
     max_lbfgs_iters = 10
   )
 
-  expect_error(
-    do.call(mod$pathfinder, pathfinder_args),
-    "The model executable was built with threading enabled but 'threads' was not set!",
-    fixed = TRUE
-  )
-
   pathfinder_args$threads <- 2
   expect_output(
     f <- do.call(mod$pathfinder, pathfinder_args),
@@ -165,11 +143,6 @@ test_that("threading works with generate_quantities()", {
   expect_output(
     f <- mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
     "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
-    fixed = TRUE
-  )
-  expect_error(
-    mod_gq$generate_quantities(fitted_params = f, data = data_file_json),
-    "The model executable was built with threading enabled but 'threads_per_chain' was not set!",
     fixed = TRUE
   )
   expect_output(
@@ -210,13 +183,9 @@ test_that("stan_threads = FALSE builds an executable without threading", {
     fixed = TRUE
   )
   expect_equal(fit$metadata()$threads_per_chain, 1)
-  expect_warning(
-    expect_output(
-      mod$sample(data = data_file_json, chains = 1, threads_per_chain = 2),
-      "Running MCMC with 1 chain",
-      fixed = TRUE
-    ),
-    "'threads_per_chain' will have no effect!",
+  expect_error(
+    mod$sample(data = data_file_json, chains = 1, threads_per_chain = 2),
+    "does not report threading as enabled",
     fixed = TRUE
   )
 })
