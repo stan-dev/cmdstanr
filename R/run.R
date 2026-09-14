@@ -414,9 +414,9 @@ CmdStanRun <- R6::R6Class(
 
 #' The environment a CmdStan process runs with
 #'
-#' CmdStan reads its default thread count from STAN_NUM_THREADS, so the
-#' count is set for the child alone and the session never sees it. Under
-#' WSL the variable also has to be named in WSLENV to reach Linux.
+#' CmdStan reads its default thread count from `STAN_NUM_THREADS`, so we set the
+#' count for child alone so the session never sees it (via the processx's `env`
+#' arg). Under WSL the variable also has to be named in WSLENV to reach Linux.
 #'
 #' @noRd
 cmdstan_process_env <- function(threads) {

@@ -830,8 +830,6 @@ compile <- function(quiet = TRUE,
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
   stanc_injected[["name"]] <- paste0(self$model_name(), "_model")
-  # stanc names the copy it compiled in runtime exceptions, so point them at
-  # the file the user edits unless the caller chose a name.
   if (is.null(stanc_options[["filename-in-msg"]])) {
     stanc_injected[["filename-in-msg"]] <- self$stan_file()
   }
