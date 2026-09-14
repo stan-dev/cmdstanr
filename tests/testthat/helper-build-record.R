@@ -13,6 +13,7 @@ example_record <- function(exe_file) {
       cpp_options_supplied = list(STAN_THREADS = "true"),
       stanc_options_supplied = list("--O1"),
       stanc_options_injected = list("--name=bernoulli_model"),
+      stanc_options_inherited = list(),
       stanc_name = "bernoulli",
       include_paths = list(dirname(exe_file))
     ),

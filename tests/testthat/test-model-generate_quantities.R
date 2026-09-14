@@ -55,19 +55,6 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
   )
-  # The existing executable is unthreaded and is not rebuilt, so asking for
-  # threads is refused (#1019).
-  expect_warning(
-    mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE)),
-    "do not match the ones requested"
-  )
-  expect_error(
-    mod_gq$generate_quantities(
-      data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2
-    ),
-    "does not report threading as enabled",
-    fixed = TRUE
-  )
 })
 
 test_that("generate_quantities works with draws_array", {

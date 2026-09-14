@@ -400,8 +400,9 @@ init_model_methods <- function(seed = 1, verbose = FALSE) {
   require_suggested_package("Rcpp")
   drop_stale_model_methods(private$model_methods_env_)
   if (length(private$model_methods_env_$hpp_code_) == 0) {
-    stop("Model methods cannot be used with a pre-compiled Stan executable, ",
-          "the model must be compiled again", call. = FALSE)
+    stop("Model methods cannot be used with a model created from an ",
+         "executable alone. There is no Stan program to compile them from.",
+         call. = FALSE)
   }
   if (is.null(private$model_methods_env_$model_ptr)) {
     expose_model_methods(private$model_methods_env_, verbose)

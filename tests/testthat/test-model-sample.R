@@ -134,7 +134,6 @@ test_that("sample() prints informational messages depending on show_exceptions",
 })
 
 test_that("sample() method errors for any invalid arguments before calling cmdstan", {
-  utils::capture.output(mod$compile())
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
@@ -193,8 +192,6 @@ test_that("mc.cores option detected", {
 })
 
 test_that("sample() method runs when fixed_param = TRUE", {
-  mod_fp$compile()
-
   expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 4)
   expect_s3_class(fit_1000, "CmdStanMCMC")
   expect_equal(dim(fit_1000$draws()), c(1000,4,10))
@@ -217,7 +214,6 @@ test_that("sample() method runs when adapt_engaged = FALSE", {
 })
 
 test_that("chain_ids work with sample()", {
-  mod$compile()
   expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
   expect_s3_class(fit12, "CmdStanMCMC")
   expect_equal(fit12$metadata()$id, c(10,12))

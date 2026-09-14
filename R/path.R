@@ -411,20 +411,3 @@ is_release_candidate <- function(path) {
   }
   grepl(pattern = "-rc[0-9]*$", x = path)
 }
-
-
-# fake a cmdstan version (only used in tests)
-fake_cmdstan_version <- function(version, mod = NULL) {
-  .cmdstanr$VERSION <- version
-  if (!is.null(mod)) {
-    if (!is.null(mod$.__enclos_env__$private$exe_info_)) {
-      mod$.__enclos_env__$private$exe_info_$stan_version <- version
-    }
-    if (!is.null(mod$.__enclos_env__$private$cmdstan_version_)) {
-      mod$.__enclos_env__$private$cmdstan_version_ <- version
-    }
-  }
-}
-reset_cmdstan_version <- function(mod = NULL) {
-  fake_cmdstan_version(read_cmdstan_version(cmdstan_path()), mod = mod)
-}

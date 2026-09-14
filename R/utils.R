@@ -1135,11 +1135,12 @@ create_skeleton <- function(param_metadata, model_variables,
   })
 }
 
-get_standalone_hpp <- function(stan_file, stancflags) {
-  name <- strip_ext(basename(stan_file))
-  path <- dirname(stan_file)
-  hpp_path <- file.path(path, paste0(name, ".hpp"))
-  on.exit(unlink(hpp_path), add = TRUE)
+# Runs stanc on the program and returns the C++ it generated. Warnings stanc
+# prints on a successful run, pedantic ones included, are shown only when
+# show_warnings is TRUE, since a build shows them from its own stanc run.
+get_standalone_hpp <- function(stan_file, stancflags, show_warnings = FALSE) {
+  hpp_path <- tempfile(pattern = "model-", fileext = ".hpp")
+  withr::defer(unlink(hpp_path))
 
   status <- withr::with_path(
       c(
@@ -1170,6 +1171,9 @@ get_standalone_hpp <- function(stan_file, stancflags) {
       )
     }
     stop(err_msg, call. = FALSE)
+  }
+  if (show_warnings && length(status$stderr) > 0 && nzchar(status$stderr)) {
+    message(status$stderr)
   }
   suppressWarnings(readLines(hpp_path, warn = FALSE))
 }
@@ -1315,12 +1319,12 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
           "WSL CmdStan and will not be compiled",
           call. = FALSE)
   }
-  if (function_env$existing_exe) {
-    stop("Exporting standalone functions is not possible with a pre-compiled Stan model!",
-          call. = FALSE)
+  if (is.null(function_env$hpp_code)) {
+    stop("Standalone functions cannot be exposed for a model created from ",
+         "an executable alone. There is no Stan program to take them from.",
+         call. = FALSE)
   }
-  if (!is.null(function_env$hpp_code) &&
-      !any(grepl("[[stan::function]]", function_env$hpp_code, fixed = TRUE))) {
+  if (!any(grepl("[[stan::function]]", function_env$hpp_code, fixed = TRUE))) {
     warning("No standalone functions found to compile and expose to R!", call. = FALSE)
     return(invisible(NULL))
   }

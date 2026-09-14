@@ -19,7 +19,6 @@ run_info_cli <- function(exe_file) {
   )
 }
 
-# new (future) parser
 # Parse the string output of <model> `info` into an R object (list)
 parse_exe_info_string <- function(ret_stdout) {
   info <- list()
@@ -48,59 +47,6 @@ parse_exe_info_string <- function(ret_stdout) {
   info
 }
 
-# old (current) parser
-model_compile_info <- function(exe_file) {
-  info <- NULL
-  ret <- run_info_cli(exe_file)
-  if (ret$status == 0) {
-    info <- list()
-    info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
-    for (key_val in info_raw) {
-      if (length(key_val) > 1) {
-        key_val <- trimws(key_val)
-        val <- key_val[2]
-        if (!is.na(as.logical(val))) {
-          val <- as.logical(val)
-        }
-        info[[toupper(key_val[1])]] <- val
-      }
-    }
-    info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
-    info[["STAN_VERSION_MAJOR"]] <- NULL
-    info[["STAN_VERSION_MINOR"]] <- NULL
-    info[["STAN_VERSION_PATCH"]] <- NULL
-  }
-  info
-}
-
-#' The version an executable's `info` output reports, or NULL
-#'
-#' `info` prints the Stan version, which has matched the CmdStan version in
-#' every release, so it stands in for the CmdStan that built the executable.
-#' Missing fields synthesise to "..", which is not a version.
-#'
-#' @noRd
-exe_info_version <- function(exe_info) {
-  version <- exe_info[["STAN_VERSION"]]
-  if (is.null(version) || !grepl(cmdstan_version_pattern, version)) {
-    return(NULL)
-  }
-  version
-}
-
-# Merge build options reported by the executable. Skip STAN_VERSION and the
-# flags reported off, so only the options the build turned on are recorded.
-merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
-  for (option_name in names(exe_info)) {
-    value <- exe_info[[option_name]]
-    if (option_name != "STAN_VERSION" &&
-        (!is.logical(value) || isTRUE(value))) {
-      cpp_options[[option_name]] <- value
-    }
-  }
-  cpp_options
-}
-
 # Normalize the flags sent to make. The last value for a name wins. Go through
 # the emitted flags rather than the list because a vector value expands into one
 # assignment per element.
@@ -111,25 +57,6 @@ parsed_cpp_options <- function(cpp_options) {
     assignments[[option_name]] <- sub("^[^=]*=", "", flag)
   }
   assignments
-}
-
-normalized_cpp_options <- function(cpp_options) {
-  assignments <- parsed_cpp_options(cpp_options)
-  if (length(assignments) == 0) {
-    return(character())
-  }
-  sort(paste0(
-    names(assignments), "=",
-    unlist(assignments, use.names = FALSE)
-  ))
-}
-
-# Omitted recorded options count as changes because cpp_options are one-shot.
-cpp_options_disagree <- function(requested, recorded) {
-  !identical(
-    normalized_cpp_options(requested),
-    normalized_cpp_options(recorded)
-  )
 }
 
 # convert to compile flags --------------------
@@ -308,9 +235,7 @@ stancflags_cpp_option_message <- function() {
 
 # check specific options for validity ---------------------------------
 cpp_option_value <- function(cpp_options, option) {
-  # CmdStanR input and executable metadata can use different casing. Prefer
-  # the final match, even when it is NULL, because later executable metadata
-  # best describes the binary.
+  # The last match wins, as it does for make.
   matches <- which(tolower(names(cpp_options)) == tolower(option))
   if (length(matches) == 0) {
     return(NULL)
@@ -356,45 +281,4 @@ assert_valid_opencl <- function(opencl_ids, features) {
     )
   }
   invisible(opencl_ids)
-}
-
-# For two functions below
-# cpp_options style means is NULL or empty string
-# exe_info style means off is FALSE
-
-exe_info_style_cpp_options <- function(cpp_options) {
-  if (is.null(cpp_options)) cpp_options <- list()
-  names(cpp_options) <- toupper(names(cpp_options))
-  flags_reported_in_exe_info <- c(
-    "STAN_THREADS", "STAN_MPI", "STAN_OPENCL",
-    "STAN_NO_RANGE_CHECKS", "STAN_CPP_OPTIMS"
-  )
-  for (flag in flags_reported_in_exe_info) {
-    cpp_options[[flag]] <- !(
-      is.null(cpp_options[[flag]]) || cpp_options[[flag]] == ""
-    )
-  }
-  cpp_options
-}
-
-exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
-  if (length(exe_info) == 0) {
-    warning("Recompiling is recommended due to missing exe_info.")
-    return(TRUE)
-  }
-  if (is.null(cpp_options)) return(TRUE)
-
-  # Compare only options reported by the executable. Other options are unknown.
-  # Parse the emitted flags so duplicates and vector values match make.
-  assignments <- parsed_cpp_options(cpp_options)
-  reported <- intersect(names(assignments), names(exe_info))
-
-  for (option_name in reported) {
-    # CmdStan treats any nonempty make value as enabled.
-    requested <- nzchar(assignments[[option_name]])
-    if (requested != isTRUE(cpp_option_value(exe_info, option_name))) {
-      return(FALSE)
-    }
-  }
-  TRUE
 }

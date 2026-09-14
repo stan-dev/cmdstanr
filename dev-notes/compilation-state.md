@@ -868,6 +868,7 @@ must not restate it. A rule written in two places is a future inconsistency.
 | `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
 | `request.stanc_options_supplied` | yes | yes | as above |
 | `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction. Never compared as a list; whether an injection's effect is compared is decided per field like every other row, and the model name is the one that earns its own, below |
+| `request.stanc_options_inherited` | yes | **no** | the `STANCFLAGS` make added for the build, as passed to make after the call's own flags displaced their make/local copies (§6). A reuse regenerates the model's C++ (§5) with them, instead of asking make again on every construction. Not compared: `make/local` is, and what an included makefile or the environment adds is untracked (§6) |
 | `request.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name; §3 rejects the `stanc_options` spelling, so this is the only source. The build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`), which carries both the raw value stanc was passed and the mangled one stanc compiled |
 | `request.include_paths`, effective | yes | **no** | the paths in force for the call drive re-resolution (§6): this call's at the constructor, the object's own at a guarded method, never the recorded ones (§5). The recorded value is provenance |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
@@ -1618,8 +1619,10 @@ path pays one more stanc run, measured on 2.39.0 as a median of five: 28 ms agai
 28 ms for `--info` on the 11-line bernoulli model, 112 ms against 54 ms on an
 807-line model with 400 parameters. <!-- contract -->With only an executable (§7) there is no source
 to generate from, and `$hpp_file()` says so, like `$code()`. The standalone-functions
-C++ is not in the snapshot: its one consumer, `$expose_functions()`, is guarded and
-validates at the moment of use, so §8 has it generated on demand.
+C++ is not generated at construction: the first guarded call that passes produces
+it, when the source has just been verified to be the built one, and keeps it on the
+object, which is where a fit copies it from. `$expose_functions()` on the model and
+on its fits both read that copy, and neither runs stanc itself.
 
 <!-- /contract -->
 
@@ -2623,16 +2626,16 @@ argument rather than the artifact, and nothing they did implies it.
 
 **With no `stan_file`, an explicitly supplied argument that can only be honoured by
 building or by reading the source is an error**: `cpp_options`, `stanc_options`,
-`include_paths`, `user_header`, `force_recompile`, `pedantic`. <!-- /contract --> Silently ignoring any
+`include_paths`, `user_header`, `force_recompile`, `pedantic`, `dir`. <!-- /contract --> Silently ignoring any
 of them is the failure mode this design exists to remove. The user believes they
 asked for something.
 
 The rule is framed on both halves rather than on build configuration alone, because
-two of the six fail on the source rather than on the build, and a frame that named
+two of the seven fail on the source rather than on the build, and a frame that named
 only the build would need an exception written for each. `cpp_options`,
 `stanc_options`, `user_header` and `force_recompile` cannot configure an artifact
 that will not be rebuilt, and a valid record is there to be inspected, not
-overridden. `include_paths` configures source resolution, and every stanc
+overridden; `dir` places a build, and there is none to place. `include_paths` configures source resolution, and every stanc
 invocation needs it (compiling, `$check_syntax()`, and the `$variables()` call
 `$sample()` makes to validate data, `R/model.R:1410`), so it is meaningful whenever
 a source is registered, whether or not anything is compiled. `pedantic` is a request
@@ -2682,7 +2685,7 @@ explicit `NULL` default breaks it just as well.
 
 <!-- contract -->
 
-**Explicit `NULL` means omission for all six, so one sentinel covers them.** <!-- /contract -->
+**Explicit `NULL` means omission for all seven, so one sentinel covers them.** <!-- /contract -->
 `user_header` is the one that looks like an exception, because `user_header = NULL`
 currently means compile without one. That meaning exists only because the header
 persists: `$compile()` tells an omitted `user_header` from an explicit `NULL` with
@@ -2888,21 +2891,21 @@ without constructing an R6 object.
 **One implementation, two entry points**, so nothing is duplicated:
 
 ```
-compile_impl(stan_file, cpp_options, stanc_options, include_paths,
-             user_header, pedantic, dir, force_recompile, quiet, dry_run)
-    -> list(path =, record =, src_info =, hpp_code =)
+build_executable(stan_file, dir, include_paths, user_header, cpp_options,
+                 stanc_options, pedantic, force_recompile, quiet)
+    -> list(exe_file =, record =, include_paths =, info =, hpp_code =)
 
-compile_stan_file(...)   # exported: compile_impl(...)$path
-cmdstan_model(...)       # exported: R6 object built from all four
+compile_stan_file(...)   # exported: build_executable(...)$exe_file
+cmdstan_model(...)       # exported: R6 object built from all five
 ```
 
 <!-- /contract -->
 
-The `...` abbreviates the named arguments each wrapper takes. It is not R's `...`,
-which matters here because today's `cmdstan_model()` really does declare one and
-forward it (`R/model.R:156`). One default it hides is already settled:
-`force_recompile` is `NULL` in both, as §7 requires of every entry point that
-forwards it.
+The `...` abbreviates the named arguments each wrapper takes. It is not R's `...`:
+both wrappers declare every argument by name, so an argument that no longer
+exists fails as an unused argument at the public boundary. One default it hides is
+already settled: `force_recompile` is `NULL` in both, as §7 requires of every entry
+point that forwards it.
 
 This is a lift of today's `$compile()` rather than a rewrite. The stanc and make
 invocation moves unchanged, and 12 of its 31 `private$` touches are `precompile_*`
@@ -2913,16 +2916,16 @@ Four constraints:
 
 - The internal returns more than a path. Otherwise `cmdstan_model()` re-reads the
   record and re-runs stanc. It needs `record` for `$cpp_options()` and
-  `$cmdstan_version()`, and `src_info` for the eager `$code()`/`$variables()`
-  snapshot (§5), which is the `stanc --info` call the build already makes. <!-- contract -->
+  `$cmdstan_version()`, `include_paths` as the resolver left them, and `info` for
+  the eager `$variables()` snapshot (§5), which is the `stanc --info` call the
+  build already makes. <!-- contract -->
 - `hpp_code` is the model's generated C++, produced on both paths (§5), which the
   constructor hands to fits and writes to the file `$hpp_file()` returns. #1245's
   discriminator dissolves with it: a source-backed model always has generated C++
   and an executable-only model (§7) never does, so every consumer that needs it
   fails for one reason, no source, rather than for whether this object ran make. <!-- /contract -->
-- `dry_run` lives on the internal only. It is the single argument the public
-  wrapper omits, which makes `compile_stan_file()` a wrapper rather than a
-  re-export, though a three-line one. <!-- contract -->
+- There is no dry run. Construction ends with an executable, so no state a dry
+  run could leave exists, and the two wrappers take the same arguments. <!-- contract -->
 - `compile_stan_file()` performs the same up-to-date check, reusing a current
   executable rather than always compiling. The verb suggests otherwise, so this
   needs documenting; one operation behaving two ways depending on entry point is
@@ -3211,9 +3214,10 @@ validation is what makes it safe.
 
 <!-- contract -->
 
-**`dry_run` demotes to internal.** <!-- /contract --> Its documentation says *"Used to speedup tests"*
-(`R/model.R:558-559`); 22 test uses, zero vignette uses. <!-- contract -->It stays as an argument to
-the internal compile machinery that the public entry points wrap.
+**`dry_run` goes.** <!-- /contract --> Its documentation says *"Used to speedup tests"*
+(`R/model.R:558-559`); 22 test uses, zero vignette uses. <!-- contract -->Tests that need a model
+object without a C++ build mock `make` instead, which leaves a file where the
+executable goes and a record beside it.
 
 <!-- /contract -->
 
@@ -3224,7 +3228,7 @@ Neither is build configuration. `compile_standalone = TRUE` runs
 (`R/model.R:963`), and `compile_model_methods = TRUE` runs
 `expose_model_methods()` into the environment fit objects copy (`:966`). Neither
 sets a make flag or changes a byte of the executable, which is why neither appears
-in `compile_impl()` above: that signature was written from what the build consumes.
+in `build_executable()` above: that signature was written from what the build consumes.
 
 **They are already broken on the reuse path, in released code.** `$compile()`
 returns at `R/model.R:804`, inside the `if (!force_recompile)` branch that opens at
@@ -3265,10 +3269,10 @@ source-only construction.
 Measured on 2.39.0: `cmdstan_model("m.stan")` on an up-to-date executable, followed
 by `mod$expose_functions()`, errors with *"Exporting standalone functions is not
 possible with a pre-compiled Stan model!"* about a model that has a source sitting
-beside it. <!-- contract -->`existing_exe` should mean "this model has no source" rather than "this
-object did not personally run make", and the hpp should be generated on demand from
-the registered source the way `pedantic` re-runs stanc. The error stays for models
-that have no source (§7).
+beside it. <!-- contract -->The field goes. With the standalone C++ produced for every model
+that has a source (§5) and for none that lacks one, its presence is the
+discriminator, and `expose_stan_functions()` refuses on its absence. The error
+stays for models that have no source (§7).
 
 <!-- /contract -->
 

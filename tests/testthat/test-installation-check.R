@@ -33,7 +33,7 @@ test_that("a model is not built when the selected installation is gone", {
 })
 
 test_that("check_syntax() and format() error naming the gone installation", {
-  mod <- cmdstan_model(stan_program, compile = FALSE)
+  mod <- cmdstan_model(stan_program)
   gone <- local_gone_installation()
   expect_error(mod$check_syntax(), gone, fixed = TRUE)
   expect_error(mod$format(), gone, fixed = TRUE)

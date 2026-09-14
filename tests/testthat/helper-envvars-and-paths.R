@@ -178,3 +178,22 @@ local_cmdstan_make_local <- function(cpp_options, envir = parent.frame(),
   local_make_local_backup(envir = envir)
   cmdstan_make_local(cpp_options = cpp_options, append = append)
 }
+
+# The session's CmdStan version and, on a model object, the version it
+# reports and the one the record beside its executable says built it, so
+# that the guard sees no change.
+fake_cmdstan_version <- function(version, mod = NULL) {
+  .cmdstanr$VERSION <- version
+  if (!is.null(mod)) {
+    private <- mod$.__enclos_env__$private
+    private$cmdstan_version_ <- version
+    if (!is.null(private$record_)) {
+      private$record_$builder$version <- version
+      write_build_record(private$record_, mod$exe_file())
+    }
+  }
+}
+
+reset_cmdstan_version <- function(mod = NULL) {
+  fake_cmdstan_version(read_cmdstan_version(cmdstan_path()), mod = mod)
+}

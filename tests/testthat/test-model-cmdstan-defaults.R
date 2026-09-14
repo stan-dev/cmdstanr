@@ -76,18 +76,6 @@ expect_cmdstan_defaults <- function(method, expected) {
   }
 }
 
-test_that("cmdstan_defaults() errors for uncompiled model", {
-  mod_uncompiled <- cmdstan_model(
-    stan_file = testing_stan_file("bernoulli"),
-    compile = FALSE
-  )
-  expect_error(
-    mod_uncompiled$cmdstan_defaults("sample"),
-    "'$cmdstan_defaults()' requires a compiled model",
-    fixed = TRUE
-  )
-})
-
 test_that("cmdstan_defaults() errors for invalid method", {
   expect_error(
     mod$cmdstan_defaults("bogus"),

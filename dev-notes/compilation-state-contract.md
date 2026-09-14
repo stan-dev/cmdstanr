@@ -238,6 +238,7 @@ contains.**
 | `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
 | `request.stanc_options_supplied` | yes | yes | as above |
 | `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction. Never compared as a list; whether an injection's effect is compared is decided per field like every other row, and the model name is the one that earns its own, below |
+| `request.stanc_options_inherited` | yes | **no** | the `STANCFLAGS` make added for the build, as passed to make after the call's own flags displaced their make/local copies (§6). A reuse regenerates the model's C++ (§5) with them, instead of asking make again on every construction. Not compared: `make/local` is, and what an included makefile or the environment adds is untracked (§6) |
 | `request.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name; §3 rejects the `stanc_options` spelling, so this is the only source. The build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`), which carries both the raw value stanc was passed and the mangled one stanc compiled |
 | `request.include_paths`, effective | yes | **no** | the paths in force for the call drive re-resolution (§6): this call's at the constructor, the object's own at a guarded method, never the recorded ones (§5). The recorded value is provenance |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
@@ -484,8 +485,10 @@ fresh build holds, and an edit after construction cannot reach it.
 
 With only an executable (§7) there is no source
 to generate from, and `$hpp_file()` says so, like `$code()`. The standalone-functions
-C++ is not in the snapshot: its one consumer, `$expose_functions()`, is guarded and
-validates at the moment of use, so §8 has it generated on demand.
+C++ is not generated at construction: the first guarded call that passes produces
+it, when the source has just been verified to be the built one, and keeps it on the
+object, which is where a fit copies it from. `$expose_functions()` on the model and
+on its fits both read that copy, and neither runs stanc itself.
 
 **`$format(overwrite_file = TRUE)` must stop refreshing the cache**
 (`R/model.R:1308-1312`).
@@ -833,7 +836,7 @@ executable, not a change, and cmdstanr must not announce it on every constructio
 
 **With no `stan_file`, an explicitly supplied argument that can only be honoured by
 building or by reading the source is an error**: `cpp_options`, `stanc_options`,
-`include_paths`, `user_header`, `force_recompile`, `pedantic`.
+`include_paths`, `user_header`, `force_recompile`, `pedantic`, `dir`.
 
 **The check is on whether the argument was supplied, not on what it resolves to**,
 and `force_recompile` is why.
@@ -849,7 +852,7 @@ implementation does, after the check, and every public function that forwards
 `cmdstanr_example()`, which resolves it in its own signature today
 (`R/example.R:62`) and hands the answer on.
 
-**Explicit `NULL` means omission for all six, so one sentinel covers them.**
+**Explicit `NULL` means omission for all seven, so one sentinel covers them.**
 
 **`force_recompile` never enters the record.** It changes whether we build, never
 what we build, so it is a decision override rather than configuration.
@@ -920,12 +923,12 @@ header is supplied.
 **One implementation, two entry points**, so nothing is duplicated:
 
 ```
-compile_impl(stan_file, cpp_options, stanc_options, include_paths,
-             user_header, pedantic, dir, force_recompile, quiet, dry_run)
-    -> list(path =, record =, src_info =, hpp_code =)
+build_executable(stan_file, dir, include_paths, user_header, cpp_options,
+                 stanc_options, pedantic, force_recompile, quiet)
+    -> list(exe_file =, record =, include_paths =, info =, hpp_code =)
 
-compile_stan_file(...)   # exported: compile_impl(...)$path
-cmdstan_model(...)       # exported: R6 object built from all four
+compile_stan_file(...)   # exported: build_executable(...)$exe_file
+cmdstan_model(...)       # exported: R6 object built from all five
 ```
 
 - `hpp_code` is the model's generated C++, produced on both paths (§5), which the
@@ -1073,10 +1076,11 @@ inspection failure.
 
 **`$format()` gets a standalone plus a method wrapper.**
 
-**`dry_run` demotes to internal.**
+**`dry_run` goes.**
 
-It stays as an argument to
-the internal compile machinery that the public entry points wrap.
+Tests that need a model
+object without a C++ build mock `make` instead, which leaves a file where the
+executable goes and a record beside it.
 
 ### [`compile_model_methods` and `compile_standalone` are removed](compilation-state.md#compile_model_methods-and-compile_standalone-are-removed)
 
@@ -1087,10 +1091,10 @@ compilation.
 
 **`$expose_functions()` is fixed here too, since removal makes it the only route.**
 
-`existing_exe` should mean "this model has no source" rather than "this
-object did not personally run make", and the hpp should be generated on demand from
-the registered source the way `pedantic` re-runs stanc. The error stays for models
-that have no source (§7).
+The field goes. With the standalone C++ produced for every model
+that has a source (§5) and for none that lacks one, its presence is the
+discriminator, and `expose_stan_functions()` refuses on its absence. The error
+stays for models that have no source (§7).
 
 ## [9. Order of work](compilation-state.md#9-order-of-work)
 

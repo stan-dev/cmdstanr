@@ -41,6 +41,29 @@ with_mocked_cli <- function(code, compile_ret, info_ret) {
   rlang::eval_bare(code, env = caller)
 }
 
+# What the mocked executable reports when a test does not say otherwise.
+default_info_ret <- list(
+  status = 0,
+  stdout = paste0(
+    "stan_version_major = 2\n",
+    "stan_version_minor = 39\n",
+    "stan_version_patch = 0\n",
+    "STAN_THREADS=true\n",
+    "STAN_OPENCL=false\n"
+  )
+)
+
+# A model whose executable make never built: stanc runs for real and a text
+# file stands in for the binary, beside the program or in `dir`. For tests
+# about the object rather than the build. Nothing can be run with it.
+mock_cmdstan_model <- function(stan_file, ..., info_ret = default_info_ret) {
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = info_ret,
+    code = cmdstan_model(stan_file, ...)
+  )
+}
+
 ######## Mock Compile Expectations #######
 
 # These helpers mimic `assert_called` and `assert_not_called` in other languages.
