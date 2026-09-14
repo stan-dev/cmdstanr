@@ -1347,7 +1347,7 @@ test_that("cpp_options names reach make uppercased and values verbatim", {
   expect_output(print(out), "CXXFLAGS_OPTIM=-Dsomething_not_used", fixed = TRUE)
 })
 
-test_that("format(overwrite_file = TRUE) refreshes cached variables", {
+test_that("format(overwrite_file = TRUE) leaves the object's code and variables alone", {
   model_dir <- withr::local_tempdir()
   stan_file <- write_stan_file(
     "parameters { real alpha; } model { alpha ~ std_normal(); }",
@@ -1357,15 +1357,17 @@ test_that("format(overwrite_file = TRUE) refreshes cached variables", {
   model <- cmdstan_model(stan_file, compile = FALSE)
   expect_equal(names(model$variables()$parameters), "alpha")
 
-  # Formatting in place must refresh variables along with the cached code.
   writeLines(
     "parameters { real beta; } model { beta ~ std_normal(); }",
     stan_file
   )
   model$format(overwrite_file = TRUE, quiet = TRUE)
 
-  expect_equal(names(model$variables()$parameters), "beta")
-  expect_match(paste(model$code(), collapse = " "), "beta")
+  expect_match(paste(readLines(stan_file), collapse = " "), "beta")
+  expect_equal(names(model$variables()$parameters), "alpha")
+  code <- paste(model$code(), collapse = " ")
+  expect_match(code, "alpha")
+  expect_false(grepl("beta", code, fixed = TRUE))
 })
 
 

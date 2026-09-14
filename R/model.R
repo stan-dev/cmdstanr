@@ -1384,11 +1384,6 @@ format <- function(overwrite_file = FALSE,
     out_file <- self$stan_file()
   }
   cat(run_log$stdout, file = out_file, sep = "\n")
-  if (isTRUE(overwrite_file)) {
-    private$stan_code_ <- readLines(self$stan_file())
-    # Force variables() to reparse the formatted source.
-    private$variables_ <- NULL
-  }
 
   invisible(TRUE)
 }
