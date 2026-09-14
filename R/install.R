@@ -159,6 +159,15 @@ install_cmdstan <- function(dir = NULL,
       make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", old_cmdstan_path, "\"))")
     }
   }
+  # Ask now, before the version is announced and before an existing
+  # installation is removed. Argument or answer decides whether the
+  # post-build message below is shown.
+  copy_make_local_decided <- !is.null(copy_make_local) || rlang::is_interactive()
+  copy_make_local <- resolve_copy_make_local(
+    previous_make_local,
+    old_cmdstan_path,
+    copy_make_local
+  )
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path(wsl = wsl)
     if (!dir.exists(dir)) {
@@ -219,14 +228,6 @@ install_cmdstan <- function(dir = NULL,
   if (!check_install_dir(dir_cmdstan, overwrite)) {
     return(invisible(NULL))
   }
-  # Ask before downloading. Argument or answer decides whether the
-  # post-build message below is shown.
-  copy_make_local_decided <- !is.null(copy_make_local) || rlang::is_interactive()
-  copy_make_local <- resolve_copy_make_local(
-    previous_make_local,
-    old_cmdstan_path,
-    copy_make_local
-  )
   if (is.null(release_file)) {
     tar_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
     if (inherits(tar_downloaded, "try-error")) {
