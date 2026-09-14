@@ -397,8 +397,8 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 
 #' Would make already apply these flags, given the current `make/local`?
 #'
-#' Follows what make does with the file rather than just looking for the same
-#' text. A plain assignment is only in force while it is the last one for that
+#' Lines are compared as text, following the two rules of make that matter
+#' here. A plain assignment only counts while it is the last one for that
 #' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
 #' further down is a real change, not a duplicate. `+=` accumulates, so a
 #' second identical `+=` line adds nothing, unless a plain assignment in
@@ -411,34 +411,57 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 make_flag_already_applies <- function(flags, existing) {
   flags <- trimws(flags)
   existing <- trimws(existing)
-  existing_variable <- make_assignment_part(existing, "\\1")
-  existing_operator <- make_assignment_part(existing, "\\2")
-  flag_variable <- make_assignment_part(flags, "\\1")
-  flag_operator <- make_assignment_part(flags, "\\2")
+  # A line ending in a backslash and the lines it continues are one assignment
+  # to make, so they are written as they are rather than checked line by line.
+  # The file's own last line can be the one being continued.
+  continued <- endsWith(flags, "\\") |
+    utils::tail(continues_previous(c(existing, flags)), length(flags))
+  applies <- logical(length(flags))
+  # Check in order, adding each line that will be written to `existing`, so
+  # that later flags see the file as it is going to be.
+  for (i in seq_along(flags)) {
+    applies[i] <- !continued[i] && make_line_already_applies(flags[i], existing)
+    if (!applies[i]) {
+      existing <- c(existing, flags[i])
+    }
+  }
+  applies
+}
 
-  vapply(seq_along(flags), function(i) {
-    if (is.na(flag_variable[i])) {
-      return(flags[i] %in% existing)
+# Would make already apply this one line, given the current make/local?
+# Same rules as above.
+make_line_already_applies <- function(line, existing) {
+  variable <- make_assignment_part(line, "\\1")
+  if (is.na(variable)) {
+    return(line %in% existing)
+  }
+  existing_variable <- make_assignment_part(existing, "\\1")
+  assignments <- which(!is.na(existing_variable) & existing_variable == variable)
+  if (make_assignment_part(line, "\\2") == "+=") {
+    # A plain assignment drops what earlier += lines added, so only the
+    # lines after the last one count.
+    existing_operator <- make_assignment_part(existing, "\\2")
+    resets <- assignments[existing_operator[assignments] %in% c("=", ":=")]
+    if (length(resets) > 0) {
+      assignments <- assignments[assignments > max(resets)]
     }
-    assignments <- which(!is.na(existing_variable) &
-                           existing_variable == flag_variable[i])
-    if (flag_operator[i] == "+=") {
-      resets <- assignments[existing_operator[assignments] %in% c("=", ":=")]
-      if (length(resets) > 0) {
-        assignments <- assignments[assignments > max(resets)]
-      }
-      return(flags[i] %in% existing[assignments])
-    }
-    length(assignments) > 0 &&
-      identical(existing[max(assignments)], flags[i])
-  }, logical(1))
+    return(line %in% existing[assignments])
+  }
+  length(assignments) > 0 && identical(existing[max(assignments)], line)
 }
 
 # Variable name ("\\1") or operator ("\\2") of a makefile assignment, NA for
-# lines that do not assign anything, such as comments and blanks.
+# lines that do not assign anything, such as comments, blanks, and the rest of
+# a continued line.
 make_assignment_part <- function(lines, part) {
   pattern <- "^([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*(\\+=|:=|\\?=|=).*$"
-  ifelse(grepl(pattern, lines), sub(pattern, part, lines), NA_character_)
+  assigns <- grepl(pattern, lines) & !continues_previous(lines)
+  ifelse(assigns, sub(pattern, part, lines), NA_character_)
+}
+
+# TRUE for a line that continues the one before it
+continues_previous <- function(lines) {
+  c(FALSE, endsWith(lines, "\\"))[seq_along(lines)]
 }
 
 check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
