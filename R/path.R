@@ -99,6 +99,26 @@ cmdstan_path <- function() {
   path
 }
 
+#' The selected installation, checked right before a program runs out of it
+#'
+#' `cmdstan_path()` returns the path cached when it was set, so an
+#' installation deleted since then would otherwise surface as a failure to
+#' start make or stanc.
+#'
+#' @noRd
+checked_cmdstan_path <- function() {
+  path <- cmdstan_path()
+  if (!dir.exists(path)) {
+    stop(
+      "The CmdStan installation at '", path, "' no longer exists. ",
+      "Use set_cmdstan_path() to select another installation or ",
+      "install_cmdstan() to reinstall it.",
+      call. = FALSE
+    )
+  }
+  path
+}
+
 #' @rdname set_cmdstan_path
 #' @export
 #' @param error_on_NA (logical) Should an error be thrown if CmdStan is not

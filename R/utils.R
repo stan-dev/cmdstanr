@@ -966,7 +966,7 @@ make_shell_quote <- function(x) {
 }
 
 get_cmdstan_flags <- function(flag_name, make_args = character()) {
-  cmdstan_path <- cmdstanr::cmdstan_path()
+  cmdstan_path <- checked_cmdstan_path()
   if (flag_name == "STANCFLAGS") {
     # stanc flags are returned as a character vector, one element per argument
     return(stancflags_from_make(cmdstan_path, make_args))
@@ -1149,7 +1149,7 @@ get_standalone_hpp <- function(stan_file, stancflags) {
       wsl_compatible_run(
         command = stanc_cmd(),
         args = c(paste0("--o=", wsl_safe_path(hpp_path)), stancflags, wsl_safe_path(stan_file)),
-        wd = cmdstan_path(),
+        wd = checked_cmdstan_path(),
         error_on_status = FALSE
       )
     )

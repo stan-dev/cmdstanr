@@ -341,7 +341,7 @@ CmdStanRun <- R6::R6Class(
             sapply(self$output_files(include_failed = FALSE),
                    wsl_safe_path),
             flags),
-          wd = cmdstan_path(),
+          wd = checked_cmdstan_path(),
           echo = TRUE,
           echo_cmd = is_verbose_mode(),
           error_on_status = TRUE
@@ -412,7 +412,8 @@ CmdStanRun <- R6::R6Class(
 
 # run helpers -------------------------------------------------
 check_target_exe <- function(exe) {
-  exe_path <- file.path(cmdstan_path(), exe)
+  path <- checked_cmdstan_path()
+  exe_path <- file.path(path, exe)
   if (!file.exists(exe_path)) {
     withr::with_envvar(
       c("HOME" = short_path(Sys.getenv("HOME"))),
@@ -424,7 +425,7 @@ check_target_exe <- function(exe) {
         run_log <- wsl_compatible_run(
           command = make_cmd(),
           args = exe,
-          wd = cmdstan_path(),
+          wd = path,
           echo_cmd = TRUE,
           echo = TRUE,
           error_on_status = TRUE
