@@ -314,8 +314,8 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @export
 #' @param append (logical) For `cmdstan_make_local()`, should the listed
 #'   makefile flags be appended to the end of the existing `make/local` file?
-#'   The default is `TRUE`. If `FALSE` the file is overwritten. A flag that is
-#'   already present in `make/local` is not written a second time.
+#'   The default is `TRUE`. If `FALSE` the file is overwritten. When appending,
+#'   a flag that is already in `make/local` is not written again.
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -398,10 +398,11 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 #' Would make already apply these flags, given the current `make/local`?
 #'
 #' Follows what make does with the file rather than just looking for the same
-#' text: `+=` accumulates, so a second identical line adds nothing wherever it
-#' sits, but a plain assignment is only in force while it is the last one for
-#' that variable. Writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
-#' further down is therefore a real change, not a duplicate.
+#' text. A plain assignment is only in force while it is the last one for that
+#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
+#' further down is a real change, not a duplicate. `+=` accumulates, so a
+#' second identical `+=` line adds nothing, unless a plain assignment in
+#' between has reset the variable and dropped what the first one added.
 #'
 #' @noRd
 #' @param flags (character vector) Flags about to be appended.
@@ -411,15 +412,23 @@ make_flag_already_applies <- function(flags, existing) {
   flags <- trimws(flags)
   existing <- trimws(existing)
   existing_variable <- make_assignment_part(existing, "\\1")
+  existing_operator <- make_assignment_part(existing, "\\2")
   flag_variable <- make_assignment_part(flags, "\\1")
   flag_operator <- make_assignment_part(flags, "\\2")
 
   vapply(seq_along(flags), function(i) {
-    if (is.na(flag_variable[i]) || flag_operator[i] == "+=") {
+    if (is.na(flag_variable[i])) {
       return(flags[i] %in% existing)
     }
     assignments <- which(!is.na(existing_variable) &
                            existing_variable == flag_variable[i])
+    if (flag_operator[i] == "+=") {
+      resets <- assignments[existing_operator[assignments] %in% c("=", ":=")]
+      if (length(resets) > 0) {
+        assignments <- assignments[assignments > max(resets)]
+      }
+      return(flags[i] %in% existing[assignments])
+    }
     length(assignments) > 0 &&
       identical(existing[max(assignments)], flags[i])
   }, logical(1))

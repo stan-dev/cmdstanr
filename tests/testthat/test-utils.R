@@ -607,6 +607,35 @@ test_that("cmdstan_make_local() appends a flag that a later line has overridden"
   )
 })
 
+test_that("cmdstan_make_local() appends a += flag that a later assignment has wiped", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3"),
+    file.path(dir, "make", "local")
+  )
+
+  # CXXFLAGS=-O3 dropped what the += line added, so adding it back is a real
+  # change rather than a duplicate
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3",
+      "CXXFLAGS += -Wno-deprecated-declarations")
+  )
+  # ... and now it is in force again
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3",
+      "CXXFLAGS += -Wno-deprecated-declarations")
+  )
+})
+
 test_that("cmdstan_make_local() still appends a new value for a known variable", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
