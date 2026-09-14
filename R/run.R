@@ -411,6 +411,25 @@ CmdStanRun <- R6::R6Class(
 
 
 # run helpers -------------------------------------------------
+
+#' The environment a CmdStan process runs with
+#'
+#' CmdStan reads its default thread count from STAN_NUM_THREADS, so the
+#' count is set for the child alone and the session never sees it. Under
+#' WSL the variable also has to be named in WSLENV to reach Linux.
+#'
+#' @noRd
+cmdstan_process_env <- function(threads) {
+  if (is.null(threads)) {
+    return(NULL)
+  }
+  env <- c("current", STAN_NUM_THREADS = as.character(as.integer(threads)))
+  if (os_is_wsl()) {
+    env <- c(env, WSLENV = "STAN_NUM_THREADS/u")
+  }
+  env
+}
+
 check_target_exe <- function(exe) {
   path <- checked_cmdstan_path()
   exe_path <- file.path(path, exe)
@@ -476,11 +495,6 @@ check_target_exe <- function(exe) {
     if (procs$show_stdout_messages()) {
       cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
     }
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -543,11 +557,6 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     if (procs$show_stdout_messages()) {
       cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
     }
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -588,13 +597,6 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 
 .run_other <- function() {
   procs <- self$procs
-  if (!is.null(procs$threads_per_proc())) {
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
-  }
   start_time <- Sys.time()
   id <- 1
   procs$new_proc(
@@ -645,13 +647,6 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs
-  if (!is.null(procs$threads_per_proc())) {
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
-  }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
 
@@ -664,6 +659,7 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
       command = self$command(),
       args = self$command_args()[[1]],
       wd = dirname(self$exe_file()),
+      env = cmdstan_process_env(procs$threads_per_proc()),
       stderr = stderr_file,
       stdout = stdout_file,
       error_on_status = FALSE
@@ -786,6 +782,7 @@ CmdStanProcs <- R6::R6Class(
           command = command,
           args = args,
           wd = wd,
+          env = cmdstan_process_env(self$threads_per_proc()),
           stdout = "|",
           stderr = "|",
           echo_cmd = is_verbose_mode()

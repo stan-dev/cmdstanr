@@ -27,7 +27,6 @@ test_that("threading works with sample()", {
     "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 1)
   expect_equal(f$metadata()$threads_per_chain, 1)
 
   expect_output(
@@ -35,15 +34,27 @@ test_that("threading works with sample()", {
     "Running MCMC with 4 parallel chains, with 2 thread(s) per chain..",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 2)
   expect_equal(f$metadata()$threads_per_chain, 2)
   expect_output(
     f <- mod$sample(data = data_file_json,  parallel_chains = 4, threads_per_chain = 4),
     "Running MCMC with 4 parallel chains, with 4 thread(s) per chain..",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 4)
   expect_equal(f$metadata()$threads_per_chain, 4)
+})
+
+test_that("the thread count reaches the child process and not the session", {
+  withr::local_envvar(STAN_NUM_THREADS = NA)
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
+  utils::capture.output({
+    with_threads <- mod$sample(
+      data = data_file_json, chains = 1, threads_per_chain = 4
+    )
+    without <- mod$sample(data = data_file_json, chains = 1)
+  })
+  expect_equal(with_threads$metadata()$threads_per_chain, 4)
+  expect_equal(without$metadata()$threads_per_chain, 1)
+  expect_true(is.na(Sys.getenv("STAN_NUM_THREADS", unset = NA)))
 })
 
 test_that("threading works with optimize()", {
@@ -54,7 +65,6 @@ test_that("threading works with optimize()", {
     "Optimization terminated normally",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 1)
   expect_equal(f$metadata()$threads, 1)
 
   expect_output(
@@ -62,7 +72,6 @@ test_that("threading works with optimize()", {
     "Optimization terminated normally",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 2)
   expect_equal(f$metadata()$threads, 2)
 
   expect_output(
@@ -70,7 +79,6 @@ test_that("threading works with optimize()", {
     "Optimization terminated normally",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 4)
   expect_equal(f$metadata()$threads, 4)
 })
 
@@ -82,7 +90,6 @@ test_that("threading works with variational()", {
     "EXPERIMENTAL ALGORITHM",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 1)
   expect_equal(f$metadata()$threads, 1)
 
   expect_output(
@@ -90,7 +97,6 @@ test_that("threading works with variational()", {
     "EXPERIMENTAL ALGORITHM",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 2)
   expect_equal(f$metadata()$threads, 2)
 
   expect_output(
@@ -98,7 +104,6 @@ test_that("threading works with variational()", {
     "EXPERIMENTAL ALGORITHM",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 4)
   expect_equal(f$metadata()$threads, 4)
 })
 
@@ -122,7 +127,6 @@ test_that("threading works with pathfinder()", {
     "Finished in",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 2)
   expect_equal(f$metadata()$threads, 2)
 
   pathfinder_args$num_threads <- 2
@@ -150,7 +154,6 @@ test_that("threading works with generate_quantities()", {
     "Running standalone generated quantities after 4 MCMC chains",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 1)
   expect_equal(f_gq$metadata()$threads_per_chain, 1)
 
   expect_output(
@@ -158,7 +161,6 @@ test_that("threading works with generate_quantities()", {
     "Running standalone generated quantities after 4 MCMC chains",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 2)
   expect_equal(f_gq$metadata()$threads_per_chain, 2)
 
   expect_output(
@@ -166,7 +168,6 @@ test_that("threading works with generate_quantities()", {
     "Running standalone generated quantities after 4 MCMC chains",
     fixed = TRUE
   )
-  expect_equal(as.integer(Sys.getenv("STAN_NUM_THREADS")), 4)
   expect_equal(f_gq$metadata()$threads_per_chain, 4)
 })
 
