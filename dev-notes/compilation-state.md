@@ -1328,6 +1328,10 @@ compiles and never mutates state.** Callers differ:
 | `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
 | any operation that runs or derives state from the binary | **errors** |
 
+The assessment returns its reasons as names, one per trigger that fired or the one
+reason the record could not be used, and the caller words them (§6). The executable
+is current when the vector is empty.
+
 <!-- /contract -->
 
 These are one assessment with two responses, not two contracts. Stating them as one
@@ -1346,7 +1350,7 @@ executable was replaced (§2).
 | | at `cmdstan_model()` | at a guarded method |
 |---|---|---|
 | **expected** | the options this call supplied | the object's own snapshot: the options it was built with, and the artifact hash it was built against |
-| **observed** | the executable's hash, the record beside it, and either the source hashes resolved with this call's include paths or a statement that they were not resolved | the same, resolved with the object's construction-time paths (§4) |
+| **observed** | the record beside the executable, hash-bound to it (§4) so the executable's hash arrives inside it; the installation selected now; and either the source hashes resolved with this call's include paths or a statement that they were not resolved | the same, resolved with the object's construction-time paths (§4) |
 
 <!-- /contract -->
 
@@ -1646,11 +1650,11 @@ unaffected cannot be known without doing it. <!-- /contract --> No warning is ne
 already says this about external edits and formatting is only an edit cmdstanr
 performs on the user's behalf.
 
-Capturing the source information costs nothing extra: the assessment already
-invokes `stanc --info` for include resolution (§6), and the same output carries the
-variables. The assessment returns parsed source information; the constructor commits
-it as the object's snapshot after a successful validation or rebuild, alongside the
-generated C++ above.
+Capturing the source information costs nothing extra: the constructor already
+invokes `stanc --info` to resolve the includes it hands the assessment (§5), and the
+same output carries the variables. The constructor keeps them and commits them as
+the object's snapshot after a clean assessment or a rebuild, alongside the generated
+C++ above. The assessment itself returns only its reasons.
 
 ---
 

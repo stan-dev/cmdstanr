@@ -36,3 +36,15 @@ example_record <- function(exe_file) {
     )
   )
 }
+
+example_expected <- function(record) {
+  list(request = record$request, artifact = NULL)
+}
+
+example_observed <- function(record) {
+  list(
+    record = list(status = "available", record = record),
+    dependencies = record$dependencies,
+    builder = record$builder
+  )
+}

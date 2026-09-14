@@ -432,39 +432,88 @@ verify_build_record <- function(exe_file) {
   invisible(result$record)
 }
 
-#' Compare a recorded build against the current one
+#' The rows of the comparison table
 #'
-#' Returns the name of every compared field whose value differs between the
-#' two records, in the order the design's table lists them. Every field is
-#' checked, and nothing stops at the first difference, so a caller who changed
-#' more than one thing is told about all of them. Each entry below extracts
-#' the value a row compares, so the list is the table.
+#' One entry per compared row, in table order, each extracting the value the
+#' row compares from a record or from the current side `assess_build()`
+#' assembles. The list is the table.
 #'
 #' @noRd
-compare_build_records <- function(recorded, current) {
-  sorted <- function(x) x[order(names(x))]
-  optional_dependency <- function(record, name, fields) {
-    record$dependencies[[name]][fields]
-  }
-  compared <- list(
-    cpp_options = function(x) sorted(x$request$cpp_options_supplied),
-    stanc_options = function(x) x$request$stanc_options_supplied,
-    stanc_name = function(x) x$request$stanc_name,
-    stan_file = function(x) x$dependencies$stan_file$hash,
-    included_files = function(x) {
-      lapply(x$dependencies$included_files, `[[`, "hash")
-    },
-    user_header = function(x) {
-      optional_dependency(x, "user_header", c("hash", "built_from"))
-    },
-    make_local = function(x) optional_dependency(x, "make_local", "hash"),
-    artifact = function(x) x$artifact,
-    builder = function(x) x$builder[c("path", "version")]
-  )
+build_record_comparisons <- list(
+  cpp_options = function(x) {
+    supplied <- x[["request"]][["cpp_options_supplied"]]
+    supplied[order(names(supplied))]
+  },
+  stanc_options = function(x) x[["request"]][["stanc_options_supplied"]],
+  stanc_name = function(x) x[["request"]][["stanc_name"]],
+  stan_file = function(x) x[["dependencies"]][["stan_file"]][["hash"]],
+  included_files = function(x) {
+    lapply(x[["dependencies"]][["included_files"]], `[[`, "hash")
+  },
+  user_header = function(x) {
+    x[["dependencies"]][["user_header"]][c("hash", "built_from")]
+  },
+  make_local = function(x) x[["dependencies"]][["make_local"]]["hash"],
+  artifact = function(x) x[["artifact"]],
+  builder = function(x) x[["builder"]][c("path", "version")]
+)
+
+#' Compare a recorded build against the current one
+#'
+#' Returns the name of every row in `rows` whose value differs between the
+#' two, in table order. Every row is checked, and nothing stops at the first
+#' difference, so a caller who changed more than one thing is told about all
+#' of them.
+#'
+#' @noRd
+compare_build_records <- function(recorded, current,
+                                  rows = names(build_record_comparisons)) {
   differs <- vapply(
-    compared,
+    build_record_comparisons[rows],
     function(value) !identical(value(recorded), value(current)),
     logical(1)
   )
-  names(compared)[differs]
+  rows[differs]
+}
+
+#' Decide whether an executable is current
+#'
+#' Takes two lists and compares them. `expected` is what the caller wants
+#' the executable to have been built from. Its `request` holds the options
+#' this call would record. Its `artifact` is the hash the object was built
+#' against, or `NULL` at the constructor, which has no expectation yet.
+#' `observed` is what is there now. Its `record` is what
+#' `read_build_record()` returned. Its `dependencies` are the current files
+#' hashed the way the writer hashes them, or `NULL` when nobody resolved
+#' them. Its `builder` is the installation selected now.
+#'
+#' Returns a character vector of reasons to rebuild, empty when the
+#' executable is current. When the record cannot be used the vector holds
+#' that one reason and nothing else, because there is no baseline to compare
+#' the rest against. Otherwise it names every compared row that differs.
+#' The dependency rows are skipped when nobody resolved them, so an
+#' unresolved set is never mistaken for an empty one. The expected artifact
+#' hash is what catches an executable another process rebuilt, since the
+#' record beside it then matches it and nothing on disk disagrees. Reads no
+#' file and runs nothing.
+#'
+#' @noRd
+assess_build <- function(expected, observed) {
+  if (observed$record$status != "available") {
+    return(observed$record$reason)
+  }
+  recorded <- observed$record$record
+  current <- list(
+    request = expected$request,
+    dependencies = observed$dependencies,
+    artifact = expected$artifact %||% recorded$artifact,
+    builder = observed$builder
+  )
+  rows <- names(build_record_comparisons)
+  if (is.null(observed$dependencies)) {
+    rows <- setdiff(
+      rows, c("stan_file", "included_files", "user_header", "make_local")
+    )
+  }
+  compare_build_records(recorded, current, rows)
 }

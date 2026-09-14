@@ -326,11 +326,29 @@ test_that("a reordered stanc_options_supplied differs as stanc_options", {
   expect_equal(compare_build_records(recorded, current), "stanc_options")
 })
 
+test_that("a changed stanc option differs as stanc_options", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$request$stanc_options_supplied <- list("--O0")
+  current$request$stanc_options_supplied <- list("--O1")
+  expect_equal(compare_build_records(recorded, current), "stanc_options")
+})
+
 test_that("a changed stanc_name differs as stanc_name", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
   current$request$stanc_name <- "other_model"
+  expect_equal(compare_build_records(recorded, current), "stanc_name")
+})
+
+test_that("a rename stanc mangles to the same identifier still differs as stanc_name", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  current <- example_record(exe)
+  recorded$request$stanc_name <- "my-model_model"
+  current$request$stanc_name <- "my_model_model"
   expect_equal(compare_build_records(recorded, current), "stanc_name")
 })
 
@@ -478,6 +496,16 @@ test_that("differences outside the comparison table never count", {
   current$known_untracked_dependencies <- list(
     list(kind = "user_header_include", detected_in = "other.hpp")
   )
+  expect_equal(compare_build_records(recorded, current), character(0))
+})
+
+test_that("an absent optional dependency is not read from a longer name", {
+  exe <- local_fake_exe()
+  recorded <- example_record(exe)
+  recorded$dependencies$make_local <- NULL
+  current <- recorded
+  recorded$dependencies$user_header_note <- list(hash = "cccc", built_from = "note.hpp")
+  recorded$dependencies$make_local_note <- list(hash = "ffff", built_from = "note")
   expect_equal(compare_build_records(recorded, current), character(0))
 })
 
