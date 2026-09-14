@@ -6,22 +6,22 @@
 #'   path to a Stan program and compiled executable (once created), and provides
 #'   methods for fitting the model using Stan's algorithms.
 #'
-#'   Given a Stan program, `cmdstan_model()` checks whether the executable
-#'   beside it was built from it with the options supplied and rebuilds it if
-#'   not, printing every reason. Given an executable alone, it uses the
-#'   executable as it is.
+#'   If a Stan program with a pre-existing executable beside it is passed to
+#'   `cmdstan_model()` it checks whether the executable was built with the
+#'   options supplied and rebuilds it if not. If just an executable is provided,
+#'   then it uses the executable as is.
 #'
 #' @export
 #' @param stan_file (string) The path to a `.stan` file containing a Stan
 #'   program. The helper function [write_stan_file()] is provided for cases when
 #'   it is more convenient to specify the Stan program as a string. If
-#'   `stan_file` is not specified then `exe_file` must be specified.
-#' @param exe_file (string) The path to an existing Stan model executable, to
-#'   use instead of a Stan program. Some `CmdStanModel` methods like `$code()`
-#'   and `$print()` will not work, and the executable is used as it is: the
-#'   build arguments below cannot be supplied, and passing `NULL` counts as
-#'   omitting them. `stan_file` and `exe_file` cannot both be supplied; use
-#'   `dir` to choose where the executable for a Stan program is built.
+#'   `stan_file` is not specified then `exe_file` must be specified. Use `dir`
+#'   to choose where the executable for a Stan program is built.
+#' @param exe_file (string) The path to an existing Stan model executable to use
+#'   instead of a Stan program. The executable is used as is: none of the build
+#'   arguments below can be specified. Some `CmdStanModel` methods like
+#'   `$code()` and `$print()` also will not work. `stan_file` and `exe_file`
+#'   cannot both be supplied.
 #' @param quiet (logical) Should the verbose output from CmdStan during
 #'   compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
@@ -42,7 +42,7 @@
 #'   changes to the working directory do not affect them. When the program
 #'   contains `#include` directives and no paths are given, the program's own
 #'   directory is used.
-#' @param user_header (string) The path to a C++ file (with a .hpp extension)
+#' @param user_header (string) The path to a C++ file (with a `.hpp` extension)
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
 #'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
@@ -66,9 +66,9 @@
 #' @param force_recompile (logical) Should the model be recompiled even if the
 #'   executable was built from this program with these options? The default,
 #'   `NULL`, defers to the `cmdstanr_force_recompile` global option, and to
-#'   `FALSE` when that is unset. Needed only for changes cmdstanr cannot see:
-#'   a changed toolchain, a CmdStan modified in place, a header the user header
-#'   includes, or a makefile that `make/local` includes.
+#'   `FALSE` when that is unset. Use `force_recompile=TRUE` for changes
+#'   cmdstanr cannot see: a changed toolchain, a CmdStan modified in place, a
+#'   header the user header includes, or a makefile that `make/local` includes.
 #'
 #' @return A [`CmdStanModel`] object.
 #'
