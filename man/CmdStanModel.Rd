@@ -38,7 +38,7 @@ methods, many of which have their own (linked) documentation pages:
 \subsection{Compilation}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=model-method-compile]{$compile()}} \tab Compile Stan program. \cr
-   \code{\link[=model-method-model-info]{$exe_file()}} \tab Return or set the file path to the compiled executable. \cr
+   \code{\link[=model-method-model-info]{$exe_file()}} \tab Return the file path to the compiled executable. \cr
    \code{\link[=model-method-model-info]{$hpp_file()}} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
    \code{\link[=model-method-model-info]{$save_hpp_file()}} \tab Save the \code{.hpp} file containing the generated C++ code. \cr
    \code{\link[=model-method-expose_functions]{$expose_functions()}} \tab Expose Stan functions for use in R. \cr

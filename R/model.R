@@ -206,7 +206,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$compile()`][model-method-compile]  |  Compile Stan program. |
-#'  [`$exe_file()`][model-method-model-info] |  Return or set the file path to the compiled executable. |
+#'  [`$exe_file()`][model-method-model-info] |  Return the file path to the compiled executable. |
 #'  [`$hpp_file()`][model-method-model-info] |  Return the file path to the `.hpp` file containing the generated C++ code. |
 #'  [`$save_hpp_file()`][model-method-model-info] |  Save the `.hpp` file containing the generated C++ code. |
 #'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
@@ -357,10 +357,7 @@ CmdStanModel <- R6::R6Class(
     model_name = function() {
       private$model_name_
     },
-    exe_file = function(path = NULL) {
-      if (!is.null(path)) {
-        private$exe_file_ <- path
-      }
+    exe_file = function() {
       private$exe_file_
     },
     cmdstan_version = function() {
@@ -411,7 +408,7 @@ CmdStanModel <- R6::R6Class(
 #'   code()
 #'   print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
 #'   model_name()
-#'   exe_file(path = NULL)
+#'   exe_file()
 #'   include_paths()
 #'   cmdstan_version()
 #'   cpp_options()
@@ -422,9 +419,6 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @param line_numbers (logical) Should line numbers be printed? The default is
 #'   `getOption("cmdstanr_print_line_numbers", FALSE)`.
-#' @param path (string) The path to a model executable. If `NULL` (the default),
-#'   `$exe_file()` returns the current path. Otherwise, the stored path is
-#'   updated before being returned.
 #' @param dir (string) The directory in which to save the `.hpp` file. The
 #'   default is the directory containing the Stan program.
 #'

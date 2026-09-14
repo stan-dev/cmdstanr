@@ -318,7 +318,7 @@ test_that("install_executable() refuses to install over a directory", {
   writeLines("important", file.path(fixture$to, "data.txt"))
 
   # Directories satisfy file.exists(), so reject them before staging or renaming.
-  # Both $exe_file(path) and exe_file= can pass a directory here.
+  # exe_file= can pass a directory here.
   expect_error(
     install_executable(fixture$from, fixture$to, fixture$record),
     "is a directory",

@@ -2030,17 +2030,19 @@ test_that("compile() refuses an executable destination that is a directory", {
   dir.create(destination)
   writeLines("important", file.path(destination, "data.txt"))
 
-  model <- cmdstan_model(stan_file, compile = FALSE)
-  model$exe_file(destination)
-
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
-    code = expect_error(
-      model$compile(force_recompile = TRUE),
-      "is a directory",
-      fixed = TRUE
-    )
+    code = {
+      model <- cmdstan_model(
+        stan_file, exe_file = destination, compile = FALSE
+      )
+      expect_error(
+        model$compile(force_recompile = TRUE),
+        "is a directory",
+        fixed = TRUE
+      )
+    }
   )
   expect_true(dir.exists(destination))
   expect_identical(readLines(file.path(destination, "data.txt")), "important")

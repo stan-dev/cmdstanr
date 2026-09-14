@@ -7,10 +7,6 @@
 \item{line_numbers}{(logical) Should line numbers be printed? The default is
 \code{getOption("cmdstanr_print_line_numbers", FALSE)}.}
 
-\item{path}{(string) The path to a model executable. If \code{NULL} (the default),
-\verb{$exe_file()} returns the current path. Otherwise, the stored path is
-updated before being returned.}
-
 \item{dir}{(string) The directory in which to save the \code{.hpp} file. The
 default is the directory containing the Stan program.}
 }
@@ -50,7 +46,7 @@ has_stan_file()
 code()
 print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
 model_name()
-exe_file(path = NULL)
+exe_file()
 include_paths()
 cmdstan_version()
 cpp_options()
