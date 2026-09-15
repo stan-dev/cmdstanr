@@ -2294,10 +2294,10 @@ assert_stan_file_exists <- function(stan_file) {
 #'
 #' @param stanc_options (list) Named or unnamed stanc options. Logical values
 #'   mark boolean flags and any other value is passed as `--name=value`.
-#' @param quote_values (logical) Single-quote option values? Only the
-#'   `STANCFLAGS` string handed to Make needs quoting, because Make expands it
-#'   through a shell. Arguments for direct `stanc` calls are passed to processx
-#'   as separate elements and must be left unquoted (#1227).
+#' @param quote_values (logical) Quote the arguments for the `STANCFLAGS`
+#'   string handed to Make, which expands it through a shell? Arguments for
+#'   direct `stanc` calls are passed to processx as separate elements and must
+#'   be left unquoted (#1227).
 #' @return A character vector of arguments, one per element.
 #' @noRd
 stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
@@ -2313,12 +2313,12 @@ stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
       if (isTRUE(option_value)) {
         args <- c(args, paste0("--", option_name))
       }
-    } else if (isTRUE(quote_values) && option_name != "name") {
-      # Quoting the model name mangles the generated namespace
-      args <- c(args, paste0("--", option_name, "=", "'", option_value, "'"))
     } else {
       args <- c(args, paste0("--", option_name, "=", option_value))
     }
+  }
+  if (isTRUE(quote_values)) {
+    args <- make_shell_quote(args)
   }
   args
 }

@@ -1320,12 +1320,27 @@ test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
     stanc_options_to_args(list(canonicalize = "deprecations")),
     "--canonicalize=deprecations"
   )
+  # make_shell_quote() quotes only arguments holding characters outside its
+  # safe set, so a plain value comes back unquoted
   expect_equal(
     stanc_options_to_args(list(canonicalize = "deprecations"), quote_values = TRUE),
-    "--canonicalize='deprecations'"
+    "--canonicalize=deprecations"
   )
 
-  # Quoting the model name mangles the generated namespace
+  # A value outside the safe set comes back as shQuote() writes it
+  expect_equal(
+    stanc_options_to_args(
+      list("filename-in-msg" = "O'Brien's model.stan"), quote_values = TRUE
+    ),
+    shQuote("--filename-in-msg=O'Brien's model.stan", type = "sh")
+  )
+
+  # A `$` in a quoted argument is doubled, since make expands it
+  expect_equal(
+    stanc_options_to_args(list(canonicalize = "$HOME"), quote_values = TRUE),
+    "'--canonicalize=$$HOME'"
+  )
+
   expect_equal(
     stanc_options_to_args(list(name = "m_model"), quote_values = TRUE),
     "--name=m_model"

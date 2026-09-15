@@ -319,3 +319,22 @@ test_that("toggling cpp_options rebuilds and threading follows the exe", {
     "does not report threading as enabled", fixed = TRUE
   )
 })
+
+test_that("a program in a directory with an apostrophe builds", {
+  dir <- tempfile("O'Brien-")
+  dir.create(dir)
+  withr::defer(unlink(dir, recursive = TRUE))
+  stan_file <- file.path(dir, "model.stan")
+  writeLines(c("parameters { real y; }", "model { y ~ std_normal(); }"), stan_file)
+
+  exe <- expect_interactive_message(
+    compile_stan_file(stan_file), "Compiling Stan program..."
+  )
+  expect_true(file.exists(exe))
+
+  before_mtime <- file.mtime(exe)
+  expect_interactive_message(
+    compile_stan_file(stan_file), "Model executable is up to date!"
+  )
+  expect_equal(file.mtime(exe), before_mtime)
+})
