@@ -239,7 +239,7 @@ observe_build <- function(stan_file, include_paths, user_header, exe_file) {
   observed <- list(
     exe_file = exe_file,
     record = list(status = "unavailable", reason = "no_executable"),
-    builder = list(path = cmdstan_path(), version = cmdstan_version())
+    builder = list(path = cmdstan_path(), version = current_cmdstan_version())
   )
   if (file.exists(exe_file)) {
     observed$record <- read_build_record(exe_file)

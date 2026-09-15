@@ -206,6 +206,37 @@ test_that("a record naming another installation rebuilds", {
   )))
 })
 
+test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
+  old_path <- cmdstan_path()
+  withr::defer(set_cmdstan_path(old_path))
+
+  install_dir <- withr::local_tempdir()
+  dir.create(file.path(install_dir, "bin"))
+  stanc_target <- file.path(install_dir, stanc_cmd())
+  stanc_source <- file.path(old_path, stanc_cmd())
+  if (!isTRUE(file.symlink(stanc_source, stanc_target))) {
+    file.copy(stanc_source, stanc_target)
+  }
+  writeLines("CMDSTAN_VERSION := 2.39.0", file.path(install_dir, "makefile"))
+  set_cmdstan_path(install_dir)
+  local_mocked_bindings(
+    get_cmdstan_flags = function(...) character(), .package = "cmdstanr"
+  )
+
+  stan_file <- local_bernoulli()
+  a <- mock_cmdstan_model(stan_file)
+
+  writeLines("CMDSTAN_VERSION := 2.40.0", file.path(install_dir, "makefile"))
+  expect_mock_compile(b <- expect_interactive_message(
+    mock_cmdstan_model(stan_file), "Recompiling:\n  - the selected CmdStan changed"
+  ))
+  expect_equal(b$cmdstan_version(), "2.40.0")
+  # cmdstan_version() still reports the version cached when the path was set.
+  expect_equal(cmdstan_version(), "2.39.0")
+
+  expect_error(a$cmdstan_defaults(), class = "cmdstanr_stale_executable")
+})
+
 test_that("dir puts the executable there and a second call reuses it", {
   stan_file <- local_bernoulli()
   exe_dir <- withr::local_tempdir()

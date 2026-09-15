@@ -119,6 +119,18 @@ checked_cmdstan_path <- function() {
   path
 }
 
+#' The selected installation's version as its makefile says now, since the
+#' version `cmdstan_version()` caches goes stale when a checkout is rebuilt
+#' in place. A missing installation keeps the cached version.
+#' @noRd
+current_cmdstan_version <- function() {
+  path <- cmdstan_path()
+  if (!dir.exists(path)) {
+    return(cmdstan_version())
+  }
+  read_cmdstan_version(path)
+}
+
 #' @rdname set_cmdstan_path
 #' @export
 #' @param error_on_NA (logical) Should an error be thrown if CmdStan is not
