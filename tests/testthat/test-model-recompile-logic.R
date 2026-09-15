@@ -319,3 +319,35 @@ test_that("an executable that reports no version is refused", {
     )
   }
 })
+
+test_that("a record member with a longer name is not read as the user header", {
+  stan_file <- local_bernoulli()
+  a <- mock_cmdstan_model(stan_file)
+
+  record <- read_build_record(a$exe_file())$record
+  record$dependencies$user_header_note <- list(
+    hash = "h", built_from = "wrong.hpp"
+  )
+  write_build_record(record, a$exe_file())
+
+  expect_no_mock_compile(b <- mock_cmdstan_model(stan_file))
+  expect_null(b$user_header())
+})
+
+test_that("filename-in-msg supplied unnamed is not injected again", {
+  stan_file <- local_bernoulli()
+  mod <- mock_cmdstan_model(
+    stan_file, stanc_options = list("filename-in-msg=published.stan")
+  )
+
+  record <- read_build_record(mod$exe_file())$record
+  expect_true(
+    "--filename-in-msg=published.stan" %in%
+      unlist(record$request$stanc_options_supplied)
+  )
+  expect_false(any(grepl(
+    "filename-in-msg", unlist(record$request$stanc_options_injected)
+  )))
+  hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
+  expect_match(hpp, "published.stan", fixed = TRUE)
+})

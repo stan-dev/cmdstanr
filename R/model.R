@@ -463,7 +463,7 @@ CmdStanModel <- R6::R6Class(
       private$reported_features_ <- snapshot$reported_features
       private$cmdstan_version_ <- snapshot$version
       private$user_header_ <-
-        snapshot$record$dependencies$user_header$built_from
+        snapshot$record$dependencies[["user_header"]][["built_from"]]
       invisible(self)
     },
     include_paths = function() {
@@ -2282,6 +2282,27 @@ assert_valid_stanc_options <- function(stanc_options) {
     i <- i + 1
   }
   invisible(stanc_options)
+}
+
+#' Whether `stanc_options` sets a flag, whichever way it was written
+#'
+#' A flag arrives named, `list("filename-in-msg" = "x.stan")`, or unnamed with
+#' its value attached, `list("filename-in-msg=x.stan")`. As in
+#' assert_valid_stanc_options(), the flag is the text before the first `=`.
+#'
+#' @noRd
+stanc_option_supplied <- function(stanc_options, flag) {
+  names <- names(stanc_options)
+  for (i in seq_along(stanc_options)) {
+    name <- names[i]
+    if (is.null(name) || !nzchar(name)) {
+      name <- stanc_options[[i]]
+    }
+    if (sub("=.*$", "", name) == flag) {
+      return(TRUE)
+    }
+  }
+  FALSE
 }
 
 assert_stan_file_exists <- function(stan_file) {

@@ -59,7 +59,7 @@ build_executable <- function(stan_file,
     injected[["allow-undefined"]] <- TRUE
   }
   injected[["name"]] <- paste0(model_name_from_path(stan_file), "_model")
-  if (is.null(stanc_options[["filename-in-msg"]])) {
+  if (!stanc_option_supplied(stanc_options, "filename-in-msg")) {
     injected[["filename-in-msg"]] <- stan_file
   }
   request <- list(
