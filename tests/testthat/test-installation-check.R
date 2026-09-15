@@ -39,6 +39,13 @@ test_that("check_syntax() and format() error naming the gone installation", {
   expect_error(mod$format(), gone, fixed = TRUE)
 })
 
+test_that("variables() works with the installation gone while stan_file_variables() does not", {
+  mod <- cmdstan_model(stan_program)
+  gone <- local_gone_installation()
+  expect_no_error(mod$variables())
+  expect_error(stan_file_variables(stan_program), gone, fixed = TRUE)
+})
+
 test_that("cmdstan_summary() errors naming the gone installation", {
   fit <- testing_fit("bernoulli", chains = 1, refresh = 0)
   expect_output(fit$cmdstan_summary(), "Inference for Stan model")

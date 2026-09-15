@@ -67,6 +67,21 @@ test_that("stan_file_variables() reports a program's variables", {
   expect_equal(stan_file_variables(include_model$stan_file), with_paths)
 })
 
+test_that("stan_file_variables() accepts a declared but undefined function", {
+  stan_file <- withr::local_tempfile(
+    lines = c(
+      "functions {",
+      "  real f(real x);",
+      "}",
+      "parameters {",
+      "  real y;",
+      "}"
+    ),
+    fileext = ".stan"
+  )
+  expect_no_error(stan_file_variables(stan_file))
+})
+
 test_that("compile_stan_file() builds or reuses the executable", {
   model_dir <- withr::local_tempdir()
   stan_file <- file.path(model_dir, "bernoulli.stan")

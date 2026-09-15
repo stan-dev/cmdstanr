@@ -161,6 +161,36 @@ test_that("a changed program rebuilds and a newer mtime alone does not", {
   )))
 })
 
+test_that("an edited user header rebuilds", {
+  stan_file <- local_bernoulli()
+  header <- withr::local_tempfile(lines = "// one", fileext = ".hpp")
+  mocked(expect_mock_compile(cmdstan_model(stan_file, user_header = header)))
+
+  writeLines("// two", header)
+  mocked(expect_mock_compile(expect_interactive_message(
+    cmdstan_model(stan_file, user_header = header),
+    "Recompiling:\n  - the user header changed"
+  )))
+})
+
+test_that("a renamed program with a copied executable rebuilds for its name", {
+  dir <- withr::local_tempdir()
+  stan_file <- file.path(dir, "model.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  mocked(expect_mock_compile(mod <- cmdstan_model(stan_file)))
+
+  renamed <- file.path(dir, "renamed.stan")
+  renamed_exe <- cmdstan_ext(strip_ext(renamed))
+  file.copy(stan_file, renamed)
+  file.copy(mod$exe_file(), renamed_exe)
+  file.copy(build_record_path(mod$exe_file()), build_record_path(renamed_exe))
+
+  mocked(expect_mock_compile(expect_interactive_message(
+    cmdstan_model(renamed),
+    "Recompiling:\n  - the model name changed"
+  )))
+})
+
 test_that("a record that cannot be used rebuilds and says why", {
   stan_file <- local_bernoulli()
   mocked(expect_mock_compile(mod <- cmdstan_model(stan_file)))
@@ -303,6 +333,33 @@ test_that("an executable with no record is asked to identify itself", {
   expect_equal(adopted$cmdstan_version(), "2.39.0")
 })
 
+test_that("an unusable record falls back to asking the executable", {
+  stan_file <- local_bernoulli()
+  mod <- mock_cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE))
+  record_path <- build_record_path(mod$exe_file())
+  original <- jsonlite::fromJSON(record_path, simplifyVector = FALSE)
+  launches <- local_info_launches()
+
+  expect_asked <- function() {
+    launches$n <- 0L
+    adopted <- mocked(cmdstan_model(exe_file = mod$exe_file()))
+    expect_equal(launches$n, 1L)
+    expect_equal(adopted$cmdstan_version(), "2.39.0")
+    expect_equal(adopted$cpp_options(), structure(list(), names = character()))
+  }
+
+  writeLines("{", record_path)
+  expect_asked()
+  for (broken in list(
+    list(format_version = 99L), list(artifact = "wrong"), list(builder = "x")
+  )) {
+    record <- original
+    record[names(broken)] <- broken
+    jsonlite::write_json(record, record_path, auto_unbox = TRUE, digits = NA)
+    expect_asked()
+  }
+})
+
 test_that("an executable that reports no version is refused", {
   stan_file <- local_bernoulli()
   mod <- mock_cmdstan_model(stan_file)
@@ -350,4 +407,16 @@ test_that("filename-in-msg supplied unnamed is not injected again", {
   )))
   hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
   expect_match(hpp, "published.stan", fixed = TRUE)
+})
+
+# Writes the shared installation's make/local, so it runs last and once.
+test_that("an edited make/local rebuilds", {
+  stan_file <- local_bernoulli()
+  mocked(expect_mock_compile(cmdstan_model(stan_file)))
+
+  local_cmdstan_make_local(cpp_options = list("CXXFLAGS += -O1"))
+  mocked(expect_mock_compile(expect_interactive_message(
+    cmdstan_model(stan_file),
+    "Recompiling:\n  - make/local changed"
+  )))
 })

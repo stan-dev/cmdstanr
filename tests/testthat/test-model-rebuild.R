@@ -86,6 +86,29 @@ test_that("adoption from a record verifies by hash alone", {
   )
 })
 
+test_that("adoption without a record verifies by the hash it captured", {
+  exe <- mod_b$exe_file()
+  record <- build_record_path(exe)
+  kept <- withr::local_tempdir()
+  file.copy(c(exe, record), kept)
+  withr::defer(file.copy(
+    file.path(kept, basename(c(exe, record))), dirname(exe), overwrite = TRUE
+  ))
+
+  file.remove(record)
+  mod_d <- cmdstan_model(exe_file = exe)
+  expect_no_error(mod_d$cmdstan_defaults())
+
+  # Replaced without a build: another program's executable copied over it
+  bernoulli_exe <- cmdstan_model(testing_stan_file("bernoulli"))$exe_file()
+  file.copy(bernoulli_exe, exe, overwrite = TRUE)
+  expect_error(
+    mod_d$cmdstan_defaults(),
+    "replaced after this model was created", fixed = TRUE,
+    class = "cmdstanr_stale_executable"
+  )
+})
+
 test_that("adoption from a record needs no installation", {
   gone <- local_gone_installation()
   mod_e <- cmdstan_model(exe_file = mod_b$exe_file())
@@ -182,6 +205,62 @@ test_that("identical included content reuses across different include paths", {
     cmdstan_model(stan_file, include_paths = v2), "included files changed"
   )
   expect_no_recompilation(cmdstan_model(stan_file, include_paths = v2))
+})
+
+test_that("an edit to a nested include rebuilds", {
+  dir <- withr::local_tempdir()
+  writeLines(
+    c(
+      "#include b.stan",
+      "parameters {",
+      "  real x;",
+      "}",
+      "model {",
+      "  x ~ std_normal();",
+      "}"
+    ),
+    file.path(dir, "a.stan")
+  )
+  writeLines("#include c.stan", file.path(dir, "b.stan"))
+  writeLines("// c v1", file.path(dir, "c.stan"))
+  stan_file <- file.path(dir, "a.stan")
+
+  expect_mock_compile(mock_cmdstan_model(stan_file))
+
+  writeLines("// c v2", file.path(dir, "c.stan"))
+  expect_mock_compile(expect_interactive_message(
+    mock_cmdstan_model(stan_file), "included files changed.*c\\.stan"
+  ))
+})
+
+test_that("include paths reordered to the same resolution do not rebuild", {
+  dir <- withr::local_tempdir()
+  dir1 <- file.path(dir, "dir1")
+  dir2 <- file.path(dir, "dir2")
+  dir.create(dir1)
+  dir.create(dir2)
+  writeLines(
+    "real helper(real x) { return x + 1; }", file.path(dir1, "helper.stan")
+  )
+  stan_file <- file.path(dir, "model.stan")
+  writeLines(
+    c(
+      "functions {",
+      "#include helper.stan",
+      "}",
+      "parameters { real x; }",
+      "model { x ~ std_normal(); }",
+      "generated quantities { real h = helper(x); }"
+    ),
+    stan_file
+  )
+
+  expect_mock_compile(
+    mock_cmdstan_model(stan_file, include_paths = c(dir1, dir2))
+  )
+  expect_no_mock_compile(
+    mock_cmdstan_model(stan_file, include_paths = c(dir2, dir1))
+  )
 })
 
 test_that("a project moved as a whole still reuses its executable", {
