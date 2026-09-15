@@ -425,7 +425,13 @@ cmdstan_process_env <- function(threads) {
   }
   env <- c("current", STAN_NUM_THREADS = as.character(as.integer(threads)))
   if (os_is_wsl()) {
-    env <- c(env, WSLENV = "STAN_NUM_THREADS/u")
+    # Keep the entries the session already exports to Linux, such as the
+    # OpenMPI ones sample_mpi() needs.
+    entries <- strsplit(Sys.getenv("WSLENV"), ":", fixed = TRUE)[[1]]
+    entries <- entries[sub("/.*$", "", entries) != "STAN_NUM_THREADS"]
+    env <- c(
+      env, WSLENV = paste(c(entries, "STAN_NUM_THREADS/u"), collapse = ":")
+    )
   }
   env
 }

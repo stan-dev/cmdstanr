@@ -57,6 +57,16 @@ test_that("the thread count reaches the child process and not the session", {
   expect_true(is.na(Sys.getenv("STAN_NUM_THREADS", unset = NA)))
 })
 
+test_that("WSLENV keeps the entries the session already exports", {
+  local_mocked_bindings(os_is_wsl = function() TRUE, .package = "cmdstanr")
+
+  withr::local_envvar(WSLENV = "A/u:STAN_NUM_THREADS/u:B/p")
+  expect_equal(cmdstan_process_env(4)[["WSLENV"]], "A/u:B/p:STAN_NUM_THREADS/u")
+
+  withr::local_envvar(WSLENV = NA)
+  expect_equal(cmdstan_process_env(4)[["WSLENV"]], "STAN_NUM_THREADS/u")
+})
+
 test_that("threading works with optimize()", {
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
