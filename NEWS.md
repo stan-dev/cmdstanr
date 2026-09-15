@@ -6,7 +6,7 @@ that is up to date, so a model object always has a working executable. The
 creating a model object use the new standalone function `compile_stan_file()`,
 which returns the path to the executable. Other new standalone functions
 `check_syntax_stan_file()`, `format_stan_file()` and `stan_file_variables()` do
-what the corresponding methods do from a Stan file alone. (#1256)
+what the corresponding methods do but from a Stan file alone. (#1256)
 * `cmdstan_model()` now rebuilds when anything the executable was built from
 has changed: the Stan program and the files it includes, the user header,
 `cpp_options` and `stanc_options`, `make/local` or the CmdStan installation,
