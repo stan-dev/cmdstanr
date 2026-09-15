@@ -187,7 +187,8 @@ test_that("stan_threads = FALSE builds an executable without threading", {
     cpp_options = list(stan_threads = FALSE),
     force_recompile = TRUE
   )
-  expect_false(mod$cpp_options()$STAN_THREADS)
+  # FALSE reaches make as an empty assignment, and is reported that way
+  expect_equal(mod$cpp_options()$STAN_THREADS, "")
   expect_output(
     fit <- mod$sample(data = data_file_json, chains = 1),
     "Running MCMC with 1 chain",
