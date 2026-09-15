@@ -110,16 +110,6 @@ test_that("sample() method runs when all arguments specified", {
   expect_s3_class(fit, "CmdStanMCMC")
 })
 
-test_that("sample() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(stan_program, stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_sample_output(
-    mod_tmp$sample(data = data_list)
-  )
-})
-
 test_that("sample() prints informational messages depending on show_exceptions", {
   mod_info_msg <- testing_model("info_message")
   expect_sample_output(

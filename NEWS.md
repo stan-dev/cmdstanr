@@ -27,7 +27,10 @@ build now says so in a one-line note and names `force_recompile = TRUE` as the
 way to pick up changes to them. (#1257)
 * Running an executable that is out of date is now an error that points at
 `cmdstan_model()`. Previously the stale executable ran as if it were current.
-(#1255)
+A model created from a Stan file also needs that file whenever it runs, since
+the check reads it; previously the model kept running after the file was
+deleted. To run an executable without its program, create the model with
+`cmdstan_model(exe_file = )`. (#1255)
 * The `compile_standalone` and `compile_model_methods` arguments are gone. Use
 `$expose_functions()` and `fit$init_model_methods()`, which now work whether
 the executable was rebuilt or reused. Previously both arguments were silently

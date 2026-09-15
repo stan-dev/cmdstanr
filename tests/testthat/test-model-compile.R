@@ -460,8 +460,7 @@ test_that("check_syntax() works", {
   file.remove(stan_file_tmp)
   expect_error(
     mod_removed_stan_file$check_syntax(),
-    "The Stan file used to create the `CmdStanModel` object does not exist.",
-    fixed = TRUE
+    "this model was created from no longer exists", fixed = TRUE
   )
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
@@ -991,8 +990,7 @@ test_that("format() works", {
   file.remove(stan_file_tmp)
   expect_error(
     mod_removed_stan_file$format(),
-    "The Stan file used to create the `CmdStanModel` object does not exist.",
-    fixed = TRUE
+    "this model was created from no longer exists", fixed = TRUE
   )
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(

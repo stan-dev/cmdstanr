@@ -374,6 +374,7 @@ CmdStanModel <- R6::R6Class(
         }
         return(invisible(self))
       }
+      assert_stan_file_exists(private$stan_file_)
       observed <- observe_build(
         private$stan_file_, private$include_paths_, private$user_header_, exe
       )
@@ -2308,7 +2309,12 @@ stanc_option_supplied <- function(stanc_options, flag) {
 
 assert_stan_file_exists <- function(stan_file) {
   if (!file.exists(stan_file)) {
-    stop("The Stan file used to create the `CmdStanModel` object does not exist.", call. = FALSE)
+    stop(
+      "The Stan file '", stan_file, "' this model was created from no longer ",
+      "exists. To run the executable without its program, create the model ",
+      "with `cmdstan_model(exe_file = )`.",
+      call. = FALSE
+    )
   }
 }
 

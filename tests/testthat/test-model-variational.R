@@ -65,13 +65,3 @@ test_that("variational() method errors for any invalid argument before calling c
     expect_error(do.call(mod$variational, args), regexp = nm)
   }
 })
-
-test_that("variational() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_vb_output(
-    mod_tmp$variational(data = data_list, seed = 123)
-  )
-})

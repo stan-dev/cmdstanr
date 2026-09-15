@@ -441,3 +441,19 @@ test_that("a program in a directory with an apostrophe builds", {
   )
   expect_equal(file.mtime(exe), before_mtime)
 })
+
+test_that("a model whose Stan file is gone errors, and its executable can be adopted", {
+  dir <- withr::local_tempdir()
+  stan_file <- file.path(dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  mod <- cmdstan_model(stan_file)
+  data <- testing_data("bernoulli")
+
+  file.remove(stan_file)
+  expect_error(
+    mod$sample(data = data), "this model was created from no longer exists",
+    fixed = TRUE
+  )
+  adopted <- cmdstan_model(exe_file = mod$exe_file())
+  expect_sample_output(adopted$sample(data = data, chains = 1), 1)
+})

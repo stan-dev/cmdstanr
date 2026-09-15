@@ -129,16 +129,6 @@ test_that("optimize() works with (L-)BFGS tolerances specified", {
   expect_equal(metadata$history_size, 6)
 })
 
-test_that("optimize() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_optim_output(
-    mod_tmp$optimize(data = data_list)
-  )
-})
-
 test_that("optimize() recognizes new jacobian argument", {
   utils::capture.output({
     fit <- mod$optimize(data = data_list, jacobian = FALSE)
