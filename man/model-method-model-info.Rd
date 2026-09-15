@@ -29,11 +29,11 @@ executable, as a string.
 \code{make} spelling.
 \item \verb{$user_header()} returns the absolute path to the user header as a string,
 or \code{NULL} if the model has no user header.
-\item \verb{$hpp_file()} returns the path to the \code{.hpp} file as a string when C++ code
-was generated while compiling this model object. It errors if no \code{.hpp}
-path is available, such as when an up-to-date executable was reused.
-\item \verb{$save_hpp_file()} requires an available \code{.hpp} file. It moves the file to
-\code{dir}, updates the stored path, and returns the new path invisibly.
+\item \verb{$hpp_file()} returns the path to the \code{.hpp} file holding the C++ code
+generated for the Stan program when the model object was created. It
+errors if the model was created without a Stan file.
+\item \verb{$save_hpp_file()} moves the \code{.hpp} file to \code{dir}, updates the stored
+path, and returns the new path invisibly.
 }
 }
 \description{
@@ -56,7 +56,7 @@ save_hpp_file(dir = NULL)
 }\if{html}{\out{</div>}}
 }
 \seealso{
-\code{\link[=model-method-compile]{$compile()}} and \code{\link[=cmdstan_model]{cmdstan_model()}}
+\code{\link[=cmdstan_model]{cmdstan_model()}}
 
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
@@ -71,7 +71,6 @@ The Stan and CmdStan documentation:
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},

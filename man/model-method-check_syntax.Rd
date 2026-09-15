@@ -3,11 +3,20 @@
 \name{model-method-check_syntax}
 \alias{model-method-check_syntax}
 \alias{check_syntax}
+\alias{check_syntax_stan_file}
 \title{Check syntax of a Stan program}
 \usage{
 check_syntax(
   pedantic = FALSE,
   include_paths = NULL,
+  stanc_options = list(),
+  quiet = FALSE
+)
+
+check_syntax_stan_file(
+  stan_file,
+  include_paths = NULL,
+  pedantic = FALSE,
   stanc_options = list(),
   quiet = FALSE
 )
@@ -20,25 +29,31 @@ the Stan User's Guide.}
 
 \item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan
-program.}
+program. The method uses the model's own include paths when none are
+given. \code{check_syntax_stan_file()} uses the program's own directory when
+none are given and the program contains \verb{#include} directives.}
 
 \item{stanc_options}{(list) Any other Stan-to-C++ transpiler options to be
-used when compiling the model. See the documentation for the
-\code{\link[=model-method-compile]{$compile()}} method for details.}
+used when compiling the model. See the documentation for
+\code{\link[=cmdstan_model]{cmdstan_model()}} for details.}
 
 \item{quiet}{(logical) Should informational messages be suppressed? The
 default is \code{FALSE}, which will print a message if the Stan program is valid
 or the compiler error message if there are syntax errors. If \code{TRUE}, only
 the error message will be printed.}
+
+\item{stan_file}{(string) The path to a Stan program.}
 }
 \value{
-The \verb{$check_syntax()} method returns \code{TRUE} (invisibly) if the model
-is valid.
+\code{TRUE} (invisibly) if the program is valid.
 }
 \description{
 The \verb{$check_syntax()} method of a \code{\link{CmdStanModel}} object
 checks the Stan program for syntax errors and returns \code{TRUE} (invisibly) if
 parsing succeeds. If invalid syntax is found an error is thrown.
+
+The standalone function \code{check_syntax_stan_file()} does the same for a Stan
+program without creating a model object, and so without compiling it.
 }
 \examples{
 \dontrun{
@@ -55,7 +70,7 @@ model {
   y ~ poisson(lambda);
 }
 ")
-mod <- cmdstan_model(file, compile = FALSE)
+mod <- cmdstan_model(file)
 
 # the program is syntactically correct, however...
 mod$check_syntax()
@@ -79,7 +94,6 @@ The Stan and CmdStan documentation:
 
 Other CmdStanModel methods:
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},

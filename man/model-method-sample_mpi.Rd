@@ -309,7 +309,7 @@ mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 }\if{html}{\out{</div>}}
 
 The C++ options that must be supplied to the
-\link[=model-method-compile]{compile} call are:
+\code{\link[=cmdstan_model]{cmdstan_model()}} call are:
 \itemize{
 \item \code{stan_mpi}: Enables the use of MPI with Stan if \code{TRUE}.
 \item \code{CXX}: The name of the MPI C++ compiler wrapper. Typically \code{"mpicxx"}.
@@ -354,7 +354,6 @@ details on MPI support in Stan.
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},

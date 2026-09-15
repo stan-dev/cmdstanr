@@ -2,36 +2,102 @@
 % Please edit documentation in R/model.R
 \name{cmdstan_model}
 \alias{cmdstan_model}
+\alias{compile_stan_file}
 \title{Create a new CmdStanModel object}
 \usage{
-cmdstan_model(stan_file = NULL, exe_file = NULL, compile = TRUE, ...)
+cmdstan_model(
+  stan_file = NULL,
+  exe_file = NULL,
+  quiet = TRUE,
+  dir = NULL,
+  pedantic = FALSE,
+  include_paths = NULL,
+  user_header = NULL,
+  cpp_options = NULL,
+  stanc_options = NULL,
+  force_recompile = NULL
+)
+
+compile_stan_file(
+  stan_file,
+  quiet = TRUE,
+  dir = NULL,
+  pedantic = FALSE,
+  include_paths = NULL,
+  user_header = NULL,
+  cpp_options = NULL,
+  stanc_options = NULL,
+  force_recompile = NULL
+)
 }
 \arguments{
 \item{stan_file}{(string) The path to a \code{.stan} file containing a Stan
 program. The helper function \code{\link[=write_stan_file]{write_stan_file()}} is provided for cases when
 it is more convenient to specify the Stan program as a string. If
-\code{stan_file} is not specified then \code{exe_file} must be specified.}
+\code{stan_file} is not specified then \code{exe_file} must be specified. Use \code{dir}
+to choose where the executable for a Stan program is built.}
 
-\item{exe_file}{(string) The path to an existing Stan model executable. Can
-be provided instead of or in addition to \code{stan_file} (if \code{stan_file} is
-omitted some \code{CmdStanModel} methods like \verb{$code()} and \verb{$print()} will not
-work). If \code{stan_file} is omitted, the executable is used as it is:
-\code{cpp_options}, \code{stanc_options}, \code{include_paths}, \code{user_header},
-\code{force_recompile} and \code{pedantic} cannot be supplied, and passing \code{NULL}
-counts as omitting them.}
+\item{exe_file}{(string) The path to an existing Stan model executable to use
+instead of a Stan program. The executable is used as is: none of the build
+arguments below can be specified. Some \code{CmdStanModel} methods like
+\verb{$code()} and \verb{$print()} also will not work. \code{stan_file} and \code{exe_file}
+cannot both be supplied.}
 
-\item{compile}{(logical) Do compilation? The default is \code{TRUE}. If \code{FALSE}
-compilation can be done later via the \code{\link[=model-method-compile]{$compile()}}
-method.}
+\item{quiet}{(logical) Should the verbose output from CmdStan during
+compilation be suppressed? The default is \code{TRUE}, but if you encounter an
+error we recommend trying again with \code{quiet=FALSE} to see more of the
+output.}
 
-\item{...}{Optionally, additional arguments to pass to the
-\code{\link[=model-method-compile]{$compile()}} method if \code{compile=TRUE}. These
-options include specifying the directory for saving the executable, turning
-on pedantic mode, specifying include paths, configuring C++ options, and
-more. See \code{\link[=model-method-compile]{$compile()}} for details.}
+\item{dir}{(string) The path to the directory in which to store the CmdStan
+executable. The default is the same location as the Stan program.}
+
+\item{pedantic}{(logical) Should pedantic mode be turned on? The default is
+\code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
+Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html}{\emph{Pedantic mode} section} in
+the Stan User's Guide. The check runs whether or not the executable is
+rebuilt. To check a program without an executable use the
+\code{\link[=model-method-check_syntax]{$check_syntax()}} method.}
+
+\item{include_paths}{(character vector) Paths to directories where Stan
+should look for files specified in \verb{#include} directives in the Stan
+program. Relative paths are resolved against the working directory when
+the model object is created and stored as absolute paths, so subsequent
+changes to the working directory do not affect them. When the program
+contains \verb{#include} directives and no paths are given, the program's own
+directory is used.}
+
+\item{user_header}{(string) The path to a C++ file (with a \code{.hpp} extension)
+to compile with the Stan model.}
+
+\item{cpp_options}{(list) Any makefile options to be used when compiling the
+model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would
+otherwise write in the \code{make/local} file. For an example of using threading
+see the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
+Every entry must be named with a \code{Make} variable name, in any casing, which
+\code{\link[=model-method-model-info]{$cpp_options()}} reports back in upper case.
+Setting an option to \code{FALSE} or \code{NULL} passes an empty assignment such as
+\verb{STAN_THREADS=}. That empties the variable for this build, which turns a
+switch off, and overrides whatever \code{make/local} sets.}
+
+\item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
+when compiling the model. See the \strong{Examples} section below as well as the
+\href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{\code{stanc} chapter of the CmdStan User's Guide} for more details
+on available options. Options that cmdstanr sets from its own arguments
+cannot be passed here: \code{include-paths} (use \code{include_paths}),
+\code{warn-pedantic} (\code{pedantic}), \code{allow-undefined} (\code{user_header}),
+\code{use-opencl} (\code{cpp_options = list(stan_opencl = TRUE)}) and \code{name} (taken
+from the name of the Stan file).}
+
+\item{force_recompile}{(logical) Should the model be recompiled even if the
+executable was built from this program with these options? The default,
+\code{NULL}, defers to the \code{cmdstanr_force_recompile} global option, and to
+\code{FALSE} when that is unset. Use \code{force_recompile=TRUE} for changes
+cmdstanr cannot see: a changed toolchain, a CmdStan modified in place, a
+header the user header includes, or a makefile that \code{make/local} includes.}
 }
 \value{
-A \code{\link{CmdStanModel}} object.
+\code{cmdstan_model()} returns a \code{\link{CmdStanModel}} object.
+\code{compile_stan_file()} returns the path to the executable.
 }
 \description{
 \if{html}{\figure{logo.svg}{options: width=25}}
@@ -40,8 +106,17 @@ or from an existing Stan executable. The \code{\link{CmdStanModel}} object store
 path to a Stan program and compiled executable (once created), and provides
 methods for fitting the model using Stan's algorithms.
 
-See the \code{compile} and \code{...} arguments for control over whether and how
-compilation happens.
+If a Stan program with a pre-existing executable beside it is passed to
+\code{cmdstan_model()} it checks whether the executable was built with the
+options supplied and rebuilds it if not. If just an executable is provided,
+then it uses the executable as is.
+
+\code{compile_stan_file()} runs the same build, or the same check of an
+existing executable, but returns the path to the executable instead of a
+\code{CmdStanModel} object. It is for code that builds an executable in one
+place and uses it in another, for example an R package that compiles its
+Stan programs when it is installed and later calls
+\code{cmdstan_model(exe_file = )}.
 }
 \examples{
 \dontrun{
@@ -163,7 +238,7 @@ fit_optim_w_init_list$init()
 
 }
 \seealso{
-\code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=model-method-compile]{$compile()}},
+\code{\link[=install_cmdstan]{install_cmdstan()}},
 \code{\link[=model-method-check_syntax]{$check_syntax()}}
 
 The CmdStanR website

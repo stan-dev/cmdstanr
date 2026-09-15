@@ -11,6 +11,13 @@
 #'   options supplied and rebuilds it if not. If just an executable is provided,
 #'   then it uses the executable as is.
 #'
+#'   `compile_stan_file()` runs the same build, or the same check of an
+#'   existing executable, but returns the path to the executable instead of a
+#'   `CmdStanModel` object. It is for code that builds an executable in one
+#'   place and uses it in another, for example an R package that compiles its
+#'   Stan programs when it is installed and later calls
+#'   `cmdstan_model(exe_file = )`.
+#'
 #' @export
 #' @param stan_file (string) The path to a `.stan` file containing a Stan
 #'   program. The helper function [write_stan_file()] is provided for cases when
@@ -70,7 +77,8 @@
 #'   cmdstanr cannot see: a changed toolchain, a CmdStan modified in place, a
 #'   header the user header includes, or a makefile that `make/local` includes.
 #'
-#' @return A [`CmdStanModel`] object.
+#' @return `cmdstan_model()` returns a [`CmdStanModel`] object.
+#'   `compile_stan_file()` returns the path to the executable.
 #'
 #' @seealso [install_cmdstan()],
 #'   [`$check_syntax()`][model-method-check_syntax]
@@ -232,6 +240,34 @@ cmdstan_model <- function(stan_file = NULL,
     stanc_options = stanc_options,
     force_recompile = force_recompile
   )
+}
+
+#' @rdname cmdstan_model
+#' @export
+compile_stan_file <- function(stan_file,
+                              quiet = TRUE,
+                              dir = NULL,
+                              pedantic = FALSE,
+                              include_paths = NULL,
+                              user_header = NULL,
+                              cpp_options = NULL,
+                              stanc_options = NULL,
+                              force_recompile = NULL) {
+  assert_file_exists(
+    stan_file, access = "r", extension = c("stan", "stanfunctions")
+  )
+  built <- build_executable(
+    resolve_path(stan_file),
+    dir = dir,
+    include_paths = include_paths,
+    user_header = user_header,
+    cpp_options = cpp_options,
+    stanc_options = stanc_options,
+    pedantic = pedantic,
+    force_recompile = force_recompile,
+    quiet = quiet
+  )
+  built$exe_file
 }
 
 # CmdStanModel -----------------------------------------------------------------
@@ -570,13 +606,18 @@ NULL
 #' @aliases variables
 #' @family CmdStanModel methods
 #'
-#' @description The `$variables()` method of a [`CmdStanModel`] object returns
-#'   a list, each element representing a Stan model block: `data`, `parameters`,
-#'   `transformed_parameters` and `generated_quantities`.
+#' @description The `$variables()` method of a [`CmdStanModel`] object returns a
+#'   list, each element representing a Stan model block: `data`, `parameters`,
+#'   `transformed_parameters` and `generated_quantities`. The information
+#'   describes the program the executable was built from, captured when the
+#'   model object was created.
 #'
-#'   Each element contains a list of variables, with each variable represented
-#'   as a list with information on its scalar type (`real` or `int`) and
-#'   number of dimensions.
+#'   The standalone function `stan_file_variables()` returns the same list for a
+#'   Stan program as it is now, without creating a model object or compiling.
+#'
+#'   Each element in the returned object contains a list of variables, with each
+#'   variable represented as a list with information on its scalar type (`real`
+#'   or `int`) and number of dimensions.
 #'
 #'   The number of dimensions reported is the number of indexing dimensions in
 #'   the declared Stan variable, equivalently the number of indices needed to
@@ -588,11 +629,8 @@ NULL
 #'   `transformed data` is not included, as variables in that block are not
 #'   part of the model's input or output.
 #'
-#'   The information describes the program the executable was built from,
-#'   captured when the model object was created.
-#'
-#' @return The method returns a list with information on input and output
-#'   variables for each of the Stan model blocks.
+#' @return A list with information on input and output variables for each of
+#'   the Stan model blocks.
 #'
 #' @seealso [write_stan_json()] for writing data for CmdStan.
 #'
@@ -628,6 +666,19 @@ variables <- function() {
 }
 CmdStanModel$set("public", name = "variables", value = variables)
 
+#' @rdname model-method-variables
+#' @export
+#' @param stan_file (string) The path to a Stan program.
+#' @inheritParams cmdstan_model
+stan_file_variables <- function(stan_file, include_paths = NULL) {
+  assert_file_exists(
+    stan_file, access = "r", extension = c("stan", "stanfunctions")
+  )
+  stan_file <- resolve_path(stan_file)
+  include_paths <- effective_include_paths(stan_file, include_paths)
+  variables_from_info(stanc_info(stan_file, include_paths))
+}
+
 #' Check syntax of a Stan program
 #'
 #' @name model-method-check_syntax
@@ -638,6 +689,10 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if
 #'   parsing succeeds. If invalid syntax is found an error is thrown.
 #'
+#'   The standalone function `check_syntax_stan_file()` does the same for a Stan
+#'   program without creating a model object, and so without compiling it.
+#'
+#' @param stan_file (string) The path to a Stan program.
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
@@ -645,7 +700,9 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #'   the Stan User's Guide.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
-#'   program.
+#'   program. The method uses the model's own include paths when none are
+#'   given. `check_syntax_stan_file()` uses the program's own directory when
+#'   none are given and the program contains `#include` directives.
 #' @param stanc_options (list) Any other Stan-to-C++ transpiler options to be
 #'   used when compiling the model. See the documentation for
 #'   [cmdstan_model()] for details.
@@ -654,8 +711,7 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #'   or the compiler error message if there are syntax errors. If `TRUE`, only
 #'   the error message will be printed.
 #'
-#' @return The `$check_syntax()` method returns `TRUE` (invisibly) if the model
-#'   is valid.
+#' @return `TRUE` (invisibly) if the program is valid.
 #'
 #' @template seealso-docs
 #'
@@ -692,56 +748,49 @@ check_syntax <- function(pedantic = FALSE,
     stop("'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
+  check_syntax_stan_file(
+    self$stan_file(),
+    include_paths = include_paths %||% self$include_paths(),
+    pedantic = pedantic,
+    stanc_options = stanc_options,
+    quiet = quiet
+  )
+}
+CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
+
+#' @rdname model-method-check_syntax
+#' @export
+check_syntax_stan_file <- function(stan_file,
+                                   include_paths = NULL,
+                                   pedantic = FALSE,
+                                   stanc_options = list(),
+                                   quiet = FALSE) {
+  assert_file_exists(
+    stan_file, access = "r", extension = c("stan", "stanfunctions")
+  )
+  stan_file <- resolve_path(stan_file)
   stanc_options <- assert_valid_stanc_options(stanc_options)
-  if (is.null(include_paths) && !is.null(self$include_paths())) {
-    include_paths <- self$include_paths()
-  }
   stanc_options[["allow-undefined"]] <- TRUE
-
-  temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
-  stanc_options[["o"]] <- wsl_safe_path(temp_hpp_file)
-
+  stanc_options[["o"]] <- wsl_safe_path(
+    tempfile(pattern = "model-", fileext = ".hpp")
+  )
   if (pedantic) {
     stanc_options[["warn-pedantic"]] <- TRUE
   }
-
-  stancflags_val <- include_paths_stanc3_args(
-    include_paths,
-    direct_call = TRUE
+  stanc_options[["name"]] <- paste0(model_name_from_path(stan_file), "_model")
+  run_stanc(
+    stan_file,
+    c(stanc_options_to_args(stanc_options),
+      include_paths_stanc3_args(
+        effective_include_paths(stan_file, include_paths), direct_call = TRUE
+      )),
+    spinner = quiet && use_spinner()
   )
-
-  stanc_options[["name"]] <- paste0(self$model_name(), "_model")
-  stanc_built_options <- stanc_options_to_args(stanc_options)
-
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path()
-    ),
-    run_log <- wsl_compatible_run(
-      command = stanc_cmd(),
-      args = c(wsl_safe_path(self$stan_file()), stanc_built_options, stancflags_val),
-      wd = checked_cmdstan_path(),
-      echo = is_verbose_mode(),
-      echo_cmd = is_verbose_mode(),
-      spinner = quiet && use_spinner(),
-      stderr_callback = function(x, p) {
-        message(x)
-      },
-      error_on_status = FALSE
-    )
-  )
-  cat(run_log$stdout)
-  if (is.na(run_log$status) || run_log$status != 0) {
-    stop("Syntax error found! See the message above for more information.",
-         call. = FALSE)
-  }
   if (!quiet) {
     message("Stan program is syntactically correct")
   }
   invisible(TRUE)
 }
-CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 
 #' Run stanc's auto-formatter on the model code.
 #'
@@ -752,7 +801,11 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @description The `$format()` method of a [`CmdStanModel`] object
 #'   runs stanc's auto-formatter on the model code. It either saves the
 #'   formatted model directly back to the file or prints it for inspection.
+#'   The standalone function `format_stan_file()` does the same for a Stan
+#'   program without creating a model object.
 #'
+#' @param stan_file (string) The path to a Stan program.
+#' @inheritParams cmdstan_model
 #' @param overwrite_file (logical) Should the formatted code be written back
 #'   to the input model file? The default is `FALSE`.
 #' @param canonicalize (list or logical) Defines whether or not the compiler
@@ -773,8 +826,7 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @param quiet (logical) Should informational messages be suppressed? The
 #'   default is `FALSE`.
 #'
-#' @return The `$format()` method returns `TRUE` (invisibly) if formatting
-#'   succeeds.
+#' @return `TRUE` (invisibly) if formatting succeeds.
 #'
 #' @template seealso-docs
 #'
@@ -796,6 +848,9 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' }
 #' ")
 #'
+#' format_stan_file(file, canonicalize = list("deprecations"))
+#'
+#' # or through a model object
 #' mod <- cmdstan_model(file)
 #' mod$format(canonicalize = list("deprecations"))
 #'
@@ -817,69 +872,68 @@ format <- function(overwrite_file = FALSE,
     )
   }
   assert_stan_file_exists(self$stan_file())
+  format_stan_file(
+    self$stan_file(),
+    include_paths = self$include_paths(),
+    overwrite_file = overwrite_file,
+    canonicalize = canonicalize,
+    backup = backup,
+    max_line_length = max_line_length,
+    quiet = quiet
+  )
+}
+CmdStanModel$set("public", name = "format", value = format)
+
+#' @rdname model-method-format
+#' @export
+format_stan_file <- function(stan_file,
+                             include_paths = NULL,
+                             overwrite_file = FALSE,
+                             canonicalize = FALSE,
+                             backup = TRUE,
+                             max_line_length = NULL,
+                             quiet = FALSE) {
+  assert_file_exists(
+    stan_file, access = "r", extension = c("stan", "stanfunctions")
+  )
+  stan_file <- resolve_path(stan_file)
   checkmate::assert_integerish(
     max_line_length,
     lower = 1, len = 1, null.ok = TRUE
   )
-  stanc_options <- list()
-  stancflags_val <- include_paths_stanc3_args(
-    self$include_paths(),
-    direct_call = TRUE
-  )
-  stanc_options[["allow-undefined"]] <- TRUE
-  stanc_options[["auto-format"]] <- TRUE
+  stanc_options <- list("allow-undefined" = TRUE, "auto-format" = TRUE)
   if (!is.null(max_line_length)) {
     stanc_options[["max-line-length"]] <- max_line_length
   }
   if (isTRUE(canonicalize)) {
     stanc_options[["print-canonical"]] <- TRUE
-  } else if (is.list(canonicalize) && length(canonicalize) > 0){
+  } else if (is.list(canonicalize) && length(canonicalize) > 0) {
     stanc_options[["canonicalize"]] <- paste0(canonicalize, collapse = ",")
   }
-  stanc_built_options <- stanc_options_to_args(stanc_options)
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path()
-    ),
-    run_log <- wsl_compatible_run(
-      command = stanc_cmd(),
-      args = c(wsl_safe_path(self$stan_file()), stanc_built_options,
-                stancflags_val),
-      wd = checked_cmdstan_path(),
-      echo = is_verbose_mode(),
-      echo_cmd = is_verbose_mode(),
-      spinner = FALSE,
-      stderr_callback = function(x, p) {
-        message(x)
-      },
-      error_on_status = FALSE
-    )
+  formatted <- run_stanc(
+    stan_file,
+    c(stanc_options_to_args(stanc_options),
+      include_paths_stanc3_args(
+        effective_include_paths(stan_file, include_paths), direct_call = TRUE
+      ))
   )
-  if (is.na(run_log$status) || run_log$status != 0) {
-    stop("Syntax error found! See the message above for more information.",
-         call. = FALSE)
-  }
   out_file <- ""
   if (isTRUE(overwrite_file)) {
     if (backup) {
-      backup_file <- paste0(self$stan_file(), ".bak-", base::format(Sys.time(), "%Y%m%d%H%M%S"))
-      file.copy(self$stan_file(), backup_file)
+      backup_file <- paste0(
+        stan_file, ".bak-", base::format(Sys.time(), "%Y%m%d%H%M%S")
+      )
+      file.copy(stan_file, backup_file)
       if (!quiet) {
-        message(
-          "Old version of the model stored to ",
-          backup_file,
-          "."
-        )
+        message("Old version of the model stored to ", backup_file, ".")
       }
     }
-    out_file <- self$stan_file()
+    out_file <- stan_file
   }
-  cat(run_log$stdout, file = out_file, sep = "\n")
-
+  cat(formatted, file = out_file, sep = "
+")
   invisible(TRUE)
 }
-CmdStanModel$set("public", name = "format", value = format)
 
 #' Run Stan's MCMC algorithms
 #'
@@ -2335,6 +2389,38 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
     }
   }
   stancflags
+}
+
+#' Run stanc on a Stan program and return what it printed
+#'
+#' What stanc writes to stderr, its warnings and its errors, is relayed as
+#' it arrives. A program stanc rejects is an error after that.
+#'
+#' @noRd
+run_stanc <- function(stan_file, args, spinner = FALSE) {
+  withr::with_path(
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    run_log <- wsl_compatible_run(
+      command = stanc_cmd(),
+      args = c(wsl_safe_path(stan_file), args),
+      wd = checked_cmdstan_path(),
+      echo = is_verbose_mode(),
+      echo_cmd = is_verbose_mode(),
+      spinner = spinner,
+      stderr_callback = function(x, p) {
+        message(x)
+      },
+      error_on_status = FALSE
+    )
+  )
+  if (is.na(run_log$status) || run_log$status != 0) {
+    stop("Syntax error found! See the message above for more information.",
+         call. = FALSE)
+  }
+  run_log$stdout
 }
 
 #' What stanc reports about a Stan program

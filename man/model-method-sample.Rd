@@ -177,7 +177,7 @@ unique positive integers as the number of chains. If not set, the default
 chain IDs are used (integers starting from \code{1}).}
 
 \item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
+\link[=cmdstan_model]{compiled} with threading support, the number of
 threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
 contrast with \code{parallel_chains}, which specifies the number of chains to
@@ -459,7 +459,6 @@ https://mc-stan.org/docs/cmdstan-guide/
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},

@@ -646,7 +646,7 @@ rebuilding from source as the two remedies.
 So the check
 goes immediately before `make` or a tool is invoked out of the installation.
 
-**`$variables()` is not on that list and `stan_variables()` is.**
+**`$variables()` is not on that list and `stan_file_variables()` is.**
 
 **It is not a precondition on holding a model.** An executable-only model (§7)
 neither builds nor re-resolves: it hydrates from its record or from `<exe> info`,
@@ -872,10 +872,10 @@ and demanding `force_recompile`.
 `cmdstan_model(compile = FALSE)` goes.
 
 ```r
-compile_stan_file(file, include_paths = NULL, cpp_options = NULL, stanc_options = NULL, ...)  -> exe path
-format_stan_file(file, include_paths = NULL, ...)
-check_syntax_stan_file(file, include_paths = NULL, ...)
-stan_variables(file, include_paths = NULL, ...)
+compile_stan_file(stan_file, include_paths = NULL, cpp_options = NULL, stanc_options = NULL, ...)  -> exe path
+format_stan_file(stan_file, include_paths = NULL, ...)
+check_syntax_stan_file(stan_file, include_paths = NULL, ...)
+stan_file_variables(stan_file, include_paths = NULL, ...)
 stan_build_info(exe_file)
 ```
 
@@ -910,7 +910,7 @@ or no flag.
 
 **So the source-only operations always set it**, whether reached as a method or as
 a standalone function: `$format()`, `$check_syntax()`, `$variables()`,
-`format_stan_file()`, `check_syntax_stan_file()` and `stan_variables()`. Only the
+`format_stan_file()`, `check_syntax_stan_file()` and `stan_file_variables()`. Only the
 build entry points derive it from `user_header`, because only a build has to link.
 
 **The accepted cost, recorded so it is not filed as a bug.**

@@ -2107,7 +2107,7 @@ added.
 
 <!-- contract -->
 
-**`$variables()` is not on that list and `stan_variables()` is.** <!-- /contract --> §5 captures the
+**`$variables()` is not on that list and `stan_file_variables()` is.** <!-- /contract --> §5 captures the
 snapshot at construction, so the accessor answers from what it already holds and
 needs no installation at all, while the standalone function holds nothing and runs
 stanc on the spot. An implementation that left today's parse-on-first-call in place
@@ -2741,10 +2741,10 @@ convention:
 <!-- contract -->
 
 ```r
-compile_stan_file(file, include_paths = NULL, cpp_options = NULL, stanc_options = NULL, ...)  -> exe path
-format_stan_file(file, include_paths = NULL, ...)
-check_syntax_stan_file(file, include_paths = NULL, ...)
-stan_variables(file, include_paths = NULL, ...)
+compile_stan_file(stan_file, include_paths = NULL, cpp_options = NULL, stanc_options = NULL, ...)  -> exe path
+format_stan_file(stan_file, include_paths = NULL, ...)
+check_syntax_stan_file(stan_file, include_paths = NULL, ...)
+stan_file_variables(stan_file, include_paths = NULL, ...)
 stan_build_info(exe_file)
 ```
 
@@ -2773,11 +2773,10 @@ cmdstanpy already has a name we copy it; where it does not, we pick one and they
 can copy it if they add a counterpart.** The two APIs are taught together, so
 parity matters, but nothing here waits on a joint naming decision.
 
-`stan_variables()` is the one name to revisit before it ships.
-`metadata()$stan_variables` already exists on fit objects (`R/csv.R:362`) and means
-something else, the variable names in the output rather than the declarations in
-the program. That is not a collision in R and not a reason to hold the design; the
-name is provisional and the decision belongs with the implementation.
+`stan_file_variables()` is named to keep clear of `metadata()$stan_variables`,
+which already exists on fit objects (`R/csv.R:362`) and means something else, the
+variable names in the output rather than the declarations in the program. It
+reads as a noun on a Stan file the way the other three read as verbs on one.
 
 `model_variables()` at `R/model.R:2657` is already this shape internally.
 
@@ -2794,7 +2793,7 @@ cmdstan_model()          ─┐
 compile_stan_file()       │
 format_stan_file()        ├─→  effective include paths  ─→  stanc
 check_syntax_stan_file()  │
-stan_variables()         ─┘
+stan_file_variables()    ─┘
 ```
 
 Mostly a move rather than new logic. Two constraints on it:
@@ -2854,7 +2853,7 @@ or no flag. <!-- /contract --> Verified on CmdStan 2.39.
 
 **So the source-only operations always set it**, whether reached as a method or as
 a standalone function: `$format()`, `$check_syntax()`, `$variables()`,
-`format_stan_file()`, `check_syntax_stan_file()` and `stan_variables()`. Only the
+`format_stan_file()`, `check_syntax_stan_file()` and `stan_file_variables()`. Only the
 build entry points derive it from `user_header`, because only a build has to link. <!-- /contract -->
 One rule, by operation rather than by entry point, so a retained method and its
 standalone twin cannot disagree.
@@ -3452,7 +3451,7 @@ user-typed value is a fixed string, so it introduces no path sensitivity.
 <!-- contract -->
 
 **Only the two build entry points inject it.** <!-- /contract --> `check_syntax_stan_file()`,
-`format_stan_file()` and `stan_variables()` run stanc against the real file
+`format_stan_file()` and `stan_file_variables()` run stanc against the real file
 already (`$check_syntax()` writes its output to a tempfile but reads
 `self$stan_file()`, `R/model.R:1126-1150`), so their messages name the right file
 and injecting there would be noise.
@@ -3681,8 +3680,8 @@ message this is a real capability, and declining to add it is a trade rather tha
 a free choice.
 
 Questions about the installed source go to §8's standalone family against that
-source directly, `stan_variables(file, include_paths = )` and
-`check_syntax_stan_file(file, include_paths = )`, which is also honest about what
+source directly, `stan_file_variables(stan_file, include_paths = )` and
+`check_syntax_stan_file(stan_file, include_paths = )`, which is also honest about what
 it describes: the source currently installed, not the file the executable was
 built from.
 
@@ -3842,8 +3841,8 @@ what to do about the answer: the constructor rebuilds, everything else errors. <
 convenience rebuild tucked inside the assessment reintroduces the hidden
 recompilation this design removed.
 
-**Naming.** `stan_build_info()` and `check_syntax_stan_file()` are still
-placeholders, to be settled in the stage that implements each (§8).
+**Naming.** `stan_build_info()` is still a placeholder, to be settled in the
+stage that implements it (§8); Stage 4 kept `check_syntax_stan_file()`.
 `.<exe>.cmdstanr.json` is decided rather than open (§4), so build against it, but
 it stays revisable until the release, after which changing it means migrating
 records that already exist.

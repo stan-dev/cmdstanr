@@ -151,7 +151,7 @@ default. Increasing this value will result in larger output CSV files and
 thus an increased usage of disk space.}
 
 \item{threads}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
+compiled with threading support, the number of
 threads to use in parallelized sections (e.g., for multi-path pathfinder
 as well as \code{reduce_sum}).}
 
@@ -188,7 +188,7 @@ Pareto smoothed importance sampling (PSIS). This should be smaller than
 
 \item{num_paths}{(positive integer) Number of single pathfinders to run. The
 default is \code{4}. The paths are run sequentially unless the model was
-\link[=model-method-compile]{compiled} with \code{cpp_options = list(stan_threads = TRUE)} and \code{threads} is set, so running multiple paths in parallel requires
+compiled with \code{cpp_options = list(stan_threads = TRUE)} and \code{threads} is set, so running multiple paths in parallel requires
 both.}
 
 \item{max_lbfgs_iters}{(positive integer) The maximum number of iterations
@@ -397,7 +397,6 @@ https://mc-stan.org/docs/cmdstan-guide/
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
