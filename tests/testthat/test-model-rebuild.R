@@ -248,6 +248,30 @@ test_that("pedantic mode runs on a current executable without rebuilding", {
   )
 })
 
+test_that("a warning flag in stanc_options is quiet on a reuse", {
+  dir <- withr::local_tempdir()
+  stan_file <- write_stan_file(c(
+    "parameters { real y; }",
+    "model {",
+    "  real x;",
+    "  target += x;",
+    "  y ~ normal(0, 1);",
+    "}"
+  ), dir = dir)
+  mock_cmdstan_model(stan_file, stanc_options = list("warn-uninitialized"))
+
+  expect_no_mock_compile(expect_no_message(
+    mock_cmdstan_model(stan_file, stanc_options = list("warn-uninitialized"))
+  ))
+
+  expect_message(
+    mock_cmdstan_model(
+      stan_file, stanc_options = list("warn-uninitialized"), pedantic = TRUE
+    ),
+    "may not have been assigned a value before its first use", fixed = TRUE
+  )
+})
+
 test_that("an edited include is caught, then rebuilt", {
   dir <- withr::local_tempdir()
   stan_file <- seed_from(canonical_include_stan, canonical_include_exe, dir)

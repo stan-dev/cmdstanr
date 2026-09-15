@@ -113,9 +113,9 @@ build_executable <- function(stan_file,
   )
 
   # make compiles a copy, so an edit during the build reaches neither the
-  # executable nor the C++ generated beside it. Pedantic and other stanc
-  # warnings are shown from the build's own stanc run, or here when nothing
-  # builds.
+  # executable nor the C++ generated beside it. Stanc's warnings are shown from
+  # the build's own stanc run. When nothing builds, this run shows them only
+  # for a pedantic check.
   source <- stan_file
   if (rebuild) {
     source <- tempfile(
@@ -124,7 +124,8 @@ build_executable <- function(stan_file,
     file.copy(stan_file, source, overwrite = TRUE)
   }
   hpp_code <- get_standalone_hpp(
-    source, c(stanc_inc_paths, stancflags_direct), show_warnings = !rebuild
+    source, c(stanc_inc_paths, stancflags_direct),
+    show_warnings = !rebuild && pedantic
   )
 
   if (!rebuild) {
