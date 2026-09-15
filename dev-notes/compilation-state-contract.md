@@ -852,7 +852,9 @@ implementation does, after the check, and every public function that forwards
 `cmdstanr_example()`, which resolves it in its own signature today
 (`R/example.R:62`) and hands the answer on.
 
-**Explicit `NULL` means omission for all seven, so one sentinel covers them.**
+**Explicit `NULL` means omission for six of the seven, so one sentinel covers
+them. `pedantic` keeps `FALSE` as its default, since `FALSE` and omission ask for
+the same thing, and only `TRUE` is refused beside `exe_file`.**
 
 **`force_recompile` never enters the record.** It changes whether we build, never
 what we build, so it is a decision override rather than configuration.

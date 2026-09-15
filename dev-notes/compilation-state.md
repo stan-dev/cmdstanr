@@ -2685,7 +2685,12 @@ explicit `NULL` default breaks it just as well.
 
 <!-- contract -->
 
-**Explicit `NULL` means omission for all seven, so one sentinel covers them.** <!-- /contract -->
+**Explicit `NULL` means omission for six of the seven, so one sentinel covers
+them. `pedantic` keeps `FALSE` as its default, since `FALSE` and omission ask for
+the same thing, and only `TRUE` is refused beside `exe_file`.** <!-- /contract -->
+`pedantic = NA` beside `exe_file` is therefore accepted and ignored. No
+reasonable call writes it, and a `NULL` default on an argument users read as a
+switch would cost more than it removes (jgabry, 2026-09-15).
 `user_header` is the one that looks like an exception, because `user_header = NULL`
 currently means compile without one. That meaning exists only because the header
 persists: `$compile()` tells an omitted `user_header` from an explicit `NULL` with

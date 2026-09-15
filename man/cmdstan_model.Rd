@@ -55,8 +55,8 @@ executable. The default is the same location as the Stan program.}
 \code{FALSE}. Pedantic mode attempts to warn you about potential issues in your
 Stan program beyond syntax errors. For details see the \href{https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html}{\emph{Pedantic mode} section} in
 the Stan User's Guide. The check runs whether or not the executable is
-rebuilt. To check a program without an executable use the
-\code{\link[=model-method-check_syntax]{$check_syntax()}} method.}
+rebuilt. To check a program without building it use
+\code{\link[=model-method-check_syntax]{check_syntax_stan_file()}}.}
 
 \item{include_paths}{(character vector) Paths to directories where Stan
 should look for files specified in \verb{#include} directives in the Stan

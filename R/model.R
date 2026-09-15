@@ -40,8 +40,8 @@
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   section](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
 #'   the Stan User's Guide. The check runs whether or not the executable is
-#'   rebuilt. To check a program without an executable use the
-#'   [`$check_syntax()`][model-method-check_syntax] method.
+#'   rebuilt. To check a program without building it use
+#'   [`check_syntax_stan_file()`][model-method-check_syntax].
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program. Relative paths are resolved against the working directory when
@@ -338,8 +338,9 @@ compile_stan_file <- function(stan_file,
 CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
-    # The snapshot: what the object was built from or adopted with. Nothing
-    # here changes after construction.
+    # What the object was built from or adopted with. After construction only
+    # `hpp_file_` changes, when `$save_hpp_file()` moves the file, and
+    # `model_methods_env_`, which fills when the methods compile.
     stan_file_ = character(),
     stan_code_ = character(),
     model_name_ = character(),
