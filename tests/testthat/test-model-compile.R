@@ -1178,7 +1178,7 @@ test_that("a quoted make/local flag the call emits is dropped whole (#1232)", {
   expect_true(file.exists(mod_local$exe_file()))
   stanc_line <- grep("bin/stanc", out, value = TRUE)
   expect_length(stanc_line, 1)
-  expect_match(stanc_line, mod_local$stan_file(), fixed = TRUE)
+  expect_match(stanc_line, wsl_safe_path(mod_local$stan_file()), fixed = TRUE)
   expect_false(grepl("my dir", stanc_line, fixed = TRUE))
   expect_false(grepl("model.stan'", stanc_line, fixed = TRUE))
 })
@@ -1280,7 +1280,7 @@ test_that("the generated C++ names the source, not the copy stanc compiled", {
     code = mod <- cmdstan_model(stan_file, force_recompile = TRUE)
   )
   hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
-  expect_match(hpp, mod$stan_file(), fixed = TRUE)
+  expect_match(hpp, wsl_safe_path(mod$stan_file()), fixed = TRUE)
   expect_no_match(hpp, "model-[0-9a-f]+\\.stan")
 
   with_mocked_cli(
@@ -1294,7 +1294,7 @@ test_that("the generated C++ names the source, not the copy stanc compiled", {
   )
   hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
   expect_match(hpp, "published.stan", fixed = TRUE)
-  expect_no_match(hpp, mod$stan_file(), fixed = TRUE)
+  expect_no_match(hpp, wsl_safe_path(mod$stan_file()), fixed = TRUE)
 })
 
 test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {

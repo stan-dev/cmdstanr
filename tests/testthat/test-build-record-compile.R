@@ -67,7 +67,7 @@ test_that("supplied and injected stanc options are recorded apart", {
     record$request$stanc_options_injected,
     list(
       "--warn-pedantic", "--name=bernoulli_model",
-      paste0("--filename-in-msg=", mod$stan_file())
+      paste0("--filename-in-msg=", wsl_safe_path(mod$stan_file()))
     )
   )
 })
@@ -170,7 +170,7 @@ test_that("the other injection sites land in the injected list", {
     record$request$stanc_options_injected,
     list(
       "--use-opencl", "--allow-undefined", "--name=bernoulli_model",
-      paste0("--filename-in-msg=", mod$stan_file())
+      paste0("--filename-in-msg=", wsl_safe_path(mod$stan_file()))
     )
   )
   expect_equal(record$request$stanc_options_supplied, list())
