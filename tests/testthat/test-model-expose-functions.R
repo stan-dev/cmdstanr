@@ -283,7 +283,8 @@ test_that("Compiled functions can be copied to global environment", {
 
 
 test_that("Functions can be compiled with model", {
-  mod <- cmdstan_model(model, force_recompile = TRUE, compile_standalone = TRUE)
+  mod <- cmdstan_model(model, force_recompile = TRUE)
+  mod$expose_functions()
   utils::capture.output(
     fit <- mod$sample(data = data_list)
   )
@@ -311,56 +312,7 @@ test_that("Functions can be compiled with model", {
   )
 })
 
-test_that("recompiling drops previously exposed functions", {
-  model_dir <- withr::local_tempdir()
-  write_model <- function(code) {
-    write_stan_file(code, dir = model_dir, basename = "issue1228.stan")
-  }
-  code_two_functions <- "
-    functions {
-      real times_two(real x) { return 2 * x; }
-      real times_three(real x) { return 3 * x; }
-    }
-    parameters {
-      real y;
-    }
-    model {
-      y ~ std_normal();
-    }
-  "
-  stan_file <- write_model(code_two_functions)
-  mod <- cmdstan_model(stan_file)
-  mod$expose_functions()
-  expect_equal(mod$functions$times_two(1), 2)
-  expect_equal(mod$functions$times_three(1), 3)
-
-  # change one function and remove the other, then recompile
-  write_model("
-    functions {
-      real times_two(real x) { return 20 * x; }
-    }
-    parameters {
-      real y;
-    }
-    model {
-      y ~ std_normal();
-    }
-  ")
-  mod$compile()
-  expect_false(mod$functions$compiled)
-  expect_false("times_three" %in% ls(mod$functions))
-  mod$expose_functions()
-  expect_equal(mod$functions$times_two(1), 20)
-  expect_false("times_three" %in% ls(mod$functions))
-
-  # compile_standalone exposes the functions of the recompiled model
-  write_model(code_two_functions)
-  mod$compile(compile_standalone = TRUE)
-  expect_equal(mod$functions$times_two(1), 2)
-  expect_equal(mod$functions$times_three(1), 3)
-})
-
-test_that("compile_standalone warns but doesn't error if no functions", {
+test_that("$expose_functions() warns but doesn't error if no functions", {
   stan_no_funs_block <- write_stan_file("
     parameters {
       real x;
@@ -369,8 +321,9 @@ test_that("compile_standalone warns but doesn't error if no functions", {
       x ~ std_normal();
     }
   ")
+  mod1 <- cmdstan_model(stan_no_funs_block, force_recompile = TRUE)
   expect_warning(
-    mod1 <- cmdstan_model(stan_no_funs_block, compile = TRUE, compile_standalone = TRUE, force_recompile = TRUE),
+    mod1$expose_functions(),
     "No standalone functions found to compile and expose to R"
   )
   checkmate::expect_r6(mod1, "CmdStanModel")
@@ -379,8 +332,9 @@ test_that("compile_standalone warns but doesn't error if no functions", {
    functions {
    }
   ")
+  mod2 <- cmdstan_model(stan_empty_funs_block, force_recompile = TRUE)
   expect_warning(
-    mod2 <- cmdstan_model(stan_empty_funs_block, compile = TRUE, compile_standalone = TRUE, force_recompile = TRUE),
+    mod2$expose_functions(),
     "No standalone functions found to compile and expose to R"
   )
   checkmate::expect_r6(mod2, "CmdStanModel")
@@ -527,7 +481,7 @@ test_that("Stan code with no reserved names exposes functions", {
 #   expect_equal(ext_mod$functions$rtn_int(10), 10)
 # })
 
-test_that("Exposing functions with precompiled model gives meaningful error", {
+test_that("Exposing functions works on a model built from a reused executable", {
   stan_file <- write_stan_file("
     functions {
       real a_plus_b(real a, real b) { return a + b; }
@@ -535,31 +489,19 @@ test_that("Exposing functions with precompiled model gives meaningful error", {
     parameters { real x; }
     model { x ~ std_normal(); }
   ")
-  mod1 <- cmdstan_model(stan_file, compile_standalone = TRUE,
-                        force_recompile = TRUE)
+  mod1 <- cmdstan_model(stan_file, force_recompile = TRUE)
+  mod1$expose_functions()
   expect_equal(7.5, mod1$functions$a_plus_b(5, 2.5))
 
   mod2 <- cmdstan_model(stan_file)
-  expect_error(
-    mod2$expose_functions(),
-    "Exporting standalone functions is not possible with a pre-compiled Stan model!",
-    fixed = TRUE
-  )
+  mod2$expose_functions()
+  expect_equal(7.5, mod2$functions$a_plus_b(5, 2.5))
 })
 
-test_that("$expose_functions() after a dry run reports why it cannot", {
-  stan_file <- write_stan_file("
-    functions { real a_plus_b(real a, real b) { return a + b; } }
-    parameters { real x; }
-    model { x ~ std_normal(); }
-  ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
-  mod$compile(dry_run = TRUE)
-  # The wording is wrong for a model that was never compiled at all (#1245).
+test_that("functions cannot be exposed from an executable alone", {
+  adopted <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
-    mod$expose_functions(),
-    "Exporting standalone functions is not possible with a pre-compiled Stan model!",
-    fixed = TRUE
+    adopted$expose_functions(), "created from an executable alone", fixed = TRUE
   )
 })
 

@@ -139,7 +139,7 @@ default. Increasing this value will result in larger output CSV files and
 thus an increased usage of disk space.}
 
 \item{threads}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
+compiled with threading support, the number of
 threads to use in parallelized sections (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}).}
 
@@ -247,7 +247,6 @@ https://mc-stan.org/docs/cmdstan-guide/
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},

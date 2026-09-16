@@ -9,7 +9,7 @@
 #'   unique positive integers as the number of chains. If not set, the default
 #'   chain IDs are used (integers starting from `1`).
 #' @param threads_per_chain (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
+#'   [compiled][cmdstan_model] with threading support, the number of
 #'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
 #'   contrast with `parallel_chains`, which specifies the number of chains to

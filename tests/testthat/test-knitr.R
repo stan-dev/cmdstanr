@@ -18,7 +18,7 @@ test_that("eng_cmdstan works", {
     output.var = "ABC",
     code = code,
     cache = TRUE,
-    cache.path = tempdir()
+    cache.path = withr::local_tempdir()
   ))
   expect_interactive_message(eng_cmdstan(opts), "Compiling Stan program")
   opts$eval <- FALSE

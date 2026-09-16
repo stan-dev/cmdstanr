@@ -3,9 +3,20 @@
 \name{model-method-format}
 \alias{model-method-format}
 \alias{format}
+\alias{format_stan_file}
 \title{Run stanc's auto-formatter on the model code.}
 \usage{
 format(
+  overwrite_file = FALSE,
+  canonicalize = FALSE,
+  backup = TRUE,
+  max_line_length = NULL,
+  quiet = FALSE
+)
+
+format_stan_file(
+  stan_file,
+  include_paths = NULL,
   overwrite_file = FALSE,
   canonicalize = FALSE,
   backup = TRUE,
@@ -37,15 +48,26 @@ The default is \code{NULL}, which defers to the default line length of stanc.}
 
 \item{quiet}{(logical) Should informational messages be suppressed? The
 default is \code{FALSE}.}
+
+\item{stan_file}{(string) The path to a Stan program.}
+
+\item{include_paths}{(character vector) Paths to directories where Stan
+should look for files specified in \verb{#include} directives in the Stan
+program. Relative paths are resolved against the working directory when
+the model object is created and stored as absolute paths, so subsequent
+changes to the working directory do not affect them. When the program
+contains \verb{#include} directives and no paths are given, the program's own
+directory is used.}
 }
 \value{
-The \verb{$format()} method returns \code{TRUE} (invisibly) if formatting
-succeeds.
+\code{TRUE} (invisibly) if formatting succeeds.
 }
 \description{
 The \verb{$format()} method of a \code{\link{CmdStanModel}} object
 runs stanc's auto-formatter on the model code. It either saves the
 formatted model directly back to the file or prints it for inspection.
+The standalone function \code{format_stan_file()} does the same for a Stan
+program without creating a model object.
 }
 \examples{
 \dontrun{
@@ -65,13 +87,16 @@ model {
 }
 ")
 
-# set compile=FALSE then call format to fix old syntax
-mod <- cmdstan_model(file, compile = FALSE)
+format_stan_file(file, canonicalize = list("deprecations"))
+
+# or through a model object
+mod <- cmdstan_model(file)
 mod$format(canonicalize = list("deprecations"))
 
-# overwrite the original file instead of just printing it
+# overwrite the original file instead of just printing it, then create the
+# model object again to rebuild the executable from the formatted program
 mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
-mod$compile()
+mod <- cmdstan_model(file)
 }
 
 }
@@ -89,7 +114,6 @@ The Stan and CmdStan documentation:
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-generate-quantities}},

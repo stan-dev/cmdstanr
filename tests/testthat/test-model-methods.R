@@ -105,24 +105,19 @@ test_that("methods error for incorrect inputs", {
   )
 })
 
-test_that("Methods error with already-compiled model", {
+test_that("Methods work with a model built from a reused executable", {
   precompile_mod <- testing_model("bernoulli")
   mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
   utils::capture.output(
     fit <- mod$sample(data = data_list, chains = 1)
   )
-  expect_error(
-    fit$init_model_methods(),
-    "Model methods cannot be used with a pre-compiled Stan executable, the model must be compiled again",
-    fixed = TRUE
-  )
+  expect_no_error(fit$init_model_methods())
 })
 
 test_that("Methods can be compiled with model", {
   mod <- cmdstan_model(testing_stan_file("bernoulli"),
-                       force_recompile = TRUE,
-                       compile_model_methods = TRUE)
+                       force_recompile = TRUE)
   utils::capture.output(
     fit <- mod$sample(data = data_list, chains = 1)
   )
@@ -153,8 +148,7 @@ test_that("Reloaded models recompile model methods lazily after saveRDS/readRDS"
   # saveRDS/readRDS when model methods are compiled: https://github.com/stan-dev/cmdstanr/issues/1157
   mod <- cmdstan_model(
     testing_stan_file("bernoulli_log_lik"),
-    force_recompile = TRUE,
-    compile_model_methods = TRUE
+    force_recompile = TRUE
   )
   temp_rds_file <- tempfile(fileext = ".RDS")
   saveRDS(mod, temp_rds_file)
@@ -172,13 +166,14 @@ test_that("Reloaded models recompile model methods lazily after saveRDS/readRDS"
 test_that("stale model-method bindings are detected and dropped", {
   mod <- cmdstan_model(
     testing_stan_file("bernoulli_log_lik"),
-    force_recompile = TRUE,
-    compile_model_methods = TRUE
+    force_recompile = TRUE
   )
+  utils::capture.output(fit <- mod$optimize(data = data_list))
+  fit$init_model_methods()
   temp_rds_file <- tempfile(fileext = ".RDS")
-  saveRDS(mod, temp_rds_file)
-  mod2 <- readRDS(temp_rds_file)
-  model_methods_env <- mod2$.__enclos_env__$private$model_methods_env_
+  saveRDS(fit, temp_rds_file)
+  fit2 <- readRDS(temp_rds_file)
+  model_methods_env <- fit2$.__enclos_env__$private$model_methods_env_
 
   expect_true(source_cpp_native_symbol_is_null(model_methods_env$model_ptr))
   expect_true(drop_stale_model_methods(model_methods_env))
@@ -201,8 +196,7 @@ test_that("unconstrain_variables correctly handles zero-length containers", {
   }
   "
   mod <- cmdstan_model(write_stan_file(model_code),
-                       force_recompile = TRUE,
-                       compile_model_methods = TRUE)
+                       force_recompile = TRUE)
   utils::capture.output(
     fit <- mod$sample(data = list(N = 0), chains = 1)
   )
@@ -225,9 +219,7 @@ test_that("unconstrain_draws returns correct values", {
       x ~ std_normal();
     }
   "
-  mod <- cmdstan_model(write_stan_file(model_code),
-                       compile_model_methods = TRUE,
-                       force_recompile = TRUE)
+  mod <- cmdstan_model(write_stan_file(model_code), force_recompile = TRUE)
   utils::capture.output({
     fit <- mod$sample(data = list(N = 0), chains = 2, save_warmup = TRUE)
     fit_no_warmup <- mod$sample(data = list(N = 0), chains = 2)
@@ -272,9 +264,7 @@ test_that("unconstrain_draws returns correct values", {
       x ~ std_normal();
     }
   "
-  mod <- cmdstan_model(write_stan_file(model_code),
-                       compile_model_methods = TRUE,
-                       force_recompile = TRUE)
+  mod <- cmdstan_model(write_stan_file(model_code), force_recompile = TRUE)
   utils::capture.output(
     fit <- mod$sample(data = list(N = 0), chains = 2)
   )
@@ -295,7 +285,7 @@ test_that("unconstrain_draws returns correct values", {
 
 test_that("Model methods can be initialised for models with no data", {
   stan_file <- write_stan_file("parameters { real x; } model { x ~ std_normal(); }")
-  mod <- cmdstan_model(stan_file, compile_model_methods = TRUE, force_recompile = TRUE)
+  mod <- cmdstan_model(stan_file, force_recompile = TRUE)
   expect_no_error(
     utils::capture.output(
       fit <- mod$sample()
@@ -320,8 +310,7 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
   model {
     x_real ~ std_normal();
   }")
-  mod <- cmdstan_model(stan_file, compile_model_methods = TRUE,
-                      force_recompile = TRUE)
+  mod <- cmdstan_model(stan_file, force_recompile = TRUE)
   N <- 4
   K <- 3
   utils::capture.output(
@@ -338,4 +327,18 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
 
   expect_equal(fit$variable_skeleton(),
                 target_skeleton)
+})
+
+test_that("model methods refuse a fit from an executable alone", {
+  adopted <- cmdstan_model(exe_file = mod$exe_file())
+  utils::capture.output(
+    fit_adopted <- adopted$sample(
+      data = data_list, chains = 1, iter_warmup = 10, iter_sampling = 10,
+      refresh = 0
+    )
+  )
+  expect_error(
+    fit_adopted$log_prob(unconstrained_variables = c(0.1)),
+    "created from an executable alone", fixed = TRUE
+  )
 })

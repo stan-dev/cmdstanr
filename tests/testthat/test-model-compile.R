@@ -1,57 +1,38 @@
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
-mod <- cmdstan_model(stan_file = stan_program, compile = FALSE)
 local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
+mod <- cmdstan_model(stan_file = stan_program)
 
 test_that("object initialized correctly", {
   expect_equal(mod$stan_file(), stan_program)
-  expect_equal(mod$exe_file(), character(0))
-  expect_error(
-    mod$hpp_file(),
-    "The .hpp file does not exist. Please (re)compile the model.",
-    fixed = TRUE
-  )
+  expect_equal(mod$exe_file(), cmdstan_ext(strip_ext(stan_program)))
+  checkmate::expect_file_exists(mod$exe_file())
+  checkmate::expect_file_exists(mod$hpp_file())
 })
 
-test_that("error if no compile() before model fitting", {
-  expect_error(
-    mod$sample(),
-    "Model not compiled. Try running the compile() method first.",
-    fixed = TRUE
-  )
-})
-
-test_that("compile() method works", {
-  # remove executable if exists
-  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
+test_that("the constructor builds an executable and then reuses it", {
+  exe <- cmdstan_ext(strip_ext(stan_program))
   if (file.exists(exe)) {
     file.remove(exe)
   }
-  expect_compilation(mod, quiet = TRUE)
-  expect_no_recompilation(mod, quiet = TRUE)
-  checkmate::expect_file_exists(mod$hpp_file())
+  built <- expect_compilation(cmdstan_model(stan_program, quiet = TRUE))
   checkmate::expect_file_exists(exe)
-  file.remove(exe)
-  out <- utils::capture.output(mod$compile(quiet = FALSE))
+  checkmate::expect_file_exists(built$hpp_file())
+  expect_no_recompilation(cmdstan_model(stan_program, quiet = TRUE))
+
+  out <- utils::capture.output(
+    cmdstan_model(stan_program, quiet = FALSE, force_recompile = TRUE)
+  )
   expect_output(print(out), "Translating Stan model")
 })
 
-test_that("compile() method forces recompilation force_recompile = TRUE", {
-  mod$compile(quiet = TRUE)
-  expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
+test_that("force_recompile = TRUE rebuilds", {
+  expect_compilation(
+    cmdstan_model(stan_program, quiet = TRUE, force_recompile = TRUE)
+  )
 })
 
-test_that("compile() method forces recompilation if model modified", {
-  # remove executable if exists
-  exe <- cmdstan_ext(strip_ext(mod$stan_file()))
-  if (!file.exists(exe)) {
-    mod$compile(quiet = TRUE)
-  }
-  Sys.setFileTime(mod$stan_file(), Sys.time() + 1) #touch file to trigger recompile
-  expect_compilation(mod, quiet = TRUE)
-})
-
-test_that("compile() method works with spaces in path", {
+test_that("compiling works with spaces in path", {
   stan_file <- testing_stan_file("bernoulli")
   stan_model_with_spaces <- testing_stan_file("folder spaces/bernoulli spaces")
 
@@ -61,30 +42,12 @@ test_that("compile() method works with spaces in path", {
   }
   file.copy(stan_file, stan_model_with_spaces)
 
-  mod_spaces <- cmdstan_model(stan_file = stan_model_with_spaces, compile = FALSE)
-  exe <- cmdstan_ext(strip_ext(mod_spaces$stan_file()))
-  if (file.exists(exe)) {
-    file.remove(exe)
-  }
-  expect_compilation(mod_spaces)
-  file.remove(stan_model_with_spaces)
-  file.remove(exe)
+  expect_compilation(cmdstan_model(stan_model_with_spaces))
   unlink(dir_with_spaces, recursive = TRUE)
-})
-
-test_that("compile() method overwrites binaries", {
-  mod$compile(quiet = TRUE)
-  old_time = file.mtime(mod$exe_file())
-  mod$compile(quiet = TRUE, force_recompile = TRUE)
-  expect_gt(file.mtime(mod$exe_file()), old_time)
 })
 
 test_that("compilation works with include_paths", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
-  exe <- cmdstan_ext(strip_ext(stan_program_w_include))
-  if(file.exists(exe)) {
-    file.remove(exe)
-  }
   expect_error(
     cmdstan_model(stan_file = stan_program_w_include, include_paths = "NOT_A_DIR",
                   quiet = TRUE),
@@ -96,80 +59,15 @@ test_that("compilation works with include_paths", {
     fixed = TRUE
   )
 
-  expect_error(
-    expect_output(
-      cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE),
-      "could not find include file"
-    )
-  )
-
-  expect_call_compilation(
-    mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
-                                   include_paths = test_path("resources", "stan"),
-                                   force_recompile = TRUE)
+  mod_w_include <- expect_compilation(
+    cmdstan_model(stan_file = stan_program_w_include, quiet = TRUE,
+                  include_paths = test_path("resources", "stan"),
+                  force_recompile = TRUE)
   )
   expect_equal(
     mod_w_include$exe_file(),
     cmdstan_ext(strip_ext(absolute_path(stan_program_w_include)))
   )
-})
-
-test_that("precompiled models retain include paths", {
-  model_dir <- withr::local_tempdir()
-  write_stan_file(
-    "
-    functions {
-      real silly_logit(real x) {
-        return logit(x);
-      }
-    }
-    ",
-    dir = file.path(model_dir, "utils"),
-    basename = "silly.stan"
-  )
-  stan_file <- write_stan_file(
-    "
-    #include utils/silly.stan
-    data {
-      int<lower=0> N;
-      array[N] int<lower=0, upper=1> y;
-    }
-    parameters {
-      real<lower=0, upper=1> theta;
-    }
-    model {
-      theta ~ beta(1, 1);
-      y ~ bernoulli(theta);
-    }
-    generated quantities {
-      real theta_lin = silly_logit(theta);
-    }
-    ",
-    dir = model_dir,
-    basename = "bernoulli.stan"
-  )
-  compiled_model <- cmdstan_model(
-    stan_file,
-    include_paths = model_dir,
-    quiet = TRUE
-  )
-
-  model_with_explicit_path <- cmdstan_model(
-    stan_file,
-    exe_file = compiled_model$exe_file(),
-    compile = FALSE,
-    include_paths = model_dir
-  )
-  expect_equal(model_with_explicit_path$include_paths(), repair_path(model_dir))
-  expect_no_error(model_with_explicit_path$variables())
-
-  model_with_automatic_path <- cmdstan_model(
-    stan_file,
-    exe_file = compiled_model$exe_file(),
-    compile = FALSE
-  )
-  expect_equal(model_with_automatic_path$include_paths(), repair_path(dirname(stan_file)))
-  expect_no_error(model_with_automatic_path$variables())
 })
 
 test_that("include paths are resolved when the model is created", {
@@ -180,7 +78,7 @@ test_that("include paths are resolved when the model is created", {
   )
   mod <- withr::with_dir(
     model_dir,
-    cmdstan_model("bernoulli_include.stan", compile = FALSE)
+    mock_cmdstan_model("bernoulli_include.stan")
   )
   # the working directory no longer contains the included file
   expect_true(mod$check_syntax(quiet = TRUE))
@@ -195,293 +93,53 @@ test_that("relative include_paths are resolved when the model is created", {
 
   mod <- withr::with_dir(
     model_dir,
-    cmdstan_model(
-      "bernoulli_include.stan",
-      include_paths = "includes",
-      compile = FALSE
-    )
+    mock_cmdstan_model("bernoulli_include.stan", include_paths = "includes")
   )
   # "includes" no longer resolves relative to the working directory
   expect_true(mod$check_syntax(quiet = TRUE))
 })
 
-test_that("relative include_paths given to $compile() are resolved when it is called", {
-  model_dir <- withr::local_tempdir()
-  include_dir <- file.path(model_dir, "includes")
-  dir.create(include_dir)
-  file.copy(testing_stan_file("bernoulli_include"), model_dir)
-  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
-
-  mod <- withr::with_dir(model_dir, {
-    mod <- cmdstan_model("bernoulli_include.stan", compile = FALSE)
-    mod$compile(include_paths = "includes", quiet = TRUE)
-    mod
-  })
-  expect_true(mod$check_syntax(quiet = TRUE))
-})
-
-test_that("$compile() reuses include paths from the previous compilation", {
-  model_dir <- withr::local_tempdir()
-  include_dir <- file.path(model_dir, "includes")
-  dir.create(include_dir)
-  file.copy(testing_stan_file("bernoulli_include"), model_dir)
-  file.copy(testing_stan_file("divide_real_by_two"), include_dir)
-
-  received_stancflags <- list()
-  local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name, ...) character(),
-    get_standalone_hpp = function(stan_file, stancflags) {
-      received_stancflags <<- append(received_stancflags, list(stancflags))
-      ""
-    }
-  )
-
-  mod <- cmdstan_model(
-    file.path(model_dir, "bernoulli_include.stan"),
-    include_paths = include_dir,
-    compile = FALSE
-  )
-  # Use a successful compile to move the paths out of precompile state.
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = mod$compile(force_recompile = TRUE, quiet = TRUE)
-  )
-  expect_null(mod$.__enclos_env__$private$precompile_include_paths_)
-
-  received_stancflags <- list()
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = expect_no_error(mod$compile(force_recompile = TRUE, quiet = TRUE))
-  )
-  expect_equal(mod$include_paths(), resolve_path(include_dir))
-  # Compare stanc arguments because WSL converts stored Windows paths.
-  include_args <- include_paths_stanc3_args(mod$include_paths(), direct_call = TRUE)
-  expect_true(all(vapply(
-    received_stancflags,
-    function(x) all(include_args %in% x),
-    logical(1)
-  )))
-})
-
-test_that("$compile() doesn't reuse cpp and stanc options from the previous compilation", {
-  # Use a temporary copy because mocked compiles install executables.
-  model_dir <- withr::local_tempdir()
-  stan_file <- file.path(model_dir, "bernoulli.stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file)
-  model <- cmdstan_model(stan_file, compile = FALSE)
-  received_stancflags <- list()
-  local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name, ...) character(),
-    get_standalone_hpp = function(stan_file, stancflags) {
-      received_stancflags <<- append(received_stancflags, list(stancflags))
-      ""
-    }
-  )
-
-  # Successful compiles clear one-shot cpp and stanc options.
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = model$compile(
-      cpp_options = list(stan_threads = TRUE),
-      stanc_options = list("warn-uninitialized" = TRUE),
-      force_recompile = TRUE
-    )
-  )
-  expect_true(model$cpp_options()[["STAN_THREADS"]])
-  expect_equal(
-    vapply(received_stancflags, function(x) "--warn-uninitialized" %in% x, logical(1)),
-    rep(TRUE, 2)
-  )
-
-  received_stancflags <- list()
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = model$compile(force_recompile = TRUE)
-  )
-
-  expect_null(model$cpp_options()[["STAN_THREADS"]])
-  expect_equal(
-    vapply(received_stancflags, function(x) "--warn-uninitialized" %in% x, logical(1)),
-    rep(FALSE, 2)
-  )
-})
-
-test_that("$compile() doesn't reuse cpp and stanc options supplied to cmdstan_model()", {
-  model_dir <- withr::local_tempdir()
-  stan_file <- file.path(model_dir, "bernoulli.stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file)
-  # Options given to the constructor are held until the first compilation
-  # consumes them, unlike the include paths and user header, which persist.
-  model <- cmdstan_model(
-    stan_file,
-    compile = FALSE,
-    cpp_options = list(stan_threads = TRUE),
-    stanc_options = list("warn-uninitialized" = TRUE)
-  )
-  received_stancflags <- list()
-  local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name, ...) character(),
-    get_standalone_hpp = function(stan_file, stancflags) {
-      received_stancflags <<- append(received_stancflags, list(stancflags))
-      ""
-    }
-  )
-
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = model$compile(force_recompile = TRUE)
-  )
-  expect_true(model$cpp_options()[["STAN_THREADS"]])
-  expect_equal(
-    vapply(received_stancflags, function(x) "--warn-uninitialized" %in% x, logical(1)),
-    rep(TRUE, 2)
-  )
-
-  received_stancflags <- list()
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = model$compile(force_recompile = TRUE)
-  )
-
-  expect_null(model$cpp_options()[["STAN_THREADS"]])
-  expect_equal(
-    vapply(received_stancflags, function(x) "--warn-uninitialized" %in% x, logical(1)),
-    rep(FALSE, 2)
-  )
-})
-
 test_that("the model name stanc receives comes from the file name", {
   local_reproducible_output()
-  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
+  out <- utils::capture.output(
+    cmdstan_model(stan_program, quiet = FALSE, force_recompile = TRUE)
+  )
   if(os_is_windows() && !os_is_wsl()) {
-    out_no_name <- "bin/stanc.exe --name=bernoulli_model --o"
+    out_no_name <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--o"
   } else {
-    out_no_name <- "bin/stanc --name=bernoulli_model --o"
+    out_no_name <- "bin/stanc --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--o"
   }
   expect_output(print(out), out_no_name)
 
   expect_error(
-    mod$compile(force_recompile = TRUE, stanc_options = list(name = "bernoulli2_model")),
+    cmdstan_model(stan_program, force_recompile = TRUE,
+                  stanc_options = list(name = "bernoulli2_model")),
     "The model name comes from the name of the Stan file.",
     fixed = TRUE
   )
 })
 
-
-test_that("switching threads on and off works without rebuild", {
-  main_path_o <- file.path(cmdstan_path(), "src", "cmdstan", "main.o")
-  main_path_threads_o <- file.path(cmdstan_path(), "src", "cmdstan", "main_threads.o")
-  no_threads <- grep("STAN_THREADS", cmdstan_make_local(), invert = TRUE, value = TRUE)
-  local_cmdstan_make_local(cpp_options = list(no_threads), append = FALSE)
-  if (file.exists(main_path_threads_o)) {
-    file.remove(main_path_threads_o)
-  }
-  mod$compile(force_recompile = TRUE)
-
-  before_mtime <- file.mtime(main_path_o)
-  mod$compile(force_recompile = TRUE)
-  after_mtime <- file.mtime(main_path_o)
-  expect_equal(before_mtime, after_mtime)
-  expect_false(file.exists(main_path_threads_o))
-
-  mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-  checkmate::expect_file_exists(main_path_threads_o)
-
-  before_mtime <- file.mtime(main_path_o)
-  mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-  after_mtime <- file.mtime(main_path_o)
-  expect_equal(before_mtime, after_mtime)
-
-  before_mtime <- file.mtime(main_path_o)
-  mod$compile(force_recompile = TRUE)
-  after_mtime <- file.mtime(main_path_o)
-  expect_equal(before_mtime, after_mtime)
-})
-
 test_that("multiple cpp_options work", {
   stan_file <- testing_stan_file("bernoulli")
-  expect_call_compilation(
-    mod <- cmdstan_model(stan_file, cpp_options = list("DUMMY_TEST2"="1", "DUMMY_TEST2"="1",  "DUMMY_TEST3"="1"), force_recompile = TRUE)
+  mod_options <- expect_compilation(
+    cmdstan_model(
+      stan_file,
+      cpp_options = list("DUMMY_TEST2"="1", "DUMMY_TEST2"="1", "DUMMY_TEST3"="1"),
+      force_recompile = TRUE
+    )
   )
-  expect_compilation(mod, cpp_options = list("DUMMY_TEST2"="1", "DUMMY_TEST2"="1",  "DUMMY_TEST3"="1"), force_recompile = TRUE)
-  expect_compilation(mod, cpp_options = list(), force_recompile = TRUE)
+  expect_equal(
+    mod_options$cpp_options(),
+    list(DUMMY_TEST2 = "1", DUMMY_TEST3 = "1")
+  )
 })
 
-test_that("compile errors are shown", {
+test_that("a program stanc rejects errors with stanc's message", {
   stan_file <- testing_stan_file("fail")
   expect_error(
     cmdstan_model(stan_file),
-    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
-    fixed = TRUE
+    "Semantic error in '.*fail.stan', line 7"
   )
-})
-
-test_that("compile() performs stanc checks during dry runs", {
-  stan_file <- testing_stan_file("fail")
-  model <- cmdstan_model(stan_file, compile = FALSE)
-  expect_error(
-    model$compile(force_recompile = TRUE, dry_run = TRUE),
-    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
-    fixed = TRUE
-  )
-})
-
-test_that("compile() with dry_run = TRUE doesn't refresh cached model state", {
-  model_dir <- withr::local_tempdir()
-  stan_file <- write_stan_file(
-    "parameters { real alpha; } model { alpha ~ std_normal(); }",
-    dir = model_dir,
-    basename = "issue1228-dry-run.stan"
-  )
-  model <- cmdstan_model(stan_file, compile = FALSE)
-  code_before <- model$code()
-  variables_before <- model$variables()
-  local_mocked_bindings(
-    get_cmdstan_flags = function(flag_name, ...) character(),
-    get_standalone_hpp = function(stan_file, stancflags) ""
-  )
-
-  write_stan_file(
-    "parameters { real beta; } model { beta ~ std_normal(); }",
-    dir = model_dir,
-    basename = "issue1228-dry-run.stan"
-  )
-  model$compile(force_recompile = TRUE, dry_run = TRUE)
-
-  expect_identical(model$code(), code_before)
-  expect_identical(model$variables(), variables_before)
-  expect_equal(ls(model$functions), c("compiled", "existing_exe"))
-  expect_false(model$functions$compiled)
-})
-
-test_that("a failed compile() doesn't refresh cached model state", {
-  model_dir <- withr::local_tempdir()
-  stan_file <- write_stan_file(
-    "parameters { real alpha; } model { alpha ~ std_normal(); }",
-    dir = model_dir,
-    basename = "issue1228-failed-compile.stan"
-  )
-  model <- cmdstan_model(stan_file, compile = FALSE)
-  code_before <- model$code()
-  variables_before <- model$variables()
-
-  file.copy(testing_stan_file("fail"), stan_file, overwrite = TRUE)
-  expect_error(
-    model$compile(force_recompile = TRUE),
-    "An error occurred during compilation!",
-    fixed = TRUE
-  )
-
-  expect_identical(model$code(), code_before)
-  expect_identical(model$variables(), variables_before)
-  expect_equal(ls(model$functions), c("compiled", "existing_exe"))
-  expect_false(model$functions$compiled)
 })
 
 # Run stanc normally but mock the C++ compiler on a temporary model copy.
@@ -498,20 +156,27 @@ local_mocked_bernoulli_model <- function(.local_envir = parent.frame()) {
   )
 }
 
-test_that("a failed C++ compile doesn't refresh generated-code state", {
+# A model for a program that cannot be built, such as one with a syntax error
+# or an undefined function. The object is built from a valid program and the
+# program under test takes its place afterwards, which is all the methods that
+# read the source ever look at.
+local_source_only_model <- function(stan_file, .local_envir = parent.frame()) {
+  path <- file.path(
+    withr::local_tempdir(.local_envir = .local_envir),
+    basename(stan_file)
+  )
+  file.copy(testing_stan_file("bernoulli"), path)
+  model <- mock_cmdstan_model(path, .local_envir = .local_envir)
+  file.copy(stan_file, path, overwrite = TRUE)
+  model
+}
+
+test_that("a failed build leaves the previous executable and its record alone", {
   model <- local_mocked_bernoulli_model()
-  private <- model$.__enclos_env__$private
+  exe_before <- readLines(model$exe_file())
+  record_before <- readLines(build_record_path(model$exe_file()))
+  hpp_before <- readLines(model$hpp_file())
 
-  code_before <- model$code()
-  variables_before <- model$variables()
-  functions_before <- as.list(model$functions)
-  hpp_file_before <- model$hpp_file()
-  hpp_code_before <- private$model_methods_env_$hpp_code_
-  exe_before <- model$exe_file()
-  other_dir <- withr::local_tempdir()
-  expect_true(any(nzchar(hpp_code_before)))
-
-  # model_methods_env_ must describe the same program as the executable.
   writeLines(
     "parameters { real beta; } model { beta ~ std_normal(); }",
     model$stan_file()
@@ -520,19 +185,17 @@ test_that("a failed C++ compile doesn't refresh generated-code state", {
     compile_ret = list(status = 1),
     info_ret = list(status = 1),
     code = expect_error(
-      model$compile(dir = other_dir, force_recompile = TRUE),
+      cmdstan_model(model$stan_file()),
       "An error occurred during compilation!",
       fixed = TRUE
     )
   )
 
-  expect_identical(model$code(), code_before)
-  expect_identical(model$variables(), variables_before)
-  expect_identical(as.list(model$functions), functions_before)
-  expect_identical(model$hpp_file(), hpp_file_before)
-  expect_identical(private$model_methods_env_$hpp_code_, hpp_code_before)
-  expect_identical(model$exe_file(), exe_before)
-  expect_true(file.exists(exe_before))
+  expect_identical(readLines(model$exe_file()), exe_before)
+  expect_identical(
+    readLines(build_record_path(model$exe_file())), record_before
+  )
+  expect_identical(readLines(model$hpp_file()), hpp_before)
 })
 
 # Build a distinct replacement whose old backup cannot be removed.
@@ -552,23 +215,22 @@ local_leftover_backup_model <- function(.local_envir = parent.frame()) {
 }
 
 expect_describes_new_program <- function(model) {
-  private <- model$.__enclos_env__$private
   expect_identical(
     model$code(),
     "parameters { real beta; } model { beta ~ std_normal(); }"
   )
   expect_equal(model$variables()$parameters$beta$dimensions, 0)
-  expect_match(paste(private$model_methods_env_$hpp_code_, collapse = "\n"), "beta")
   expect_match(paste(readLines(model$hpp_file()), collapse = "\n"), "beta")
-  expect_true(model$cpp_options()$STAN_THREADS)
+  expect_equal(model$cpp_options()$STAN_THREADS, "TRUE")
   expect_match(readLines(model$exe_file()), "^mock executable ")
 }
 
-test_that("a leftover backup doesn't unwind a compile when warnings are errors", {
+test_that("a leftover backup doesn't unwind a build when warnings are errors", {
   model <- local_leftover_backup_model()
   model_dir <- dirname(model$exe_file())
+  stan_file <- model$stan_file()
 
-  # The warning must come after the new executable state is committed.
+  # The warning must come after the new executable is installed.
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
@@ -576,7 +238,7 @@ test_that("a leftover backup doesn't unwind a compile when warnings are errors",
       error = TRUE,
       withr::with_options(
         list(warn = 2),
-        model$compile(cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
+        cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE))
       ),
       # Normalize Windows separators and the random backup names.
       transform = function(lines) {
@@ -589,32 +251,23 @@ test_that("a leftover backup doesn't unwind a compile when warnings are errors",
     )
   )
 
-  expect_describes_new_program(model)
+  # The install stands, so the next constructor reuses what it left behind.
+  rebuilt <- with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = expect_no_mock_compile(
+      cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE))
+    )
+  )
+  expect_describes_new_program(rebuilt)
 })
 
-test_that("dir arg works for cmdstan_model and $compile()", {
-  tmp_dir <- tempdir()
-  tmp_dir_2 <- tempdir()
+test_that("dir arg works for cmdstan_model", {
+  tmp_dir <- withr::local_tempdir()
 
   mod_dir <- cmdstan_model(stan_program, dir = tmp_dir)
   expect_equal(repair_path(dirname(mod_dir$exe_file())), repair_path(tmp_dir))
   checkmate::expect_file_exists(mod_dir$exe_file())
-  file.remove(mod_dir$exe_file())
-
-  mod_dir_1 <- cmdstan_model(stan_program, dir = tmp_dir, compile = FALSE)
-  mod_dir_1$compile(dry_run = TRUE)
-  expect_equal(repair_path(dirname(mod_dir_1$exe_file())), repair_path(tmp_dir))
-
-  mod_dir_1$compile(dir = tmp_dir_2, dry_run = TRUE) #dir in compile overwrites dir in cmdstan_model
-  expect_equal(repair_path(dirname(mod_dir_1$exe_file())), repair_path(tmp_dir))
-
-  mod_dir_2 <- cmdstan_model(stan_program, compile = FALSE)
-  mod_dir_2$compile(dir = tmp_dir, dry_run = TRUE)
-  expect_equal(repair_path(dirname(mod_dir_2$exe_file())), repair_path(tmp_dir))
-
-  mod_dir_3 <- cmdstan_model(stan_program)
-  mod_dir_3$compile(dir = tmp_dir, dry_run = TRUE) #dir in compile overwrites dir in cmdstan_model
-  expect_equal(repair_path(dirname(mod_dir_3$exe_file())), repair_path(tmp_dir))
 
   expect_error(
     cmdstan_model(stan_program, dir = "ABCD"),
@@ -628,33 +281,17 @@ test_that("compiling stops on hyphens in stanc_options", {
   hyphens3 <- list("--o" = "something")
   stan_file <- testing_stan_file("bernoulli")
   expect_error(
-    cmdstan_model(stan_file, stanc_options = hyphens, compile = FALSE),
+    cmdstan_model(stan_file, stanc_options = hyphens),
     "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
   )
   expect_error(
-    cmdstan_model(stan_file, stanc_options = hyphens2, compile = FALSE),
+    cmdstan_model(stan_file, stanc_options = hyphens2),
     "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
   )
   expect_error(
-    cmdstan_model(stan_file, stanc_options = hyphens3, compile = FALSE),
-    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
-    fixed = TRUE
-  )
-  mod <- cmdstan_model(stan_file, compile = FALSE)
-  expect_error(
-    mod$compile(stanc_options = hyphens),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
-    fixed = TRUE
-  )
-  expect_error(
-    mod$compile(stanc_options = hyphens2),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
-    fixed = TRUE
-  )
-  expect_error(
-    mod$compile(stanc_options = hyphens3),
+    cmdstan_model(stan_file, stanc_options = hyphens3),
     "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
     fixed = TRUE
   )
@@ -662,7 +299,6 @@ test_that("compiling stops on hyphens in stanc_options", {
 
 test_that("compiling stops on stanc options cmdstanr sets itself", {
   stan_file <- testing_stan_file("bernoulli")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
   fragments <- list(
     "include-paths" = "Pass the directories with the `include_paths` argument.",
     "warn-pedantic" = "Use `pedantic = TRUE`.",
@@ -683,12 +319,7 @@ test_that("compiling stops on stanc options cmdstanr sets itself", {
     )
     for (spelling in spellings) {
       expect_error(
-        cmdstan_model(stan_file, stanc_options = spelling, compile = FALSE),
-        fragment,
-        fixed = TRUE
-      )
-      expect_error(
-        mod$compile(stanc_options = spelling),
+        cmdstan_model(stan_file, stanc_options = spelling),
         fragment,
         fixed = TRUE
       )
@@ -697,7 +328,7 @@ test_that("compiling stops on stanc options cmdstanr sets itself", {
 
   # A named entry carrying its own value still matches on the flag name.
   expect_error(
-    cmdstan_model(stan_file, stanc_options = list("include-paths=/b" = TRUE), compile = FALSE),
+    cmdstan_model(stan_file, stanc_options = list("include-paths=/b" = TRUE)),
     "Pass the directories with the `include_paths` argument.",
     fixed = TRUE
   )
@@ -707,8 +338,7 @@ test_that("stanc_options names cannot carry their own value", {
   expect_error(
     cmdstan_model(
       testing_stan_file("bernoulli"),
-      stanc_options = list("max-line-length=78" = TRUE),
-      compile = FALSE
+      stanc_options = list("max-line-length=78" = TRUE)
     ),
     "`list(\"max-line-length\" = \"78\")`",
     fixed = TRUE
@@ -727,14 +357,17 @@ test_that("stanc options without a dedicated argument are left alone", {
 
 test_that("compiling works with only names in list", {
   stan_file <- testing_stan_file("bernoulli")
-  expect_call_compilation(mod <- cmdstan_model(stan_file, stanc_options = list("warn-uninitialized"), force_recompile = TRUE))
+  mod <- expect_compilation(
+    cmdstan_model(stan_file, stanc_options = list("warn-uninitialized"),
+                  force_recompile = TRUE)
+  )
   checkmate::expect_r6(
     mod,
     "CmdStanModel"
   )
 })
 
-test_that("compile() works with pedantic=TRUE", {
+test_that("pedantic = TRUE warns on a build and on a reuse", {
   stan_file <- write_stan_file("
   parameters {
     real y;
@@ -745,35 +378,37 @@ test_that("compile() works with pedantic=TRUE", {
   }
   ")
   expect_message(
-    mod_pedantic_warn <- cmdstan_model(stan_file, pedantic = TRUE, force_recompile = TRUE),
+    cmdstan_model(stan_file, pedantic = TRUE, force_recompile = TRUE),
+    "The parameter x was declared but was not used",
+    fixed = TRUE
+  )
+  # The executable is current, so the warning comes from stanc alone.
+  expect_message(
+    expect_no_recompilation(cmdstan_model(stan_file, pedantic = TRUE)),
     "The parameter x was declared but was not used",
     fixed = TRUE
   )
 })
 
 test_that("*hpp_file() functions work", {
-  tmp_dir <- tempdir()
+  tmp_dir <- withr::local_tempdir()
   stan_file <- testing_stan_file("bernoulli")
-  expect_call_compilation(mod <- cmdstan_model(stan_file, force_recompile = TRUE))
+  mod <- cmdstan_model(stan_file)
   checkmate::expect_file_exists(mod$hpp_file())
   expect_match(paste0(readLines(mod$hpp_file(), warn = FALSE), collapse = "\n"), "Code generated by stanc", fixed = TRUE)
   mod$save_hpp_file()
   expect_equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))
   mod$save_hpp_file(tmp_dir)
   expect_equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))
-  # A dry run leaves the saved header location unchanged.
-  mod$compile(force_recompile = TRUE, dry_run = TRUE)
-  expect_equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))
-  # A real recompilation uses a fresh temporary header.
-  expect_call_compilation(mod$compile(force_recompile = TRUE))
-  expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(tmp_dir, "bernoulli.hpp"))))
-  expect_false(isTRUE(all.equal(mod$hpp_file(), file.path(dirname(mod$stan_file()), "bernoulli.hpp"))))
-  checkmate::expect_file_exists(mod$hpp_file())
+
+  # A model on a reused executable holds generated C++ of its own.
+  reused <- cmdstan_model(stan_file)
+  checkmate::expect_file_exists(reused$hpp_file())
+  expect_false(isTRUE(all.equal(reused$hpp_file(), mod$hpp_file())))
 })
 
 test_that("check_syntax() works", {
-  stan_file <- testing_stan_file("fail")
-  mod_fail <- cmdstan_model(stan_file, compile = FALSE)
+  mod_fail <- local_source_only_model(testing_stan_file("fail"))
   expect_error(
     expect_message(
       mod_fail$check_syntax(),
@@ -783,7 +418,7 @@ test_that("check_syntax() works", {
   )
 
   stan_file <- testing_stan_file("bernoulli")
-  mod_ok <- cmdstan_model(stan_file, compile = FALSE)
+  mod_ok <- cmdstan_model(stan_file)
   expect_message(
     mod_ok$check_syntax(),
     "Stan program is syntactically correct"
@@ -821,12 +456,11 @@ test_that("check_syntax() works", {
   }
   "
   stan_file_tmp <- write_stan_file(code)
-  mod_removed_stan_file <- cmdstan_model(stan_file_tmp)
+  mod_removed_stan_file <- mock_cmdstan_model(stan_file_tmp)
   file.remove(stan_file_tmp)
   expect_error(
     mod_removed_stan_file$check_syntax(),
-    "The Stan file used to create the `CmdStanModel` object does not exist.",
-    fixed = TRUE
+    "this model was created from no longer exists", fixed = TRUE
   )
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
@@ -848,7 +482,7 @@ test_that("check_syntax() works with pedantic=TRUE", {
   }
   "
   stan_file <- write_stan_file(model_code)
-  mod_pedantic_warn <- cmdstan_model(stan_file, compile = FALSE)
+  mod_pedantic_warn <- mock_cmdstan_model(stan_file)
   expect_message(
     mod_pedantic_warn$check_syntax(),
     "Stan program is syntactically correct"
@@ -877,9 +511,8 @@ test_that("check_syntax() works with pedantic=TRUE", {
 test_that("check_syntax() works with include_paths", {
   include_model <- local_include_model_with_spaces()
 
-  mod_w_include <- cmdstan_model(
+  mod_w_include <- mock_cmdstan_model(
     stan_file = include_model$stan_file,
-    compile = FALSE,
     include_paths = include_model$include_paths
   )
   expect_true(mod_w_include$check_syntax())
@@ -889,31 +522,26 @@ test_that("check_syntax() works with include_paths", {
 test_that("check_syntax() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
-  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include,
                                  include_paths = test_path("resources", "stan"))
   expect_true(mod_w_include$check_syntax())
 
 })
 
 test_that("check_syntax() and format() allow undefined functions with a user header", {
-  stan_file <- testing_stan_file("bernoulli_external")
+  stan_file <- file.path(
+    withr::local_tempdir(), "bernoulli_external.stan"
+  )
+  file.copy(testing_stan_file("bernoulli_external"), stan_file)
   # Stanc does not read the header, so an empty one is enough.
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
-  mod <- cmdstan_model(stan_file, user_header = user_header, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file, user_header = user_header)
 
   expect_true(mod$check_syntax(quiet = TRUE))
   expect_output(mod$format(), "make_odds", fixed = TRUE)
-
-  # A compile that failed because the header is missing still counts as using one.
-  mod_missing <- cmdstan_model(stan_file, compile = FALSE)
-  expect_error(
-    mod_missing$compile(user_header = "not_a_real_header.hpp"),
-    "does not exist"
-  )
-  expect_true(mod_missing$check_syntax(quiet = TRUE))
 })
 
-test_that("compile() and check_syntax() error on removed syntax", {
+test_that("building errors on removed syntax", {
   model_code <- "
   transformed data {
     real a;
@@ -921,17 +549,7 @@ test_that("compile() and check_syntax() error on removed syntax", {
   }
   "
   stan_file <- write_stan_file(model_code)
-  mod_dep_warning <- cmdstan_model(stan_file, compile = FALSE)
-  expect_error(
-    mod_dep_warning$compile(),
-    "An error occurred during compilation! See the message above for more information. (stanc exited with status 1)",
-    fixed = TRUE
-  )
-  expect_error(
-    mod_dep_warning$check_syntax(),
-    "Syntax error found! See the message above for more information.",
-    fixed = TRUE
-  )
+  expect_error(cmdstan_model(stan_file), "Syntax error in '.*', line 4")
 })
 
 test_that("compilation errors if folder with the model name exists", {
@@ -1067,82 +685,74 @@ test_that("include_paths_stanc3_args() works", {
   }
 })
 
-test_that("cpp_options work with settings in make/local", {
-  no_threads <- grep("STAN_THREADS", cmdstan_make_local(), invert = TRUE, value = TRUE)
-  local_cmdstan_make_local(cpp_options = list(no_threads), append = FALSE)
+test_that("cpp_options() reports the options that were supplied", {
+  expect_equal(mod$cpp_options(), structure(list(), names = character()))
 
-  if (length(mod$exe_file()) > 0 && file.exists(mod$exe_file())) {
-    file.remove(mod$exe_file())
-  }
-
-  rebuild_cmdstan()
-  mod <- cmdstan_model(stan_file = stan_program)
-  expect_null(mod$cpp_options()$STAN_THREADS)
-
-  file.remove(mod$exe_file())
-
-  cmdstan_make_local(cpp_options = list(stan_threads = TRUE), append = TRUE)
-
-  file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
-  mod <- cmdstan_model(file)
-  expect_true(mod$cpp_options()$STAN_THREADS)
-
-  file.remove(mod$exe_file())
-})
-
-test_that("a recompile records options inherited from make/local", {
-  local_cmdstan_make_local(cpp_options = list(STAN_THREADS = "true"))
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
-  file.copy(stan_program, stan_file)
-
-  mod <- cmdstan_model(stan_file, compile = FALSE)
-  mod$compile(force_recompile = TRUE)
-
-  # Nothing was passed to $compile(), so only the binary can report threading.
-  expect_true(cpp_option_value(mod$cpp_options(), "stan_threads"))
-  expect_silent(assert_valid_threads(2, mod$cpp_options(), multiple_chains = TRUE))
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  threaded <- mock_cmdstan_model(
+    stan_file, cpp_options = list(stan_threads = TRUE)
+  )
+  expect_equal(threaded$cpp_options(), list(STAN_THREADS = "TRUE"))
 })
 
-test_that("cpp_options() excludes the Stan version reported by the executable", {
-  mod <- cmdstan_model(stan_file = stan_program)
-  expect_null(mod$cpp_options()$STAN_VERSION)
+test_that("cmdstan_version() reports the version that built an adopted executable", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  older <- paste0(
+    "stan_version_major=2\nstan_version_minor=35\nstan_version_patch=0"
+  )
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = older),
+    code = mod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+  # Built here, so the session's CmdStan built it whatever info reports.
   expect_equal(mod$cmdstan_version(), cmdstan_version())
+
+  # The record beside it says what built it, so the binary is not asked.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = older),
+    code = adopted <- cmdstan_model(exe_file = mod$exe_file())
+  )
+  expect_equal(adopted$cmdstan_version(), cmdstan_version())
+
+  # Without a record the executable is asked to identify itself.
+  alone_exe <- file.path(withr::local_tempdir(), basename(mod$exe_file()))
+  file.copy(mod$exe_file(), alone_exe)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = older),
+    code = alone <- cmdstan_model(exe_file = alone_exe)
+  )
+  expect_equal(alone$cmdstan_version(), "2.35.0")
+
+  # An executable that reports no version is not a CmdStan executable.
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 0, stdout = "STAN_THREADS=false"),
+    code = expect_error(
+      cmdstan_model(exe_file = alone_exe),
+      "did not identify itself as a CmdStan executable",
+      fixed = TRUE
+    )
+  )
 })
 
-test_that("cmdstan_model works with exe_file", {
-  stan_file <- testing_stan_file("bernoulli")
-  mod <- cmdstan_model(stan_file, dry_run = TRUE)
-  default_exe_file <- mod$exe_file()
-  if(file.exists(mod$exe_file())) {
-    file.remove(mod$exe_file())
-  }
+test_that("cmdstan_model takes a stan_file or an exe_file, not both", {
+  expect_error(
+    cmdstan_model(stan_file = stan_program, exe_file = mod$exe_file()),
+    "`stan_file` and `exe_file` cannot both be supplied.",
+    fixed = TRUE
+  )
 
-  tmp_exe_file <- tempfile(fileext = cmdstan_ext())
-  mod <- cmdstan_model(
-    stan_file = stan_file,
-    exe_file = tmp_exe_file
-  )
-  expect_match(
-    mod$exe_file(),
-    repair_path(tmp_exe_file)
-  )
-  expect_true(file.exists(mod$exe_file()))
-  expect_false(file.exists(default_exe_file))
-
-  mod <- cmdstan_model(
-    exe_file = tmp_exe_file,
-    dry_run = TRUE
-  )
-  expect_match(
-    mod$exe_file(),
-    repair_path(tmp_exe_file)
-  )
+  adopted <- cmdstan_model(exe_file = mod$exe_file())
+  expect_equal(adopted$exe_file(), mod$exe_file())
+  expect_false(adopted$has_stan_file())
 })
 
 test_that("build configuration cannot accompany an executable-only model", {
-  if (length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
-    mod$compile()
-  }
   exe <- mod$exe_file()
 
   expect_error(
@@ -1180,6 +790,11 @@ test_that("build configuration cannot accompany an executable-only model", {
     "`pedantic` cannot be supplied",
     fixed = TRUE
   )
+  expect_error(
+    cmdstan_model(exe_file = exe, dir = tempdir()),
+    "`dir` cannot be supplied",
+    fixed = TRUE
+  )
 
   mod_exe <- cmdstan_model(
     exe_file = exe,
@@ -1188,7 +803,8 @@ test_that("build configuration cannot accompany an executable-only model", {
     include_paths = NULL,
     user_header = NULL,
     force_recompile = NULL,
-    pedantic = NULL
+    pedantic = NULL,
+    dir = NULL
   )
   expect_false(mod_exe$has_stan_file())
 
@@ -1202,7 +818,7 @@ test_that("build configuration cannot accompany an executable-only model", {
   )
 })
 
-test_that("cmdstan_model created only with exe_file errors for check_syntax, code, ... ", {
+test_that("a model created only with exe_file refuses what needs a Stan file", {
   mod <- testing_model("bernoulli")
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
@@ -1216,8 +832,8 @@ test_that("cmdstan_model created only with exe_file errors for check_syntax, cod
     fixed = TRUE
   )
   expect_error(
-    mod_exe$compile(),
-    "'$compile()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    mod_exe$hpp_file(),
+    "'$hpp_file()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
     fixed = TRUE
   )
 })
@@ -1251,34 +867,30 @@ test_that("cmdstan_model works with user_header", {
       }
   }"
   cat(hpp, file = tmpfile, sep = "\n")
-  expect_call_compilation(
-    mod <- cmdstan_model(
-      stan_file = testing_stan_file("bernoulli_external"),
-      user_header = tmpfile
-  ))
-  expect_equal(mod$user_header(), resolve_path(tmpfile))
-  expect_false("USER_HEADER" %in% names(mod$cpp_options()))
-  file.remove(mod$exe_file())
+  stan_file <- testing_stan_file("bernoulli_external")
 
   # No stanc_options here: the user header argument must enable allow-undefined
   # on its own (#1227)
-  expect_call_compilation(
-    mod_2 <- cmdstan_model(
-      stan_file = testing_stan_file("bernoulli_external"),
-      user_header = tmpfile
-    )
+  mod <- expect_compilation(
+    cmdstan_model(stan_file = stan_file, user_header = tmpfile)
+  )
+  expect_equal(mod$user_header(), resolve_path(tmpfile))
+  expect_false("USER_HEADER" %in% names(mod$cpp_options()))
+
+  expect_no_recompilation(
+    cmdstan_model(stan_file = stan_file, user_header = tmpfile)
   )
 
   # Check recompilation upon changing header
-  expect_no_recompilation(mod, quiet = TRUE, user_header = tmpfile)
-
-  Sys.setFileTime(tmpfile, Sys.time() + 1) #touch file to trigger recompile
-  expect_compilation(mod, quiet = TRUE, user_header = tmpfile)
+  cat("\n", file = tmpfile, append = TRUE)
+  expect_compilation(
+    cmdstan_model(stan_file = stan_file, user_header = tmpfile, quiet = TRUE)
+  )
 
   # Error messages
   expect_error(
     cmdstan_model(
-      stan_file = testing_stan_file("bernoulli_external"),
+      stan_file = stan_file,
       user_header = "non_existent.hpp"
     ),
     "header file '[^']*' does not exist"
@@ -1309,25 +921,27 @@ test_that("cpp_options names reach make uppercased and values verbatim", {
   expect_output(print(out), "CXXFLAGS_OPTIM=-Dsomething_not_used", fixed = TRUE)
 })
 
-test_that("format(overwrite_file = TRUE) refreshes cached variables", {
+test_that("format(overwrite_file = TRUE) leaves the object's code and variables alone", {
   model_dir <- withr::local_tempdir()
   stan_file <- write_stan_file(
     "parameters { real alpha; } model { alpha ~ std_normal(); }",
     dir = model_dir,
     basename = "reformat.stan"
   )
-  model <- cmdstan_model(stan_file, compile = FALSE)
+  model <- mock_cmdstan_model(stan_file)
   expect_equal(names(model$variables()$parameters), "alpha")
 
-  # Formatting in place must refresh variables along with the cached code.
   writeLines(
     "parameters { real beta; } model { beta ~ std_normal(); }",
     stan_file
   )
   model$format(overwrite_file = TRUE, quiet = TRUE)
 
-  expect_equal(names(model$variables()$parameters), "beta")
-  expect_match(paste(model$code(), collapse = " "), "beta")
+  expect_match(paste(readLines(stan_file), collapse = " "), "beta")
+  expect_equal(names(model$variables()$parameters), "alpha")
+  code <- paste(model$code(), collapse = " ")
+  expect_match(code, "alpha")
+  expect_false(grepl("beta", code, fixed = TRUE))
 })
 
 
@@ -1340,8 +954,7 @@ test_that("format() works", {
   target +=         normal_log(y, 0, 1);
   }
   "
-  stan_file_tmp <- write_stan_file(code)
-  mod_1 <- cmdstan_model(stan_file_tmp, compile = FALSE)
+  mod_1 <- local_source_only_model(write_stan_file(code))
 
   expect_error(
     mod_1$format(),
@@ -1349,14 +962,7 @@ test_that("format() works", {
     fixed = TRUE
   )
 
-  expect_error(
-    mod_1$format(),
-    "Syntax error found! See the message above for more information.",
-    fixed = TRUE
-  )
-
-  stan_file <- testing_stan_file("bernoulli_external")
-  mod_2 <- cmdstan_model(stan_file, compile = FALSE)
+  mod_2 <- local_source_only_model(testing_stan_file("bernoulli_external"))
   expect_output(
     mod_2$format(),
     "make_odds(theta);",
@@ -1380,12 +986,11 @@ test_that("format() works", {
   }
   "
   stan_file_tmp <- write_stan_file(code)
-  mod_removed_stan_file <- cmdstan_model(stan_file_tmp)
+  mod_removed_stan_file <- mock_cmdstan_model(stan_file_tmp)
   file.remove(stan_file_tmp)
   expect_error(
     mod_removed_stan_file$format(),
-    "The Stan file used to create the `CmdStanModel` object does not exist.",
-    fixed = TRUE
+    "this model was created from no longer exists", fixed = TRUE
   )
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
@@ -1396,7 +1001,7 @@ test_that("format() works", {
 })
 
 test_that("source-only operations do not need a user header to allow undefined functions", {
-  mod <- cmdstan_model(testing_stan_file("bernoulli_external"), compile = FALSE)
+  mod <- local_source_only_model(testing_stan_file("bernoulli_external"))
   expect_message(
     expect_true(mod$check_syntax()),
     "Stan program is syntactically correct"
@@ -1406,15 +1011,13 @@ test_that("source-only operations do not need a user header to allow undefined f
     "make_odds(theta);",
     fixed = TRUE
   )
-  expect_equal(names(mod$variables()$parameters), "theta")
 })
 
 test_that("format() works with include_paths", {
   include_model <- local_include_model_with_spaces()
 
-  mod_w_include <- cmdstan_model(
+  mod_w_include <- mock_cmdstan_model(
     stan_file = include_model$stan_file,
-    compile = FALSE,
     include_paths = include_model$include_paths
   )
   expect_output(
@@ -1437,7 +1040,7 @@ test_that("format() works with include_paths", {
 test_that("format() works with include_paths on compiled model", {
   stan_program_w_include <- testing_stan_file("bernoulli_include")
 
-  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include, compile=TRUE,
+  mod_w_include <- cmdstan_model(stan_file = stan_program_w_include,
                                  include_paths = test_path("resources", "stan"))
   expect_output(
     mod_w_include$format(),
@@ -1466,7 +1069,7 @@ test_that("overwrite_file works with format()", {
   }
   "
   stan_file_tmp <- write_stan_file(code)
-  mod_1 <- cmdstan_model(stan_file_tmp, compile = FALSE)
+  mod_1 <- mock_cmdstan_model(stan_file_tmp)
   expect_false(
     any(
       grepl(paste0(basename(mod_1$stan_file()), ".bak"),
@@ -1512,10 +1115,10 @@ test_that("dirname of stan_file is used as include path if no other paths suppli
   stan_data_file <- write_stan_file(data_code, basename = "separate_file.stan", dir = tmpdir)
   stan_file <- write_stan_file(model_code, dir = tmpdir)
 
-  mod_tmp <- cmdstan_model(stan_file, compile = FALSE)
+  mod_tmp <- mock_cmdstan_model(stan_file)
+  expect_s3_class(mod_tmp, "CmdStanModel")
   expect_true(mod_tmp$check_syntax())
   utils::capture.output(expect_true(mod_tmp$format()))
-  expect_s3_class(mod_tmp$compile(), "CmdStanModel")
 })
 
 test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", {
@@ -1530,18 +1133,21 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
       }
     }
   )
-  out <- utils::capture.output(mod$compile(quiet = FALSE, force_recompile = TRUE))
+  out <- utils::capture.output(
+    cmdstan_model(stan_program, quiet = FALSE, force_recompile = TRUE)
+  )
   if(os_is_windows() && !os_is_wsl()) {
-    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   } else {
-    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
 
   # The call emits --warn-pedantic, so make/local's copy is dropped and the
   # stanc command line make prints holds the flag once.
   out <- utils::capture.output(
-    mod$compile(pedantic = TRUE, quiet = FALSE, force_recompile = TRUE)
+    cmdstan_model(stan_program, pedantic = TRUE, quiet = FALSE,
+                  force_recompile = TRUE)
   )
   stanc_lines <- out[grepl("bin/stanc", out)]
   expect_gt(length(stanc_lines), 0)
@@ -1554,10 +1160,10 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
   )
 })
 
-test_that("quoted make/local STANCFLAGS values reach stanc as one argument (#1232)", {
-  # Nothing is mocked: the direct stanc call would fail with "too many
-  # arguments" if the value split at the space, and the make recipe echoes the
-  # requoted flag.
+test_that("a quoted make/local flag the call emits is dropped whole (#1232)", {
+  # Nothing is mocked. The call always emits --filename-in-msg, so the
+  # make/local copy is dropped, and it has to go as one argument: a split at
+  # the space would leave a stray "model.stan'" word for stanc to choke on.
   local_reproducible_output()
   local_cmdstan_make_local(
     cpp_options = list("STANCFLAGS += --filename-in-msg='/my dir/model.stan'")
@@ -1566,14 +1172,15 @@ test_that("quoted make/local STANCFLAGS values reach stanc as one argument (#123
 
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
-  mod_local <- cmdstan_model(stan_file, compile = FALSE)
-  out <- utils::capture.output(mod_local$compile(quiet = FALSE, force_recompile = TRUE))
-  expect_true(file.exists(mod_local$exe_file()))
-  expect_output(
-    print(out),
-    "'--filename-in-msg=/my dir/model.stan'",
-    fixed = TRUE
+  out <- utils::capture.output(
+    mod_local <- cmdstan_model(stan_file, quiet = FALSE)
   )
+  expect_true(file.exists(mod_local$exe_file()))
+  stanc_line <- grep("bin/stanc", out, value = TRUE)
+  expect_length(stanc_line, 1)
+  expect_match(stanc_line, wsl_safe_path(mod_local$stan_file()), fixed = TRUE)
+  expect_false(grepl("my dir", stanc_line, fixed = TRUE))
+  expect_false(grepl("model.stan'", stanc_line, fixed = TRUE))
 })
 
 test_that("include paths in make/local STANCFLAGS stop the build", {
@@ -1587,7 +1194,7 @@ test_that("include paths in make/local STANCFLAGS stop the build", {
     get_cmdstan_flags = function(flag_name, ...) {
       if (identical(flag_name, "STANCFLAGS")) local_flags else character()
     },
-    get_standalone_hpp = function(stan_file, stancflags) {
+    get_standalone_hpp = function(stan_file, stancflags, ...) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
     }
@@ -1596,12 +1203,11 @@ test_that("include paths in make/local STANCFLAGS stop the build", {
   for (flags in list("--include-paths=/b", c("-I", "/b"), "-I/b")) {
     local_flags <- flags
     received_stancflags <- list()
-    model <- cmdstan_model(stan_file, compile = FALSE)
     with_mocked_cli(
       compile_ret = list(status = 0),
       info_ret = list(status = 1),
       code = expect_error(
-        model$compile(force_recompile = TRUE),
+        cmdstan_model(stan_file),
         "pass the directories with the `include_paths` argument",
         fixed = TRUE
       )
@@ -1615,14 +1221,13 @@ test_that("a flag the call emits reaches stanc once when make/local sets it too"
   model_dir <- withr::local_tempdir()
   stan_file <- file.path(model_dir, "bernoulli.stan")
   file.copy(testing_stan_file("bernoulli"), stan_file)
-  model <- cmdstan_model(stan_file, compile = FALSE)
   local_flags <- NULL
   received_stancflags <- list()
   local_mocked_bindings(
     get_cmdstan_flags = function(flag_name, ...) {
       if (identical(flag_name, "STANCFLAGS")) local_flags else character()
     },
-    get_standalone_hpp = function(stan_file, stancflags) {
+    get_standalone_hpp = function(stan_file, stancflags, ...) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
     }
@@ -1633,29 +1238,22 @@ test_that("a flag the call emits reaches stanc once when make/local sets it too"
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
-    code = model$compile(pedantic = TRUE, force_recompile = TRUE)
+    code = cmdstan_model(stan_file, pedantic = TRUE, force_recompile = TRUE)
   )
-  expect_equal(
-    vapply(received_stancflags, function(x) sum(x == "--warn-pedantic"), integer(1)),
-    rep(1L, 2)
-  )
-  expect_true(all(vapply(
-    received_stancflags,
-    function(x) "-fno-soa" %in% x,
-    logical(1)
-  )))
+  expect_length(received_stancflags, 1)
+  expect_equal(sum(received_stancflags[[1]] == "--warn-pedantic"), 1L)
+  expect_true("-fno-soa" %in% received_stancflags[[1]])
 
   local_flags <- "--O1"
   received_stancflags <- list()
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
-    code = model$compile(stanc_options = list("O1"), force_recompile = TRUE)
+    code = cmdstan_model(stan_file, stanc_options = list("O1"),
+                         force_recompile = TRUE)
   )
-  expect_equal(
-    vapply(received_stancflags, function(x) sum(x == "--O1"), integer(1)),
-    rep(1L, 2)
-  )
+  expect_length(received_stancflags, 1)
+  expect_equal(sum(received_stancflags[[1]] == "--O1"), 1L)
 
   # The value given as a separate word goes with the flag it belongs to.
   local_flags <- c("--filename-in-msg", "published.stan")
@@ -1663,16 +1261,40 @@ test_that("a flag the call emits reaches stanc once when make/local sets it too"
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
-    code = model$compile(
+    code = cmdstan_model(
+      stan_file,
       stanc_options = list("filename-in-msg" = "x.stan"),
       force_recompile = TRUE
     )
   )
-  expect_true(all(vapply(
-    received_stancflags,
-    function(x) "--filename-in-msg=x.stan" %in% x && !("published.stan" %in% x),
-    logical(1)
-  )))
+  expect_true("--filename-in-msg=x.stan" %in% received_stancflags[[1]])
+  expect_false("published.stan" %in% received_stancflags[[1]])
+})
+
+test_that("the generated C++ names the source, not the copy stanc compiled", {
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  )
+  hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
+  expect_match(hpp, wsl_safe_path(mod$stan_file()), fixed = TRUE)
+  expect_no_match(hpp, "model-[0-9a-f]+\\.stan")
+
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = mod <- cmdstan_model(
+      stan_file,
+      stanc_options = list("filename-in-msg" = "published.stan"),
+      force_recompile = TRUE
+    )
+  )
+  hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
+  expect_match(hpp, "published.stan", fixed = TRUE)
+  expect_no_match(hpp, wsl_safe_path(mod$stan_file()), fixed = TRUE)
 })
 
 test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
@@ -1696,12 +1318,27 @@ test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
     stanc_options_to_args(list(canonicalize = "deprecations")),
     "--canonicalize=deprecations"
   )
+  # make_shell_quote() quotes only arguments holding characters outside its
+  # safe set, so a plain value comes back unquoted
   expect_equal(
     stanc_options_to_args(list(canonicalize = "deprecations"), quote_values = TRUE),
-    "--canonicalize='deprecations'"
+    "--canonicalize=deprecations"
   )
 
-  # Quoting the model name mangles the generated namespace
+  # A value outside the safe set comes back as shQuote() writes it
+  expect_equal(
+    stanc_options_to_args(
+      list("filename-in-msg" = "O'Brien's model.stan"), quote_values = TRUE
+    ),
+    shQuote("--filename-in-msg=O'Brien's model.stan", type = "sh")
+  )
+
+  # A `$` in a quoted argument is doubled, since make expands it
+  expect_equal(
+    stanc_options_to_args(list(canonicalize = "$HOME"), quote_values = TRUE),
+    "'--canonicalize=$$HOME'"
+  )
+
   expect_equal(
     stanc_options_to_args(list(name = "m_model"), quote_values = TRUE),
     "--name=m_model"
@@ -1756,43 +1393,47 @@ test_that("a flag the call emits drops the make/local copy", {
   )
 })
 
-test_that("compile() passes unquoted named stanc options to direct calls", {
-  stan_file <- testing_stan_file("bernoulli")
-  model <- cmdstan_model(stan_file, compile = FALSE)
+test_that("named stanc options reach direct calls unquoted", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
   received_stancflags <- list()
   local_mocked_bindings(
     get_cmdstan_flags = function(flag_name, ...) character(),
-    get_standalone_hpp = function(stan_file, stancflags) {
+    get_standalone_hpp = function(stan_file, stancflags, ...) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
     }
   )
 
-  model$compile(
-    stanc_options = list(
-      canonicalize = "deprecations",
-      "filename-in-msg" = "model filename with spaces.stan"
-    ),
-    force_recompile = TRUE,
-    dry_run = TRUE
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(
+      stan_file,
+      stanc_options = list(
+        canonicalize = "deprecations",
+        "filename-in-msg" = "model filename with spaces.stan"
+      )
+    )
   )
 
   expected <- c(
     "--canonicalize=deprecations",
     "--filename-in-msg=model filename with spaces.stan"
   )
-  direct_options <- lapply(received_stancflags, function(x) {
-    grep("^--(canonicalize|filename-in-msg)=", x, value = TRUE)
-  })
-  expect_length(received_stancflags, 2)
-  expect_equal(direct_options, rep(list(expected), 2))
+  expect_length(received_stancflags, 1)
+  expect_equal(
+    grep("^--(canonicalize|filename-in-msg)=", received_stancflags[[1]], value = TRUE),
+    expected
+  )
   expect_equal(
     grep("'", unlist(received_stancflags), fixed = TRUE, value = TRUE),
     character()
   )
 })
 
-test_that("compile() works with named stanc option values", {
+test_that("a build works with named stanc option values", {
   stan_file <- write_stan_file(
     "
     functions {
@@ -1811,8 +1452,8 @@ test_that("compile() works with named stanc option values", {
     basename = "issue1227.stan"
   )
 
-  expect_call_compilation(
-    model <- cmdstan_model(
+  expect_compilation(
+    cmdstan_model(
       stan_file,
       stanc_options = list(
         canonicalize = "deprecations",
@@ -1822,81 +1463,75 @@ test_that("compile() works with named stanc option values", {
   )
 })
 
-test_that("compile() detects stan_opencl without case or partial matching", {
-  stan_file <- testing_stan_file("bernoulli")
-  model <- cmdstan_model(stan_file, compile = FALSE)
+test_that("a build detects stan_opencl without case or partial matching", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
   received_stancflags <- list()
   local_mocked_bindings(
     get_cmdstan_flags = function(flag_name, ...) character(),
-    get_standalone_hpp = function(stan_file, stancflags) {
+    get_standalone_hpp = function(stan_file, stancflags, ...) {
       received_stancflags <<- append(received_stancflags, list(stancflags))
       ""
     }
   )
 
-  model$compile(
-    cpp_options = list(STAN_OPENCL = TRUE),
-    force_recompile = TRUE,
-    dry_run = TRUE
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, cpp_options = list(STAN_OPENCL = TRUE),
+                         force_recompile = TRUE)
   )
-  expect_length(received_stancflags, 2)
-  expect_equal(
-    vapply(
-      received_stancflags,
-      function(x) "--use-opencl" %in% x,
-      logical(1)
-    ),
-    rep(TRUE, length(received_stancflags))
-  )
+  expect_length(received_stancflags, 1)
+  expect_true("--use-opencl" %in% received_stancflags[[1]])
 
   received_stancflags <- list()
-  model$compile(
-    cpp_options = list(stan_opencl_x = TRUE),
-    force_recompile = TRUE,
-    dry_run = TRUE
+  with_mocked_cli(
+    compile_ret = list(status = 0),
+    info_ret = list(status = 1),
+    code = cmdstan_model(stan_file, cpp_options = list(stan_opencl_x = TRUE),
+                         force_recompile = TRUE)
   )
-  expect_length(received_stancflags, 2)
-  expect_equal(
-    vapply(
-      received_stancflags,
-      function(x) "--use-opencl" %in% x,
-      logical(1)
-    ),
-    rep(FALSE, length(received_stancflags))
-  )
+  expect_length(received_stancflags, 1)
+  expect_false("--use-opencl" %in% received_stancflags[[1]])
 })
 
-test_that("compile() resolves make/local STANCFLAGS with the call's cpp_options applied", {
+test_that("a build resolves make/local STANCFLAGS with its cpp_options applied", {
   local_cmdstan_make_local(list(STAN_OPENCL = TRUE))
-  stan_file <- testing_stan_file("bernoulli")
-  model <- cmdstan_model(stan_file, compile = FALSE)
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
   received <- list()
   local_mocked_bindings(
-    get_standalone_hpp = function(stan_file, stancflags) {
+    get_standalone_hpp = function(stan_file, stancflags, ...) {
       received <<- append(received, list(stancflags))
       ""
     }
   )
-  opencl_count <- function() {
-    vapply(received, function(x) sum(x == "--use-opencl"), integer(1))
+  build <- function(...) {
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = cmdstan_model(stan_file, ..., force_recompile = TRUE)
+    )
   }
 
-  model$compile(cpp_options = list(stan_opencl = FALSE), force_recompile = TRUE, dry_run = TRUE)
-  expect_length(received, 2)
-  expect_equal(opencl_count(), c(0L, 0L))
+  build(cpp_options = list(stan_opencl = FALSE))
+  expect_length(received, 1)
+  expect_equal(sum(received[[1]] == "--use-opencl"), 0L)
 
   received <- list()
-  model$compile(cpp_options = list(stan_opencl = TRUE), force_recompile = TRUE, dry_run = TRUE)
-  expect_length(received, 2)
-  expect_equal(opencl_count(), c(1L, 1L))
+  build(cpp_options = list(stan_opencl = TRUE))
+  expect_length(received, 1)
+  expect_equal(sum(received[[1]] == "--use-opencl"), 1L)
 
   received <- list()
-  model$compile(force_recompile = TRUE, dry_run = TRUE)
-  expect_length(received, 2)
-  expect_equal(opencl_count(), c(1L, 1L))
+  build()
+  expect_length(received, 1)
+  expect_equal(sum(received[[1]] == "--use-opencl"), 1L)
 })
 
-test_that("compile() resolves make/local STANCFLAGS with the call's user_header applied", {
+test_that("a build resolves make/local STANCFLAGS with its user_header applied", {
   local_cmdstan_make_local(list(
     "ifeq ($(origin USER_HEADER),command line)",
     "STANCFLAGS += --O1",
@@ -1904,96 +1539,58 @@ test_that("compile() resolves make/local STANCFLAGS with the call's user_header 
     "STANCFLAGS += --O0",
     "endif"
   ), append = FALSE)
-  stan_file <- testing_stan_file("bernoulli")
-  model <- cmdstan_model(stan_file, compile = FALSE)
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
   header <- withr::local_tempfile(fileext = ".hpp")
   writeLines("", header)
   received <- list()
   local_mocked_bindings(
-    get_standalone_hpp = function(stan_file, stancflags) {
+    get_standalone_hpp = function(stan_file, stancflags, ...) {
       received <<- append(received, list(stancflags))
       ""
     }
   )
+  build <- function(...) {
+    with_mocked_cli(
+      compile_ret = list(status = 0),
+      info_ret = list(status = 1),
+      code = cmdstan_model(stan_file, ..., force_recompile = TRUE)
+    )
+  }
 
-  model$compile(user_header = header, force_recompile = TRUE, dry_run = TRUE)
-  expect_length(received, 2)
-  expect_true(all(vapply(received, function(x) "--O1" %in% x, logical(1))))
-  expect_false(any(vapply(received, function(x) "--O0" %in% x, logical(1))))
+  build(user_header = header)
+  expect_length(received, 1)
+  expect_true("--O1" %in% received[[1]])
+  expect_false("--O0" %in% received[[1]])
 
   received <- list()
-  model$compile(user_header = NULL, force_recompile = TRUE, dry_run = TRUE)
-  expect_length(received, 2)
-  expect_true(all(vapply(received, function(x) "--O0" %in% x, logical(1))))
-  expect_false(any(vapply(received, function(x) "--O1" %in% x, logical(1))))
+  build(user_header = NULL)
+  expect_length(received, 1)
+  expect_true("--O0" %in% received[[1]])
+  expect_false("--O1" %in% received[[1]])
 })
 
-test_that("compile() ignores directory chatter from MAKEFLAGS when reading STANCFLAGS", {
+test_that("a build ignores directory chatter from MAKEFLAGS", {
   withr::local_envvar(MAKEFLAGS = "-w -j 4")
-  expect_compilation(mod, quiet = TRUE, force_recompile = TRUE)
-})
-
-test_that("compile() checks it can commit before replacing the executable", {
-  model_dir <- withr::local_tempdir()
-  stan_file <- file.path(model_dir, "bernoulli.stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file)
-  model <- cmdstan_model(stan_file, compile = FALSE)
-  exe <- cmdstan_ext(strip_ext(stan_file))
-
-  lockEnvironment(model$functions, bindings = FALSE)
-
-  # Clearing a locked environment would fail during the state commit.
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = expect_error(
-      model$compile(force_recompile = TRUE),
-      "missing or locked",
-      fixed = TRUE
-    )
+  expect_compilation(
+    cmdstan_model(stan_program, quiet = TRUE, force_recompile = TRUE)
   )
-  expect_false(file.exists(exe))
-  expect_length(model$exe_file(), 0)
 })
 
-test_that("compile() refuses an executable destination that is a directory", {
+test_that("a build installs the artifact it just built, not the previous one", {
   model_dir <- withr::local_tempdir()
   stan_file <- file.path(model_dir, "bernoulli.stan")
   file.copy(testing_stan_file("bernoulli"), stan_file)
-  destination <- file.path(model_dir, "target-dir")
-  dir.create(destination)
-  writeLines("important", file.path(destination, "data.txt"))
-
-  model <- cmdstan_model(stan_file, compile = FALSE)
-  model$exe_file(destination)
-
-  with_mocked_cli(
-    compile_ret = list(status = 0),
-    info_ret = list(status = 1),
-    code = expect_error(
-      model$compile(force_recompile = TRUE),
-      "is a directory",
-      fixed = TRUE
-    )
-  )
-  expect_true(dir.exists(destination))
-  expect_identical(readLines(file.path(destination, "data.txt")), "important")
-})
-
-test_that("compile() installs the artifact it just built, not the previous one", {
-  model_dir <- withr::local_tempdir()
-  stan_file <- file.path(model_dir, "bernoulli.stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file)
-  model <- cmdstan_model(stan_file, compile = FALSE)
   exe <- cmdstan_ext(strip_ext(stan_file))
 
   with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),
     code = {
-      model$compile(force_recompile = TRUE)
+      cmdstan_model(stan_file)
       first <- readLines(exe)
-      model$compile(force_recompile = TRUE)
+      cmdstan_model(stan_file, force_recompile = TRUE)
       second <- readLines(exe)
     }
   )

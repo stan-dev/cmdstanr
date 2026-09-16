@@ -138,9 +138,7 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
 test_that("get_standalone_hpp() reports stanc failures", {
   model_dir <- withr::local_tempdir()
   stan_file <- file.path(model_dir, "model.stan")
-  hpp_file <- file.path(model_dir, "model.hpp")
   writeLines("parameters { real y; } model { y ~ std_normal(); }", stan_file)
-  writeLines("// partial output", hpp_file)
   local_mocked_bindings(
     wsl_compatible_run = function(...) {
       list(
@@ -158,7 +156,6 @@ test_that("get_standalone_hpp() reports stanc failures", {
       "--canonicalize='deprecations'"
     )
   )
-  expect_false(file.exists(hpp_file))
 })
 
 test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
@@ -318,7 +315,7 @@ test_that("install_executable() refuses to install over a directory", {
   writeLines("important", file.path(fixture$to, "data.txt"))
 
   # Directories satisfy file.exists(), so reject them before staging or renaming.
-  # Both $exe_file(path) and exe_file= can pass a directory here.
+  # exe_file= can pass a directory here.
   expect_error(
     install_executable(fixture$from, fixture$to, fixture$record),
     "is a directory",
@@ -909,8 +906,8 @@ test_that("make_shell_quote() survives Make expansion and shell splitting (#1230
   expect_equal(quoted[2], "'--filename-in-msg=/my dir/model.stan'")
   expect_equal(quoted[4], "'/costs $$5'")
 
-  # Oracle: hand the quoted words to make the way $compile() does and read
-  # back what the shell delivers to the recipe, one argument per line.
+  # Oracle: hand the quoted words to make the way build_executable() does and
+  # read back what the shell delivers to the recipe, one argument per line.
   tmpdir <- withr::local_tempdir()
   writeLines(
     "args: ; @printf '%s\\n' $(STANCFLAGS)",
