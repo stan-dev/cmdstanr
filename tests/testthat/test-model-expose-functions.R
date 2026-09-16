@@ -498,6 +498,13 @@ test_that("Exposing functions works on a model built from a reused executable", 
   expect_equal(7.5, mod2$functions$a_plus_b(5, 2.5))
 })
 
+test_that("functions cannot be exposed from an executable alone", {
+  adopted <- cmdstan_model(exe_file = mod$exe_file())
+  expect_error(
+    adopted$expose_functions(), "created from an executable alone", fixed = TRUE
+  )
+})
+
 test_that("Functions with SUNDIALS/KINSOL methods link correctly", {
   modcode <- "
     functions {

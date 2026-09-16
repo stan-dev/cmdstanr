@@ -142,6 +142,17 @@ test_that("include_paths rebuild when they resolve a different file", {
     "included files changed \\(.*/b/params\\.stan\\)"
   )))
   expect_equal(names(mod$variables()$parameters), "beta")
+
+  # A second directive changes the set, not just an included file.
+  writeLines("generated quantities { real g = 1; }", file.path(dir_b, "more.stan"))
+  writeLines(
+    c("#include params.stan", "model { target += 0; }", "#include more.stan"),
+    stan_file
+  )
+  mocked(expect_mock_compile(expect_interactive_message(
+    cmdstan_model(stan_file, include_paths = dir_b),
+    "the set of included files changed"
+  )))
 })
 
 test_that("a changed program rebuilds and a newer mtime alone does not", {

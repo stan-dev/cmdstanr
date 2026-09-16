@@ -86,6 +86,18 @@ test_that("adoption from a record verifies by hash alone", {
   )
 })
 
+test_that("an adopted executable that is deleted is refused", {
+  dir <- withr::local_tempdir()
+  seed_from(canonical_bernoulli_stan, canonical_bernoulli_exe, dir)
+  exe <- file.path(dir, basename(canonical_bernoulli_exe))
+  mod <- cmdstan_model(exe_file = exe)
+  file.remove(exe)
+  expect_error(
+    mod$cmdstan_defaults(), "no longer exists", fixed = TRUE,
+    class = "cmdstanr_stale_executable"
+  )
+})
+
 test_that("adoption without a record verifies by the hash it captured", {
   exe <- mod_b$exe_file()
   record <- build_record_path(exe)

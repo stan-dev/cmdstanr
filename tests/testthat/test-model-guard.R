@@ -98,3 +98,21 @@ test_that("a current model gets past the guard", {
   mod <- mock_cmdstan_model(stan_file)
   expect_true(not_stale(mod$cmdstan_defaults()))
 })
+
+test_that("the guard names an altered or missing executable", {
+  stan_file <- write_stan_file(
+    "parameters { real y; } model { y ~ std_normal(); }",
+    dir = withr::local_tempdir()
+  )
+  mod <- mock_cmdstan_model(stan_file)
+  writeLines("altered", mod$exe_file())
+  expect_error(
+    mod$sample(), "the executable does not match its build record",
+    fixed = TRUE, class = "cmdstanr_stale_executable"
+  )
+  file.remove(mod$exe_file())
+  expect_error(
+    mod$sample(), paste0("there is no executable at '", mod$exe_file(), "'"),
+    fixed = TRUE, class = "cmdstanr_stale_executable"
+  )
+})

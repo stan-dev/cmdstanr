@@ -328,3 +328,17 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
   expect_equal(fit$variable_skeleton(),
                 target_skeleton)
 })
+
+test_that("model methods refuse a fit from an executable alone", {
+  adopted <- cmdstan_model(exe_file = mod$exe_file())
+  utils::capture.output(
+    fit_adopted <- adopted$sample(
+      data = data_list, chains = 1, iter_warmup = 10, iter_sampling = 10,
+      refresh = 0
+    )
+  )
+  expect_error(
+    fit_adopted$log_prob(unconstrained_variables = c(0.1)),
+    "created from an executable alone", fixed = TRUE
+  )
+})
