@@ -180,17 +180,12 @@ local_cmdstan_make_local <- function(cpp_options, envir = parent.frame(),
 }
 
 # The session's CmdStan version and, on a model object, the version it
-# reports and the one the record beside its executable says built it, so
-# that the guard sees no change.
+# reports. The record beside the executable stays as written, since the
+# guard compares it with the installation, not with either cached version.
 fake_cmdstan_version <- function(version, mod = NULL) {
   .cmdstanr$VERSION <- version
   if (!is.null(mod)) {
-    private <- mod$.__enclos_env__$private
-    private$cmdstan_version_ <- version
-    if (!is.null(private$record_)) {
-      private$record_$builder$version <- version
-      write_build_record(private$record_, mod$exe_file())
-    }
+    mod$.__enclos_env__$private$cmdstan_version_ <- version
   }
 }
 
