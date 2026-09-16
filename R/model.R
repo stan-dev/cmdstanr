@@ -614,7 +614,7 @@ NULL
 #'   describes the program the executable was built from, captured when the
 #'   model object was created.
 #'
-#'   The standalone function `stan_file_variables()` returns the same list for a
+#'   The standalone function `variables_stan_file()` returns the same list for a
 #'   Stan program as it is now, without creating a model object or compiling.
 #'
 #'   Each element in the returned object contains a list of variables, with each
@@ -672,7 +672,7 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #' @export
 #' @param stan_file (string) The path to a Stan program.
 #' @inheritParams cmdstan_model
-stan_file_variables <- function(stan_file, include_paths = NULL) {
+variables_stan_file <- function(stan_file, include_paths = NULL) {
   assert_file_exists(
     stan_file, access = "r", extension = c("stan", "stanfunctions")
   )

@@ -177,10 +177,10 @@ check_syntax_stan_file(stan_file_pedantic, pedantic = TRUE)
 You can obtain the names, types and dimensions of the data, parameters,
 transformed parameters and generated quantities variables of a Stan model using
 the `$variables()` method of the `CmdStanModel` object, or with
-`stan_file_variables()` on the file itself when there is no need to compile the
+`variables_stan_file()` on the file itself when there is no need to compile the
 program, as in the case below.
 
-```{r stan_file_variables}
+```{r variables_stan_file}
 variables_stan_file <- write_stan_file("
 data {
   int<lower=1> J;
@@ -202,7 +202,7 @@ model {
   target += normal_lpdf(y | theta, sigma);
 }
 ")
-variables <- stan_file_variables(variables_stan_file)
+variables <- variables_stan_file(variables_stan_file)
 ```
 
 The result is a list with `data`, `parameters`,

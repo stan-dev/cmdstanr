@@ -3,12 +3,12 @@
 \name{model-method-variables}
 \alias{model-method-variables}
 \alias{variables}
-\alias{stan_file_variables}
+\alias{variables_stan_file}
 \title{Input and output variables of a Stan program}
 \usage{
 variables()
 
-stan_file_variables(stan_file, include_paths = NULL)
+variables_stan_file(stan_file, include_paths = NULL)
 }
 \arguments{
 \item{stan_file}{(string) The path to a Stan program.}
@@ -32,7 +32,7 @@ list, each element representing a Stan model block: \code{data}, \code{parameter
 describes the program the executable was built from, captured when the
 model object was created.
 
-The standalone function \code{stan_file_variables()} returns the same list for a
+The standalone function \code{variables_stan_file()} returns the same list for a
 Stan program as it is now, without creating a model object or compiling.
 
 Each element in the returned object contains a list of variables, with each

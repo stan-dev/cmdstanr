@@ -53,21 +53,21 @@ test_that("format_stan_file() formats a program", {
   )
 })
 
-test_that("stan_file_variables() reports a program's variables", {
-  variables <- stan_file_variables(testing_stan_file("bernoulli"))
+test_that("variables_stan_file() reports a program's variables", {
+  variables <- variables_stan_file(testing_stan_file("bernoulli"))
   expect_equal(variables$data$N, list(type = "int", dimensions = 0))
   expect_equal(variables$data$y, list(type = "int", dimensions = 1))
   expect_equal(variables$parameters$theta, list(type = "real", dimensions = 0))
 
   include_model <- local_include_model_with_spaces()
-  with_paths <- stan_file_variables(
+  with_paths <- variables_stan_file(
     include_model$stan_file, include_paths = include_model$include_paths
   )
   expect_equal(names(with_paths$parameters), "theta")
-  expect_equal(stan_file_variables(include_model$stan_file), with_paths)
+  expect_equal(variables_stan_file(include_model$stan_file), with_paths)
 })
 
-test_that("stan_file_variables() accepts a declared but undefined function", {
+test_that("variables_stan_file() accepts a declared but undefined function", {
   stan_file <- withr::local_tempfile(
     lines = c(
       "functions {",
@@ -79,7 +79,7 @@ test_that("stan_file_variables() accepts a declared but undefined function", {
     ),
     fileext = ".stan"
   )
-  expect_no_error(stan_file_variables(stan_file))
+  expect_no_error(variables_stan_file(stan_file))
 })
 
 test_that("compile_stan_file() builds or reuses the executable", {

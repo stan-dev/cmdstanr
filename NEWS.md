@@ -5,7 +5,7 @@ that is up to date, so a model object always has an executable. The
 `compile` argument and the `$compile()` method are gone! To build without
 creating a model object use the new standalone function `compile_stan_file()`,
 which returns the path to the executable. Other new standalone functions
-`check_syntax_stan_file()`, `format_stan_file()` and `stan_file_variables()` do
+`check_syntax_stan_file()`, `format_stan_file()` and `variables_stan_file()` do
 what the corresponding methods do but from a Stan file alone. (#1256)
 * `cmdstan_model()` now rebuilds when any input it tracks has changed:
 the Stan program and the files it includes, the user header, `cpp_options` and
