@@ -19,7 +19,6 @@ run_info_cli <- function(exe_file) {
   )
 }
 
-# new (future) parser
 # Parse the string output of <model> `info` into an R object (list)
 parse_exe_info_string <- function(ret_stdout) {
   info <- list()
@@ -48,44 +47,6 @@ parse_exe_info_string <- function(ret_stdout) {
   info
 }
 
-# old (current) parser
-model_compile_info <- function(exe_file, version) {
-  info <- NULL
-  ret <- run_info_cli(exe_file)
-  if (ret$status == 0) {
-    info <- list()
-    info_raw <- strsplit(strsplit(ret$stdout, "\n")[[1]], "=")
-    for (key_val in info_raw) {
-      if (length(key_val) > 1) {
-        key_val <- trimws(key_val)
-        val <- key_val[2]
-        if (!is.na(as.logical(val))) {
-          val <- as.logical(val)
-        }
-        info[[toupper(key_val[1])]] <- val
-      }
-    }
-    info[["STAN_VERSION"]] <- paste0(info[["STAN_VERSION_MAJOR"]], ".", info[["STAN_VERSION_MINOR"]], ".", info[["STAN_VERSION_PATCH"]])
-    info[["STAN_VERSION_MAJOR"]] <- NULL
-    info[["STAN_VERSION_MINOR"]] <- NULL
-    info[["STAN_VERSION_PATCH"]] <- NULL
-  }
-  info
-}
-
-# Merge build options reported by the executable. Skip STAN_VERSION and the
-# flags reported off, so only the options the build turned on are recorded.
-merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
-  for (option_name in names(exe_info)) {
-    value <- exe_info[[option_name]]
-    if (option_name != "STAN_VERSION" &&
-        (!is.logical(value) || isTRUE(value))) {
-      cpp_options[[option_name]] <- value
-    }
-  }
-  cpp_options
-}
-
 # Normalize the flags sent to make. The last value for a name wins. Go through
 # the emitted flags rather than the list because a vector value expands into one
 # assignment per element.
@@ -96,25 +57,6 @@ parsed_cpp_options <- function(cpp_options) {
     assignments[[option_name]] <- sub("^[^=]*=", "", flag)
   }
   assignments
-}
-
-normalized_cpp_options <- function(cpp_options) {
-  assignments <- parsed_cpp_options(cpp_options)
-  if (length(assignments) == 0) {
-    return(character())
-  }
-  sort(paste0(
-    names(assignments), "=",
-    unlist(assignments, use.names = FALSE)
-  ))
-}
-
-# Omitted recorded options count as changes because cpp_options are one-shot.
-cpp_options_disagree <- function(requested, recorded) {
-  !identical(
-    normalized_cpp_options(requested),
-    normalized_cpp_options(recorded)
-  )
 }
 
 # convert to compile flags --------------------
@@ -293,9 +235,7 @@ stancflags_cpp_option_message <- function() {
 
 # check specific options for validity ---------------------------------
 cpp_option_value <- function(cpp_options, option) {
-  # CmdStanR input and executable metadata can use different casing. Prefer
-  # the final match, even when it is NULL, because later executable metadata
-  # best describes the binary.
+  # The last match wins, as it does for make.
   matches <- which(tolower(names(cpp_options)) == tolower(option))
   if (length(matches) == 0) {
     return(NULL)
@@ -303,82 +243,42 @@ cpp_option_value <- function(cpp_options, option) {
   cpp_options[[matches[[length(matches)]]]]
 }
 
-# no type checking for opencl_ids
-# cpp_options must be a list
-# opencl_ids returned unchanged
-assert_valid_opencl <- function(opencl_ids, cpp_options) {
-  if (is.null(cpp_option_value(cpp_options, "stan_opencl"))
-      && !is.null(opencl_ids)) {
-    stop("'opencl_ids' is set but the model was not compiled for use with OpenCL.",
-         "\nRecompile the model with 'cpp_options = list(stan_opencl = TRUE)'",
-         call. = FALSE)
-  }
-  invisible(opencl_ids)
-}
-
-# cpp_options must be a list
-assert_valid_threads <- function(threads, cpp_options, multiple_chains = FALSE) {
+# check runtime requests against what the executable reports ------------
+#' Check a thread request against the features the executable reports
+#'
+#' `features` is what the executable said about its own build: each feature
+#' is known on, known off, or absent when unknown. More than one thread needs
+#' threading known on. One thread, or no request, asks for no parallelism and
+#' so needs nothing, whatever the executable was built with.
+#'
+#' @noRd
+assert_valid_threads <- function(threads, features, multiple_chains = FALSE) {
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
   checkmate::assert_integerish(threads, .var.name = threads_arg,
                                null.ok = TRUE, lower = 1, len = 1)
-  stan_threads <- cpp_option_value(cpp_options, "stan_threads")
-  if (is.null(stan_threads) || !isTRUE(stan_threads)) {
-    if (!is.null(threads)) {
-      warning(
-        "'", threads_arg, "' is set but the model was not compiled with ",
-        "'cpp_options = list(stan_threads = TRUE)' ",
-        "so '", threads_arg, "' will have no effect!",
-        call. = FALSE
-      )
-      threads <- NULL
-    }
-  } else if (isTRUE(stan_threads) && is.null(threads)) {
+  threaded <- isTRUE(features[["stan_threads"]])
+  if (!is.null(threads) && threads > 1 && !threaded) {
     stop(
-      "The model executable was built with threading enabled but '",
-      threads_arg, "' was not set!",
+      "'", threads_arg, "' is set but the executable does not report ",
+      "threading as enabled.\nRecompile the model with ",
+      "'cpp_options = list(stan_threads = TRUE)'.",
       call. = FALSE
     )
   }
   invisible(threads)
 }
 
-# For two functions below
-# cpp_options style means is NULL or empty string
-# exe_info style means off is FALSE
-
-exe_info_style_cpp_options <- function(cpp_options) {
-  if (is.null(cpp_options)) cpp_options <- list()
-  names(cpp_options) <- toupper(names(cpp_options))
-  flags_reported_in_exe_info <- c(
-    "STAN_THREADS", "STAN_MPI", "STAN_OPENCL",
-    "STAN_NO_RANGE_CHECKS", "STAN_CPP_OPTIMS"
-  )
-  for (flag in flags_reported_in_exe_info) {
-    cpp_options[[flag]] <- !(
-      is.null(cpp_options[[flag]]) || cpp_options[[flag]] == ""
+#' Check an OpenCL device request against the features the executable reports
+#'
+#' @noRd
+assert_valid_opencl <- function(opencl_ids, features) {
+  if (!is.null(opencl_ids) && !isTRUE(features[["stan_opencl"]])) {
+    stop(
+      "'opencl_ids' is set but the executable does not report OpenCL as ",
+      "enabled.\nRecompile the model with ",
+      "'cpp_options = list(stan_opencl = TRUE)'.",
+      call. = FALSE
     )
   }
-  cpp_options
-}
-
-exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
-  if (length(exe_info) == 0) {
-    warning("Recompiling is recommended due to missing exe_info.")
-    return(TRUE)
-  }
-  if (is.null(cpp_options)) return(TRUE)
-
-  # Compare only options reported by the executable. Other options are unknown.
-  # Parse the emitted flags so duplicates and vector values match make.
-  assignments <- parsed_cpp_options(cpp_options)
-  reported <- intersect(names(assignments), names(exe_info))
-
-  for (option_name in reported) {
-    # CmdStan treats any nonempty make value as enabled.
-    requested <- nzchar(assignments[[option_name]])
-    if (requested != isTRUE(cpp_option_value(exe_info, option_name))) {
-      return(FALSE)
-    }
-  }
-  TRUE
+  invisible(opencl_ids)
 }

@@ -51,10 +51,10 @@ test_that("variational() method runs when all arguments specified validly", {
   expect_s3_class(fit2, "CmdStanVB")
 })
 
-test_that("variational() warns if threads specified but not enabled", {
-  expect_warning(
-    expect_vb_output(fit <- mod$variational(data = data_list, threads = 2, seed = 123)),
-    "'threads' will have no effect"
+test_that("variational() errors if threads specified but not enabled", {
+  expect_error(
+    mod$variational(data = data_list, threads = 2, seed = 123),
+    "does not report threading as enabled", fixed = TRUE
   )
 })
 
@@ -64,14 +64,4 @@ test_that("variational() method errors for any invalid argument before calling c
     args[[nm]] <- bad_arg_values[[nm]]
     expect_error(do.call(mod$variational, args), regexp = nm)
   }
-})
-
-test_that("variational() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_vb_output(
-    mod_tmp$variational(data = data_list, seed = 123)
-  )
 })

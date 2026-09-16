@@ -13,7 +13,7 @@ test_that("empty data list converted to NULL", {
   }
   ")
   expect_null(process_data(list()))
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   expect_null(process_data(list(), model_variables = mod$variables()))
 })
 
@@ -24,21 +24,21 @@ test_that("process_data works for inputs of length one", {
     real val;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = 5))
   stan_file <- write_stan_file("
   data {
     int val;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = 5))
   stan_file <- write_stan_file("
   data {
     vector[1] val;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   expect_equal(jsonlite::read_json(process_data(data, model_variables = mod$variables())), list(val = list(5)))
 })
 
@@ -48,7 +48,7 @@ test_that("process_data errors on NULL data variables", {
     int N;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   expect_error(
     process_data(list(N = NULL), model_variables = mod$variables()),
     "Variable 'N' is NULL"
@@ -307,7 +307,7 @@ test_that("process_data() errors on missing variables", {
     real val2;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   expect_error(
     process_data(data = list(val1 = 5), model_variables = mod$variables()),
     "Missing input data for the following data variables: val2."
@@ -322,7 +322,7 @@ test_that("process_data() errors on missing variables", {
     real val2 = 2;
   }
   ")
-  mod <- cmdstan_model(stan_file_no_data, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file_no_data)
   v <- process_data(data = list(val1 = 5), model_variables = mod$variables())
   expect_type(v, "character")
 })
@@ -334,7 +334,7 @@ test_that("process_data() correctly casts integers and floating point numbers", 
     real b;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   test_file <- process_data(list(a = 1, b = 2), model_variables = mod$variables())
   expect_match(
     "  \"a\": 1,",
@@ -363,7 +363,7 @@ test_that("process_data() correctly casts integers and floating point numbers", 
     array[3,3] int<lower=0> k;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   test_file <- process_data(list(k = matrix(c(18, 18, 16, 13, 9, 6, 4, 4, 4), nrow=3, ncol=3, byrow=T)), model_variables = mod$variables())
   expect_match(
     "  \"k\": [",
@@ -384,7 +384,7 @@ test_that("process_data warns on int coercion", {
     real b;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   expect_warning(
     process_data(list(a = 1.1, b = 2.1), model_variables = mod$variables()),
     "A non-integer value was supplied for 'a'! It will be truncated to an integer."
@@ -395,7 +395,7 @@ test_that("process_data warns on int coercion", {
     array[3] int a;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   expect_warning(
     process_data(list(a = c(1, 2.1, 3)), model_variables = mod$variables()),
     "A non-integer value was supplied for 'a'! It will be truncated to an integer."
@@ -415,7 +415,7 @@ test_that("process_data accepts lists of matrices/vectors for int variables", {
     array[4,3,2] int x;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   model_variables <- mod$variables()
 
   a <- matrix(1:6, nrow = 3, ncol = 2)
@@ -439,7 +439,7 @@ test_that("process_data accepts lists of matrices/vectors for int variables", {
     array[2,3] int x;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   test_file <- process_data(list(x = list(c(1, 2, 3), c(4, 5, 6))), model_variables = mod$variables())
   expect_equal(
     jsonlite::read_json(test_file, simplifyVector = TRUE),
@@ -453,7 +453,7 @@ test_that("process_data accepts data frames for int variables", {
     array[2,2] int x;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   model_variables <- mod$variables()
 
   df <- data.frame(a = c(1, 2), b = c(3, 4))
@@ -469,7 +469,7 @@ test_that("process_data errors on invalid types", {
     array[2,2] int x;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   model_variables <- mod$variables()
 
   expect_error(
@@ -496,7 +496,7 @@ test_that("process_data errors on a factor for a non-int variable", {
     vector[2] d;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   model_variables <- mod$variables()
   data <- list(a = 1L, b = c(1L, 2L), c = 2.5, d = c(1, 2))
 
@@ -517,7 +517,7 @@ test_that("process_data errors on a factor for a non-int variable", {
     matrix[2,1] x;
   }
   ")
-  mod_matrix <- cmdstan_model(stan_file, compile = FALSE)
+  mod_matrix <- mock_cmdstan_model(stan_file)
   expect_error(
     process_data(list(x = data.frame(a = factor(c("b", "a")))),
                  model_variables = mod_matrix$variables()),
@@ -542,7 +542,7 @@ test_that("factors work for length-1 arrays", {
     array[1] real b;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   model_variables <- mod$variables()
   data <- list(a = 1L, b = 2.5)
 
@@ -568,7 +568,7 @@ test_that("Floating-point differences do not cause truncation towards 0", {
     real b;
   }
   ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
+  mod <- mock_cmdstan_model(stan_file)
   a <- 10*(3-2.7)
   expect_false(is.integer(a))
   test_file <- process_data(list(a = a, b = 2.0), model_variables = mod$variables())

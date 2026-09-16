@@ -180,8 +180,7 @@ test_that("reloaded fits rebuild model methods lazily after save_object()", {
   skip_if(os_is_wsl())
   mod <- cmdstan_model(
     testing_stan_file("bernoulli_log_lik"),
-    force_recompile = TRUE,
-    compile_model_methods = TRUE
+    force_recompile = TRUE
   )
   utils::capture.output(
     fit <- mod$optimize(data = testing_data("bernoulli"))
@@ -506,9 +505,7 @@ test_that("sampling works with explicit and inferred include paths containing sp
 
   mod_explicit <- cmdstan_model(
     stan_file = include_model$stan_file,
-    exe_file = mod_inferred$exe_file(),
-    include_paths = include_model$include_paths,
-    compile = FALSE
+    include_paths = include_model$include_paths
   )
   expect_equal(
     repair_path(mod_explicit$include_paths()),

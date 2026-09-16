@@ -178,16 +178,6 @@ test_that("pathfinder() saves single path outputs", {
   expect_equal(file.exists(single_path_files), rep(TRUE, 4))
 })
 
-test_that("pathfinder() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(stan_program, stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_pathfinder_output(
-    mod_tmp$pathfinder(data = data_list)
-  )
-})
-
 test_that("no error when checking estimates after failure", {
   fit <- cmdstanr_example("schools", method = "pathfinder", seed = 123) # optim always fails for this
   expect_no_error(fit$summary())

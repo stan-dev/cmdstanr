@@ -22,9 +22,7 @@ printed to the console? Defaults to \code{FALSE}.}
 \description{
 The \verb{$expose_functions()} method of a \code{\link{CmdStanModel}} object
 will compile the functions in the Stan program's \code{functions} block and
-expose them for use in \R. This can also be specified via the
-\code{compile_standalone} argument to the \code{\link[=model-method-compile]{$compile()}}
-method.
+expose them for use in \R.
 
 This method is also available for all fitted model objects. See
 \strong{Examples}.
@@ -74,7 +72,6 @@ The Stan and CmdStan documentation:
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},

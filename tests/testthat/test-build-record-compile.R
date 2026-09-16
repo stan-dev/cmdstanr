@@ -1,17 +1,5 @@
 set_cmdstan_path()
 
-# What the mocked executable reports when a test does not say otherwise.
-default_info_ret <- list(
-  status = 0,
-  stdout = paste0(
-    "stan_version_major = 2\n",
-    "stan_version_minor = 39\n",
-    "stan_version_patch = 0\n",
-    "STAN_THREADS=true\n",
-    "STAN_OPENCL=false\n"
-  )
-)
-
 # No C++ is compiled here: the mock writes a text file where make would have
 # left the executable. stanc and make/local are real.
 mock_compile <- function(stan_file, ..., info_ret = default_info_ret) {
@@ -77,7 +65,10 @@ test_that("supplied and injected stanc options are recorded apart", {
   expect_equal(record$request$stanc_options_supplied, list("--O1"))
   expect_equal(
     record$request$stanc_options_injected,
-    list("--warn-pedantic", "--name=bernoulli_model")
+    list(
+      "--warn-pedantic", "--name=bernoulli_model",
+      paste0("--filename-in-msg=", mod$stan_file())
+    )
   )
 })
 
@@ -85,7 +76,7 @@ test_that("cpp_options_supplied holds what the caller passed", {
   stan_file <- local_bernoulli()
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   local_mocked_bindings(
-    get_standalone_hpp = function(stan_file, stancflags) ""
+    get_standalone_hpp = function(stan_file, stancflags, ...) ""
   )
   mod <- mock_compile(
     stan_file,
@@ -165,7 +156,7 @@ test_that("an include on the WSL filesystem is recorded by its share path", {
 test_that("the other injection sites land in the injected list", {
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   local_mocked_bindings(
-    get_standalone_hpp = function(stan_file, stancflags) ""
+    get_standalone_hpp = function(stan_file, stancflags, ...) ""
   )
   stan_file <- local_bernoulli()
   mod <- mock_compile(
@@ -177,7 +168,10 @@ test_that("the other injection sites land in the injected list", {
   record <- read_build_record(mod$exe_file())$record
   expect_equal(
     record$request$stanc_options_injected,
-    list("--use-opencl", "--allow-undefined", "--name=bernoulli_model")
+    list(
+      "--use-opencl", "--allow-undefined", "--name=bernoulli_model",
+      paste0("--filename-in-msg=", mod$stan_file())
+    )
   )
   expect_equal(record$request$stanc_options_supplied, list())
 })
@@ -285,11 +279,7 @@ test_that("the note fires on a write and not otherwise", {
     )
   )
 
-  # Nothing is written on a dry run or a failed build, so nothing is said.
-  expect_no_message(
-    cmdstan_model(stan_file, dry_run = TRUE, force_recompile = TRUE),
-    message = "does not track"
-  )
+  # Nothing is written on a failed build, so nothing is said.
   with_mocked_cli(
     compile_ret = list(status = 1),
     info_ret = default_info_ret,

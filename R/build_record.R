@@ -138,6 +138,9 @@ validate_build_record <- function(record) {
   record_string_array(
     request, "stanc_options_injected", "request.stanc_options_injected"
   )
+  record_string_array(
+    request, "stanc_options_inherited", "request.stanc_options_inherited"
+  )
   stanc_name <- record_member(
     request, "stanc_name", "string", "request.stanc_name"
   )
@@ -208,8 +211,8 @@ validate_build_record <- function(record) {
 #' The one place a record is built. `format_version` comes first and the rest
 #' follow the schema's order, so the written JSON reads in that order too.
 #' `request` arrives in the forms the record compares: `cpp_options_supplied`
-#' as canonical Make assignments, one per name, and the two stanc option lists
-#' as the argument vectors stanc receives.
+#' as canonical Make assignments, one per name, and the three stanc option
+#' lists as the argument vectors stanc receives.
 #'
 #' @noRd
 new_build_record <- function(request, reported_features, dependencies, artifact,

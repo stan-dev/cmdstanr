@@ -102,8 +102,8 @@ test_that("$variables() is refreshed when the model is recompiled", {
   # editing the file alone doesn't invalidate the cached variables
   expect_equal(names(mod$variables()$parameters), "alpha")
 
-  # the edited file is newer than the executable, so this recompiles
-  mod$compile()
+  # a fresh construction sees the edited file and rebuilds
+  mod <- expect_compilation(cmdstan_model(stan_file))
   expect_equal(names(mod$variables()$parameters), "beta")
 
   # the fitting methods validate inits against the refreshed variables
@@ -123,7 +123,7 @@ test_that("$variables() is refreshed when the model is recompiled", {
   )
 })
 
-test_that("$variables() errors on no stan_file", {
+test_that("$variables() errors when the model was not created from a Stan file", {
   code <- "
   parameters {
     real y;
@@ -134,12 +134,6 @@ test_that("$variables() errors on no stan_file", {
   "
   stan_file <- write_stan_file(code)
   mod <- cmdstan_model(stan_file)
-  file.remove(stan_file)
-  expect_error(
-    mod$variables(),
-    "The Stan file used to create the `CmdStanModel` object does not exist.",
-    fixed = TRUE
-  )
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
     mod_exe$variables(),
@@ -148,7 +142,7 @@ test_that("$variables() errors on no stan_file", {
   )
 })
 
-test_that("$variables() works with #includes, both pre and post compilation.", {
+test_that("$variables() works with #includes, explicit or auto-detected paths", {
   data_code <- "
     data {
       int N;
@@ -170,24 +164,16 @@ test_that("$variables() works with #includes, both pre and post compilation.", {
   model_file <- write_stan_file(code = model_code, dir = model_dir)
   write_stan_file(code = data_code, basename = "data.stan", dir = include_dir)
 
-  mod_explicit <- cmdstan_model(
-    stan_file = model_file,
-    include_paths = model_dir,
-    compile = FALSE
+  mod_explicit <- cmdstan_model(stan_file = model_file, include_paths = model_dir)
+  vars_explicit <- mod_explicit$variables()
+
+  # a second construction with the same include path reuses the executable
+  mod_reused <- expect_no_recompilation(
+    cmdstan_model(stan_file = model_file, include_paths = model_dir)
   )
+  expect_equal(mod_reused$variables(), vars_explicit)
 
-  vars_pre <- mod_explicit$variables()
-  mod_explicit$compile()
-  mod_explicit_post <- cmdstan_model(
-    stan_file = model_file,
-    exe_file = mod_explicit$exe_file(),
-    include_paths = model_dir,
-    compile = FALSE
-  )
-  vars_post <- mod_explicit_post$variables()
-
-  expect_equal(vars_pre, vars_post)
-
-  mod_automatic <- cmdstan_model(stan_file = model_file, compile = FALSE)
-  expect_equal(mod_automatic$variables(), vars_pre)
+  # the include path is auto-detected without being supplied, and also reuses
+  mod_automatic <- expect_no_recompilation(cmdstan_model(stan_file = model_file))
+  expect_equal(mod_automatic$variables(), vars_explicit)
 })

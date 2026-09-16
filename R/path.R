@@ -99,6 +99,38 @@ cmdstan_path <- function() {
   path
 }
 
+#' The selected installation, checked right before a program runs out of it
+#'
+#' `cmdstan_path()` returns the path cached when it was set, so an
+#' installation deleted since then would otherwise surface as a failure to
+#' start make or stanc.
+#'
+#' @noRd
+checked_cmdstan_path <- function() {
+  path <- cmdstan_path()
+  if (!dir.exists(path)) {
+    stop(
+      "The CmdStan installation at '", path, "' no longer exists. ",
+      "Use set_cmdstan_path() to select another installation or ",
+      "install_cmdstan() to reinstall it.",
+      call. = FALSE
+    )
+  }
+  path
+}
+
+#' The selected installation's version as its makefile says now, since the
+#' version `cmdstan_version()` caches goes stale when a checkout is rebuilt
+#' in place. A missing installation keeps the cached version.
+#' @noRd
+current_cmdstan_version <- function() {
+  path <- cmdstan_path()
+  if (!dir.exists(path)) {
+    return(cmdstan_version())
+  }
+  read_cmdstan_version(path)
+}
+
 #' @rdname set_cmdstan_path
 #' @export
 #' @param error_on_NA (logical) Should an error be thrown if CmdStan is not
@@ -390,21 +422,4 @@ is_release_candidate <- function(path) {
     path <- substr(path, 1, nchar(path) - 1)
   }
   grepl(pattern = "-rc[0-9]*$", x = path)
-}
-
-
-# fake a cmdstan version (only used in tests)
-fake_cmdstan_version <- function(version, mod = NULL) {
-  .cmdstanr$VERSION <- version
-  if (!is.null(mod)) {
-    if (!is.null(mod$.__enclos_env__$private$exe_info_)) {
-      mod$.__enclos_env__$private$exe_info_$stan_version <- version
-    }
-    if (!is.null(mod$.__enclos_env__$private$cmdstan_version_)) {
-      mod$.__enclos_env__$private$cmdstan_version_ <- version
-    }
-  }
-}
-reset_cmdstan_version <- function(mod = NULL) {
-  fake_cmdstan_version(read_cmdstan_version(cmdstan_path()), mod = mod)
 }

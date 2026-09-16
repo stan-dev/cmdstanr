@@ -3,22 +3,41 @@
 \name{model-method-variables}
 \alias{model-method-variables}
 \alias{variables}
+\alias{stan_file_variables}
 \title{Input and output variables of a Stan program}
 \usage{
 variables()
+
+stan_file_variables(stan_file, include_paths = NULL)
+}
+\arguments{
+\item{stan_file}{(string) The path to a Stan program.}
+
+\item{include_paths}{(character vector) Paths to directories where Stan
+should look for files specified in \verb{#include} directives in the Stan
+program. Relative paths are resolved against the working directory when
+the model object is created and stored as absolute paths, so subsequent
+changes to the working directory do not affect them. When the program
+contains \verb{#include} directives and no paths are given, the program's own
+directory is used.}
 }
 \value{
-The method returns a list with information on input and output
-variables for each of the Stan model blocks.
+A list with information on input and output variables for each of
+the Stan model blocks.
 }
 \description{
-The \verb{$variables()} method of a \code{\link{CmdStanModel}} object returns
-a list, each element representing a Stan model block: \code{data}, \code{parameters},
-\code{transformed_parameters} and \code{generated_quantities}.
+The \verb{$variables()} method of a \code{\link{CmdStanModel}} object returns a
+list, each element representing a Stan model block: \code{data}, \code{parameters},
+\code{transformed_parameters} and \code{generated_quantities}. The information
+describes the program the executable was built from, captured when the
+model object was created.
 
-Each element contains a list of variables, with each variable represented
-as a list with information on its scalar type (\code{real} or \code{int}) and
-number of dimensions.
+The standalone function \code{stan_file_variables()} returns the same list for a
+Stan program as it is now, without creating a model object or compiling.
+
+Each element in the returned object contains a list of variables, with each
+variable represented as a list with information on its scalar type (\code{real}
+or \code{int}) and number of dimensions.
 
 The number of dimensions reported is the number of indexing dimensions in
 the declared Stan variable, equivalently the number of indices needed to
@@ -44,8 +63,7 @@ parameters {
 }
 ")
 
-# create a CmdStanModel object, compiling the model is not required
-mod <- cmdstan_model(stan_file, compile = FALSE)
+mod <- cmdstan_model(stan_file)
 
 vars <- mod$variables()
 str(vars)
@@ -58,7 +76,6 @@ str(vars)
 Other CmdStanModel methods:
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},

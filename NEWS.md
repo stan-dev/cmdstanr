@@ -1,58 +1,86 @@
 # cmdstanr (development version)
 
+* `cmdstan_model()` now builds the executable before it returns, or reuses one
+that is up to date, so a model object always has an executable. The
+`compile` argument and the `$compile()` method are gone! To build without
+creating a model object use the new standalone function `compile_stan_file()`,
+which returns the path to the executable. Other new standalone functions
+`check_syntax_stan_file()`, `format_stan_file()` and `stan_file_variables()` do
+what the corresponding methods do but from a Stan file alone. (#1256)
+* `cmdstan_model()` now rebuilds when any input it tracks has changed:
+the Stan program and the files it includes, the user header, `cpp_options` and
+`stanc_options`, `make/local` or the CmdStan installation, and the message names
+every reason. What isn't tracked, such as the C++ toolchain, is listed in the
+"How does CmdStanR work?" vignette. (#1255, #1237, #1019)
 * Every compiled model now has a build record beside its executable, a hidden
 JSON file named after the executable: `bernoulli` is described by
 `.bernoulli.cmdstanr.json` and `bernoulli.exe` by
 `.bernoulli.exe.cmdstanr.json`. It records how the executable was built. It
 belongs with the executable, not in version control: add `.*.cmdstanr.json` to
-`.gitignore` wherever the executable is already ignored. The vignette on
-CmdStanR internals has the details. (#1238)
+`.gitignore` wherever the executable is already ignored. When constructing from
+a Stan file, a missing record causes a rebuild. The vignette "How does CmdStanR
+work?" has the details. (#1238)
 * When a build depends on files cmdstanr cannot track, a `make/local` that
 includes another makefile or a user header that includes other headers, the
 build now says so in a one-line note and names `force_recompile = TRUE` as the
 way to pick up changes to them. (#1257)
+* Running an executable that is out of date is now an error that points at
+`cmdstan_model()`. Previously the stale executable ran as if it were current.
+A model created from a Stan file also needs that file whenever it runs, since
+the check reads it; previously the model kept running after the file was
+deleted. To run an executable without its program, create the model with
+`cmdstan_model(exe_file = )`. (#1255)
+* The `compile_standalone` and `compile_model_methods` arguments are gone. Use
+`$expose_functions()` and `fit$init_model_methods()`, which now work whether
+the executable was rebuilt or reused. Previously both arguments were silently
+ignored whenever the executable was already up to date, and both methods
+failed on a reused executable. (#1256, #1245)
+* `$cpp_options()` now reports the options the model was created with, in
+their Make spelling (e.g., `list(stan_threads = TRUE)` comes back as
+`STAN_THREADS`), and nothing else. Previously it also reported what the
+executable said about its own build. (#1019, #1258)
+* `threads_per_chain` is now checked only when it asks for more than one
+thread: a model built with threading runs without it, and more than one
+thread for a model built without threading is an error. Previously the first
+was an error and the second a warning that dropped the argument. The thread
+count set for one call also no longer stays in the session's environment
+after the call returns. (#1258)
+* `$cmdstan_version()` now reports the version of CmdStan that built the
+executable. Previously it reported the version at `cmdstan_path()`, whatever
+had built the executable. (#1249)
+* Runtime exceptions from an executable built from now on name the Stan file
+the model was created from. Previously they named a temporary copy of the
+program that no longer existed when the message was printed. (#1258)
+* `$format(overwrite_file = TRUE)` no longer changes what `$code()` and
+`$variables()` return; the model object describes the program it was created
+from. Create the model again to pick up the formatted program, which rebuilds
+the executable. (#1258)
+* `$exe_file()` no longer accepts a path. Where the executable goes is decided
+when the model is created, with `exe_file` or `dir`. (#1253)
 * `include_paths` is now the only way to give `stanc` include paths. An
 `include-paths` entry in `stanc_options`, a `STANCFLAGS` entry in `cpp_options`
 and an include path in `make/local`'s `STANCFLAGS` are all errors that point at
 the argument. (#1258)
 * `user_header` is now the only way to supply a user header. A `USER_HEADER` or
 `user_header` entry in `cpp_options` is an error that points at the argument.
-The header no longer appears in `$cpp_options()`; the new `$user_header()`
+The header no longer appears in `$cpp_options()` because the new `$user_header()`
 method returns its path. (#1258)
 * `stanc_options` now rejects the flags cmdstanr sets from its own arguments:
 `include-paths` (`include_paths`), `warn-pedantic` (`pedantic`),
 `allow-undefined` (`user_header`), `use-opencl`
 (`cpp_options = list(stan_opencl = TRUE)`) and `name`, which comes from the name
 of the Stan file. Every spelling is caught, named or unnamed, with or without a
-value. `$check_syntax()` checks its own `stanc_options` the same way; it
-previously did not check them at all. (#1258)
-* `$check_syntax()`, `$format()` and `$variables()` now always pass
-`--allow-undefined` to `stanc`. They read a program and link nothing, so whether
-an external function has a definition is a question for `$compile()`. Previously
-a model with an external function and no header could not be checked or
-formatted without passing the flag by hand. (#1258)
+value. (#1258)
 * Every `cpp_options` entry must now be named, and names must be Make variable
-names. An unnamed entry gets an error naming the route for what was written:
+names. An unnamed entry gets an error naming the correct route for what was written:
 `list(NAME = value)` for a plain assignment, `cmdstan_make_local()` for `+=` and
 the other makefile operators. Previously unnamed entries reached `make` but were
 invisible to everything that keys on names. (#1250)
 * `cpp_options = list(stan_threads = FALSE)` now disables threading, and a
 `FALSE` for any option turns it off even when `make/local` turns it on.
 Previously `FALSE` was passed as a value and enabled the option. (#1251)
-* `$cpp_options()` now reports names in their Make spelling, so
-`list(stan_threads = TRUE)` comes back as `STAN_THREADS`. (#1258)
-* When a `$compile()` call sets a `stanc` flag that `make/local`'s `STANCFLAGS`
-also sets, the call's flag wins. The flag from `make/local` is dropped before
-`stanc` runs, together with any value written after it as a separate word.
-Previously both reached `stanc`. (#1258)
-* `make/local`'s `STANCFLAGS` are now read the way the shell splits them, so a
-quoted value with a space, such as `--filename-in-msg='/my dir/model.stan'`,
-reaches `stanc` as one argument. Previously the direct `stanc` calls in
-`$compile()` received it as two and stanc refused the second. (#1232)
-* Include paths handed to `make` are now quoted for Make and the shell, so a
-quote or a dollar sign in a path no longer splits or expands inside the
-`STANCFLAGS` value. On WSL a dollar sign is still lost before `make` runs.
-(#1230)
+* When `stanc_options` sets a flag that `make/local`'s `STANCFLAGS` also sets,
+the `stanc_options` flag takes precedence. (#1258)
 * `cmdstan_model(exe_file = )` with no `stan_file` now rejects `cpp_options`,
 `stanc_options`, `include_paths`, `user_header`, `force_recompile` and
 `pedantic`. With no Stan file there is nothing to build, so the executable is
@@ -78,7 +106,9 @@ variables are, instead of erroring. (#1225)
 which previously errored. (#1225)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
-* `check_cmdstan_toolchain()` now locates Windows toolchains using `R_TOOLS_SOFT` and falls back to `PATH`, improving support for alternate R distributions and future Rtools releases. (#1211)
+* `check_cmdstan_toolchain()` now locates Windows toolchains using `R_TOOLS_SOFT` 
+and falls back to `PATH`, improving support for alternate R distributions and 
+future Rtools releases. (#1211)
 * `$compile()` now works with named `stanc_options` values such as
 `canonicalize`. The values were shell-quoted for Make and the same quoted
 strings were also passed to `stanc` directly, which rejected them. (#1227)
@@ -142,9 +172,6 @@ metadata. (#1236)
 Previously a request that did not rebuild the model was recorded as though it
 had, so `$sample()` could fail with "the model executable was built with
 threading enabled" for a binary that had no threading. (#1019, #1235)
-* `$format(overwrite_file = TRUE)` now refreshes `$variables()` along with
-`$code()`, which previously kept describing the program as it was before
-formatting. (#1235)
 * `$compile()` now errors if the newly compiled executable cannot be installed,
 restoring the previous executable. Previously the replacement was unchecked, so
 a failure could silently leave the model with no executable at all. (#1235)
