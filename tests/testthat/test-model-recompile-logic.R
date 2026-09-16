@@ -257,14 +257,17 @@ test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
   a <- mock_cmdstan_model(stan_file)
 
   writeLines("CMDSTAN_VERSION := 2.40.0", file.path(install_dir, "makefile"))
+  # The guard first, while the executable is still the one a was built with
+  expect_error(
+    a$cmdstan_defaults(), "the selected CmdStan changed",
+    class = "cmdstanr_stale_executable"
+  )
   expect_mock_compile(b <- expect_interactive_message(
     mock_cmdstan_model(stan_file), "Recompiling:\n  - the selected CmdStan changed"
   ))
   expect_equal(b$cmdstan_version(), "2.40.0")
   # cmdstan_version() still reports the version cached when the path was set.
   expect_equal(cmdstan_version(), "2.39.0")
-
-  expect_error(a$cmdstan_defaults(), class = "cmdstanr_stale_executable")
 })
 
 test_that("dir puts the executable there and a second call reuses it", {
