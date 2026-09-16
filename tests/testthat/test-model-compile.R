@@ -166,7 +166,7 @@ local_source_only_model <- function(stan_file, .local_envir = parent.frame()) {
     basename(stan_file)
   )
   file.copy(testing_stan_file("bernoulli"), path)
-  model <- mock_cmdstan_model(path)
+  model <- mock_cmdstan_model(path, .local_envir = .local_envir)
   file.copy(stan_file, path, overwrite = TRUE)
   model
 }

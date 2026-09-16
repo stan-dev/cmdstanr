@@ -55,13 +55,21 @@ default_info_ret <- list(
 
 # A model whose executable make never built: stanc runs for real and a text
 # file stands in for the binary, beside the program or in `dir`. For tests
-# about the object rather than the build. Nothing can be run with it.
-mock_cmdstan_model <- function(stan_file, ..., info_ret = default_info_ret) {
-  with_mocked_cli(
+# about the object rather than the build. Nothing can be run with it. The
+# text file and its record go when the caller's frame ends, so a later real
+# build of the same program in the same place does not find them current.
+mock_cmdstan_model <- function(stan_file, ..., info_ret = default_info_ret,
+                               .local_envir = parent.frame()) {
+  mod <- with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = info_ret,
     code = cmdstan_model(stan_file, ...)
   )
+  withr::defer(
+    unlink(c(mod$exe_file(), build_record_path(mod$exe_file()))),
+    envir = .local_envir
+  )
+  mod
 }
 
 ######## Mock Compile Expectations #######

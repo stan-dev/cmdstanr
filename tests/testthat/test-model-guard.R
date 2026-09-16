@@ -29,7 +29,7 @@ local_stale_model <- function(.local_envir = parent.frame()) {
     "parameters { real y; } model { y ~ std_normal(); }",
     dir = withr::local_tempdir(.local_envir = .local_envir)
   )
-  mod <- mock_cmdstan_model(stan_file)
+  mod <- mock_cmdstan_model(stan_file, .local_envir = .local_envir)
   writeLines(c(readLines(stan_file), "// a change"), stan_file)
   mod
 }
