@@ -123,6 +123,11 @@ cmdstan_version <- function(error_on_NA = TRUE) {
 .cmdstanr$TEMP_DIR <- NULL
 .cmdstanr$WSL <- FALSE
 .cmdstanr$TOOLCHAIN_PATH <- NULL
+# A private null external pointer.
+null_external_pointer <- function() {
+  unserialize(serialize(methods::new("externalptr"), NULL))
+}
+.cmdstanr$NULL_EXTERNAL_POINTER <- null_external_pointer()
 
 unset_cmdstan_path <- function() {
   .cmdstanr$PATH <- NULL
