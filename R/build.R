@@ -60,7 +60,7 @@ build_executable <- function(stan_file,
   }
   injected[["name"]] <- paste0(model_name_from_path(stan_file), "_model")
   if (!stanc_option_supplied(stanc_options, "filename-in-msg")) {
-    injected[["filename-in-msg"]] <- stan_file
+    injected[["filename-in-msg"]] <- wsl_safe_path(stan_file)
   }
   request <- list(
     cpp_options_supplied = parsed_cpp_options(cpp_options),

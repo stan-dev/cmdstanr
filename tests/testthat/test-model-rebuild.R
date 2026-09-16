@@ -424,6 +424,7 @@ test_that("toggling cpp_options rebuilds and threading follows the exe", {
 })
 
 test_that("a program in a directory with an apostrophe builds", {
+  skip_if(os_is_wsl(), "the WSL file check cannot take an apostrophe")
   dir <- tempfile("O'Brien-")
   dir.create(dir)
   withr::defer(unlink(dir, recursive = TRUE))

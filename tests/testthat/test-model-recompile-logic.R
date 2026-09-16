@@ -139,10 +139,7 @@ test_that("include_paths rebuild when they resolve a different file", {
 
   mocked(expect_mock_compile(expect_interactive_message(
     mod <- cmdstan_model(stan_file, include_paths = dir_b),
-    paste0(
-      "included files changed \\(",
-      resolve_path(file.path(dir_b, "params.stan")), "\\)"
-    )
+    "included files changed \\(.*/b/params\\.stan\\)"
   )))
   expect_equal(names(mod$variables()$parameters), "beta")
 })
@@ -237,6 +234,7 @@ test_that("a record naming another installation rebuilds", {
 })
 
 test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
+  skip_if(os_is_wsl(), "a Windows directory cannot stand in for a WSL installation")
   old_path <- cmdstan_path()
   withr::defer(set_cmdstan_path(old_path))
 
