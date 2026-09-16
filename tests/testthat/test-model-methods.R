@@ -199,19 +199,19 @@ test_that("model_methods_are_live() rejects pointers without an address", {
   model_methods_env <- new.env()
   expect_false(model_methods_are_live(model_methods_env))
 
-  model_methods_env$model_ptr_ <- null_external_pointer()
+  model_methods_env$model_ptr_ <- new_null_external_pointer()
   expect_false(model_methods_are_live(model_methods_env))
 
   # A decorated pointer is not a shape this can decide, so it must not be
   # reported as live either.
-  decorated <- null_external_pointer()
+  decorated <- new_null_external_pointer()
   class(decorated) <- "SomethingElse"
   model_methods_env$model_ptr_ <- decorated
   expect_false(model_methods_are_live(model_methods_env))
 })
 
 test_that("source_cpp_native_symbol_is_null() only flags null .Call symbols", {
-  null_symbol <- null_external_pointer()
+  null_symbol <- new_null_external_pointer()
   class(null_symbol) <- "NativeSymbol"
   null_symbol_fun <- function(x) NULL
   body(null_symbol_fun) <- as.call(list(as.name(".Call"), null_symbol, quote(x)))
