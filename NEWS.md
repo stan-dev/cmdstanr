@@ -10,16 +10,15 @@ what the corresponding methods do but from a Stan file alone. (#1256)
 * `cmdstan_model()` now rebuilds when any input it tracks has changed:
 the Stan program and the files it includes, the user header, `cpp_options` and
 `stanc_options`, `make/local` or the CmdStan installation, and the message names
-every reason. Previously only the modification time of the Stan file was
-compared with the executable's. What isn't tracked, such as the C++ toolchain,
-is listed in the "How does CmdStanR work?" vignette. (#1255, #1237, #1019)
+every reason. What isn't tracked, such as the C++ toolchain, is listed in the
+"How does CmdStanR work?" vignette. (#1255, #1237, #1019)
 * Every compiled model now has a build record beside its executable, a hidden
 JSON file named after the executable: `bernoulli` is described by
 `.bernoulli.cmdstanr.json` and `bernoulli.exe` by
 `.bernoulli.exe.cmdstanr.json`. It records how the executable was built. It
 belongs with the executable, not in version control: add `.*.cmdstanr.json` to
-`.gitignore` wherever the executable is already ignored. Without the record,
-`cmdstan_model()` rebuilds the executable. The vignette "How does CmdStanR
+`.gitignore` wherever the executable is already ignored. When constructing from
+a Stan file, a missing record causes a rebuild. The vignette "How does CmdStanR
 work?" has the details. (#1238)
 * When a build depends on files cmdstanr cannot track, a `make/local` that
 includes another makefile or a user header that includes other headers, the
