@@ -16,38 +16,31 @@ and `$print()`.
 ``` r
 
 fit <- cmdstanr_example("schools_ncp", method = "sample")
-```
-
-    Warning: 1 of 4000 (0.0%) transitions ended with a divergence.
-    See https://mc-stan.org/misc/warnings for details.
-
-``` r
-
 fit$summary()
 ```
 
     # A tibble: 19 × 10
        variable     mean   median    sd   mad      q5    q95  rhat ess_bulk ess_tail
        <chr>       <dbl>    <dbl> <dbl> <dbl>   <dbl>  <dbl> <dbl>    <dbl>    <dbl>
-     1 lp__     -46.9    -46.6    2.44  2.31  -51.3   -43.5   1.00    1717.    2154.
-     2 mu         6.46     6.52   4.23  4.25   -0.476  13.3   1.00    3196.    2474.
-     3 tau        4.76     3.94   3.69  3.50    0.398  11.6   1.00    1996.    1918.
-     4 theta_r…   0.354    0.342  0.953 0.968  -1.21    1.89  1.00    3840.    2857.
-     5 theta_r…   0.0524   0.0590 0.905 0.911  -1.42    1.55  1.00    3948.    3165.
-     6 theta_r…  -0.163   -0.172  0.952 0.925  -1.73    1.41  1.00    3660.    2914.
-     7 theta_r…   0.0156   0.0193 0.921 0.896  -1.53    1.52  1.00    4162.    2704.
-     8 theta_r…  -0.269   -0.269  0.896 0.859  -1.74    1.21  1.00    4049.    3019.
-     9 theta_r…  -0.167   -0.186  0.919 0.900  -1.66    1.38  1.00    4202.    2979.
-    10 theta_r…   0.351    0.371  0.972 0.946  -1.25    1.93  1.00    3552.    2618.
-    11 theta_r…   0.0862   0.0813 0.946 0.947  -1.49    1.64  1.00    4403.    3067.
-    12 theta[1]   8.85     8.11   6.67  5.83   -0.687  20.5   1.00    3546.    3147.
-    13 theta[2]   6.82     6.70   5.41  5.13   -1.91   15.8   1.00    4684.    3650.
-    14 theta[3]   5.34     5.59   6.51  5.77   -5.92   15.1   1.00    3912.    2735.
-    15 theta[4]   6.60     6.42   5.56  5.16   -2.15   15.6   1.00    4355.    3376.
-    16 theta[5]   4.79     5.07   5.50  5.17   -4.76   13.3   1.00    3918.    3061.
-    17 theta[6]   5.50     5.70   5.87  5.14   -4.44   14.8   1.00    4147.    3146.
-    18 theta[7]   8.74     8.25   6.18  5.67   -0.425  19.8   1.00    3986.    3189.
-    19 theta[8]   6.99     6.88   6.44  5.58   -3.10   17.5   1.00    3649.    2981.
+     1 lp__     -46.9    -46.6    2.47  2.33  -51.4   -43.4  1.00     1524.    2291.
+     2 mu         6.44     6.52   4.15  4.03   -0.411  13.3  1.00     3505.    2446.
+     3 tau        4.66     3.91   3.56  3.42    0.393  11.5  1.00     2078.    1851.
+     4 theta_r…   0.360    0.366  0.961 0.957  -1.24    1.89 1.00     5127.    2867.
+     5 theta_r…   0.0415   0.0604 0.933 0.936  -1.49    1.58 1.00     4762.    2734.
+     6 theta_r…  -0.157   -0.155  0.978 0.995  -1.74    1.44 1.00     5327.    3101.
+     7 theta_r…   0.0166   0.0162 0.929 0.924  -1.53    1.49 1.00     5274.    3101.
+     8 theta_r…  -0.270   -0.290  0.911 0.885  -1.75    1.28 1.000    4878.    2922.
+     9 theta_r…  -0.141   -0.148  0.915 0.892  -1.62    1.39 1.00     5109.    3112.
+    10 theta_r…   0.392    0.417  0.924 0.930  -1.15    1.88 1.00     4824.    3129.
+    11 theta_r…   0.0741   0.0849 0.941 0.953  -1.45    1.59 1.00     5619.    2869.
+    12 theta[1]   8.85     8.10   6.54  5.71   -0.493  20.6  1.00     4440.    3343.
+    13 theta[2]   6.81     6.80   5.35  4.92   -2.10   15.6  1.00     5222.    2813.
+    14 theta[3]   5.44     5.78   6.50  5.67   -5.52   15.1  1.00     4328.    3269.
+    15 theta[4]   6.54     6.58   5.74  5.21   -2.76   15.8  1.000    4382.    3278.
+    16 theta[5]   4.85     5.10   5.51  4.96   -4.63   13.3  1.00     4147.    3454.
+    17 theta[6]   5.57     5.75   5.68  5.25   -4.04   14.3  1.00     5029.    3322.
+    18 theta[7]   8.80     8.35   5.94  5.37    0.185  19.4  1.00     4817.    3726.
+    19 theta[8]   6.90     6.79   6.34  5.65   -3.17   17.1  1.00     4708.    3289.
 
 By default, all variables are summarized with the following functions:
 
@@ -68,16 +61,16 @@ fit$summary(variables = c("mu", "tau", "theta"))
     # A tibble: 10 × 10
        variable  mean median    sd   mad     q5   q95  rhat ess_bulk ess_tail
        <chr>    <dbl>  <dbl> <dbl> <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
-     1 mu        6.46   6.52  4.23  4.25 -0.476  13.3  1.00    3196.    2474.
-     2 tau       4.76   3.94  3.69  3.50  0.398  11.6  1.00    1996.    1918.
-     3 theta[1]  8.85   8.11  6.67  5.83 -0.687  20.5  1.00    3546.    3147.
-     4 theta[2]  6.82   6.70  5.41  5.13 -1.91   15.8  1.00    4684.    3650.
-     5 theta[3]  5.34   5.59  6.51  5.77 -5.92   15.1  1.00    3912.    2735.
-     6 theta[4]  6.60   6.42  5.56  5.16 -2.15   15.6  1.00    4355.    3376.
-     7 theta[5]  4.79   5.07  5.50  5.17 -4.76   13.3  1.00    3918.    3061.
-     8 theta[6]  5.50   5.70  5.87  5.14 -4.44   14.8  1.00    4147.    3146.
-     9 theta[7]  8.74   8.25  6.18  5.67 -0.425  19.8  1.00    3986.    3189.
-    10 theta[8]  6.99   6.88  6.44  5.58 -3.10   17.5  1.00    3649.    2981.
+     1 mu        6.44   6.52  4.15  4.03 -0.411  13.3 1.00     3505.    2446.
+     2 tau       4.66   3.91  3.56  3.42  0.393  11.5 1.00     2078.    1851.
+     3 theta[1]  8.85   8.10  6.54  5.71 -0.493  20.6 1.00     4440.    3343.
+     4 theta[2]  6.81   6.80  5.35  4.92 -2.10   15.6 1.00     5222.    2813.
+     5 theta[3]  5.44   5.78  6.50  5.67 -5.52   15.1 1.00     4328.    3269.
+     6 theta[4]  6.54   6.58  5.74  5.21 -2.76   15.8 1.000    4382.    3278.
+     7 theta[5]  4.85   5.10  5.51  4.96 -4.63   13.3 1.00     4147.    3454.
+     8 theta[6]  5.57   5.75  5.68  5.25 -4.04   14.3 1.00     5029.    3322.
+     9 theta[7]  8.80   8.35  5.94  5.37  0.185  19.4 1.00     4817.    3726.
+    10 theta[8]  6.90   6.79  6.34  5.65 -3.17   17.1 1.00     4708.    3289.
 
 We can also change which functions are used:
 
@@ -89,8 +82,8 @@ fit$summary(variables = c("mu", "tau"), mean, sd)
     # A tibble: 2 × 3
       variable  mean    sd
       <chr>    <dbl> <dbl>
-    1 mu        6.46  4.23
-    2 tau       4.76  3.69
+    1 mu        6.44  4.15
+    2 tau       4.66  3.56
 
 To summarize all variables with non-default functions, it is necessary
 to explicitly set the `variables` argument, either to `NULL` or the full
@@ -105,24 +98,24 @@ fit$summary(variables = NULL, "mean", "median")
        variable         mean   median
        <chr>           <dbl>    <dbl>
      1 lp__         -46.9    -46.6   
-     2 mu             6.46     6.52  
-     3 tau            4.76     3.94  
-     4 theta_raw[1]   0.354    0.342 
-     5 theta_raw[2]   0.0524   0.0590
-     6 theta_raw[3]  -0.163   -0.172 
-     7 theta_raw[4]   0.0156   0.0193
-     8 theta_raw[5]  -0.269   -0.269 
-     9 theta_raw[6]  -0.167   -0.186 
-    10 theta_raw[7]   0.351    0.371 
-    11 theta_raw[8]   0.0862   0.0813
-    12 theta[1]       8.85     8.11  
-    13 theta[2]       6.82     6.70  
-    14 theta[3]       5.34     5.59  
-    15 theta[4]       6.60     6.42  
-    16 theta[5]       4.79     5.07  
-    17 theta[6]       5.50     5.70  
-    18 theta[7]       8.74     8.25  
-    19 theta[8]       6.99     6.88  
+     2 mu             6.44     6.52  
+     3 tau            4.66     3.91  
+     4 theta_raw[1]   0.360    0.366 
+     5 theta_raw[2]   0.0415   0.0604
+     6 theta_raw[3]  -0.157   -0.155 
+     7 theta_raw[4]   0.0166   0.0162
+     8 theta_raw[5]  -0.270   -0.290 
+     9 theta_raw[6]  -0.141   -0.148 
+    10 theta_raw[7]   0.392    0.417 
+    11 theta_raw[8]   0.0741   0.0849
+    12 theta[1]       8.85     8.10  
+    13 theta[2]       6.81     6.80  
+    14 theta[3]       5.44     5.78  
+    15 theta[4]       6.54     6.58  
+    16 theta[5]       4.85     5.10  
+    17 theta[6]       5.57     5.75  
+    18 theta[7]       8.80     8.35  
+    19 theta[8]       6.90     6.79  
 
 Summary functions can be specified by character string, function, or
 using a formula (or anything else supported by
@@ -144,10 +137,10 @@ fit$summary(
 ```
 
     # A tibble: 2 × 7
-      variable  MEAN median My_SD `10%` `90%`   Minimum
-      <chr>    <dbl>  <dbl> <dbl> <dbl> <dbl>     <dbl>
-    1 mu        6.46   6.52  4.23 1.06  11.9  -9.30    
-    2 tau       4.76   3.94  3.69 0.721  9.77  0.000211
+      variable  MEAN median My_SD `10%` `90%`  Minimum
+      <chr>    <dbl>  <dbl> <dbl> <dbl> <dbl>    <dbl>
+    1 mu        6.44   6.52  4.15 1.13  11.6  -8.19   
+    2 tau       4.66   3.91  3.56 0.758  9.50  0.00431
 
 Arguments to all summary functions can also be specified with `.args`.
 
@@ -159,8 +152,8 @@ fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, .05, .95, .9
     # A tibble: 2 × 5
       variable `2.5%`   `5%` `95%` `97.5%`
       <chr>     <dbl>  <dbl> <dbl>   <dbl>
-    1 mu       -1.82  -0.476  13.3    14.7
-    2 tau       0.192  0.398  11.6    13.8
+    1 mu       -1.87  -0.411  13.3    14.5
+    2 tau       0.212  0.393  11.5    13.3
 
 Each summary function is applied separately to each variable and
 receives a matrix whose rows are saved iterations and whose columns are
@@ -174,14 +167,14 @@ fit$summary(variables = "theta", dim, colMeans)
     # A tibble: 8 × 7
       variable dim.1 dim.2   `1`   `2`   `3`   `4`
       <chr>    <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
-    1 theta[1]  1000     4  9.20  9.08  8.69  8.42
-    2 theta[2]  1000     4  7.03  6.92  6.48  6.83
-    3 theta[3]  1000     4  5.39  5.20  5.36  5.40
-    4 theta[4]  1000     4  6.87  6.43  6.24  6.85
-    5 theta[5]  1000     4  4.89  4.81  4.62  4.83
-    6 theta[6]  1000     4  5.62  5.71  5.41  5.25
-    7 theta[7]  1000     4  9.08  8.78  8.52  8.58
-    8 theta[8]  1000     4  7.05  6.91  7.02  6.98
+    1 theta[1]  1000     4  8.86  8.95  8.87  8.70
+    2 theta[2]  1000     4  6.71  6.94  6.76  6.82
+    3 theta[3]  1000     4  5.51  5.69  5.44  5.14
+    4 theta[4]  1000     4  6.40  6.66  6.72  6.40
+    5 theta[5]  1000     4  4.70  5.00  4.97  4.72
+    6 theta[6]  1000     4  5.52  5.72  5.60  5.45
+    7 theta[7]  1000     4  9.12  8.86  8.70  8.52
+    8 theta[8]  1000     4  7.23  6.58  6.80  6.98
 
 For this reason users may have unexpected results if they use
 [`stats::var()`](https://rdrr.io/r/stats/cor.html) directly, as it will
@@ -198,8 +191,8 @@ fit$summary(c("mu", "tau"), posterior::variance, ~var(as.vector(.x)))
     # A tibble: 2 × 3
       variable `posterior::variance` `~var(as.vector(.x))`
       <chr>                    <dbl>                 <dbl>
-    1 mu                        17.9                  17.9
-    2 tau                       13.6                  13.6
+    1 mu                        17.2                  17.2
+    2 tau                       12.7                  12.7
 
 Summary functions need not return numeric values when used with
 `$summary()`. The `$print()` method requires numeric summary columns
@@ -254,12 +247,12 @@ fit$draws("mu")
     , , variable = mu
 
              chain
-    iteration    1      2    3     4
-            1  6.1  4.342  3.0  3.69
-            2 13.1  0.029 14.5  0.31
-            3 -5.0 -4.071  1.9 10.67
-            4 10.6 -3.879 12.8  2.15
-            5 10.2  6.221  4.6  1.21
+    iteration    1     2   3    4
+            1 14.2  3.45 5.6  5.3
+            2  6.8  8.89 6.2  7.8
+            3  6.9 17.76 7.1  9.3
+            4  5.0 -0.55 5.9 11.5
+            5  8.2  7.52 7.6 -1.2
 
     # ... with 995 more iterations
 
@@ -272,42 +265,42 @@ fit$draws("theta")
     , , variable = theta[1]
 
              chain
-    iteration    1    2     3     4
-            1  4.5  8.9  0.15  0.33
-            2 12.3  7.7 22.04 -2.54
-            3 -2.3 10.9 -1.39  9.25
-            4 12.9 14.2 13.39  3.97
-            5 11.0  6.2  9.05  2.13
+    iteration    1     2    3    4
+            1 21.2  3.81  5.2  4.7
+            2  8.0  8.93  6.7 16.0
+            3  5.0 17.79  6.3 14.0
+            4 16.6  0.62 17.4 12.0
+            5  8.2  9.42  5.6  1.3
 
     , , variable = theta[2]
 
              chain
-    iteration    1    2    3     4
-            1 10.0  4.0  4.1 -1.54
-            2 12.6 11.2 10.3  0.17
-            3 -3.3 -4.1  4.0 17.05
-            4 10.3 -5.3 12.6  1.77
-            5  6.5  9.3 -8.9 -0.35
+    iteration    1    2    3    4
+            1 20.3  7.2  5.2  6.5
+            2 10.2  8.8  8.8 11.4
+            3  7.8 16.8  4.3 12.0
+            4 -2.6  1.2 13.4 12.0
+            5  8.6  8.4  5.4 -1.6
 
     , , variable = theta[3]
 
              chain
-    iteration    1    2    3     4
-            1  6.3  2.7  8.3  8.87
-            2 13.5  5.7  5.2 -1.06
-            3 -6.4 -6.9  2.4 11.83
-            4 11.4 -7.4 14.2  0.98
-            5  7.4  6.2 -5.3 -3.45
+    iteration     1    2   3    4
+            1 12.58  1.8 5.2  9.6
+            2  4.35  8.9 6.8  6.3
+            3 -0.36 22.1 6.7  9.2
+            4  3.72 -6.0 7.2 10.6
+            5  8.56  6.7 6.4 -3.8
 
     , , variable = theta[4]
 
              chain
-    iteration    1      2     3     4
-            1  4.8 -0.046 -2.23 -2.42
-            2 12.5 11.259 18.44 -2.90
-            3 -2.8 -0.327 -0.59 12.44
-            4  7.9  7.832 13.33  2.30
-            5 13.3  5.988  7.73 -0.84
+    iteration    1    2   3    4
+            1  9.4  2.8 5.3  4.1
+            2  4.1  8.9 8.1  4.4
+            3  5.7 16.3 6.4  7.4
+            4 12.5  2.0 7.7 11.2
+            5  7.6  6.9 6.6 -1.4
 
     # ... with 995 more iterations, and 4 more variables
 
@@ -317,17 +310,17 @@ fit$draws(c("mu", "theta[1]"), format = "df")
 ```
 
     # A draws_df: 1000 iterations, 4 chains, and 2 variables
-         mu theta[1]
-    1   6.1      4.5
-    2  13.1     12.3
-    3  -5.0     -2.3
-    4  10.6     12.9
-    5  10.2     11.0
-    6   4.8      4.9
-    7   9.5     12.0
-    8  13.1     16.7
-    9  12.6     15.6
-    10 13.4     21.2
+           mu theta[1]
+    1  14.198     21.2
+    2   6.844      8.0
+    3   6.852      5.0
+    4   4.989     16.6
+    5   8.203      8.2
+    6   4.941      5.0
+    7   9.005      9.0
+    8  10.097     13.5
+    9   5.247      2.4
+    10 -0.095      5.2
     # ... with 3990 more draws
     # ... hidden reserved variables {'.chain', '.iteration', '.draw'}
 
@@ -359,11 +352,11 @@ str(draw_arrays)
 ```
 
     List of 2
-     $ mu   : num [1:4000, 1] 6.12 13.12 -4.96 10.64 10.17 ...
+     $ mu   : num [1:4000, 1] 14.2 6.84 6.85 4.99 8.2 ...
       ..- attr(*, "dimnames")=List of 2
       .. ..$ : chr [1:4000] "1" "2" "3" "4" ...
       .. ..$ : NULL
-     $ theta: num [1:4000, 1:8] 4.52 12.27 -2.34 12.92 10.98 ...
+     $ theta: num [1:4000, 1:8] 21.23 7.95 5.03 16.63 8.22 ...
       ..- attr(*, "dimnames")=List of 2
       .. ..$ : chr [1:4000] "1" "2" "3" "4" ...
       .. ..$ : NULL
@@ -396,7 +389,7 @@ theta_difference
 ```
 
     rvar<1000,4>[1] mean ± sd:
-    [1] 2 ± 7.1 
+    [1] 2 ± 6.9 
 
 ``` r
 

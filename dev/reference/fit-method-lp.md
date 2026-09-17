@@ -66,7 +66,7 @@ International Conference on Machine Learning*, PMLR 80:5581–5590.
 # \dontrun{
 fit_mcmc <- cmdstanr_example("logistic")
 head(fit_mcmc$lp())
-#> [1] -67.48149 -70.15671 -65.15136 -66.78601 -66.59203 -67.35672
+#> [1] -64.74925 -64.74925 -65.11224 -65.10279 -65.37265 -65.22446
 
 fit_optim <- cmdstanr_example("logistic", method = "optimize")
 fit_optim$lp()

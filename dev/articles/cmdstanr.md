@@ -107,14 +107,14 @@ and
 cmdstan_path()
 ```
 
-    [1] "/home/runner/.cmdstan/cmdstan-2.39.0"
+    [1] "/home/runner/.cmdstan/cmdstan-2.40.0"
 
 ``` r
 
 cmdstan_version()
 ```
 
-    [1] "2.39.0"
+    [1] "2.40.0"
 
 ## Compiling a model
 
@@ -169,7 +169,7 @@ method:
 mod$exe_file()
 ```
 
-    [1] "/home/runner/.cmdstan/cmdstan-2.39.0/examples/bernoulli/bernoulli"
+    [1] "/home/runner/.cmdstan/cmdstan-2.40.0/examples/bernoulli/bernoulli"
 
 ## Running MCMC
 
@@ -481,7 +481,7 @@ suffers from divergences.
 fit_with_warning <- cmdstanr_example("schools")
 ```
 
-    Warning: 187 of 4000 (5.0%) transitions ended with a divergence.
+    Warning: 119 of 4000 (3.0%) transitions ended with a divergence.
     See https://mc-stan.org/misc/warnings for details.
 
     Warning: 1 of 4 chains had an E-BFMI less than 0.3.
@@ -496,7 +496,7 @@ regenerate this warning message later using
 diagnostics <- fit_with_warning$diagnostic_summary()
 ```
 
-    Warning: 187 of 4000 (5.0%) transitions ended with a divergence.
+    Warning: 119 of 4000 (3.0%) transitions ended with a divergence.
     See https://mc-stan.org/misc/warnings for details.
 
     Warning: 1 of 4 chains had an E-BFMI less than 0.3.
@@ -508,13 +508,13 @@ print(diagnostics)
 ```
 
     $num_divergent
-    [1] 60 10 48 69
+    [1]  3 54 20 42
 
     $num_max_treedepth
     [1] 0 0 0 0
 
     $ebfmi
-    [1] 0.3271278 0.3747243 0.3263650 0.2647513
+    [1] 0.2709927 0.3625987 0.3117667 0.3331180
 
 ``` r
 
@@ -522,7 +522,7 @@ print(diagnostics)
 sum(diagnostics$num_divergent)
 ```
 
-    [1] 187
+    [1] 119
 
 #### CmdStan’s diagnose utility
 

@@ -198,10 +198,10 @@ for locating files created by CmdStanR
 fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
-#> [1] "/tmp/Rtmp03oUSN/logistic-202609151822-01-3d71af.csv"
-#> [2] "/tmp/Rtmp03oUSN/logistic-202609151822-02-3d71af.csv"
-#> [3] "/tmp/Rtmp03oUSN/logistic-202609151822-03-3d71af.csv"
-#> [4] "/tmp/Rtmp03oUSN/logistic-202609151822-04-3d71af.csv"
+#> [1] "/tmp/RtmpvbwK1c/logistic-202609170109-01-3d7191.csv"
+#> [2] "/tmp/RtmpvbwK1c/logistic-202609170109-02-3d7191.csv"
+#> [3] "/tmp/RtmpvbwK1c/logistic-202609170109-03-3d7191.csv"
+#> [4] "/tmp/RtmpvbwK1c/logistic-202609170109-04-3d7191.csv"
 
 # Creating fitting model objects with as_cmdstan_fit()
 
@@ -209,11 +209,11 @@ print(csv_files)
 fit2 <- as_cmdstan_fit(csv_files)
 fit2$print("beta")
 #>  variable  mean median   sd  mad    q5   q95 rhat ess_bulk ess_tail
-#>   beta[1] -0.66  -0.65 0.25 0.25 -1.09 -0.27 1.00     4276     3053
-#>   beta[2] -0.28  -0.28 0.22 0.22 -0.65  0.09 1.00     4109     3014
-#>   beta[3]  0.68   0.68 0.27 0.27  0.25  1.12 1.00     4188     3186
+#>   beta[1] -0.67  -0.66 0.25 0.25 -1.10 -0.27 1.00     4106     3138
+#>   beta[2] -0.27  -0.27 0.23 0.22 -0.65  0.09 1.00     4198     2916
+#>   beta[3]  0.69   0.68 0.27 0.26  0.25  1.14 1.00     3958     3059
 str(fit2$draws())
-#>  'draws_array' num [1:1000, 1:4, 1:105] -64.7 -65.7 -64 -65.1 -65.8 ...
+#>  'draws_array' num [1:1000, 1:4, 1:105] -67 -65.9 -66.3 -67.7 -70.1 ...
 #>  - attr(*, "dimnames")=List of 3
 #>   ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   ..$ chain    : chr [1:4] "1" "2" "3" "4"
@@ -228,9 +228,9 @@ str(x)
 #> List of 8
 #>  $ metadata                       :List of 42
 #>   ..$ stan_version_major  : num 2
-#>   ..$ stan_version_minor  : num 39
+#>   ..$ stan_version_minor  : num 40
 #>   ..$ stan_version_patch  : num 0
-#>   ..$ start_datetime      : chr "2026-09-15 18:22:22 UTC"
+#>   ..$ start_datetime      : chr "2026-09-17 01:09:47 UTC"
 #>   ..$ method              : chr "sample"
 #>   ..$ save_warmup         : int 1
 #>   ..$ thin                : num 1
@@ -251,12 +251,12 @@ str(x)
 #>   ..$ seed                : num 1.12e+09
 #>   ..$ refresh             : num 100
 #>   ..$ sig_figs            : num 8
-#>   ..$ profile_file        : chr "/tmp/Rtmp03oUSN/logistic-profile-202609151822-01-091edd.csv"
+#>   ..$ profile_file        : chr "/tmp/RtmpvbwK1c/logistic-profile-202609170109-01-091ebf.csv"
 #>   ..$ save_cmdstan_config : int 0
-#>   ..$ stanc_version       : chr "stanc3 v2.39.0"
+#>   ..$ stanc_version       : chr "stanc3 v2.40.0"
 #>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
 #>   ..$ variables           : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
-#>   ..$ step_size_adaptation: num [1:4] 0.739 0.791 0.725 0.664
+#>   ..$ step_size_adaptation: num [1:4] 0.887 0.734 0.812 0.744
 #>   ..$ model_name          : chr "logistic_model"
 #>   ..$ adapt_engaged       : int 1
 #>   ..$ adapt_delta         : num 0.8
@@ -267,9 +267,9 @@ str(x)
 #>   ..$ threads_per_chain   : num 1
 #>   ..$ time                :'data.frame': 4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.041 0.042 0.042 0.041
-#>   .. ..$ sampling: num [1:4] 0.041 0.042 0.041 0.043
-#>   .. ..$ total   : num [1:4] 0.082 0.084 0.083 0.084
+#>   .. ..$ warmup  : num [1:4] 0.043 0.044 0.042 0.04
+#>   .. ..$ sampling: num [1:4] 0.042 0.044 0.043 0.041
+#>   .. ..$ total   : num [1:4] 0.085 0.088 0.085 0.081
 #>   ..$ stan_variable_sizes :List of 4
 #>   .. ..$ lp__   : num 1
 #>   .. ..$ alpha  : num 1
@@ -281,25 +281,25 @@ str(x)
 #>   ..$ total : int NA
 #>   ..$ chains:'data.frame':   4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.041 0.042 0.042 0.041
-#>   .. ..$ sampling: num [1:4] 0.041 0.042 0.041 0.043
-#>   .. ..$ total   : num [1:4] 0.082 0.084 0.083 0.084
+#>   .. ..$ warmup  : num [1:4] 0.043 0.044 0.042 0.04
+#>   .. ..$ sampling: num [1:4] 0.042 0.044 0.043 0.041
+#>   .. ..$ total   : num [1:4] 0.085 0.088 0.085 0.081
 #>  $ inv_metric                     :List of 4
-#>   ..$ 1: num [1:4] 0.0458 0.0628 0.0518 0.075
-#>   ..$ 2: num [1:4] 0.0397 0.0649 0.0511 0.0699
-#>   ..$ 3: num [1:4] 0.048 0.0699 0.0535 0.0802
-#>   ..$ 4: num [1:4] 0.052 0.0771 0.0511 0.0773
+#>   ..$ 1: num [1:4] 0.0451 0.0558 0.0488 0.0628
+#>   ..$ 2: num [1:4] 0.0517 0.0579 0.0483 0.0656
+#>   ..$ 3: num [1:4] 0.0499 0.0643 0.0477 0.0681
+#>   ..$ 4: num [1:4] 0.053 0.0598 0.0585 0.0807
 #>  $ step_size                      :List of 4
-#>   ..$ 1: num 0.739
-#>   ..$ 2: num 0.791
-#>   ..$ 3: num 0.725
-#>   ..$ 4: num 0.664
+#>   ..$ 1: num 0.887
+#>   ..$ 2: num 0.734
+#>   ..$ 3: num 0.812
+#>   ..$ 4: num 0.744
 #>  $ warmup_draws                   : 'draws_array' num [1:1000, 1:4, 1:105] -87.9 -87.9 -87.9 -72.2 -65.1 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #>   .. ..$ variable : chr [1:105] "lp__" "alpha" "beta[1]" "beta[2]" ...
-#>  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -64.7 -65.7 -64 -65.1 -65.8 ...
+#>  $ post_warmup_draws              : 'draws_array' num [1:1000, 1:4, 1:105] -67 -65.9 -66.3 -67.7 -70.1 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
@@ -309,7 +309,7 @@ str(x)
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"
 #>   .. ..$ variable : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
-#>  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 1 0.805 0.925 0.841 0.975 ...
+#>  $ post_warmup_sampler_diagnostics: 'draws_array' num [1:1000, 1:4, 1:6] 0.66 0.983 0.938 0.96 0.721 ...
 #>   ..- attr(*, "dimnames")=List of 3
 #>   .. ..$ iteration: chr [1:1000] "1" "2" "3" "4" ...
 #>   .. ..$ chain    : chr [1:4] "1" "2" "3" "4"

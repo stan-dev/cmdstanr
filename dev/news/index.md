@@ -2,6 +2,10 @@
 
 ## cmdstanr (development version)
 
+- `$log_prob()`, `$grad_log_prob()`, and other model methods are now
+  faster after initialization because they avoid repeated stale-binding
+  checks. ([\#1274](https://github.com/stan-dev/cmdstanr/issues/1274))
+
 - [`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
   now offers to copy the `make/local` flags of the current installation
   into the new one before building it, so the new CmdStan is built with
