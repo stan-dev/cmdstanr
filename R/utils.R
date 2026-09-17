@@ -961,6 +961,14 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   invisible(NULL)
 }
 
+# Can the compiled model-method bindings in `env` be called in this session?
+model_methods_are_live <- function(env) {
+  model_ptr <- env$model_ptr_
+  typeof(model_ptr) == "externalptr" &&
+    is.null(attributes(model_ptr)) &&
+    !identical(model_ptr, .cmdstanr$NULL_EXTERNAL_POINTER)
+}
+
 # Detect serialized sourceCpp wrappers whose native symbol was lost after reload.
 source_cpp_native_symbol_is_null <- function(fun) {
   if (!is.function(fun)) {
@@ -976,8 +984,7 @@ source_cpp_native_symbol_is_null <- function(fun) {
   if (!inherits(symbol, "NativeSymbol")) {
     return(FALSE)
   }
-  symbol_text <- paste(utils::capture.output(print(symbol)), collapse = "")
-  grepl("<pointer: (0x0+|\\(nil\\))>", symbol_text)
+  identical(symbol, unserialize(serialize(symbol, NULL)))
 }
 
 # Drop stale compiled bindings but keep the generated C++ so model methods
