@@ -1,5 +1,15 @@
 # cmdstanr (development version)
 
+* `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
+after initialization because they avoid repeated stale-binding checks. (#1274)
+* `install_cmdstan()` now offers to copy the `make/local` flags of the
+current installation into the new one before building it, so the new CmdStan is
+built with the same flags. In an interactive session it shows the previous
+`make/local` and asks if the `copy_make_local` argument isn't set to `TRUE` or
+`FALSE`. (#1267)
+* `cmdstan_make_local()` now skips flags that are already in `make/local`.
+Previously copying the flags of a previous installation after every upgrade
+added the same lines again each time. (#1266)
 * Chain IDs in generated filenames are now zero-padded to at least two digits, 
 for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 

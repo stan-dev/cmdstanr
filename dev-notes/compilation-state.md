@@ -1,0 +1,3887 @@
+# Compilation state and C++ options: intended behaviour
+
+Status: draft for discussion. Describes the target behaviour of `cmdstan_model()`,
+the build record kept beside an executable, and when that record is validated.
+
+## Purpose and scope
+
+The defects in this area have not been independent. #1228, #1234, the residual
+warning gaps, #1019 and #1237 all come down to a small number of rules that were
+never written down, so each was rediscovered by being violated. This document states
+those rules once and sequences the remaining work off them instead of off the issue
+list.
+
+**This note owns behaviour, and is the copy to trust if it and an issue disagree.**
+The issues own what a specification cannot carry: staging, checklists, reproductions
+and progress. #1258 is the authority on the order of work and on what belongs to each
+stage (§9). Neither is the authority on code locations. The `file:line` references in
+both go stale on the next edit, and the source settles them.
+
+What this note adds beyond the rules is why they are what they are, why the work is
+ordered this way, and which alternatives were rejected. The appendix lists the
+rejected alternatives one line each, so the same idea is not proposed again.
+
+The work is tracked in #1238 (the record), #1255 (rebuild decisions), #1256
+(removing deferred compilation), #1257 (untracked dependencies), #1237 (includes),
+#1250 (option classification), #1251 (logical `FALSE`) and #1261 (the TBB directory
+at launch).
+
+**In scope:** what is recorded about an executable and when; what a configuration
+means when it reaches `make`; when the record is validated; what can and cannot be
+known about an executable cmdstanr did not build.
+
+**Out of scope:** the toolchain itself, meaning the compiler version and system
+libraries, which are untracked (§6). The CmdStan installation is in scope: its
+normalised path and version together are the `builder` identity, and §6 also checks
+that the installation still exists.
+
+---
+
+## At a glance
+
+Every rule is stated once, in the section that owns it, and this section only says
+which section that is. Restating a rule here would make a second copy to keep
+correct, which is the same argument this document makes for being canonical over the
+issues.
+
+`compilation-state-contract.md` is the short read: the rules without the reasoning,
+in this document's words. It is generated rather than written. `build-contract.R`
+copies out the blocks this file marks with HTML comments, so it is a view of these
+rules and not a second copy to keep correct, and it is stale only until the script is
+rerun.
+
+| Section | Answers |
+|---|---|
+| §1 | What the record is; what `$cpp_options()` and `stan_build_info()` each report, and why they are never merged |
+| §2 | Where a build is configured, and why nothing on an existing model object reconfigures it |
+| §3 | What a `cpp_options` entry means to `make`, which spellings are accepted, and why the rest are rejected |
+| §4 | What the record holds, where it lives, how it is bound to its executable, and who ignores it. **Contains the recorded/compared table, which is the authority on both** |
+| §5 | When an operation validates, what it does on failure, and the full classification of the public surface |
+| §6 | Every rebuild trigger, what identity means for each kind of dependency, and what is untracked |
+| §7 | Executable-only models: adoption, provenance, and what cannot be configured |
+| §8 | Removing deferred compilation, the standalone functions that replace it, and the public result `stan_build_info()` returns |
+| §9 | Why the work is ordered as it is, and why an install-time build is adopted executable-only. **#1258 holds the work list itself** |
+| §10 | Traps for whoever implements this |
+| Appendix | Rejected alternatives, one line each |
+
+Two things to know before reading any of it. Options are supplied on every build
+call and never accumulate on the object (§2). And a model either has a current
+executable or errors: nothing compiles behind your back, and the only two things
+that build are `cmdstan_model()` and `compile_stan_file()` (§8).
+
+---
+
+## 1. Vocabulary: what the record is, and what it is not
+
+<!-- contract -->
+
+The record describes how an executable came to exist. It is not a configuration
+store, it does not authorise whatever happens to be at the executable path, and it
+does not replace looking at the binary itself. Its fields are different kinds of
+fact:
+
+- **`request`**: the build configuration. `stanc_options` is stored two ways, what
+  the caller supplied and what cmdstanr injected. The two are disjoint because
+  cmdstanr injects only what the caller did not supply. Which list a value lands in
+  is decided by where it came from; whether it can force a rebuild is decided per
+  field in §4, and the model name is the injection that can. Everything else is
+  stored once, in the form the build used: `cpp_options`, which cmdstanr adds nothing
+  to (§4), and the effective `include_paths`, so a caller who passes none on a
+  program with `#include` has `dirname(stan_file)` recorded (§6). These fields
+  explain a build. Feeding them back into another build is not supported and no rule
+  here depends on it.
+- **`reported_features`**: what the binary reports as enabled. Kept apart from
+  `request` because `make/local` can enable threading or OpenCL the user never
+  mentioned. `request` is everything settled before the build ran; `reported_features`
+  is what could only be discovered afterward.
+- **`dependencies`**: the sources consumed, and enough about how they were resolved
+  to resolve them again. Identified by content; each also records the `built_from`
+  path it had at build time (§4).
+- **`artifact`**: a hash of the executable this record describes, used only to check
+  that a record and an executable belong together (§4).
+- **`builder`**: the CmdStan installation that produced it.
+- **`known_untracked_dependencies`**: dependencies we can see exist but cannot
+  resolve (§6). An empty list means nothing was detected, never that the record is
+  complete.
+- **`format_version`**: which format the record is written in. 1.0 reads only the
+  format it writes; any other version is reported and treated like every other
+  artifact-side reason (§6).
+
+<!-- /contract -->
+
+<!-- contract -->
+
+`reported_features` is **tri-state and best-effort**: each feature is known enabled,
+known disabled, or unknown. `<exe> info` reports what CmdStan chooses to report,
+which is threading, OpenCL and the Stan version, not arbitrary flags. **Absence must
+never be read as disabled.**
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**In the record, encode the state by presence, not by a third value**: write a key
+only when the state is known, and let an absent key mean unknown. <!-- /contract --> This rule is about
+what survives a file; §8 settles the public result separately and reaches the other
+answer. `NA` for unknown does not survive the record. `jsonlite` writes `NA` as
+`null` and reads it back as `NULL`, so the R type is gone after one trip through a
+file, and `is.na()` on the result returns `logical(0)`, which errors inside an `if`.
+The two states remain recoverable through `names()`, which distinguishes an explicit
+null from a missing key, but only by a two-step check at every lookup. The one-step
+idiom anyone actually writes collapses them: `x[["stan_threads"]]` is `NULL` either
+way and `!isTRUE(x)` is `TRUE` either way, which is the disabled-versus-unknown
+collapse this rule exists to prevent. Encoding by presence leaves only `true` and
+`false` in the JSON, so the naive access is the correct access. §4 carries the
+schema; this is the constraint it satisfies.
+
+<!-- contract -->
+
+**Request and reported features are never merged into one accessor.**
+`$cpp_options()` reports `cpp_options_supplied`, what the caller asked for and not
+what cmdstanr added. The user header has its own accessor, `$user_header()`, matching
+its own argument; it is not readable through `$cpp_options()` because it is no longer
+settable there (§3). `stan_build_info()` reports what the binary says, with its
+provenance. And runtime validators read `reported_features` directly, never a merged
+list. <!-- /contract --> A merged list answers neither question: it looks complete but is not, and it
+cannot represent unknown, so a requested `TRUE` sitting over an unknown reading
+survives as a plain `TRUE` and the table below is bypassed.
+
+`merge_exe_info_cpp_options()` (`R/cpp_opts.R:78`) is what this replaces, and it
+already shows the failure. It drops `FALSE` values, because passing `FLAG=FALSE` back
+to CmdStan can enable the flag (#1251), so a binary reporting `STAN_THREADS=false`
+contributes nothing and known-disabled is already indistinguishable from
+never-reported. Fixing #1251 removes the reason for dropping `FALSE` but not the gap:
+`cpp_options` is a request, and has nowhere to put unknown.
+
+Little is given up by separating them. `<exe> info` reports four `STAN_*` booleans
+and the Stan version; `CXX`, `CXXFLAGS`, `PRECOMPILED_HEADERS` and everything else
+have no reported counterpart and are request-only anyway. `STAN_CPP_OPTIMS` is a
+`STAN_*` flag that is not one of the four: it only adds compiler flags
+(`makefile:66`), leaving no macro for `write_stan_flags.hpp`'s `#ifdef`s to test, so
+CmdStan could not report it without a change of its own. Verified on 2.39.
+
+### What consumers do with each state
+
+Recording three states is useless unless downstream code acts on three.
+
+<!-- contract -->
+
+**This table covers one case only: a runtime argument asks for a build feature.** <!-- /contract -->
+The converse, an artifact that has a feature nobody asked to use, is a separate
+policy below, and the two are easy to conflate.
+
+<!-- contract -->
+
+| State, *when the feature was requested at runtime* | Behaviour |
+|---|---|
+| known enabled | proceed |
+| known disabled | **error** |
+| **unknown** | **error**. Never read as disabled, never discard the user's runtime option |
+
+<!-- /contract -->
+
+`assert_valid_threads()` (`R/cpp_opts.R:282`) is the case to fix. Asking for threads
+on an unthreaded binary warns and then discards the argument:
+
+```r
+stan_threads <- cpp_option_value(cpp_options, "stan_threads")
+if (is.null(stan_threads) || !isTRUE(stan_threads)) {
+  if (!is.null(threads)) {
+    warning(...)
+    threads <- NULL          # the user asked for threads and silently got none
+```
+
+That is a request the artifact cannot meet, which §5 says operations error on, and
+it is the expensive half: a silently single-threaded run is the four-hour job that
+should have taken one, discovered afterwards. Erroring is a behaviour change, and it
+costs a user who wants to run unthreaded nothing. They stop passing
+`threads_per_chain`.
+
+### The converse case: a capability nobody asked to use
+
+<!-- contract -->
+
+**A separate policy, not an instance of the table above.** A threading-enabled
+binary run with no `threads` argument is not a mismatch. The artifact exceeds the
+request and the run is correct, on CmdStan's default of one thread unless the user's
+own environment sets `STAN_NUM_THREADS`. cmdstanr errors on this today
+(`R/cpp_opts.R:297-303`), and **that error is removed.**
+
+<!-- /contract -->
+
+**Removing the error exposes a leak, and the count moves to the child process.**
+cmdstanr never puts `num_threads=` on the command line. At four launch sites
+(`R/run.R:478`, `:545`, `:591`, `:648`) it runs `Sys.setenv("STAN_NUM_THREADS" = n)`
+when threads were supplied and nothing when they were not, and CmdStan's default for
+`num_threads` is "1 or the value of the STAN_NUM_THREADS environment variable if
+set" (`src/cmdstan/arguments/arg_num_threads.hpp:17`). The variable stays in the R
+session, so a call that omits the argument inherits the last call that gave it:
+`threads_per_chain = 4` and then four parallel chains with no argument is sixteen
+threads. Today the error masks that; thirteen assertions in `test-threads.R` check
+the session variable after each run and so encode the leak. <!-- contract -->The variable is scoped
+to the child instead, through the `env` argument of `processx::process$new()`, which
+`wsl_compatible_process_new()` (`R/utils.R:689`) already forwards: set for that run
+when threads are supplied, absent otherwise, so the omitted call sees the user's own
+environment and nothing cmdstanr wrote. <!-- /contract --> That is the treatment §6 gives Make
+variables from the environment: honoured, not managed. Passing `num_threads=` on the
+command line instead would be wrong, because CmdStan refuses to start when the
+argument and a set `STAN_NUM_THREADS` disagree (`src/cmdstan/command.hpp:137-146`),
+so a user with the variable in `.Renviron` would be refused the first time they
+passed `threads_per_chain`. The WSL export through `WSLENV` moves into the same
+argument. Lands with the error removal (Stage 4).
+
+<!-- contract -->
+
+The rule is asymmetric, because the two directions are not equally expensive:
+
+| Runtime request | Feature enabled | Feature disabled or unknown |
+|---|---|---|
+| `threads > 1` | proceed | **error** |
+| `threads == 1` | proceed | proceed |
+| no `threads` argument | proceed | proceed |
+
+<!-- /contract -->
+
+Only the top-right cell is the expensive silent failure: parallelism asked for and
+not delivered, discovered after a run that took four hours instead of one. Omitting
+the argument, or asking for a single thread, requests no parallelism, so there is
+nothing to fail to deliver.
+
+The current `stop()` is wrong in three ordinary situations. A model with no
+`reduce_sum` or `map_rect` cannot use threads at all, yet is required to supply the
+argument. Running `parallel_chains = 4` with one thread each is a sensible
+configuration that must currently be spelled `threads_per_chain = 1` to avoid an
+error. And `STAN_THREADS=true` in `make/local` is a single global setting that makes
+every model on the machine error by default.
+
+Its message also gives the wrong advice:
+
+```
+The model executable was built with threading enabled but 'threads_per_chain'
+was not set!
+```
+
+If what concerns the user is paying for threading they do not use, the remedy is to
+build without it, not to start passing `threads_per_chain`.
+
+**Threading is not free when unused, and that belongs in documentation rather than
+in a runtime message.** With `STAN_THREADS` defined, Stan Math makes the autodiff
+stack pointer thread-local, on the hottest path in the program. The cost has been
+engineered down: a pointer is used so the TLS can be constant-initialized, and the
+`__thread` extension is preferred over `thread_local` because only it "guarantees
+that constant initialization and its implied speedup"
+(`stan/math/rev/core/autodiffstackstorage.hpp`). Small and constant. Say so where
+users choose whether to enable threading globally. Anyone who put it in
+`make/local` chose it, and `stan_build_info()` reports it on demand.
+
+Five assertion sites in `test-threads.R`, plus snapshots, encode the old error and
+will change; its thirteen `Sys.getenv("STAN_NUM_THREADS")` assertions turn into one
+that the session variable is untouched, and one consecutive-call test asserts
+`metadata()$threads_per_chain` is 1 on an omitted call that follows a
+`threads_per_chain = 4` call.
+
+<!-- contract -->
+
+**Scope this to features an operation actually requires.** <!-- /contract --> For arbitrary options
+such as `CXXFLAGS` or a user header, status is permanently unknown, because CmdStan
+never reports them; erroring on those would error on everything. <!-- contract -->It applies where a
+runtime argument depends on a build feature: `threads_per_chain` on `STAN_THREADS`,
+OpenCL device selection on `STAN_OPENCL`.
+
+<!-- /contract -->
+
+In practice the error will rarely fire. CmdStan 2.39 reports all four flags
+explicitly, including negatives:
+
+```
+STAN_THREADS=false
+STAN_MPI=false
+STAN_OPENCL=false
+STAN_NO_RANGE_CHECKS=false
+```
+
+so the features with runtime checks are the ones whose status is known, and every
+supported CmdStan reports the same four: `cmdstan_min_version()` is 2.35
+(`R/path.R:144`), and every version from 2.27 up reports them.
+
+<!-- contract -->
+
+**Unknown is not expected from a supported binary, but it is possible.** §7 admits an
+executable on a valid version from `<exe> info` rather than on a full set of flags,
+so a future or custom CmdStan that reports its version and omits `STAN_THREADS`
+constructs with threading unknown, from a live call with no record in sight. <!-- /contract --> An
+`<exe> info` that fails outright is not a source at all, since §7 errors on that
+instead of constructing. Records are the other source for a checked feature, which
+is what the encoding rule above is for: a key is absent when the CmdStan that built
+the artifact did not report that feature. The set does move. `STAN_CPP_OPTIMS` was
+reported from 2.27 and dropped at 2.38, so both sources are real cases.
+
+<!-- contract -->
+
+**A model object is a handle on an executable plus its record.** It holds no
+durable configuration of its own.
+
+<!-- /contract -->
+
+---
+
+## 2. Contract: options are specified once, on the build call
+
+<!-- contract -->
+
+> Every call that builds specifies the configuration it wants. Omitting an option
+> means you are not asking for it.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**An automatic rebuild never replays stored configuration.** <!-- /contract --> The constructor builds
+from the request in front of it, and anything that would run a stale executable
+errors instead (§5), so there is no point at which cmdstanr needs configuration it
+was not just given. That is what closes the case for persistent options (#1248,
+appendix): the previous compile consumed its options, and nothing has to remember
+them for a rebuild that never happens on its own.
+
+<!-- contract -->
+
+`cmdstan_model()` **ensures a current compiled executable** when given a Stan file.
+It reuses one that is up to date and builds when it is not; it does not compile
+unconditionally. There is no `compile = FALSE` (§8), and **`$compile()` is removed**. <!-- /contract -->
+Once deferred compilation is gone it has no unique public purpose, and
+`cmdstan_model(file, force_recompile = TRUE, ...)` covers every remaining use.
+Nothing replaces it internally either: the assessment never rebuilds (§5), and
+constructor compilation uses the current request.
+
+Nothing structural blocks removal. Fits do not hold model references
+(`R/fit.R:20-26` copies the model-methods environment rather than pointing at the
+object).
+
+### What this costs, stated accurately
+
+<!-- contract -->
+
+**The executable cache is single-configuration.** One binary per Stan file per
+`dir`, and the most recent compile owns it. Two call sites wanting different
+options will each rebuild to evict the other.
+
+<!-- /contract -->
+
+**This does not fail loudly**, except for threading: `assert_valid_threads()` warns
+when `threads_per_chain` is set on an unthreaded model, but nothing warns about
+changed optimisation flags, range checks, or a different user header. Most
+configuration changes have no runtime check at all.
+
+Single-configuration caching is an acceptable simplification for v1, but it needs a
+guard rather than a hope. §5 gives the assessment what it needs to detect that
+another call or process replaced the executable this object was built against.
+
+<!-- contract -->
+
+**Report what actually differs.** If the replacement carries a different
+configuration, name it. If another process installed an equivalent configuration as
+a different artifact, the honest message is that the executable was replaced. <!-- /contract -->
+Promising a changed option name when none changed would be a lie the user cannot
+act on.
+
+A content-addressed executable cache would remove the problem rather than detect
+it. That is deferred, not rejected.
+
+---
+
+## 3. Contract: what a configuration means to `make`
+
+### Logical `FALSE` must disable (#1251)
+
+`cpp_options = list(stan_threads = FALSE)` currently *enables* threading. Verified:
+`ifdef` is true for any non-empty value.
+
+```
+STAN_THREADS=FALSE  ->  ifdef: ENABLED
+STAN_THREADS=       ->  ifdef: disabled
+```
+
+<!-- contract -->
+
+A logical `FALSE` must emit the empty assignment. This is a value, not an absence:
+it overrides `make/local`, which is the point. `NULL` already means this and must
+keep meaning it.
+
+<!-- /contract -->
+
+### The command line is not `make/local`
+
+They are different languages, and the difference is not cosmetic. Verified with a
+recursive Make test:
+
+- On the command line, a lone `+=`, `?=` or `:=` collapses to `=`. Two assignments
+  to the same variable do not; see the rejection rule below.
+- A command-line assignment has command-line origin, which blocks any
+  makefile-side `+=` to the same variable.
+- Both properties propagate into sub-makes via `MAKEFLAGS`.
+
+In `make/local`, a file, `+=` is real and appends. cmdstanr's own `+=` usage
+(`CXXFLAGS` at `R/install.R:258` and `:269`; `CPPFLAGS_SUNDIALS` at
+`R/utils.R:932`) is all in `make/local`, and is not evidence that `+=` works in
+`cpp_options`. It does not. `::=` errors on Make 3.81, still the macOS default.
+
+### The user header is not a `cpp_options` entry
+
+Through cmdstanr's own arguments, `user_header` is currently reachable three ways:
+the dedicated argument, `cpp_options[["USER_HEADER"]]` and
+`cpp_options[["user_header"]]`, with the argument taking precedence over both
+(`R/model.R:512-513`). <!-- contract -->**Only the argument survives.** The two `cpp_options`
+spellings are rejected, with an error naming it.
+
+<!-- /contract -->
+
+This is the same rule as for `include_paths`, `warn-pedantic` and `STANCFLAGS` (§6,
+§4): one setting, one channel. It is stated separately because of what it deletes.
+`resolve_user_header()` (`R/cpp_opts.R:189-245`) exists almost entirely to reconcile
+the three, tracking positions of both casings so duplicates follow make's last-wins
+rule, walking a four-level precedence chain, and raising two distinct conflict
+warnings. §8 removes its `previous` parameter along with deferred compilation, and
+what remains is resolving a path and setting `USER_HEADER` for `make`.
+
+The code already treats the header as not belonging here: `parsed_cpp_options()`
+skips `user_header` when canonicalizing (`R/cpp_opts.R:101`), because it is not an
+ordinary Make assignment to compare.
+
+<!-- contract -->
+
+**A flag cmdstanr derives from another argument is not separately settable.**
+`--allow-undefined` is what `user_header` implies, `--use-opencl` is what
+`cpp_options$stan_opencl` implies (`R/model.R:676-678`), and `--name` is what
+`stan_file` implies (`R/model.R:273`, `:835`). All are rejected in `stanc_options`
+by the occurrence rule below, with an error naming the argument that owns them. <!-- /contract --> For
+`allow-undefined` the builds derive it and the source-only operations always set it
+(§8), so a caller has nothing left to decide.
+
+`--use-opencl` is rejected rather than guarded because supplying it alone never
+produces an OpenCL-enabled executable. It produces one of two other things, and
+which one depends on the model. stanc emits `matrix_cl` members and `to_matrix_cl`
+calls only where a GLM-family function takes data it can move to the device, and
+`STAN_OPENCL` is what makes those types exist (`stan/math/prim.hpp:6`). A model with
+such a call dies at compile time on `no template named 'matrix_cl'`. A model without
+one (`bernoulli.stan`, measured on 2.39) emits C++ identical but for the embedded
+`stancflags` string, builds, and reports `STAN_OPENCL=false`. The second is the
+worse outcome, since nothing tells the caller their request did nothing. One
+sentence naming `cpp_options` beats either.
+
+`--name` is the one whose owning argument is the source file itself. `R/model.R:273`
+takes the model name from the file's basename and nothing else writes it, so
+`stanc_options = list(name = "foo")` leaves `$model_name()` answering `bernoulli`
+while every CSV the binary writes stamps `foo`. That much could be reconciled by
+writing `model_name_` too. The reason to reject instead is that nothing asks for it:
+a model compiled from a string is named through `write_stan_file(basename =)`
+(`R/file.R:61`), and two models that need telling apart in a CSV header need
+distinct file names anyway. The error says the name comes from the file name, since
+there is no other argument to redirect to.
+
+<!-- contract -->
+
+**`$user_header()` is added**, so the dedicated argument has a dedicated accessor. <!-- /contract -->
+Today the only way to read the header back is `$cpp_options()[["USER_HEADER"]]`.
+That is why §1 can have `$cpp_options()` report `cpp_options_supplied` without
+losing anything: the header was never really a `cpp_option`, and now it is not one
+at all.
+
+**`R/model.R:709` is what makes it one, and it goes.** After resolution, `compile()`
+writes the header back into `cpp_options` under whichever spelling was used, and
+`:941` then stores that list, so a caller who passed `user_header = "inc/mine.hpp"`
+as an argument and never touched `cpp_options` gets
+`USER_HEADER = "/abs/path/inc/mine.hpp"` back from `$cpp_options()`. Wired to
+`cpp_options_supplied` with that line still in place, the accessor would report a
+field the caller never passed, holding a path they never wrote. <!-- contract -->What survives is
+only the Make flag: CmdStan reads `-include $(USER_HEADER)` (`make/program:41`), so
+`USER_HEADER=` still has to reach `make`. **It reaches it as a flag built with the
+others, not as a recorded `cpp_options` entry.** <!-- /contract --> A recorded option would put the
+header's path in `request` as well as in `dependencies` (§8), and under WSL not
+even in the same spelling, since the Make side is `wsl_safe_path()`-transformed
+(`R/utils.R:627`) and `built_from` is not. `resolved_header$spelling` goes with
+the line, since `R/model.R:709` is its only consumer and one channel has one
+spelling, alongside the `previous` parameter §8 removes.
+
+### One canonical spelling, established on entry
+
+`cpp_options_to_compile_flags()` (`R/cpp_opts.R:131`) uppercases every named entry,
+so `list(USER_HEADER = h)`, `list(user_header = h)` and `list(User_Header = h)` are
+one variable to `make` and three values to R. The code reconciles that three times
+in two directions today: `toupper()` on the way out to `make`, `tolower()` in
+`parsed_cpp_options()` (`:100`) on the way into comparison, and `tolower()` again in
+the dormant `validate_cpp_options()` (`:165`).
+
+<!-- contract -->
+
+**Named `cpp_options` entries are normalized to their `make` spelling once, on entry
+to the build call, ahead of validation.** <!-- /contract --> Uppercase is the canonical direction
+because it is what `make` receives and what a compile log shows; lowercase is an R
+naming convention. <!-- contract -->After that point one spelling is in play, and validation,
+comparison, the record and `$cpp_options()` all use it. `list(stan_threads = TRUE)`
+keeps working. <!-- /contract --> It is normalized immediately instead of at three later points.
+
+This is what makes the reserved-variable rejection below exact, but the rejection is
+not the reason to canonicalize. A matcher that folded case itself would get that one
+case right and leave every other consumer seeing whatever the caller typed, each
+folding again or not at all. Doing it once on entry gives validation, comparison,
+the record and `$cpp_options()` one representation, and it is the one `make`
+receives.
+
+**It changes what `$cpp_options()` returns, and that break needs a NEWS entry.**
+Today the accessor reports the caller's spelling and the binary's, because
+`merge_exe_info_cpp_options()` writes reported names in upper case over the request
+(`R/cpp_opts.R:83`); `list(stan_threads = TRUE)` comes back as `stan_threads` and
+`STAN_THREADS` both. After this it is one entry, `STAN_THREADS`. Indexing the
+lower-case name stops working, which is loud. Indexing the upper-case name keeps
+working and changes meaning, from a value the binary confirmed to one the caller
+asked for; `stan_build_info()` is where the confirmed value went (§1). Tested on
+ordinary construction and on record-backed adoption.
+
+It also retires `parsed_cpp_options()`'s exclusion list (`:101`), for a different
+reason on each entry. Both are there because that function is fed a merged list of
+request and binary report (`R/model.R:774`); §1 stops merging those, so the only
+input left to parse is a supplied list.
+
+`user_header` cannot appear in one, since the named spelling is rejected above and
+cmdstanr's own injection is not supplied. `stan_version` can, and should. Nothing
+in CmdStan reads `STAN_VERSION`: cmdstanr synthesizes the name at `R/cpp_opts.R:68`
+from the three `stan_version_*` fields `<exe> info` prints, and CmdStan's own
+version variable is `CMDSTAN_VERSION` (`makefile:151`). A supplied one is still an
+ordinary Make variable. `cpp_options_to_compile_flags()` puts it on the make command
+line (`R/cpp_opts.R:141`, `R/model.R:864`) and `make/local` is `-include`d before
+anything else runs (`makefile:20`), so a user's own file can read `$(STAN_VERSION)`
+and change `CXXFLAGS` with it. Verified. That is the position `FOO` is in, so the
+treatment is the same: recorded, compared, and able to trigger a rebuild. Excluding
+it would silently drop a supplied entry that can change the artifact.
+
+That leaves the parser with one caller, because the other is **deleted in Stage 4**.
+`exe_info_reflects_cpp_options()` (`R/cpp_opts.R:327`) diffs supplied `cpp_options`
+against what a binary found on disk reports, and its caller is the reuse branch of
+`$compile()` (`R/model.R:777`), which every fresh session reaches when it constructs
+a source-backed model whose executable already exists. Today that is the only check
+there is: `cmdstan_model(f, cpp_options = list(stan_threads = TRUE))` against an
+unthreaded executable warns from it, and twelve assertions in three test files expect
+the warning. From Stage 4 the engine compares the request against the record's
+`cpp_options_supplied` and rebuilds on a difference (§6), so a request-against-report
+diff has no job left, and with only an executable §7 makes the request an error. The
+helper goes in the pull request that wires the engine (#1255), with its branch and
+its tests, which turn from expecting the warning into expecting the rebuild.
+
+**Its key fold is changed with this rule, not after it.** The function matches the
+parser's names against `tolower(names(exe_info))`, one side folded and the other
+inherited from the parser. Canonicalizing while that stands empties the intersection
+for every option, and the check silently stops checking: no error, no mismatch ever
+reported, just a validator that always agrees. Stage 1 drops the fold, so both sides
+carry the `make` spelling, and the check keeps working until Stage 4 removes it.
+
+**One function owns normalize-then-check.** `assert_valid_cpp_options()` (#1250) does
+both, called from the single build implementation §8 leaves behind, so the ordering
+is built in rather than a convention a later contributor has to know. It pairs with
+`assert_valid_stanc_options()` (`R/model.R:2562`), which already does this job for
+the other list. `validate_cpp_options()` (`R/cpp_opts.R:151`) is **deleted** rather
+than left dormant: its one substantive behaviour is a warning that a logical `FALSE`
+will turn an option on, which #1251 reverses, so leaving it in the file would
+document the opposite of v1.0's semantics to whoever reads it next. Its tests go
+with it (`test-cpp_opts.R:24-37`).
+
+<!-- contract -->
+
+**The `stanc_options` side is not symmetric.** `stanc_options_to_args()` passes names
+through unchanged and stanc is case-sensitive, so a miscased flag fails at the build
+with `unknown option --Warn-Pedantic. Did you mean --warn-pedantic?`, which is better
+than anything we would write. <!-- /contract --> Canonicalizing there would solve a problem that does
+not exist.
+
+### Rejection matches the option, not the spelling
+
+<!-- contract -->
+
+These entries are rejected from an R option list that currently accepts them:
+`include-paths`, `warn-pedantic`, `allow-undefined`, `use-opencl` and `name` from
+`stanc_options`, and `USER_HEADER` / `user_header` and `STANCFLAGS` from
+`cpp_options`. **Every one is matched by where the option name occurs, never by
+enumerating accepted values.** (`--include-paths` in the effective `STANCFLAGS` is
+rejected too, but that is a value Make resolved rather than a list entry, so §6
+gives it its own detection rule.)
+
+`stanc_options_to_args()` (`R/model.R:2598`) puts the flag name in a different slot
+depending on the entry's shape, so the rule has two arms:
+
+- Named entry: reject if the name is the flag, whatever the value is.
+- Unnamed entry: reject if the value is the flag, or begins with the flag followed
+  by `=`.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**A named entry's name may not contain `=`.** <!-- /contract --> The named arm is sound only while the
+name slot holds a flag name, and `=` is the character that moves it.
+`list("include-paths=/b" = TRUE)` has a name that is not `include-paths`, so the arm
+passes it, and the converter's logical branch emits `--include-paths=/b`. With
+`include_paths = "/a"` as well, `stanc --info` searches `/a` alone while the build
+searches both, and which file a shadowed include compiles from is then a stanc
+version question. Measured with a `par.stan` in each directory: 2.35 and 2.36 take
+`/b`, 2.38 and 2.39 take `/a`, and 2.37 refuses the repeated flag outright. None of
+it reaches the record. The check is a shape check like the one
+`assert_valid_stanc_options()` (`R/model.R:2562`) already makes for a leading `--`,
+lands beside it, and shows the legal spelling the same way. The `cpp_options` name
+grammar below closes the same door for `+`.
+
+Enumerating values does not terminate. `warn-pedantic` alone has six spellings that
+`stanc_options_to_args()` treats differently:
+
+<!-- contract -->
+
+| spelling | emits |
+|---|---|
+| `list("warn-pedantic")` | `--warn-pedantic` |
+| `list("warn-pedantic" = TRUE)` | `--warn-pedantic` |
+| `list("warn-pedantic" = FALSE)` | *nothing* |
+| `list("warn-pedantic" = NA)` | *nothing* |
+| `list("warn-pedantic" = NULL)` | `--warn-pedantic=` |
+| `list("warn-pedantic" = "yes")` | `--warn-pedantic=yes` |
+
+**The two that emit nothing are rejected as well.** <!-- /contract --> A validator keyed on the emitted
+arguments would pass them, and the caller who wrote `list("warn-pedantic" = FALSE)`
+believing it disables pedantic mode gets silence rather than the error naming the
+`pedantic` argument. Rejecting on occurrence catches the whole column; §4 gives the
+`FALSE` case a second reason on top of this one.
+
+<!-- contract -->
+
+The `cpp_options` rejections are the same rule against `make` variable names,
+applied after the normalization above, so `USER_HEADER` and `STANCFLAGS` are matched
+as literals with no case folding inside the matcher.
+
+<!-- /contract -->
+
+Unnamed entries need a message rather than a matcher. They skip the uppercasing and
+reach `make` verbatim, so `list("User_Header=h")` assigns an unrelated variable and
+sets no header at all; only an exact-case raw assignment would do anything, and
+#1250 already rejects every assignment-shaped raw entry. What a rejection on shape
+owes the reserved variables is guidance naming the argument that owns them, not a
+second occurrence test. That covers the name grammar below as well: `USER_HEADER+`
+is refused for its shape, and the caller still needs pointing at `user_header`.
+
+### Only named assignments configure a build (#1250)
+
+Two verified defects. **Unnamed raw entries reach `make` but are invisible to
+everything keyed on names**, because an unnamed list entry's name is `""` while
+`cpp_options_to_compile_flags()` passes it straight through (`R/cpp_opts.R:139`):
+
+```r
+mod <- cmdstan_model(f, cpp_options = list("STAN_THREADS=TRUE"))
+mod$sample(threads_per_chain = 4)
+#> Warning: ... not compiled with 'cpp_options = list(stan_threads = TRUE)'
+```
+
+The model *is* threaded. This is #765's symptom via a different spelling.
+
+**Names are lower-cased at `R/cpp_opts.R:100`**, so `foo=1` and `FOO=1` compare
+equal despite being different Make variables.
+
+**Raw `NAME+=`, `NAME?=` and `NAME:=` are assignments, not Make flags.**
+`parsed_cpp_options()`'s `^[A-Za-z_][A-Za-z0-9_]*=` does not match them, so they
+fall through to `opaque`. The collapse to `=` is only true of an assignment
+appearing alone. Two assignments to the same variable retain operator semantics
+(GNU Make 3.81):
+
+```
+make 'FOO=x'                -> FOO=[x]       # alone: all four collapse
+make 'FOO+=x'               -> FOO=[x]
+make 'FOO?=x'               -> FOO=[x]
+make 'FOO:=x'               -> FOO=[x]
+
+make 'FOO=base' 'FOO+=x'    -> FOO=[base x]  # in combination: they do not
+make 'FOO=base' 'FOO?=x'    -> FOO=[base]
+make 'FOO+=x'   'FOO+=y'    -> FOO=[x y]
+make 'FOO+=x'   'FOO:=y'    -> FOO=[y]
+make 'FOO=a'    'FOO=b'     -> FOO=[b]
+```
+
+<!-- contract -->
+
+**So raw assignment-shaped entries are rejected, not reclassified.** <!-- /contract --> Treating
+`list("FOO+=x")` as `list(foo = "x")` is wrong whenever a second assignment to the
+same variable exists, and supporting these correctly would mean preserving and
+interpreting an ordered assignment program, which is real complexity for no user
+benefit. #1250 specifies the rejection.
+
+**Rejection is what makes §4's canonicalization sound.** With only named entries
+reachable, only `=` is ever emitted, so "last assignment wins" is correct. Accepting
+raw operators would invalidate the canonicalization rule as well.
+
+<!-- contract -->
+
+**After normalization, a name must match `^[A-Za-z_][A-Za-z0-9_]*$`.** <!-- /contract --> Without that,
+the sentence above is not true, because an operator arrives through the named door
+instead. `cpp_options_to_compile_flags()` builds each argument as
+`paste0(toupper(option_name), "=", value)` (`R/cpp_opts.R:141`) and `toupper()`
+leaves `+` alone, so `list("FOO+" = "x")` reaches `make` as `FOO+=x`. The grammar is
+the one `parsed_cpp_options()` already applies above, where all it decides is how a
+flag is classified. Nothing consults it before the flag is handed to `make`.
+
+The reserved-variable rule shows this is not only about operators. `USER_HEADER+` is
+not `USER_HEADER`, so the matcher that rejects the two `cpp_options` spellings of
+the user header passes it, and `make 'USER_HEADER+=/tmp/x.hpp'` sets `USER_HEADER`
+to that path (measured; a lone `+=` on the command line overrides rather than
+appends). Until names are constrained, the one channel that rule gives the user
+header has a second one behind it.
+
+<!-- contract -->
+
+**Plain `NAME=value` is rejected too**<!-- /contract -->, though it is unambiguous, because accepting
+raw `=` means re-implementing every special-cased variable on the raw path: a raw
+`USER_HEADER=my.hpp` reaches `make` while everything keyed on names looks straight
+past it. Nothing is lost. Named entries already emit `NAME=value`
+(`R/cpp_opts.R:141`), so the migration is a spelling change and the error can name
+the form to use.
+
+<!-- contract -->
+
+**Make's own flags are rejected as well, so nothing unnamed reaches the build.** <!-- /contract -->
+`-j4`, `-f other.mk` and `--eval=...` are not assignments, and keeping them as an
+opaque class preserved in order does not work: `-f` sets any variable this section
+gives one channel, without looking like an assignment.
+
+```
+$ make -s show
+STAN_OPENCL=[unset] USER_HEADER=[unset]
+
+$ make -s -f Makefile -f other.mk show
+STAN_OPENCL=[from_other_mk] USER_HEADER=[/tmp/sneaky.hpp]
+```
+
+`--eval=` is the same route on Make 4.0 and newer, while 3.81 rejects the option
+outright, so which spellings reach a variable depends on the user's toolchain rather
+than on this contract. This is not a reserved-variable guard (appendix): a guard has
+to know what each flag does, while rejecting the whole shape needs to know nothing
+and closes the routes a guard would miss.
+
+**What it costs is one flag, `-e`.** The others have makefile routes, which is where
+a build-wide policy belongs anyway: `include other.mk` for `-f`, a plain assignment
+for `--eval=`, `MAKEFLAGS += -j4` for `-j` (verified on 3.81, where set inside an
+included makefile it still parallelises), and `force_recompile` for `-B`. Only `-e`
+has to be on the command line, and it hands the environment precedence over the
+`CXXFLAGS`, `CPPFLAGS` and `LDFLAGS` CmdStan's own makefiles assign, so it
+dismantles a build rather than configuring one. Nothing in the package passes an
+unnamed non-assignment entry today.
+
+<!-- contract -->
+
+**This applies to `cpp_options` on a build call**, meaning `cmdstan_model()` or
+`compile_stan_file()`, which share one implementation (§8), so a rule that held for
+only one of them would be bypassable by choosing the other. The distinction is
+between configuring a build and writing `make/local`, not between the two build
+entry points. <!-- /contract --> `cmdstan_make_local()` passes unnamed entries through verbatim
+(`R/install.R:332-333`) into a file, where `+=` is real and is not otherwise
+expressible. cmdstanr's own documented example (`man/install_cmdstan.Rd:137-142`) is
+this form:
+
+```r
+cpp_options <- list("CXX" = "clang++", "CXXFLAGS+= -march=native", ...)
+```
+
+That must keep working. `+=` there preserves an environment-provided `CXXFLAGS`
+where `=` discards it, and since `append = TRUE` is the default, repeated calls
+accumulate rather than clobber. On a build call every assignment is expressible as a
+named entry; in a makefile `+=` is not.
+
+**This is a prerequisite for the record, not adjacent to it.** The canonicalization
+§4 specifies is sound only under the rejection above, so the rejection has to land
+first.
+
+---
+
+## 4. Contract: the build record (#1238)
+
+<!-- contract -->
+
+A file beside the executable describing how it was built. JSON, named for the
+executable's own file name with a leading dot and `.cmdstanr.json` appended, so
+`bernoulli` is described by `.bernoulli.cmdstanr.json` in the same directory, and
+`bernoulli.exe` by `.bernoulli.exe.cmdstanr.json`.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**The name comes from the executable, not from `$model_name()`.** <!-- /contract --> The two agree in
+the ordinary case, which is why the difference is easy to miss, but `$model_name()`
+substitutes underscores for spaces (`R/model.R:273`) and the executable path does
+not. Measured: `my model.stan` compiles to an executable named `my model` while
+`$model_name()` returns `my_model`, so a directory holding `my model.stan` and
+`my_model.stan` yields two executables and, under a model-name scheme, a single
+record that the second build overwrites. A record path that is a function of the
+executable path cannot collide, and adoption has nothing but that path to work from.
+
+**The leading dot is because this is not a file users are expected to open.**
+`stan_build_info()` is the supported way to ask what an executable is (§1), so the
+record is an implementation detail, and hiding it on macOS and Linux keeps a project
+directory from filling with files nobody needs to read. Windows does not hide by
+naming convention, but it shows the same file either way, so the dot costs nothing
+there.
+
+JSON because `jsonlite` is already an import, a parse failure hands us one of §4's
+"unreadable" cases for free, and a text format makes bug reports, golden fixtures
+and our own debugging tractable. The name also stays clear of `.dep` and `.d`, which
+`make` and the C++ toolchain already claim in that directory.
+
+**Implementation trap:** `list.files()` defaults to `all.files = FALSE` and will not
+see the record. Anything enumerating files beside a model must opt in.
+
+<!-- contract -->
+
+**Scope: the record describes how the artifact was built, not what the model
+contains.** <!-- /contract --> That boundary is what keeps `format_version` tractable. Storing derived
+model metadata such as stanc's variable output would make every change in that
+output a record format change. It also settles proposals to hydrate `$variables()`
+or similar onto adopted models from the record: they are out of scope by
+construction.
+
+Both name and format remain revisable up to the release, so nothing outside the
+reader and the writer should depend on either.
+
+### What is recorded, and what is compared
+
+These are two different questions. **Recording** serves provenance and diagnosis:
+the record should describe the build completely enough to explain it, which is a
+weaker bar than reproducing it (§1). **Comparison** serves the rebuild verdict (§6),
+and a field belongs there only if it determines the artifact's observable behaviour
+and is not already determined by another compared field.
+
+<!-- contract -->
+
+**This table is the single statement of both.** <!-- /contract --> Prose elsewhere refers to it and
+must not restate it. A rule written in two places is a future inconsistency.
+
+<!-- contract -->
+
+| Field | Recorded | Compared | Notes |
+|---|---|---|---|
+| `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
+| `request.stanc_options_supplied` | yes | yes | as above |
+| `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction. Never compared as a list; whether an injection's effect is compared is decided per field like every other row, and the model name is the one that earns its own, below |
+| `request.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name; §3 rejects the `stanc_options` spelling, so this is the only source. The build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`), which carries both the raw value stanc was passed and the mangled one stanc compiled |
+| `request.include_paths`, effective | yes | **no** | the paths in force for the call drive re-resolution (§6): this call's at the constructor, the object's own at a guarded method, never the recorded ones (§5). The recorded value is provenance |
+| `reported_features` | yes | no | describes the binary; never a trigger (§1) |
+| `dependencies[].hash` | yes | yes | content hash; this is what identity means |
+| `dependencies[].built_from` | yes | no | where the file was at build time; provenance. The user header is the exception below |
+| `dependencies.user_header.built_from` | yes | **yes** | the one *dependency* path compared, because the C++ closure beneath it cannot be enumerated. `-I` flags decide the same resolution and are compared inside `cpp_options` above (§6) |
+| `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
+| `artifact` | yes | yes | hash of the executable this record describes |
+| `builder` | yes | yes | normalized installation path and version |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the build resolved, from `make -s print-TBB_BIN_ABSOLUTE_PATH print-TBB_LIB` run with the build's own `cpp_options`, so a `TBB_LIB` supplied on the call is seen (`get_cmdstan_flags()` runs flag-free and would miss it); a relative `TBB_LIB` is resolved against the directory `make` ran in. Recorded because Windows needs it at launch and only the build can determine it (#1261 consumes it; no verdict here turns on it). Not compared: every tracked route to it is compared already, through `cpp_options_supplied` or `make/local`'s hash, and the untracked ones (§6) move this field with nothing else moving |
+| `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
+| `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
+
+<!-- /contract -->
+
+Three consequences:
+
+**Recorded-but-not-compared is the ordinary case, not a list of exceptions.** The
+column says which, and it is not a short list. The default is not "everything in
+`request` is compared", and reasoning from that default is what produced the errors.
+
+<!-- contract -->
+
+**Origin is stored, not inferred.** <!-- /contract --> Within `stanc_options` the verdict compares the
+supplied list and not the injected one, and a merged list cannot be split back apart
+without knowing this version's injection rules, which is the reconstruct-after-the-
+fact fragility this design removes everywhere else. That holds even if no option can
+arrive by both routes. Origin decides which list a value is recorded in and nothing
+beyond that: whether an injected value's effect is compared is this table's
+question, and `stanc_name` above is the row where the answer is yes.
+
+One option can arrive by both routes today: cmdstanr injects `--filename-in-msg` as
+the real source path, and a caller may supply their own value, which wins untouched
+(§9). The flag is identical and the two must compare differently, since a
+path-derived injection would reintroduce path sensitivity while a user-typed string
+is a fixed value like any other. The rule does not depend on this case existing, and
+a future rejection that removes it takes nothing with it.
+
+**`--name` is compared as its own row because the build bakes it into the binary and
+nothing else compared pins it down.** Rename a source, its executable and its record
+together and every content hash still matches, while the binary goes on stamping
+the old name into every CSV it writes (`R/csv.R:873` maps that onto
+`fit$metadata()$model_name`), so the rename has to be a rebuild. The recorded value
+is the raw string stanc was passed, not the identifier stanc mangles it to (measured
+on 2.35 through 2.39, `my-model_model` compiles to `my_model_model` and
+`my.model_model` to `myx46model_model`), since reproducing a compiler's mangling in R
+would drift in the direction that does not rebuild. It does nothing for
+executable-only models, which §7 forbids from rebuilding.
+
+The two fields are built side by side rather than one recovered from the other.
+`R/model.R:673`, `:677`, `:693` and `:835` currently write into a single
+`stanc_options` variable, which would force the record to reconstruct the caller's
+input; accumulating injections into their own list instead makes both fields fall
+out of the code (§10).
+
+**What cmdstanr injects is itself build semantics.** The set is recorded rather than
+described here, so no list of injected options has to be kept correct in this
+document. That is a statement about the `_injected` field, which is never compared,
+and not about the injections themselves: whether the value an injection determines
+is compared is this table's question, and `--name` is the one that currently earns a
+row.
+
+<!-- contract -->
+
+**A change to which options cmdstanr injects does not rebuild anything already
+built.** An option a later cmdstanr adds can change the artifact while an old
+record's `_supplied` goes on matching, and nothing rebuilds. That is the intended
+answer: the caller asked for the same build they asked for before, and the new
+binary is theirs to ask for with `force_recompile = TRUE`. <!-- /contract --> The scheduled case is
+`--filename-in-msg` (§9), which makes runtime exceptions name the real source rather
+than a deleted tempfile copy; an executable built before it goes on naming the
+tempfile until something else rebuilds it, which is the price of leaving working
+models alone.
+
+<!-- contract -->
+
+CmdStan is not an exception to that rule. A CmdStan upgrade does rebuild, through
+`builder`, because the installation is a standing runtime dependency of the artifact
+rather than a fact about how it was built: the binary loads its TBB through an
+absolute rpath, by default into that tree (§6), and re-resolution invokes that
+installation's stanc (§6). <!-- /contract --> cmdstanr appears nowhere in the executable. It drives
+builds rather than forming part of one, so changing it changes what happens next
+rather than invalidating what already exists.
+
+**A release that changes what cmdstanr injects says so in NEWS.** Nothing else tells
+the caller: their models go on behaving as they did, and the entry says that
+`force_recompile = TRUE` is how to ask for the new build.
+
+**An injection that would make an existing artifact incorrect is outside both rules
+above rather than an exception to them.** Nothing cmdstanr injects is of that kind,
+and the scheduled addition is not either; `--filename-in-msg` changes which file a
+runtime exception names. What keeps the class closed is that a correctness fix to
+generated code belongs to stanc, and a CmdStan upgrade already rebuilds through
+`builder`. If a release ever needs one anyway, these are the rules it has to reopen,
+because a NEWS entry cannot make incorrect reuse safe.
+
+Only `stanc_options` has an injected row. With the user header built as a flag
+(§3), cmdstanr injects no C++ option at all, so a `cpp_options_injected` would be
+empty in every record 1.0 writes. If one ever appears it arrives with the field.
+
+**An injection nothing compares still applies.** `--name` is injected too, and its
+value is compared through `stanc_name` (above), so renaming a source does rebuild.
+`--warn-pedantic` is what is left, and for it the invariant is narrower than "a
+diagnostic always re-emits": asking for something you did not have before never
+yields nothing. A compared option satisfies that for free, since turning it on
+mismatches the record and rebuilds. An uncompared one cannot, and needs a mechanism
+of its own: §8 runs the check on a model that is already up to date.
+
+<!-- contract -->
+
+`pedantic = TRUE` and a supplied `--warn-uninitialized` therefore behave differently
+on an identical repeat, and that is right, because they are different kinds of
+thing. `pedantic` is a request scoped to the call, like `quiet`: it runs whenever it
+is asked for, and the way to stop the warnings is to stop asking for them.
+`--warn-uninitialized` is part of the build configuration, so it applies when a
+build happens and is otherwise quiet, which is what a C compiler does with `-W`
+flags against an up-to-date object file.
+
+<!-- /contract -->
+
+A third policy, running the check only when the recorded injections show pedantic
+was not already applied, is rejected (appendix): two identical calls would behave
+differently on the strength of a file the caller cannot see, and the reason to put
+`pedantic` in a script is to have the check run every time. Output the caller asked
+for runs whenever they ask, while output they did not ask for picks its moment,
+which is why §6's untracked-provenance note fires on writing a record rather than
+on every construction.
+
+**A general diagnostic classifier is refused.** Rerunning supplied `stanc_options`
+diagnostics on an up-to-date model would need cmdstanr to know which stanc flags are
+diagnostic-only, per CmdStan version, the per-option semantics this section declines
+below for canonicalization. What it buys is re-emitting warnings for a build nobody
+asked to repeat.
+
+<!-- contract -->
+
+**`--warn-pedantic` is rejected from `stanc_options`**, with an error naming
+`pedantic = TRUE`, matched on occurrence rather than by value (§3). <!-- /contract --> This is the
+one-channel rule of §3 and §6, and pedantic is the case where two channels would
+differ in kind rather than in spelling: `pedantic = TRUE` is injected and not
+compared, the same flag through `stanc_options` is supplied and compared, so one
+warns on every call and the other only on a build. The named `FALSE` has a second
+reason of its own: it emits nothing today (logical `FALSE` leaves a flag out, #1251)
+while `pedantic = TRUE` still injects, so it reads as a way to switch pedantic off
+and is not one.
+
+<!-- contract -->
+
+`filename-in-msg` stays supplyable: it has no dedicated argument and is
+caller-overridable (§9). `name` and `allow-undefined` do not, each being what
+another argument implies, the source file and `user_header` respectively (§3).
+
+<!-- /contract -->
+
+### The record's lifecycle follows the executable's
+
+<!-- contract -->
+
+Whatever ignores the executable ignores the record; wherever the executable goes,
+the record goes with it. <!-- /contract --> One rule, which answers the cases below and the ones nobody
+has thought of yet. It is also why the pair is hash-bound in the first place (§4): a
+record without its executable describes nothing, and an executable without its
+record is unprovenanced.
+
+**In practice that means `.gitignore`**, because a Stan executable is a
+platform-specific build artifact that almost nobody commits. Add `.*.cmdstanr.json`
+beside whatever already excludes the binary. The leading dot makes this easy to
+forget: it hides the file from `ls`, not from git, so `git add -A` commits it.
+
+Committing a record beside a disposable executable is worse than having none. It
+holds a hash of a binary that does not exist on the machine checking it out and an
+absolute path to the CmdStan installation that built it, so it fails validation and
+rebuilds anyway, having produced a diff on every rebuild in the meantime.
+
+**`.Rbuildignore` follows the same rule**, and is the easier one to miss. `R CMD
+build` excludes hidden files by a fixed list (`tools:::.hidden_file_exclusions`), not
+by leading dot, so this name is not covered: a package author who compiles in a
+source tree ships records inside the tarball describing their own machine. Exclude
+the executable and the record together.
+
+**Where the executable is kept on purpose, keep the record with it**: a CI job
+passing a built binary to a later job, a container layer, a shared build directory.
+Any staging step that copies one must copy both. These cases are real but uncommon,
+and instantiate is not one of them: it compiles on the user's machine at install
+time, so the record is generated locally beside a binary that was never in git or
+in the tarball.
+
+<!-- contract -->
+
+**Losing a record never corrupts the executable**, but it is not harmless, and the
+three cases differ:
+
+- Source-backed construction rebuilds and writes a new record (§6). One compile.
+- An already-constructed source-backed object errors on any guarded operation (§5),
+  because assessment reads the filesystem each time and the record is gone. The
+  remedy is `cmdstan_model()` again, not `force_recompile`.
+- Executable-only adoption continues with reduced provenance (§7). It is the only
+  case that keeps working without a record, and the only one where the loss is not
+  recovered by rebuilding.
+
+<!-- /contract -->
+
+What is never lost is the binary itself, and `<exe> info` still reports its flags in
+all three.
+
+<!-- contract -->
+
+**cmdstanr writes neither ignore file itself.** <!-- /contract --> Compiling a model should not modify
+a user's repository configuration; the recommendation belongs in documentation.
+
+**This repository needs the patterns too, before Stage 3 writes anything.**
+`tests/testthat/resources/stan/.gitignore` enumerates fifteen compiled binaries by
+hand and is already behind; four models there have no entry. Every compiled test
+model will add a record, so replace the enumeration with patterns rather than
+extending it.
+
+### Binding the record to its executable
+
+<!-- contract -->
+
+**The record must contain a hash of the executable it describes.** <!-- /contract --> Atomic
+replacement of the record alone does not bind the pair:
+
+```
+process A installs executable A
+process B installs executable B
+process B writes record B
+process A writes record A
+final state: executable B + record A
+```
+
+A crash between the two installations produces the same result, and the current
+code already acknowledges a crash window when replacing an executable: *"A crash
+between renames may leave only the backup"* (`R/utils.R:267-272`). Hashing a CmdStan
+binary measured **8.5 ms**, against 28.6 ms merely to spawn `<exe> info`, so cost is
+not an argument against it.
+
+The hash also detects manual replacement and ordinary corruption, cheaply.
+
+<!-- contract -->
+
+**Installation is a transaction:** build and stage both artifacts, install the
+executable, install the record, then verify the pair. **Any failure, including a
+successful record install whose pair verification then fails, restores both the
+previous executable and the previous record**, leaving a consistent pair rather
+than a new artifact with old provenance. <!-- /contract --> Treating a record-write failure as
+non-fatal but visible would be incompatible with §5, since an executable without a
+valid record is immediately unusable.
+
+<!-- contract -->
+
+**Concurrency is out of scope for v1.** <!-- /contract --> The hash fixes crash-created and sequential
+mismatches. It does not fix active concurrency: process A can validate executable
+A, process B can replace it, and A then launches B. That is a TOCTOU race, and no
+claim of correctness under concurrency is made here. <!-- contract -->Concurrent compilation or use
+of one destination is unsupported; locking is tracked separately. <!-- /contract --> #1025 is a related
+proposal to give the unit tests independent workspaces. It is open, and scoped to
+the test suite rather than to user models, so it does not answer this, but a lock
+would be a second concurrency strategy beside it and the two should be decided
+together.
+
+### The bug this fixes
+
+`R/model.R:732-733` asks Make's question:
+
+```r
+file.mtime(exe) < file.mtime(self$stan_file())
+```
+
+Exe versus source, correct only if mtimes move monotonically forward. Extracting a
+project tarball over an existing build:
+
+```
+source content is now DIFFERENT
+exe mtime : 2026-08-27 10:19:38.476
+stan mtime: 2026-03-15 09:00:00.000
+exe < stan (rebuild?): FALSE   <-- no rebuild
+```
+
+cmdstanr reports "up to date" and runs the old binary against the new source.
+`tar -x`, `unzip`, `cp -p`, `rsync -a` and backup restores all reach this.
+
+The fix is not "hash instead of mtime". It is to compare against the record instead
+of against the artifact.
+
+### Hashes rather than mtimes
+
+Once the comparison is against the record, a stored mtime is defensible and fixes
+the case above. What hashing adds is the false-positive column:
+
+| | false negative (stale binary) | false positive (spurious rebuild) |
+|---|---|---|
+| exe vs. source mtime (today) | **easy** | rare |
+| recorded vs. source mtime | needs mtime restored to the exact recorded value | branch round-trip, `touch`, cloud sync |
+| recorded vs. source hash | none *within tracked files* | none |
+
+The hash row is bounded by what is tracked. Toolchain drift and the untracked
+dependencies in §6 are false negatives by construction, not defects in the
+comparison.
+
+The false-positive case is ordinary: the Stan file is in git, the executable is a
+gitignored artifact beside it, and a branch round-trip leaves identical content
+with a fresh mtime. Measured on six realistic source files: **0.04 ms** to stat,
+**0.31 ms** to hash. 0.27 ms against a rebuild measured at **6.7 s** for
+`bernoulli.stan` with precompiled headers enabled and **13.8 s** without.
+
+**Treat that as a floor, not a typical figure.** It is a trivial model on one fast
+machine; a program with many user functions, ODE solves or a large generated
+quantities block is substantially slower, and Windows differs. Every argument in
+this document that weighs a check against a rebuild is of the form "the check is
+free next to the compile", so anchoring low is the safe direction. Those arguments
+hold *a fortiori* at larger values, and none of them depends on the number.
+
+Ninja uses mtime because it stats tens of thousands of files per invocation. We
+stat about six.
+
+### The record is parsed into an object, and compared as one
+
+JSON is how the record is stored, not how it is reasoned about. Reading one yields a
+structured R object, and the call assembles a second one from what it was asked
+for, so deciding whether to rebuild is a field-by-field comparison over the fields
+§4 marks compared, not text matching or a single equality test. The two are not the
+same shape and do not need to be: the record carries `format_version`, which the
+call has no counterpart for and never computes (§4). That is what lets §6 report
+every evaluable reason instead of the first, wherever there is a usable record to
+compare against, and it is why the rules below are per field.
+
+The object model is what delivers the comparison and the reasons; the format is
+only how bytes reach disk. JSON earns its place there on different grounds. A parse
+failure is one of the "unreadable" cases §4 needs, and getting it from `jsonlite`
+leaves the `format_version` check and the reader's own field checks to write by
+hand. RDS would round-trip R types exactly, which would remove the tri-state hazard
+in §10 for free, but at the cost of an opaque binary beside the user's model and a
+second forward-compatibility surface under our own. Not worth it while the tri-state
+property is testable.
+
+<!-- contract -->
+
+**What the reader cannot use, it rejects as unreadable rather than working with.** A
+file that parses as JSON is not yet a record (§6). Every field the format requires
+is checked for type and shape before the record is accepted, `builder`'s version
+against the grammar §7 defines since a string that is not a CmdStan version is the
+wrong shape rather than an odd value, and a record failing any of those checks is
+unreadable whole: nothing in it is used and nothing in it is reported, including a
+`format_version` that parsed perfectly well. <!-- /contract --> How that checking is written is the
+implementation's to choose; how far it reaches is not. Checking only the fields the
+caller at hand happens to need is what leaves one record adoptable by
+`cmdstan_model()` and unavailable to `stan_build_info()`.
+
+<!-- contract -->
+
+**`reported_features` is checked for shape and never for membership.** <!-- /contract --> §1 makes an
+absent key mean unknown, so requiring the four flags CmdStan reports today would
+make a record written by a CmdStan that stopped reporting one unreadable, rebuilding
+every model it built that has a source and stripping the provenance from every one
+that does not (§6). The set has already moved once (§1), and it is the one field
+whose contents are the binary's to decide rather than the format's.
+
+<!-- contract -->
+
+**The version is checked first, and on its own.** Reading a record has two steps,
+and the first decides whether the second means anything: `format_version` is
+validated by itself, and only a version this cmdstanr reads sends the reader on to
+the remaining fields. A record written in a format we do not read is never measured
+against the current schema, because we do not know what that version required. It
+reports `unsupported_format` and the version it read, and nothing else from the
+record. The executable's own `reported_features` still come back, as §8 requires of
+every unavailable provenance. <!-- /contract --> The rule above governs the records we claim to
+understand.
+
+### Canonicalization is per-field
+
+<!-- contract -->
+
+A single "sort and last-wins-deduplicate" rule is wrong. The correct rules differ:
+
+- Named Make assignments: canonical by the time anything compares them (§3), so
+  comparison is a literal match rather than a case-folding one; last assignment
+  wins, then sort by name.
+- Include paths: preserve order. Order controls shadowing, so a record that
+  reordered them would misdescribe the build. A recording rule only; see §4's table
+  for whether it is compared, and §6 for what the verdict resolves with.
+- Stanc options: compare the argument vector the options emit, not the R list.
+  `stanc_options_to_args()` already computes it, and it collapses the two accepted
+  spellings at no cost: `list("O1")` and `list("O1" = TRUE)` both become `--O1`, so a
+  model built one way is not rebuilt by the other. Order is preserved, so a
+  reordered list rebuilds. <!-- /contract --> This rule declines per-option semantics in both
+  directions: normalizing the order away would need to know that no two flags settle
+  one setting between them, and canonicalizing semantic equivalence would need to
+  know which two flags mean the same thing. stanc has a live instance, `--O` being an
+  alias for `--O1` from 2.37 on, so `list("O")` and `list("O1")` rebuild each other
+  for nothing. The Make assignments above sort for a reason that needs neither: once
+  §3 leaves only `=` reachable, order decides duplicates and nothing else, and
+  last-wins resolves that without consulting any variable's meaning. What declining
+  the sort costs is small: on 2.39.0 `--O1 --O0` and `--O0 --O1` both generate the
+  code plain `--O0` does, so a reorder rebuilds to produce identical C++ but for the
+  `stancflags` string stanc stamps into the binary. A spurious rebuild is the safe
+  direction, and nothing in cmdstanr reorders a caller's list, so this one is
+  reached only by a deliberate reorder. <!-- contract -->
+- User-header paths: normalise. This is the one path that is also compared (§6), so
+  normalisation here affects the verdict rather than only the record's readability.
+- `NULL` / `FALSE`: preserve the explicit empty-assignment meaning (§3).
+
+<!-- /contract -->
+
+### Format versions
+
+<!-- contract -->
+
+**1.0 reads only the format it writes.** A record carrying any other
+`format_version` is an artifact-side reason, and says so, like an executable that
+predates records: a rebuild where there is a source to rebuild from and a loss of
+provenance where there is not, which is §6's split and not this rule's. It is not
+refused and does not require `force_recompile`. The reason is reported as
+`unsupported_format`, kept distinct from an unreadable record (§6), and the message
+says which way the mismatch runs, since a downgrade regenerates old-format records
+and a later cmdstanr can then meet one it no longer reads:
+
+```
+#> Recompiling: this model's build record was written by a newer version of
+#>   cmdstanr (format 3; this version understands 2), so how the existing
+#>   executable was built cannot be verified.
+```
+
+<!-- /contract -->
+
+The number is not written down here. Stage 3 starts writing records, so a literal
+in this section would have to be kept in step with a value only the merging pull
+request knows (§9).
+
+<!-- contract -->
+
+**Executable-only models are the exception**, because §7 forbids rebuilding them.
+The record is not replaced there: an unsupported version joins missing, unreadable
+and hash-mismatched in leaving the executable unprovenanced, and it stays on disk.
+
+<!-- /contract -->
+
+---
+
+## 5. Contract: when validation happens
+
+Specifying rebuild triggers is not enough; the design must say when they are
+checked and what each caller does about them. Today `$format(overwrite_file = TRUE)`
+rewrites the Stan file (`R/model.R:1293`) and updates cached source and variables
+(`:1309-1311`) but leaves the executable untouched, and an external editor does the
+same. The object can then show new Stan code while `$sample()` runs the old binary.
+
+### Assessment is separate from what the caller does about it
+
+<!-- contract -->
+
+One operation answers one question, *is this executable current?*, and it **never
+compiles and never mutates state.** Callers differ:
+
+| Caller | On a trigger |
+|---|---|
+| `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
+| any operation that runs or derives state from the binary | **errors** |
+
+<!-- /contract -->
+
+These are one assessment with two responses, not two contracts. Stating them as one
+contract is what makes §5 and §6 look like they disagree.
+
+### What the assessment is given
+
+<!-- contract -->
+
+**Two arguments: what this caller expects, and what is on disk.** <!-- /contract --> The expected side
+is where the callers differ, and that difference is what lets an object notice its
+executable was replaced (§2).
+
+<!-- contract -->
+
+| | at `cmdstan_model()` | at a guarded method |
+|---|---|---|
+| **expected** | the options this call supplied | the object's own snapshot: the options it was built with, and the artifact hash it was built against |
+| **observed** | the executable's hash, the record beside it, and either the source hashes resolved with this call's include paths or a statement that they were not resolved | the same, resolved with the object's construction-time paths (§4) |
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**Only the object's own snapshot catches a replaced executable.** <!-- /contract --> §2's
+single-configuration cache lets the most recent compile own the executable and the
+record beside it, so once another call or process rebuilds, the pair on disk is
+self-consistent and describes a program this object never saw. The path is
+unchanged, the file exists, and the record's `artifact` hash matches the binary it
+now sits beside, which is the bond it exists to prove (§4). <!-- contract -->Nothing on disk
+disagrees, so the disagreement has to be carried in. For an executable-only object
+that carried-in hash is the whole check (§7).
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**Resolving the sources is the caller's work.** The engine compiles nothing, reads
+nothing and mutates nothing, which is what lets §9 build and test it before anything
+calls it, so `observed` arrives already hashed, or, on the one path §6 skips
+re-resolution, saying so. The include paths come from the expected side, so
+`observed` cannot be assembled until the caller knows which column it is in.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**A re-resolution that fails is an error, not a verdict.** `stanc --info` can fail:
+a syntax error in the program, an include that does not resolve under the paths in
+force, a stanc that will not run. The caller then has nothing to hand the engine,
+and the engine is not called. At `cmdstan_model()` and at every guarded method alike
+the failure is raised as an error carrying stanc's own message, so nothing runs and
+nothing rebuilds. <!-- /contract --> Rebuilding would be wrong twice over: the build's own stanc call
+fails at the same point, and a program stanc rejects is the user's to fix. Nor is it
+a third engine state. The engine sees resolved hashes or a statement that resolution
+was skipped (above), and a failed resolution is neither, because it never reaches
+the engine. Tests: a constructor and one guarded method, each against a program
+whose include is missing, both erroring with stanc's message and neither
+rebuilding.
+
+### What the error says
+
+<!-- contract -->
+
+**Not `force_recompile = TRUE`.** Everything the assessment detects, the constructor
+already fixes: a changed source or configuration, a corrupt or missing record, an
+executable that does not match the record it sits beside. <!-- /contract --> Naming any of those as a
+reason to reach for the flag is circular, since a plain `cmdstan_model(...)` is the
+fix. For an executable-only model it cannot help at all, because there is no source
+to rebuild from.
+
+<!-- contract -->
+
+Reserve `force_recompile` for what nothing we compare can see: distrust of the
+artifact, and a change to one of the untracked dependencies below, meaning
+toolchain drift, CmdStan or Stan Math modified in place, headers reached
+transitively through `USER_HEADER`, a `make/local` that includes another makefile,
+and Make variables set in the environment. <!-- /contract --> Those are the cases where the
+assessment is right that nothing it tracks has changed and wrong about the
+conclusion.
+
+It has one other legitimate use, of a different kind. A cmdstanr release that
+changes what it injects leaves existing executables alone (§4), so the flag is how
+a caller opts into the new build. The assessment is not wrong there, since not
+rebuilding is the intended answer, which is why this is stated separately rather
+than added to the list above.
+
+Erroring rather than rebuilding is the point. A compile appearing unexpectedly
+inside `$sample()` is worse than an actionable message whatever it costs. The
+objection is that the caller asked to sample and did not ask to build, and that the
+latency is unpredictable, not that the number is large.
+
+### Scope and cost
+
+<!-- contract -->
+
+**Guard every operation that executes or derives state from the binary**, not only
+the fitting methods. <!-- /contract --> "At least" is not implementable, so the full public surface is
+classified here. Three counts are involved because the surface moves underneath the
+table. `CmdStanModel` carries twenty-seven public methods and one public field
+today and twenty-seven at 1.0 (§3 adds `$user_header()`, §8 removes `$compile()`),
+while the table below has twenty-eight method rows, being the union of both. It
+classifies the removed member rather than omitting it, so no count is wrong; they
+answer different questions and the test below depends on which one it asks. The two
+build entry points are listed for their behaviour and neither is a member of the
+class.
+
+The completeness claim should be enforced: `CmdStanModel$public_methods` and
+`$public_fields` enumerate the live surface, so a test can compare it against the
+twenty-seven non-removed method rows and the one field, and fail on any member that
+appears without a classification, asserting `$compile()`'s absence separately.
+Otherwise this table decays the first time someone adds a method, which is the
+failure the `$initialize()` and `$clone()` entries below already guard against by
+hand.
+
+**Every member is exercised, not one per class.** A representative passing proves
+nothing about the other nine guarded methods, each of which can be classified
+correctly here and still run a stale executable. Call each guarded method against a
+stale model with no other arguments: if validation runs first every one of them
+fails with the staleness error, while a method that validates late fails with a
+missing-argument complaint instead. So the matrix checks ordering rather than only
+presence, and none of the ten get far enough to need MPI, data or an algorithm. The
+must-nots carry equal weight and cost the same, since guarding `$format()` or
+`$code()` is the regression this section argues against. `$initialize()` is
+excluded for the reason given below; `$clone()` is called and asserted not to error.
+
+<!-- contract -->
+
+| Behaviour | Members |
+|---|---|
+| **Validate, and error on any trigger** | `$sample()`, `$sample_mpi()`, `$optimize()`, `$laplace()`, `$variational()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`, `$cmdstan_defaults()`, `$expose_functions()` |
+| **Rebuild, printing every reason** | `cmdstan_model()` itself, the constructor. `compile_stan_file()` is the other build entry point, but returns a path rather than a model |
+| **Snapshot of the built model; no validation** | `$code()`, `$variables()`, `$print()`, `$functions` |
+| **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()`, `$user_header()` |
+| **Operates on source, not the binary; no validation** | `$check_syntax()`, `$format()` |
+| **Generated C++, part of the snapshot; no validation** | `$hpp_file()`, `$save_hpp_file()` |
+| **R6 plumbing; no validation** | `$initialize()`, `$clone()` |
+| **Removed** | `$compile()` (§8) |
+
+<!-- /contract -->
+
+Two entries need their reasoning stated.
+
+**`$check_syntax()` and `$format()` never touch the executable.** They run `stanc`
+against source. Validating there would demand a current binary in order to answer a
+question the binary is irrelevant to, and would make a syntax check on a model whose
+executable is stale fail for the wrong reason.
+
+<!-- contract -->
+
+**Functions exposed by `$expose_functions()` are a snapshot, like `$code()`.** <!-- /contract --> The
+validation happens at exposure; the resulting entries in `$functions` are plain R
+bindings over separately compiled code, not the CmdStan binary, and re-validating
+on every call is neither practical nor meaningful. <!-- contract -->A recompile drops them and they
+must be exposed again, which is the behaviour #1228 established. <!-- /contract --> The `$functions`
+field itself is classified with them, for the same reason.
+
+**`$initialize()` and `$clone()` are R6 plumbing**, listed because an unlisted
+member is indistinguishable from an overlooked one. Neither is guarded.
+`$initialize()` is the constructor: it is reached through `cmdstan_model()`, nothing
+in cmdstanr calls it on a live object, and no supported workflow calls it directly.
+Invoking it a second time would retarget private state, but writing a guard for
+that is error handling for a case nobody arrives at.
+
+`$clone()` copies state and derives nothing from the binary. One note, because it
+looks like a defect until it doesn't: `functions` is an environment (`R/model.R:264`)
+and there is no `deep_clone` method, so a clone shares that environment with the
+original and exposing functions on either is visible on both. That is safe because
+§8 makes the binding to the executable immutable, not the object itself;
+`$expose_functions()` is one of the things that goes on mutating state after
+construction. Through the supported API the two objects describe the same
+executable permanently and cannot diverge, so a shared exposure is valid for both.
+A direct `$initialize()` call could retarget one of them, which is the unguarded
+case above, and it is not defended against here either.
+
+<!-- contract -->
+
+**The `$exe_file(path)` setter is removed** (`R/model.R:365-370`). <!-- /contract --> It assigns
+`private$exe_file_` with no validation, no snapshot refresh and no provenance
+update, so under this design it would leave an object holding a record that
+describes a different binary, the pairing §4 exists to prevent. <!-- contract -->The getter stays
+and must keep not erroring (§1). Retargeting is done by constructing a new object,
+which is the same answer §8 gives to the rest of the mutable-configuration surface. <!-- /contract -->
+Its only call site is `test-model-compile.R:1535`, in a test built on
+`compile = FALSE`, so that call retires with it. The test covers a guard that stays,
+since `dir` still resolves onto a directory, so it is rewritten rather than dropped.
+Folded into #1253.
+
+Cost is about 8.8 ms: source hashes plus the executable hash, which dominates. A
+figure counting only the sources comes out at 0.3 ms and understates it. If include
+re-resolution runs here too (§6) add about 30 ms. Still negligible against a
+sampling run.
+
+### The verdict is not state, and must not be stored as state
+
+<!-- contract -->
+
+Assessment reads the filesystem each time it is asked, and its answer is good only
+for that moment. <!-- /contract --> That matters most where a model object outlives the machine that
+built it, which is not hypothetical: brms keeps a whole `CmdStanModel` in
+`attributes(fit$fit)`, so a saved `brmsfit` carries our object, and its recorded
+absolute paths, to wherever the fit is next opened.
+
+That case needs nothing extra. Where the executable is absent the assessment fails
+and the operation errors; where a different executable sits at the same path, the
+object's expected artifact hash catches it rather than running the wrong binary. Not
+the record's hash: that one proves the record and the executable belong together
+(§4), and after a rebuild they do. Both fall out of the contract above.
+
+What would break it is memoization. The cost above is the number someone later
+decides to cache on the object, and a cached verdict is right within a
+session and wrong the moment the object is deserialized somewhere else. That failure
+is silent and looks like a caching bug rather than a violated contract, so it is
+prohibited here while the reason is still visible.
+
+One knock-on for consumers. brms currently decides whether to rebuild by reading
+`$exe_file()` and calling `file.exists()` on the result
+(`brms/R/backends.R:377-383`), which is how a relocated fit gets recompiled before
+anything asks us for a verdict at all. That code is ours to change, so it is not a
+constraint on #1253. <!-- contract -->What must hold is that a caller can ask whether a usable
+executable exists without triggering an error. `$exe_file()` provides it, and the
+table above settles that it stays a plain accessor that never errors. <!-- /contract --> A public form
+of the assessment may be added later for callers wanting a fuller answer; that would
+not change the accessor's contract. What is ruled out is leaving no way to ask.
+
+### Introspection is a construction-time snapshot
+
+<!-- contract -->
+
+Pre-operation validation does not make cached introspection safe: `$code()` and
+`$variables()` can still be stale after an external edit. The rule is that they
+describe the source the executable was built from, not the file as it is now.
+
+<!-- /contract -->
+
+That is the more correct answer. `$code()` returning the current file would show
+code the binary does not have. It also does not undo #1228, which was staleness
+after a recompile; a snapshot as of the last compile fixes that case.
+
+<!-- contract -->
+
+**The snapshot must be captured eagerly, or it is not a snapshot.** <!-- /contract --> `$variables()`
+parses from disk on first call (`R/model.R:1041`), so an edit made before that first
+call would return information about the new source while claiming to describe the
+built one. Worse, the result depends on call history: the same object, after the
+same edit, answers differently depending on whether anyone happened to ask before
+the edit. `$code()` is already eager (`R/model.R:272`), so today the two accessors
+can describe two different versions of the program.
+
+**Construction is the right moment, and the call is already being made.** It is the
+one instant when the source and the executable are guaranteed to agree, since the
+constructor has just either rebuilt or verified the hashes, and the object's binding
+to that executable cannot change afterwards (§8), so the snapshot cannot go stale
+relative to it. §6 also already invokes `stanc --info` there to re-resolve includes,
+and a single call returns both things:
+
+```
+inputs, parameters, transformed parameters, generated quantities,
+functions, distributions, included_files
+```
+
+So for a model with includes this is one call doing two jobs rather than a new
+cost. A model without includes pays one 30 ms stanc call at construction that it
+would otherwise have paid on first `$variables()`: earlier, not extra, and anyone
+who samples pays it regardless, since `$sample()` calls `$variables()` to validate
+data (`R/model.R:1409-1412`).
+
+<!-- contract -->
+
+**The model's generated C++ is part of the snapshot, for the same reason.** <!-- /contract --> The build
+runs stanc a second time, without make, to produce it (`R/model.R:848`), and that
+text is what `fit$init_model_methods()` compiles the model methods from and what
+`$hpp_file()` points at. Neither consumer can validate: a fit copies the text at its
+own construction and has no engine, and the file is a path. Today neither exists on
+the reuse path. `fit$init_model_methods()` errors "cannot be used with a pre-compiled
+Stan executable", asserted by `test-model-methods.R:108`, `$hpp_file()` errors
+"Please (re)compile", and the roxygen for both names `force_recompile = TRUE` as the
+way round. <!-- contract -->Under this design the constructor generates the C++ on both paths, from
+the source it has just verified and with the include paths and stanc flags it has
+just compared, so a fit from a reused executable holds the same text a fit from a
+fresh build holds, and an edit after construction cannot reach it. <!-- /contract --> It is the call the
+build branch already makes, made before the branch instead of inside it. The reuse
+path pays one more stanc run, measured on 2.39.0 as a median of five: 28 ms against
+28 ms for `--info` on the 11-line bernoulli model, 112 ms against 54 ms on an
+807-line model with 400 parameters. <!-- contract -->With only an executable (§7) there is no source
+to generate from, and `$hpp_file()` says so, like `$code()`. The standalone-functions
+C++ is not in the snapshot: its one consumer, `$expose_functions()`, is guarded and
+validates at the moment of use, so §8 has it generated on demand.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**`$format(overwrite_file = TRUE)` must stop refreshing the cache**
+(`R/model.R:1308-1312`). <!-- /contract --> It rewrites the Stan file and then reassigns `stan_code_`
+and clears `variables_`, which makes both accessors describe a source the executable
+was never built from, #1228's failure in the opposite direction. Both lines were
+written under the older contract where `$code()` meant "the file as it is now"; the
+accessors have since been redefined and this has not caught up.
+
+**The two lines are not the same age, and the difference decides a NEWS entry.** The
+`variables_` clear is #1235's, written and reverted inside the unreleased window, so
+`NEWS.md:94` goes with it and no user upgrading from 0.9 ever saw it. The
+`stan_code_` reassignment is commit `1719851e` from April 2022 and shipped in 0.7.0
+through 0.9.0, so removing it changes released behaviour and owes an entry of its
+own. `NEWS.md:94` describes both in one sentence, so deleting it as a stale
+unreleased entry would take the released half down with it.
+
+Removing those lines is the whole fix. <!-- contract -->**`$format()` is kept, overwriting included**<!-- /contract -->:
+rewriting the file is the useful part and is not what breaks anything. With the
+refresh gone, the file changes, the snapshot keeps describing the built source, the
+Stan file's content hash no longer matches, and the next operation that runs the
+binary errors and points at `cmdstan_model()`. <!-- contract -->So **reformatting forces a
+recompile**, which is correct: the bytes changed, and whether the build is
+unaffected cannot be known without doing it. <!-- /contract --> No warning is needed, because §5
+already says this about external edits and formatting is only an edit cmdstanr
+performs on the user's behalf.
+
+Capturing the source information costs nothing extra: the assessment already
+invokes `stanc --info` for include resolution (§6), and the same output carries the
+variables. The assessment returns parsed source information; the constructor commits
+it as the object's snapshot after a successful validation or rebuild, alongside the
+generated C++ above.
+
+---
+
+## 6. Contract: when a rebuild happens (#1019)
+
+<!-- contract -->
+
+A rebuild is triggered by `force_recompile = TRUE`, or when any field §4's table
+marks **compared** differs from what this call computes. Which fields those are is
+§4's to say. <!-- /contract --> The dependencies among them are the Stan program, its resolved
+includes, the user header and `make/local` (§8 carries the shape), named here only
+so this section can be read without holding the table open.
+
+<!-- contract -->
+
+Or when the record cannot be used at all:
+
+- the executable does not match `artifact`: replaced by another process, or corrupt
+- the record is missing, unreadable, or written in a format version this cmdstanr
+  does not read
+- the executable predates build records, so there is nothing to compare
+
+<!-- /contract -->
+
+These are artifact-side: reasons the record cannot be relied on, rather than
+reasons the inputs changed. They belong in the same contract because the response
+does not turn on which of them fired. Say why, and stop trusting the record.
+
+<!-- contract -->
+
+**Rebuilding takes a source, which is where the two model kinds part.** A
+source-backed model rebuilds on any of the reasons above, and it is the same rebuild
+whichever one fired. An executable-only model (§7) has nothing to rebuild from, so
+the same reasons put it on §7's adoption path instead, and what happens there is not
+settled by the record having failed: with a valid version from `<exe> info` it
+constructs explicitly unprovenanced, reporting what the binary says about itself and
+nothing about how it was built, and without one adoption errors. <!-- /contract --> Those are the
+second and third rows of §7's table. The split belongs to the class rather than to
+any member of it, so it is stated here and the individual reasons point at it.
+
+<!-- contract -->
+
+**`include_paths` is absent from §4's compared column on purpose.** <!-- /contract --> Comparing it as
+a spelling would reintroduce path sensitivity for every model that has an include:
+renaming a working directory would rebuild through a different field, for the
+population content identity exists to serve.
+
+<!-- contract -->
+
+It does not need comparing, because its whole effect is which files it resolves,
+and that is checked directly: re-resolution runs `stanc --info` and compares the
+resulting sequence of content hashes against the record. A change to
+`include_paths` that alters what resolves rebuilds; one that alters nothing does
+not.
+
+<!-- /contract -->
+
+**That argument requires `include_paths` to be the only way paths reach stanc, so
+it is made the only way.** stanc accepts `--include-paths` repeatedly and
+accumulates the paths on every supported version but 2.37, which refuses the repeat
+(§3 measures the search order), and four cmdstanr channels reach the build's stanc
+invocation:
+the `include_paths` argument (`R/model.R:832`), `stanc_options` (`:837`),
+`make/local`'s `STANCFLAGS` (`:839`), and `STANCFLAGS` set through `cpp_options`,
+which arrives as a `make` command-line assignment that cmdstanr's own
+`STANCFLAGS +=` appends to rather than replaces (confirmed in a built binary's
+embedded `stancflags` string). Only the first reaches `model_variables()`
+(`:2668`), the `stanc --info` call re-resolution is built on, so a path supplied
+through any of the others resolves for the build and nowhere else. That is a live
+defect in released cmdstanr, independent of this design: a model built through
+`stanc_options` compiles and then fails on `$sample()`, which calls `$variables()`
+for every source-backed model (`:1410`).
+
+<!-- contract -->
+
+**`include_paths` is therefore the only accepted channel**, and the rest are
+rejected with an error naming it: `--include-paths` in `stanc_options`, matched on
+occurrence (§3); `--include-paths` in the effective `STANCFLAGS`, below; and
+`STANCFLAGS` in `cpp_options` outright, since `stanc_options` is the channel for
+stanc flags and a raw make-variable passthrough only duplicates it. In the
+`STANCFLAGS` case detection is a substring test, not a parse: an element containing
+`--include-paths`, or beginning with `-I`, the flag's short spelling from 2.38 on
+(`-I DIR` and `-IDIR` both resolve, measured on 2.39, and no other stanc option
+begins with `-I`). We never interpret the comma lists, quoting or separator forms,
+only refuse them.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**The `STANCFLAGS` check reads what Make resolved, not what `make/local` says, and
+runs at build time only.** <!-- /contract --> `make/local` may include another makefile, a pattern
+CmdStan's own `make/local.example` suggests (below), so scanning the file misses
+any flag arriving that way. Measured, the
+file reads `include $(HOME)/.config/stan/extra.mk` while `make -s print-STANCFLAGS`
+returns `--include-paths=/sneaky/inc`. `get_cmdstan_flags("STANCFLAGS")` already
+asks Make on every compile (`R/model.R:839`); the check reads that value and
+nothing records it. Build time is the only moment it matters: a change to
+`make/local` itself is a rebuild trigger (§4), and what an included makefile sets is
+untracked (below), like every other Make variable that reaches the build from
+outside cmdstanr. The message names `make/local` as where the chain starts rather
+than as where the flag sits, since sending the user to a file the flag does not
+appear in is worse than naming no file at all. Which makefile assigned it is the
+parse this rule declines.
+
+**The other scan of `make/local` below is not this one.** The `make_local_include`
+detector asks whether the file reaches beyond itself, so it reads the raw text; run
+against the effective value it would find nothing, because by then the include has
+already happened. One scan asks what Make ended up with, the other how it got there,
+and unifying them disables the detector.
+
+<!-- contract -->
+
+**The two rejections differ in scope, and should not be unified.** `cpp_options` is
+a cmdstanr argument, so the whole variable goes. `make/local` is CmdStan's own
+configuration file (`make/local.example:20` ships `STANCFLAGS+= --warn-pedantic` as
+a suggested line), so only the include-path flag is refused from its `STANCFLAGS`,
+not the variable. <!-- /contract --> The check on `cpp_options` belongs in
+`assert_valid_cpp_options()` (§3, #1250), which `cmdstan_make_local()` does not call
+(`R/install.R:324-338` builds its flags inline), so writing `STANCFLAGS` into
+`make/local` through the supported function stays possible. A `--warn-pedantic`
+left there is fine and is not the case §4 rejects: it asks to warn whenever CmdStan
+builds, and that is what it does. §4 refuses the per-call spelling, where silence on
+an up-to-date model would contradict the request.
+
+<!-- contract -->
+
+**A flag the call emits wins over the same flag in `make/local`'s `STANCFLAGS`.** <!-- /contract -->
+cmdstanr reads the resolved value itself and appends it to its own flags for the
+make invocation and the direct stanc calls alike (`R/model.R:839-843`), so every
+flag reaches stanc through one vector cmdstanr assembles, and a flag present in the
+call and in `make/local` is a repeat cmdstanr created. What stanc does with a repeat
+depends on the version, so it cannot be left to stanc. Measured:
+
+| stanc | valued flag repeated (`--name`, `--filename-in-msg`) | boolean flag repeated (`--O1`, `--warn-pedantic`) |
+|---|---|---|
+| 2.35, 2.36 | accepted; `--name` last wins, `--filename-in-msg` puts both names in the C++ | accepted silently |
+| 2.37 | refused, `option '--name' cannot be repeated` | refused |
+| 2.38, 2.39 | refused | warning, duplicate ignored |
+
+The `--warn-pedantic` line above against `pedantic = TRUE` is a repeat, and so is a
+`make/local` `--O1` against `list("O1")`; today both fail the build on 2.37. <!-- contract -->The rule
+is the one §3 states for `cpp_options`, that the call overrides `make/local` because
+it is the more specific of the two: before either stanc invocation, every element of
+the resolved `STANCFLAGS` that is a flag the call emits, supplied or injected, is
+dropped, matched the way §3 matches an unnamed entry, the flag itself or the flag
+followed by `=`. When the match is the bare flag, the element after it goes too if
+it does not begin with `-`, because it is the flag's value given separately: stanc
+accepts `--filename-in-msg published-model.stan` as two arguments on every
+supported version, and an element of `STANCFLAGS` that does not start with a
+hyphen can be nothing but such a value, since a second positional argument fails
+stanc with `too many arguments` (measured 2.35, 2.37, 2.39). Dropping the flag
+alone would leave the value behind as that second positional. The test is for one
+hyphen, not two, because stanc has single-hyphen options: `-fno-soa` after a
+`--warn-pedantic` in `make/local` is the next flag, not a value, and consuming it
+would silently change the generated C++. <!-- /contract --> A value never starts with a hyphen, since
+2.37 and 2.39 read any hyphen-led token as an option (`unknown option -x` for
+`--filename-in-msg -x.stan`). <!-- contract -->`make/local` supplies defaults for what
+the call does not say. <!-- /contract --> This is an occurrence test on a character vector, not the
+parse of the file declined above, and it needs no knowledge of which flags take a
+value. <!-- contract -->The match is on the spelling the call emits. <!-- /contract --> 2.39 accepts no
+abbreviated spellings, and a repeat in another spelling is stanc's to refuse, which
+it does by name: `option -o cannot be repeated` for a `make/local` `-o` beside the
+`--o` every stanc call carries. <!-- contract -->The include-path rejection is unchanged and is not an instance of this rule:
+it exists so that the build and `stanc --info` resolve the same files, and dropping
+the flag only when the call also supplies paths would leave the defect in place when
+it does not. <!-- /contract --> Nothing recorded moves, since the call's options are in
+`stanc_options_supplied` and `make/local` is hashed whole. Lands in Stage 1, where
+the boolean repeats already exist; the `--filename-in-msg` injection (§9) relies on
+it.
+
+This narrows what CmdStan accepts. cmdstanr owns source resolution because it
+re-runs it, and a second spelling of the same configuration buys nothing and costs
+the guarantee above. The cost is a `make/local` set for command-line CmdStan use now
+erroring even for programs with no `#include`, a configuration that is already
+broken for every program that has one.
+
+<!-- contract -->
+
+**Re-resolution uses the include paths supplied on the current call, not the
+recorded ones.** <!-- /contract --> This is the easiest thing in this document to get backwards, and
+backwards it is inert. Resolving with the recorded paths can only ever confirm that
+the previously resolved files are unchanged; it can never reveal that the caller
+asked for different ones. A user moving `include_paths` from `v1` to `v2` would
+silently keep the `v1` binary, which is the same class of failure as the user header
+below.
+
+<!-- contract -->
+
+**Order matters on the current call, for the same reason.** Include paths control
+shadowing, so re-resolution must be given them in the order supplied.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**An unsupported format version is among those artifact-side reasons.** <!-- /contract --> It takes
+their outcome, with the reason stated (§4), whether the version is newer or older
+than what this cmdstanr supports. It is still distinguished from an unreadable
+record, because the two warrant different messages. <!-- contract -->Unreadable means the record
+could not be accepted as a record at all: invalid JSON, a missing or unusable
+`format_version`, or a required field that is absent or the wrong shape. Required
+is relative to the record's own `format_version`. Unsupported means a version was
+found, and read, and this cmdstanr does not interpret it. <!-- /contract --> Same behaviour, different
+diagnosis, and the vocabulary is kept apart because a record whose version we do
+support can still be corrupt.
+
+<!-- contract -->
+
+**Dependencies are identified by content.** A dependency matches when its content
+hash matches what the record holds, wherever it now lives. Moving a project does not
+rebuild it.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**Renaming the source file does rebuild, and that is not an exception.** A Stan
+source is identified by content and its directory is not compared; its basename is
+a compiler input, since `R/model.R:835` passes it to stanc as `--name` and §3 makes
+the file name the only way to set that flag. <!-- /contract --> So moving a project costs nothing while
+renaming `bernoulli.stan` to `survival.stan` costs a compile, for the same reason a
+changed `stanc_options` entry does. §4's `request.stanc_name` row carries the
+argument. The user header's directory is the exception, for the reason given below.
+
+**Path-and-content identity is rejected, and it is the closest call here.** The
+argument for it is real: stanc compiles absolute source paths into the generated
+C++ `locations_array__`, so two builds at two paths are different binaries. What the
+difference buys is a stale directory prefix in an exception message:
+
+```
+Exception: normal_lpdf: Scale parameter is 0, but must be positive!
+  (in '/old/path/sub/helper.stan', line 12, column 2 to column 30)
+```
+
+Correct line, correct column, and whoever moved the project knows where it went.
+Against that, renaming a working directory from `docs/A` to `docs/B` would pay a
+full recompile for a benefit its user never receives, and nobody thinks of a
+directory name as a compiler input. Cross-machine moves almost always rebuild on
+`builder` identity anyway, so path identity would be the sole trigger only for the
+folder rename. The rule the rest of this section uses is: rebuild when the artifact
+would differ in a way the caller can observe and care about. It is why dependencies
+are hashed rather than trusted by mtime, and why `make/local` rebuilds even on an
+edit that changes nothing, since there we cannot tell whether it matters. Here we
+can. ccache reaches the same conclusion, shipping `base_dir` and
+`-fdebug-prefix-map` so users can defeat path-induced cache misses.
+
+<!-- contract -->
+
+**Comparison is positional.** The verdict compares the recorded sequence of content
+hashes against a freshly resolved one, element by element, preserving order and
+duplicates. `built_from` is no part of the test. <!-- /contract --> It only names the file once a
+mismatch is found, since position *i* in the sequence has a `built_from` at
+position *i*. A whole project moving changes every path and no hash, so the
+comparison passes with no special handling at all.
+
+**Order and multiplicity are compared because stanc reports them faithfully.**
+`stanc --info` returns `included_files` in source-inclusion order rather than
+sorted, and repeats a file that is included twice. Comparing the ordered sequence is
+both exact and the simpler implementation: a set comparison requires sorting or
+multiset bookkeeping in order to arrive at a weaker answer, and would miss two files
+exchanging contents in place.
+
+One reporting note for the implementer: when an include is added or removed the
+sequences differ in length and every later position shifts, so walking positions
+would name every subsequent file as changed. Report a length change as "the
+included-file sequence changed" and walk positions only when the lengths match. The
+verdict is correct either way; this is about the message.
+
+Normalisation matters only for `built_from`, which is recorded rather than compared.
+
+<!-- contract -->
+
+**Moving everything except the record is fine.** The record is hidden (§4), so a
+`cp *` or a drag-select will leave it behind. Where source is available that is a
+missing record, which rebuilds once and writes a new one: a single compile, never a
+wrong answer. For an executable-only model (§7) there is nothing to rebuild from, so
+a lost record costs provenance rather than time.
+
+<!-- /contract -->
+
+### Identity for C++ include resolution
+
+<!-- contract -->
+
+**Every directory supplied to cmdstanr for C++ include resolution is compared as a
+spelling, and nothing beneath it is tracked.** The `-I` flags a user puts in
+`cpp_options` are the explicit members of that set; the user header's own directory
+is the implicit one. <!-- /contract --> The two are compared through different fields, the flags as
+part of `request.cpp_options_supplied` and the header's path as the one dependency
+whose recorded path is compared (§4), but this is one rule with two instances, not a
+rule plus an exception.
+
+<!-- contract -->
+
+**The user header is therefore matched on normalised path and content.** <!-- /contract --> The reason
+is not that C++ headers are special. Our information about them is incomplete in a
+way it is not for Stan files.
+
+For a Stan program, `stanc --info` hands back the entire include closure, so hashing
+it covers every byte that went into the artifact and the paths are irrelevant. For
+a C++ header we hash the top of the tree and nothing beneath it. CmdStan feeds the
+header in as `-include $(USER_HEADER)` (`make/program:41`), and a quoted `#include`
+inside it resolves relative to the directory of the file containing the directive,
+so the header's location is an input to the compilation, not a label for it.
+
+Two byte-identical headers in different directories are therefore different
+translation units:
+
+```
+cb942ef4…  exact/user_header.hpp     #include "odds_impl.hpp"
+cb942ef4…  approx/user_header.hpp    #include "odds_impl.hpp"     same hash
+
+exact/odds_impl.hpp    return theta / (1 - theta);
+approx/odds_impl.hpp   return -1.0;
+```
+
+Built through cmdstanr, those two produce `mean(odds) = 0.3261` and `-1.0000`. Under
+content-only identity every compared field matches and the second build is skipped,
+so a caller who explicitly selected the second header runs the first.
+
+**So this is the same rule under incomplete information, not an exception to it.**
+Identity is the content of the whole input closure. Where the closure can be
+enumerated we compare it exactly; where it cannot, we compare what identifies the
+closure's root and accept that we see nothing below it. For a header, that is the
+directory it hangs from. §6 already does this once, for `make/local`: the whole file
+is hashed, so any edit rebuilds, including edits that change nothing, and an edit to
+a makefile it includes rebuilds nothing (#1257). This is the second instance, and a
+`-I` directory is the third: we compare the flag as the user wrote it and track
+nothing in the directory it names.
+
+**What the comparison does and does not guarantee.** It detects re-rooting: a model
+whose header moves, or whose caller selects a different header directory, rebuilds.
+On that class of change it errs only in the safe direction. An unnecessary rebuild
+costs one compile, and a binary built from a different root is never reused. It is
+not a conservative approximation of every change beneath the root, and the next
+paragraph is the case it misses.
+
+<!-- contract -->
+
+**What it does not catch, and what happens instead.** An in-place edit to a file the
+header includes changes nothing we compare, so the stale binary is reused and the
+numbers are silently wrong. It makes no difference whether the included file sits
+beside the header or arrives through a `-I` directory; the gap and the remedy are
+the same. That gap exists today and is documented in #1257 with
+`force_recompile = TRUE` as the remedy, plus a single message at compile time for
+models the regex detects. <!-- /contract --> The message is triggered by the `#include` directive in
+the header, not by where it resolves, so a `-I` supplied without a user header
+raises nothing, having no user-controlled `#include` to satisfy. Closing it
+properly means asking the compiler for the closure: `c++ -MM -MG` returns it in
+about 150 ms and `-MG` leaves CmdStan's own headers as unresolved names to discard.
+That is recorded on #1257 with the measurements, and not in v1: the cost is not the
+150 ms but coupling record validation to compiler flag construction, which can drift
+quietly. When it does land, this path comparison is what it replaces, and records
+written before it cannot answer the comparison that replaces it, so they are
+refused once (§4).
+
+### Identity for the CmdStan installation
+
+<!-- contract -->
+
+The comparison is the normalised installation path and the version, plus the
+`make/local` hash, which is its own dependency with its own trigger rather than
+part of `builder`.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**A different path at the same version is a rebuild reason.** <!-- /contract --> Selecting another
+installation with `set_cmdstan_path()` is a deliberate act, and under a version-only
+rule it would have no effect at all: the executable would still be the one the old
+installation built, still linked against the TBB that build resolved (below), while
+validation ran the new installation's `stanc`. Rebuilding is what makes the
+selection mean something.
+
+**Why this is path-sensitive when dependencies are not.** A dependency is a file
+whose content is the input; its location is incidental, and moving it changes
+nothing anyone can act on. An installation is not a file. A build resolves stanc
+and, by default, TBB out of it at an absolute path (below), so where it lives is a
+standing runtime dependency of the binary rather than a build-time locator. And
+`set_cmdstan_path()` is an explicit act of selecting a different toolchain, where
+renaming a working directory is not an act of selecting anything.
+
+**The executable carries a hard reference to the TBB it was built against.** Stan
+Math bakes that path in absolutely, and which path depends on how the build was
+configured (`stan/lib/stan_math/make/compiler_flags:277-330`): `TBB_LIB` where the
+build named an external TBB, and `$(abspath $(TBB_BIN))` otherwise, where `TBB_BIN`
+defaults to the installation's own `lib/tbb`. So the recorded installation is a
+runtime dependency of the binary in the default case and in no other, which is why
+the rule below reports a missing builder rather than treating it as fatal, and why
+the directory is recorded rather than derived (§4).
+
+**Which TBB the executable is launched with is a launch-side rule, not an
+assessment one.** On macOS and Linux the rpath settles it. On Windows there is no
+rpath and cmdstanr supplies the directory on `PATH`, today the selected
+installation's rather than the builder's (`R/run.R:1238-1247`), which is wrong as
+soon as the two differ. The fix reads `tbb_dir` from the record at the sites that
+launch the model binary and is #1261. It lands after Stage 3, needs no format change
+because the field is already recorded, and changes no verdict here.
+
+<!-- contract -->
+
+**A missing builder is reported, and is not itself a rebuild trigger.** <!-- /contract --> It is not
+the record going bad: the record parses, it hash-binds to this binary, and
+`stan_build_info()` answers out of it. What it says is that the executable may not
+run, and whether anything can be done about that turns on the selected installation
+rather than the recorded one. Select a different one and `builder` differs, so the
+ordinary trigger above has already fired and the model rebuilds against a CmdStan
+that exists. Leave the selection alone and the gone installation is also the one a
+rebuild would run in, so making this a trigger buys a doomed compile in place of
+the honest failure below. With only an executable (§7) there is nothing to rebuild
+from at all.
+
+So the record is kept and reported in every case, and refusing it would break a
+working setup: a model built with `cpp_options = list(tbb_lib =, tbb_inc =)` against
+a system TBB has an rpath outside CmdStan entirely and runs with the builder tree
+deleted. Recording the TBB directory separately from the builder is what lets the
+Windows launch treat a gone builder and a gone TBB as two events, and that build's
+TBB is still there. <!-- contract -->`stan_build_info()` reports the builder with `exists = FALSE`,
+the treatment §7 already gives recorded sources that are gone, and a launch failure
+becomes an error naming the recorded installation, with reinstalling it or
+rebuilding from source as the two remedies.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**A selected installation that is gone is its own error, checked where it is used.** <!-- /contract -->
+`set_cmdstan_path()` checks the directory once and caches the path and version
+(`R/path.R:69-77`), and `cmdstan_path()` hands back the cached value without
+rechecking (`R/path.R:93-100`), so a directory deleted or unmounted mid-session goes
+on being handed out. Measured, what that reaches is `cannot start processx process
+'make' (system error 2, No such file or directory)`, which reads as a missing
+toolchain.
+
+What uses it is anything that runs a program out of it. `make` runs there
+(`R/model.R:862-866`), and so does stanc: `stanc_cmd()` is the relative path
+`bin/stanc` (`R/utils.R:123-129`), given the selected installation as its working
+directory by the build, by the construction-time `stanc --info` (`R/model.R:2673`),
+and by `$check_syntax()` (`:1151`) and `$format()` (`:1278`) alike. <!-- contract -->So the check
+goes immediately before `make` or a tool is invoked out of the installation. <!-- /contract --> That
+covers the build, the re-resolution and snapshot construction takes in one call
+(§5), and the source-only operations §8 gives standalone twins. It is a shorter rule
+than enumerating the routes, and one that does not go stale when a call site is
+added.
+
+<!-- contract -->
+
+**`$variables()` is not on that list and `stan_variables()` is.** <!-- /contract --> §5 captures the
+snapshot at construction, so the accessor answers from what it already holds and
+needs no installation at all, while the standalone function holds nothing and runs
+stanc on the spot. An implementation that left today's parse-on-first-call in place
+(`R/model.R:1041`) would put the method back on the list, and the list is the wrong
+place to discover that the snapshot was never made eager.
+
+**This is not the validation §5 withholds from them.** §5's table keeps
+`$check_syntax()` and `$format()` clear of staleness checking, since a syntax check
+has no business demanding a current binary. Whether the installation about to run
+stanc is still there is a different question, and the one thing they cannot do
+without: no installation, no stanc.
+
+<!-- contract -->
+
+**It is not a precondition on holding a model.** An executable-only model (§7)
+neither builds nor re-resolves: it hydrates from its record or from `<exe> info`,
+and `stan_build_info()` answers out of it. <!-- /contract --> The source-only operations refuse an
+executable-only model for the missing source before any installation is reached
+(`R/model.R:1033`, `:1112`, `:1240`), which is §7's ordinary shape. Requiring an
+installation that none of that touches would refuse the packaged models §7 exists
+to admit. The selection does reach one of them: with no usable record, the
+`<exe> info` fallback on Windows launches with the selected installation's TBB, and
+there it is not a precheck that refuses. A failure is reported as §7's adoption
+error rather than as a missing installation. Nor is it a third answer to the one
+question §5's assessment asks: checked before every use, it leaves no reachable
+state where an assessment begins and cannot finish for this reason.
+
+<!-- contract -->
+
+**Report every evaluable trigger, not whichever branch is checked first.** <!-- /contract --> Today's
+`if`/`else if` chain (`R/model.R:726-739`) reports one. A user who changed both the
+source and `make/local` should be told both. Evaluable rather than applicable
+because two of `observed`'s parts can be absent, and each is a precondition on the
+rule rather than an exception to it.
+
+<!-- contract -->
+
+**The rule needs a usable record to be about anything.** With one, report every
+compared field that differs. Without one, which is the artifact-side reasons above,
+report why the record could not be used, and stop there: missing, unreadable and
+unsupported leave no baseline to measure the inputs against, and one bound to a
+different executable would supply the wrong baseline.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**It also needs the sources to have been resolved**, and `observed` says whether
+they were, so that an unresolved set is never read as an empty one. <!-- /contract --> That is the
+difference between a program that includes nothing and one nobody looked at, and
+reading the second as the first reports an included file as changed when nothing
+touched it. <!-- contract -->One path reaches it: re-resolution is skipped when the selected
+installation differs from `builder` (below). That difference is itself a trigger,
+so the verdict is the same either way and only the reason list is shorter.
+
+<!-- /contract -->
+
+```
+#> Recompiling:
+#>   - the Stan program changed
+#>   - make/local changed (/path/to/cmdstan-2.39.0/make/local)
+```
+
+<!-- contract -->
+
+`make/local` is per-installation, so editing it invalidates every model built
+against that installation. <!-- /contract --> That is correct: `cmdstan_make_local()`,
+`install_cmdstan(overwrite = TRUE)` and the `-fPIC` auto-fix at `R/utils.R:932` all
+stale those executables, and the last of those fixes a bug for free, since today
+nothing notices. It is narrower than it first appears: an upgrade installs to a new
+directory, so `builder` already differs.
+
+### Include shadowing is detected, not accepted
+
+Accepting this as an undetectable limitation would contradict the premise that we
+never silently run the wrong binary. A branch switch adding a higher-priority
+include is the same workflow used to justify hashing, and it is tractable.
+
+**`stanc --info` already answers this.** It returns the resolved include set
+directly:
+
+```json
+{
+  "parameters": { "y": { "type": "real", "dimensions": 0 } },
+  "included_files": [
+    "/abs/path/to/inc/half.stan"
+  ]
+}
+```
+
+So: <!-- contract -->**record the files `stanc --info` reports at build time, hash them, and compare
+the hashes positionally against a fresh `stanc --info` resolution**, the comparison
+defined above. <!-- /contract --> Recording each include's spelling, its ordered search roots and the
+selected path, then re-resolving that mapping, is unnecessary, and it would need
+parsing that stanc does for us.
+
+<!-- contract -->
+
+The fresh call takes the current call's effective `include_paths`, in the order
+supplied, never the recorded ones, for the reason given above; the recorded value is
+provenance (§4).
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**Re-resolve by invoking stanc, never by reimplementing its rules.** <!-- /contract --> Reproducing
+stanc's resolution semantics in R is a correctness hazard, and getting it subtly
+wrong reintroduces the silent-stale-binary class this design exists to remove.
+There is no performance argument for the risk:
+
+```
+stanc --info      : 29.9 ms
+exe info          : 32.2 ms
+```
+
+Against the hashing cost in §5 and a compile measured in seconds (§4), a stanc call
+is free.
+
+<!-- contract -->
+
+**Invoke stanc from the recorded `builder`, not from whichever installation is
+selected now**, or a different stanc's resolution rules get applied to a model this
+one did not build. **Check builder identity first**: if the selected installation
+differs from `builder`, that is already a rebuild trigger (above) and should be
+reported without attempting re-resolution at all. <!-- /contract --> That leaves one way for the
+recorded stanc to be missing, the selection being the recorded installation and it
+being gone, and there the model can be neither assessed nor rebuilt, which is the
+error above rather than a reason to re-resolve with some other installation's
+stanc.
+
+<!-- contract -->
+
+**Normalisation: normalised absolute paths, recorded but not compared.**
+`included_files` comes back from `stanc --info` as absolute paths. Each entry is
+compared by content (§6); the normalised path is stored as its `built_from` so the
+record still says where the artifact was built. <!-- /contract --> Normalising is about the record
+reading consistently rather than about avoiding spurious rebuilds, which content
+identity already avoids.
+
+Relocatable records are a separate and rejected idea (appendix): storing paths
+relative to some root would require defining that root, symlink behaviour, and what
+to do with paths outside the project. Content identity removes the reason anyone
+wanted them, since a moved project does not rebuild (§6), and the case where
+rebuilding is impossible, no source at all, is covered by executable-only models
+(§7).
+
+### Provenance we cannot complete
+
+<!-- contract -->
+
+Two untracked dependencies are **detected and recorded even though they are not
+resolved**, so the limitation reaches the users who hit it rather than only the
+documentation:
+
+- `make/local` including another makefile (`make_local_include`).
+  `make/local.example:36` ships with `# -include $(HOME)/.config/stan/make.local`, so
+  it is a suggested pattern. Parsing arbitrary Make syntax is not justified for v1.
+  Everything the included file sets is untracked. The one thing still caught is an
+  include-path flag in the effective `STANCFLAGS`, which the build-time check above
+  reads from Make rather than from the file.
+- Headers transitively included by `USER_HEADER` (`user_header_include`). Hashing
+  the top-level header misses them.
+
+In both cases a regex, `^\s*(?:-?include|sinclude)\b` for `make/local` and
+`^\s*#\s*include\s*"` for the user header, tells us there is an untracked
+dependency, without resolving anything. <!-- /contract --> `sinclude` is GNU Make's silent-include
+spelling and costs one alternation rather than any Make parsing; verified on Make
+3.81, it loads the named file and stays quiet when that file is missing, like
+`-include`.
+
+**A third route of this shape exists, and §3 closes it rather than detecting it.**
+A makefile named by `-f` on the build call changes the build, changes no recorded
+field, and is invisible to both regexes above, which scan `make/local` and the user
+header. It is not a third entry here because unnamed `cpp_options` entries are
+rejected (§3), an option available for `-f`, which is reachable only through that
+channel, and not for a `make/local` include, which is not.
+
+<!-- contract -->
+
+**The field is `known_untracked_dependencies`, not `provenance_complete`.** <!-- /contract --> A regex
+can establish that a gap exists; it cannot establish that none does. Make also has
+variable expansion and `eval`; C++ has angle-bracket local headers, macro-expanded
+includes, line continuations and conditional inclusion. <!-- contract -->**No match means "no known
+gap", never "complete".** <!-- /contract --> Until compiler depfiles exist, any user header potentially
+carries untracked transitive dependencies. The regex improves the message, not the
+guarantee. Naming it `provenance_complete` would repeat the error §10 warns about
+for `reported_features`: treating absence of evidence as evidence of absence.
+
+Angle brackets are the blind spot to name, because a user-supplied `-I` is
+what makes `#include <helpers.hpp>` work for a user's own files, so the form is
+realistic once `cpp_options` carries include directories. The regex is still not
+widened to `[<"]`: it would then fire on `<vector>`, which is to say on nearly every
+real user header, and separating `<helpers.hpp>` from `<vector>` means resolving
+against the search path, the work the regex exists to avoid and what depfiles would
+do properly.
+
+<!-- contract -->
+
+**Surface it when the record is written, and through `stan_build_info()`. Not in
+pre-operation validation, and not on every construction.** <!-- /contract --> It is a standing
+property of the model, not a change, and validation reports only what changed. A
+warning on every `$sample()` call is noise that trains people to ignore warnings.
+
+Writing is the right trigger because it is the moment the information is new, and
+because it is stateless. "Once per session" would work too, but it needs a cache of
+what has already been said, and §5 spends a subsection prohibiting stored verdicts
+for reasons that apply to any sibling cache. Keying on the write also settles the
+case that raised this: adoption never writes a record, so
+`instantiate::stan_package_model()`, which constructs on every fit (§9), stays
+silent, while the note still reaches whoever ran the build that could not be fully
+tracked.
+
+```
+#> Note: this model has dependencies cmdstanr does not track: make/local
+#>   includes another makefile. If you change it, rebuild with
+#>   force_recompile = TRUE.
+```
+
+**Compiler-generated dependency files are the right long-term mechanism for
+transitive C++ headers, and CmdStan does not currently provide one.** The machinery
+appears to exist (`make/program:106-108` sets up `-include` for a model depfile and
+`make/program:68` has a `%.d: %.hpp` rule), but building a model produces no `.d`,
+because the model's `.hpp` is an intermediate that CmdStan deletes after linking.
+Asking for it directly fails: `make m.d` gives `No rule to make target`. Verified
+against CmdStan 2.39. So this needs a CmdStan-side change or a different
+compilation driver, not merely reading a file that is already there.
+
+### What no record can fix
+
+<!-- contract -->
+
+- Toolchain drift. A compiler upgrade, a changed system library. Outside the
+  recorded set rather than chasing completeness.
+- Compiler include-path environment variables. `CPATH` and `CPLUS_INCLUDE_PATH` add
+  directories to the C++ search path without reaching cmdstanr as an argument, so a
+  quoted `#include` can resolve through one of them while no recorded field moves.
+  Documented rather than detected: reading them establishes that they are set,
+  never that this build used them. `force_recompile = TRUE` is the remedy (#1257).
+- Make variables from the environment. GNU Make imports the environment without
+  `-e`, so any variable the call leaves unset can be set there and the build uses
+  it. Measured on `USER_HEADER`, `STANCFLAGS`, `STAN_THREADS`, `STAN_OPENCL`,
+  `TBB_BIN` and `TBB_LIB`. A command-line assignment wins, so this reaches only what
+  cmdstanr does not supply. None of it is compared: a variable that arrived from
+  the environment appears in no compared field. The four flags `<exe> info` reports
+  land in `reported_features`, `TBB_BIN` and `TBB_LIB` move `tbb_dir`, and §4's
+  table says neither is a trigger. A `USER_HEADER` set there compiles a header that
+  appears in no `dependencies` entry. `force_recompile = TRUE` is the remedy, as for
+  the rest of this list.
+- CmdStan or Stan Math modified in place. A patch applied, or a checkout updated,
+  at the same path and version. The version is unchanged, `make/local` is unchanged,
+  and nothing else is recorded, so this is invisible and needs
+  `force_recompile = TRUE` (#1257). A git identity would not help (appendix).
+- Distrust of a source. The artifact is now verifiable (§4); its inputs are only as
+  trustworthy as the filesystem.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**An executable that will not launch is an error, not a rebuild trigger.** <!-- /contract --> A
+hash-matched record establishes that the executable is the one it describes, not
+that this machine can run it. Nothing the record compares moves when the execute
+bit is lost in a copy, when the binary was built for another platform, or when its
+recorded TBB is gone, so none of the reasons above fire and none should: a check on
+the one of those a `stat` can see would leave the rest to fail at launch anyway.
+The state is ordinary. Measured, R's own `utils::unzip()` extracts an executable
+without the execute bit where `untar()` and `file.copy()` keep it, so a project
+folder shared as a zip and unpacked from R arrives in it. What has to change is the
+failure text: today a lost bit reaches `cannot start processx process './bern'
+(system error 13, Permission denied)`, the executable's basename in a relative path
+and an errno. #1246's error is the answer, and it belongs at every site that
+launches the model binary (#1261 enumerates the four), not only the adoption
+fallback its own report covers. <!-- contract -->It names the executable, and for a source-backed
+model says that `force_recompile = TRUE` rebuilds it; with only an executable (§7)
+there is nothing to rebuild and it says so instead.
+
+<!-- /contract -->
+
+`R/model.R:799` currently tells users to use `force_recompile = TRUE` to apply
+options. Under this design options apply on their own, so that message needs
+rewriting.
+
+---
+
+## 7. Executable-only models
+
+`cmdstan_model(exe_file = ...)` is a first-class workflow today, with no Stan source
+at all (`R/model.R:156`). Three otherwise-general statements do not hold for it:
+that `cmdstan_model()` always compiles, that a missing record causes a rebuild, and
+that pre-record executables get a one-time rebuild.
+
+<!-- contract -->
+
+**`stan_file` and `exe_file` together are an error.** <!-- /contract --> Both are accepted today, and
+`exe_file` is not adoption there: it names the build destination, filename included,
+with `dir` overriding its directory while the basename survives (`R/model.R:2707`).
+A stale binary at that path is rebuilt over rather than adopted, so the combination
+was never a route to using an executable as it stands, only a way to choose its
+name.
+
+<!-- contract -->
+
+**`dir` replaces it and gives up nothing but the filename.** It places the binary in
+any directory, including one the source does not live in, and the model stays
+source-backed, so `$code()`, `$variables()`, `$check_syntax()`, `$format()`,
+`$hpp_file()` and `$expose_functions()` keep working, along with model methods on
+its fits, which is what executable-only construction gives up. <!-- /contract --> Two
+configurations of one program coexist under separate directories. The filename is
+already the caller's, from the `.stan` file's name or from
+`write_stan_file(basename = )` (`R/file.R:61`) for generated code. What goes is
+naming two builds inside one directory, and a subdirectory covers that. Rejecting
+the pair also retires a Windows asymmetry: `resolve_exe_path()` skips
+`cmdstan_ext()` on a supplied path while adoption asserts the `.exe` extension
+(`R/model.R:303`), so an executable cmdstanr itself built could not be read back.
+
+**A whole class of package belongs here by design.** Anything that compiles at
+install time and ships the binary inside itself, instantiate and its dependents
+most directly, ships the source beside the binary and could register it; under
+content identity that would not even rebuild (§9). It should not, because the
+package owns when its model is built, and registering source hands that decision to
+the session. This section is their normal case rather than their fallback, and §9
+carries the argument.
+
+<!-- contract -->
+
+**Executable-only models are kept, and adoption has three outcomes.** <!-- /contract --> Calling every
+adopted executable unprovenanced would discard information we may have written
+ourselves: `compile_stan_file()`
+followed by `cmdstan_model(exe_file = path)` is a first-class flow under this
+design, and it produces an executable with a record.
+
+<!-- contract -->
+
+| the artifact arrives with | adoption | provenance |
+|---|---|---|
+| a usable hash-bound record | succeeds, without launching the binary | known |
+| no usable record, and `<exe> info` reporting a valid version | succeeds | unavailable |
+| no usable record and no valid version from `<exe> info` | **errors** | none |
+
+<!-- /contract -->
+
+The first two are what the rest of this section describes. The third is the only
+state here that refuses an executable, and the version rule below is why it refuses
+nothing that could have sampled.
+
+<!-- contract -->
+
+**Executable plus a valid hash-bound record.** Artifact provenance is known: the
+record describes this binary, verified by the hash in §4. Report it.
+`stan_build_info()` returns the build information, not "unavailable". Source
+freshness may still be unverifiable. If the recorded sources are absent or the
+paths no longer resolve, say so specifically rather than collapsing it to unknown
+provenance.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+`$cpp_options()` returns the recorded `cpp_options_supplied` here, and
+`$user_header()` the recorded header path. <!-- /contract --> That is consistent with §1: the accessor
+always answers "what was this build asked for", and adoption sources that answer
+from the record instead of from the current call. Since adoption hydrates from a
+hash-matched record without launching the binary (§4), this costs nothing.
+
+<!-- contract -->
+
+**Adoption establishes what the artifact is, not that it runs.** A hash-matched
+record is read and nothing executes the binary, so an executable that cannot run on
+this machine adopts successfully and fails when something first runs it, with the
+launch error §6 requires. <!-- /contract --> The alternative is spawning a process on every adoption
+to learn something the first fit establishes anyway, which is the cost
+`instantiate` pays per fit rather than once at install (§9).
+
+<!-- contract -->
+
+**Executable without a usable record**: missing, unreadable (an unparseable
+`builder` version among the field checks that decide it, §4), hash mismatch, or
+written in a format version this cmdstanr does not read. Explicitly unprovenanced,
+which is a statement about provenance and must not suppress what the binary does
+report. `stan_build_info()` returns an explicit unavailable provenance, never an
+empty result that could be mistaken for "nothing was configured", together with the
+`reported_features` the executable supplies. <!-- /contract --> §8 carries the shape, and the four
+forms named above are the four reasons it reports. The four `STAN_*` flags and the
+version from `<exe> info` are real information, and §1's separation is what makes
+reporting them here consistent: the request is unknown, the reported features are
+not.
+
+<!-- contract -->
+
+Here `$cpp_options()` is empty, and that is the honest answer. <!-- /contract --> No request is known,
+and inventing one from the four flags the binary happens to report is the merge §1
+rejects. This is the one case where a user must call `stan_build_info()` to learn
+anything, and error messages about options should say so rather than leaving them
+at an empty list.
+
+<!-- contract -->
+
+**Both paths must yield a syntactically valid version, and adoption fails if neither
+does.** <!-- /contract --> Adoption is the one place a version arrives from an artifact nobody vouched
+for; everywhere else it comes from the CmdStan installation the session validated
+at install time. So this is the only place the invariant §10 relies on can be
+established. A usable record's half is enforced where the record's other field
+checks are (§4), so a record carrying an unparseable `builder` version is not a
+usable record; on the fallback, `<exe> info` must report complete version fields.
+
+Failing both means the executable did not identify itself as a supported CmdStan
+executable, which is a weaker claim than "it did not run" and is the one to make. A
+two-line shell script that exits 0 reaches the same place, having no version
+fields to report. What it does not reach is a CmdStan binary that could have
+sampled: `info` has printed `stan_version_*` unconditionally since CmdStan 2.27
+(`write_stan.hpp`), eight
+releases below cmdstanr's own floor of 2.35 (`R/path.R:145`). The error refuses
+artifacts that could not have sampled either, not ones we merely cannot identify.
+
+<!-- contract -->
+
+**"Syntactically valid" means the grammar cmdstanr already uses**: three numeric
+components with an optional release-candidate suffix, anchored at both ends,
+`^[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$`. <!-- /contract --> It is the version half of `R/path.R:298`'s
+`^cmdstan-[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$`, which decides what counts as a
+CmdStan installation directory, and of the trailing-component match at `:337`. What
+differs is where the anchors sit, and that follows from the job: there the string
+is a directory name and the anchors bind the `cmdstan-` prefix along with the
+version, while here the whole string is the version. Unanchored, `grepl()` accepts
+`cmdstan 2.36.0 (broken)`. Note for whoever implements it that
+`cmdstan_version_for_comparison()` strips `-rc[0-9]+$` (`R/path.R:156`), so the
+check runs on the reported string before that stripping.
+
+<!-- contract -->
+
+**`utils::compareVersion()` must not be the validator.** <!-- /contract --> "It did not complain" is a
+weaker property than "this is a CmdStan version": `compareVersion("2.36", "2.35.0")`
+and `compareVersion("2.36.0.1", "2.35.0")` both return `1` with no warning and no
+error, and neither input is a version CmdStan reports. Only the grammar rejects
+them.
+
+<!-- contract -->
+
+It is a syntactic check and nothing more. **Rejecting a version for being old would
+defeat this whole section**, whose purpose is that a binary built by an older
+CmdStan keeps working. <!-- /contract --> Without the check, `model_compile_info()` synthesises `".."`
+from three absent fields (`R/cpp_opts.R:68`), a string that passes every guard
+`cmdstan_version_compare()` has, so construction succeeds silently and the failure
+surfaces later inside a version gate, complaining about `TRUE/FALSE` values in code
+the user never called. An executable that cannot say what built it is not a CmdStan
+executable, and the error says so, sharing #1246's message rather than inventing a
+second one. Tests: an `info` result missing the version fields, and one printing a
+malformed value.
+
+<!-- contract -->
+
+Both rows above that succeed, the usable hash-bound record and the executable
+admitted on a valid version alone, permit fitting and **never attempt an automatic
+rebuild**, there being no source to build from. <!-- /contract --> The second of them is the
+exception to §5's requirement that a model have a valid record before running. The
+first has one.
+
+<!-- contract -->
+
+**A guarded method on an executable-only model checks the artifact hash alone.**
+Whether the object was adopted with a record or without one, the check at every
+guarded method compares the executable's current hash to the one the object was
+constructed with, and nothing else: no record is read, no source is resolved, no
+configuration is compared. A replaced executable errors, an unchanged one proceeds,
+and a record deleted or rewritten after construction changes nothing, since the
+object holds its snapshot. <!-- /contract --> That is §5's expected-side check with everything that
+needs a source removed. The record-backed row is not a source-backed model with the
+source missing: its record proves what the binary is (§4) and provenance is
+reported from the snapshot, but with nothing to rebuild from there is nothing for a
+later call to compare the record against. Tests: adopt a recordless executable,
+replace it at the same path, and a guarded method refuses; an unchanged recordless
+executable still runs.
+
+<!-- contract -->
+
+**That exception is also who pays when a `format_version` is not readable** (§4).
+An ordinary model reads a version it does not support, rebuilds once, and is
+current again. An adopted one cannot rebuild, so it drops to the unprovenanced path
+above and stays there until whoever produced the executable rebuilds it; for a
+package that compiles at install time, until the user reinstalls it. <!-- /contract --> Nothing
+breaks: fitting, the runtime validators and `reported_features` are all
+unaffected, and what remains is the pre-record behaviour. What is lost is
+provenance, and the saving of not launching the binary to get it.
+
+<!-- contract -->
+
+**Adoption is silent.** Unknown provenance is a standing property of the
+executable, not a change, and cmdstanr must not announce it on every construction. <!-- /contract -->
+`instantiate::stan_package_model()` adopts on every fit rather than once at install
+(§9), so a message here reaches every user of every package built that way, on
+every call, and cannot be silenced by fixing anything. `stan_build_info()` is how a
+caller asks.
+
+The line is not "standing properties are silent", since §6 does surface
+`known_untracked_dependencies` at construction, and should. Nor is it whether the
+user chose the thing: including another makefile from `make/local` is deliberate,
+and CmdStan's own `make/local.example` ships it as a suggestion (§6). The line is
+whether the consequence follows from the action.
+
+The threading policy (§1) is the case where it does: `STAN_THREADS` in `make/local`
+produces a threaded binary, which is the thing that was asked for. But writing an
+`-include` line says nothing about cmdstanr's staleness detection stopping at the
+first file. That is a limitation of ours, invisible from where the user stands, and
+no amount of deliberateness on their part reveals it.
+
+<!-- contract -->
+
+**Say something when the user asks for what we cannot deliver.** <!-- /contract --> That is about their
+argument rather than the artifact, and nothing they did implies it.
+
+### Build configuration cannot accompany an adopted executable
+
+<!-- contract -->
+
+**With no `stan_file`, an explicitly supplied argument that can only be honoured by
+building or by reading the source is an error**: `cpp_options`, `stanc_options`,
+`include_paths`, `user_header`, `force_recompile`, `pedantic`. <!-- /contract --> Silently ignoring any
+of them is the failure mode this design exists to remove. The user believes they
+asked for something.
+
+The rule is framed on both halves rather than on build configuration alone, because
+two of the six fail on the source rather than on the build, and a frame that named
+only the build would need an exception written for each. `cpp_options`,
+`stanc_options`, `user_header` and `force_recompile` cannot configure an artifact
+that will not be rebuilt, and a valid record is there to be inspected, not
+overridden. `include_paths` configures source resolution, and every stanc
+invocation needs it (compiling, `$check_syntax()`, and the `$variables()` call
+`$sample()` makes to validate data, `R/model.R:1410`), so it is meaningful whenever
+a source is registered, whether or not anything is compiled. `pedantic` is a request
+scoped to the call (§4), and what it asks for is a stanc run over the program; with
+no program there is nothing to run and nothing to report, so the guarantee that it
+produces diagnostics on every call cannot be kept quietly. For both, the reason is
+the missing source, not the missing build.
+
+<!-- contract -->
+
+**The check is on whether the argument was supplied, not on what it resolves to**,
+and `force_recompile` is why. <!-- /contract --> Its default today is
+`getOption("cmdstanr_force_recompile")` (`R/model.R:621`), so a check written as
+`isTRUE(force_recompile)` would error for every adoption performed by anyone who
+has that option set, including every `instantiate` fit (§9), from inside a package
+the user never chose to look at. The option was set for their models; adoption is a
+third party's implementation detail.
+
+That is the §7 line applied to provenance rather than to content. <!-- contract -->Writing
+`force_recompile = TRUE` beside `exe_file =` is a per-call request we cannot
+honour, so it errors. A session-wide option is not a statement about this model, so
+it is ignored. <!-- /contract --> Document on the option's help page that it has no effect on
+executable-only models, so the advice arrives as documentation rather than as a
+runtime failure in somebody else's code.
+
+<!-- contract -->
+
+**No signature resolves the `cmdstanr_force_recompile` option.** The shared
+implementation does, after the check, and every public function that forwards
+`force_recompile` declares it `NULL`: `cmdstan_model()`, `compile_stan_file()` and
+`cmdstanr_example()`, which resolves it in its own signature today
+(`R/example.R:62`) and hands the answer on. <!-- /contract --> A signature default cannot work: once
+it has been evaluated, an option-supplied `TRUE` and an argument-supplied `TRUE` are
+one value, and the check has nothing left to read. The sentinel carries omission
+through every entry point and into the shared implementation with no separate
+`force_recompile_supplied` flag, and on the adoption path nothing resolves the
+option at all, so the rule above holds by construction.
+
+`missing()` is the alternative, and its fragility is ours rather than a caller's
+(appendix). It survives dynamic dispatch and `...` forwarding, including
+instantiate's `eval(parse(text = paste0("cmdstanr::", name)))`, measured, and
+breaks only when an intermediate layer declares its own default and forwards it.
+That is the shape §8 introduces, and the shared implementation is where provenance
+is still wanted: it is what names the option in the rebuild reason below. By then
+`missing()` is `FALSE` on every call whatever the wrapper declared, since an
+explicit `NULL` default breaks it just as well.
+
+<!-- contract -->
+
+**Explicit `NULL` means omission for all six, so one sentinel covers them.** <!-- /contract -->
+`user_header` is the one that looks like an exception, because `user_header = NULL`
+currently means compile without one. That meaning exists only because the header
+persisted: `resolve_user_header()`'s `supplied` flag decides precedence over the two
+`cpp_options` spellings and otherwise falls back to `previous`
+(`R/cpp_opts.R:189-245`). §3 rejects both spellings and §8 removes `previous`, so
+nothing is left for an explicit `NULL` to override, and under §2 omitting the
+argument already means no header. `supplied` leaves `resolve_user_header()` with the
+precedence chain it existed for.
+
+<!-- contract -->
+
+**`force_recompile` never enters the record.** It changes whether we build, never
+what we build, so it is a decision override rather than configuration. <!-- /contract --> Two
+identical builds must produce identical records whether or not one of them was
+forced; recording it would leave a forced rebuild permanently marked and every
+later comparison seeing a difference that means nothing. <!-- contract -->For the same reason the
+rebuild reason should name the option when the value came from there:
+"`force_recompile = TRUE`" is baffling to someone who set it in `.Rprofile` months
+ago and passed nothing.
+
+<!-- /contract -->
+
+Rejecting executable-only models would also be coherent for v1, but it is a
+substantial capability removal and would need its own argument. None is made here.
+
+<!-- contract -->
+
+**Pre-record executables**, anything built before this work, are a separate case:
+they have source, so they can be rebuilt. **Migration happens during the explicitly
+requested `cmdstan_model()` call, with the reason printed**, rather than erroring
+and demanding `force_recompile`. <!-- /contract --> The user asked for a model; a one-time rebuild
+with a stated cause is the least surprising way to give them one. This is the same
+rule as §5: the constructor rebuilds, operations error.
+
+```
+#> Recompiling: this executable predates build records, so what it was
+#>   built with cannot be determined.
+```
+
+---
+
+## 8. Contract: the API that replaces deferred compilation
+
+<!-- contract -->
+
+`cmdstan_model(compile = FALSE)` goes. <!-- /contract --> 96 uses in tests, 10 in `R/`, 9 in `man/`,
+5 in vignettes.
+
+The use cases it served were introspection, and they are better served by
+functions that never needed an object. Names follow cmdstanpy where a counterpart
+exists, and cmdstanr's existing `write_stan_file()`, rather than inventing a third
+convention:
+
+<!-- contract -->
+
+```r
+compile_stan_file(file, include_paths = NULL, cpp_options = NULL, stanc_options = NULL, ...)  -> exe path
+format_stan_file(file, include_paths = NULL, ...)
+check_syntax_stan_file(file, include_paths = NULL, ...)
+stan_variables(file, include_paths = NULL, ...)
+stan_build_info(exe_file)
+```
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**Every function that hands a source file to stanc takes `include_paths`**, and
+`format_stan_file()` is the one that makes this a correctness requirement rather
+than symmetry. <!-- /contract --> `$format()` has no such parameter today and does not need one,
+because it reads `self$include_paths()` internally (`R/model.R:1252`), which carries
+the `dirname(stan_file)` default. A standalone replacement has no object to read
+from, so without the parameter it cannot format any program containing `#include`
+at all:
+
+```
+Syntax error in 'model.stan', line 3, column 0 to column 15, include error:
+```
+
+That would be a regression on behaviour `$format()` has today, not merely a gap.
+
+`compile_stan_file()` and `format_stan_file()` match cmdstanpy exactly. cmdstanpy
+has no standalone syntax check, and its `src_info()` is lower-level than
+`$variables()`, so those two are cmdstanr-only and named to fit R. **Where
+cmdstanpy already has a name we copy it; where it does not, we pick one and they
+can copy it if they add a counterpart.** The two APIs are taught together, so
+parity matters, but nothing here waits on a joint naming decision.
+
+`stan_variables()` is the one name to revisit before it ships.
+`metadata()$stan_variables` already exists on fit objects (`R/csv.R:362`) and means
+something else, the variable names in the output rather than the declarations in
+the program. That is not a collision in R and not a reason to hold the design; the
+name is provisional and the decision belongs with the implementation.
+
+`model_variables()` at `R/model.R:2657` is already this shape internally.
+
+### One resolver produces the effective include paths
+
+The `dirname(stan_file)` default currently lives in the constructor
+(`R/model.R:293-297`) and is shared through object state: `$format()`,
+`$variables()` and `$check_syntax()` all reach it via `self$include_paths()`. Three
+of the five entry points above have no object, so the default has to move into a
+plain function that all of them call:
+
+```
+cmdstan_model()          ─┐
+compile_stan_file()       │
+format_stan_file()        ├─→  effective include paths  ─→  stanc
+check_syntax_stan_file()  │
+stan_variables()         ─┘
+```
+
+Mostly a move rather than new logic. Two constraints on it:
+
+<!-- contract -->
+
+**It runs before the request is recorded**, so the record holds the effective value
+(§4). <!-- /contract --> Recording the caller's `NULL` would store something true about the user and
+useless to the machine.
+
+<!-- contract -->
+
+**It is not what the verdict re-resolves with.** The verdict uses the effective
+paths of the current call (§6); the recorded ones are provenance. <!-- /contract --> Those are the
+same value on the call that builds and can differ on any later one, which is the
+point.
+
+The default is user-visible behaviour and belongs in the public documentation for
+`include_paths`, not only in §10's implementation notes.
+
+### An option that only produces output still has to produce it
+
+`pedantic = TRUE` becomes `--warn-pedantic` (`R/model.R:672-673`). §4 records it and
+does not compare it, so it cannot force a rebuild. That is correct, since the only
+difference it makes to the artifact is one embedded flag string:
+
+```
+< "stancflags = --name=bernoulli_model"
+> "stancflags = --warn-pedantic --name=bernoulli_model"
+```
+
+<!-- contract -->
+
+But not rebuilding must not become doing nothing. Pedantic warnings are produced by
+stanc during the build, so a build entry point that skips the build has to run the
+check anyway, around 30 ms, or the caller asks to be warned about their model and
+receives silence. <!-- /contract --> That is worse than an unnecessary recompile, because nothing
+indicates the request was dropped.
+
+<!-- contract -->
+
+Asking for the same flag through `stanc_options` is refused however it is spelled
+(§3), so the two routes cannot diverge: `pedantic` owns the concept and is the only
+way to ask for it.
+
+<!-- /contract -->
+
+### Only a build cares whether a function has a definition
+
+<!-- contract -->
+
+`--allow-undefined` suppresses one error: a function declared and never defined. A
+call to something never declared at all is still not in scope and still fails, flag
+or no flag. <!-- /contract --> Verified on CmdStan 2.39.
+
+<!-- contract -->
+
+**So the source-only operations always set it**, whether reached as a method or as
+a standalone function: `$format()`, `$check_syntax()`, `$variables()`,
+`format_stan_file()`, `check_syntax_stan_file()` and `stan_variables()`. Only the
+build entry points derive it from `user_header`, because only a build has to link. <!-- /contract -->
+One rule, by operation rather than by entry point, so a retained method and its
+standalone twin cannot disagree.
+
+This finishes `eeed5baf` rather than reverting it. That commit fixed
+`$check_syntax()` and `$format()` reporting a syntax error on a program whose
+functions are defined in a user header, by having them consult
+`using_user_header_`. Under one rule those conditionals become unconditional and the
+dependency on `using_user_header_` leaves all three, which is less code than the
+conditional version and removes the divergence the retained methods would otherwise
+have: `mod$check_syntax()` erroring where `check_syntax_stan_file()` passes on the
+same file.
+
+<!-- contract -->
+
+**The accepted cost, recorded so it is not filed as a bug.**
+`check_syntax_stan_file()` reports success on a program that `compile_stan_file()`
+then rejects, in the one case where a function is declared, never defined, and no
+header is supplied. <!-- /contract --> The build is where that surfaces, with a message naming the
+function. Everywhere else the flag is inert: `--auto-format` and `--info` return
+byte-identical output with and without it on a program that defines everything it
+declares.
+
+### `compile_stan_file()` is exported, and shares one implementation
+
+Exporting it only once a consumer commits to it would be the wrong bar. The
+argument is parity: cmdstanpy already has `compile_stan_file`, and having
+`format_stan_file()` and `check_syntax_stan_file()` public while the compile step
+is not is arbitrary. With `compile = FALSE` gone there would be no way to build
+without constructing an R6 object.
+
+<!-- contract -->
+
+**One implementation, two entry points**, so nothing is duplicated:
+
+```
+compile_impl(stan_file, cpp_options, stanc_options, include_paths,
+             user_header, pedantic, dir, force_recompile, quiet, dry_run)
+    -> list(path =, record =, src_info =, hpp_code =)
+
+compile_stan_file(...)   # exported: compile_impl(...)$path
+cmdstan_model(...)       # exported: R6 object built from all four
+```
+
+<!-- /contract -->
+
+The `...` abbreviates the named arguments each wrapper takes. It is not R's `...`,
+which matters here because today's `cmdstan_model()` really does declare one and
+forward it (`R/model.R:156`). One default it hides is already settled:
+`force_recompile` is `NULL` in both, as §7 requires of every entry point that
+forwards it.
+
+This is a lift of today's `$compile()` rather than a rewrite. The stanc and make
+invocation moves unchanged, and 12 of its 31 `private$` touches are `precompile_*`
+fields this issue deletes anyway. What remains resolves into arguments in and
+values out.
+
+Four constraints:
+
+- The internal returns more than a path. Otherwise `cmdstan_model()` re-reads the
+  record and re-runs stanc. It needs `record` for `$cpp_options()` and
+  `$cmdstan_version()`, and `src_info` for the eager `$code()`/`$variables()`
+  snapshot (§5), which is the `stanc --info` call the build already makes. <!-- contract -->
+- `hpp_code` is the model's generated C++, produced on both paths (§5), which the
+  constructor hands to fits and writes to the file `$hpp_file()` returns. #1245's
+  discriminator dissolves with it: a source-backed model always has generated C++
+  and an executable-only model (§7) never does, so every consumer that needs it
+  fails for one reason, no source, rather than for whether this object ran make. <!-- /contract -->
+- `dry_run` lives on the internal only. It is the single argument the public
+  wrapper omits, which makes `compile_stan_file()` a wrapper rather than a
+  re-export, though a three-line one. <!-- contract -->
+- `compile_stan_file()` performs the same up-to-date check, reusing a current
+  executable rather than always compiling. The verb suggests otherwise, so this
+  needs documenting; one operation behaving two ways depending on entry point is
+  the inconsistency this design exists to remove. It writes the record too, so a
+  later `cmdstan_model(exe_file = path)` finds it and knows provenance (#1238).
+
+<!-- /contract -->
+
+`force_recompile` keeps cmdstanr's spelling rather than cmdstanpy's `force`.
+Matching on the function name is what buys cross-implementation teachability;
+matching every argument at the cost of internal consistency is not worth it.
+
+<!-- contract -->
+
+**`stan_build_info()` returns a public result, not the parsed record.** <!-- /contract --> Saying only
+that it returns "a parsed object" does not settle this: the obvious implementation
+is `jsonlite::fromJSON()` on the record, and then the returned object is the
+on-disk schema one deserialisation removed. That contradicts §4, which makes the
+format private and versions it so that it can change. A later cmdstanr that stores
+`cpp_options_supplied` in a different shape bumps `format_version` and reshapes the
+field, and every script reading `info$request$cpp_options_supplied` breaks on a
+change §4 says is ours to make. <!-- contract -->So the reader translates: the public field names
+are the promise, and the record's layout is free underneath them.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**The result is a list with class `"stan_build_info"`.** <!-- /contract --> That is what the print
+method below dispatches on. One class name rather than a vector: `is.list()` is
+already `TRUE` without adding `"list"`, and a second name only offers someone a
+wrong target to write a method against. The class name follows the function name,
+so §10's note that `stan_build_info()` is still a placeholder covers both.
+
+<!-- contract -->
+
+| field | present when | holds |
+|---|---|---|
+| `provenance` | always | `status` and `reason`, both always present |
+| `reported_features` | always | one entry per feature: four logical flags, each `TRUE`, `FALSE` or `NA`, and `stan_version`, a character scalar or `NA_character_` |
+| `format_version` | `unsupported_format` only (below) | the format the record was written in |
+| `request` | provenance available | the recorded build configuration of §1 |
+| `dependencies` | provenance available | every file whose content the build consumed |
+| `builder` | provenance available | installation path, version, `exists` |
+| `known_untracked_dependencies` | provenance available | §6's list; empty means nothing was detected |
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**A field is public only if a caller can act on it.** <!-- /contract --> The record stays
+comprehensive and the result is narrower than it, because a field can be added in
+a later release and cannot be removed or reshaped once it ships. Nothing has
+shipped yet, so the set can still be chosen freely; after 1.0 it cannot. The hashes
+fail that test. The artifact hash answers a question the caller can already answer
+by hashing the file whose path they just passed in, and the dependency hashes
+compare against nothing but another record's same field. So do
+`stanc_options_injected` and `stanc_name`, which say how cmdstanr assembled the
+stanc command line rather than what was asked of it. `tbb_dir` is out on the same
+test; the record keeps it because Windows needs it at launch (§4). `request` keeps
+`include_paths` for diagnosis alone: a caller debugging an include has no other way
+to see where the build searched.
+
+<!-- contract -->
+
+**The nested names are settled here rather than by whoever implements it**<!-- /contract -->, because
+a test for the public shape cannot be written from a list of seven top-level
+fields. <!-- contract -->A source-backed model with one include, no user header, and a `make/local`
+that includes another makefile:
+
+```r
+list(
+  provenance = list(status = "available", reason = NULL),
+  reported_features = list(
+    stan_threads = TRUE, stan_mpi = FALSE, stan_opencl = FALSE,
+    stan_no_range_checks = FALSE, stan_version = "2.39.0"
+  ),
+  request = list(
+    cpp_options_supplied   = list(STAN_THREADS = TRUE),
+    stanc_options_supplied = list(),
+    include_paths          = "/proj"
+  ),
+  dependencies = list(
+    stan_file      = list(built_from = "/proj/bernoulli.stan", exists = TRUE),
+    included_files = list(
+      list(built_from = "/proj/inc/half.stan", exists = TRUE)
+    ),
+    user_header    = NULL,
+    make_local     = list(built_from = "/cmdstan-2.39.0/make/local", exists = TRUE)
+  ),
+  builder  = list(path = "/cmdstan-2.39.0", version = "2.39.0", exists = TRUE),
+  known_untracked_dependencies = list(
+    list(kind = "make_local_include", detected_in = "/cmdstan-2.39.0/make/local")
+  )
+)
+```
+
+<!-- /contract -->
+
+Each of the rules below explains a place in that sketch where the obvious shape is
+not the one chosen.
+
+<!-- contract -->
+
+**The user header appears once, under `dependencies`.** <!-- /contract --> It is a file the build
+read, so it belongs beside the other files the build read rather than in `request`
+with the options. §4 compares it as `dependencies.user_header.built_from` and the
+record holds it in that one place too, so nothing is translated here. The rule
+exists because carrying it in both is the natural thing to write, and it puts one
+normalised path in two public places that can never disagree: a second owner, in
+the API rather than in the prose.
+
+<!-- contract -->
+
+**`make_local` is `NULL` when the installation had none**, and that has to be
+distinguishable from a `make/local` that is there, or creating the file after a
+build would not trigger §6's rebuild. <!-- /contract --> No unknown case arises: a record always knows
+whether the file was there.
+
+<!-- contract -->
+
+**A known untracked dependency says which gap and where it was found, never what it
+points at.** Each entry is `list(kind, detected_in)`. `kind` is one of §6's two
+cases, `make_local_include` or `user_header_include`, and `detected_in` is the file
+the regex matched in, the `make/local` or the user header itself, not the thing it
+includes. <!-- /contract --> The unresolved target is absent because resolving it is the work §6
+declines to do, and a field for it would end up holding a path sometimes and a
+guess the rest of the time.
+
+That does repeat a path `dependencies` already holds, which the header rule above
+forbids for `request`. The difference is that this field is never compared (§4), so
+a stale copy cannot move a verdict, and an entry that names its own file is what
+lets the printer build its message from the entry alone.
+
+<!-- contract -->
+
+**One entry per distinct `(kind, detected_in)` pair, ordered by `kind` then
+`detected_in`.** <!-- /contract --> Nothing in an entry says how many times the regex matched, so a
+header with two quoted includes would otherwise contribute two entries equal byte
+for byte. With one file per kind today the list is at most two entries long, but
+the rule is written on the pair rather than the kind, so a later kind that can
+match in more than one file needs no amendment. Fixing the order costs a line and
+makes the list comparable as a value, where leaving it unspecified pushes a sort
+into every test that touches it.
+
+<!-- contract -->
+
+**`reported_features` has fixed names, and unknown is `NA`.** <!-- /contract --> §1 encodes unknown by
+omitting the key, which is right for the record and wrong here. Nothing in this
+result round-trips through a file, so `NA` keeps its type, and that is the whole of
+the difference: `NA` is a state you can ask about, where a missing member gives
+back an answer that is neither yes nor no.
+
+```r
+is.na(NA)     # TRUE
+is.na(NULL)   # logical(0)
+```
+
+Neither encoding buys a loud failure on its own. `isTRUE()` reads both as `FALSE`
+and `if ()` errors on both, so a caller who writes `isTRUE(x$stan_threads)`
+collapses unknown into disabled whichever way the field is encoded. What fixed
+names and `NA` buy is that the collapse becomes the caller's to avoid rather than
+invisible to them, and that `names(reported_features)` is a fixed set a test can
+hold, the same property this section relies on for `names(provenance)`. <!-- contract -->The names
+are the four booleans `<exe> info` prints, `stan_threads`, `stan_mpi`,
+`stan_opencl` and `stan_no_range_checks`, plus `stan_version`, and the table above
+has their types. They are always all present. <!-- /contract --> A flag CmdStan starts reporting gets
+added here deliberately rather than appearing on its own.
+
+<!-- contract -->
+
+**`provenance` carries why, not only whether.** <!-- /contract --> §7 already enumerates four ways a
+record fails to describe an executable, and collapsing them to a bare "unavailable"
+throws the distinction away at the only point a user can act on it:
+
+<!-- contract -->
+
+```r
+provenance = list(status = "available",   reason = NULL)
+provenance = list(status = "unavailable", reason = "record_missing")
+                                        # "record_unreadable"
+                                        # "artifact_mismatch"
+                                        # "unsupported_format"
+```
+
+Both names are always there. `available` requires `reason = NULL`, `unavailable`
+requires exactly one code, and `names(provenance)` is the same pair either way,
+which is what a test can hold. The enum is machine-readable and no free-form
+message is stored. <!-- /contract --> The printer derives its prose from the reason, so the wording
+stays revisable and never becomes contract.
+
+<!-- contract -->
+
+**`format_version` is public only under `unsupported_format`.** <!-- /contract --> There it is the
+printer's only input: the direction message below is promised behaviour and
+`print.stan_build_info(x)` receives nothing but `x`, so the version has to reach it
+through the result. That is a named consumer, and it is what the fields withheld
+above do not have. The other three reasons carry no version, and
+`record_unreadable` is the one to say out loud: an unreadable record is withheld
+whole (§4), so its version goes unreported even where it parsed perfectly well.
+
+<!-- contract -->
+
+**`unsupported_format` is not evidence that cmdstanr is old.** §4's rule refuses any
+version but its own, and a downgrade regenerates old-format records, so the record
+may be newer or older than what this cmdstanr writes. The printer reads the
+direction off the reported `format_version` and says the corresponding thing:
+upgrade cmdstanr for a newer record, rebuild or obtain a newly produced artifact
+for an older one.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**Unknown and empty must never render alike, anywhere in the result.** <!-- /contract --> This is §6's
+`known_untracked_dependencies` rule and §1's absence-of-evidence rule stated once as
+a property of the whole object rather than per field. <!-- contract -->An empty
+`known_untracked_dependencies` means the scan detected nothing; no record to scan
+means the field is absent. A recorded builder whose path is gone is
+`exists = FALSE`; an absent `builder` means there was no usable record to read one
+from, which is the only way it can be missing. An unknown request is absent, not
+`list()`.
+
+<!-- /contract -->
+
+That last one is where the two accessors answer the same executable differently,
+and both are right. §7 keeps `$cpp_options()` empty for an unprovenanced executable
+because that accessor reports what the caller asked for and nobody asked for
+anything. `stan_build_info()` reports what is known about the build, so it must say
+unknown.
+
+<!-- contract -->
+
+**A readable record whose hash does not match is read only to say why.**
+`artifact_mismatch` returns no record-derived field at all, even though `request`,
+`dependencies` and `builder` all parsed. `reported_features` still comes back, read
+off the executable rather than the record, which is the general rule below and not
+an exception to this one. <!-- /contract --> This is the one place the reader holds back data it can
+see. Reporting the fields with a caveat is the natural instinct and it is wrong,
+because `reported_features` from that record is what §1 sends the runtime
+validators to. A helpful partial report puts `stan_threads: true` from some other
+build in front of a validator guarding this one, which is the silently
+single-threaded run this design exists to remove, arriving through a new door.
+Relocation never reaches here: a moved executable keeps its bytes and its hash, and
+§6 compares dependencies by content, so `artifact_mismatch` means the executable at
+this path was replaced without cmdstanr writing a new record.
+
+<!-- contract -->
+
+**Unavailable provenance still reports the binary's own features.** All four
+reasons are §7's "executable without a usable record", so all four read
+`reported_features` off the executable; an available one reads them from the
+record. <!-- /contract --> That is one rule covering five states with nothing carved out of it, and
+it is what keeps `artifact_mismatch` narrow: what a mismatched record loses is
+everything it claims about the build, not what the binary says about itself.
+
+A test has to prove where the features came from, not that the field is populated.
+Reporting them with a caveat from the rejected record fills the field, so an
+assertion that it is non-empty passes. Make the record say `stan_threads = TRUE`,
+make `<exe> info` say `false`, and require `FALSE`.
+
+<!-- contract -->
+
+**The `exe_file` argument has two failure modes and both are errors.** <!-- /contract --> The name
+matches `cmdstan_model(exe_file = )` and `$exe_file()` rather than inventing a
+third spelling for the same thing. <!-- contract -->A path that is missing or is not a file errors.
+Otherwise, a valid hash-matched record is answered from the record alone, without
+launching the binary. <!-- /contract --> §4's adoption rule already works this way, and it is what
+keeps a cross-platform artifact fully reported. <!-- contract -->Only an executable with no usable
+record is launched for `<exe> info`, and if that fails the function errors rather
+than returning an all-unknown result: with neither a record nor an info response
+there is nothing to report, and an object of unknowns would be zero information
+wearing the shape of an answer. Feature-level unknown stays for a feature absent
+from a valid record or a successful info response, and never stands in for total
+inspection failure.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**`$format()` gets a standalone plus a method wrapper.** <!-- /contract --> The case for keeping it
+method-only, that it invalidates `stan_code_` and `variables_`
+(`R/model.R:1309-1311`), is weak: another model object or an external editor
+already bypasses that invalidation, so it was never a guarantee. §5's pre-run
+validation is what makes it safe.
+
+<!-- contract -->
+
+**`dry_run` demotes to internal.** <!-- /contract --> Its documentation says *"Used to speedup tests"*
+(`R/model.R:558-559`); 22 test uses, zero vignette uses. <!-- contract -->It stays as an argument to
+the internal compile machinery that the public entry points wrap.
+
+<!-- /contract -->
+
+### `compile_model_methods` and `compile_standalone` are removed
+
+Neither is build configuration. `compile_standalone = TRUE` runs
+`expose_stan_functions()` into `self$functions` after make finishes
+(`R/model.R:963`), and `compile_model_methods = TRUE` runs
+`expose_model_methods()` into the environment fit objects copy (`:966`). Neither
+sets a make flag or changes a byte of the executable, which is why neither appears
+in `compile_impl()` above: that signature was written from what the build consumes.
+
+**They are already broken on the reuse path, in released code.** `$compile()`
+returns at `R/model.R:804`, inside the `if (!force_recompile)` branch that opens at
+`:741`, and both exposure calls sit past that return. The same call therefore
+populates `functions` or does not, depending on whether a rebuild happened to be
+needed:
+
+```r
+mod <- cmdstan_model("bernoulli.stan", compile_standalone = TRUE)
+# fresh session, executable still current
+mod <- cmdstan_model("bernoulli.stan", compile_standalone = TRUE)
+mod$functions$foo   # not there
+```
+
+That is the failure this design exists to remove: a request the call cannot honour
+and does not report. Keeping them would mean writing a reuse-path rule for a case
+that has been wrong since before 0.9.0.
+
+<!-- contract -->
+
+**The replacements are the ones their own documentation already names.**
+`R/model.R:551` tells the caller to use `fit$init_model_methods()` instead when the
+model will be saved, and `:557` says `$expose_functions()` does the same job after
+compilation. <!-- /contract --> Both are public and both are tested. `fit$init_model_methods()`
+compiles from the model C++ the fit copied at construction, which §5 puts in the
+snapshot on both paths; today that text is absent on reuse and the method errors
+there, one more consumer of the defect fixed below. `$expose_functions()` runs when
+it is called, and needs the fix below.
+
+<!-- contract -->
+
+**`$expose_functions()` is fixed here too, since removal makes it the only route.** <!-- /contract -->
+`expose_stan_functions()` refuses whenever `function_env$existing_exe` is `TRUE`
+(`R/utils.R:1217`), and the no-op path sets that: `R/model.R:267` initialises it
+`TRUE`, `:299` sets `exe_file_` only when the caller passed `exe_file`, and
+`:786` branches on `length(private$exe_file_) == 0`, still true for a
+source-only construction.
+Measured on 2.39.0: `cmdstan_model("m.stan")` on an up-to-date executable, followed
+by `mod$expose_functions()`, errors with *"Exporting standalone functions is not
+possible with a pre-compiled Stan model!"* about a model that has a source sitting
+beside it. <!-- contract -->`existing_exe` should mean "this model has no source" rather than "this
+object did not personally run make", and the hpp should be generated on demand from
+the registered source the way `pedantic` re-runs stanc. The error stays for models
+that have no source (§7).
+
+<!-- /contract -->
+
+Nothing is lost: on the reuse path today none of these works, the two arguments in
+silence, `fit$init_model_methods()` with a message blaming a pre-compiled
+executable, and `$expose_functions()` with a message describing a different model.
+
+### What this dissolves
+
+**#1252** closes outright. It exists because `precompile_stanc_options_` leaks into
+file operations, and with deferred compilation gone there is no precompile store.
+Also removed: `precompile_include_paths_`, `precompile_cpp_options_`, the `%||%`
+include-path baseline and `include_paths_dirty_` (`R/model.R:642-656`).
+
+**Note on #1235.** That PR's include-path fix at `R/model.R:646-656` is the
+persistence mechanism this design rejects. It should still merge. It fixes a live
+bug against today's API, and this work deletes the mechanism rather than
+correcting it.
+
+**#1234's guarantee does not move into the record.** It would if the record were
+replayed on a later build, but it is not (§2). What happens instead is that the
+lifecycle disappears: #1234 exists because a second build call, `$compile()`,
+could drop the include paths and user header the first one supplied. Once deferred
+compilation and `$compile()` are gone there is no second call, every build carries
+its own complete configuration, and there is nothing left to drop.
+
+---
+
+## 9. Order of work
+
+**#1258 is the work list; this section is only the reasoning behind the order.**
+The items belonging to each stage are enumerated there, with the file and line
+references implementation needs. If the order changes, the work list is what you
+edit; if the reason changes, this is. Where the two disagree about what lands
+when, #1258 is right, while the contracts being staged are still this document's
+(Purpose and scope).
+
+Two constraints shape the order. The Make-option fixes come first, because
+per-field canonicalization depends on them. And the API change and the live
+decision engine ship as one stage, since separating those leaves a window where the
+new promise is broken whichever way the cut is made (Stage 4), though the engine's
+pure, unwired half separates cleanly and is Stage 3b.
+
+The candidate ships when everything is ready rather than at the earliest
+defensible moment. The moment an item can be adjudicated safe-before or safe-after
+the tag, every item needs adjudicating, and the answers settle into separate
+paragraphs that drift apart. One definition of ready removes the adjudication.
+
+What downstream gives up by waiting is a tag, not a start. We open their pull
+requests ourselves (#1258), and the dev version supplies the boundary in the
+meantime: bumped in the same pull request as each break, it lets brms guard on
+`packageVersion("cmdstanr")` against the `v1.0` branch the day the break lands
+there, which is finer-grained than a tag rather than a substitute for one. Bumping in a follow-up
+commit is worse than not bumping at all, since a guard written against the new
+number then takes the old branch and calls a method that has already gone.
+
+**Each guard names the stage it needs, not a number chosen now.** brms moves onto
+the standalone family, which arrives in Stage 4, so its boundary is the Stage 4 dev
+version, whatever that pull request assigns. Writing a literal here picks the
+wrong stage as soon as the arithmetic moves: from `0.9.0.9002`, Stage 1's bump is
+`.9003`, so a guard written against `.9003` today would switch brms to
+`compile_stan_file()` three stages before it exists. The downstream pull requests
+we open carry the real numbers.
+
+**A bump is owed for a public contract downstream has to branch on, not for
+anything observable.** Stages 1, 4 and 5 owe one; Stages 2, 3 and 3b do not. Stage
+3 is the case that makes the distinction necessary: it creates a sidecar beside
+every executable and can print the untracked-dependency note, both observable, and
+neither is something brms or instantiate could write an `if` against. What the
+sidecar does raise is whether instantiate carries the record into the package
+library alongside the staged executable, which is install mechanics and belongs to
+#1238; no version guard would answer it.
+
+### Stages 0 and 1: landing in #1235, then Make-option correctness
+
+Both are independent of the record, which is why they can go first. Stage 1 must
+go before everything below because per-field canonicalization (§3) is meaningless
+while options are still parsed and spelled inconsistently. Comparing two
+configurations presupposes knowing what each one means, so the `+=` / `?=` / `:=`
+classification, casing, quoting and escaping all have to be settled before any
+comparison is written.
+
+### Stage 2: schema and helper tests
+
+Field separation (§1), executable hash, corruption, an unsupported format version,
+executable-only models. Parser, writer and comparison helpers tested against
+fixtures.
+
+**This stage is behaviour-free**, and should be kept that way: nothing writes a
+record beside a user's Stan program until Stage 3. Name, format and the
+version-control story are decided (§4), settled enough to build against and
+revisable until the release. What this stage owes is the groundwork that has to be
+in place before Stage 3 creates a file: ignore patterns in this repository, and the
+user-facing wording to ship with the writer.
+
+### Stage 3: transactional record writing
+
+Executable-plus-record staged and committed together, with verification and the
+rollback in §4. Locking excluded. This is where the file first appears on disk; it
+is written but does not yet drive decisions.
+
+### Stage 3b: why the engine separates from the API change
+
+The assessment is built and tested as a pure function before anything calls it,
+which is a stage of its own rather than the first half of Stage 4. It depends only
+on Stage 2's fixtures, compiles nothing, and can be worked alongside Stage 3.
+
+The reason to separate it is that it is what makes this section's contract
+checkable. §6's triggers are prose, and prose gives consistency only if a reader
+notices two statements disagreeing. As a decision table with a fixture per row, a
+contradiction is a red suite instead. A single test asserting that `v1/` to `v2/`
+rebuilds catches "re-resolution uses the recorded paths" the day it is written.
+Landing the engine early moves that check ahead of Stage 4 rather than arriving
+with it.
+
+It does not weaken the argument below that the API change and the decision engine
+ship together. That argument is about the engine being live while `$compile()` is
+gone; an unwired function changes nothing observable, so it carries none of the
+risk the combined stage exists to contain.
+
+### Stage 4: the API change and the decision engine, together
+
+Removing deferred compilation and `$compile()` and adding the standalone family
+(§8) is **#1256**. The constructor decision engine is **#1255**, superseding
+**#1019**, and brings with it **#1237**, the triggers in §6, include re-resolution,
+and §5's assessment with its two caller behaviours. Likely closes **#1253**.
+
+**These cannot ship separately, in either order.** The intermediate state is broken
+whichever way it is cut:
+
+```r
+mod <- cmdstan_model(file, cpp_options = list(stan_threads = TRUE))
+```
+
+If `$compile()` is removed before configuration mismatches trigger rebuilds, an
+existing unthreaded executable is still reused under today's decision logic while
+the only escape route is gone. That breaks the central promise of the new API,
+that supplied options apply, in the window between the two stages.
+
+**The main file's compiled-in path is wrong today, and Stage 4 fixes it.** stanc
+bakes source paths into `locations_array__`, which holds for resolved includes but
+not for the program itself: `R/model.R:823-824` copies it to a `tempfile()` and
+compiles the copy. This is independent of §6, since content identity means the
+path never decides a rebuild, and is worth fixing on its own merits. Measured on
+2.39 for a model with one include: ten occurrences of
+`/var/folders/…/RtmpLEUpO4/model-92f518cac7e5.stan`, two of the include's real
+absolute path. What a user sees is a location that was deleted before they could
+reach it:
+
+```
+Chain 1 Exception: normal_lpdf: Location parameter is nan, but must be finite!
+  (in '/var/folders/…/RtmpxvEWEP/model-950f21e1e16b.stan', line 6, column 2 to column 38)
+```
+
+Correct line and column, useless filename. This is a live defect in released
+cmdstanr, independent of everything else here, and it has never been filed. The
+fix is `--filename-in-msg=<normalised original path>`, which stanc has already
+(`absent=MODEL_FILE`). Verified accepted and effective on every CmdStan from 2.27
+to 2.39, and `cmdstan_min_version()` is 2.35 (`R/path.R:145`), so it can be
+injected unconditionally with no version guard.
+
+<!-- contract -->
+
+**Precedence is settled, not left to implementation.** Absent, cmdstanr injects the
+real source path. Supplied by the caller in `stanc_options`, that value wins
+untouched; existing cmdstanr already accepts it there, so overriding it would break
+§2's rule that supplied options apply, and would do so silently. Either way the
+call's value wins over one in `make/local`'s `STANCFLAGS`, whose occurrence is
+dropped under §6's rule for a flag the call emits; 2.38 and 2.39 refuse the repeat
+outright, so without that rule a `make/local` carrying the flag would fail every
+build. Which list the value lands in, and so whether it is compared, is §4's. A
+user-typed value is a fixed string, so it introduces no path sensitivity.
+
+<!-- /contract -->
+
+<!-- contract -->
+
+**Only the two build entry points inject it.** <!-- /contract --> `check_syntax_stan_file()`,
+`format_stan_file()` and `stan_variables()` run stanc against the real file
+already (`$check_syntax()` writes its output to a tempfile but reads
+`self$stan_file()`, `R/model.R:1126-1150`), so their messages name the right file
+and injecting there would be noise.
+
+<!-- contract -->
+
+**The cost, so it is not discovered instead.** The injected value is path-derived
+and not compared, so a project that moves keeps the old embedded path in its binary
+until something else triggers a rebuild. <!-- /contract --> That is the conceded price of content
+identity (§6), not an oversight.
+
+Its own NEWS entry and its own test; it is small in code but it changes what a user
+reads in every runtime error from a model built after it lands. Executables built
+before it keep the tempfile path, since a change to which options cmdstanr injects
+rebuilds nothing already built, and the NEWS entry says so as §4 requires.
+
+For a model built at install time the recovered path is the staged build location
+(§9), so this makes the artifact describe where it was built, which is all it
+claims to do, rather than making that location reachable.
+
+**One thing possibly worth automating here.** §6 treats an executable predating
+records as a rebuild trigger, and that transition can be tested rather than waited
+for: 0.9 stays installable from GitHub, so a job could install it, build an
+executable, then install this branch and assert the adoption path (no record,
+provenance unknown, rebuild triggered). Worth weighing when the stage is planned,
+not a commitment. Building such an executable by hand when it is needed may well
+be enough, and is one fewer moving part in CI.
+
+### Stage 5: public build-record inspection
+
+`stan_build_info()` last, because it publishes answers Stage 4 settles. Its inputs
+exist a stage earlier, since Stage 3 writes the record and captures
+`reported_features`, so the ordering is about meaning rather than availability.
+Until Stage 4 deletes the merge, `$cpp_options()` still answers "what is this
+binary" by mixing the report into the request, so a function published before then
+would arrive into a world where its own purpose is not yet true, and Stage 4 would
+change what it reports. It must also answer for an unprovenanced executable (§7),
+and record-aware adoption is Stage 4, so before that the case it most needs to
+cover does not exist. It ships before the candidate, per #1258.
+
+<!-- contract -->
+
+**It must ship in 1.0**, despite looking purely additive. <!-- /contract --> Because §1 keeps the
+request separate from what the binary reports, this is the only way to ask what an
+executable is, and the only answer available at all for an unprovenanced one (§7). <!-- contract -->
+From the candidate onward its output may gain fields (the dependency reporting is
+expected to) but may not rename or remove one. <!-- /contract --> That is ordinary candidate
+discipline for any published API.
+
+<!-- contract -->
+
+**It reports each dependency's `built_from`, and whether that path still exists.**
+It cannot report where the file resolves now, and must not try: it receives an
+executable and nothing else, so for a relocated project it has no source to
+resolve against, and for an executable-only model (§7) there is no registered
+source at all. <!-- /contract --> Deriving one would mean inferring a project root or searching the
+filesystem, the relocatable-record idea rejected in §4 and §6, arriving through a
+different door. Current resolution belongs to a source-backed model, which already
+has `$stan_file()` and `$include_paths()` to answer it.
+
+<!-- contract -->
+
+**The existence flag is a neutral fact, not a warning.** <!-- /contract --> For every package that
+builds at install time, a whole class by construction (§7), `built_from` points
+into R's staging tree and is expected to be gone, because R deletes it on success.
+Rendering that as a problem would mean a maintainer asking a user to run
+`stan_build_info()` and getting back a healthy installation with every dependency
+flagged. The documentation should say plainly that a missing recorded path is
+normal for install-time builds.
+
+<!-- contract -->
+
+Not a message either. A relocation that costs nothing should not narrate itself on
+every construction, and this is reported only when asked.
+
+<!-- /contract -->
+
+### The release candidate
+
+The candidate ships after the NEWS reconciliation, per #1258, so downstream
+packages have something to migrate against rather than a release note. That is
+what makes §8's breaking change affordable. #1258 carries the pull requests
+themselves, the NEWS pass and Air's whole-repo format, with the package-by-package
+surveys behind them.
+
+**The downstream surveys in #1258 are signals, not constraints.** brms and
+instantiate internals are ours to change, and what they do today shows what real
+callers need to be able to express rather than what has to keep working. Build
+what §8 describes, then make them use it. The only obligation is negative: nothing
+here may leave a downstream package unable to express something it legitimately
+needs.
+
+### Why an install-time build is adopted executable-only
+
+§7 puts a whole class of package here by design and leaves the argument to this
+section. instantiate is the case it is drawn from: `stan_package_compile()` builds
+the model at installation and `stan_package_model()` adopts the executable on every
+fit, so both halves are visible in one package.
+
+**Its runtime model stays executable-only, and that is a choice. The staged build
+path is not the reason.** R installs packages in staged mode by default:
+`src/install.libs.R` runs against an `R_PACKAGE_DIR` under
+`00LOCK-<pkg>/00new/<pkg>`, and R moves the tree to its final location afterwards.
+instantiate compiles there, so the path the executable was built from stops
+existing the moment installation finishes. Verified with an ordinary
+`R CMD INSTALL` of a probe package built to the same shape:
+
+```
+build time (R_PACKAGE_DIR): …/lib/00LOCK-pkgstage/00new/pkgstage/bin/stan/bernoulli.stan
+runtime (system.file):      …/lib/pkgstage/bin/stan/bernoulli.stan
+```
+
+Identical content, different normalised path. The source itself is still there, at
+its final location, and could be registered; under §6's content identity that
+would not even rebuild. So the recommendation needs a reason that does not depend
+on the identity rule.
+
+**The reason is that registering source hands the rebuild decision to the session,
+and `builder` guarantees it fires.** instantiate's defining promise is that models
+compile at installation and never during use. §6 compares the CmdStan installation
+path and version, and `install_cmdstan()` puts every version in its own directory,
+so an upgrade changes both halves:
+
+```
+Monday     install.packages("somepkg")  -> built against cmdstan-2.39.0
+Tuesday    install_cmdstan()            -> cmdstan-2.40.0
+Wednesday  somepkg::fit(...)            -> builder mismatch, rebuild inside the fit
+                                           call, into the package library
+```
+
+`stan_package_model()` adopts on every fit, so this is the next fit rather than an
+eventual one.
+
+**And that rebuild would be unnecessary**, which is what makes this decisive. The
+executable is self-contained apart from TBB, which it loads through an absolute
+rpath baked in at link time, and `install_cmdstan()` leaves the old tree in place:
+
+```
+$ otool -l <model> | grep LC_RPATH -A2
+  path /Users/jgabry/.cmdstan/cmdstan-2.39.0/stan/lib/stan_math/lib/tbb
+$ ./<model> info      # no cmdstanr, no CmdStan on any path
+stan_version_minor = 39
+```
+
+`tbb_path()` is non-`NULL` only on Windows (`R/run.R:1238-1247`), so on macOS and
+Linux which CmdStan cmdstanr points at has no bearing on whether the binary loads.
+A new CmdStan release therefore costs a source-backed instantiate model a full
+recompile and buys it nothing anyone asked for.
+
+For an ordinary model, rebuilding when CmdStan changes is correct: you want the new
+Stan. For a model built at package-install time it is not. The package owns when
+that model is built, and the user asks for a rebuild by reinstalling the package.
+Executable-only adoption is what keeps that true, because §7 has no path that
+rebuilds a model with no source.
+
+A secondary case, weaker but real: somebody edits the installed `.stan` in the
+package library to debug something, and the content hash differs. A third candidate
+does not exist. Two `.libPaths()` entries resolving source and binary to different
+package versions cannot happen, because `stan_package_model()` derives the
+executable from the source it just found, `exe_file <- file.path(dirname(stan_file),
+name)`, so there is only ever one library resolution.
+
+**This is not an instantiate quirk.** Any package that compiles at install time and
+ships the binary inside itself is in the same position, because staged installation
+is R's default. An install-time-built executable should be adopted executable-only,
+and §7 is the correct mode for that whole class of package rather than a degraded
+fallback.
+
+The conclusion does not rest on the staged path, which is what keeps it stable
+under §6's content identity. The measurement above still earns its place, for a
+narrower purpose: it establishes that `built_from` points somewhere that stops
+existing, which is what `stan_build_info()` reports, and why its existence flag
+has to read as normal rather than as a fault.
+
+**`include_paths` is settled at installation, and inert at adoption.** instantiate
+currently forwards it into a branch supplying no source, which §7 rejects, for the
+reason given there: with no source there is nothing to resolve, not because nothing
+will be compiled.
+
+#1094 is that distinction being missed. A model built with `stan_file`, `exe_file`,
+`compile = FALSE` and `include_paths` failed at fit time, not compile time: with a
+source registered, `$sample()` reached `$variables()`, stanc ran with no include
+paths, and the include did not resolve. Dropping `stan_file` was the workaround,
+and instantiate's present shape follows from it, losing `stan_file`
+([instantiate discussion 28](https://github.com/wlandau/instantiate/discussions/28))
+and gaining an `include_paths` argument
+([instantiate issue 33](https://github.com/wlandau/instantiate/issues/33)) as
+separate changes.
+
+1.0 dissolves this structurally rather than by patching storage. The construction
+it describes is twice unavailable, since `compile = FALSE` is gone and §7 rejects
+`stan_file` beside `exe_file`, and with one build call per model, it carries
+`include_paths`, so they are stored once and available to every later stanc
+invocation. `precompile_include_paths_` exists only to bridge construction and a
+later `$compile()`; with no second call there is nothing to bridge.
+
+So the two calls separate cleanly. Installation resolves includes; adoption has no
+source to resolve them against:
+
+```r
+# installation
+compile_stan_file(stan_file, include_paths = , cpp_options = , stanc_options = )
+# runtime
+cmdstan_model(exe_file = exe_file)
+```
+
+Nothing about include resolution is lost at the second line, because all of it was
+settled at the first; the record carries the requested include paths, the resolved
+files, their hashes and any known untracked dependencies, to be read rather than
+recomputed. `include_paths` survives in instantiate's own signature, narrowed to
+their explicit `compile = TRUE` branch, which does supply a source.
+
+**No instantiate user's model changes behaviour.** On the adoption path
+`include_paths` is stored and never consumed today, since no source means no
+`$variables()` and so no stanc runs. Making it an error rather than a silent no-op
+changes what the argument does, not what any model does.
+
+<!-- contract -->
+
+**Executable-only adoption does cost data validation, which belongs in the trade.**
+With no source, `is_variables_method_supported()` is false, so `$sample()` skips the
+variable-based check of supplied data and `process_data()` serialises with
+`always_decimal = FALSE` (`R/data.R:281`). <!-- /contract --> Both are already true of instantiate
+today, so neither is a regression, but unlike an accurate path in an exception
+message this is a real capability, and declining to add it is a trade rather than
+a free choice.
+
+Questions about the installed source go to §8's standalone family against that
+source directly, `stan_variables(file, include_paths = )` and
+`check_syntax_stan_file(file, include_paths = )`, which is also honest about what
+it describes: the source currently installed, not the file the executable was
+built from.
+
+<!-- contract -->
+
+**cmdstanr cannot repair an install-time-built model.** It is executable-only, so
+§7 forbids rebuilding it, and no CmdStan upgrade or cmdstanr update changes that.
+The remedy is reinstalling the package, so any message here points at the package
+and never at `force_recompile`. <!-- /contract --> That is today's behaviour too; what changes is that
+it follows from a decision rather than from an accident. Expect one cosmetic
+consequence rather than discovering it: `stan_build_info()` on such a model reports
+a `00LOCK-…/00new/…` build path, which is accurate provenance and will look like a
+bug to whoever sees it first.
+
+**Adoption happens on every fit, not once at install.** `stan_package_compile()`
+runs from `src/install.libs.R` (instantiate ships no `configure` template at all),
+but `stan_package_model()` is called inside the user-facing model function;
+instantiate's own example package wraps it and `$sample()` together in
+`run_bernoulli_model()`. So anything cmdstanr prints at adoption prints on every
+fit, in every package built this way, through a function that does not look like
+it touches a compiler. That is the concrete case behind the silence rule in §7.
+
+### How the stages are executed
+
+One pull request per stage, merged into a `v1.0` integration branch, each green and
+revertable on its own. The branch merges to master at the release candidate and not
+before: enough people install cmdstanr from GitHub master that a sequence of breaking
+stages landing there over weeks would reach them one break at a time. The rebase
+cost of a long-lived branch is what that trades against, and it is small. Master is
+quiet apart from bug fixes while the work is under way, each stage is still one pull
+request reviewed on its own, and what gets rebased is the branch onto those fixes
+rather than a stage onto a moving master.
+
+Stage 4 ships as one pull request, but with the engine already built and tested in
+Stage 3b what remains is the wiring and the API removal. Most of the risk is
+retired before anything user-facing moves, and it is retired in a separate
+reviewable unit.
+
+Parallel work is bounded by what the tests contend for, not by what a checkout
+isolates. `make/local` lives in the CmdStan installation, the precompiled headers
+are keyed by `STAN_FLAGS` in that same installation, and parts of the suite reach
+`rebuild_cmdstan()`. Separate checkouts separate none of that, so only one
+compiling task runs at a time, and a run killed part-way leaves residue that the
+next run snapshots as its baseline. What does parallelise is the work that never
+compiles: Stages 2 and 3b in their entirety, the downstream-usage inventory,
+documentation and test migration once the API commit exists, and adversarial
+review of a finished stage. That last is worth a reviewer rather than another
+implementer.
+
+### Independent, can land any time
+
+**#1245**, **#1246** (error message quality) and **#1249** (`$cmdstan_version()`
+reports the installed CmdStan, not the one that built the executable, caused by
+`R/model.R:318` and not `dry_run`). Small, user-visible, and the natural work to
+pick up while Stage 0 is in review.
+
+**#1261** (launch the model executable with the TBB its build resolved) is gated
+only on Stage 3 having written `tbb_dir`, and lands any time after it.
+
+---
+
+## 10. Notes for whoever implements this
+
+<!-- contract -->
+
+**The record describes; it does not authorise.** It is not permission to run
+whatever is at the executable path. That is what the artifact hash is for. <!-- /contract --> Code
+that reads the record and proceeds without verifying the pair reintroduces the
+class of bug this design exists to remove.
+
+<!-- contract -->
+
+**Updating the object's snapshot is the constructor's job, not the engine's.** <!-- /contract --> §5's
+assessment never mutates state, so the artifact hash an object expects is stored by
+whoever rebuilt or verified, once the verdict is back. Doing it inside the engine
+is the natural place to reach for and costs the purity §9 builds the engine on.
+
+<!-- contract -->
+
+**The `dirname(stan_file)` include default is behaviour, not scaffolding.** When a
+program contains `#include` and no `include_paths` are supplied, cmdstanr defaults
+them to the model's own directory (`R/model.R:293-294`). <!-- /contract --> stanc does not do this
+itself. Invoked directly on a model with `#include utils/silly.stan` and no
+`--include-paths`, 2.39 fails with a syntax error at the include line, so the
+default is the only reason such models build. Downstream depends on it too:
+`instantiate::stan_package_compile()` defaults `include_paths` to `NULL` and the
+example `install.libs.R` does not pass it, so every instantiate package with a
+multi-file model depends on this default, and dropping it would turn their
+installs into build failures rather than degraded messages.
+
+§8 removes the reason `precompile_include_paths_` exists as a separate variable,
+since there is no second build call left to bridge, but the default it carries has
+to survive in whatever replaces it. With one build call the natural form is to
+resolve the default where include paths are resolved for that build, with no
+second variable. Requirement, not mechanism; it needs a test either way.
+
+The default resolves before the request is recorded (§8), and `$include_paths()`
+already reports the defaulted value today, so the record and the accessor agree.
+
+**Stop merging the injected options into the user's list in place.**
+`R/model.R:673`, `:677`, `:693` and `:835` all write into the same `stanc_options`
+variable, so by the time a record could be written the user's entries and
+cmdstanr's additions are indistinguishable. Do not fix that with a snapshot taken
+before line 673; it only works until someone adds a fifth injection site above it.
+Accumulate injections in their own list and merge the two when converting to
+arguments, so `_supplied` and `_injected` are both values the code already holds
+and neither is reconstructed. Getting this wrong is silent: it turns every
+injection into a compared option, and toggling `pedantic` starts recompiling.
+
+**For the user header, the directory is the part that matters.** §6 compares the
+whole normalised path because that is what `built_from` already holds and the only
+extra rebuild it buys is renaming a header in place with identical contents, which
+nobody does. If anyone later wants to loosen it, `dirname` is the loosening;
+removing the comparison is not.
+
+**Two checks that look alike and are not.** "The record disagrees with what was
+asked for" and "the record cannot be read" both mean rebuild, but they are not the
+same check. Conflating them makes an unreadable record silently equivalent to a
+matching one. The failure is treating no answer as the answer agreed. The same
+applies to a record whose format version this cmdstanr does not read: identical
+behaviour, different diagnosis, and the message has to say which happened.
+
+**Absence of evidence is not evidence of absence, twice.** `reported_features` is
+tri-state (§1): a feature CmdStan does not report is unknown, and treating unknown
+as disabled reproduces #765 in a new place. `known_untracked_dependencies` (§6) is
+the same shape: an empty list means nothing was detected, never that the record is
+complete. Check for both rather than trusting the field names.
+
+Serialization is where it gets lost in practice. §1 encodes the record's tri-state
+by presence because `jsonlite` turns `NA` into `NULL` on the way through a file;
+reintroducing `NA` for unknown in the record reintroduces the collapse. §8 uses
+`NA` in the public result for the opposite reason, and serialization is the whole
+of the difference: what never reaches a file keeps its R type.
+
+`cmdstan_version_compare()` is a third instance, in a different costume: it returns
+`-1` for a version that is missing, `NA`, or empty (`R/path.R:162-164`), so an
+absent version compares as older than everything and every `<` gate fires. That
+fallback is correct where it is used, in install-path code where "no CmdStan"
+should lose every comparison. It is wrong for a model.
+
+The guard is also narrower than "unusable", which matters because it removes the
+temptation to lean on it: a malformed non-empty string never reaches the `-1` at
+all. Both `".."` and `"garbage"` error inside `utils::compareVersion()`, with
+`missing value where TRUE/FALSE needed`; `"garbage"` emits `NAs introduced by
+coercion` first. So the bad-input behaviour is an error, sometimes with a warning
+in front of it, and never the `-1`. Filed as #1260, separately from this design:
+the comparison should not answer a question it was not asked, but fixing it is
+defence in depth rather than what closes this. That is why §7 makes "an adopted
+executable always yields a valid version" a checked invariant rather than an
+observation, and why a model without an executable cannot reach a gate (§8).
+
+<!-- contract -->
+
+**The assessment is pure.** The operation that answers "is this executable
+current?" must not compile, install, or mutate object state (§5). Callers decide
+what to do about the answer: the constructor rebuilds, everything else errors. <!-- /contract --> A
+convenience rebuild tucked inside the assessment reintroduces the hidden
+recompilation this design removed.
+
+**Naming.** `stan_build_info()` and `check_syntax_stan_file()` are still
+placeholders, to be settled in the stage that implements each (§8).
+`.<exe>.cmdstanr.json` is decided rather than open (§4), so build against it, but
+it stays revisable until the release, after which changing it means migrating
+records that already exist.
+
+---
+
+## Appendix: rejected alternatives
+
+One line each: the idea, and why it lost. The section named holds the rule that
+replaced it.
+
+- **Persistent options** (#1248, §2). An automatic rebuild never replays stored
+  configuration, so nothing has to remember them.
+- **`$compile()` narrowed to "rebuild as recorded"** (§2). Replaying build arguments
+  from a file needs a strictly validated schema before it is safe;
+  `cmdstan_model(force_recompile = TRUE)` covers every use.
+- **Reclassifying raw assignments** such as `list("FOO+=x")` as named entries (§3).
+  Wrong whenever a second assignment to the same variable exists.
+- **Keeping Make's own flags as an opaque ordered class** (§3). `-f` and `--eval=`
+  set variables without looking like assignments.
+- **A reserved-variable guard** on `cpp_options` (§3, #1250). Has to know what each
+  flag does; rejecting the whole unnamed shape needs to know nothing.
+- **Running `pedantic` only when the record shows it was not already applied** (§4).
+  Two identical calls would differ on the strength of a file the caller cannot see.
+- **A general diagnostic classifier** re-running diagnostic-only `stanc_options` (§4).
+  Needs per-option semantics per CmdStan version, to re-emit warnings for a build
+  nobody asked to repeat.
+- **`NA` for an unknown reported feature in the record** (§1). Does not survive
+  `jsonlite`; presence of the key encodes the state instead.
+- **Path-and-content identity for Stan sources** (§6). A folder rename would pay a
+  full recompile to fix a directory prefix in an exception message.
+- **Version-only builder identity** (§6). Rebuilds only when two installations are
+  configured identically, which is exactly when a user's `set_cmdstan_path()` would
+  otherwise be ignored.
+- **A git identity for the CmdStan installation** (§6). A typical installation is an
+  unpacked tarball, not a repository, so the check would report unchanged for
+  everyone but developers.
+- **Relocatable records** storing paths relative to a root (§6). Needs a root,
+  symlink rules and out-of-project handling; content identity removes the reason
+  anyone wanted them.
+- **Recording each include's search roots and re-resolving the mapping** (§6).
+  `stanc --info` returns the resolved set directly.
+- **Removing `$format()`** (§5). Rewriting the file is the useful part; the cache
+  refresh beside it was what broke things.
+- **Refusing to replace a record written by a newer cmdstanr** (§4). The record is
+  derived data, so refusing protects nothing and costs an error in the one case it
+  arises, a downgrade on one machine.
+- **A third engine state for a failed re-resolution** (§5). Resolving is the
+  caller's job, so the failure is raised before the engine is called.
+- **Deriving the TBB directory from the builder path** (#1261). Wrong for any build
+  that named its own TBB.
+- **`missing()` to learn whether `force_recompile` was supplied** (§7). Breaks as soon
+  as a wrapper declares its own default and forwards it.
+- **Caching the assessment's verdict on the object** (§5). Right within a session and
+  wrong the moment the object is deserialized somewhere else.
