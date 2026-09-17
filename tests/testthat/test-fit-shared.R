@@ -185,14 +185,22 @@ test_that("reloaded fits rebuild model methods lazily after save_object()", {
   utils::capture.output(
     fit <- mod$optimize(data = testing_data("bernoulli"))
   )
+  fit$init_model_methods()
 
   temp_rds_file <- tempfile(fileext = ".RDS")
   fit$save_object(temp_rds_file)
   fit2 <- readRDS(temp_rds_file)
 
+  # The external pointer object survives serialization, but its address does not.
+  reloaded_env <- fit2$.__enclos_env__$private$model_methods_env_
+  expect_type(reloaded_env$model_ptr_, "externalptr")
+  expect_false(model_methods_are_live(reloaded_env))
+
+  # Calling log_prob() rebuilds the bindings and initializes a live pointer.
   expect_no_error(
     lp <- fit2$log_prob(unconstrained_variables = c(0.1))
   )
+  expect_true(model_methods_are_live(reloaded_env))
   expect_equal(lp, -8.6327599208828509347)
 })
 

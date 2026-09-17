@@ -181,6 +181,50 @@ test_that("stale model-method bindings are detected and dropped", {
   expect_false(drop_stale_model_methods(model_methods_env))
 })
 
+test_that("bindings compiled in this session are recognised as live", {
+  fit$init_model_methods()
+  model_methods_env <- fit$.__enclos_env__$private$model_methods_env_
+  expect_true(model_methods_are_live(model_methods_env))
+  expect_false(source_cpp_native_symbol_is_null(model_methods_env$model_ptr))
+})
+
+test_that("model_methods_are_live() rejects pointers without an address", {
+  # Serializing an external pointer discards its address, which is the state a
+  # reloaded fit's model_ptr_ is in. No compilation needed to reproduce it.
+  model_methods_env <- new.env()
+  expect_false(model_methods_are_live(model_methods_env))
+
+  model_methods_env$model_ptr_ <- new_null_external_pointer()
+  expect_false(model_methods_are_live(model_methods_env))
+
+  # A decorated pointer is not a shape this can decide, so it must not be
+  # reported as live either.
+  decorated <- new_null_external_pointer()
+  class(decorated) <- "SomethingElse"
+  model_methods_env$model_ptr_ <- decorated
+  expect_false(model_methods_are_live(model_methods_env))
+})
+
+test_that("source_cpp_native_symbol_is_null() only flags null .Call symbols", {
+  null_symbol <- new_null_external_pointer()
+  class(null_symbol) <- "NativeSymbol"
+  null_symbol_fun <- function(x) NULL
+  body(null_symbol_fun) <- as.call(list(as.name(".Call"), null_symbol, quote(x)))
+  expect_true(source_cpp_native_symbol_is_null(null_symbol_fun))
+
+  expect_false(source_cpp_native_symbol_is_null(function(x) x + 1))
+  expect_false(source_cpp_native_symbol_is_null(quote(.Call)))
+  expect_false(source_cpp_native_symbol_is_null(NULL))
+})
+
+test_that("cmdstanr does not modify the shared externalptr prototype", {
+  # methods::new("externalptr") returns the S4 prototype itself, and external
+  # pointers are not duplicated on assignment, so attaching attributes to the
+  # result would corrupt new("externalptr") for every caller in the session.
+  expect_null(attributes(methods::new("externalptr")))
+  expect_null(attributes(.cmdstanr$NULL_EXTERNAL_POINTER))
+})
+
 test_that("unconstrain_variables correctly handles zero-length containers", {
   model_code <- "
   data {

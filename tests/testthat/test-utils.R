@@ -619,6 +619,188 @@ test_that("cmdstan_make_local() reads back written make flags", {
   )
 })
 
+test_that("cmdstan_make_local() does not append flags that are already present", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  make_local_path <- file.path(dir, "make", "local")
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false"),
+    make_local_path
+  )
+
+  # A flag already in the file is not written again.
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false")
+  )
+
+  # Copying the make/local of a previous installation, as suggested by
+  # install_cmdstan(), adds only the flags that are new.
+  previous_install <- c(
+    "CXXFLAGS += -Wno-deprecated-declarations",
+    "PRECOMPILED_HEADERS=false",
+    "O = 3"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = as.list(previous_install)),
+    c(previous_install[1:2], "O = 3")
+  )
+
+  # Leading/trailing whitespace does not defeat the check.
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("  O = 3  ")),
+    c(previous_install[1:2], "O = 3")
+  )
+})
+
+test_that("cmdstan_make_local() appends a flag that a later line has overridden", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    "STAN_THREADS=true"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = FALSE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false")
+  )
+  # make applies the last assignment, so threading is off at this point and
+  # turning it back on is a real change rather than a duplicate
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
+  )
+  # ... and now it is the last assignment again
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
+  )
+})
+
+test_that("cmdstan_make_local() appends a += flag that a later assignment has wiped", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3"),
+    file.path(dir, "make", "local")
+  )
+
+  # CXXFLAGS=-O3 dropped what the += line added, so adding it back is a real
+  # change rather than a duplicate
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3",
+      "CXXFLAGS += -Wno-deprecated-declarations")
+  )
+  # ... and now it is in force again
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3",
+      "CXXFLAGS += -Wno-deprecated-declarations")
+  )
+})
+
+test_that("cmdstan_make_local() checks flags in one call against each other", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STAN_THREADS=false", file.path(dir, "make", "local"))
+
+  # The second flag is a duplicate of the file but not of what the file will
+  # contain once the first flag is written, so both are needed to end up
+  # with threading off
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list(STAN_THREADS = TRUE, STAN_THREADS = FALSE)
+    ),
+    c("STAN_THREADS=false", "STAN_THREADS=true", "STAN_THREADS=false")
+  )
+})
+
+test_that("cmdstan_make_local() leaves line continuations alone", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(c("CXXFLAGS += \\", "  -O2"), file.path(dir, "make", "local"))
+
+  # The opener matches a line in the file, but dropping it would leave a bare
+  # "-O3" that make cannot parse
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "  -O3")
+    ),
+    c("CXXFLAGS += \\", "-O2", "CXXFLAGS += \\", "-O3")
+  )
+})
+
+test_that("cmdstan_make_local() counts a line continuation as an assignment", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("CXXFLAGS=-O2", file.path(dir, "make", "local"))
+
+  # The last CXXFLAGS=-O2 matches the file, but the continued += in between
+  # changes CXXFLAGS, so writing it again is what makes -O2 the final value
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "  -O3", CXXFLAGS = "-O2")
+    ),
+    c("CXXFLAGS=-O2", "CXXFLAGS += \\", "-O3", "CXXFLAGS=-O2")
+  )
+})
+
+test_that("cmdstan_make_local() does not read a continued line as an assignment", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STAN_THREADS=true", file.path(dir, "make", "local"))
+
+  # The first FOO=bar is part of the CXXFLAGS value, so the second one is the
+  # only assignment to FOO and has to be written
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+    ),
+    c("STAN_THREADS=true", "CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+  )
+  # Same when the continued line is already in the file
+  writeLines(c("CXXFLAGS += \\", "FOO=bar"), file.path(dir, "make", "local"))
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(FOO = "bar")),
+    c("CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+  )
+  # And when the file ends with a backslash, so that the first new flag
+  # continues the file's last line
+  writeLines(c("FOO=bar", "CXXFLAGS += \\"), file.path(dir, "make", "local"))
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(FOO = "bar")),
+    c("FOO=bar", "CXXFLAGS += \\", "FOO=bar")
+  )
+})
+
+test_that("cmdstan_make_local() still appends a new value for a known variable", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STANCFLAGS=--O1", file.path(dir, "make", "local"))
+
+  # Same variable, different value: make lets the last assignment win, so this
+  # must not be treated as a duplicate.
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STANCFLAGS = "--Oexperimental")),
+    c("STANCFLAGS=--O1", "STANCFLAGS=--Oexperimental")
+  )
+})
+
 test_that("matching_variables() works", {
   ret <- matching_variables(c("beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
   expect_equal(
