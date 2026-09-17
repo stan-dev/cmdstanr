@@ -87,6 +87,10 @@ model. (#1258)
 loaded with `readRDS()`. Previously it reported them as already compiled and
 calling one failed with a null symbol address, the same defect
 `$init_model_methods()` had before #1157.
+* A build no longer leaves its copy of the Stan program, the C++ generated from
+it and a second copy of the executable in the session's temporary directory.
+Checking syntax and reading a program's variables no longer leave stanc's
+output there either. (#1258)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization because they avoid repeated stale-binding checks. (#1274)
 * `install_cmdstan()` now offers to copy the `make/local` flags of the

@@ -122,6 +122,9 @@ build_executable <- function(stan_file,
       pattern = "model-", fileext = paste0(".", tools::file_ext(stan_file))
     )
     file.copy(stan_file, source, overwrite = TRUE)
+    withr::defer(unlink(c(
+      source, paste0(strip_ext(source), ".hpp"), cmdstan_ext(strip_ext(source))
+    )))
   }
   hpp_code <- get_standalone_hpp(
     source, c(stanc_inc_paths, stancflags_direct),

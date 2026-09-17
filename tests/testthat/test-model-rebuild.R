@@ -465,3 +465,10 @@ test_that("a model whose Stan file is gone errors, and its executable can be ado
   adopted <- cmdstan_model(exe_file = mod$exe_file())
   expect_sample_output(adopted$sample(data = data, chains = 1), 1)
 })
+
+test_that("a build leaves only the model's C++ in the temporary directory", {
+  stan_file <- local_program()
+  before <- list.files(tempdir())
+  mod <- cmdstan_model(stan_file)
+  expect_equal(setdiff(list.files(tempdir()), before), basename(mod$hpp_file()))
+})

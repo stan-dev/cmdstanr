@@ -23,6 +23,13 @@ test_that("check_syntax_stan_file() checks a program", {
   expect_true(check_syntax_stan_file(include_model$stan_file, quiet = TRUE))
 })
 
+test_that("check_syntax_stan_file() and variables_stan_file() leave nothing behind", {
+  before <- list.files(tempdir())
+  check_syntax_stan_file(testing_stan_file("bernoulli"), quiet = TRUE)
+  variables_stan_file(testing_stan_file("bernoulli"))
+  expect_equal(list.files(tempdir()), before)
+})
+
 test_that("format_stan_file() formats a program", {
   stan_file <- withr::local_tempfile(
     lines = "parameters {real y;} model {y ~ std_normal();}", fileext = ".stan"
