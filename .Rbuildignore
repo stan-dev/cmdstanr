@@ -15,3 +15,4 @@
 ^\.vscode$
 ^dev-notes$
 ^tests/testthat/resources/stan/\..*\.cmdstanr\.json$
+^tests/testthat/README\.md$

@@ -1,8 +1,3 @@
-# End to end pins for the decision engine in R/build.R and the guard in
-# R/model.R: real executables where the executable itself is the subject,
-# mocks where only the decision is. Consecutive threads calls are covered by
-# test-threads.R and are not repeated here.
-
 set_cmdstan_path()
 
 # A fresh copy of a resources/stan/ program (with its include file, for
