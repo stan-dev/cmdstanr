@@ -25,16 +25,13 @@ includes another makefile or a user header that includes other headers, the
 build now says so in a one-line note and names `force_recompile = TRUE` as the
 way to pick up changes to them. (#1257)
 * Running an executable that is out of date is now an error that points at
-`cmdstan_model()`. Previously the stale executable ran as if it were current.
-A model created from a Stan file also needs that file whenever it runs, since
-the check reads it; previously the model kept running after the file was
-deleted. To run an executable without its program, create the model with
-`cmdstan_model(exe_file = )`. (#1255)
+`cmdstan_model()`. Previously the stale executable ran as if it were current. A
+model created from a Stan file also needs the Stan file whenever it runs, since
+the check reads it. To run an executable without its program, create the model
+with `cmdstan_model(exe_file = )`. (#1255)
 * The `compile_standalone` and `compile_model_methods` arguments are gone. Use
 `$expose_functions()` and `fit$init_model_methods()`, which now work whether
-the executable was rebuilt or reused. Previously both arguments were silently
-ignored whenever the executable was already up to date, and both methods
-failed on a reused executable. (#1256, #1245)
+the executable was rebuilt or reused. (#1256, #1245)
 * `$cpp_options()` now reports the options the model was created with, in
 their Make spelling (e.g., `list(stan_threads = TRUE)` comes back as
 `STAN_THREADS`), and nothing else. Previously it also reported what the
@@ -208,16 +205,20 @@ resolved when the model object is created or `$compile()` is called rather than
 on each `stanc` call. Previously a model created from a relative path could
 resolve `#include` directives against the wrong directory if the working
 directory changed. (#1229)
-* `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model 
-executable's metadata. It was never a C++ option; use `$cmdstan_version()` instead. (#1215)
-* CmdStanModel methods now use executable metadata regardless of the 
-capitalization of C++ option names. Any executable reporting threading enabled 
-requires the corresponding `threads` or `threads_per_chain` argument. (#765, #1100)
-* Pathfinder fits used as initial values now use uniform weights when CmdStan 
-already PSIS-resampled their draws, avoiding a second application of importance weights. (#1206)
-* Pathfinder fits used as initial values now correctly treat draws with different 
-initialization parameter values as distinct even when their log weights are equal, 
-and collapse duplicate resampled draws while retaining their selection frequency. (#1207)
+* `$cpp_options()` no longer includes a `STAN_VERSION` entry read from the model
+executable's metadata. It was never a C++ option; use `$cmdstan_version()`
+instead. (#1215)
+* CmdStanModel methods now use executable metadata regardless of the
+capitalization of C++ option names. Any executable reporting threading enabled
+requires the corresponding `threads` or `threads_per_chain` argument. (#765,
+#1100)
+* Pathfinder fits used as initial values now use uniform weights when CmdStan
+already PSIS-resampled their draws, avoiding a second application of importance
+weights. (#1206)
+* Pathfinder fits used as initial values now correctly treat draws with different
+initialization parameter values as distinct even when their log weights are
+equal, and collapse duplicate resampled draws while retaining their selection
+frequency. (#1207)
 * `pathfinder()` now passes separately supplied initial values to every path 
 instead of using only the first path's initial values. (#1206)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
@@ -239,7 +240,8 @@ the new `cmdstanr_spinner` global option to `FALSE`. The spinner shown while
 installing or rebuilding CmdStan and while checking syntax also respects this
 option, and is no longer shown when knitting. (#486)
 * `save_metric_files()` now gives an informative error when metric files were
-not created and keeps saved metric files after the fitted model is garbage-collected. (#1021)
+not created and keeps saved metric files after the fitted model is
+garbage-collected. (#1021)
 * `cmdstan_model()` no longer fails when `MAKEFLAGS` enables directory-printing
 output while reading `STANCFLAGS` from `make`. (#1163)
 * `cmdstan_model()` now retains include paths when initialized with both a Stan file
@@ -287,20 +289,25 @@ are recompiled lazily if needed. (#1158)
 
 ## General Improvements/Changes
 
- * Added compatibility for RTools45 (#1066)
- * cmdstanr will now use RTools with no additional toolchain updates needed on Windows (CmdStan 2.35+ only; #1065, #1054)
- * Improve error messages when calling `sampler_diagnostics()` with `fixed_param=TRUE`
- * Improve numerical stability in calculation of effective sample size during `loo` method (#1057)
- * Improve numerical stablity with very small log-ratios in calculation of effective sample size during `loo` method (#1015)
- * Add warning if input data/inits have been coerced to ints (#994)
+* Added compatibility for RTools45 (#1066)
+* cmdstanr will now use RTools with no additional toolchain updates needed on 
+Windows (CmdStan 2.35+ only; #1065, #1054)
+* Improve error messages when calling `sampler_diagnostics()` with `fixed_param=TRUE`
+* Improve numerical stability in calculation of effective sample size during 
+`loo` method (#1057)
+* Improve numerical stablity with very small log-ratios in calculation of 
+effective sample size during `loo` method (#1015)
+* Add warning if input data/inits have been coerced to ints (#994)
 
 ## Bugfixes
 
- * Don't require fixed_param for models with zero parameters (only GQs) for CmdStan >= 2.36 (#1046)
+ * Don't require fixed_param for models with zero parameters (only GQs) for 
+ CmdStan >= 2.36 (#1046)
  * Improve detection/handling of `make` (#1036)
  * Fix saving of model objects to network drive (#1038, thanks to @bschneidr)
  * Update usage of `untar` to fix installation errors (#1034)
- * Respect compilation flags in `make/local` when exposing functions or model methods (#1003)
+ * Respect compilation flags in `make/local` when exposing functions or model 
+ methods (#1003)
  * Fix passing of include paths to CmdStan (#1000)
  * Fix passing of factor data to CmdStan (#999)
  * Fix extraction and passing of array data/parameters as model inits (#993)
@@ -309,24 +316,30 @@ are recompiled lazily if needed. (#1158)
 
  * Clarifications to usage of `optimize` and `loo` methods (#1060)
  * Add documentation for faster model saving with large models (#1042)
- * Remove mentions of `rstan::read_stan_csv` due to incompatibility with newer CmdStan outputs (#1018)
- * Document global option `cmdstanr_print_line_numbers` for printing line numbers (#1017)
+ * Remove mentions of `rstan::read_stan_csv` due to incompatibility with newer 
+ CmdStan outputs (#1018)
+ * Document global option `cmdstanr_print_line_numbers` for printing line 
+ numbers (#1017)
  * Change usage of 'chapter' to 'section' in documentation (#1014)
- * Remove examples of updating removed array syntax as functionality no longer supported in CmdStan (#1008)
+ * Remove examples of updating removed array syntax as functionality no longer 
+ supported in CmdStan (#1008)
  * Change usages of 'sampling statement' -> 'distribution statement' (#987)
 
 # cmdstanr 0.8.1
 
 ## Minor changes
 
-* Added `CMDSTANR_USE_RTOOLS` environment variable to force stock RTools on Windows by @andrjohns in #980
+* Added `CMDSTANR_USE_RTOOLS` environment variable to force stock RTools on 
+Windows by @andrjohns in #980
 * Added support for Windows ARM64 by @andrjohns in #990
-* Automatically initialise model methods when called, add `inc_warmup` argument to `$unconstrain_draws()` by @andrjohns in #985
+* Automatically initialise model methods when called, add `inc_warmup` argument 
+to `$unconstrain_draws()` by @andrjohns in #985
 
 ## Bugfixes
 
 * Fix errors when using pathfinder object as initial values by @avehtari in #984
-* Fix error with `$unconstrain_draws()` returning incorrect assumptions in some cases by @andrjohns in #983
+* Fix error with `$unconstrain_draws()` returning incorrect assumptions in some 
+cases by @andrjohns in #983
 * Fix spurious errors about missing CmdStan config files by @andrjohns in #981
 * Fix linking error when exposing SUNDIALS/KINSOL functions or model methods by @andrjohns in #977
 * Fix long-standing error with OneDrive paths on Windows by @andrjohns in #990
@@ -335,24 +348,34 @@ are recompiled lazily if needed. (#1158)
 
 ## Major new features
 
-* Add functionality for passing `CmdStanFit` objects as initial values by @SteveBronder in #937
+* Add functionality for passing `CmdStanFit` objects as initial values by 
+@SteveBronder in #937
 
 ## Other improvements
 
 * Add compatibility with CmdStan 2.35 by @andrjohns in #972
-* Add `show_messages` and `show_exceptions` arguments to all methods for controlling output by @andrjohns in #897
-* Drop RcppEigen dependency, implement basic Eigen -> C++ interop by @andrjohns in #899
+* Add `show_messages` and `show_exceptions` arguments to all methods for 
+controlling output by @andrjohns in #897
+* Drop RcppEigen dependency, implement basic Eigen -> C++ interop 
+by @andrjohns in #899
 * Add compatibility with CmdStan 2.34 by @andrjohns in #905 #910
-* Add a format argument to the `unconstrain_draws()` method to specify draws format of return by @andrjohns in #886
+* Add a format argument to the `unconstrain_draws()` method to specify draws 
+format of return by @andrjohns in #886
 * Align `cmdstanr` EBFMI diagnostic threshold with CmdStan by @andrjohns in #892
-* Add global option `cmdstanr_print_line_numbers` to add line number to model printing by @sbfnk in #967
-* Add new CmdStan arguments `save_metric` and `save_cmdstan_config` by @venpopov in #932
+* Add global option `cmdstanr_print_line_numbers` to add line number to model 
+printing by @sbfnk in #967
+* Add new CmdStan arguments `save_metric` and `save_cmdstan_config` 
+by @venpopov in #932
 * Add documentation for CmdStanR global options by @jgabry in #951
-* Add documentation for how to obtain structured output similar to `rstan::extract()` using a combination of `cmdstanr` and `posterior` by @jgabry in #955
+* Add documentation for how to obtain structured output similar to 
+`rstan::extract()` using a combination of `cmdstanr` and `posterior` 
+by @jgabry in #955
 * Added coercion generics for CmdStanFit objects by @gowerc in #943
-* `psis_resample` and `calculate_lp` arguments added to Pathfinder method by @SteveBronder in #903
+* `psis_resample` and `calculate_lp` arguments added to Pathfinder method 
+by @SteveBronder in #903
 * Documentation and tests for LOO method updated by @jgabry in #923
-* Global option `cmdstanr_warn_inits` added to disable warnings about partially specified initial values by @jgabry in #913
+* Global option `cmdstanr_warn_inits` added to disable warnings about partially 
+specified initial values by @jgabry in #913
 * Updates to MCMC `output_dir` documentation by @jgabry in #929
 
 ## Bugfixes
@@ -361,8 +384,10 @@ are recompiled lazily if needed. (#1158)
 * Fix a minor typo in the README by @jgabry in #911
 * Make exported RNG functions respect changes to R's seed by @andrjohns in #973
 * Optimisations for model methods functions by @andrjohns in #960
-* Bugfix for passing function for initial values with Pathfinder method and default `num_paths` by @andrjohns in #964
-* Continue with compilation if `compile_stanalone=TRUE` but no functions are found by @jgabry in #956
+* Bugfix for passing function for initial values with Pathfinder method and 
+default `num_paths` by @andrjohns in #964
+* Continue with compilation if `compile_stanalone=TRUE` but no functions are 
+found by @jgabry in #956
 * Update tests and CI for compatibility with MacOS ARM64 by @andrjohns in #958
 * Fix handling of `inv_metric` argument with only 1 parameter by @venpopov in #935
 * Fixes for compatibility with RTools44 by @andrjohns in #952 #959
@@ -397,11 +422,14 @@ are recompiled lazily if needed. (#1158)
 * Store return codes instead of always querying exit status by @jgabry in #798
 * enable jacobian argument for optimization by @jgabry in #799
 * Fix init_model_methods for models with no data by @andrjohns in #801
-* Document a CmdStan-focused way to pre-compile Stan models in R packages by @wlandau in #809
+* Document a CmdStan-focused way to pre-compile Stan models in R packages 
+by @wlandau in #809
 * Describe how to efficiently save model fit objects by @wlandau in #816
 * fix errors in doc for new methods by @jgabry in #823
-* Give informative error when exposing stan functions with precompiled model by @andrjohns in #831
-* Bugfixes in .stanfunctions, hessian model method, and exposing RNG functions by @andrjohns in #811
+* Give informative error when exposing stan functions with precompiled model 
+by @andrjohns in #831
+* Bugfixes in .stanfunctions, hessian model method, and exposing RNG functions 
+by @andrjohns in #811
 * Fix variable_skeleton() with containers by @andrjohns in #832
 * Improve handling of user header by @martinmodrak in #818
 * change duplicate stdout_file to stderr_file by @jgabry in #834
@@ -411,8 +439,10 @@ are recompiled lazily if needed. (#1158)
 
 ### Major new features
 
-* New `expose_functions()` method to expose Stan functions to R by @andrjohns in #702. See `?expose_functions`.
-* New methods for accessing log_prob, grad_log_prob, hessian, un/constrain variables by @andrjohns in #701. See `?init_model_methods`.
+* New `expose_functions()` method to expose Stan functions to R by @andrjohns 
+in #702. See `?expose_functions`.
+* New methods for accessing log_prob, grad_log_prob, hessian, un/constrain 
+variables by @andrjohns in #701. See `?init_model_methods`.
 
 ### Other changes
 
@@ -435,7 +465,8 @@ are recompiled lazily if needed. (#1158)
 * Rtools43 support by @andrjohns in #755
 * Add stanc M1 make patch, suppress boost warnings by @andrjohns in #756
 * more examples of summary method by @gravesti in #751
-* Fix model$format and model$check_syntax for compiled models with include-paths by @adrian-lison in #775
+* Fix model$format and model$check_syntax for compiled models with 
+include-paths by @adrian-lison in #775
 * Generalise RTools config/support by @andrjohns in #777
 * New posterior vignette by @gravesti in #719
 * Add moment-matching support to $loo() method by @andrjohns in #778
@@ -452,27 +483,27 @@ Windows execution. (#677, @andrjohns)
 
 ### Bug fixes
 
-* In `cmdstan_default_path()` we now ignore directories inside `.cmdstan` that don't start
-with `"cmdstan-"`. (#651)
+* In `cmdstan_default_path()` we now ignore directories inside `.cmdstan` 
+that don't start with `"cmdstan-"`. (#651)
 
-* Fixed Windows issue related to not locating `grep.exe` or when it is located in a path
-with spaces. (@weshinsley, #661, #663)
+* Fixed Windows issue related to not locating `grep.exe` or when it is located 
+in a path with spaces. (@weshinsley, #661, #663)
 
 * Fixed a bug with diagnostic checks when ebfmi is NaN.
 
 * Fixed a bug that caused issues when using `~` or `.` in paths supplied to the
 `cmdstanr_write_stan_file_dir` global option.
 
-* Fixed a bug that caused the `time()` method fail when some of the chains failed to finish
-succesfully.
+* Fixed a bug that caused the `time()` method fail when some of the chains 
+failed to finish succesfully.
 
 # cmdstanr 0.5.2
 
-* Refactored toolchain installation and checks for R 4.x on Windows and added support
-for Rtools42. (#645)
+* Refactored toolchain installation and checks for R 4.x on Windows and added 
+support for Rtools42. (#645)
 
-* Expanded the use of `CMDSTAN` environment variable to point to CmdStan installation
-_or_ directory containing CmdStan installations. (#643)
+* Expanded the use of `CMDSTAN` environment variable to point to CmdStan 
+installation _or_ directory containing CmdStan installations. (#643)
 
 * New vignette on how to handle deprecations using the `$format()` method. (#644)
 
@@ -712,7 +743,8 @@ specifying custom chain IDs. (#319)
 
 * Added support for the `sig_figs` argument in CmdStan versions 2.25 and above. (#327)
 
-* Added checks if the user has the necessary permissions in the RTools and temporary folders. (#343)
+* Added checks if the user has the necessary permissions in the RTools and 
+temporary folders. (#343)
 
 # cmdstanr 0.1.3
 
