@@ -268,6 +268,15 @@ test_that("Functions can be exposed in fit object", {
   )
 })
 
+test_that("Functions can be exposed again on a fit reloaded with readRDS()", {
+  fit$expose_functions()
+  rds_file <- tempfile(fileext = ".RDS")
+  fit$save_object(rds_file)
+  fit2 <- readRDS(rds_file)
+  expect_no_error(fit2$expose_functions())
+  expect_equal(fit2$functions$rtn_vec(c(1, 2, 3, 4)), c(1, 2, 3, 4))
+})
+
 test_that("Compiled functions can be copied to global environment", {
   expect_message(
     fit$expose_functions(global = TRUE),

@@ -1100,6 +1100,18 @@ drop_stale_model_methods <- function(env) {
   invisible(TRUE)
 }
 
+# The same for standalone functions: after readRDS() the compiled wrappers
+# point at nothing, so drop them and let expose_functions() compile again.
+drop_stale_standalone_functions <- function(env) {
+  if (!isTRUE(env$compiled) ||
+      !source_cpp_native_symbol_is_null(env[[env$fun_names[1]]])) {
+    return(invisible(FALSE))
+  }
+  rm(list = setdiff(ls(env, all.names = TRUE), "hpp_code"), envir = env)
+  env$compiled <- FALSE
+  invisible(TRUE)
+}
+
 expose_model_methods <- function(env, verbose = FALSE) {
   if (rlang::is_interactive()) {
     message("Compiling additional model methods...")
@@ -1336,6 +1348,7 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
     return(invisible(NULL))
   }
   require_suggested_package("Rcpp")
+  drop_stale_standalone_functions(function_env)
   if (function_env$compiled) {
     if (!global) {
       message("Functions already compiled, nothing to do!")

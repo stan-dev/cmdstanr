@@ -86,6 +86,10 @@ the `stanc_options` flag takes precedence. (#1258)
 `pedantic`. With no Stan file there is nothing to build, so the executable is
 used as it is. The `cmdstanr_force_recompile` option has no effect on such a
 model. (#1258)
+* `$expose_functions()` now compiles the functions again on a model or fit
+loaded with `readRDS()`. Previously it reported them as already compiled and
+calling one failed with a null symbol address, the same defect
+`$init_model_methods()` had before #1157.
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization because they avoid repeated stale-binding checks. (#1274)
 * `install_cmdstan()` now offers to copy the `make/local` flags of the
