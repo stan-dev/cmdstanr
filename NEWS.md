@@ -1,5 +1,8 @@
 # cmdstanr (development version)
 
+* `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
+CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
+`.csv.bz2`. (#1027, #1217)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization because they avoid repeated stale-binding checks. (#1274)
 * `install_cmdstan()` now offers to copy the `make/local` flags of the
