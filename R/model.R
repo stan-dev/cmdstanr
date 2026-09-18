@@ -356,10 +356,10 @@ CmdStanModel <- R6::R6Class(
     variables_ = NULL,
     hpp_file_ = character(),
     model_methods_env_ = NULL,
-    # The check every member that runs the executable, or derives state from
-    # it, makes first: the executable is the one this object was built
-    # against and, for a model with a source, nothing it was built from has
-    # changed.
+    # Every method that runs the executable, or reads something derived from
+    # it, calls this first. It checks that the executable is the one this
+    # object was built with and, for a model with a Stan file, that nothing
+    # it was built from has changed.
     assert_current = function() {
       exe <- private$exe_file_
       if (!self$has_stan_file()) {
@@ -399,7 +399,7 @@ CmdStanModel <- R6::R6Class(
     # The standalone-functions C++, generated from the source once, after
     # assert_current() has passed, when the source is known to be the built
     # one. Construction does not pay a stanc run for a feature most models
-    # never use. Fits copy it from here. Empty without a source.
+    # never use. Empty without a source.
     standalone_functions = function() {
       if (self$has_stan_file() && is.null(self$functions$hpp_code)) {
         configuration <- private$record_$configuration
@@ -2210,15 +2210,17 @@ CmdStanModel$set("public", name = "build_info", value = build_info)
 #' The error for a build argument supplied with no `stan_file`
 #'
 #' With no `stan_file` there is nothing to build, so the executable is used
-#' as it is and none of these arguments apply. Checked in the order
-#' `cpp_options`, `stanc_options`, `include_paths`, `user_header`,
-#' `force_recompile`, `pedantic`, `dir`, stopping at the first one supplied.
+#' as it is and none of these arguments apply.
 #'
+#' @param cpp_options,stanc_options,include_paths,user_header As
+#'   `cmdstan_model()` received them.
+#' @param force_recompile,pedantic,dir As `cmdstan_model()` received them.
+#' @return `NULL`, invisibly. The first argument supplied is an error.
 #' @noRd
 assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
                                               include_paths, user_header,
                                               force_recompile, pedantic, dir) {
-  build_message <- function(arg) {
+  build_arg_message <- function(arg) {
     sprintf(
       paste0(
         "`%s` cannot be supplied for a model created from an executable alone. ",
@@ -2228,10 +2230,10 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
     )
   }
   if (!is.null(cpp_options)) {
-    stop(build_message("cpp_options"), call. = FALSE)
+    stop(build_arg_message("cpp_options"), call. = FALSE)
   }
   if (!is.null(stanc_options)) {
-    stop(build_message("stanc_options"), call. = FALSE)
+    stop(build_arg_message("stanc_options"), call. = FALSE)
   }
   if (!is.null(include_paths)) {
     stop(
@@ -2241,10 +2243,10 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
     )
   }
   if (!is.null(user_header)) {
-    stop(build_message("user_header"), call. = FALSE)
+    stop(build_arg_message("user_header"), call. = FALSE)
   }
   if (!is.null(force_recompile)) {
-    stop(build_message("force_recompile"), call. = FALSE)
+    stop(build_arg_message("force_recompile"), call. = FALSE)
   }
   if (isTRUE(pedantic)) {
     stop(
@@ -2254,16 +2256,18 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
     )
   }
   if (!is.null(dir)) {
-    stop(build_message("dir"), call. = FALSE)
+    stop(build_arg_message("dir"), call. = FALSE)
   }
   invisible(NULL)
 }
 
 #' The error for a stanc flag cmdstanr sets from one of its own arguments
 #'
-#' Returns `NULL` for any other flag. The five names live here so that the
-#' matcher and the messages cannot drift apart.
+#' The five flag names live here so the check and the messages cannot drift
+#' apart.
 #'
+#' @param flag The flag name, without its value.
+#' @return The message, or `NULL` for any other flag.
 #' @noRd
 derived_stanc_option_message <- function(flag) {
   messages <- c(
@@ -2342,6 +2346,9 @@ assert_valid_stanc_options <- function(stanc_options) {
 #' its value attached, `list("filename-in-msg=x.stan")`. As in
 #' assert_valid_stanc_options(), the flag is the text before the first `=`.
 #'
+#' @param stanc_options The user's `stanc_options`.
+#' @param flag The flag name, without its value.
+#' @return `TRUE` or `FALSE`.
 #' @noRd
 stanc_option_supplied <- function(stanc_options, flag) {
   names <- names(stanc_options)
@@ -2472,8 +2479,12 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
 #' Run stanc on a Stan program and return what it printed
 #'
 #' What stanc writes to stderr, its warnings and its errors, is relayed as
-#' it arrives. A program stanc rejects is an error after that.
+#' it arrives. When stanc rejects the program, the error follows that output.
 #'
+#' @param stan_file Path to the program.
+#' @param args Arguments after the file, one per element.
+#' @param spinner Whether to show a spinner while stanc runs.
+#' @return What stanc wrote to stdout, one string.
 #' @noRd
 run_stanc <- function(stan_file, args, spinner = FALSE) {
   withr::with_path(
@@ -2507,6 +2518,9 @@ run_stanc <- function(stan_file, args, spinner = FALSE) {
 #' files it included. A program stanc rejects is an error carrying stanc's
 #' own message, which names the file and the line.
 #'
+#' @param stan_file Path to the program.
+#' @param include_paths Directories for its `#include` lines, or `NULL`.
+#' @return The parsed JSON, a list.
 #' @noRd
 stanc_info <- function(stan_file, include_paths = NULL) {
   out_file <- tempfile(fileext = ".json")
@@ -2534,6 +2548,8 @@ stanc_info <- function(stan_file, include_paths = NULL) {
 
 #' The `$variables()` result, from what `stanc --info` reported
 #'
+#' @param info What `stanc_info()` returned.
+#' @return The list `$variables()` documents.
 #' @noRd
 variables_from_info <- function(info) {
   variables <- info

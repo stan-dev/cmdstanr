@@ -12,6 +12,8 @@ build_record_format_version <- 1L
 #' executable path does not. Two executables in one directory therefore cannot
 #' share a record.
 #'
+#' @param exe_file Path to the executable.
+#' @return The record's path.
 #' @noRd
 build_record_path <- function(exe_file) {
   checkmate::assert_string(exe_file)
@@ -26,6 +28,8 @@ build_record_path <- function(exe_file) {
 #' Every hash in a record comes from here, so the algorithm can change in one
 #' place.
 #'
+#' @param path Path to the file.
+#' @return The hash, a string.
 #' @noRd
 hash_file <- function(path) {
   unname(rlang::hash_file(path))
@@ -61,14 +65,26 @@ cmdstan_version_pattern <- "^[0-9]+\\.[0-9]+\\.[0-9]+(-rc[0-9]+)?$"
 
 #' Reject a build record, naming the field that failed
 #'
+#' @param field The field's path in the record, such as
+#'   `"dependencies.stan_file.hash"`.
+#' @param requirement What the field had to be, completing "build record
+#'   field `x` ...".
+#' @return Does not return.
 #' @noRd
 stop_build_record_field <- function(field, requirement) {
   stop("build record field `", field, "` ", requirement, ".", call. = FALSE)
 }
 
-# `field` is the path the error names, such as "dependencies.stan_file.hash".
-# A missing member and an explicit JSON null both arrive as NULL.
-record_shape <- function(value, shape, field) {
+#' Check one value in a build record
+#'
+#' @param value The value. A missing member and an explicit JSON null both
+#'   arrive as `NULL`.
+#' @param shape A name in `record_shapes`.
+#' @param field The path the error names, such as
+#'   `"dependencies.stan_file.hash"`.
+#' @return `value`, invisibly.
+#' @noRd
+assert_record_shape <- function(value, shape, field) {
   if (is.null(value)) {
     stop_build_record_field(field, "is missing")
   }
@@ -78,40 +94,52 @@ record_shape <- function(value, shape, field) {
   invisible(value)
 }
 
-record_member <- function(x, name, shape, field = name) {
-  record_shape(x[[name]], shape, field)
+assert_record_member <- function(x, name, shape, field = name) {
+  assert_record_shape(x[[name]], shape, field)
 }
 
-record_string_array <- function(x, name, field) {
-  value <- record_member(x, name, "array", field)
+assert_record_string_array <- function(x, name, field) {
+  value <- assert_record_member(x, name, "array", field)
   for (i in seq_along(value)) {
-    record_shape(value[[i]], "string", paste0(field, "[[", i, "]]"))
+    assert_record_shape(value[[i]], "string", paste0(field, "[[", i, "]]"))
   }
   invisible(value)
 }
 
-#' A file the build consumed, identified by content and by where it then was
+#' Check a dependency entry in a build record
 #'
+#' An entry is an object with the file's `hash` and `built_from`, the path
+#' it had when the build ran.
+#'
+#' @param value The entry.
+#' @param field The entry's path in the record, such as
+#'   `"dependencies.stan_file"`, for the error.
+#' @return `value`, invisibly.
 #' @noRd
-record_dependency_entry <- function(value, field) {
-  record_shape(value, "object", field)
-  record_member(value, "hash", "string", paste0(field, ".hash"))
-  record_member(value, "built_from", "string", paste0(field, ".built_from"))
+assert_record_dependency_entry <- function(value, field) {
+  assert_record_shape(value, "object", field)
+  assert_record_member(value, "hash", "string", paste0(field, ".hash"))
+  assert_record_member(
+    value, "built_from", "string", paste0(field, ".built_from")
+  )
+  invisible(value)
 }
 
 #' Check a build record against the format version 1 schema
 #'
-#' This function is the schema. The constructor and the reader both call it and
-#' nothing else checks a record's fields, so a record one caller can use is a
-#' record every caller can use. Fields are checked in the order the record
-#' holds them and the first failure names its field. Members the schema
-#' does not name are ignored rather than rejected. `reported_features` is
-#' checked for shape and never for membership, because an absent feature means
-#' unknown and the set CmdStan reports is the binary's to decide.
+#' Every check of a record's fields is here. `new_build_record()` runs it
+#' before a record is written and `read_build_record()` after one is read, so
+#' a record that passes when written passes when read. Fields the schema does
+#' not name are ignored. No feature in `reported_features` is required, since
+#' an executable that does not report one leaves it unknown; the ones present
+#' must be true or false, except `stan_version`, a string.
 #'
+#' @param record The record, as `jsonlite::fromJSON(simplifyVector = FALSE)`
+#'   returns it or as `new_build_record()` assembled it.
+#' @return `record`, invisibly. A failed check is an error naming the field.
 #' @noRd
 validate_build_record <- function(record) {
-  record_shape(record, "object", "record")
+  assert_record_shape(record, "object", "record")
 
   format_version <- record[["format_version"]]
   if (!checkmate::test_int(format_version, tol = 0) ||
@@ -121,8 +149,8 @@ validate_build_record <- function(record) {
     )
   }
 
-  configuration <- record_member(record, "configuration", "object")
-  cpp_options <- record_member(
+  configuration <- assert_record_member(record, "configuration", "object")
+  cpp_options <- assert_record_member(
     configuration, "cpp_options", "object", "configuration.cpp_options"
   )
   for (i in seq_along(cpp_options)) {
@@ -131,58 +159,64 @@ validate_build_record <- function(record) {
     if (!grepl(paste0("^", make_variable_name_pattern, "$"), option_name)) {
       stop_build_record_field(field, "must be named for a Make variable")
     }
-    record_shape(cpp_options[[i]], "string", field)
+    assert_record_shape(cpp_options[[i]], "string", field)
   }
-  record_string_array(
+  assert_record_string_array(
     configuration, "stanc_options", "configuration.stanc_options"
   )
-  record_string_array(
+  assert_record_string_array(
     configuration, "stanc_options_added",
     "configuration.stanc_options_added"
   )
-  record_string_array(
+  assert_record_string_array(
     configuration, "stanc_options_from_make",
     "configuration.stanc_options_from_make"
   )
-  stanc_name <- record_member(
+  stanc_name <- assert_record_member(
     configuration, "stanc_name", "string", "configuration.stanc_name"
   )
   if (!nzchar(stanc_name)) {
     stop_build_record_field("configuration.stanc_name", "must not be empty")
   }
-  record_string_array(
+  assert_record_string_array(
     configuration, "include_paths", "configuration.include_paths"
   )
 
-  reported_features <- record_member(record, "reported_features", "object")
+  reported_features <- assert_record_member(
+    record, "reported_features", "object"
+  )
   for (i in seq_along(reported_features)) {
     feature_name <- names(reported_features)[[i]]
     shape <- if (feature_name == "stan_version") "string" else "flag"
-    record_shape(
+    assert_record_shape(
       reported_features[[i]], shape, paste0("reported_features.", feature_name)
     )
   }
 
-  dependencies <- record_member(record, "dependencies", "object")
+  dependencies <- assert_record_member(record, "dependencies", "object")
   # An absent user header or make/local means there was none.
   optional <- intersect(c("user_header", "make_local"), names(dependencies))
   for (name in c("stan_file", optional)) {
-    record_dependency_entry(dependencies[[name]], paste0("dependencies.", name))
+    assert_record_dependency_entry(
+      dependencies[[name]], paste0("dependencies.", name)
+    )
   }
-  included_files <- record_member(
+  included_files <- assert_record_member(
     dependencies, "included_files", "array", "dependencies.included_files"
   )
   for (i in seq_along(included_files)) {
-    record_dependency_entry(
+    assert_record_dependency_entry(
       included_files[[i]], paste0("dependencies.included_files[[", i, "]]")
     )
   }
 
-  record_member(record, "executable_hash", "string")
+  assert_record_member(record, "executable_hash", "string")
 
-  cmdstan <- record_member(record, "cmdstan", "object")
-  record_member(cmdstan, "path", "string", "cmdstan.path")
-  version <- record_member(cmdstan, "version", "string", "cmdstan.version")
+  cmdstan <- assert_record_member(record, "cmdstan", "object")
+  assert_record_member(cmdstan, "path", "string", "cmdstan.path")
+  version <- assert_record_member(
+    cmdstan, "version", "string", "cmdstan.version"
+  )
   # A string that is not a CmdStan version is the wrong shape, not an odd value.
   if (!grepl(cmdstan_version_pattern, version)) {
     stop_build_record_field(
@@ -190,20 +224,22 @@ validate_build_record <- function(record) {
     )
   }
 
-  record_member(record, "tbb_dir", "string")
+  assert_record_member(record, "tbb_dir", "string")
 
-  untracked <- record_member(record, "untracked_dependencies", "array")
+  untracked <- assert_record_member(record, "untracked_dependencies", "array")
   for (i in seq_along(untracked)) {
     field <- paste0("untracked_dependencies[[", i, "]]")
-    entry <- record_shape(untracked[[i]], "object", field)
-    kind <- record_member(entry, "kind", "string", paste0(field, ".kind"))
+    entry <- assert_record_shape(untracked[[i]], "object", field)
+    kind <- assert_record_member(
+      entry, "kind", "string", paste0(field, ".kind")
+    )
     if (!kind %in% c("make_local_include", "user_header_include")) {
       stop_build_record_field(
         paste0(field, ".kind"),
         "must be \"make_local_include\" or \"user_header_include\""
       )
     }
-    record_member(
+    assert_record_member(
       entry, "detected_in", "string", paste0(field, ".detected_in")
     )
   }
@@ -213,12 +249,21 @@ validate_build_record <- function(record) {
 
 #' Assemble a build record
 #'
-#' The one place a record is built. `format_version` comes first and the rest
-#' follow the schema's order, so the written JSON reads in that order too.
-#' `configuration` arrives in the forms the record compares: `cpp_options`
-#' as normalized Make assignments, one per name, and the three stanc option
-#' lists as the argument vectors stanc receives.
+#' The one place a record is built. The fields go in the schema's order so the
+#' written JSON reads that way too.
 #'
+#' @param configuration The options the build used: `cpp_options` as the Make
+#'   assignments `parsed_cpp_options()` returns, one per name; `stanc_options`,
+#'   `stanc_options_added` and `stanc_options_from_make` as the argument
+#'   vectors stanc receives; `stanc_name`; and `include_paths` as searched.
+#' @param reported_features What `reported_features_from_exe()` returned.
+#' @param dependencies The hashed sources, as `resolve_dependencies()` returns
+#'   them.
+#' @param executable_hash The hash of the executable the record describes.
+#' @param cmdstan A list with the installation's `path` and `version`.
+#' @param tbb_dir What `tbb_dir_from_options()` returned.
+#' @param untracked_dependencies What `untracked_dependencies()` returned.
+#' @return The record, validated.
 #' @noRd
 new_build_record <- function(configuration, reported_features, dependencies,
                              executable_hash, cmdstan, tbb_dir,
@@ -242,11 +287,13 @@ new_build_record <- function(configuration, reported_features, dependencies,
 
 #' The build features the executable reports
 #'
-#' Keeps the entries reported as a single logical under a name, plus a
-#' `stan_version` of three dotted integers, so output the record cannot hold
-#' cannot fail the writer. Any failure leaves every feature unknown rather than
-#' failing the build.
+#' Runs `<exe> info` and keeps the flags that parsed as true or false, plus a
+#' `stan_version` of three dotted integers. Anything else the executable
+#' prints is dropped, since the schema would reject it. A failed run leaves
+#' every feature unknown rather than failing the build.
 #'
+#' @param exe_file Path to the executable.
+#' @return A named list of what was kept, empty when nothing was.
 #' @noRd
 reported_features_from_exe <- function(exe_file) {
   unknown <- structure(list(), names = character())
@@ -282,6 +329,8 @@ reported_features_from_exe <- function(exe_file) {
 #' which is what happens today anyway. We decided not to ask make for the real
 #' answer for now, and could reconsider if there is demand for it.
 #'
+#' @param cpp_options The call's `cpp_options`, as given.
+#' @return The directory. Under WSL it is the Windows path.
 #' @noRd
 tbb_dir_from_options <- function(cpp_options) {
   assigned <- parsed_cpp_options(cpp_options)
@@ -301,6 +350,11 @@ tbb_dir_from_options <- function(cpp_options) {
 #' includes another header, both pull in files nothing here can enumerate. An
 #' empty list means nothing was detected, never that the record is complete.
 #'
+#' @param make_local Path to the installation's `make/local`, or `NULL` when
+#'   there is none.
+#' @param user_header Path to the user header, or `NULL`.
+#' @return A list with one entry per detection, each with `kind` and
+#'   `detected_in`.
 #' @noRd
 untracked_dependencies <- function(make_local = NULL, user_header = NULL) {
   detectors <- list(
@@ -332,6 +386,8 @@ untracked_dependency_descriptions <- c(
 
 #' The one line a build prints when it has dependencies we cannot track
 #'
+#' @param untracked What `untracked_dependencies()` returned, non-empty.
+#' @return The line, a string.
 #' @noRd
 untracked_dependencies_note <- function(untracked) {
   kinds <- vapply(untracked, `[[`, character(1), "kind")
@@ -353,6 +409,9 @@ untracked_dependencies_note <- function(untracked) {
 #' scalars as length-one vectors, so a single included file is still written
 #' as an array.
 #'
+#' @param record A record `new_build_record()` assembled.
+#' @param exe_file Path to the executable it describes.
+#' @return The record's path, invisibly.
 #' @noRd
 write_build_record <- function(record, exe_file) {
   validate_build_record(record)
@@ -373,11 +432,15 @@ write_build_record <- function(record, exe_file) {
 #' A record that cannot be used is not an error, the result says why
 #' instead. The format version is checked before anything else, so a record
 #' in a format this version of cmdstanr does not read is never checked
-#' against the current schema. A record that fails any field check is
-#' returned as unreadable, with no `format_version`. A record whose hash does
-#' not match the executable is returned as a mismatch, with none of its
-#' contents.
+#' against the current schema.
 #'
+#' @param exe_file Path to the executable, which must exist.
+#' @return A list with `status` `"available"` and the `record`, or `status`
+#'   `"unavailable"` and a `reason`: `"missing"` when there is no record,
+#'   `"unreadable"` when the file is not JSON or fails a field check,
+#'   `"unsupported_format"` with the `format_version` found, or
+#'   `"executable_mismatch"` when the record's hash is not the executable's.
+#'   Only an available record's contents are returned.
 #' @noRd
 read_build_record <- function(exe_file) {
   checkmate::assert_file_exists(exe_file)
@@ -422,9 +485,12 @@ read_build_record <- function(exe_file) {
 
 #' Check that the record beside an executable describes it
 #'
-#' The check the install transaction ends with. The test for interleaved writes
-#' runs it on its own.
+#' `install_executable()` calls this after its last rename. The test for
+#' interleaved writes calls it directly.
 #'
+#' @param exe_file Path to the executable.
+#' @return The record, invisibly. A record that cannot be used is an error
+#'   naming the reason.
 #' @noRd
 verify_build_record <- function(exe_file) {
   result <- read_build_record(exe_file)
@@ -438,13 +504,10 @@ verify_build_record <- function(exe_file) {
   invisible(result$record)
 }
 
-#' What the rebuild check compares
-#'
-#' One function per compared field, in the order the reasons are reported.
-#' Each takes a record, or the list `assess_build()` builds for the current
-#' state, and returns the value to compare.
-#'
-#' @noRd
+# What the rebuild check compares: one function per compared field, in the
+# order the reasons are reported. Each takes a record, or the list
+# assess_build() builds for the current state, and returns the value to
+# compare.
 build_record_comparisons <- list(
   cpp_options = function(x) {
     supplied <- x[["configuration"]][["cpp_options"]]
@@ -466,9 +529,10 @@ build_record_comparisons <- list(
 
 #' Compare a recorded build against the current one
 #'
-#' Returns the name of every row in `rows` whose value differs between the
-#' two, in table order.
-#'
+#' @param recorded The record read from disk.
+#' @param current The list `assess_build()` builds for the current state.
+#' @param rows Which of `build_record_comparisons` to apply.
+#' @return The names in `rows` whose values differ, in that order.
 #' @noRd
 compare_build_records <- function(recorded, current,
                                   rows = names(build_record_comparisons)) {
@@ -482,33 +546,33 @@ compare_build_records <- function(recorded, current,
 
 #' Decide whether an executable is current
 #'
-#' `wanted` is what the caller wants the executable to have been built from:
-#' `configuration`, the options this call would record, and
-#' `executable_hash`, the hash of the executable the model object was created
-#' with, or `NULL` from the constructor, which has no executable yet.
-#' `current` is what is on disk now: `record`, as `read_build_record()`
-#' returned it; `dependencies`, the current files hashed as the writer hashes
-#' them, or `NULL` when they were not resolved; and `cmdstan`, the
-#' installation in use.
-#'
-#' Returns the reasons to rebuild as a character vector, empty when the
-#' executable is current. If the record cannot be used, that is the only
-#' reason returned, since there is nothing to compare against. Otherwise every
-#' compared field that differs is a reason. Comparing `executable_hash` is
-#' what catches an executable that another process rebuilt: the record beside
-#' it matches the new executable, and only the model object remembers the old
-#' one.
-#'
+#' @param expected What the executable must match: `configuration`, the
+#'   options it should have been built with, which `build_executable()`
+#'   resolves from its arguments and `assert_current()` takes from the model
+#'   object's record; and `executable_hash`, the executable the model object
+#'   was created with, or `NULL` from `build_executable()`, where there is no
+#'   model object yet.
+#' @param current What is on disk now: `record`, as `read_build_record()`
+#'   returned it; `dependencies`, the current files hashed as the writer
+#'   hashes them, or `NULL` when they were not resolved; and `cmdstan`, the
+#'   installation in use.
+#' @return The reasons to rebuild as a character vector, empty when the
+#'   executable is current. If the record cannot be used, that is the only
+#'   reason, since there is nothing to compare against. Otherwise every
+#'   compared field that differs is a reason. Comparing `executable_hash` is
+#'   what catches an executable that another process rebuilt: the record
+#'   beside it matches the new executable, and only the model object
+#'   remembers the old one.
 #' @noRd
-assess_build <- function(wanted, current) {
+assess_build <- function(expected, current) {
   if (current$record$status != "available") {
     return(current$record$reason)
   }
   recorded <- current$record$record
   now <- list(
-    configuration = wanted$configuration,
+    configuration = expected$configuration,
     dependencies = current$dependencies,
-    executable_hash = wanted$executable_hash %||% recorded$executable_hash,
+    executable_hash = expected$executable_hash %||% recorded$executable_hash,
     cmdstan = current$cmdstan
   )
   rows <- names(build_record_comparisons)
@@ -654,9 +718,12 @@ reported_feature_flags <- c(
 #' The reported features with every name present
 #'
 #' The record omits a feature the executable did not report. Here the same
-#' feature is `NA`, so the result always has the same five names and a
-#' caller can check `is.na()`.
+#' feature is `NA`, so the result always has the same five names and the
+#' user can check `is.na()`.
 #'
+#' @param reported The record's `reported_features`, or what
+#'   `reported_features_from_exe()` returned.
+#' @return The four flags and `stan_version`, `NA` where unknown.
 #' @noRd
 public_reported_features <- function(reported) {
   features <- lapply(reported_feature_flags, function(name) {
@@ -673,6 +740,8 @@ public_reported_features <- function(reported) {
 #' the rebuild check. `user_header` and `make_local` are `NULL` when the
 #' build had none, so the result always has the same four names.
 #'
+#' @param dependencies The record's `dependencies`.
+#' @return The four entries, each with `built_from` and `exists`.
 #' @noRd
 public_dependencies <- function(dependencies) {
   entry <- function(x) {
@@ -691,6 +760,8 @@ public_dependencies <- function(dependencies) {
 
 #' One entry per distinct pair, ordered by kind then path
 #'
+#' @param untracked The record's `untracked_dependencies`.
+#' @return A list of `kind` and `detected_in` pairs.
 #' @noRd
 public_untracked_dependencies <- function(untracked) {
   kind <- vapply(untracked, `[[`, character(1), "kind")
@@ -754,9 +825,8 @@ print.stan_build_info <- function(x, ...) {
 
 #' The first printed line, from the record's status and reason
 #'
-#' The direction for an unsupported format is read off its version: a higher
-#' number than this cmdstanr writes came from a newer one.
-#'
+#' @param x A `stan_build_info` object.
+#' @return The line, a string.
 #' @noRd
 build_record_status_line <- function(x) {
   if (x$record$status == "available") {

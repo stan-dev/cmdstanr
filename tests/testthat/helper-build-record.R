@@ -38,7 +38,7 @@ example_record <- function(exe_file) {
   )
 }
 
-example_wanted <- function(record) {
+example_expected <- function(record) {
   list(configuration = record$configuration, executable_hash = NULL)
 }
 

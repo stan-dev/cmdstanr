@@ -10,7 +10,7 @@ test_that("object initialized correctly", {
   checkmate::expect_file_exists(mod$hpp_file())
 })
 
-test_that("the constructor builds an executable and then reuses it", {
+test_that("cmdstan_model() builds an executable and then reuses it", {
   exe <- cmdstan_ext(strip_ext(stan_program))
   if (file.exists(exe)) {
     file.remove(exe)
@@ -251,7 +251,7 @@ test_that("a leftover backup doesn't unwind a build when warnings are errors", {
     )
   )
 
-  # The install stands, so the next constructor reuses what it left behind.
+  # The install stands, so the next cmdstan_model() reuses what it left behind.
   rebuilt <- with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = list(status = 1),

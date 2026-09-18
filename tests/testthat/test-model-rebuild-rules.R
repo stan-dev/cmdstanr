@@ -1,6 +1,6 @@
 set_cmdstan_path()
 
-# The decision the constructor makes: build, reuse, or adopt. No C++ is
+# The decision cmdstan_model() makes: build, reuse, or adopt. No C++ is
 # compiled here. make is mocked and a text file stands in for the executable,
 # while stanc, make/local and the build record are real.
 mocked <- function(code, compile_ret = list(status = 0),

@@ -1,9 +1,12 @@
 # Internal functions for handling cpp options
 
 # running and parsing exe info --------------------------------
-# run <model> info command
+
+#' Run an executable's `info` command
+#'
+#' @param exe_file Path to the executable.
+#' @return The `processx::run()` result. A non-zero exit is not an error.
 #' @noRd
-#' @example `.cmdstan/bin`
 run_info_cli <- function(exe_file) {
   withr::with_path(
     c(
@@ -47,9 +50,15 @@ parse_exe_info_string <- function(ret_stdout) {
   info
 }
 
-# Normalize the flags sent to make. The last value for a name wins. Go through
-# the emitted flags rather than the list because a vector value expands into one
-# assignment per element.
+#' Normalize the flags sent to make
+#'
+#' The last value for a name wins. Goes through the emitted flags rather than
+#' the list because a vector value expands into one assignment per element.
+#'
+#' @param cpp_options The user's `cpp_options`, as
+#'   `assert_valid_cpp_options()` returned them.
+#' @return A named list with one value per Make variable.
+#' @noRd
 parsed_cpp_options <- function(cpp_options) {
   assignments <- structure(list(), names = character())
   for (flag in cpp_options_to_compile_flags(cpp_options)) {
@@ -85,13 +94,16 @@ cpp_options_to_compile_flags <- function(cpp_options) {
 # check options overall for validity ---------------------------------
 make_variable_name_pattern <- "[A-Za-z_][A-Za-z0-9_]*"
 
-#' Check the `cpp_options` a caller supplied and return them
+#' Check the `cpp_options` the user supplied and return them
 #'
 #' Every entry must be named and every name must be a Make variable name. The
 #' names are uppercased here so that one spelling reaches everything downstream.
 #' The user header and the stanc flags have their own arguments, so setting them
 #' here is an error.
 #'
+#' @param cpp_options What the user passed, or `NULL`.
+#' @return The options with their names uppercased, or an empty list for
+#'   `NULL`.
 #' @noRd
 assert_valid_cpp_options <- function(cpp_options) {
   if (is.null(cpp_options)) {
@@ -130,9 +142,11 @@ assert_valid_cpp_options <- function(cpp_options) {
 
 #' Explain why an unnamed `cpp_options` entry cannot be used
 #'
-#' Callers reach for makefile syntax here, so name the route that accepts the
+#' Users reach for makefile syntax here, so name the route that accepts the
 #' entry they wrote rather than repeating the rule.
 #'
+#' @param value The unnamed entry.
+#' @return The message.
 #' @noRd
 unnamed_cpp_option_message <- function(value) {
   entry <- if (checkmate::test_string(value)) trimws(value) else ""
@@ -207,6 +221,8 @@ unnamed_cpp_option_message <- function(value) {
 
 #' The error for a user header supplied through `cpp_options`
 #'
+#' @param value What was given for `USER_HEADER`, or `NULL`.
+#' @return The message.
 #' @noRd
 user_header_cpp_option_message <- function(value) {
   is_empty_string <- checkmate::test_string(value) && !nzchar(trimws(value))
@@ -223,9 +239,7 @@ user_header_cpp_option_message <- function(value) {
   )
 }
 
-#' The error for STANCFLAGS supplied through `cpp_options`
-#'
-#' @noRd
+# The error for STANCFLAGS supplied through cpp_options.
 stancflags_cpp_option_message <- function() {
   paste0(
     "`STANCFLAGS` cannot be set through `cpp_options`. ",
@@ -246,11 +260,14 @@ cpp_option_value <- function(cpp_options, option) {
 # check runtime requests against what the executable reports ------------
 #' Check a thread request against the features the executable reports
 #'
-#' `features` is what the executable said about its own build: each feature
-#' is known on, known off, or absent when unknown. More than one thread needs
-#' threading known on. One thread, or no request, asks for no parallelism and
-#' so needs nothing, whatever the executable was built with.
+#' More than one thread needs threading known on. One thread, or no request,
+#' needs nothing.
 #'
+#' @param threads The request, or `NULL`.
+#' @param features What the executable reports about its own build: each
+#'   feature is known on, known off, or absent when unknown.
+#' @param multiple_chains Whether the request came as `threads_per_chain`.
+#' @return `threads`, invisibly.
 #' @noRd
 assert_valid_threads <- function(threads, features, multiple_chains = FALSE) {
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
@@ -270,6 +287,9 @@ assert_valid_threads <- function(threads, features, multiple_chains = FALSE) {
 
 #' Check an OpenCL device request against the features the executable reports
 #'
+#' @param opencl_ids The request, or `NULL`.
+#' @param features As for `assert_valid_threads()`.
+#' @return `opencl_ids`, invisibly.
 #' @noRd
 assert_valid_opencl <- function(opencl_ids, features) {
   if (!is.null(opencl_ids) && !isTRUE(features[["stan_opencl"]])) {

@@ -264,132 +264,6 @@ copy_temp_files <-
     absolute_path(destinations)
   }
 
-#' Install a model executable and its build record as a pair
-#'
-#' Both files are staged beside the destination first, so nothing there changes
-#' until both are ready. The moves that follow, the old pair aside and the new
-#' pair in, are kept in a list and undone in reverse if a later one fails or the
-#' installed pair does not read back, so any failure leaves the previous pair in
-#' place or names the files it could not put back. file.copy() and
-#' file.rename() warnings are suppressed so warn = 2 cannot interrupt the undo.
-#' A crash between renames may leave only the backup.
-#'
-#' @noRd
-#' @param from Path to the newly compiled executable.
-#' @param to Path the executable should be installed at.
-#' @param record The build record to install beside the executable.
-#' @return NULL after a clean install, or the backup paths that cleanup could
-#'   not remove. The new executable and its record are installed in either case.
-install_executable <- function(from, to, record) {
-  if (dir.exists(to)) {
-    stop(
-      "Cannot install the compiled executable at '", to,
-      "' because that path is a directory. Nothing was modified.",
-      call. = FALSE
-    )
-  }
-  # Normalize mixed Windows separators before converting the path for WSL.
-  stage <- function(pattern) {
-    repair_path(tempfile(pattern = pattern, tmpdir = dirname(to)))
-  }
-  rename <- function(from, to) {
-    isTRUE(suppressWarnings(file.rename(from, to)))
-  }
-  # The paths that are still there after trying to remove them.
-  remove <- function(paths) {
-    paths <- Filter(file.exists, paths)
-    paths[vapply(paths, unlink, integer(1), expand = FALSE) != 0L]
-  }
-  left_behind <- function(paths) {
-    if (length(paths) == 0) {
-      ""
-    } else {
-      paste0(" Files left behind: '", paste(paths, collapse = "', '"), "'.")
-    }
-  }
-
-  # Nothing at the destination changes until both files are staged beside it.
-  candidate <- stage("exe-new-")
-  staged_record <- build_record_path(candidate)
-  staging <- tryCatch({
-    if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
-      stop(
-        "Could not stage the compiled executable at '", candidate, "'.",
-        call. = FALSE
-      )
-    }
-    if (os_is_wsl()) {
-      chmod <- processx::run(
-        command = "wsl",
-        args = c("chmod", "+x", wsl_safe_path(candidate)),
-        error_on_status = FALSE
-      )
-      if (is.na(chmod$status) || chmod$status != 0) {
-        stop("Could not make the compiled executable executable.", call. = FALSE)
-      }
-    }
-    write_build_record(record, candidate)
-    NULL
-  }, error = function(e) e)
-  if (!is.null(staging)) {
-    stop(
-      conditionMessage(staging),
-      " The model executable at '", to, "' was not modified.",
-      left_behind(remove(c(candidate, staged_record))),
-      call. = FALSE
-    )
-  }
-
-  # The old pair aside, then the new pair in. A move with nothing to back up
-  # drops out.
-  record_path <- build_record_path(to)
-  exe_backup <- if (file.exists(to)) stage("exe-old-")
-  record_backup <- if (file.exists(record_path)) stage("record-old-")
-  moves <- list(
-    c(to, exe_backup),
-    c(record_path, record_backup),
-    c(candidate, to),
-    c(staged_record, record_path)
-  )
-  moves <- moves[lengths(moves) == 2]
-  done <- list()
-  failure <- tryCatch({
-    for (move in moves) {
-      if (!rename(move[1], move[2])) {
-        stop("Could not move '", move[1], "' to '", move[2], "'.", call. = FALSE)
-      }
-      done <- c(done, list(move))
-    }
-    verify_build_record(to)
-    NULL
-  }, error = function(e) e)
-  if (!is.null(failure)) {
-    # A later undo can put the old file back over one that would not move.
-    stuck <- character()
-    for (move in rev(done)) {
-      if (rename(move[2], move[1])) {
-        stuck <- setdiff(stuck, move[1])
-      } else {
-        stuck <- c(stuck, move[2])
-      }
-    }
-    stop(
-      "Could not install the compiled executable at '", to, "': ",
-      conditionMessage(failure),
-      if (length(stuck) == 0) {
-        " The executable and build record there are as they were."
-      } else {
-        " The previous executable and build record could not all be put back."
-      },
-      left_behind(c(stuck, remove(c(candidate, staged_record)))),
-      call. = FALSE
-    )
-  }
-
-  leftover <- remove(c(exe_backup, record_backup))
-  if (length(leftover) == 0) NULL else leftover
-}
-
 # generate new file names
 # see doc above for copy_temp_files
 generate_file_names <-
@@ -901,8 +775,7 @@ parse_make_print_flag <- function(flag_name, stdout) {
 #' rather than an `--eval` argument because users may have a make too old for
 #' `--eval`; the one Apple ships with macOS is. The fragment's first line removes
 #' the fragment from `MAKEFILE_LIST` so a value that reads the list sees the same
-#' makefiles the real build does. The call's `cpp_options` and `user_header` go
-#' in `make_args` so the answer is the one the build will see.
+#' makefiles the real build does.
 #'
 #' @param cmdstan_path (string) The CmdStan directory.
 #' @param make_args (character) Command-line variable assignments (`NAME=value`)
@@ -1100,8 +973,14 @@ drop_stale_model_methods <- function(env) {
   invisible(TRUE)
 }
 
-# The same for standalone functions: after readRDS() the compiled wrappers
-# point at nothing, so drop them and let expose_functions() compile again.
+#' Drop standalone-function bindings that no longer point at compiled code
+#'
+#' After `readRDS()` the compiled wrappers point at nothing, so drop them and
+#' let `expose_functions()` compile again.
+#'
+#' @param env The model's `functions` environment.
+#' @return Whether anything was dropped, invisibly.
+#' @noRd
 drop_stale_standalone_functions <- function(env) {
   if (!isTRUE(env$compiled) ||
       !source_cpp_native_symbol_is_null(env[[env$fun_names[1]]])) {
@@ -1154,9 +1033,15 @@ create_skeleton <- function(param_metadata, model_variables,
   })
 }
 
-# Runs stanc on the program and returns the C++ it generated. Warnings stanc
-# prints on a successful run, pedantic ones included, are shown only when
-# show_warnings is TRUE, since a build shows them from its own stanc run.
+#' Run stanc on a Stan program and return the C++ it generated
+#'
+#' @param stan_file Path to the program.
+#' @param stancflags Arguments for stanc, one per element.
+#' @param show_warnings Whether to show the warnings stanc prints on a
+#'   successful run, pedantic ones included. A build shows them from its own
+#'   stanc run, so it passes `FALSE`.
+#' @return The C++, one element per line.
+#' @noRd
 get_standalone_hpp <- function(stan_file, stancflags, show_warnings = FALSE) {
   hpp_path <- tempfile(pattern = "model-", fileext = ".hpp")
   withr::defer(unlink(hpp_path))
