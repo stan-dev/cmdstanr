@@ -2515,8 +2515,8 @@ established. A usable record's half is enforced where the record's other field
 checks are (§4), so a record carrying an unparseable `cmdstan` version is not a
 usable record; on the fallback, `<exe> info` must report complete version fields.
 
-Failing both means the executable did not identify itself as a supported CmdStan
-executable, which is a weaker claim than "it did not run" and is the one to make. A
+Failing both means the executable did not report a Stan version, which is a
+weaker claim than "it did not run" and is the one to make. A
 two-line shell script that exits 0 reaches the same place, having no version
 fields to report. What it does not reach is a CmdStan binary that could have
 sampled: `info` has printed `stan_version_*` unconditionally since CmdStan 2.27

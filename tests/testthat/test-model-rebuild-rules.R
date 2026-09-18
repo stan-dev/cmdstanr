@@ -348,7 +348,7 @@ test_that("an executable with a usable record is adopted from the record", {
   expect_equal(adopted$cmdstan_version(), cmdstan_version())
 })
 
-test_that("an executable with no record is asked to identify itself", {
+test_that("an executable with no record is run with 'info'", {
   stan_file <- local_bernoulli()
   mod <- mock_cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE))
   file.remove(build_record_path(mod$exe_file()))
@@ -399,7 +399,7 @@ test_that("an executable that reports no version is refused", {
       info_ret = list(status = 0, stdout = reported),
       code = expect_error(
         cmdstan_model(exe_file = mod$exe_file()),
-        "did not identify itself as a CmdStan executable",
+        "did not report a Stan version",
         fixed = TRUE
       )
     )

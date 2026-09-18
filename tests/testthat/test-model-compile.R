@@ -633,7 +633,8 @@ test_that("cmdstan_version() reports the version that built an adopted executabl
   )
   expect_equal(adopted$cmdstan_version(), cmdstan_version())
 
-  # Without a record the executable is asked to identify itself.
+  # Without a record, the executable is run with 'info' to learn what it
+  # was built with.
   alone_exe <- file.path(withr::local_tempdir(), basename(mod$exe_file()))
   file.copy(mod$exe_file(), alone_exe)
   with_mocked_cli(
@@ -649,7 +650,7 @@ test_that("cmdstan_version() reports the version that built an adopted executabl
     info_ret = list(status = 0, stdout = "STAN_THREADS=false"),
     code = expect_error(
       cmdstan_model(exe_file = alone_exe),
-      "did not identify itself as a CmdStan executable",
+      "did not report a Stan version",
       fixed = TRUE
     )
   )
