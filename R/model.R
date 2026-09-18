@@ -347,7 +347,7 @@ CmdStanModel <- R6::R6Class(
     include_paths_ = NULL,
     user_header_ = NULL,
     exe_file_ = character(),
-    artifact_ = NULL,
+    executable_hash_ = NULL,
     record_ = NULL,
     reported_features_ = NULL,
     cmdstan_version_ = NULL,
@@ -366,46 +366,51 @@ CmdStanModel <- R6::R6Class(
             paste0("The executable at '", exe, "' no longer exists.")
           )
         }
-        if (!identical(hash_file(exe), private$artifact_)) {
+        if (!identical(hash_file(exe), private$executable_hash_)) {
           stop_stale_executable(paste0(
             "The executable at '", exe,
-            "' was replaced after this model was created."
+            "' changed after this model was created."
           ))
         }
         return(invisible(self))
       }
       assert_stan_file_exists(private$stan_file_)
-      observed <- observe_build(
+      current <- read_current_build(
         private$stan_file_, private$include_paths_, private$user_header_, exe
       )
       reasons <- assess_build(
-        list(request = private$record_$request, artifact = private$artifact_),
-        observed
+        list(
+          configuration = private$record_$configuration,
+          executable_hash = private$executable_hash_
+        ),
+        current
       )
       if (length(reasons) > 0) {
         stop_stale_executable(c(
           "The executable is out of date:",
-          paste0("  - ", rebuild_reasons(reasons, observed)),
+          paste0("  - ", rebuild_reasons(reasons, current)),
           "Run cmdstan_model() to rebuild it."
         ))
       }
       invisible(self)
     },
-    # The standalone-functions C++, generated from the source once, on the
-    # first call that has passed the guard, when the source is known to be
-    # the built one. Construction does not pay a stanc run for a feature most
-    # models never use. Fits copy it from here. Empty without a source.
+    # The standalone-functions C++, generated from the source once, after
+    # assert_current() has passed, when the source is known to be the built
+    # one. Construction does not pay a stanc run for a feature most models
+    # never use. Fits copy it from here. Empty without a source.
     standalone_functions = function() {
       if (self$has_stan_file() && is.null(self$functions$hpp_code)) {
-        request <- private$record_$request
+        configuration <- private$record_$configuration
         self$functions$hpp_code <- get_standalone_hpp(
           private$stan_file_,
           c("--standalone-functions",
             include_paths_stanc3_args(
               private$include_paths_, direct_call = TRUE
             ),
-            unlist(request[c("stanc_options_supplied", "stanc_options_injected",
-                             "stanc_options_inherited")], use.names = FALSE))
+            unlist(configuration[c(
+              "stanc_options", "stanc_options_added",
+              "stanc_options_from_make"
+            )], use.names = FALSE))
         )
       }
       self$functions
@@ -448,7 +453,7 @@ CmdStanModel <- R6::R6Class(
         writeLines(built$hpp_code, private$hpp_file_)
         private$model_methods_env_ <- new.env()
         private$model_methods_env_$hpp_code_ <- built$hpp_code
-        snapshot <- snapshot_from_record(built$record)
+        facts <- facts_from_record(built$record)
       } else {
         assert_no_build_args_for_exe_only(
           cpp_options, stanc_options, include_paths, user_header,
@@ -458,14 +463,14 @@ CmdStanModel <- R6::R6Class(
         assert_file_exists(exe_file, access = "r", extension = ext)
         private$exe_file_ <- resolve_path(exe_file)
         private$model_name_ <- model_name_from_path(private$exe_file_)
-        snapshot <- adopt_executable(private$exe_file_)
+        facts <- adopt_executable(private$exe_file_)
       }
-      private$record_ <- snapshot$record
-      private$artifact_ <- snapshot$artifact
-      private$reported_features_ <- snapshot$reported_features
-      private$cmdstan_version_ <- snapshot$version
+      private$record_ <- facts$record
+      private$executable_hash_ <- facts$executable_hash
+      private$reported_features_ <- facts$reported_features
+      private$cmdstan_version_ <- facts$version
       private$user_header_ <-
-        snapshot$record$dependencies[["user_header"]][["built_from"]]
+        facts$record$dependencies[["user_header"]][["built_from"]]
       invisible(self)
     },
     include_paths = function() {
@@ -511,7 +516,7 @@ CmdStanModel <- R6::R6Class(
       private$cmdstan_version_
     },
     cpp_options = function() {
-      private$record_$request$cpp_options_supplied %||%
+      private$record_$configuration$cpp_options %||%
         structure(list(), names = character())
     },
     user_header = function() {

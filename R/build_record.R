@@ -120,34 +120,38 @@ validate_build_record <- function(record) {
     )
   }
 
-  request <- record_member(record, "request", "object")
+  configuration <- record_member(record, "configuration", "object")
   cpp_options <- record_member(
-    request, "cpp_options_supplied", "object", "request.cpp_options_supplied"
+    configuration, "cpp_options", "object", "configuration.cpp_options"
   )
   for (i in seq_along(cpp_options)) {
     option_name <- names(cpp_options)[[i]]
-    field <- paste0("request.cpp_options_supplied.", option_name)
+    field <- paste0("configuration.cpp_options.", option_name)
     if (!grepl(paste0("^", make_variable_name_pattern, "$"), option_name)) {
       stop_build_record_field(field, "must be named for a Make variable")
     }
     record_shape(cpp_options[[i]], "string", field)
   }
   record_string_array(
-    request, "stanc_options_supplied", "request.stanc_options_supplied"
+    configuration, "stanc_options", "configuration.stanc_options"
   )
   record_string_array(
-    request, "stanc_options_injected", "request.stanc_options_injected"
+    configuration, "stanc_options_added",
+    "configuration.stanc_options_added"
   )
   record_string_array(
-    request, "stanc_options_inherited", "request.stanc_options_inherited"
+    configuration, "stanc_options_from_make",
+    "configuration.stanc_options_from_make"
   )
   stanc_name <- record_member(
-    request, "stanc_name", "string", "request.stanc_name"
+    configuration, "stanc_name", "string", "configuration.stanc_name"
   )
   if (!nzchar(stanc_name)) {
-    stop_build_record_field("request.stanc_name", "must not be empty")
+    stop_build_record_field("configuration.stanc_name", "must not be empty")
   }
-  record_string_array(request, "include_paths", "request.include_paths")
+  record_string_array(
+    configuration, "include_paths", "configuration.include_paths"
+  )
 
   reported_features <- record_member(record, "reported_features", "object")
   for (i in seq_along(reported_features)) {
@@ -173,23 +177,23 @@ validate_build_record <- function(record) {
     )
   }
 
-  record_member(record, "artifact", "string")
+  record_member(record, "executable_hash", "string")
 
-  builder <- record_member(record, "builder", "object")
-  record_member(builder, "path", "string", "builder.path")
-  version <- record_member(builder, "version", "string", "builder.version")
+  cmdstan <- record_member(record, "cmdstan", "object")
+  record_member(cmdstan, "path", "string", "cmdstan.path")
+  version <- record_member(cmdstan, "version", "string", "cmdstan.version")
   # A string that is not a CmdStan version is the wrong shape, not an odd value.
   if (!grepl(cmdstan_version_pattern, version)) {
     stop_build_record_field(
-      "builder.version", "must be a CmdStan version such as \"2.39.0\""
+      "cmdstan.version", "must be a CmdStan version such as \"2.39.0\""
     )
   }
 
   record_member(record, "tbb_dir", "string")
 
-  untracked <- record_member(record, "known_untracked_dependencies", "array")
+  untracked <- record_member(record, "untracked_dependencies", "array")
   for (i in seq_along(untracked)) {
-    field <- paste0("known_untracked_dependencies[[", i, "]]")
+    field <- paste0("untracked_dependencies[[", i, "]]")
     entry <- record_shape(untracked[[i]], "object", field)
     kind <- record_member(entry, "kind", "string", paste0(field, ".kind"))
     if (!kind %in% c("make_local_include", "user_header_include")) {
@@ -210,23 +214,23 @@ validate_build_record <- function(record) {
 #'
 #' The one place a record is built. `format_version` comes first and the rest
 #' follow the schema's order, so the written JSON reads in that order too.
-#' `request` arrives in the forms the record compares: `cpp_options_supplied`
-#' as canonical Make assignments, one per name, and the three stanc option
+#' `configuration` arrives in the forms the record compares: `cpp_options`
+#' as normalized Make assignments, one per name, and the three stanc option
 #' lists as the argument vectors stanc receives.
 #'
 #' @noRd
-new_build_record <- function(request, reported_features, dependencies, artifact,
-                             builder, tbb_dir,
-                             known_untracked_dependencies = list()) {
+new_build_record <- function(configuration, reported_features, dependencies,
+                             executable_hash, cmdstan, tbb_dir,
+                             untracked_dependencies = list()) {
   record <- list(
     format_version = build_record_format_version,
-    request = request,
+    configuration = configuration,
     reported_features = reported_features,
     dependencies = dependencies,
-    artifact = artifact,
-    builder = builder,
+    executable_hash = executable_hash,
+    cmdstan = cmdstan,
     tbb_dir = tbb_dir,
-    known_untracked_dependencies = known_untracked_dependencies
+    untracked_dependencies = untracked_dependencies
   )
   validate_build_record(record)
   record
@@ -410,8 +414,8 @@ read_build_record <- function(exe_file) {
   if (!accepted) {
     return(unreadable)
   }
-  if (!identical(hash_file(exe_file), record[["artifact"]])) {
-    return(list(status = "unavailable", reason = "artifact_mismatch"))
+  if (!identical(hash_file(exe_file), record[["executable_hash"]])) {
+    return(list(status = "unavailable", reason = "executable_mismatch"))
   }
 
   list(status = "available", record = record)
@@ -444,11 +448,11 @@ verify_build_record <- function(exe_file) {
 #' @noRd
 build_record_comparisons <- list(
   cpp_options = function(x) {
-    supplied <- x[["request"]][["cpp_options_supplied"]]
+    supplied <- x[["configuration"]][["cpp_options"]]
     supplied[order(names(supplied))]
   },
-  stanc_options = function(x) x[["request"]][["stanc_options_supplied"]],
-  stanc_name = function(x) x[["request"]][["stanc_name"]],
+  stanc_options = function(x) x[["configuration"]][["stanc_options"]],
+  stanc_name = function(x) x[["configuration"]][["stanc_name"]],
   stan_file = function(x) x[["dependencies"]][["stan_file"]][["hash"]],
   included_files = function(x) {
     lapply(x[["dependencies"]][["included_files"]], `[[`, "hash")
@@ -457,8 +461,8 @@ build_record_comparisons <- list(
     x[["dependencies"]][["user_header"]][c("hash", "built_from")]
   },
   make_local = function(x) x[["dependencies"]][["make_local"]]["hash"],
-  artifact = function(x) x[["artifact"]],
-  builder = function(x) x[["builder"]][c("path", "version")]
+  executable = function(x) x[["executable_hash"]],
+  cmdstan = function(x) x[["cmdstan"]][c("path", "version")]
 )
 
 #' Compare a recorded build against the current one
@@ -481,42 +485,42 @@ compare_build_records <- function(recorded, current,
 
 #' Decide whether an executable is current
 #'
-#' Takes two lists and compares them. `expected` is what the caller wants
-#' the executable to have been built from. Its `request` holds the options
-#' this call would record. Its `artifact` is the hash the object was built
-#' against, or `NULL` at the constructor, which has no expectation yet.
-#' `observed` is what is there now. Its `record` is what
+#' Takes two lists and compares them. `wanted` is what the caller wants
+#' the executable to have been built from. Its `configuration` holds the
+#' options this call would record. Its `executable_hash` is the hash the
+#' object was built against, or `NULL` at the constructor, which has no
+#' expectation yet. `current` is what is there now. Its `record` is what
 #' `read_build_record()` returned. Its `dependencies` are the current files
 #' hashed the way the writer hashes them, or `NULL` when nobody resolved
-#' them. Its `builder` is the installation selected now.
+#' them. Its `cmdstan` is the installation selected now.
 #'
 #' Returns a character vector of reasons to rebuild, empty when the
 #' executable is current. When the record cannot be used the vector holds
 #' that one reason and nothing else, because there is no baseline to compare
 #' the rest against. Otherwise it names every compared row that differs.
 #' The dependency rows are skipped when nobody resolved them, so an
-#' unresolved set is never mistaken for an empty one. The expected artifact
+#' unresolved set is never mistaken for an empty one. The wanted executable
 #' hash is what catches an executable another process rebuilt, since the
 #' record beside it then matches it and nothing on disk disagrees. Reads no
 #' file and runs nothing.
 #'
 #' @noRd
-assess_build <- function(expected, observed) {
-  if (observed$record$status != "available") {
-    return(observed$record$reason)
+assess_build <- function(wanted, current) {
+  if (current$record$status != "available") {
+    return(current$record$reason)
   }
-  recorded <- observed$record$record
-  current <- list(
-    request = expected$request,
-    dependencies = observed$dependencies,
-    artifact = expected$artifact %||% recorded$artifact,
-    builder = observed$builder
+  recorded <- current$record$record
+  now <- list(
+    configuration = wanted$configuration,
+    dependencies = current$dependencies,
+    executable_hash = wanted$executable_hash %||% recorded$executable_hash,
+    cmdstan = current$cmdstan
   )
   rows <- names(build_record_comparisons)
-  if (is.null(observed$dependencies)) {
+  if (is.null(current$dependencies)) {
     rows <- setdiff(
       rows, c("stan_file", "included_files", "user_header", "make_local")
     )
   }
-  compare_build_records(recorded, current, rows)
+  compare_build_records(recorded, now, rows)
 }

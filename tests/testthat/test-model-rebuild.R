@@ -60,7 +60,7 @@ mod_b <- cmdstan_model(replaced_stan_file, force_recompile = TRUE)
 test_that("a replaced executable is refused by the object that built it", {
   expect_error(
     mod_a$cmdstan_defaults(),
-    "replaced after this model was created", fixed = TRUE,
+    "changed after this model was created", fixed = TRUE,
     class = "cmdstanr_stale_executable"
   )
   expect_no_error(mod_b$cmdstan_defaults())
@@ -76,7 +76,7 @@ test_that("adoption from a record verifies by hash alone", {
   cmdstan_model(replaced_stan_file, force_recompile = TRUE)
   expect_error(
     mod_c$cmdstan_defaults(),
-    "replaced after this model was created", fixed = TRUE,
+    "changed after this model was created", fixed = TRUE,
     class = "cmdstanr_stale_executable"
   )
 })
@@ -111,7 +111,7 @@ test_that("adoption without a record verifies by the hash it captured", {
   file.copy(bernoulli_exe, exe, overwrite = TRUE)
   expect_error(
     mod_d$cmdstan_defaults(),
-    "replaced after this model was created", fixed = TRUE,
+    "changed after this model was created", fixed = TRUE,
     class = "cmdstanr_stale_executable"
   )
 })
@@ -141,7 +141,7 @@ test_that("an edited program with an old mtime still triggers a rebuild", {
   expect_error(mod$cmdstan_defaults(), class = "cmdstanr_stale_executable")
 })
 
-test_that("a re-resolution failure errors instead of producing a verdict", {
+test_that("a failure resolving again errors instead of producing a verdict", {
   dir <- withr::local_tempdir()
   stan_file <- seed_from(canonical_include_stan, canonical_include_exe, dir)
   mod <- cmdstan_model(stan_file)
@@ -160,7 +160,7 @@ test_that("a re-resolution failure errors instead of producing a verdict", {
 
 test_that("adoption from a record ignores a CmdStan it never selected", {
   record <- read_build_record(mod_b$exe_file())$record
-  record$builder$version <- "2.35.0"
+  record$cmdstan$version <- "2.35.0"
   write_build_record(record, mod_b$exe_file())
 
   mod <- with_mocked_cli(
@@ -379,16 +379,16 @@ test_that("log_prob after an edit still reflects the program that was built", {
   expect_equal(fit$log_prob(unconstrained_variables = 0.3), expected_lp)
 })
 
-test_that("a make/local pedantic flag is injected once, not inherited too", {
+test_that("a pedantic flag both added and in make/local is recorded once, as added", {
   local_cmdstan_make_local(cpp_options = list("STANCFLAGS += --warn-pedantic"))
   stan_file <- local_program("bernoulli")
   mod <- mock_cmdstan_model(stan_file, pedantic = TRUE)
 
   record <- read_build_record(mod$exe_file())$record
-  injected <- unlist(record$request$stanc_options_injected)
-  inherited <- unlist(record$request$stanc_options_inherited)
-  expect_equal(sum(injected == "--warn-pedantic"), 1)
-  expect_false("--warn-pedantic" %in% inherited)
+  added <- unlist(record$configuration$stanc_options_added)
+  from_make <- unlist(record$configuration$stanc_options_from_make)
+  expect_equal(sum(added == "--warn-pedantic"), 1)
+  expect_false("--warn-pedantic" %in% from_make)
   expect_true(file.exists(mod$hpp_file()))
 })
 
