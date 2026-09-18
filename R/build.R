@@ -3,12 +3,12 @@
 
 #' Build or verify the executable for a Stan program
 #'
-#' The one build path. The call is resolved into the request the record
+#' The one build path. The call is resolved into the configuration the record
 #' compares, assess_build() says whether the executable beside the program (or
 #' in `dir`) was built from it, and a rebuild follows when it was not or when
 #' `force_recompile` asks for one. Both ways out generate the model's C++ from
 #' the source just verified or built, so a model constructed on a reused
-#' executable holds the same snapshot as one that built it.
+#' executable holds the same facts as one that built it.
 #'
 #' `force_recompile = NULL` means the caller did not say and the
 #' `cmdstanr_force_recompile` option decides. The rebuild reason names
@@ -48,25 +48,25 @@ build_executable <- function(stan_file,
 
   # Options cmdstanr adds stay apart from the caller's, so the record can hold
   # each as it was, and are merged only when they become arguments.
-  injected <- list()
+  added <- list()
   if (pedantic) {
-    injected[["warn-pedantic"]] <- TRUE
+    added[["warn-pedantic"]] <- TRUE
   }
   if (isTRUE(cpp_option_value(cpp_options, "stan_opencl"))) {
-    injected[["use-opencl"]] <- TRUE
+    added[["use-opencl"]] <- TRUE
   }
   if (!is.null(user_header)) {
-    injected[["allow-undefined"]] <- TRUE
+    added[["allow-undefined"]] <- TRUE
   }
-  injected[["name"]] <- paste0(model_name_from_path(stan_file), "_model")
+  added[["name"]] <- paste0(model_name_from_path(stan_file), "_model")
   if (!stanc_option_supplied(stanc_options, "filename-in-msg")) {
-    injected[["filename-in-msg"]] <- wsl_safe_path(stan_file)
+    added[["filename-in-msg"]] <- wsl_safe_path(stan_file)
   }
-  request <- list(
-    cpp_options_supplied = parsed_cpp_options(cpp_options),
-    stanc_options_supplied = as.list(stanc_options_to_args(stanc_options)),
-    stanc_options_injected = as.list(stanc_options_to_args(injected)),
-    stanc_name = injected[["name"]],
+  configuration <- list(
+    cpp_options = parsed_cpp_options(cpp_options),
+    stanc_options = as.list(stanc_options_to_args(stanc_options)),
+    stanc_options_added = as.list(stanc_options_to_args(added)),
+    stanc_name = added[["name"]],
     include_paths = as.list(include_paths)
   )
 
@@ -77,19 +77,21 @@ build_executable <- function(stan_file,
              isTRUE(getOption("cmdstanr_force_recompile"))) {
     forced <- "force_recompile_option"
   }
-  observed <- observe_build(stan_file, include_paths, user_header, exe)
+  current <- read_current_build(stan_file, include_paths, user_header, exe)
   reasons <- c(
-    assess_build(list(request = request, artifact = NULL), observed),
+    assess_build(
+      list(configuration = configuration, executable_hash = NULL), current
+    ),
     forced
   )
   rebuild <- length(reasons) > 0
   if (rlang::is_interactive()) {
-    message(constructor_message(reasons, observed))
+    message(constructor_message(reasons, current))
   }
 
   # The flags stanc receives: the call's, then what make adds for this build.
   # On a reuse the record says what make added, since make/local is unchanged.
-  stancflags_call <- stanc_options_to_args(c(stanc_options, injected))
+  stancflags_call <- stanc_options_to_args(c(stanc_options, added))
   make_vars <- cpp_options_to_compile_flags(cpp_options)
   if (!is.null(user_header)) {
     make_vars <- c(
@@ -97,17 +99,18 @@ build_executable <- function(stan_file,
     )
   }
   if (rebuild) {
-    if (is.null(observed$info)) {
-      observed <- c(
-        observed, resolve_dependencies(stan_file, include_paths, user_header)
+    if (is.null(current$info)) {
+      current <- c(
+        current, resolve_dependencies(stan_file, include_paths, user_header)
       )
     }
-    inherited <- inherited_stancflags(make_vars)
+    from_make <- stancflags_added_by_make(make_vars)
   } else {
-    inherited <- unlist(observed$record$record$request$stanc_options_inherited)
+    from_make <-
+      unlist(current$record$record$configuration$stanc_options_from_make)
   }
-  inherited <- drop_overridden_stancflags(inherited, stancflags_call)
-  stancflags_direct <- c(stancflags_call, inherited)
+  from_make <- drop_overridden_stancflags(from_make, stancflags_call)
+  stancflags_direct <- c(stancflags_call, from_make)
   stanc_inc_paths <- include_paths_stanc3_args(
     include_paths, direct_call = TRUE
   )
@@ -132,43 +135,44 @@ build_executable <- function(stan_file,
   )
 
   if (!rebuild) {
-    record <- observed$record$record
+    record <- current$record$record
   } else {
     tmp_exe <- cmdstan_ext(strip_ext(source))
     if (os_is_windows() && !os_is_wsl()) {
       tmp_exe <- utils::shortPathName(tmp_exe)
     }
-    # get_cmdstan_flags() split the inherited flags into words. Requote them
+    # get_cmdstan_flags() split the flags from make into words. Requote them
     # for the STANCFLAGS value handed back to make.
     stancflags_quoted <- stanc_options_to_args(
-      c(stanc_options, injected), quote_values = TRUE
+      c(stanc_options, added), quote_values = TRUE
     )
     stancflags_make <- paste0(
       "STANCFLAGS += ", include_paths_stanc3_args(include_paths),
       paste0(
-        " ", c(stancflags_quoted, make_shell_quote(inherited)), collapse = ""
+        " ", c(stancflags_quoted, make_shell_quote(from_make)), collapse = ""
       )
     )
     run_make(
       c(wsl_safe_path(repair_path(tmp_exe)), make_vars, stancflags_make), quiet
     )
     record <- new_build_record(
-      request = append(
-        request, list(stanc_options_inherited = as.list(inherited)), after = 3
+      configuration = append(
+        configuration, list(stanc_options_from_make = as.list(from_make)),
+        after = 3
       ),
       reported_features = reported_features_from_exe(tmp_exe),
-      dependencies = observed$dependencies,
-      artifact = hash_file(tmp_exe),
-      builder = observed$builder,
+      dependencies = current$dependencies,
+      executable_hash = hash_file(tmp_exe),
+      cmdstan = current$cmdstan,
       tbb_dir = tbb_dir_from_options(cpp_options),
-      known_untracked_dependencies = untracked_dependencies(
-        observed$dependencies$make_local$built_from, user_header
+      untracked_dependencies = untracked_dependencies(
+        current$dependencies$make_local$built_from, user_header
       )
     )
     leftover_backup <- install_executable(tmp_exe, exe, record)
     # Said once, when the record is written, and never on a no-op.
-    if (length(record$known_untracked_dependencies) > 0) {
-      message(untracked_dependencies_note(record$known_untracked_dependencies))
+    if (length(record$untracked_dependencies) > 0) {
+      message(untracked_dependencies_note(record$untracked_dependencies))
     }
     if (!is.null(leftover_backup)) {
       warning(
@@ -182,7 +186,7 @@ build_executable <- function(stan_file,
     exe_file = exe,
     record = record,
     include_paths = include_paths,
-    info = observed$info,
+    info = current$info,
     hpp_code = hpp_code
   )
 }
@@ -192,16 +196,18 @@ build_executable <- function(stan_file,
 #' Three outcomes. With a usable record beside it nothing is launched: the
 #' hash the reader checked proves the binary is the one the record describes.
 #' Without one the executable is asked to identify itself with `info`, once. A
-#' version it reports admits it, unprovenanced. No version refuses it, since an
-#' executable that cannot say what built it is not a CmdStan executable.
+#' version it reports admits it, without a record. No version refuses it,
+#' since an executable that cannot say what built it is not a CmdStan
+#' executable.
 #'
-#' @return A list: `record` (`NULL` when unprovenanced), `reported_features`,
-#'   `version` and `artifact`, the executable's hash.
+#' @return A list: `record` (`NULL` when there is no record),
+#'   `reported_features`, `version` and `executable_hash`, the executable's
+#'   hash.
 #' @noRd
 adopt_executable <- function(exe_file) {
   found <- read_build_record(exe_file)
   if (found$status == "available") {
-    return(snapshot_from_record(found$record))
+    return(facts_from_record(found$record))
   }
   features <- reported_features_from_exe(exe_file)
   if (is.null(features[["stan_version"]])) {
@@ -215,50 +221,51 @@ adopt_executable <- function(exe_file) {
     record = NULL,
     reported_features = features,
     version = features[["stan_version"]],
-    artifact = hash_file(exe_file)
+    executable_hash = hash_file(exe_file)
   )
 }
 
-snapshot_from_record <- function(record) {
+facts_from_record <- function(record) {
   list(
     record = record,
     reported_features = record$reported_features,
-    version = record$builder$version,
-    artifact = record$artifact
+    version = record$cmdstan$version,
+    executable_hash = record$executable_hash
   )
 }
 
 #' What is on disk for an executable built from a Stan program
 #'
-#' The `observed` argument of assess_build(): the record beside the executable,
+#' The `current` argument of assess_build(): the record beside the executable,
 #' the installation selected now, and the sources hashed the way the writer
 #' hashes them, with `info`, the `stanc --info` output they were resolved
-#' from, kept for the snapshot. The constructor and the guard both come here,
-#' so they cannot assemble it differently. The sources are resolved through
-#' the selected stanc, so they are left unresolved when the selection is not
-#' the recorded builder. That difference is a reason on its own.
+#' from, kept for the facts. The constructor and assert_current() both come
+#' here, so they cannot assemble it differently. The sources are resolved
+#' through the selected stanc, so they are left unresolved when the selection
+#' is not the recorded CmdStan. That difference is a reason on its own.
 #'
 #' @noRd
-observe_build <- function(stan_file, include_paths, user_header, exe_file) {
-  observed <- list(
+read_current_build <- function(stan_file, include_paths, user_header,
+                               exe_file) {
+  current <- list(
     exe_file = exe_file,
     record = list(status = "unavailable", reason = "no_executable"),
-    builder = list(path = cmdstan_path(), version = current_cmdstan_version())
+    cmdstan = list(path = cmdstan_path(), version = current_cmdstan_version())
   )
   if (file.exists(exe_file)) {
-    observed$record <- read_build_record(exe_file)
+    current$record <- read_build_record(exe_file)
   }
-  same_builder <- function() {
-    recorded <- observed$record$record
-    differs <- compare_build_records(recorded, observed, "builder")
+  same_cmdstan <- function() {
+    recorded <- current$record$record
+    differs <- compare_build_records(recorded, current, "cmdstan")
     length(differs) == 0
   }
-  if (observed$record$status == "available" && same_builder()) {
-    observed <- c(
-      observed, resolve_dependencies(stan_file, include_paths, user_header)
+  if (current$record$status == "available" && same_cmdstan()) {
+    current <- c(
+      current, resolve_dependencies(stan_file, include_paths, user_header)
     )
   }
-  observed
+  current
 }
 
 #' Hash what a build of this program consumes
@@ -295,10 +302,10 @@ resolve_dependencies <- function(stan_file, include_paths, user_header) {
 #' What Make resolves `STANCFLAGS` to with this build's variables applied,
 #' which is how make/local and CmdStan's own makefiles reach stanc. An include
 #' path there is refused: `include_paths` is the one channel, so that
-#' re-resolution sees every path the build saw.
+#' resolving again sees every path the build saw.
 #'
 #' @noRd
-inherited_stancflags <- function(make_vars) {
+stancflags_added_by_make <- function(make_vars) {
   flags <- get_cmdstan_flags("STANCFLAGS", make_vars)
   is_include_path <- grepl("--include-paths", flags, fixed = TRUE) |
     startsWith(flags, "-I")
@@ -418,12 +425,12 @@ model_name_from_path <- function(path) {
 }
 
 
-# what the constructor and the guard say ------------------------------------
+# what the constructor and assert_current() say -----------------------------
 
 #' What the constructor says before it builds or reuses
 #'
 #' @noRd
-constructor_message <- function(reasons, observed) {
+constructor_message <- function(reasons, current) {
   if (length(reasons) == 0) {
     return("Model executable is up to date!")
   }
@@ -431,7 +438,7 @@ constructor_message <- function(reasons, observed) {
     return("Compiling Stan program...")
   }
   paste(
-    c("Recompiling:", paste0("  - ", rebuild_reasons(reasons, observed))),
+    c("Recompiling:", paste0("  - ", rebuild_reasons(reasons, current))),
     collapse = "\n"
   )
 }
@@ -439,12 +446,12 @@ constructor_message <- function(reasons, observed) {
 #' Word the reasons assess_build() returns, one line each
 #'
 #' @noRd
-rebuild_reasons <- function(reasons, observed) {
-  recorded <- observed$record$record
-  current <- observed$dependencies
+rebuild_reasons <- function(reasons, current) {
+  recorded <- current$record$record
+  deps <- current$dependencies
   included_files <- function() {
     old <- recorded$dependencies$included_files
-    new <- current$included_files
+    new <- deps$included_files
     if (length(old) != length(new)) {
       return("the set of included files changed")
     }
@@ -457,7 +464,7 @@ rebuild_reasons <- function(reasons, observed) {
     paste0("included files changed (", paste(paths, collapse = ", "), ")")
   }
   format_version <- function() {
-    written <- observed$record$format_version
+    written <- current$record$format_version
     sprintf(
       paste0(
         "the build record was written by %s version of cmdstanr (format %s; ",
@@ -472,7 +479,7 @@ rebuild_reasons <- function(reasons, observed) {
     switch(
       reason,
       no_executable = paste0(
-        "there is no executable at '", observed$exe_file, "'"
+        "there is no executable at '", current$exe_file, "'"
       ),
       missing = paste0(
         "the executable has no build record, so what it was built with ",
@@ -483,11 +490,11 @@ rebuild_reasons <- function(reasons, observed) {
         "it was built with cannot be verified"
       ),
       unsupported_format = format_version(),
-      artifact_mismatch = paste0(
+      executable_mismatch = paste0(
         "the executable does not match its build record, so it was replaced ",
         "or altered after it was built"
       ),
-      artifact = "the executable was replaced after this model was created",
+      executable = "the executable changed after this model was created",
       cpp_options = "`cpp_options` changed",
       stanc_options = "`stanc_options` changed",
       stanc_name = "the model name changed",
@@ -495,21 +502,21 @@ rebuild_reasons <- function(reasons, observed) {
       included_files = included_files(),
       user_header = paste0(
         "the user header changed (",
-        (current$user_header %||% recorded$dependencies$user_header)$built_from,
+        (deps$user_header %||% recorded$dependencies$user_header)$built_from,
         ")"
       ),
       make_local = paste0(
         "make/local changed (",
-        (current$make_local %||% recorded$dependencies$make_local)$built_from,
+        (deps$make_local %||% recorded$dependencies$make_local)$built_from,
         ")"
       ),
-      builder = sprintf(
+      cmdstan = sprintf(
         paste0(
           "the selected CmdStan changed (built with %s at '%s'; ",
           "%s at '%s' is selected now)"
         ),
-        recorded$builder$version, recorded$builder$path,
-        observed$builder$version, observed$builder$path
+        recorded$cmdstan$version, recorded$cmdstan$path,
+        current$cmdstan$version, current$cmdstan$path
       ),
       force_recompile = "`force_recompile = TRUE` was supplied",
       force_recompile_option = "the `cmdstanr_force_recompile` option is set"
@@ -518,7 +525,7 @@ rebuild_reasons <- function(reasons, observed) {
   vapply(reasons, line, character(1), USE.NAMES = FALSE)
 }
 
-#' The error a guarded member raises on a stale executable
+#' The error a checked method raises on a stale executable
 #'
 #' Carries the class `cmdstanr_stale_executable` so callers can catch it by
 #' what it means rather than by its text.

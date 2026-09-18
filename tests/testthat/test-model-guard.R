@@ -4,12 +4,12 @@ set_cmdstan_path()
 # public member: whether it checks that the executable is still the one the
 # object was built against before it does anything else.
 member_class <- c(
-  sample = "guarded", sample_mpi = "guarded", optimize = "guarded",
-  laplace = "guarded", variational = "guarded", pathfinder = "guarded",
-  generate_quantities = "guarded", diagnose = "guarded",
-  cmdstan_defaults = "guarded", expose_functions = "guarded",
-  code = "snapshot", variables = "snapshot", print = "snapshot",
-  hpp_file = "snapshot", save_hpp_file = "snapshot", functions = "snapshot",
+  sample = "checked", sample_mpi = "checked", optimize = "checked",
+  laplace = "checked", variational = "checked", pathfinder = "checked",
+  generate_quantities = "checked", diagnose = "checked",
+  cmdstan_defaults = "checked", expose_functions = "checked",
+  code = "stored", variables = "stored", print = "stored",
+  hpp_file = "stored", save_hpp_file = "stored", functions = "stored",
   stan_file = "accessor", has_stan_file = "accessor", model_name = "accessor",
   exe_file = "accessor", include_paths = "accessor",
   cmdstan_version = "accessor", cpp_options = "accessor",
@@ -53,23 +53,23 @@ test_that("every public member is classified, and only those", {
   expect_false("compile" %in% names(member_class))
 })
 
-test_that("every guarded member raises the staleness error, bare", {
+test_that("every checked method raises the staleness error, bare", {
   mod <- local_stale_model()
-  guarded <- names(member_class)[member_class == "guarded"]
-  for (name in guarded) {
+  checked <- names(member_class)[member_class == "checked"]
+  for (name in checked) {
     expect_error(
       mod[[name]](), class = "cmdstanr_stale_executable", info = name
     )
   }
 })
 
-test_that("every non-guarded member gets past the guard", {
+test_that("every method that is not checked works on a stale build", {
   mod <- local_stale_model()
-  non_guarded <- setdiff(
-    names(member_class)[member_class != "guarded"],
+  unchecked <- setdiff(
+    names(member_class)[member_class != "checked"],
     c("initialize", "clone", "functions", "print")
   )
-  for (name in non_guarded) {
+  for (name in unchecked) {
     expect_true(not_stale(mod[[name]]()), info = name)
   }
   capture.output(expect_true(not_stale(mod$print())))
@@ -77,20 +77,20 @@ test_that("every non-guarded member gets past the guard", {
   expect_true(is.environment(mod$functions))
 })
 
-test_that("the guard says what is stale and where to go", {
+test_that("assert_current() says what is stale and where to go", {
   mod <- local_stale_model()
   expect_error(mod$sample(), "the Stan program changed", fixed = TRUE)
   expect_error(mod$sample(), "Run cmdstan_model() to rebuild it.", fixed = TRUE)
 })
 
-test_that("the guard is not memoised", {
+test_that("assert_current() is not memoised", {
   mod <- local_stale_model()
   code <- readLines(mod$stan_file())
   writeLines(code[-length(code)], mod$stan_file())
   expect_true(not_stale(mod$cmdstan_defaults()))
 })
 
-test_that("a current model gets past the guard", {
+test_that("a current model passes assert_current()", {
   stan_file <- write_stan_file(
     "parameters { real y; } model { y ~ std_normal(); }",
     dir = withr::local_tempdir()
@@ -99,7 +99,7 @@ test_that("a current model gets past the guard", {
   expect_true(not_stale(mod$cmdstan_defaults()))
 })
 
-test_that("the guard names an altered or missing executable", {
+test_that("assert_current() names an altered or missing executable", {
   stan_file <- write_stan_file(
     "parameters { real y; } model { y ~ std_normal(); }",
     dir = withr::local_tempdir()

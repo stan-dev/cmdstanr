@@ -465,11 +465,11 @@ test_that("install_executable() restores both files if the pair fails verificati
   fixture <- local_exe_fixture()
   # A record that describes some other executable still writes, so only the
   # verification at the end of the transaction can catch it.
-  fixture$record$artifact <- "deadbeef"
+  fixture$record$executable_hash <- "deadbeef"
 
   expect_error(
     install_executable(fixture$from, fixture$to, fixture$record),
-    "artifact_mismatch",
+    "executable_mismatch",
     fixed = TRUE
   )
   expect_identical(readLines(fixture$to), "old executable")

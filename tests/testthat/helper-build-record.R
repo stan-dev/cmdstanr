@@ -9,11 +9,11 @@ local_fake_exe <- function(name = "bernoulli") {
 
 example_record <- function(exe_file) {
   new_build_record(
-    request = list(
-      cpp_options_supplied = list(STAN_THREADS = "true"),
-      stanc_options_supplied = list("--O1"),
-      stanc_options_injected = list("--name=bernoulli_model"),
-      stanc_options_inherited = list(),
+    configuration = list(
+      cpp_options = list(STAN_THREADS = "true"),
+      stanc_options = list("--O1"),
+      stanc_options_added = list("--name=bernoulli_model"),
+      stanc_options_from_make = list(),
       stanc_name = "bernoulli",
       include_paths = list(dirname(exe_file))
     ),
@@ -29,23 +29,23 @@ example_record <- function(exe_file) {
       ),
       make_local = list(hash = "4b5a", built_from = "make/local")
     ),
-    artifact = hash_file(exe_file),
-    builder = list(path = "/opt/cmdstan-2.39.0", version = "2.39.0"),
+    executable_hash = hash_file(exe_file),
+    cmdstan = list(path = "/opt/cmdstan-2.39.0", version = "2.39.0"),
     tbb_dir = "/opt/cmdstan-2.39.0/stan/lib/stan_math/lib/tbb",
-    known_untracked_dependencies = list(
+    untracked_dependencies = list(
       list(kind = "make_local_include", detected_in = "make/local")
     )
   )
 }
 
-example_expected <- function(record) {
-  list(request = record$request, artifact = NULL)
+example_wanted <- function(record) {
+  list(configuration = record$configuration, executable_hash = NULL)
 }
 
-example_observed <- function(record) {
+example_current <- function(record) {
   list(
     record = list(status = "available", record = record),
     dependencies = record$dependencies,
-    builder = record$builder
+    cmdstan = record$cmdstan
   )
 }

@@ -10,12 +10,12 @@ it.
 
 ## [1. Vocabulary: what the record is, and what it is not](compilation-state.md#1-vocabulary-what-the-record-is-and-what-it-is-not)
 
-The record describes how an executable came to exist. It is not a configuration
-store, it does not authorise whatever happens to be at the executable path, and it
-does not replace looking at the binary itself. Its fields are different kinds of
-fact:
+The record describes how an executable came to exist. It cannot be fed back into
+a build, it does not authorise whatever happens to be at the executable path, and
+it does not replace looking at the binary itself. Its fields are different kinds
+of fact:
 
-- **`request`**: the build configuration. `stanc_options` is stored two ways, what
+- **`configuration`**: what the build was asked for. `stanc_options` is stored two ways, what
   the caller supplied and what cmdstanr injected. The two are disjoint because
   cmdstanr injects only what the caller did not supply. Which list a value lands in
   is decided by where it came from; whether it can force a rebuild is decided per
@@ -26,16 +26,16 @@ fact:
   explain a build. Feeding them back into another build is not supported and no rule
   here depends on it.
 - **`reported_features`**: what the binary reports as enabled. Kept apart from
-  `request` because `make/local` can enable threading or OpenCL the user never
-  mentioned. `request` is everything settled before the build ran; `reported_features`
+  `configuration` because `make/local` can enable threading or OpenCL the user never
+  mentioned. `configuration` is everything settled before the build ran; `reported_features`
   is what could only be discovered afterward.
 - **`dependencies`**: the sources consumed, and enough about how they were resolved
   to resolve them again. Identified by content; each also records the `built_from`
   path it had at build time (§4).
-- **`artifact`**: a hash of the executable this record describes, used only to check
-  that a record and an executable belong together (§4).
-- **`builder`**: the CmdStan installation that produced it.
-- **`known_untracked_dependencies`**: dependencies we can see exist but cannot
+- **`executable_hash`**: a hash of the executable this record describes, used only to
+  check that a record and an executable belong together (§4).
+- **`cmdstan`**: the CmdStan installation that produced it.
+- **`untracked_dependencies`**: dependencies we can see exist but cannot
   resolve (§6). An empty list means nothing was detected, never that the record is
   complete.
 - **`format_version`**: which format the record is written in. 1.0 reads only the
@@ -51,7 +51,7 @@ never be read as disabled.**
 only when the state is known, and let an absent key mean unknown.
 
 **Request and reported features are never merged into one accessor.**
-`$cpp_options()` reports `cpp_options_supplied`, what the caller asked for and not
+`$cpp_options()` reports `cpp_options`, what the caller asked for and not
 what cmdstanr added. The user header has its own accessor, `$user_header()`, matching
 its own argument; it is not readable through `$cpp_options()` because it is no longer
 settable there (§3). `stan_build_info()` reports what the binary says, with its
@@ -235,33 +235,33 @@ contains.**
 
 | Field | Recorded | Compared | Notes |
 |---|---|---|---|
-| `request.cpp_options_supplied` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
-| `request.stanc_options_supplied` | yes | yes | as above |
-| `request.stanc_options_injected` | yes | **no** | what cmdstanr added, disjoint from `_supplied` by construction. Never compared as a list; whether an injection's effect is compared is decided per field like every other row, and the model name is the one that earns its own, below |
-| `request.stanc_options_inherited` | yes | **no** | the `STANCFLAGS` make added for the build, as passed to make after the call's own flags displaced their make/local copies (§6). A reuse regenerates the model's C++ (§5) with them, instead of asking make again on every construction. Not compared: `make/local` is, and what an included makefile or the environment adds is untracked (§6) |
-| `request.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name; §3 rejects the `stanc_options` spelling, so this is the only source. The build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`), which carries both the raw value stanc was passed and the mangled one stanc compiled |
-| `request.include_paths`, effective | yes | **no** | the paths in force for the call drive re-resolution (§6): this call's at the constructor, the object's own at a guarded method, never the recorded ones (§5). The recorded value is provenance |
+| `configuration.cpp_options` | yes | yes | what the caller passed; canonicalized per field (§3, #1250) |
+| `configuration.stanc_options` | yes | yes | as above |
+| `configuration.stanc_options_added` | yes | **no** | what cmdstanr added, disjoint from `stanc_options` by construction. Never compared as a list; whether an injection's effect is compared is decided per field like every other row, and the model name is the one that earns its own, below |
+| `configuration.stanc_options_from_make` | yes | **no** | the `STANCFLAGS` make added for the build, as passed to make after the call's own flags displaced their make/local copies (§6). A reuse regenerates the model's C++ (§5) with them, instead of asking make again on every construction. Not compared: `make/local` is, and what an included makefile or the environment adds is untracked (§6) |
+| `configuration.stanc_name` | yes | **yes** | the `--name` stanc receives, which `R/model.R:835` derives from the file name; §3 rejects the `stanc_options` spelling, so this is the only source. The build bakes it into the binary, and no other compared field pins it down, since content hashes are compared and paths are not. Its visible effect is the CSV header (`R/csv.R:873`), which carries both the raw value stanc was passed and the mangled one stanc compiled |
+| `configuration.include_paths`, effective | yes | **no** | the paths in force for the call drive re-resolution (§6): this call's at the constructor, the object's own at a guarded method, never the recorded ones (§5). The recorded value is provenance |
 | `reported_features` | yes | no | describes the binary; never a trigger (§1) |
 | `dependencies[].hash` | yes | yes | content hash; this is what identity means |
 | `dependencies[].built_from` | yes | no | where the file was at build time; provenance. The user header is the exception below |
 | `dependencies.user_header.built_from` | yes | **yes** | the one *dependency* path compared, because the C++ closure beneath it cannot be enumerated. `-I` flags decide the same resolution and are compared inside `cpp_options` above (§6) |
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
-| `artifact` | yes | yes | hash of the executable this record describes |
-| `builder` | yes | yes | normalized installation path and version |
-| `tbb_dir` | yes | **no** | the absolute TBB directory the call named, read as `make` receives the call's `cpp_options` (§3: last assignment wins, `FALSE` is an empty one): `TBB_LIB`, or `TBB_BIN` when `TBB_LIB` is empty, which is the order `compiler_flags` uses; resolved against the installation when relative, since `make` runs there; and the installation's own `lib/tbb` when the call named neither. Filled from the call, not asked of `make`: a `TBB_LIB` or `TBB_BIN` set in `make/local`, `~/.config/stan/make.local` or the environment moves the TBB the binary links against and not this field (§6). Recorded because Windows needs it at launch and a later `set_cmdstan_path()` must not move it (#1261 consumes it; no verdict here turns on it). Not compared: both routes it sees are compared already, through `cpp_options_supplied` and `builder` |
-| `known_untracked_dependencies` | yes | no | reported (§6), never a trigger |
+| `executable_hash` | yes | yes | hash of the executable this record describes |
+| `cmdstan` | yes | yes | normalized installation path and version |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the call named, read as `make` receives the call's `cpp_options` (§3: last assignment wins, `FALSE` is an empty one): `TBB_LIB`, or `TBB_BIN` when `TBB_LIB` is empty, which is the order `compiler_flags` uses; resolved against the installation when relative, since `make` runs there; and the installation's own `lib/tbb` when the call named neither. Filled from the call, not asked of `make`: a `TBB_LIB` or `TBB_BIN` set in `make/local`, `~/.config/stan/make.local` or the environment moves the TBB the binary links against and not this field (§6). Recorded because Windows needs it at launch and a later `set_cmdstan_path()` must not move it (#1261 consumes it; no verdict here turns on it). Not compared: both routes it sees are compared already, through `cpp_options` and `cmdstan` |
+| `untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
 **Origin is stored, not inferred.**
 
 **A change to which options cmdstanr injects does not rebuild anything already
 built.** An option a later cmdstanr adds can change the artifact while an old
-record's `_supplied` goes on matching, and nothing rebuilds. That is the intended
+record's `stanc_options` goes on matching, and nothing rebuilds. That is the intended
 answer: the caller asked for the same build they asked for before, and the new
 binary is theirs to ask for with `force_recompile = TRUE`.
 
 CmdStan is not an exception to that rule. A CmdStan upgrade does rebuild, through
-`builder`, because the installation is a standing runtime dependency of the artifact
+`cmdstan`, because the installation is a standing runtime dependency of the artifact
 rather than a fact about how it was built: the binary loads its TBB through an
 absolute rpath, by default into that tree (§6), and re-resolution invokes that
 installation's stanc (§6).
@@ -318,7 +318,7 @@ of one destination is unsupported; locking is tracked separately.
 
 **What the reader cannot use, it rejects as unreadable rather than working with.** A
 file that parses as JSON is not yet a record (§6). Every field the format requires
-is checked for type and shape before the record is accepted, `builder`'s version
+is checked for type and shape before the record is accepted, `cmdstan`'s version
 against the grammar §7 defines since a string that is not a CmdStan version is the
 wrong shape rather than an odd value, and a record failing any of those checks is
 unreadable whole: nothing in it is used and nothing in it is reported, including a
@@ -507,7 +507,7 @@ marks **compared** differs from what this call computes. Which fields those are 
 
 Or when the record cannot be used at all:
 
-- the executable does not match `artifact`: replaced by another process, or corrupt
+- the executable does not match `executable_hash`: replaced by another process, or corrupt
 - the record is missing, unreadable, or written in a format version this cmdstanr
   does not read
 - the executable predates build records, so there is nothing to compare
@@ -630,7 +630,7 @@ models the regex detects.
 
 The comparison is the normalised installation path and the version, plus the
 `make/local` hash, which is its own dependency with its own trigger rather than
-part of `builder`.
+part of `cmdstan`.
 
 **A different path at the same version is a rebuild reason.**
 
@@ -664,7 +664,7 @@ different executable would supply the wrong baseline.
 they were, so that an unresolved set is never read as an empty one.
 
 One path reaches it: re-resolution is skipped when the selected
-installation differs from `builder` (below). That difference is itself a trigger,
+installation differs from `cmdstan` (below). That difference is itself a trigger,
 so the verdict is the same either way and only the reason list is shorter.
 
 `make/local` is per-installation, so editing it invalidates every model built
@@ -682,10 +682,10 @@ provenance (§4).
 
 **Re-resolve by invoking stanc, never by reimplementing its rules.**
 
-**Invoke stanc from the recorded `builder`, not from whichever installation is
+**Invoke stanc from the recorded `cmdstan`, not from whichever installation is
 selected now**, or a different stanc's resolution rules get applied to a model this
 one did not build. **Check builder identity first**: if the selected installation
-differs from `builder`, that is already a rebuild trigger (above) and should be
+differs from `cmdstan`, that is already a rebuild trigger (above) and should be
 reported without attempting re-resolution at all.
 
 **Normalisation: normalised absolute paths, recorded but not compared.**
@@ -712,7 +712,7 @@ In both cases a regex, `^\s*(?:-?include|sinclude)\b` for `make/local` and
 `^\s*#\s*include\s*"` for the user header, tells us there is an untracked
 dependency, without resolving anything.
 
-**The field is `known_untracked_dependencies`, not `provenance_complete`.**
+**The field is `untracked_dependencies`, not `provenance_complete`.**
 
 **No match means "no known
 gap", never "complete".**
@@ -778,7 +778,7 @@ freshness may still be unverifiable. If the recorded sources are absent or the
 paths no longer resolve, say so specifically rather than collapsing it to unknown
 provenance.
 
-`$cpp_options()` returns the recorded `cpp_options_supplied` here, and
+`$cpp_options()` returns the recorded `cpp_options` here, and
 `$user_header()` the recorded header path.
 
 **Adoption establishes what the artifact is, not that it runs.** A hash-matched
@@ -787,7 +787,7 @@ this machine adopts successfully and fails when something first runs it, with th
 launch error §6 requires.
 
 **Executable without a usable record**: missing, unreadable (an unparseable
-`builder` version among the field checks that decide it, §4), hash mismatch, or
+`cmdstan` version among the field checks that decide it, §4), hash mismatch, or
 written in a format version this cmdstanr does not read. Explicitly unprovenanced,
 which is a statement about provenance and must not suppress what the binary does
 report. `stan_build_info()` returns an explicit unavailable provenance, never an
@@ -954,13 +954,13 @@ are the promise, and the record's layout is free underneath them.
 
 | field | present when | holds |
 |---|---|---|
-| `provenance` | always | `status` and `reason`, both always present |
+| `record` | always | `status` and `reason`, both always present |
 | `reported_features` | always | one entry per feature: four logical flags, each `TRUE`, `FALSE` or `NA`, and `stan_version`, a character scalar or `NA_character_` |
 | `format_version` | `unsupported_format` only (below) | the format the record was written in |
-| `request` | provenance available | the recorded build configuration of §1 |
-| `dependencies` | provenance available | every file whose content the build consumed |
-| `builder` | provenance available | installation path, version, `exists` |
-| `known_untracked_dependencies` | provenance available | §6's list; empty means nothing was detected |
+| `configuration` | record available | the recorded build configuration of §1 |
+| `dependencies` | record available | every file whose content the build consumed |
+| `cmdstan` | record available | installation path, version, `exists` |
+| `untracked_dependencies` | record available | §6's list; empty means nothing was detected |
 
 **A field is public only if a caller can act on it.**
 
@@ -971,15 +971,15 @@ that includes another makefile:
 
 ```r
 list(
-  provenance = list(status = "available", reason = NULL),
+  record = list(status = "available", reason = NULL),
   reported_features = list(
     stan_threads = TRUE, stan_mpi = FALSE, stan_opencl = FALSE,
     stan_no_range_checks = FALSE, stan_version = "2.39.0"
   ),
-  request = list(
-    cpp_options_supplied   = list(STAN_THREADS = TRUE),
-    stanc_options_supplied = list(),
-    include_paths          = "/proj"
+  configuration = list(
+    cpp_options   = list(STAN_THREADS = TRUE),
+    stanc_options = list(),
+    include_paths = "/proj"
   ),
   dependencies = list(
     stan_file      = list(built_from = "/proj/bernoulli.stan", exists = TRUE),
@@ -989,8 +989,8 @@ list(
     user_header    = NULL,
     make_local     = list(built_from = "/cmdstan-2.39.0/make/local", exists = TRUE)
   ),
-  builder  = list(path = "/cmdstan-2.39.0", version = "2.39.0", exists = TRUE),
-  known_untracked_dependencies = list(
+  cmdstan  = list(path = "/cmdstan-2.39.0", version = "2.39.0", exists = TRUE),
+  untracked_dependencies = list(
     list(kind = "make_local_include", detected_in = "/cmdstan-2.39.0/make/local")
   )
 )
@@ -1018,18 +1018,18 @@ are the four booleans `<exe> info` prints, `stan_threads`, `stan_mpi`,
 `stan_opencl` and `stan_no_range_checks`, plus `stan_version`, and the table above
 has their types. They are always all present.
 
-**`provenance` carries why, not only whether.**
+**`record` carries why, not only whether.**
 
 ```r
-provenance = list(status = "available",   reason = NULL)
-provenance = list(status = "unavailable", reason = "record_missing")
-                                        # "record_unreadable"
-                                        # "artifact_mismatch"
-                                        # "unsupported_format"
+record = list(status = "available",   reason = NULL)
+record = list(status = "unavailable", reason = "missing")
+                                    # "unreadable"
+                                    # "executable_mismatch"
+                                    # "unsupported_format"
 ```
 
 Both names are always there. `available` requires `reason = NULL`, `unavailable`
-requires exactly one code, and `names(provenance)` is the same pair either way,
+requires exactly one code, and `names(record)` is the same pair either way,
 which is what a test can hold. The enum is machine-readable and no free-form
 message is stored.
 
@@ -1045,15 +1045,15 @@ for an older one.
 **Unknown and empty must never render alike, anywhere in the result.**
 
 An empty
-`known_untracked_dependencies` means the scan detected nothing; no record to scan
+`untracked_dependencies` means the scan detected nothing; no record to scan
 means the field is absent. A recorded builder whose path is gone is
-`exists = FALSE`; an absent `builder` means there was no usable record to read one
+`exists = FALSE`; an absent `cmdstan` means there was no usable record to read one
 from, which is the only way it can be missing. An unknown request is absent, not
 `list()`.
 
 **A readable record whose hash does not match is read only to say why.**
-`artifact_mismatch` returns no record-derived field at all, even though `request`,
-`dependencies` and `builder` all parsed. `reported_features` still comes back, read
+`executable_mismatch` returns no record-derived field at all, even though `configuration`,
+`dependencies` and `cmdstan` all parsed. `reported_features` still comes back, read
 off the executable rather than the record, which is the general rule below and not
 an exception to this one.
 
