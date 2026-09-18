@@ -29,12 +29,12 @@ test_that("a build writes a record that reads back available", {
 
   result <- read_build_record(mod$exe_file())
   expect_equal(result$status, "available")
-  expect_equal(result$record$request$stanc_name, "bernoulli_model")
+  expect_equal(result$record$configuration$stanc_name, "bernoulli_model")
   expect_equal(
-    result$record$builder,
+    result$record$cmdstan,
     list(path = cmdstan_path(), version = cmdstan_version())
   )
-  expect_equal(result$record$artifact, hash_file(mod$exe_file()))
+  expect_equal(result$record$executable_hash, hash_file(mod$exe_file()))
   expect_false("user_header" %in% names(result$record$dependencies))
   if (!file.exists(file.path(cmdstan_path(), "make", "local"))) {
     expect_false("make_local" %in% names(result$record$dependencies))
@@ -47,13 +47,14 @@ test_that("the recorded stanc name is the raw string stanc was passed", {
   mod <- mock_compile(stan_file)
 
   record <- read_build_record(mod$exe_file())$record
-  expect_equal(record$request$stanc_name, "my-model_model")
+  expect_equal(record$configuration$stanc_name, "my-model_model")
   expect_true(
-    "--name=my-model_model" %in% unlist(record$request$stanc_options_injected)
+    "--name=my-model_model" %in%
+      unlist(record$configuration$stanc_options_added)
   )
 })
 
-test_that("supplied and injected stanc options are recorded apart", {
+test_that("supplied and added stanc options are recorded apart", {
   stan_file <- local_bernoulli()
   mod <- mock_compile(
     stan_file,
@@ -62,9 +63,9 @@ test_that("supplied and injected stanc options are recorded apart", {
   )
 
   record <- read_build_record(mod$exe_file())$record
-  expect_equal(record$request$stanc_options_supplied, list("--O1"))
+  expect_equal(record$configuration$stanc_options, list("--O1"))
   expect_equal(
-    record$request$stanc_options_injected,
+    record$configuration$stanc_options_added,
     list(
       "--warn-pedantic", "--name=bernoulli_model",
       paste0("--filename-in-msg=", wsl_safe_path(mod$stan_file()))
@@ -72,7 +73,7 @@ test_that("supplied and injected stanc options are recorded apart", {
   )
 })
 
-test_that("cpp_options_supplied holds what the caller passed", {
+test_that("cpp_options holds what the caller passed", {
   stan_file <- local_bernoulli()
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   local_mocked_bindings(
@@ -85,8 +86,8 @@ test_that("cpp_options_supplied holds what the caller passed", {
   )
 
   record <- read_build_record(mod$exe_file())$record
-  expect_equal(record$request$cpp_options_supplied, list(STAN_THREADS = "TRUE"))
-  expect_false("USER_HEADER" %in% names(record$request$cpp_options_supplied))
+  expect_equal(record$configuration$cpp_options, list(STAN_THREADS = "TRUE"))
+  expect_false("USER_HEADER" %in% names(record$configuration$cpp_options))
   expect_equal(
     record$dependencies$user_header,
     list(hash = hash_file(user_header), built_from = resolve_path(user_header))
@@ -122,7 +123,7 @@ test_that("included files are recorded in stanc's order with content hashes", {
   }
   # The constructor defaults include_paths to the stan file's own directory.
   expect_equal(
-    record$request$include_paths,
+    record$configuration$include_paths,
     list(resolve_path(dirname(stan_file)))
   )
 })
@@ -153,7 +154,7 @@ test_that("an include on the WSL filesystem is recorded by its share path", {
   expect_equal(included[[1]]$built_from, resolve_path(include))
 })
 
-test_that("the other injection sites land in the injected list", {
+test_that("the other injection sites land in the added list", {
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   local_mocked_bindings(
     get_standalone_hpp = function(stan_file, stancflags, ...) ""
@@ -167,13 +168,13 @@ test_that("the other injection sites land in the injected list", {
 
   record <- read_build_record(mod$exe_file())$record
   expect_equal(
-    record$request$stanc_options_injected,
+    record$configuration$stanc_options_added,
     list(
       "--use-opencl", "--allow-undefined", "--name=bernoulli_model",
       paste0("--filename-in-msg=", wsl_safe_path(mod$stan_file()))
     )
   )
-  expect_equal(record$request$stanc_options_supplied, list())
+  expect_equal(record$configuration$stanc_options, list())
 })
 
 test_that("make/local is a dependency only when present", {
@@ -260,7 +261,7 @@ test_that("a build with an untracked dependency records it", {
 
   record <- read_build_record(mod$exe_file())$record
   expect_equal(
-    record$known_untracked_dependencies,
+    record$untracked_dependencies,
     list(list(kind = "make_local_include", detected_in = make_local))
   )
 })

@@ -36,17 +36,17 @@ test_that("a written record reads back unchanged", {
 test_that("an empty object writes as {} and an empty array as []", {
   exe <- local_fake_exe()
   record <- example_record(exe)
-  record$request$cpp_options_supplied <- structure(list(), names = character())
+  record$configuration$cpp_options <- structure(list(), names = character())
   record$dependencies$included_files <- list()
   path <- write_build_record(record, exe)
 
   text <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  expect_match(text, '"cpp_options_supplied"\\s*:\\s*\\{\\s*\\}')
+  expect_match(text, '"cpp_options"\\s*:\\s*\\{\\s*\\}')
   expect_match(text, '"included_files"\\s*:\\s*\\[\\s*\\]')
 
   result <- read_build_record(exe)
   expect_equal(
-    result$record$request$cpp_options_supplied,
+    result$record$configuration$cpp_options,
     structure(list(), names = character())
   )
   expect_equal(result$record$dependencies$included_files, list())
@@ -73,7 +73,7 @@ test_that("a record that is not JSON is unreadable", {
 test_that("a record with a field of the wrong type is unreadable", {
   exe <- local_fake_exe()
   record <- example_record(exe)
-  record$builder$version <- 42
+  record$cmdstan$version <- 42
   jsonlite::write_json(
     record, build_record_path(exe),
     auto_unbox = TRUE, pretty = TRUE, digits = NA
@@ -89,7 +89,7 @@ test_that("a record repeating a member at its top level is unreadable", {
   exe <- local_fake_exe()
   json <- jsonlite::toJSON(example_record(exe), auto_unbox = TRUE, digits = NA)
   writeLines(
-    sub("}$", ",\"artifact\":\"different\"}", json),
+    sub("}$", ",\"executable_hash\":\"different\"}", json),
     build_record_path(exe)
   )
 
@@ -133,7 +133,7 @@ test_that("a record in a format we do not read is checked on its version alone",
   exe <- local_fake_exe()
   record <- example_record(exe)
   record$format_version <- 99L
-  record$builder <- "garbage"
+  record$cmdstan <- "garbage"
   jsonlite::write_json(
     record, build_record_path(exe),
     auto_unbox = TRUE, pretty = TRUE, digits = NA
@@ -166,7 +166,7 @@ test_that("a record whose hash does not match the executable is a mismatch", {
   writeBin(as.raw(c(0x7f, 0x45, 0x4c, 0x46, 0x00)), exe)
 
   result <- read_build_record(exe)
-  expect_equal(result$reason, "artifact_mismatch")
+  expect_equal(result$reason, "executable_mismatch")
   expect_false("record" %in% names(result))
   expect_false("format_version" %in% names(result))
 })
@@ -210,36 +210,36 @@ test_that("the validator names the field that fails", {
   rebuild <- function(record) do.call(new_build_record, record[-1])
 
   bad_version <- base
-  bad_version$builder$version <- "2.39"
-  expect_error(rebuild(bad_version), "`builder.version`", fixed = TRUE)
+  bad_version$cmdstan$version <- "2.39"
+  expect_error(rebuild(bad_version), "`cmdstan.version`", fixed = TRUE)
 
   no_name <- base
-  no_name$request$stanc_name <- ""
-  expect_error(rebuild(no_name), "`request.stanc_name`", fixed = TRUE)
+  no_name$configuration$stanc_name <- ""
+  expect_error(rebuild(no_name), "`configuration.stanc_name`", fixed = TRUE)
 
   logical_option <- base
-  logical_option$request$cpp_options_supplied <- list(STAN_THREADS = TRUE)
+  logical_option$configuration$cpp_options <- list(STAN_THREADS = TRUE)
   expect_error(
     rebuild(logical_option),
-    "`request.cpp_options_supplied.STAN_THREADS`",
+    "`configuration.cpp_options.STAN_THREADS`",
     fixed = TRUE
   )
 
   repeated_option <- base
-  repeated_option$request$cpp_options_supplied <- list(
+  repeated_option$configuration$cpp_options <- list(
     STAN_THREADS = "false", STAN_THREADS = "true"
   )
   expect_error(
-    rebuild(repeated_option), "`request.cpp_options_supplied`", fixed = TRUE
+    rebuild(repeated_option), "`configuration.cpp_options`", fixed = TRUE
   )
 
   unknown_kind <- base
-  unknown_kind$known_untracked_dependencies <- list(
+  unknown_kind$untracked_dependencies <- list(
     list(kind = "mystery", detected_in = "make/local")
   )
   expect_error(
     rebuild(unknown_kind),
-    "`known_untracked_dependencies[[1]].kind`",
+    "`untracked_dependencies[[1]].kind`",
     fixed = TRUE
   )
 
@@ -298,8 +298,8 @@ test_that("the hash catches what ordering cannot", {
   write_build_record(record_b, path)
   write_build_record(record_a, path)
 
-  expect_error(verify_build_record(path), "artifact_mismatch", fixed = TRUE)
-  expect_equal(read_build_record(path)$reason, "artifact_mismatch")
+  expect_error(verify_build_record(path), "executable_mismatch", fixed = TRUE)
+  expect_equal(read_build_record(path)$reason, "executable_mismatch")
 })
 
 test_that("two identical build records compare with no differences", {
@@ -313,16 +313,16 @@ test_that("a changed cpp option value differs as cpp_options", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  current$request$cpp_options_supplied <- list(STAN_THREADS = "false")
+  current$configuration$cpp_options <- list(STAN_THREADS = "false")
   expect_equal(compare_build_records(recorded, current), "cpp_options")
 })
 
-test_that("a reordered stanc_options_supplied differs as stanc_options", {
+test_that("a reordered stanc_options differs as stanc_options", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  recorded$request$stanc_options_supplied <- list("--O0", "--O1")
-  current$request$stanc_options_supplied <- list("--O1", "--O0")
+  recorded$configuration$stanc_options <- list("--O0", "--O1")
+  current$configuration$stanc_options <- list("--O1", "--O0")
   expect_equal(compare_build_records(recorded, current), "stanc_options")
 })
 
@@ -330,8 +330,8 @@ test_that("a changed stanc option differs as stanc_options", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  recorded$request$stanc_options_supplied <- list("--O0")
-  current$request$stanc_options_supplied <- list("--O1")
+  recorded$configuration$stanc_options <- list("--O0")
+  current$configuration$stanc_options <- list("--O1")
   expect_equal(compare_build_records(recorded, current), "stanc_options")
 })
 
@@ -339,7 +339,7 @@ test_that("a changed stanc_name differs as stanc_name", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  current$request$stanc_name <- "other_model"
+  current$configuration$stanc_name <- "other_model"
   expect_equal(compare_build_records(recorded, current), "stanc_name")
 })
 
@@ -347,8 +347,8 @@ test_that("a rename stanc mangles to the same identifier still differs as stanc_
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  recorded$request$stanc_name <- "my-model_model"
-  current$request$stanc_name <- "my_model_model"
+  recorded$configuration$stanc_name <- "my-model_model"
+  current$configuration$stanc_name <- "my_model_model"
   expect_equal(compare_build_records(recorded, current), "stanc_name")
 })
 
@@ -417,28 +417,28 @@ test_that("a changed make_local hash differs as make_local", {
   expect_equal(compare_build_records(recorded, current), "make_local")
 })
 
-test_that("a changed artifact differs as artifact", {
+test_that("a changed executable hash differs as executable", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  current$artifact <- "deadbeef"
-  expect_equal(compare_build_records(recorded, current), "artifact")
+  current$executable_hash <- "deadbeef"
+  expect_equal(compare_build_records(recorded, current), "executable")
 })
 
-test_that("a changed builder version differs as builder", {
+test_that("a changed cmdstan version differs as cmdstan", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  current$builder$version <- "2.40.0"
-  expect_equal(compare_build_records(recorded, current), "builder")
+  current$cmdstan$version <- "2.40.0"
+  expect_equal(compare_build_records(recorded, current), "cmdstan")
 })
 
-test_that("a changed builder path differs as builder", {
+test_that("a changed cmdstan path differs as cmdstan", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  current$builder$path <- "/opt/cmdstan-2.40.0"
-  expect_equal(compare_build_records(recorded, current), "builder")
+  current$cmdstan$path <- "/opt/cmdstan-2.40.0"
+  expect_equal(compare_build_records(recorded, current), "cmdstan")
 })
 
 test_that("two differences are both reported, in table order", {
@@ -446,18 +446,18 @@ test_that("two differences are both reported, in table order", {
   recorded <- example_record(exe)
   current <- example_record(exe)
   current$dependencies$stan_file$hash <- "ffff"
-  current$builder$version <- "2.40.0"
-  expect_equal(compare_build_records(recorded, current), c("stan_file", "builder"))
+  current$cmdstan$version <- "2.40.0"
+  expect_equal(compare_build_records(recorded, current), c("stan_file", "cmdstan"))
 })
 
 test_that("the same cpp options in a different assignment order do not differ", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  recorded$request$cpp_options_supplied <- list(
+  recorded$configuration$cpp_options <- list(
     STAN_THREADS = "true", STAN_NO_RANGE_CHECKS = "true"
   )
-  current$request$cpp_options_supplied <- list(
+  current$configuration$cpp_options <- list(
     STAN_NO_RANGE_CHECKS = "true", STAN_THREADS = "true"
   )
   expect_equal(compare_build_records(recorded, current), character(0))
@@ -489,22 +489,22 @@ test_that("differences outside the comparison table never count", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  current$request$stanc_options_injected <- list("--name=other_model")
-  current$request$include_paths <- list("/some/other/path")
+  current$configuration$stanc_options_added <- list("--name=other_model")
+  current$configuration$include_paths <- list("/some/other/path")
   current$reported_features$stan_opencl <- TRUE
   current$tbb_dir <- "/opt/other/tbb"
-  current$known_untracked_dependencies <- list(
+  current$untracked_dependencies <- list(
     list(kind = "user_header_include", detected_in = "other.hpp")
   )
   expect_equal(compare_build_records(recorded, current), character(0))
 })
 
-test_that("an injection added after the build does not rebuild", {
+test_that("an option added after the build does not rebuild", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  current$request$stanc_options_injected <- c(
-    recorded$request$stanc_options_injected,
+  current$configuration$stanc_options_added <- c(
+    recorded$configuration$stanc_options_added,
     list("--filename-in-msg=/home/me/bernoulli.stan")
   )
   expect_equal(compare_build_records(recorded, current), character(0))

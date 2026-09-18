@@ -104,7 +104,7 @@ test_that("stanc_options rebuild when they change, and pedantic never does", {
     cmdstan_model(stan_file, stanc_options = list("O1"))
   ))
 
-  # --warn-pedantic is injected rather than supplied, so it is not compared.
+  # --warn-pedantic is added rather than supplied, so it is not compared.
   mocked(expect_no_mock_compile(
     cmdstan_model(stan_file, stanc_options = list("O1"), pedantic = TRUE)
   ))
@@ -247,9 +247,9 @@ test_that("a record naming another installation rebuilds", {
   mocked(expect_mock_compile(mod <- cmdstan_model(stan_file)))
 
   # The executable is untouched, so its hash still matches the record and the
-  # builder is the only row that differs.
+  # cmdstan is the only row that differs.
   record <- read_build_record(mod$exe_file())$record
-  record$builder$version <- "1.2.3"
+  record$cmdstan$version <- "1.2.3"
   write_build_record(record, mod$exe_file())
 
   mocked(expect_mock_compile(expect_interactive_message(
@@ -280,7 +280,8 @@ test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
   a <- mock_cmdstan_model(stan_file)
 
   writeLines("CMDSTAN_VERSION := 2.40.0", file.path(install_dir, "makefile"))
-  # The guard first, while the executable is still the one a was built with
+  # assert_current() first, while the executable is still the one a was
+  # built with
   expect_error(
     a$cmdstan_defaults(), "the selected CmdStan changed",
     class = "cmdstanr_stale_executable"
@@ -377,7 +378,9 @@ test_that("an unusable record falls back to asking the executable", {
   writeLines("{", record_path)
   expect_asked()
   for (broken in list(
-    list(format_version = 99L), list(artifact = "wrong"), list(builder = "x")
+    list(format_version = 99L),
+    list(executable_hash = "wrong"),
+    list(cmdstan = "x")
   )) {
     record <- original
     record[names(broken)] <- broken
@@ -417,7 +420,7 @@ test_that("a record member with a longer name is not read as the user header", {
   expect_null(b$user_header())
 })
 
-test_that("filename-in-msg supplied unnamed is not injected again", {
+test_that("filename-in-msg supplied unnamed is not added again", {
   stan_file <- local_bernoulli()
   mod <- mock_cmdstan_model(
     stan_file, stanc_options = list("filename-in-msg=published.stan")
@@ -426,10 +429,10 @@ test_that("filename-in-msg supplied unnamed is not injected again", {
   record <- read_build_record(mod$exe_file())$record
   expect_true(
     "--filename-in-msg=published.stan" %in%
-      unlist(record$request$stanc_options_supplied)
+      unlist(record$configuration$stanc_options)
   )
   expect_false(any(grepl(
-    "filename-in-msg", unlist(record$request$stanc_options_injected)
+    "filename-in-msg", unlist(record$configuration$stanc_options_added)
   )))
   hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
   expect_match(hpp, "published.stan", fixed = TRUE)
