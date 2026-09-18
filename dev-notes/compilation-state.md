@@ -2962,7 +2962,7 @@ are the promise, and the record's layout is free underneath them.
 method below dispatches on. One class name rather than a vector: `is.list()` is
 already `TRUE` without adding `"list"`, and a second name only offers someone a
 wrong target to write a method against. The class name follows the function name,
-so §10's note that `stan_build_info()` is still a placeholder covers both.
+so §10's naming note covers both.
 
 <!-- contract -->
 
@@ -2987,8 +2987,8 @@ shipped yet, so the set can still be chosen freely; after 1.0 it cannot. The has
 fail that test. The artifact hash answers a question the caller can already answer
 by hashing the file whose path they just passed in, and the dependency hashes
 compare against nothing but another record's same field. So do
-`stanc_options_added` and `stanc_name`, which say how cmdstanr assembled the
-stanc command line rather than what was asked of it. `tbb_dir` is out on the same
+`stanc_options_added`, `stanc_options_from_make` and `stanc_name`, which say how
+cmdstanr assembled the stanc command line rather than what was asked of it. `tbb_dir` is out on the same
 test; the record keeps it because Windows needs it at launch (§4). `configuration` keeps
 `include_paths` for diagnosis alone: a caller debugging an include has no other way
 to see where the build searched.
@@ -3008,7 +3008,7 @@ list(
     stan_no_range_checks = FALSE, stan_version = "2.39.0"
   ),
   configuration = list(
-    cpp_options   = list(STAN_THREADS = TRUE),
+    cpp_options   = list(STAN_THREADS = "true"),
     stanc_options = list(),
     include_paths = "/proj"
   ),
@@ -3846,8 +3846,9 @@ what to do about the answer: the constructor rebuilds, everything else errors. <
 convenience rebuild tucked inside the assessment reintroduces the hidden
 recompilation this design removed.
 
-**Naming.** `stan_build_info()` is still a placeholder, to be settled in the
-stage that implements it (§8); Stage 4 kept `check_syntax_stan_file()`.
+**Naming.** `stan_build_info()` was settled by the stage that implemented it
+(§8), as the name the design used throughout; Stage 4 kept
+`check_syntax_stan_file()`.
 `.<exe>.cmdstanr.json` is decided rather than open (§4), so build against it, but
 it stays revisable until the release, after which changing it means migrating
 records that already exist.

@@ -46,6 +46,7 @@ The Stan and CmdStan documentation:
 }
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},

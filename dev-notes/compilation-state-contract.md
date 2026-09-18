@@ -977,7 +977,7 @@ list(
     stan_no_range_checks = FALSE, stan_version = "2.39.0"
   ),
   configuration = list(
-    cpp_options   = list(STAN_THREADS = TRUE),
+    cpp_options   = list(STAN_THREADS = "true"),
     stanc_options = list(),
     include_paths = "/proj"
   ),

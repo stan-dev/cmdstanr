@@ -70,19 +70,23 @@ directory is used.}
 to compile with the Stan model.}
 
 \item{cpp_options}{(list) Any makefile options to be used when compiling the
-model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.). Anything you would
-otherwise write in the \code{make/local} file. For an example of using threading
-see the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.
-Every entry must be named with a \code{Make} variable name, in any casing, which
-\code{\link[=model-method-model-info]{$cpp_options()}} reports back in upper case.
+model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.), written as
+\code{list(NAME = value)}. Each entry is an assignment you could make in the
+\code{make/local} file, so \code{list(CXXFLAGS = "-O3")} rather than \code{"-O3"}.
+Every entry must be named with a \code{Make} variable name, in any casing.
 Setting an option to \code{FALSE} or \code{NULL} passes an empty assignment such as
 \verb{STAN_THREADS=}. That empties the variable for this build, which turns a
-switch off, and overrides whatever \code{make/local} sets.}
+switch off, and overrides whatever \code{make/local} sets. See
+\code{\link[=stan_build_info]{stan_build_info()}} for an example of setting options and checking what
+the executable was built with, and the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}
+for using threading.}
 
 \item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
-when compiling the model. See the \strong{Examples} section below as well as the
-\href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{\code{stanc} chapter of the CmdStan User's Guide} for more details
-on available options. Options that cmdstanr sets from its own arguments
+when compiling the model. A flag is given by name without the leading
+hyphens, as \code{list("O1")} or \code{list(O1 = TRUE)}, and an option that takes a
+value as \code{list(option = "value")}. See \code{\link[=stan_build_info]{stan_build_info()}} for an example
+and the \href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{\code{stanc} chapter of the CmdStan User's Guide} for the
+available options. Options that cmdstanr sets from its own arguments
 cannot be passed here: \code{include-paths} (use \code{include_paths}),
 \code{warn-pedantic} (\code{pedantic}), \code{allow-undefined} (\code{user_header}),
 \code{use-opencl} (\code{cpp_options = list(stan_opencl = TRUE)}) and \code{name} (taken

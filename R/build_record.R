@@ -1,5 +1,6 @@
 # The build record: a JSON file beside an executable describing how it was
-# built. The schema, the writer and the reader all live here.
+# built. The schema, the writer, the reader and the public view of a record,
+# stan_build_info(), all live here.
 
 # The only format version this cmdstanr reads or writes.
 build_record_format_version <- 1L
@@ -346,14 +347,11 @@ untracked_dependencies_note <- function(untracked) {
 
 #' Write a build record beside its executable
 #'
-#' Staged in the same directory and renamed into place so a reader never meets
-#' a half-written record, and the staging file is removed on the way out whether
-#' or not it got that far. A failed rename warns, and the warning is suppressed
-#' so that `warn = 2` cannot pre-empt the error below. `auto_unbox` writes a
-#' length-one vector as a JSON scalar, which is why the schema holds every
-#' array as a list and every scalar as a length-one vector: a one-element
-#' `included_files` still writes as an array. No field the schema names is ever
-#' `NULL` or `NA`, since an unknown state is an absent key.
+#' Written to a temporary file and renamed into place, so a reader never
+#' sees a half-written record. Because `auto_unbox = TRUE` writes a
+#' length-one vector as a JSON scalar, the schema stores arrays as lists and
+#' scalars as length-one vectors, so a single included file is still written
+#' as an array.
 #'
 #' @noRd
 write_build_record <- function(record, exe_file) {
@@ -372,12 +370,13 @@ write_build_record <- function(record, exe_file) {
 
 #' Read the build record beside an executable
 #'
-#' Returns the reason a record cannot be used instead of signalling it, because
-#' every one of those reasons is an ordinary outcome. The version is checked
-#' first and on its own, so a record written in a format we do not read is
-#' never measured against the current schema. Anything failing a field check is
-#' unreadable whole and comes back with no `format_version`, and a record whose
-#' hash does not match the executable comes back with nothing it contains.
+#' A record that cannot be used is not an error, the result says why
+#' instead. The format version is checked before anything else, so a record
+#' in a format this version of cmdstanr does not read is never checked
+#' against the current schema. A record that fails any field check is
+#' returned as unreadable, with no `format_version`. A record whose hash does
+#' not match the executable is returned as a mismatch, with none of its
+#' contents.
 #'
 #' @noRd
 read_build_record <- function(exe_file) {
@@ -439,11 +438,11 @@ verify_build_record <- function(exe_file) {
   invisible(result$record)
 }
 
-#' The rows of the comparison table
+#' What the rebuild check compares
 #'
-#' One entry per compared row, in table order, each extracting the value the
-#' row compares from a record or from the current side `assess_build()`
-#' assembles. The list is the table.
+#' One function per compared field, in the order the reasons are reported.
+#' Each takes a record, or the list `assess_build()` builds for the current
+#' state, and returns the value to compare.
 #'
 #' @noRd
 build_record_comparisons <- list(
@@ -468,9 +467,7 @@ build_record_comparisons <- list(
 #' Compare a recorded build against the current one
 #'
 #' Returns the name of every row in `rows` whose value differs between the
-#' two, in table order. Every row is checked, and nothing stops at the first
-#' difference, so a caller who changed more than one thing is told about all
-#' of them.
+#' two, in table order.
 #'
 #' @noRd
 compare_build_records <- function(recorded, current,
@@ -485,24 +482,22 @@ compare_build_records <- function(recorded, current,
 
 #' Decide whether an executable is current
 #'
-#' Takes two lists and compares them. `wanted` is what the caller wants
-#' the executable to have been built from. Its `configuration` holds the
-#' options this call would record. Its `executable_hash` is the hash the
-#' object was built against, or `NULL` at the constructor, which has no
-#' expectation yet. `current` is what is there now. Its `record` is what
-#' `read_build_record()` returned. Its `dependencies` are the current files
-#' hashed the way the writer hashes them, or `NULL` when nobody resolved
-#' them. Its `cmdstan` is the installation selected now.
+#' `wanted` is what the caller wants the executable to have been built from:
+#' `configuration`, the options this call would record, and
+#' `executable_hash`, the hash of the executable the model object was created
+#' with, or `NULL` from the constructor, which has no executable yet.
+#' `current` is what is on disk now: `record`, as `read_build_record()`
+#' returned it; `dependencies`, the current files hashed as the writer hashes
+#' them, or `NULL` when they were not resolved; and `cmdstan`, the
+#' installation in use.
 #'
-#' Returns a character vector of reasons to rebuild, empty when the
-#' executable is current. When the record cannot be used the vector holds
-#' that one reason and nothing else, because there is no baseline to compare
-#' the rest against. Otherwise it names every compared row that differs.
-#' The dependency rows are skipped when nobody resolved them, so an
-#' unresolved set is never mistaken for an empty one. The wanted executable
-#' hash is what catches an executable another process rebuilt, since the
-#' record beside it then matches it and nothing on disk disagrees. Reads no
-#' file and runs nothing.
+#' Returns the reasons to rebuild as a character vector, empty when the
+#' executable is current. If the record cannot be used, that is the only
+#' reason returned, since there is nothing to compare against. Otherwise every
+#' compared field that differs is a reason. Comparing `executable_hash` is
+#' what catches an executable that another process rebuilt: the record beside
+#' it matches the new executable, and only the model object remembers the old
+#' one.
 #'
 #' @noRd
 assess_build <- function(wanted, current) {
@@ -523,4 +518,271 @@ assess_build <- function(wanted, current) {
     )
   }
   compare_build_records(recorded, now, rows)
+}
+
+
+# the public view --------------------------------------------------------
+
+#' What is known about how a CmdStan executable was built
+#'
+#' @export
+#' @description When cmdstanr builds a model it writes a build record next to
+#'   the executable containing the options the build was asked for, the
+#'   files it read, the CmdStan installation it used, and what the executable
+#'   reports about itself. `stan_build_info()` reads that record back into \R.
+#'   When there is no usable record it says why, and reports only the
+#'   information we can obtain by querying the executable itself (using
+#'   CmdStan's `<exe> info`).
+#'
+#'   The [`$build_info()`][model-method-build_info] method of a [`CmdStanModel`]
+#'   object runs `stan_build_info()` internally for the model's executable.
+#'
+#' @param exe_file (string) Path to the executable.
+#' @param x (`stan_build_info`) The object to print.
+#' @param ... Not used.
+#'
+#' @return A list of class `"stan_build_info"`. Two fields are always there:
+#'
+#' * `record`: A list containing `status`, either `"available"` or
+#' `"unavailable"`, and `reason`, which is `NULL` when the record is available
+#' and otherwise one of `"missing"` (no record beside the executable),
+#' `"unreadable"` (a record that could not be read), `"executable_mismatch"`
+#' (the record describes a different executable, so the one at this path was
+#' replaced after the record was written) or `"unsupported_format"` (written by
+#' a cmdstanr that stores records differently, in which case a `format_version`
+#' is also reported).
+#'
+#' * `reported_features`: A list containing what the executable reports about
+#' its own build. `stan_threads`, `stan_mpi`, `stan_opencl` and
+#' `stan_no_range_checks` are each `TRUE`, `FALSE`, or `NA` when the executable
+#' did not report the feature, and `stan_version` is the Stan version the
+#' executable reports being compiled with. These come from the record when it is
+#' available and otherwise from querying the executable.
+#'
+#' When the build record is available, there are four more fields:
+#'
+#' * `configuration`: A list of the options the model was created with,
+#' as passed to `cmdstan_model()` or `compile_stan_file()`. Contains sublists
+#' `cpp_options` (in their Make spelling, as `$cpp_options()` reports them:
+#' `list(stan_threads = TRUE)` comes back as `list(STAN_THREADS = "true")`),
+#' `stanc_options`, and `include_paths` (as searched, which includes the
+#' default of the Stan program's own directory).
+#'
+#' * `dependencies`: A list describing the files the build read. Contains sublists
+#' `stan_file`, `included_files`, `user_header` and `make_local`. `user_header`
+#' and `make_local` are `NULL` when the build had none. `included_files` holds
+#' one entry per file. Each entry has two fields:
+#'   * `built_from`: the path the file had when the build ran.
+#'   * `exists`, whether that path exists now. A path that no longer exists is
+#'   not necessarily a problem. For example, an \R package may build its models
+#'   at install time in a temporary directory that is gone by the time the model
+#'   is used.
+#'
+#' * `cmdstan`: A list containing the `path` and `version` of the CmdStan
+#' installation that built the executable, and whether that path still `exists`.
+#' This version and `reported_features$stan_version` will typically agree except
+#' when using a release candidate (`cmdstan$version` will have a
+#' release-candidate suffix whereas `reported_features$stan_version` comes from
+#' the Stan library headers the executable was compiled against and will not).
+#'
+#' * `untracked_dependencies`: A list of files the build depended on that cmdstanr
+#' cannot follow, so a change to them does not automatically trigger a rebuild.
+#' An empty list means nothing of the kind was found. Each file is reported as
+#' a sublist with two fields:
+#'   * `kind`: `"make_local_include"` when `make/local` includes another
+#'   makefile or `"user_header_include"` when the user header includes other
+#'   headers.
+#'   * `detected_in`: the file the include was found in.
+#'
+#' The result leaves out some of what the record holds: the file hashes the
+#' rebuild check compares, the stanc flags cmdstanr added or `make/local`
+#' contributed, the model name given to stanc, and the TBB directory. For what
+#' `make/local` contributed, check the file `dependencies$make_local` names.
+#'
+#' Absent items and empty items have different interpretations. A field missing
+#' from the result means there was no usable record to read it from. An empty
+#' list is a recorded empty value, such as no untracked dependencies.
+#'
+#' @seealso [cmdstan_model()], [model-method-build_info]
+#' @examples
+#' \dontrun{
+#' exe <- compile_stan_file(
+#'   file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan"),
+#'   cpp_options = list(stan_threads = TRUE),
+#'   stanc_options = list("O1")
+#' )
+#' info <- stan_build_info(exe)
+#' info
+#' info$configuration
+#' info$reported_features$stan_threads
+#' info$dependencies$stan_file
+#' }
+#'
+stan_build_info <- function(exe_file) {
+  found <- inspect_executable(exe_file)
+  info <- list(
+    record = list(status = found$status, reason = found$reason),
+    reported_features = public_reported_features(found$reported_features)
+  )
+  if (found$status == "available") {
+    record <- found$record
+    info$configuration <- list(
+      cpp_options = record$configuration$cpp_options,
+      stanc_options = record$configuration$stanc_options,
+      include_paths = as.character(unlist(record$configuration$include_paths))
+    )
+    info$dependencies <- public_dependencies(record$dependencies)
+    info$cmdstan <- list(
+      path = record$cmdstan$path,
+      version = record$cmdstan$version,
+      exists = dir.exists(record$cmdstan$path)
+    )
+    info$untracked_dependencies <- public_untracked_dependencies(
+      record$untracked_dependencies
+    )
+  } else if (found$reason == "unsupported_format") {
+    info$format_version <- found$format_version
+  }
+  structure(info, class = "stan_build_info")
+}
+
+# The four flags `<exe> info` prints, in its order.
+reported_feature_flags <- c(
+  "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks"
+)
+
+#' The reported features with every name present
+#'
+#' The record omits a feature the executable did not report. Here the same
+#' feature is `NA`, so the result always has the same five names and a
+#' caller can check `is.na()`.
+#'
+#' @noRd
+public_reported_features <- function(reported) {
+  features <- lapply(reported_feature_flags, function(name) {
+    reported[[name]] %||% NA
+  })
+  names(features) <- reported_feature_flags
+  features$stan_version <- reported[["stan_version"]] %||% NA_character_
+  features
+}
+
+#' Each dependency's recorded path and whether it exists now
+#'
+#' The file hashes are not copied over, since they are only meaningful to
+#' the rebuild check. `user_header` and `make_local` are `NULL` when the
+#' build had none, so the result always has the same four names.
+#'
+#' @noRd
+public_dependencies <- function(dependencies) {
+  entry <- function(x) {
+    if (is.null(x)) {
+      return(NULL)
+    }
+    list(built_from = x$built_from, exists = file.exists(x$built_from))
+  }
+  list(
+    stan_file = entry(dependencies$stan_file),
+    included_files = lapply(dependencies$included_files, entry),
+    user_header = entry(dependencies$user_header),
+    make_local = entry(dependencies$make_local)
+  )
+}
+
+#' One entry per distinct pair, ordered by kind then path
+#'
+#' @noRd
+public_untracked_dependencies <- function(untracked) {
+  kind <- vapply(untracked, `[[`, character(1), "kind")
+  detected_in <- vapply(untracked, `[[`, character(1), "detected_in")
+  ordered <- untracked[order(kind, detected_in)]
+  ordered[!duplicated(ordered)]
+}
+
+#' @rdname stan_build_info
+#' @export
+print.stan_build_info <- function(x, ...) {
+  cat(build_record_status_line(x), "\n", sep = "")
+  cat("Reported features:\n")
+  for (name in names(x$reported_features)) {
+    value <- x$reported_features[[name]]
+    cat("  ", name, ": ", if (is.na(value)) "unknown" else value, "\n", sep = "")
+  }
+  if (x$record$status != "available") {
+    return(invisible(x))
+  }
+
+  cat("Configuration:\n")
+  cpp_options <- x$configuration$cpp_options
+  cat("  cpp_options: ", if (length(cpp_options) == 0) "none" else
+    paste(names(cpp_options), unlist(cpp_options), sep = "=", collapse = " "),
+    "\n", sep = "")
+  stanc_options <- unlist(x$configuration$stanc_options)
+  cat("  stanc_options: ", if (length(stanc_options) == 0) "none" else
+    paste(stanc_options, collapse = " "), "\n", sep = "")
+  cat("  include_paths: ", paste(x$configuration$include_paths, collapse = ", "),
+    "\n", sep = "")
+
+  cat("Dependencies:\n")
+  path_line <- function(label, entry) {
+    if (is.null(entry)) {
+      return(invisible())
+    }
+    gone <- if (entry$exists) "" else " (no longer exists)"
+    cat("  ", label, ": ", entry$built_from, gone, "\n", sep = "")
+  }
+  path_line("stan_file", x$dependencies$stan_file)
+  for (included in x$dependencies$included_files) {
+    path_line("included_file", included)
+  }
+  path_line("user_header", x$dependencies$user_header)
+  path_line("make_local", x$dependencies$make_local)
+
+  cmdstan <- x$cmdstan
+  cat("CmdStan ", cmdstan$version, " at ", cmdstan$path,
+    if (cmdstan$exists) "" else " (no longer exists)", "\n", sep = "")
+
+  if (length(x$untracked_dependencies) > 0) {
+    cat("Dependencies cmdstanr does not track:\n")
+    for (entry in x$untracked_dependencies) {
+      cat("  ", untracked_dependency_descriptions[[entry$kind]], " (",
+        entry$detected_in, ")\n", sep = "")
+    }
+  }
+  invisible(x)
+}
+
+#' The first printed line, from the record's status and reason
+#'
+#' The direction for an unsupported format is read off its version: a higher
+#' number than this cmdstanr writes came from a newer one.
+#'
+#' @noRd
+build_record_status_line <- function(x) {
+  if (x$record$status == "available") {
+    return("Build record: available")
+  }
+  switch(x$record$reason,
+    missing = paste0(
+      "Build record: none. There is no build record beside this executable, ",
+      "so only what it reports about itself is known."
+    ),
+    unreadable = "Build record: could not be read.",
+    executable_mismatch = paste0(
+      "Build record: does not match this executable, which was replaced ",
+      "after the record was written."
+    ),
+    unsupported_format = if (x$format_version > build_record_format_version) {
+      paste0(
+        "Build record: written in format ", x$format_version, " by a newer ",
+        "version of cmdstanr. Upgrade cmdstanr to read it."
+      )
+    } else {
+      paste0(
+        "Build record: written in format ", x$format_version, " by an older ",
+        "version of cmdstanr. To get a record this version reads, rebuild ",
+        "the executable."
+      )
+    }
+  )
 }

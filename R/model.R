@@ -52,20 +52,25 @@
 #' @param user_header (string) The path to a C++ file (with a `.hpp` extension)
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
-#'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
-#'   otherwise write in the `make/local` file. For an example of using threading
-#'   see the Stan case study [Reduce Sum: A Minimal
-#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
-#'   Every entry must be named with a `Make` variable name, in any casing, which
-#'   [`$cpp_options()`][model-method-model-info] reports back in upper case.
+#'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.), written as
+#'   `list(NAME = value)`. Each entry is an assignment you could make in the
+#'   `make/local` file, so `list(CXXFLAGS = "-O3")` rather than `"-O3"`.
+#'   Every entry must be named with a `Make` variable name, in any casing.
 #'   Setting an option to `FALSE` or `NULL` passes an empty assignment such as
 #'   `STAN_THREADS=`. That empties the variable for this build, which turns a
-#'   switch off, and overrides whatever `make/local` sets.
+#'   switch off, and overrides whatever `make/local` sets. See
+#'   [stan_build_info()] for an example of setting options and checking what
+#'   the executable was built with, and the Stan case study [Reduce Sum: A
+#'   Minimal
+#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html)
+#'   for using threading.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
-#'   when compiling the model. See the **Examples** section below as well as the
-#'   [`stanc` chapter of the CmdStan User's
-#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for more details
-#'   on available options. Options that cmdstanr sets from its own arguments
+#'   when compiling the model. A flag is given by name without the leading
+#'   hyphens, as `list("O1")` or `list(O1 = TRUE)`, and an option that takes a
+#'   value as `list(option = "value")`. See [stan_build_info()] for an example
+#'   and the [`stanc` chapter of the CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for the
+#'   available options. Options that cmdstanr sets from its own arguments
 #'   cannot be passed here: `include-paths` (use `include_paths`),
 #'   `warn-pedantic` (`pedantic`), `allow-undefined` (`user_header`),
 #'   `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`) and `name` (taken
@@ -283,36 +288,33 @@ compile_stan_file <- function(stan_file,
 #' @section Methods: `CmdStanModel` objects have the following associated
 #'   methods, many of which have their own (linked) documentation pages:
 #'
-#'  ## Stan code
+#'  ## The Stan program
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$stan_file()`][model-method-model-info] | Return the file path to the Stan program. |
 #'  [`$has_stan_file()`][model-method-model-info] | Check whether the model was created with a Stan file. |
+#'  [`$model_name()`][model-method-model-info] | Return the model name. |
 #'  [`$code()`][model-method-model-info] | Return Stan program as a character vector. |
 #'  [`$print()`][model-method-model-info] | Print readable version of Stan program. |
+#'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
+#'  [`$variables()`][model-method-variables] | Return the input and output variables of the program, by block. |
 #'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
 #'  [`$format()`][model-method-format]  |  Format and canonicalize the Stan model code. |
 #'
-#'  ## Model information
-#'
-#'  |**Method**|**Description**|
-#'  |:----------|:---------------|
-#'  [`$model_name()`][model-method-model-info] | Return the model name. |
-#'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
-#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version that built the executable. |
-#'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
-#'  [`$user_header()`][model-method-model-info] | Return the path to the user header, if the model has one. |
-#'
-#'  ## Compilation
+#'  ## The executable
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$exe_file()`][model-method-model-info] |  Return the file path to the compiled executable. |
+#'  [`$build_info()`][model-method-build_info] |  Report how the executable was built, from its build record. |
+#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version that built the executable. |
+#'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
+#'  [`$user_header()`][model-method-model-info] | Return the path to the user header, if the model has one. |
 #'  [`$hpp_file()`][model-method-model-info] |  Return the file path to the `.hpp` file containing the generated C++ code. |
 #'  [`$save_hpp_file()`][model-method-model-info] |  Save the `.hpp` file containing the generated C++ code. |
-#'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'  [`$cmdstan_defaults()`][model-method-cmdstan_defaults] |  Get CmdStan default argument values for a method. |
+#'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'
 #'  ## Diagnostics
 #'
@@ -554,7 +556,8 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @description These methods access information stored in a [`CmdStanModel`]
 #'   object, print its Stan program, and manage paths to its executable and
-#'   generated C++ file.
+#'   generated C++ file. For how the executable was built, see the
+#'   [`$build_info()`][model-method-build_info] method, which has its own page.
 #'
 #'   ```
 #'   stan_file()
@@ -2158,6 +2161,48 @@ cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
   parse_cmdstan_args(self$exe_file(), method)
 }
 CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
+
+
+#' What is known about how the model's executable was built
+#'
+#' @name model-method-build_info
+#' @aliases build_info
+#' @family CmdStanModel methods
+#'
+#' @description The `$build_info()` method of a [`CmdStanModel`] object
+#'   calls [stan_build_info()] on the model's executable. See that page for
+#'   what the result holds. The method reports on the executable as it is
+#'   now, so it also works on a model whose executable was replaced or whose
+#'   build record is gone.
+#'
+#'   This method is different than the `$cpp_options()` method, which answers a
+#'   narrower question: the C++ options this model object was created with.
+#'   `$build_info()` describes the executable itself, including what it reports
+#'   about its own build when run. The difference is clear when considering a
+#'   model created with `cmdstan_model(exe_file = )` from just an executable
+#'   with no build record: `$cpp_options()` is empty, since no options were
+#'   given, but `$build_info()` still reports whether the executable was built
+#'   with threading, OpenCL and so on.
+#'
+#' @return See [stan_build_info()].
+#'
+#' @template seealso-docs
+#'
+#' @examples
+#' \dontrun{
+#' mod <- cmdstan_model(
+#'   file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan"),
+#'   cpp_options = list(stan_threads = TRUE)
+#' )
+#' info <- mod$build_info()
+#' info
+#' info$reported_features$stan_threads
+#' }
+#'
+build_info <- function() {
+  stan_build_info(self$exe_file())
+}
+CmdStanModel$set("public", name = "build_info", value = build_info)
 
 
 

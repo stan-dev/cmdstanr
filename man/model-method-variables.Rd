@@ -74,6 +74,7 @@ str(vars)
 \code{\link[=write_stan_json]{write_stan_json()}} for writing data for CmdStan.
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-diagnose}},

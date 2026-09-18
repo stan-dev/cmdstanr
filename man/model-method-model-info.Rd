@@ -39,7 +39,8 @@ path, and returns the new path invisibly.
 \description{
 These methods access information stored in a \code{\link{CmdStanModel}}
 object, print its Stan program, and manage paths to its executable and
-generated C++ file.
+generated C++ file. For how the executable was built, see the
+\code{\link[=model-method-build_info]{$build_info()}} method, which has its own page.
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{stan_file()
 has_stan_file()
@@ -69,6 +70,7 @@ The Stan and CmdStan documentation:
 }
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-diagnose}},

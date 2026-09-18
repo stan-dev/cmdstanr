@@ -193,21 +193,35 @@ build_executable <- function(stan_file,
 
 #' Take an executable as it is
 #'
-#' Three outcomes. With a usable record beside it nothing is launched: the
-#' hash the reader checked proves the binary is the one the record describes.
-#' Without one the executable is asked to identify itself with `info`, once. A
-#' version it reports admits it, without a record. No version refuses it,
-#' since an executable that cannot say what built it is not a CmdStan
-#' executable.
-#'
 #' @return A list: `record` (`NULL` when there is no record),
-#'   `reported_features`, `version` and `executable_hash`, the executable's
-#'   hash.
+#'   `reported_features`, `version` and `executable_hash`.
 #' @noRd
 adopt_executable <- function(exe_file) {
-  found <- read_build_record(exe_file)
+  found <- inspect_executable(exe_file)
   if (found$status == "available") {
     return(facts_from_record(found$record))
+  }
+  list(
+    record = NULL,
+    reported_features = found$reported_features,
+    version = found$reported_features[["stan_version"]],
+    executable_hash = hash_file(exe_file)
+  )
+}
+
+#' Read the build record beside an executable, or query the executable
+#'
+#' With a usable record the features come from it and the executable is not
+#' run. Without one the executable is run with `info` and the features come
+#' from its output.
+#'
+#' @return What `read_build_record()` returns, plus `reported_features`.
+#' @noRd
+inspect_executable <- function(exe_file) {
+  found <- read_build_record(exe_file)
+  if (found$status == "available") {
+    found$reported_features <- found$record$reported_features
+    return(found)
   }
   features <- reported_features_from_exe(exe_file)
   if (is.null(features[["stan_version"]])) {
@@ -217,12 +231,8 @@ adopt_executable <- function(exe_file) {
       call. = FALSE
     )
   }
-  list(
-    record = NULL,
-    reported_features = features,
-    version = features[["stan_version"]],
-    executable_hash = hash_file(exe_file)
-  )
+  found$reported_features <- features
+  found
 }
 
 facts_from_record <- function(record) {
