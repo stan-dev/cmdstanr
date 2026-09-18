@@ -199,6 +199,20 @@ test_that("a renamed program with a copied executable rebuilds for its name", {
   )))
 })
 
+test_that("a project moved as a whole still reuses its executable", {
+  stan_file <- local_bernoulli()
+  mocked(expect_mock_compile(cmdstan_model(stan_file)))
+
+  moved <- paste0(dirname(stan_file), "-moved")
+  withr::defer(unlink(moved, recursive = TRUE))
+  file.rename(dirname(stan_file), moved)
+
+  mocked(expect_no_mock_compile(expect_interactive_message(
+    cmdstan_model(file.path(moved, basename(stan_file))),
+    "Model executable is up to date!"
+  )))
+})
+
 test_that("a record that cannot be used rebuilds and says why", {
   stan_file <- local_bernoulli()
   mocked(expect_mock_compile(mod <- cmdstan_model(stan_file)))

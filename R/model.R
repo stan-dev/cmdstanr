@@ -773,9 +773,9 @@ check_syntax_stan_file <- function(stan_file,
   stan_file <- resolve_path(stan_file)
   stanc_options <- assert_valid_stanc_options(stanc_options)
   stanc_options[["allow-undefined"]] <- TRUE
-  stanc_options[["o"]] <- wsl_safe_path(
-    tempfile(pattern = "model-", fileext = ".hpp")
-  )
+  hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
+  withr::defer(unlink(hpp_file))
+  stanc_options[["o"]] <- wsl_safe_path(hpp_file)
   if (pedantic) {
     stanc_options[["warn-pedantic"]] <- TRUE
   }
@@ -2460,6 +2460,7 @@ run_stanc <- function(stan_file, args, spinner = FALSE) {
 #' @noRd
 stanc_info <- function(stan_file, include_paths = NULL) {
   out_file <- tempfile(fileext = ".json")
+  withr::defer(unlink(out_file))
   run_log <- wsl_compatible_run(
     command = stanc_cmd(),
     args = c(wsl_safe_path(stan_file),

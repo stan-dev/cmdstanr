@@ -270,20 +270,6 @@ test_that("include paths reordered to the same resolution do not rebuild", {
   )
 })
 
-test_that("a project moved as a whole still reuses its executable", {
-  dir_a <- withr::local_tempdir()
-  stan_file_a <- seed_from(
-    canonical_bernoulli_stan, canonical_bernoulli_exe, dir_a
-  )
-  dir_b <- paste0(dir_a, "-moved")
-  withr::defer(unlink(dir_b, recursive = TRUE))
-  file.rename(dir_a, dir_b)
-
-  expect_no_recompilation(
-    cmdstan_model(file.path(dir_b, basename(stan_file_a)))
-  )
-})
-
 test_that("formatting the program invalidates the executable that built it", {
   dir <- withr::local_tempdir()
   stan_file <- write_stan_file(c(
@@ -464,4 +450,11 @@ test_that("a model whose Stan file is gone errors, and its executable can be ado
   )
   adopted <- cmdstan_model(exe_file = mod$exe_file())
   expect_sample_output(adopted$sample(data = data, chains = 1), 1)
+})
+
+test_that("a build leaves only the model's C++ in the temporary directory", {
+  stan_file <- local_program()
+  before <- list.files(tempdir())
+  mod <- cmdstan_model(stan_file)
+  expect_equal(setdiff(list.files(tempdir()), before), basename(mod$hpp_file()))
 })
