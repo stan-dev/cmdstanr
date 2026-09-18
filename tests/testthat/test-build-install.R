@@ -1,6 +1,6 @@
-# install_executable(): the last step of a build, putting the executable and
-# its record in place as a pair. No C++ is compiled; text files stand in for
-# the executables.
+# install_executable(): the last step of a build, putting the executable and its
+# record in place as a pair. No C++ is compiled, we just use text files to stand
+# in for the executables.
 
 local_exe_fixture <- function(destination_exists = TRUE,
                               .local_envir = parent.frame()) {
