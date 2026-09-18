@@ -1241,14 +1241,3 @@ CmdStanGQProcs <- R6::R6Class(
     }
   )
 )
-
-tbb_path <- function(dir = NULL) {
-  path_to_TBB <- NULL
-  if (os_is_windows()) {
-    if (is.null(dir)) {
-      dir <- cmdstan_path()
-    }
-    path_to_TBB <- file.path(dir, "stan", "lib", "stan_math", "lib", "tbb")
-  }
-  path_to_TBB
-}

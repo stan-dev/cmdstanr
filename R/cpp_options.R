@@ -1,55 +1,5 @@
 # Internal functions for handling cpp options
 
-# running and parsing exe info --------------------------------
-
-#' Run an executable's `info` command
-#'
-#' @param exe_file Path to the executable.
-#' @return The `processx::run()` result. A non-zero exit is not an error.
-#' @noRd
-run_info_cli <- function(exe_file) {
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path()
-    ),
-    wsl_compatible_run(
-      command = wsl_safe_path(exe_file),
-      args = "info",
-      echo = is_verbose_mode(),
-      error_on_status = FALSE
-    )
-  )
-}
-
-# Parse the string output of <model> `info` into an R object (list)
-parse_exe_info_string <- function(ret_stdout) {
-  info <- list()
-  info_raw <- strsplit(strsplit(ret_stdout, "\n")[[1]], "=")
-  for (key_val in info_raw) {
-    if (length(key_val) > 1) {
-      key_val <- trimws(key_val)
-      val <- key_val[2]
-      if (!is.na(as.logical(val))) {
-        val <- as.logical(val)
-      }
-      info[[tolower(key_val[1])]] <- val
-    }
-  }
-
-  info[["stan_version"]] <- paste0(
-    info[["stan_version_major"]],
-    ".",
-    info[["stan_version_minor"]],
-    ".", info[["stan_version_patch"]]
-  )
-  info[["stan_version_major"]] <- NULL
-  info[["stan_version_minor"]] <- NULL
-  info[["stan_version_patch"]] <- NULL
-
-  info
-}
-
 #' Normalize the flags sent to make
 #'
 #' The last value for a name wins. Goes through the emitted flags rather than
