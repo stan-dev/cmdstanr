@@ -661,34 +661,38 @@ assess_build <- function(expected, current) {
 #' `"unreadable"` (a record that could not be read), `"executable_mismatch"`
 #' (the record describes a different executable, so the one at this path was
 #' replaced after the record was written) or `"unsupported_format"` (written by
-#' a cmdstanr that stores records differently, in which case a `format_version`
-#' is also reported).
+#' a cmdstanr that stores records differently, in which case the result also
+#' has a `format_version` field).
 #'
 #' * `reported_features`: A list containing what the executable reports about
 #' its own build. `stan_threads`, `stan_mpi`, `stan_opencl` and
 #' `stan_no_range_checks` are each `TRUE`, `FALSE`, or `NA` when the executable
 #' did not report the feature, and `stan_version` is the Stan version the
-#' executable reports being compiled with. These come from the record when it is
-#' available and otherwise from querying the executable.
+#' executable reports being compiled with, or `NA` when it did not report one.
+#' These come from the record when it is available and otherwise from querying
+#' the executable.
 #'
 #' When the build record is available, there are four more fields:
 #'
-#' * `configuration`: A list of the options the model was created with,
-#' as passed to `cmdstan_model()` or `compile_stan_file()`. Contains sublists
-#' `cpp_options` (in their Make spelling, as `$cpp_options()` reports them:
-#' `list(stan_threads = TRUE)` comes back as `list(STAN_THREADS = "true")`),
-#' `stanc_options`, and `include_paths` (as searched, which includes the
-#' default of the Stan program's own directory).
+#' * `configuration`: A list of the options the model was created with.
+#'   * `cpp_options`: the list of options in their Make spelling, as
+#'   `$cpp_options()` reports them. For example, `list(stan_threads = TRUE)`
+#'   comes back as `list(STAN_THREADS = "true")`.
+#'   * `stanc_options`: the flags as given to stanc, in order.
+#'   For example, `list(O1 = TRUE)` and `list("O1")` both come back as
+#'   `list("--O1")`.
+#'   * `include_paths`: a character vector of the directories searched for
+#'   included files. When none were given, this is the Stan program's own
+#'   directory if the program has includes and empty otherwise.
 #'
 #' * `dependencies`: A list describing the files the build read. Contains sublists
 #' `stan_file`, `included_files`, `user_header` and `make_local`. `user_header`
 #' and `make_local` are `NULL` when the build had none. `included_files` holds
-#' one entry per file. Each entry has two fields:
-#'   * `built_from`: the path the file had when the build ran.
-#'   * `exists`, whether that path exists now. A path that no longer exists is
-#'   not necessarily a problem. For example, an \R package may build its models
-#'   at install time in a temporary directory that is gone by the time the model
-#'   is used.
+#' one entry per file. Each entry has two fields: `built_from`, the path the
+#' file had when the build ran, and `exists`, whether that path exists now. A
+#' path that no longer exists is not necessarily a problem. For example, an \R
+#' package may build its models at install time in a temporary directory that
+#' is gone by the time the model is used.
 #'
 #' * `cmdstan`: A list containing the `path` and `version` of the CmdStan
 #' installation that built the executable, and whether that path still `exists`.
@@ -700,16 +704,16 @@ assess_build <- function(expected, current) {
 #' * `untracked_dependencies`: A list of files the build depended on that cmdstanr
 #' cannot follow, so a change to them does not automatically trigger a rebuild.
 #' An empty list means nothing of the kind was found. Each file is reported as
-#' a sublist with two fields:
-#'   * `kind`: `"make_local_include"` when `make/local` includes another
-#'   makefile or `"user_header_include"` when the user header includes other
-#'   headers.
-#'   * `detected_in`: the file the include was found in.
+#' a sublist with two fields: `kind`, which is `"make_local_include"` when
+#' `make/local` includes another makefile or `"user_header_include"` when the
+#' user header includes other headers, and `detected_in`, the file the include
+#' was found in.
 #'
 #' The result leaves out some of what the record holds: the file hashes the
 #' rebuild check compares, the stanc flags cmdstanr added or `make/local`
-#' contributed, the model name given to stanc, and the TBB directory. For what
-#' `make/local` contributed, check the file `dependencies$make_local` names.
+#' contributed, the model name given to stanc, and the TBB directory.
+#' `dependencies$make_local` names the file those flags came from, though its
+#' contents may have changed since the build.
 #'
 #' Absent items and empty items have different interpretations. A field missing
 #' from the result means there was no usable record to read it from. An empty
@@ -731,6 +735,7 @@ assess_build <- function(expected, current) {
 #' }
 #'
 stan_build_info <- function(exe_file) {
+  exe_file <- resolve_path(exe_file)
   found <- inspect_executable(exe_file)
   info <- list(
     record = list(status = found$status, reason = found$reason),
@@ -799,10 +804,10 @@ public_dependencies <- function(dependencies) {
     list(built_from = x$built_from, exists = file.exists(x$built_from))
   }
   list(
-    stan_file = entry(dependencies$stan_file),
-    included_files = lapply(dependencies$included_files, entry),
-    user_header = entry(dependencies$user_header),
-    make_local = entry(dependencies$make_local)
+    stan_file = entry(dependencies[["stan_file"]]),
+    included_files = lapply(dependencies[["included_files"]], entry),
+    user_header = entry(dependencies[["user_header"]]),
+    make_local = entry(dependencies[["make_local"]])
   )
 }
 
@@ -812,9 +817,12 @@ public_dependencies <- function(dependencies) {
 #' @return A list of `kind` and `detected_in` pairs.
 #' @noRd
 public_untracked_dependencies <- function(untracked) {
-  kind <- vapply(untracked, `[[`, character(1), "kind")
-  detected_in <- vapply(untracked, `[[`, character(1), "detected_in")
-  ordered <- untracked[order(kind, detected_in)]
+  entries <- lapply(untracked, function(x) {
+    list(kind = x[["kind"]], detected_in = x[["detected_in"]])
+  })
+  kind <- vapply(entries, `[[`, character(1), "kind")
+  detected_in <- vapply(entries, `[[`, character(1), "detected_in")
+  ordered <- entries[order(kind, detected_in)]
   ordered[!duplicated(ordered)]
 }
 

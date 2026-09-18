@@ -1,14 +1,20 @@
-# A result built from `example_record()`, written beside a fake executable
-# and optionally edited first. `run_info_cli` stops if launched, so this is
-# always a genuinely available record read straight from disk.
+# Write an example record beside a fake executable and read it back with
+# stan_build_info(). `edit` changes the record before it is written. The
+# record is valid, so the executable must never be run: run_info_cli() is
+# mocked to count calls and the count must stay zero. Counting matters
+# because reported_features_from_exe() swallows errors, so a mock that
+# only stops would let an unneeded run go unnoticed.
 available_result <- function(edit = identity) {
   exe <- local_fake_exe()
   write_build_record(edit(example_record(exe)), exe)
+  launches <- 0
   local_mocked_bindings(
-    run_info_cli = function(...) stop("launched the executable"),
+    run_info_cli = function(...) launches <<- launches + 1,
     .package = "cmdstanr"
   )
-  stan_build_info(exe)
+  result <- stan_build_info(exe)
+  expect_identical(launches, 0)
+  result
 }
 
 test_that("an available build record is read in full without launching the executable", {
@@ -227,9 +233,26 @@ test_that("the recorded cmdstan installation is checked for existing on disk", {
   expect_true(present$cmdstan$exists)
 })
 
+test_that("include paths come back as a character vector in the recorded order", {
+  two <- available_result(function(record) {
+    record$configuration$include_paths <- list("/b", "/a")
+    record
+  })
+  expect_identical(two$configuration$include_paths, c("/b", "/a"))
+
+  none <- available_result(function(record) {
+    record$configuration$include_paths <- list()
+    record
+  })
+  expect_identical(none$configuration$include_paths, character(0))
+})
+
 test_that("a record without a user header or make/local reports them as NULL", {
   result <- available_result(function(record) {
     record$dependencies$make_local <- NULL
+    # Longer names must not be picked up in place of the absent ones.
+    record$dependencies$user_header_extra <- list(built_from = "/wrong.hpp")
+    record$dependencies$make_local_extra <- "private metadata"
     record
   })
 
@@ -260,9 +283,11 @@ test_that("an empty untracked dependencies list differs from having no record at
 test_that("untracked dependencies are ordered by kind and deduplicated", {
   result <- available_result(function(record) {
     record$untracked_dependencies <- list(
-      list(kind = "user_header_include", detected_in = "user.hpp"),
+      list(kind = "user_header_include", detected_in = "z.hpp"),
+      list(kind = "user_header_include", detected_in = "user.hpp", target = "a"),
       list(kind = "make_local_include", detected_in = "make/local"),
-      list(kind = "user_header_include", detected_in = "user.hpp")
+      list(detected_in = "user.hpp", kind = "user_header_include"),
+      list(kind = "user_header_include", detected_in = "a.hpp")
     )
     record
   })
@@ -271,7 +296,9 @@ test_that("untracked dependencies are ordered by kind and deduplicated", {
     result$untracked_dependencies,
     list(
       list(kind = "make_local_include", detected_in = "make/local"),
-      list(kind = "user_header_include", detected_in = "user.hpp")
+      list(kind = "user_header_include", detected_in = "a.hpp"),
+      list(kind = "user_header_include", detected_in = "user.hpp"),
+      list(kind = "user_header_include", detected_in = "z.hpp")
     )
   )
 })
@@ -285,12 +312,14 @@ test_that("a real user header is reported under dependencies and nowhere else", 
   )
   mod <- mock_cmdstan_model(stan_file, user_header = header)
 
+  launches <- 0
   local_mocked_bindings(
-    run_info_cli = function(...) stop("launched the executable"),
+    run_info_cli = function(...) launches <<- launches + 1,
     .package = "cmdstanr"
   )
   result <- stan_build_info(mod$exe_file())
   expect_identical(result, mod$build_info())
+  expect_identical(launches, 0)
 
   header_path <- resolve_path(header)
   expect_equal(
@@ -311,6 +340,68 @@ test_that("a real user header is reported under dependencies and nowhere else", 
   expect_false(header_path %in% unlist(elsewhere))
 })
 
+test_that("a real build reads back with its record and without it", {
+  skip_on_cran()
+  stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
+  file.copy(testing_stan_file("bernoulli"), stan_file)
+  mod <- cmdstan_model(
+    stan_file,
+    cpp_options = list(stan_threads = TRUE),
+    stanc_options = list("O1"),
+    force_recompile = TRUE
+  )
+
+  info <- stan_build_info(mod$exe_file())
+  expect_identical(info, mod$build_info())
+  expect_identical(info$record$status, "available")
+  expect_null(info$record$reason)
+  expect_true(info$reported_features$stan_threads)
+  expect_identical(info$configuration$cpp_options, mod$cpp_options())
+  expect_identical(info$configuration$stanc_options, list("--O1"))
+  expect_identical(info$configuration$include_paths, character(0))
+  expect_identical(
+    info$dependencies$stan_file,
+    list(built_from = mod$stan_file(), exists = TRUE)
+  )
+  expect_identical(info$cmdstan$path, cmdstan_path())
+  expect_true(info$cmdstan$exists)
+
+  # Without the record, the executable itself is run for real.
+  file.remove(build_record_path(mod$exe_file()))
+  fallback <- stan_build_info(mod$exe_file())
+  expect_identical(fallback$record$status, "unavailable")
+  expect_identical(fallback$record$reason, "missing")
+  expect_true(fallback$reported_features$stan_threads)
+  expect_identical(
+    fallback$reported_features$stan_version,
+    info$reported_features$stan_version
+  )
+  expect_false("configuration" %in% names(fallback))
+})
+
+test_that("a relative path names a file in the working directory, not one on PATH", {
+  skip_on_os("windows")
+  dir <- withr::local_tempdir()
+  bin <- file.path(dir, "bin")
+  dir.create(bin)
+  info_script <- function(path, threads) {
+    writeLines(c(
+      "#!/bin/sh",
+      "echo STAN_VERSION_MAJOR=2",
+      "echo STAN_VERSION_MINOR=39",
+      "echo STAN_VERSION_PATCH=0",
+      paste0("echo STAN_THREADS=", threads)
+    ), path)
+    Sys.chmod(path, "0755")
+  }
+  info_script(file.path(dir, "model"), "false")
+  info_script(file.path(bin, "model"), "true")
+  withr::local_dir(dir)
+  withr::local_path(bin)
+
+  expect_false(stan_build_info("model")$reported_features$stan_threads)
+})
+
 test_that("stan_build_info() errors on unusable paths and unidentifiable executables", {
   missing_path <- withr::local_tempfile()
   expect_error(stan_build_info(missing_path), "does not exist")
@@ -325,7 +416,8 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
   expect_error(
     stan_build_info(failed_exe),
     paste0(
-      "Running '", failed_exe, "' with the argument 'info' did not report a ",
+      "Running '", resolve_path(failed_exe), "' with the argument 'info' did ",
+      "not report a ",
       "Stan version, so it is either not a CmdStan executable or cannot be ",
       "run."
     ),
@@ -340,9 +432,9 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
   expect_error(
     stan_build_info(no_version_exe),
     paste0(
-      "Running '", no_version_exe, "' with the argument 'info' did not ",
-      "report a Stan version, so it is either not a CmdStan executable or ",
-      "cannot be run."
+      "Running '", resolve_path(no_version_exe), "' with the argument 'info' ",
+      "did not report a Stan version, so it is either not a CmdStan ",
+      "executable or cannot be run."
     ),
     fixed = TRUE
   )

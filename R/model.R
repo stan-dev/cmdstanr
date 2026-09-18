@@ -341,8 +341,8 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     # What the object was built from or adopted with. After construction only
-    # `hpp_file_` changes, when `$save_hpp_file()` moves the file, and
-    # `model_methods_env_`, which fills when the methods compile.
+    # `hpp_file_` changes (when `$save_hpp_file()` moves the file) and
+    # `model_methods_env_` gets filled in when the methods compile.
     stan_file_ = character(),
     stan_code_ = character(),
     model_name_ = character(),
@@ -356,10 +356,11 @@ CmdStanModel <- R6::R6Class(
     variables_ = NULL,
     hpp_file_ = character(),
     model_methods_env_ = NULL,
-    # Every method that runs the executable, or reads something derived from
-    # it, calls this first. It checks that the executable is the one this
-    # object was built with and, for a model with a Stan file, that nothing
-    # it was built from has changed.
+    # Every method that runs the executable, and $expose_functions(), calls
+    # this first. It checks that the executable is the one this object was
+    # built with and, for a model with a Stan file, that nothing it was built
+    # from has changed. $build_info() doesn't call it since it reads whatever is
+    # on disk now.
     assert_current = function() {
       exe <- private$exe_file_
       if (!self$has_stan_file()) {
@@ -396,10 +397,11 @@ CmdStanModel <- R6::R6Class(
       }
       invisible(self)
     },
-    # The standalone-functions C++, generated from the source once, after
-    # assert_current() has passed, when the source is known to be the built
-    # one. Construction does not pay a stanc run for a feature most models
-    # never use. Empty without a source.
+    # The C++ for the standalone functions, generated from the Stan file the
+    # first time it's needed, after assert_current() checks the file is the one
+    # the executable was built from. Generating it in the constructor would run
+    # stanc for a feature most models never use. Empty for a model without a
+    # Stan file.
     standalone_functions = function() {
       if (self$has_stan_file() && is.null(self$functions$hpp_code)) {
         configuration <- private$record_$configuration

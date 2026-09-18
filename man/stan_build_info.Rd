@@ -25,35 +25,39 @@ and otherwise one of \code{"missing"} (no record beside the executable),
 \code{"unreadable"} (a record that could not be read), \code{"executable_mismatch"}
 (the record describes a different executable, so the one at this path was
 replaced after the record was written) or \code{"unsupported_format"} (written by
-a cmdstanr that stores records differently, in which case a \code{format_version}
-is also reported).
+a cmdstanr that stores records differently, in which case the result also
+has a \code{format_version} field).
 \item \code{reported_features}: A list containing what the executable reports about
 its own build. \code{stan_threads}, \code{stan_mpi}, \code{stan_opencl} and
 \code{stan_no_range_checks} are each \code{TRUE}, \code{FALSE}, or \code{NA} when the executable
 did not report the feature, and \code{stan_version} is the Stan version the
-executable reports being compiled with. These come from the record when it is
-available and otherwise from querying the executable.
+executable reports being compiled with, or \code{NA} when it did not report one.
+These come from the record when it is available and otherwise from querying
+the executable.
 }
 
 When the build record is available, there are four more fields:
 \itemize{
-\item \code{configuration}: A list of the options the model was created with,
-as passed to \code{cmdstan_model()} or \code{compile_stan_file()}. Contains sublists
-\code{cpp_options} (in their Make spelling, as \verb{$cpp_options()} reports them:
-\code{list(stan_threads = TRUE)} comes back as \code{list(STAN_THREADS = "true")}),
-\code{stanc_options}, and \code{include_paths} (as searched, which includes the
-default of the Stan program's own directory).
+\item \code{configuration}: A list of the options the model was created with.
+\itemize{
+\item \code{cpp_options}: the list of options in their Make spelling, as
+\verb{$cpp_options()} reports them. For example, \code{list(stan_threads = TRUE)}
+comes back as \code{list(STAN_THREADS = "true")}.
+\item \code{stanc_options}: the flags as given to stanc, in order.
+For example, \code{list(O1 = TRUE)} and \code{list("O1")} both come back as
+\code{list("--O1")}.
+\item \code{include_paths}: a character vector of the directories searched for
+included files. When none were given, this is the Stan program's own
+directory if the program has includes and empty otherwise.
+}
 \item \code{dependencies}: A list describing the files the build read. Contains sublists
 \code{stan_file}, \code{included_files}, \code{user_header} and \code{make_local}. \code{user_header}
 and \code{make_local} are \code{NULL} when the build had none. \code{included_files} holds
-one entry per file. Each entry has two fields:
-\itemize{
-\item \code{built_from}: the path the file had when the build ran.
-\item \code{exists}, whether that path exists now. A path that no longer exists is
-not necessarily a problem. For example, an \R package may build its models
-at install time in a temporary directory that is gone by the time the model
-is used.
-}
+one entry per file. Each entry has two fields: \code{built_from}, the path the
+file had when the build ran, and \code{exists}, whether that path exists now. A
+path that no longer exists is not necessarily a problem. For example, an \R
+package may build its models at install time in a temporary directory that
+is gone by the time the model is used.
 \item \code{cmdstan}: A list containing the \code{path} and \code{version} of the CmdStan
 installation that built the executable, and whether that path still \code{exists}.
 This version and \code{reported_features$stan_version} will typically agree except
@@ -63,19 +67,17 @@ the Stan library headers the executable was compiled against and will not).
 \item \code{untracked_dependencies}: A list of files the build depended on that cmdstanr
 cannot follow, so a change to them does not automatically trigger a rebuild.
 An empty list means nothing of the kind was found. Each file is reported as
-a sublist with two fields:
-\itemize{
-\item \code{kind}: \code{"make_local_include"} when \code{make/local} includes another
-makefile or \code{"user_header_include"} when the user header includes other
-headers.
-\item \code{detected_in}: the file the include was found in.
-}
+a sublist with two fields: \code{kind}, which is \code{"make_local_include"} when
+\code{make/local} includes another makefile or \code{"user_header_include"} when the
+user header includes other headers, and \code{detected_in}, the file the include
+was found in.
 }
 
 The result leaves out some of what the record holds: the file hashes the
 rebuild check compares, the stanc flags cmdstanr added or \code{make/local}
-contributed, the model name given to stanc, and the TBB directory. For what
-\code{make/local} contributed, check the file \code{dependencies$make_local} names.
+contributed, the model name given to stanc, and the TBB directory.
+\code{dependencies$make_local} names the file those flags came from, though its
+contents may have changed since the build.
 
 Absent items and empty items have different interpretations. A field missing
 from the result means there was no usable record to read it from. An empty
