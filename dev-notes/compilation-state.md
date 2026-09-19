@@ -1433,8 +1433,9 @@ latency is unpredictable, not that the number is large.
 the fitting methods. <!-- /contract --> "At least" is not implementable, so the full public surface is
 classified here. Three counts are involved because the surface moves underneath the
 table. `CmdStanModel` carries twenty-seven public methods and one public field
-today and twenty-seven at 1.0 (§3 adds `$user_header()`, §8 removes `$compile()`),
-while the table below has twenty-eight method rows, being the union of both. It
+today and twenty-eight at 1.0 (§3 adds `$user_header()`, §8 removes `$compile()`
+and adds `$build_info()`), while the table below has twenty-nine method rows,
+being the union of both. It
 classifies the removed member rather than omitting it, so no count is wrong; they
 answer different questions and the test below depends on which one it asks. The two
 build entry points are listed for their behaviour and neither is a member of the
@@ -1442,7 +1443,7 @@ class.
 
 The completeness claim should be enforced: `CmdStanModel$public_methods` and
 `$public_fields` enumerate the live surface, so a test can compare it against the
-twenty-seven non-removed method rows and the one field, and fail on any member that
+twenty-eight non-removed method rows and the one field, and fail on any member that
 appears without a classification, asserting `$compile()`'s absence separately.
 Otherwise this table decays the first time someone adds a method, which is the
 failure the `$initialize()` and `$clone()` entries below already guard against by
@@ -1469,6 +1470,7 @@ excluded for the reason given below; `$clone()` is called and asserted not to er
 | **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()`, `$user_header()` |
 | **Operates on source, not the binary; no validation** | `$check_syntax()`, `$format()` |
 | **Generated C++, part of the snapshot; no validation** | `$hpp_file()`, `$save_hpp_file()` |
+| **Reads the executable on disk as it is now; no validation** | `$build_info()` (§8) |
 | **R6 plumbing; no validation** | `$initialize()`, `$clone()` |
 | **Removed** | `$compile()` (§8) |
 
@@ -2515,8 +2517,8 @@ established. A usable record's half is enforced where the record's other field
 checks are (§4), so a record carrying an unparseable `cmdstan` version is not a
 usable record; on the fallback, `<exe> info` must report complete version fields.
 
-Failing both means the executable did not identify itself as a supported CmdStan
-executable, which is a weaker claim than "it did not run" and is the one to make. A
+Failing both means the executable did not report a Stan version, which is a
+weaker claim than "it did not run" and is the one to make. A
 two-line shell script that exits 0 reaches the same place, having no version
 fields to report. What it does not reach is a CmdStan binary that could have
 sampled: `info` has printed `stan_version_*` unconditionally since CmdStan 2.27
@@ -2962,7 +2964,7 @@ are the promise, and the record's layout is free underneath them.
 method below dispatches on. One class name rather than a vector: `is.list()` is
 already `TRUE` without adding `"list"`, and a second name only offers someone a
 wrong target to write a method against. The class name follows the function name,
-so §10's note that `stan_build_info()` is still a placeholder covers both.
+so §10's naming note covers both.
 
 <!-- contract -->
 
@@ -2987,8 +2989,8 @@ shipped yet, so the set can still be chosen freely; after 1.0 it cannot. The has
 fail that test. The artifact hash answers a question the caller can already answer
 by hashing the file whose path they just passed in, and the dependency hashes
 compare against nothing but another record's same field. So do
-`stanc_options_added` and `stanc_name`, which say how cmdstanr assembled the
-stanc command line rather than what was asked of it. `tbb_dir` is out on the same
+`stanc_options_added`, `stanc_options_from_make` and `stanc_name`, which say how
+cmdstanr assembled the stanc command line rather than what was asked of it. `tbb_dir` is out on the same
 test; the record keeps it because Windows needs it at launch (§4). `configuration` keeps
 `include_paths` for diagnosis alone: a caller debugging an include has no other way
 to see where the build searched.
@@ -3008,7 +3010,7 @@ list(
     stan_no_range_checks = FALSE, stan_version = "2.39.0"
   ),
   configuration = list(
-    cpp_options   = list(STAN_THREADS = TRUE),
+    cpp_options   = list(STAN_THREADS = "true"),
     stanc_options = list(),
     include_paths = "/proj"
   ),
@@ -3846,8 +3848,9 @@ what to do about the answer: the constructor rebuilds, everything else errors. <
 convenience rebuild tucked inside the assessment reintroduces the hidden
 recompilation this design removed.
 
-**Naming.** `stan_build_info()` is still a placeholder, to be settled in the
-stage that implements it (§8); Stage 4 kept `check_syntax_stan_file()`.
+**Naming.** `stan_build_info()` was settled by the stage that implemented it
+(§8), as the name the design used throughout; Stage 4 kept
+`check_syntax_stan_file()`.
 `.<exe>.cmdstanr.json` is decided rather than open (§4), so build against it, but
 it stays revisable until the release, after which changing it means migrating
 records that already exist.

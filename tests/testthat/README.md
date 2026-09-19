@@ -6,9 +6,11 @@ The files are flat and the prefix says what a file tests.
 object it returns. `test-fit-*.R` files test a fitted model object, one file
 per fitting method plus `test-fit-shared.R` for the methods every fit has.
 `test-build-*.R` files test the build record (the hidden JSON file written
-beside an executable) and the code that reads it, using the fixtures in
+beside an executable), the code that writes and reads it, and
+`stan_build_info()`, which reports it, using the fixtures in
 `helper-build-record.R`; `test-build-record-compile.R` is the one of those
-that compiles for real. A file with no prefix tests the function or feature
+that runs stanc for real, with make mocked; `test-build-info.R` compiles one
+model for real. A file with no prefix tests the function or feature
 it is named after, so, e.g., `cmdstan_make_local()` is tested in
 `test-install.R` because the function is defined in `R/install.R`.
 

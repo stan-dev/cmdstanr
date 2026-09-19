@@ -1,9 +1,9 @@
-#' Expect a constructor call to compile the model
-#' @param constructor_call a call returning a CmdStanModel object
+#' Expect a `cmdstan_model()` call to compile the model
+#' @param model_call a call returning a CmdStanModel object
 #' @return the new model
-expect_compilation <- function(constructor_call) {
+expect_compilation <- function(model_call) {
   before_time <- Sys.time()
-  mod <- expect_interactive_message(constructor_call, "Compiling Stan program...|Recompiling:")
+  mod <- expect_interactive_message(model_call, "Compiling Stan program...|Recompiling:")
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
     fail(sprint("Model executable '%s' does not exist after compilation.", mod$exe_file()))
   }
@@ -16,12 +16,12 @@ expect_compilation <- function(constructor_call) {
   invisible(mod)
 }
 
-#' Expect a constructor call to reuse the executable
-#' @param constructor_call a call returning a CmdStanModel object
+#' Expect a `cmdstan_model()` call to reuse the executable
+#' @param model_call a call returning a CmdStanModel object
 #' @return the new model
-expect_no_recompilation <- function(constructor_call) {
+expect_no_recompilation <- function(model_call) {
   before_time <- Sys.time()
-  mod <- expect_interactive_message(constructor_call, "Model executable is up to date!")
+  mod <- expect_interactive_message(model_call, "Model executable is up to date!")
   after_mtime <- file.mtime(mod$exe_file())
   expect_lt(
     after_mtime,

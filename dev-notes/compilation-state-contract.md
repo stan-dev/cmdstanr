@@ -445,6 +445,7 @@ the fitting methods.
 | **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()`, `$user_header()` |
 | **Operates on source, not the binary; no validation** | `$check_syntax()`, `$format()` |
 | **Generated C++, part of the snapshot; no validation** | `$hpp_file()`, `$save_hpp_file()` |
+| **Reads the executable on disk as it is now; no validation** | `$build_info()` (§8) |
 | **R6 plumbing; no validation** | `$initialize()`, `$clone()` |
 | **Removed** | `$compile()` (§8) |
 
@@ -977,7 +978,7 @@ list(
     stan_no_range_checks = FALSE, stan_version = "2.39.0"
   ),
   configuration = list(
-    cpp_options   = list(STAN_THREADS = TRUE),
+    cpp_options   = list(STAN_THREADS = "true"),
     stanc_options = list(),
     include_paths = "/proj"
   ),

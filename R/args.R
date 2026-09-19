@@ -1498,8 +1498,7 @@ validate_exe_file <- function(exe_file) {
   if (!length(exe_file) ||
       !nzchar(exe_file) ||
       !file.exists(exe_file)) {
-    stop("Model not compiled. Try running the compile() method first.",
-         call. = FALSE)
+    stop("There is no executable at '", exe_file, "'.", call. = FALSE)
   }
   invisible(TRUE)
 }

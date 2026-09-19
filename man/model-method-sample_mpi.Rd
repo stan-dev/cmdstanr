@@ -352,6 +352,7 @@ The Stan Math Library's documentation
 details on MPI support in Stan.
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
 \code{\link{model-method-diagnose}},

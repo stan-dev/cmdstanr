@@ -2,7 +2,8 @@ set_cmdstan_path()
 
 # What R/model.R's private assert_current() and its callers say about every
 # public member: whether it checks that the executable is still the one the
-# object was built against before it does anything else.
+# object was built against before it does anything else. "disk" reads the
+# executable and its record as they are now, on purpose.
 member_class <- c(
   sample = "checked", sample_mpi = "checked", optimize = "checked",
   laplace = "checked", variational = "checked", pathfinder = "checked",
@@ -15,6 +16,7 @@ member_class <- c(
   cmdstan_version = "accessor", cpp_options = "accessor",
   user_header = "accessor",
   check_syntax = "source", format = "source",
+  build_info = "disk",
   initialize = "plumbing", clone = "plumbing"
 )
 

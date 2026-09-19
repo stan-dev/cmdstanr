@@ -73,7 +73,7 @@ test_that("supplied and added stanc options are recorded apart", {
   )
 })
 
-test_that("cpp_options holds what the caller passed", {
+test_that("cpp_options holds what the user passed", {
   stan_file <- local_bernoulli()
   user_header <- withr::local_tempfile(lines = "", fileext = ".hpp")
   local_mocked_bindings(
@@ -121,7 +121,7 @@ test_that("included files are recorded in stanc's order with content hashes", {
       same_path(included[[i]]$built_from, resolve_path(expected[[i]]))
     )
   }
-  # The constructor defaults include_paths to the stan file's own directory.
+  # cmdstan_model() defaults include_paths to the stan file's own directory.
   expect_equal(
     record$configuration$include_paths,
     list(resolve_path(dirname(stan_file)))

@@ -52,20 +52,25 @@
 #' @param user_header (string) The path to a C++ file (with a `.hpp` extension)
 #'   to compile with the Stan model.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
-#'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
-#'   otherwise write in the `make/local` file. For an example of using threading
-#'   see the Stan case study [Reduce Sum: A Minimal
-#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
-#'   Every entry must be named with a `Make` variable name, in any casing, which
-#'   [`$cpp_options()`][model-method-model-info] reports back in upper case.
+#'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.), written as
+#'   `list(NAME = value)`. Each entry is an assignment you could make in the
+#'   `make/local` file, so `list(CXXFLAGS = "-O3")` rather than `"-O3"`.
+#'   Every entry must be named with a `Make` variable name, in any casing.
 #'   Setting an option to `FALSE` or `NULL` passes an empty assignment such as
 #'   `STAN_THREADS=`. That empties the variable for this build, which turns a
-#'   switch off, and overrides whatever `make/local` sets.
+#'   switch off, and overrides whatever `make/local` sets. See
+#'   [stan_build_info()] for an example of setting options and checking what
+#'   the executable was built with, and the Stan case study [Reduce Sum: A
+#'   Minimal
+#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html)
+#'   for using threading.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
-#'   when compiling the model. See the **Examples** section below as well as the
-#'   [`stanc` chapter of the CmdStan User's
-#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for more details
-#'   on available options. Options that cmdstanr sets from its own arguments
+#'   when compiling the model. A flag is given by name without the leading
+#'   hyphens, as `list("O1")` or `list(O1 = TRUE)`, and an option that takes a
+#'   value as `list(option = "value")`. See [stan_build_info()] for an example
+#'   and the [`stanc` chapter of the CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for the
+#'   available options. Options that cmdstanr sets from its own arguments
 #'   cannot be passed here: `include-paths` (use `include_paths`),
 #'   `warn-pedantic` (`pedantic`), `allow-undefined` (`user_header`),
 #'   `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`) and `name` (taken
@@ -283,36 +288,33 @@ compile_stan_file <- function(stan_file,
 #' @section Methods: `CmdStanModel` objects have the following associated
 #'   methods, many of which have their own (linked) documentation pages:
 #'
-#'  ## Stan code
+#'  ## The Stan program
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$stan_file()`][model-method-model-info] | Return the file path to the Stan program. |
 #'  [`$has_stan_file()`][model-method-model-info] | Check whether the model was created with a Stan file. |
+#'  [`$model_name()`][model-method-model-info] | Return the model name. |
 #'  [`$code()`][model-method-model-info] | Return Stan program as a character vector. |
 #'  [`$print()`][model-method-model-info] | Print readable version of Stan program. |
+#'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
+#'  [`$variables()`][model-method-variables] | Return the input and output variables of the program, by block. |
 #'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
 #'  [`$format()`][model-method-format]  |  Format and canonicalize the Stan model code. |
 #'
-#'  ## Model information
-#'
-#'  |**Method**|**Description**|
-#'  |:----------|:---------------|
-#'  [`$model_name()`][model-method-model-info] | Return the model name. |
-#'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
-#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version that built the executable. |
-#'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
-#'  [`$user_header()`][model-method-model-info] | Return the path to the user header, if the model has one. |
-#'
-#'  ## Compilation
+#'  ## The executable
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$exe_file()`][model-method-model-info] |  Return the file path to the compiled executable. |
+#'  [`$build_info()`][model-method-build_info] |  Report how the executable was built, from its build record. |
+#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version that built the executable. |
+#'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
+#'  [`$user_header()`][model-method-model-info] | Return the path to the user header, if the model has one. |
 #'  [`$hpp_file()`][model-method-model-info] |  Return the file path to the `.hpp` file containing the generated C++ code. |
 #'  [`$save_hpp_file()`][model-method-model-info] |  Save the `.hpp` file containing the generated C++ code. |
-#'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'  [`$cmdstan_defaults()`][model-method-cmdstan_defaults] |  Get CmdStan default argument values for a method. |
+#'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'
 #'  ## Diagnostics
 #'
@@ -339,8 +341,8 @@ CmdStanModel <- R6::R6Class(
   classname = "CmdStanModel",
   private = list(
     # What the object was built from or adopted with. After construction only
-    # `hpp_file_` changes, when `$save_hpp_file()` moves the file, and
-    # `model_methods_env_`, which fills when the methods compile.
+    # `hpp_file_` changes (when `$save_hpp_file()` moves the file) and
+    # `model_methods_env_` gets filled in when the methods compile.
     stan_file_ = character(),
     stan_code_ = character(),
     model_name_ = character(),
@@ -354,10 +356,11 @@ CmdStanModel <- R6::R6Class(
     variables_ = NULL,
     hpp_file_ = character(),
     model_methods_env_ = NULL,
-    # The check every member that runs the executable, or derives state from
-    # it, makes first: the executable is the one this object was built
-    # against and, for a model with a source, nothing it was built from has
-    # changed.
+    # Every method that runs the executable, and $expose_functions(), calls
+    # this first. It checks that the executable is the one this object was
+    # built with and, for a model with a Stan file, that nothing it was built
+    # from has changed. $build_info() doesn't call it since it reads whatever is
+    # on disk now.
     assert_current = function() {
       exe <- private$exe_file_
       if (!self$has_stan_file()) {
@@ -394,10 +397,11 @@ CmdStanModel <- R6::R6Class(
       }
       invisible(self)
     },
-    # The standalone-functions C++, generated from the source once, after
-    # assert_current() has passed, when the source is known to be the built
-    # one. Construction does not pay a stanc run for a feature most models
-    # never use. Fits copy it from here. Empty without a source.
+    # The C++ for the standalone functions, generated from the Stan file the
+    # first time it's needed, after assert_current() checks the file is the one
+    # the executable was built from. Generating it in the constructor would run
+    # stanc for a feature most models never use. Empty for a model without a
+    # Stan file.
     standalone_functions = function() {
       if (self$has_stan_file() && is.null(self$functions$hpp_code)) {
         configuration <- private$record_$configuration
@@ -554,7 +558,8 @@ CmdStanModel <- R6::R6Class(
 #'
 #' @description These methods access information stored in a [`CmdStanModel`]
 #'   object, print its Stan program, and manage paths to its executable and
-#'   generated C++ file.
+#'   generated C++ file. For how the executable was built, see the
+#'   [`$build_info()`][model-method-build_info] method, which has its own page.
 #'
 #'   ```
 #'   stan_file()
@@ -2160,20 +2165,65 @@ cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
 CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 
 
+#' What is known about how the model's executable was built
+#'
+#' @name model-method-build_info
+#' @aliases build_info
+#' @family CmdStanModel methods
+#'
+#' @description The `$build_info()` method of a [`CmdStanModel`] object
+#'   calls [stan_build_info()] on the model's executable. See that page for
+#'   what the result holds. The method reports on the executable as it is
+#'   now, so it also works on a model whose executable was replaced or whose
+#'   build record is gone.
+#'
+#'   This method is different than the `$cpp_options()` method, which answers a
+#'   narrower question: the C++ options this model object was created with.
+#'   `$build_info()` describes the executable itself, including what it reports
+#'   about its own build when run. The difference is clear when considering a
+#'   model created with `cmdstan_model(exe_file = )` from just an executable
+#'   with no build record: `$cpp_options()` is empty, since no options were
+#'   given, but `$build_info()` still reports whether the executable was built
+#'   with threading, OpenCL and so on.
+#'
+#' @return See [stan_build_info()].
+#'
+#' @template seealso-docs
+#'
+#' @examples
+#' \dontrun{
+#' mod <- cmdstan_model(
+#'   file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan"),
+#'   cpp_options = list(stan_threads = TRUE)
+#' )
+#' info <- mod$build_info()
+#' info
+#' info$reported_features$stan_threads
+#' }
+#'
+build_info <- function() {
+  stan_build_info(self$exe_file())
+}
+CmdStanModel$set("public", name = "build_info", value = build_info)
+
+
 
 # internal ----------------------------------------------------------------
 #' The error for a build argument supplied with no `stan_file`
 #'
 #' With no `stan_file` there is nothing to build, so the executable is used
-#' as it is and none of these arguments apply. Checked in the order
-#' `cpp_options`, `stanc_options`, `include_paths`, `user_header`,
-#' `force_recompile`, `pedantic`, `dir`, stopping at the first one supplied.
+#' as it is and none of these arguments apply.
 #'
+#' @param cpp_options,stanc_options,include_paths,user_header The arguments
+#'   the user passed to `cmdstan_model()`.
+#' @param force_recompile,pedantic,dir The arguments the user passed to
+#'   `cmdstan_model()`.
+#' @return `NULL`, invisibly. The first argument supplied is an error.
 #' @noRd
 assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
                                               include_paths, user_header,
                                               force_recompile, pedantic, dir) {
-  build_message <- function(arg) {
+  build_arg_message <- function(arg) {
     sprintf(
       paste0(
         "`%s` cannot be supplied for a model created from an executable alone. ",
@@ -2183,10 +2233,10 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
     )
   }
   if (!is.null(cpp_options)) {
-    stop(build_message("cpp_options"), call. = FALSE)
+    stop(build_arg_message("cpp_options"), call. = FALSE)
   }
   if (!is.null(stanc_options)) {
-    stop(build_message("stanc_options"), call. = FALSE)
+    stop(build_arg_message("stanc_options"), call. = FALSE)
   }
   if (!is.null(include_paths)) {
     stop(
@@ -2196,10 +2246,10 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
     )
   }
   if (!is.null(user_header)) {
-    stop(build_message("user_header"), call. = FALSE)
+    stop(build_arg_message("user_header"), call. = FALSE)
   }
   if (!is.null(force_recompile)) {
-    stop(build_message("force_recompile"), call. = FALSE)
+    stop(build_arg_message("force_recompile"), call. = FALSE)
   }
   if (isTRUE(pedantic)) {
     stop(
@@ -2209,107 +2259,9 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
     )
   }
   if (!is.null(dir)) {
-    stop(build_message("dir"), call. = FALSE)
+    stop(build_arg_message("dir"), call. = FALSE)
   }
   invisible(NULL)
-}
-
-#' The error for a stanc flag cmdstanr sets from one of its own arguments
-#'
-#' Returns `NULL` for any other flag. The five names live here so that the
-#' matcher and the messages cannot drift apart.
-#'
-#' @noRd
-derived_stanc_option_message <- function(flag) {
-  messages <- c(
-    "include-paths" = paste0(
-      "`include-paths` cannot be set through `stanc_options`. ",
-      "Pass the directories with the `include_paths` argument."
-    ),
-    "warn-pedantic" = paste0(
-      "`warn-pedantic` cannot be set through `stanc_options`. ",
-      "Use `pedantic = TRUE`."
-    ),
-    "allow-undefined" = paste0(
-      "`allow-undefined` cannot be set through `stanc_options`. ",
-      "Builds turn it on when a `user_header` is supplied, and ",
-      "`$check_syntax()`, `$format()` and `$variables()` always use it."
-    ),
-    "use-opencl" = paste0(
-      "`use-opencl` cannot be set through `stanc_options`. ",
-      "Use `cpp_options = list(stan_opencl = TRUE)`, which turns it on."
-    ),
-    "name" = paste0(
-      "`name` cannot be set through `stanc_options`. ",
-      "The model name comes from the name of the Stan file."
-    )
-  )
-  if (flag %in% names(messages)) {
-    messages[[flag]]
-  } else {
-    NULL
-  }
-}
-
-assert_valid_stanc_options <- function(stanc_options) {
-  i <- 1
-  names <- names(stanc_options)
-  for (s in stanc_options) {
-    named <- !is.null(names[i]) && nzchar(names[i])
-    if (named) {
-      name <- names[i]
-    } else {
-      name <- s
-    }
-    if (startsWith(name, "--")) {
-      stop("No leading hyphens allowed in stanc options (", name, "). ",
-           "Use options without leading hyphens, for example ",
-           "`stanc_options = list('warn-uninitialized')`",
-           call. = FALSE)
-    }
-    # The flag is the part before the first `=`, wherever the name occurs.
-    flag <- sub("=.*$", "", name)
-    derived <- derived_stanc_option_message(flag)
-    if (!is.null(derived)) {
-      stop(derived, call. = FALSE)
-    }
-    if (named && grepl("=", name, fixed = TRUE)) {
-      stop(
-        sprintf(
-          paste0(
-            "`stanc_options` names cannot contain `=`. ",
-            "Write the value after the name: `list(\"%s\" = \"%s\")` ",
-            "instead of `list(\"%s\" = ...)`."
-          ),
-          flag, sub("^[^=]*=", "", name), name
-        ),
-        call. = FALSE
-      )
-    }
-    i <- i + 1
-  }
-  invisible(stanc_options)
-}
-
-#' Whether `stanc_options` sets a flag, whichever way it was written
-#'
-#' A flag arrives named, `list("filename-in-msg" = "x.stan")`, or unnamed with
-#' its value attached, `list("filename-in-msg=x.stan")`. As in
-#' assert_valid_stanc_options(), the flag is the text before the first `=`.
-#'
-#' @noRd
-stanc_option_supplied <- function(stanc_options, flag) {
-  names <- names(stanc_options)
-  for (i in seq_along(stanc_options)) {
-    name <- names[i]
-    if (is.null(name) || !nzchar(name)) {
-      name <- stanc_options[[i]]
-    }
-    if (sub("=.*$", "", name) == flag) {
-      return(TRUE)
-    }
-  }
-  FALSE
 }
 
 assert_stan_file_exists <- function(stan_file) {
@@ -2321,186 +2273,6 @@ assert_stan_file_exists <- function(stan_file) {
       call. = FALSE
     )
   }
-}
-
-#' Turn a `stanc_options` list into `stanc` command line arguments
-#'
-#' @param stanc_options (list) Named or unnamed stanc options. Logical values
-#'   mark boolean flags and any other value is passed as `--name=value`.
-#' @param quote_values (logical) Quote the arguments for the `STANCFLAGS`
-#'   string handed to Make, which expands it through a shell? Arguments for
-#'   direct `stanc` calls are passed to processx as separate elements and must
-#'   be left unquoted (#1227).
-#' @return A character vector of arguments, one per element.
-#' @noRd
-stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
-  args <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    option_value <- stanc_options[[i]]
-    if (is.null(option_name) || !nzchar(option_name)) {
-      # Unnamed options are already flag names, e.g. list("O1")
-      args <- c(args, paste0("--", option_value))
-    } else if (is.logical(option_value)) {
-      # TRUE emits a bare flag, FALSE leaves the flag out entirely
-      if (isTRUE(option_value)) {
-        args <- c(args, paste0("--", option_name))
-      }
-    } else {
-      args <- c(args, paste0("--", option_name, "=", option_value))
-    }
-  }
-  if (isTRUE(quote_values)) {
-    args <- make_shell_quote(args)
-  }
-  args
-}
-
-#' Drop the `make/local` stanc flags that the call sets itself
-#'
-#' A flag is the text before the first `=`. An element of `local_flags` whose
-#' flag is one the call emits is dropped. When that element is a bare flag and
-#' the next element does not start with a hyphen, the next element is the value
-#' given separately and goes with it.
-#'
-#' @param local_flags (character) The `STANCFLAGS` words from `make/local`, one
-#'   argument per element.
-#' @param call_args (character) The arguments the call emits, one per element,
-#'   each starting with `--`.
-#' @return `local_flags` without the overridden elements, the rest in order.
-#' @noRd
-drop_overridden_stancflags <- function(local_flags, call_args) {
-  call_flags <- sub("=.*$", "", call_args)
-  keep <- rep(TRUE, length(local_flags))
-  i <- 1
-  while (i <= length(local_flags)) {
-    if (sub("=.*$", "", local_flags[i]) %in% call_flags) {
-      keep[i] <- FALSE
-      if (!grepl("=", local_flags[i], fixed = TRUE) &&
-          i < length(local_flags) &&
-          !startsWith(local_flags[i + 1], "-")) {
-        keep[i + 1] <- FALSE
-        i <- i + 1
-      }
-    }
-    i <- i + 1
-  }
-  local_flags[keep]
-}
-
-#' Build stanc include-path arguments
-#'
-#' Make receives include paths through `STANCFLAGS`, expands the value and hands
-#' it to the shell, so `make_shell_quote()` quotes each path for both (#1230)
-#' inside a single `--include-paths=` flag. Direct calls through processx
-#' instead need the flag and comma-separated paths as separate, unquoted
-#' arguments.
-#'
-#' @param include_paths A character vector of directories containing files used
-#'   in Stan `#include` directives, or `NULL`.
-#' @param direct_call A logical indicating whether the arguments will be passed
-#'   directly to stanc through processx instead of through Make.
-#'
-#' @return `NULL` if `include_paths` is `NULL`; otherwise, a single
-#'   `--include-paths=` argument for Make or two arguments for a direct call.
-#' @noRd
-include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE) {
-  stancflags <- NULL
-  if (!is.null(include_paths)) {
-    assert_dir_exists(include_paths, access = "r")
-    include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
-    # Calling stanc3 directly through processx::run does not need quoting
-    if (!isTRUE(direct_call)) {
-      include_paths <- make_shell_quote(include_paths)
-    }
-    include_paths <- paste0(include_paths, collapse = ",")
-    include_paths_flag <- "--include-paths="
-    if (isTRUE(direct_call)) {
-      stancflags <- c(stancflags, "--include-paths", include_paths)
-    } else {
-      stancflags <- paste0(stancflags, include_paths_flag, include_paths)
-    }
-  }
-  stancflags
-}
-
-#' Run stanc on a Stan program and return what it printed
-#'
-#' What stanc writes to stderr, its warnings and its errors, is relayed as
-#' it arrives. A program stanc rejects is an error after that.
-#'
-#' @noRd
-run_stanc <- function(stan_file, args, spinner = FALSE) {
-  withr::with_path(
-    c(
-      toolchain_PATH_env_var(),
-      tbb_path()
-    ),
-    run_log <- wsl_compatible_run(
-      command = stanc_cmd(),
-      args = c(wsl_safe_path(stan_file), args),
-      wd = checked_cmdstan_path(),
-      echo = is_verbose_mode(),
-      echo_cmd = is_verbose_mode(),
-      spinner = spinner,
-      stderr_callback = function(x, p) {
-        message(x)
-      },
-      error_on_status = FALSE
-    )
-  )
-  if (is.na(run_log$status) || run_log$status != 0) {
-    stop("Syntax error found! See the message above for more information.",
-         call. = FALSE)
-  }
-  run_log$stdout
-}
-
-#' What stanc reports about a Stan program
-#'
-#' The parsed `stanc --info` output, holding the program's variables and the
-#' files it included. A program stanc rejects is an error carrying stanc's
-#' own message, which names the file and the line.
-#'
-#' @noRd
-stanc_info <- function(stan_file, include_paths = NULL) {
-  out_file <- tempfile(fileext = ".json")
-  withr::defer(unlink(out_file))
-  run_log <- wsl_compatible_run(
-    command = stanc_cmd(),
-    args = c(wsl_safe_path(stan_file),
-              "--info",
-              include_paths_stanc3_args(
-                include_paths,
-                direct_call = TRUE
-              ),
-              "--allow-undefined"),
-    wd = checked_cmdstan_path(),
-    echo = FALSE,
-    echo_cmd = FALSE,
-    stdout = out_file,
-    error_on_status = FALSE
-  )
-  if (is.na(run_log$status) || run_log$status != 0) {
-    stop(trimws(run_log$stderr), call. = FALSE)
-  }
-  jsonlite::read_json(out_file, na = "null")
-}
-
-#' The `$variables()` result, from what `stanc --info` reported
-#'
-#' @noRd
-variables_from_info <- function(info) {
-  variables <- info
-  variables$data <- variables$inputs
-  variables$inputs <- NULL
-  variables$transformed_parameters <- variables[["transformed parameters"]]
-  variables[["transformed parameters"]] <- NULL
-  variables$generated_quantities <- variables[["generated quantities"]]
-  variables[["generated quantities"]] <- NULL
-  variables$functions <- NULL
-  variables$distributions <- NULL
-  variables
 }
 
 # cmdstan_defaults() helpers

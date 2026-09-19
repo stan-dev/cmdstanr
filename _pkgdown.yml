@@ -77,6 +77,7 @@ reference:
       Run CmdStan from R.
     contents:
       - cmdstan_model
+      - stan_build_info
       - CmdStanModel
       - starts_with("model-method")
       - cmdstanr_example

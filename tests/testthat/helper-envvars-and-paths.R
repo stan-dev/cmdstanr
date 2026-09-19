@@ -179,10 +179,10 @@ local_cmdstan_make_local <- function(cpp_options, envir = parent.frame(),
   cmdstan_make_local(cpp_options = cpp_options, append = append)
 }
 
-# The session's CmdStan version and, on a model object, the version it
-# reports. The record beside the executable stays as written, since
-# assert_current() compares it with the installation, not with either cached
-# version.
+# Set the CmdStan version the session believes it has and, given a model,
+# the version that object reports. The record beside the executable is left
+# as written, since assert_current() compares it with the installation, not
+# with either cached version.
 fake_cmdstan_version <- function(version, mod = NULL) {
   .cmdstanr$VERSION <- version
   if (!is.null(mod)) {

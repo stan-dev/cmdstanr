@@ -20,6 +20,11 @@ belongs with the executable, not in version control: add `.*.cmdstanr.json` to
 `.gitignore` wherever the executable is already ignored. When constructing from
 a Stan file, a missing record causes a rebuild. The vignette "How does CmdStanR
 work?" has the details. (#1238)
+* The new `stan_build_info()` reads the build record back: what the build was
+asked for, the files it read, the CmdStan installation that built it, and what
+the executable reports about its own build. When there is no usable record it
+says why and reports only what the executable says about itself. The
+`$build_info()` method does the same for a model's executable. (#1258)
 * When a build depends on files cmdstanr cannot track, a `make/local` that
 includes another makefile or a user header that includes other headers, the
 build now says so in a one-line note and names `force_recompile = TRUE` as the
@@ -35,7 +40,8 @@ the executable was rebuilt or reused. (#1256, #1245)
 * `$cpp_options()` now reports the options the model was created with, in
 their Make spelling (e.g., `list(stan_threads = TRUE)` comes back as
 `STAN_THREADS`), and nothing else. Previously it also reported what the
-executable said about its own build. (#1019, #1258)
+executable said about its own build, which `stan_build_info()` now reports.
+(#1019, #1258)
 * `threads_per_chain` is now checked only when it asks for more than one
 thread: a model built with threading runs without it, and more than one
 thread for a model built without threading is an error. Previously the first

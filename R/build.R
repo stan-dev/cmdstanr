@@ -1,19 +1,23 @@
-# Building the executable for a Stan program, and adopting one as it is. The
-# constructor is the one caller of both.
+# Building the executable for a Stan program or adopting one as it is
 
 #' Build or verify the executable for a Stan program
 #'
-#' The one build path. The call is resolved into the configuration the record
-#' compares, assess_build() says whether the executable beside the program (or
-#' in `dir`) was built from it, and a rebuild follows when it was not or when
-#' `force_recompile` asks for one. Both ways out generate the model's C++ from
-#' the source just verified or built, so a model constructed on a reused
-#' executable holds the same facts as one that built it.
+#' The executable beside the program, or in `dir`, is reused when
+#' `assess_build()` finds nothing changed and rebuilt otherwise, or when
+#' `force_recompile` asks for a rebuild. Both paths generate the model's C++ and
+#' `stanc --info` from the source just verified or built, so a model object
+#' has the same `info` and `hpp_code` whether its executable was reused or
+#' built.
 #'
-#' `force_recompile = NULL` means the caller did not say and the
-#' `cmdstanr_force_recompile` option decides. The rebuild reason names
-#' whichever of the two asked.
+#' `NULL` for any build argument means it was omitted. An omitted `pedantic`
+#' is `FALSE`. An omitted `force_recompile` lets the `cmdstanr_force_recompile`
+#' option decide, and the rebuild reason names whichever of the two asked.
 #'
+#' @param stan_file,dir,include_paths,user_header As `cmdstan_model()`
+#'   documents them.
+#' @param cpp_options,stanc_options,pedantic,force_recompile As
+#'   `cmdstan_model()` documents them.
+#' @param quiet Whether to hide make's output.
 #' @return A list: `exe_file`, `record`, `include_paths` (the effective ones),
 #'   `info` (what `stanc --info` reported) and `hpp_code` (the model's C++).
 #' @noRd
@@ -29,8 +33,6 @@ build_executable <- function(stan_file,
   cpp_options <- assert_valid_cpp_options(cpp_options)
   stanc_options <- assert_valid_stanc_options(stanc_options) %||% list()
   checkmate::assert_string(user_header, null.ok = TRUE)
-  # NULL means omitted for every build argument (the adoption path relies on
-  # it), and an omitted pedantic is FALSE.
   pedantic <- isTRUE(checkmate::assert_flag(pedantic, null.ok = TRUE))
   checkmate::assert_flag(force_recompile, null.ok = TRUE)
   checkmate::assert_flag(quiet)
@@ -46,8 +48,8 @@ build_executable <- function(stan_file,
   }
   exe <- executable_path(stan_file, dir)
 
-  # Options cmdstanr adds stay apart from the caller's, so the record can hold
-  # each as it was, and are merged only when they become arguments.
+  # Options cmdstanr adds stay apart from the user's so the record can hold
+  # each as it was. They're merged only when they become arguments.
   added <- list()
   if (pedantic) {
     added[["warn-pedantic"]] <- TRUE
@@ -86,11 +88,12 @@ build_executable <- function(stan_file,
   )
   rebuild <- length(reasons) > 0
   if (rlang::is_interactive()) {
-    message(constructor_message(reasons, current))
+    message(build_message(reasons, current))
   }
 
-  # The flags stanc receives: the call's, then what make adds for this build.
-  # On a reuse the record says what make added, since make/local is unchanged.
+  # The flags stanc receives: the user's and the added ones, then what make
+  # adds for this build.
+  # On a reuse the record says what make added since make/local is unchanged.
   stancflags_call <- stanc_options_to_args(c(stanc_options, added))
   make_vars <- cpp_options_to_compile_flags(cpp_options)
   if (!is.null(user_header)) {
@@ -115,10 +118,11 @@ build_executable <- function(stan_file,
     include_paths, direct_call = TRUE
   )
 
-  # make compiles a copy, so an edit during the build reaches neither the
-  # executable nor the C++ generated beside it. Stanc's warnings are shown from
-  # the build's own stanc run. When nothing builds, this run shows them only
-  # for a pedantic check.
+  # On a rebuild make compiles a copy of the Stan file, and the C++ below is
+  # generated from the same copy, so an edit made during the build reaches
+  # neither. Stanc's warnings are left to the build's own stanc run. When the
+  # executable is reused there is no such run, so a pedantic check shows them
+  # here.
   source <- stan_file
   if (rebuild) {
     source <- tempfile(
@@ -191,38 +195,173 @@ build_executable <- function(stan_file,
   )
 }
 
+#' Install a model executable and its build record as a pair
+#'
+#' `file.copy()` and `file.rename()` warnings are suppressed so that
+#' `options(warn = 2)` cannot interrupt the undo. A crash between two renames
+#' can leave only the backup.
+#'
+#' @param from Path to the newly compiled executable.
+#' @param to Path the executable should be installed at.
+#' @param record The build record to install beside the executable.
+#' @return `NULL` after a clean install, or the backup paths that cleanup could
+#'   not remove. The new executable and its record are installed in either case.
+#' @noRd
+install_executable <- function(from, to, record) {
+  if (dir.exists(to)) {
+    stop(
+      "Cannot install the compiled executable at '", to,
+      "' because that path is a directory. Nothing was modified.",
+      call. = FALSE
+    )
+  }
+  # Normalize mixed Windows separators before converting the path for WSL.
+  stage <- function(pattern) {
+    repair_path(tempfile(pattern = pattern, tmpdir = dirname(to)))
+  }
+  rename <- function(from, to) {
+    isTRUE(suppressWarnings(file.rename(from, to)))
+  }
+  # The paths that are still there after trying to remove them.
+  remove <- function(paths) {
+    paths <- Filter(file.exists, paths)
+    paths[vapply(paths, unlink, integer(1), expand = FALSE) != 0L]
+  }
+  left_behind <- function(paths) {
+    if (length(paths) == 0) {
+      ""
+    } else {
+      paste0(" Files left behind: '", paste(paths, collapse = "', '"), "'.")
+    }
+  }
+
+  # Nothing at the destination changes until both files are staged beside it.
+  candidate <- stage("exe-new-")
+  staged_record <- build_record_path(candidate)
+  staging <- tryCatch({
+    if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
+      stop(
+        "Could not stage the compiled executable at '", candidate, "'.",
+        call. = FALSE
+      )
+    }
+    if (os_is_wsl()) {
+      chmod <- processx::run(
+        command = "wsl",
+        args = c("chmod", "+x", wsl_safe_path(candidate)),
+        error_on_status = FALSE
+      )
+      if (is.na(chmod$status) || chmod$status != 0) {
+        stop("Could not make the compiled executable executable.", call. = FALSE)
+      }
+    }
+    write_build_record(record, candidate)
+    NULL
+  }, error = function(e) e)
+  if (!is.null(staging)) {
+    stop(
+      conditionMessage(staging),
+      " The model executable at '", to, "' was not modified.",
+      left_behind(remove(c(candidate, staged_record))),
+      call. = FALSE
+    )
+  }
+
+  # The old pair aside, then the new pair in. A move with nothing to back up
+  # drops out.
+  record_path <- build_record_path(to)
+  exe_backup <- if (file.exists(to)) stage("exe-old-")
+  record_backup <- if (file.exists(record_path)) stage("record-old-")
+  moves <- list(
+    c(to, exe_backup),
+    c(record_path, record_backup),
+    c(candidate, to),
+    c(staged_record, record_path)
+  )
+  moves <- moves[lengths(moves) == 2]
+  done <- list()
+  failure <- tryCatch({
+    for (move in moves) {
+      if (!rename(move[1], move[2])) {
+        stop("Could not move '", move[1], "' to '", move[2], "'.", call. = FALSE)
+      }
+      done <- c(done, list(move))
+    }
+    verify_build_record(to)
+    NULL
+  }, error = function(e) e)
+  if (!is.null(failure)) {
+    # A later undo can put the old file back over one that would not move.
+    stuck <- character()
+    for (move in rev(done)) {
+      if (rename(move[2], move[1])) {
+        stuck <- setdiff(stuck, move[1])
+      } else {
+        stuck <- c(stuck, move[2])
+      }
+    }
+    stop(
+      "Could not install the compiled executable at '", to, "': ",
+      conditionMessage(failure),
+      if (length(stuck) == 0) {
+        " The executable and build record there are as they were."
+      } else {
+        " The previous executable and build record could not all be put back."
+      },
+      left_behind(c(stuck, remove(c(candidate, staged_record)))),
+      call. = FALSE
+    )
+  }
+
+  leftover <- remove(c(exe_backup, record_backup))
+  if (length(leftover) == 0) NULL else leftover
+}
+
 #' Take an executable as it is
 #'
-#' Three outcomes. With a usable record beside it nothing is launched: the
-#' hash the reader checked proves the binary is the one the record describes.
-#' Without one the executable is asked to identify itself with `info`, once. A
-#' version it reports admits it, without a record. No version refuses it,
-#' since an executable that cannot say what built it is not a CmdStan
-#' executable.
-#'
+#' @param exe_file Path to the executable.
 #' @return A list: `record` (`NULL` when there is no record),
-#'   `reported_features`, `version` and `executable_hash`, the executable's
-#'   hash.
+#'   `reported_features`, `version` and `executable_hash`.
 #' @noRd
 adopt_executable <- function(exe_file) {
-  found <- read_build_record(exe_file)
+  found <- inspect_executable(exe_file)
   if (found$status == "available") {
     return(facts_from_record(found$record))
+  }
+  list(
+    record = NULL,
+    reported_features = found$reported_features,
+    version = found$reported_features[["stan_version"]],
+    executable_hash = hash_file(exe_file)
+  )
+}
+
+#' Read the build record beside an executable, or query the executable
+#'
+#' With a usable record the features come from it and the executable is not
+#' run. Without one the executable is run with `info` and the features come
+#' from its output.
+#'
+#' @param exe_file Path to the executable.
+#' @return What `read_build_record()` returns, plus `reported_features`.
+#' @noRd
+inspect_executable <- function(exe_file) {
+  found <- read_build_record(exe_file)
+  if (found$status == "available") {
+    found$reported_features <- found$record$reported_features
+    return(found)
   }
   features <- reported_features_from_exe(exe_file)
   if (is.null(features[["stan_version"]])) {
     stop(
-      "'", exe_file, "' did not identify itself as a CmdStan executable. ",
-      "Running it with the argument 'info' did not report a Stan version.",
+      "Running '", exe_file, "' with the argument 'info' did not report a ",
+      "Stan version, so it is either not a CmdStan executable or cannot be ",
+      "run.",
       call. = FALSE
     )
   }
-  list(
-    record = NULL,
-    reported_features = features,
-    version = features[["stan_version"]],
-    executable_hash = hash_file(exe_file)
-  )
+  found$reported_features <- features
+  found
 }
 
 facts_from_record <- function(record) {
@@ -236,14 +375,21 @@ facts_from_record <- function(record) {
 
 #' What is on disk for an executable built from a Stan program
 #'
-#' The `current` argument of assess_build(): the record beside the executable,
-#' the installation selected now, and the sources hashed the way the writer
-#' hashes them, with `info`, the `stanc --info` output they were resolved
-#' from, kept for the facts. The constructor and assert_current() both come
-#' here, so they cannot assemble it differently. The sources are resolved
-#' through the selected stanc, so they are left unresolved when the selection
-#' is not the recorded CmdStan. That difference is a reason on its own.
+#' The `current` argument of `assess_build()`. `build_executable()` and
+#' `assert_current()` both come here, so they cannot assemble it differently.
+#' The sources are hashed only when the selected CmdStan is the one in the
+#' record, because the selected stanc resolves them and a different CmdStan
+#' already forces a rebuild. `info`, the `stanc --info` output they were
+#' resolved from, comes along for the model's `$variables()`.
 #'
+#' @param stan_file,include_paths,user_header The Stan program, include paths
+#'   and user header of the model being checked, with `include_paths` from
+#'   `effective_include_paths()`.
+#' @param exe_file Where the executable is or would be.
+#' @return A list: `exe_file`; `record`, what `read_build_record()` returned,
+#'   or the reason `no_executable`; `cmdstan`, the selected installation's
+#'   `path` and `version`; and, when the sources were hashed, `info` and
+#'   `dependencies` from `resolve_dependencies()`.
 #' @noRd
 read_current_build <- function(stan_file, include_paths, user_header,
                                exe_file) {
@@ -271,10 +417,12 @@ read_current_build <- function(stan_file, include_paths, user_header,
 #' Hash what a build of this program consumes
 #'
 #' The Stan program, the files stanc resolves its includes to under these
-#' paths, the user header and the installation's make/local, each by content
-#' and by where it is. Under WSL stanc reports the includes in its own
-#' spelling.
+#' paths, the user header and the installation's make/local. Under WSL stanc
+#' reports the includes in its own spelling.
 #'
+#' @param stan_file,include_paths,user_header As for `read_current_build()`.
+#' @return A list: `info`, what `stanc --info` reported, and `dependencies`,
+#'   the record's `dependencies` field for these files.
 #' @noRd
 resolve_dependencies <- function(stan_file, include_paths, user_header) {
   info <- stanc_info(stan_file, include_paths)
@@ -299,11 +447,14 @@ resolve_dependencies <- function(stan_file, include_paths, user_header) {
 
 #' The stanc flags make adds for this build
 #'
-#' What Make resolves `STANCFLAGS` to with this build's variables applied,
-#' which is how make/local and CmdStan's own makefiles reach stanc. An include
-#' path there is refused: `include_paths` is the one channel, so that
-#' resolving again sees every path the build saw.
+#' What make resolves `STANCFLAGS` to with this build's variables applied,
+#' which is how make/local and CmdStan's own makefiles reach stanc. Setting
+#' an include path there is an error. Include paths have to come through
+#' `include_paths`, because that's the only place `stanc --info` looks when
+#' the dependencies are resolved.
 #'
+#' @param make_vars The variable assignments this build passes to make.
+#' @return The flags, one per element.
 #' @noRd
 stancflags_added_by_make <- function(make_vars) {
   flags <- get_cmdstan_flags("STANCFLAGS", make_vars)
@@ -323,6 +474,10 @@ stancflags_added_by_make <- function(make_vars) {
 
 #' Run make on a model target inside the selected installation
 #'
+#' @param args Arguments to make: the target, then variable assignments.
+#' @param quiet Whether to hide make's output.
+#' @return The `processx::run()` result, invisibly. A failed build is an
+#'   error.
 #' @noRd
 run_make <- function(args, quiet) {
   withr::with_envvar(
@@ -387,6 +542,9 @@ run_make <- function(args, quiet) {
 #' A program with `#include` lines and no paths given looks in its own
 #' directory. stanc does not do this itself.
 #'
+#' @param stan_file Path to the program.
+#' @param include_paths What the user gave, or `NULL`.
+#' @return The paths, resolved, or `NULL` when there are none.
 #' @noRd
 effective_include_paths <- function(stan_file, include_paths = NULL) {
   code <- readLines(stan_file, warn = FALSE)
@@ -400,6 +558,9 @@ effective_include_paths <- function(stan_file, include_paths = NULL) {
 #'
 #' Beside the program, or in `dir`, under the program's name.
 #'
+#' @param stan_file Path to the program.
+#' @param dir A directory to put it in instead, or `NULL`.
+#' @return The path. A directory already there under that name is an error.
 #' @noRd
 executable_path <- function(stan_file, dir = NULL) {
   exe_base <- stan_file
@@ -425,12 +586,16 @@ model_name_from_path <- function(path) {
 }
 
 
-# what the constructor and assert_current() say -----------------------------
+# what build_executable() and assert_current() say --------------------------
 
-#' What the constructor says before it builds or reuses
+#' What `build_executable()` says before it builds or reuses
 #'
+#' @param reasons What `assess_build()` returned, plus the forced reason if
+#'   any.
+#' @param current What `read_current_build()` returned.
+#' @return The message, one string.
 #' @noRd
-constructor_message <- function(reasons, current) {
+build_message <- function(reasons, current) {
   if (length(reasons) == 0) {
     return("Model executable is up to date!")
   }
@@ -445,6 +610,9 @@ constructor_message <- function(reasons, current) {
 
 #' Word the reasons assess_build() returns, one line each
 #'
+#' @param reasons As for `build_message()`.
+#' @param current What `read_current_build()` returned.
+#' @return One line per reason, unnamed.
 #' @noRd
 rebuild_reasons <- function(reasons, current) {
   recorded <- current$record$record
@@ -530,6 +698,8 @@ rebuild_reasons <- function(reasons, current) {
 #' Carries the class `cmdstanr_stale_executable` so callers can catch it by
 #' what it means rather than by its text.
 #'
+#' @param lines The message, one element per line.
+#' @return Does not return.
 #' @noRd
 stop_stale_executable <- function(lines) {
   rlang::abort(
