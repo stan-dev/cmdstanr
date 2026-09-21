@@ -72,17 +72,6 @@ jobs:
         with:
           type: 'minimal'
 
-      # R-devel on macOS uses LLVM flang (not gfortran) and setup-r doesn't
-      # install it yet, so Fortran packages (quadprog, via bayesplot -> ggdist)
-      # fail to build from source. Drop once CRAN ships 4.7 arm64 binaries or
-      # setup-r handles it (r-lib/actions#1107).
-      - name: Install flang for R-devel on macOS
-        if: ${{ runner.os == 'macOS' && matrix.config.r == 'devel' }}
-        run: |
-          curl -fsSL https://mac.r-project.org/tools/flang-23.1.0-darwin23.tar.xz | sudo tar -xJf - -C /
-          echo "SDKROOT=$(xcrun --show-sdk-path)" >> $GITHUB_ENV
-        shell: bash
-
       - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r-dependencies@v2
