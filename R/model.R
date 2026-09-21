@@ -2303,9 +2303,20 @@ parse_cmdstan_args <- function(model_binary, method, stan_file) {
         args = c(method, "help-all"),
         error_on_status = FALSE
       ),
-      error = function(e) stop_cannot_run(model_binary, stan_file, e)
+      error = function(e) {
+        stop_cannot_run(model_binary, stan_file, conditionMessage(e))
+      }
     )
   )
+  # A CmdStan executable answers help-all with status 0, so anything else
+  # means it couldn't get that far, e.g. a missing library.
+  if (is.na(ret$status) || ret$status != 0) {
+    output <- trimws(paste0(ret$stderr, ret$stdout))
+    stop_cannot_run(
+      model_binary, stan_file,
+      if (nzchar(output)) output else paste("exit status", ret$status)
+    )
+  }
   # CmdStan may write help text to stdout or stderr depending on the platform
   raw <- paste0(ret$stdout, ret$stderr)
   output <- strsplit(raw, "\r?\n")[[1]]

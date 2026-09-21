@@ -436,9 +436,25 @@ test_that("an executable that will not start is an error at every launch", {
   expect_cannot_run(mod$cmdstan_defaults(), rebuild)
 
   adopted <- cmdstan_model(exe_file = exe)
-  expect_cannot_run(
-    adopted$sample(data = data, chains = 1),
-    "There is no Stan file to rebuild it from."
+  no_stan_file <- "There is no Stan file to rebuild it from."
+  expect_cannot_run(adopted$sample(data = data, chains = 1), no_stan_file)
+  expect_cannot_run(adopted$cmdstan_defaults(), no_stan_file)
+})
+
+test_that("an executable that starts but cannot answer help-all is an error", {
+  local_mocked_bindings(wsl_compatible_run = function(...) {
+    list(
+      status = 127L, stdout = "",
+      stderr = "error while loading shared libraries: libtbb.so: not found\n"
+    )
+  })
+  expect_error(
+    parse_cmdstan_args("/models/bern", "sample", "/models/bern.stan"),
+    paste0(
+      "^The executable at '/models/bern' could not be run: ",
+      "error while loading shared libraries: libtbb.so: not found\n",
+      "Run cmdstan_model\\(\\) with force_recompile = TRUE to rebuild it.$"
+    )
   )
 })
 
