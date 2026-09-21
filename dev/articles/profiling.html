@@ -210,8 +210,8 @@ documentation</a>.</p>
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1 likelihood 140051512850240 0.589957680  0.482317780  0.107639890       51261
-2     priors 140051512850240 0.003996736  0.002853373  0.001143363       34174
+1 likelihood 140198269429568 0.502907610  0.389072340  0.113835270       51261
+2     priors 140198269429568 0.003340161  0.002583384  0.000756777       34174
   no_chain_stack autodiff_calls no_autodiff_calls
 1       34191087          17087                 1
 2          34174          17087                 1</code></pre>
@@ -259,8 +259,8 @@ like for the previous one.</p>
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 140091891140416 0.003750588  0.002827281  0.000923307       35712
-2 likelihood 140091891140416 0.354999340  0.353962700  0.001036640       53568
+1     priors 139928397825856 0.003409369  0.002619959  0.000789410       35712
+2 likelihood 139928397825856 0.337815020  0.336954960  0.000860053       53568
   no_chain_stack autodiff_calls no_autodiff_calls
 1          35712          17856                 1
 2          17856          17856                 1</code></pre>
@@ -287,7 +287,7 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span> <span class="op">/</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 3.452670e-05 2.339051e-07</code></pre>
+<pre><code>[1] 2.943218e-05 1.954797e-07</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
@@ -297,7 +297,7 @@ CmdStan stores the profiling data in CSV files in a temporary location.
 The paths of the profiling CSV files can be retrieved using <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$profile_files()</code></a>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/Rtmpl1rlzD/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609170110-01-8ee266.csv"</code></pre>
+<pre><code>[1] "/tmp/RtmpPx8ixc/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609211620-01-8ee292.csv"</code></pre>
 <p>These can be saved to a more permanent location with the <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$save_profile_files()</code></a>
 method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">

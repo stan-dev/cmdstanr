@@ -124,8 +124,8 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140051512850240 0.589957680  0.482317780  0.107639890       51261
-    2     priors 140051512850240 0.003996736  0.002853373  0.001143363       34174
+    1 likelihood 140198269429568 0.502907610  0.389072340  0.113835270       51261
+    2     priors 140198269429568 0.003340161  0.002583384  0.000756777       34174
       no_chain_stack autodiff_calls no_autodiff_calls
     1       34191087          17087                 1
     2          34174          17087                 1
@@ -186,8 +186,8 @@ fit_glm$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1     priors 140091891140416 0.003750588  0.002827281  0.000923307       35712
-    2 likelihood 140091891140416 0.354999340  0.353962700  0.001036640       53568
+    1     priors 139928397825856 0.003409369  0.002619959  0.000789410       35712
+    2 likelihood 139928397825856 0.337815020  0.336954960  0.000860053       53568
       no_chain_stack autodiff_calls no_autodiff_calls
     1          35712          17856                 1
     2          17856          17856                 1
@@ -220,7 +220,7 @@ per_gradient_timing <- profile_chain_1$total_time / profile_chain_1$autodiff_cal
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.452670e-05 2.339051e-07
+    [1] 2.943218e-05 1.954797e-07
 
 ### Accessing and saving the profile files
 
@@ -234,7 +234,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/Rtmpl1rlzD/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609170110-01-8ee266.csv"
+    [1] "/tmp/RtmpPx8ixc/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609211620-01-8ee292.csv"
 
 These can be saved to a more permanent location with the
 [`$save_profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html)
