@@ -33,7 +33,7 @@ analysis.
 
 #### Installing the R package
 
-You can install the latest release of the **cmdstanr** R package with
+You can install the latest release of the **CmdStanR** R package with
 
 ```r
 # we recommend running this in a fresh R session or restarting your current session

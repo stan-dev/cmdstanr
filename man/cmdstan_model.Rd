@@ -86,7 +86,7 @@ when compiling the model. A flag is given by name without the leading
 hyphens, as \code{list("O1")} or \code{list(O1 = TRUE)}, and an option that takes a
 value as \code{list(option = "value")}. See \code{\link[=stan_build_info]{stan_build_info()}} for an example
 and the \href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{\code{stanc} chapter of the CmdStan User's Guide} for the
-available options. Options that cmdstanr sets from its own arguments
+available options. Options that CmdStanR sets from its own arguments
 cannot be passed here: \code{include-paths} (use \code{include_paths}),
 \code{warn-pedantic} (\code{pedantic}), \code{allow-undefined} (\code{user_header}),
 \code{use-opencl} (\code{cpp_options = list(stan_opencl = TRUE)}) and \code{name} (taken
@@ -96,7 +96,7 @@ from the name of the Stan file).}
 executable was built from this program with these options? The default,
 \code{NULL}, defers to the \code{cmdstanr_force_recompile} global option, and to
 \code{FALSE} when that is unset. Use \code{force_recompile=TRUE} for changes
-cmdstanr cannot see: a changed toolchain, a CmdStan modified in place, a
+CmdStanR cannot see: a changed toolchain, a CmdStan modified in place, a
 header the user header includes, or a makefile that \code{make/local} includes.}
 }
 \value{

@@ -25,7 +25,7 @@ and otherwise one of \code{"missing"} (no record beside the executable),
 \code{"unreadable"} (a record that could not be read), \code{"executable_mismatch"}
 (the record describes a different executable, so the one at this path was
 replaced after the record was written) or \code{"unsupported_format"} (written by
-a cmdstanr that stores records differently, in which case the result also
+a CmdStanR that stores records differently, in which case the result also
 has a \code{format_version} field).
 \item \code{reported_features}: A list containing what the executable reports about
 its own build. \code{stan_threads}, \code{stan_mpi}, \code{stan_opencl} and
@@ -64,7 +64,7 @@ This version and \code{reported_features$stan_version} will typically agree exce
 when using a release candidate (\code{cmdstan$version} will have a
 release-candidate suffix whereas \code{reported_features$stan_version} comes from
 the Stan library headers the executable was compiled against and will not).
-\item \code{untracked_dependencies}: A list of files the build depended on that cmdstanr
+\item \code{untracked_dependencies}: A list of files the build depended on that CmdStanR
 cannot follow, so a change to them does not automatically trigger a rebuild.
 An empty list means nothing of the kind was found. Each file is reported as
 a sublist with two fields: \code{kind}, which is \code{"make_local_include"} when
@@ -74,7 +74,7 @@ was found in.
 }
 
 The result leaves out some of what the record holds: the file hashes the
-rebuild check compares, the stanc flags cmdstanr added or \code{make/local}
+rebuild check compares, the stanc flags CmdStanR added or \code{make/local}
 contributed, the model name given to stanc, and the TBB directory.
 \code{dependencies$make_local} names the file those flags came from, though its
 contents may have changed since the build.
@@ -84,7 +84,7 @@ from the result means there was no usable record to read it from. An empty
 list is a recorded empty value, such as no untracked dependencies.
 }
 \description{
-When cmdstanr builds a model it writes a build record next to
+When CmdStanR builds a model it writes a build record next to
 the executable containing the options the build was asked for, the
 files it read, the CmdStan installation it used, and what the executable
 reports about itself. \code{stan_build_info()} reads that record back into \R.

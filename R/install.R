@@ -202,7 +202,7 @@ install_cmdstan <- function(dir = NULL,
     }
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
-           "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
+           "CmdStanR supports installing from .tar.gz archives only.", call. = FALSE)
     }
     message("* Installing CmdStan from ", release_url)
     download_url <- release_url
@@ -1001,8 +1001,8 @@ assert_supported_requested_cmdstan_version <- function(version, source = "versio
   }
   stop(
     "Requested CmdStan ", source, " (", version, ") is unsupported. ",
-    "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer. ",
-    "If you need an older CmdStan release, install an older cmdstanr version from GitHub.",
+    "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer. ",
+    "If you need an older CmdStan release, install an older CmdStanR version from GitHub.",
     call. = FALSE
   )
 }

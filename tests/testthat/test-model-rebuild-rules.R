@@ -236,7 +236,7 @@ test_that("a record that cannot be used rebuilds and says why", {
   mocked(expect_mock_compile(expect_interactive_message(
     cmdstan_model(stan_file),
     paste0(
-      "written by a newer version of cmdstanr ",
+      "written by a newer version of CmdStanR ",
       "\\(format 2; this version understands 1\\)"
     )
   )))

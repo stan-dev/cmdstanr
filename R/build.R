@@ -48,7 +48,7 @@ build_executable <- function(stan_file,
   }
   exe <- executable_path(stan_file, dir)
 
-  # Options cmdstanr adds stay apart from the user's so the record can hold
+  # Options CmdStanR adds stay apart from the user's so the record can hold
   # each as it was. They're merged only when they become arguments.
   added <- list()
   if (pedantic) {
@@ -635,7 +635,7 @@ rebuild_reasons <- function(reasons, current) {
     written <- current$record$format_version
     sprintf(
       paste0(
-        "the build record was written by %s version of cmdstanr (format %s; ",
+        "the build record was written by %s version of CmdStanR (format %s; ",
         "this version understands %s), so how the executable was built ",
         "cannot be verified"
       ),

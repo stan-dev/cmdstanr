@@ -78,7 +78,7 @@ test_that("install_cmdstan() errors if invalid version or URL", {
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
-    "cmdstanr supports installing from .tar.gz archives only"
+    "CmdStanR supports installing from .tar.gz archives only"
   )
 })
 

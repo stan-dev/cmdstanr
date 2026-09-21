@@ -72,7 +72,7 @@ set_cmdstan_path <- function(path = NULL) {
     if (!is.null(version) && !is_supported_cmdstan_version(version)) {
       warning(
         "CmdStan path not set. CmdStan v", version, " is no longer supported. ",
-        "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer.",
+        "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer.",
         call. = FALSE
       )
       unset_cmdstan_path()
