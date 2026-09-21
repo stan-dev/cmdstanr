@@ -1,5 +1,5 @@
 startup_messages <- function() {
-  packageStartupMessage("This is cmdstanr version ", utils::packageVersion("cmdstanr"))
+  packageStartupMessage("This is CmdStanR version ", utils::packageVersion("cmdstanr"))
   packageStartupMessage("- CmdStanR documentation and vignettes: mc-stan.org/cmdstanr")
   if (is.null(.cmdstanr$PATH)) {
     packageStartupMessage("- Use set_cmdstan_path() to set the path to CmdStan")

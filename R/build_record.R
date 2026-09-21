@@ -2,7 +2,7 @@
 # built. The schema, the writer, the reader and the public view of a record,
 # stan_build_info(), all live here.
 
-# The only format version this cmdstanr reads or writes.
+# The only format version this CmdStanR reads or writes.
 build_record_format_version <- 1L
 
 #' Where an executable's build record lives
@@ -440,7 +440,7 @@ untracked_dependency_descriptions <- c(
 untracked_dependencies_note <- function(untracked) {
   kinds <- vapply(untracked, `[[`, character(1), "kind")
   paste0(
-    "Note: this model has dependencies cmdstanr does not track: ",
+    "Note: this model has dependencies CmdStanR does not track: ",
     paste(untracked_dependency_descriptions[kinds], collapse = ", "),
     ". If those files change, rebuild with force_recompile = TRUE."
   )
@@ -479,7 +479,7 @@ write_build_record <- function(record, exe_file) {
 #'
 #' A record that cannot be used is not an error, the result says why
 #' instead. The format version is checked before anything else, so a record
-#' in a format this version of cmdstanr does not read is never checked
+#' in a format this version of CmdStanR does not read is never checked
 #' against the current schema.
 #'
 #' @param exe_file Path to the executable, which must exist.
@@ -638,7 +638,7 @@ assess_build <- function(expected, current) {
 #' What is known about how a CmdStan executable was built
 #'
 #' @export
-#' @description When cmdstanr builds a model it writes a build record next to
+#' @description When CmdStanR builds a model it writes a build record next to
 #'   the executable containing the options the build was asked for, the
 #'   files it read, the CmdStan installation it used, and what the executable
 #'   reports about itself. `stan_build_info()` reads that record back into \R.
@@ -661,7 +661,7 @@ assess_build <- function(expected, current) {
 #' `"unreadable"` (a record that could not be read), `"executable_mismatch"`
 #' (the record describes a different executable, so the one at this path was
 #' replaced after the record was written) or `"unsupported_format"` (written by
-#' a cmdstanr that stores records differently, in which case the result also
+#' a CmdStanR that stores records differently, in which case the result also
 #' has a `format_version` field).
 #'
 #' * `reported_features`: A list containing what the executable reports about
@@ -701,7 +701,7 @@ assess_build <- function(expected, current) {
 #' release-candidate suffix whereas `reported_features$stan_version` comes from
 #' the Stan library headers the executable was compiled against and will not).
 #'
-#' * `untracked_dependencies`: A list of files the build depended on that cmdstanr
+#' * `untracked_dependencies`: A list of files the build depended on that CmdStanR
 #' cannot follow, so a change to them does not automatically trigger a rebuild.
 #' An empty list means nothing of the kind was found. Each file is reported as
 #' a sublist with two fields: `kind`, which is `"make_local_include"` when
@@ -710,7 +710,7 @@ assess_build <- function(expected, current) {
 #' was found in.
 #'
 #' The result leaves out some of what the record holds: the file hashes the
-#' rebuild check compares, the stanc flags cmdstanr added or `make/local`
+#' rebuild check compares, the stanc flags CmdStanR added or `make/local`
 #' contributed, the model name given to stanc, and the TBB directory.
 #' `dependencies$make_local` names the file those flags came from, though its
 #' contents may have changed since the build.
@@ -870,7 +870,7 @@ print.stan_build_info <- function(x, ...) {
     if (cmdstan$exists) "" else " (no longer exists)", "\n", sep = "")
 
   if (length(x$untracked_dependencies) > 0) {
-    cat("Dependencies cmdstanr does not track:\n")
+    cat("Dependencies CmdStanR does not track:\n")
     for (entry in x$untracked_dependencies) {
       cat("  ", untracked_dependency_descriptions[[entry$kind]], " (",
         entry$detected_in, ")\n", sep = "")
@@ -901,12 +901,12 @@ build_record_status_line <- function(x) {
     unsupported_format = if (x$format_version > build_record_format_version) {
       paste0(
         "Build record: written in format ", x$format_version, " by a newer ",
-        "version of cmdstanr. Upgrade cmdstanr to read it."
+        "version of CmdStanR. Upgrade CmdStanR to read it."
       )
     } else {
       paste0(
         "Build record: written in format ", x$format_version, " by an older ",
-        "version of cmdstanr. To get a record this version reads, rebuild ",
+        "version of CmdStanR. To get a record this version reads, rebuild ",
         "the executable."
       )
     }

@@ -11,9 +11,9 @@ stanc_cmd <- function() {
   }
 }
 
-#' Check the user's `stanc_options` for what stanc or cmdstanr would reject
+#' Check the user's `stanc_options` for what stanc or CmdStanR would reject
 #'
-#' Each element is a flag, named or not. A leading `--`, a flag cmdstanr sets
+#' Each element is a flag, named or not. A leading `--`, a flag CmdStanR sets
 #' from one of its own arguments, and a `=` inside a name are errors.
 #'
 #' @param stanc_options The options the user passed to `cmdstan_model()` or
@@ -60,7 +60,7 @@ assert_valid_stanc_options <- function(stanc_options) {
   invisible(stanc_options)
 }
 
-#' The error for a stanc flag cmdstanr sets from one of its own arguments
+#' The error for a stanc flag CmdStanR sets from one of its own arguments
 #'
 #' The five flag names live here so the check and the messages cannot drift
 #' apart.

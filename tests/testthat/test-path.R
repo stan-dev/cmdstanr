@@ -168,7 +168,7 @@ test_that("Setting path rejects unsupported CmdStan versions", {
 
   expect_warning(
     set_cmdstan_path(path),
-    "cmdstanr now requires CmdStan v2.35.0 or newer",
+    "CmdStanR now requires CmdStan v2.35.0 or newer",
     fixed = TRUE
   )
   expect_null(.cmdstanr$PATH)

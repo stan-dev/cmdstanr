@@ -1,4 +1,4 @@
-# cmdstanr (development version)
+# CmdStanR (development version)
 
 This is a major release with enough noteworthy items that we've broken the
 release notes into sections. The **Building models** section covers the
@@ -38,7 +38,7 @@ was asked for, the files it read, the CmdStan installation that built it, and
 what the executable itself reports. Without a usable record it says why and
 shows only what the executable reports. `$build_info()` does the same for a
 model object. (#1258)
-* When a build depends on files cmdstanr cannot track, such as a makefile
+* When a build depends on files CmdStanR cannot track, such as a makefile
 included from `make/local` or a header included from the user header, the build
 prints a one-line note saying that changes to them need `force_recompile =
 TRUE`. (#1257)
@@ -83,7 +83,7 @@ Previously `FALSE` was passed through as a value, which enabled the option.
 `user_header` entry in `cpp_options` is an error that points at the argument.
 The header is no longer in `$cpp_options()`; the new `$user_header()` method
 returns its path. (#1258)
-* `stanc_options` now rejects the flags that cmdstanr's own arguments set:
+* `stanc_options` now rejects the flags that CmdStanR's own arguments set:
 `include-paths` (use `include_paths`), `warn-pedantic` (`pedantic`),
 `allow-undefined` (`user_header`), `use-opencl` (`cpp_options = list(stan_opencl
 = TRUE)`) and `name`, which comes from the file name. Every spelling is caught,
@@ -158,7 +158,7 @@ them. Validation occurs in the same pass. (#1195)
 * The new `print_stan_file()` prints a Stan file, with syntax highlighting when
 used in a Quarto or R Markdown document. (#1166)
 * The new `$cmdstan_defaults()` method returns CmdStan's default argument
-values for a method, `"sample"` by default, under the corresponding cmdstanr
+values for a method, `"sample"` by default, under the corresponding CmdStanR
 argument names. (#1167)
 * The new `$materialize()` method reads a fit's draws, sampler diagnostics,
 initial values and profiles from the CSV files into R in one call. (#1181)
@@ -221,7 +221,7 @@ and a precompiled executable (#1094).
 `mode = NULL` and `output_basename` is supplied. The internally generated
 optimizer CSV now uses the filename `<output_basename>-mode-01.csv`.
 * `read_cmdstan_csv()` now expands `~` in file paths. (#1098)
-* Loading cmdstanr no longer causes `parallel::mclapply()` to leave zombie
+* Loading CmdStanR no longer causes `parallel::mclapply()` to leave zombie
 processes behind. (#1105)
 * Supplying data with a `NULL` element now gives an informative error. (#1129)
 * `$metadata()` now reports the number of chains in `num_chains`. Previously it
@@ -238,9 +238,9 @@ as the other methods. (#1205)
 
 * Minimum R version increased to 4.0.0. (#1144)
 * CmdStan versions older than 2.35.0 are no longer supported. To use an older
-CmdStan version install an older cmdstanr release from GitHub. (#1144)
+CmdStan version install an older CmdStanR release from GitHub. (#1144)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
-as of cmdstanr 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
+as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `pathfinder()` now uses `threads` argument (`num_threads` is deprecated),
 to be consistent with other methods.
 * Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
@@ -264,12 +264,12 @@ to be consistent with other methods.
     - `max_depth` (`max_treedepth`)
     - `stepsize` (`step_size`)
 
-# cmdstanr 0.9.0
+# CmdStanR 0.9.0
 
 ## General Improvements/Changes
 
 * Added compatibility for RTools45 (#1066)
-* cmdstanr will now use RTools with no additional toolchain updates needed on 
+* CmdStanR will now use RTools with no additional toolchain updates needed on 
 Windows (CmdStan 2.35+ only; #1065, #1054)
 * Improve error messages when calling `sampler_diagnostics()` with `fixed_param=TRUE`
 * Improve numerical stability in calculation of effective sample size during 
@@ -304,7 +304,7 @@ effective sample size during `loo` method (#1015)
  supported in CmdStan (#1008)
  * Change usages of 'sampling statement' -> 'distribution statement' (#987)
 
-# cmdstanr 0.8.1
+# CmdStanR 0.8.1
 
 ## Minor changes
 
@@ -323,7 +323,7 @@ cases by @andrjohns in #983
 * Fix linking error when exposing SUNDIALS/KINSOL functions or model methods by @andrjohns in #977
 * Fix long-standing error with OneDrive paths on Windows by @andrjohns in #990
 
-# cmdstanr 0.8.0
+# CmdStanR 0.8.0
 
 ## Major new features
 
@@ -371,7 +371,7 @@ found by @jgabry in #956
 * Fix handling of `inv_metric` argument with only 1 parameter by @venpopov in #935
 * Fixes for compatibility with RTools44 by @andrjohns in #952 #959
 
-# cmdstanr 0.7.0
+# CmdStanR 0.7.0
 
 ## Major new features
 
@@ -396,7 +396,7 @@ found by @jgabry in #956
 * Rename `jacobian_adjustment` argument to `jacobian` by @jgabry in #879
 * Fix get_cmdstan_flags('STANCFLAGS') in recursive make by @pearsonca in #881
 
-# cmdstanr 0.6.1
+# CmdStanR 0.6.1
 
 * Store return codes instead of always querying exit status by @jgabry in #798
 * enable jacobian argument for optimization by @jgabry in #799
@@ -414,7 +414,7 @@ by @andrjohns in #811
 * change duplicate stdout_file to stderr_file by @jgabry in #834
 
 
-# cmdstanr 0.6.0
+# CmdStanR 0.6.0
 
 ### Major new features
 
@@ -451,7 +451,7 @@ include-paths by @adrian-lison in #775
 * Add moment-matching support to $loo() method by @andrjohns in #778
 * replace \ with function by @jsocolar in #789
 
-# cmdstanr 0.5.3
+# CmdStanR 0.5.3
 
 ### New features
 
@@ -476,7 +476,7 @@ in a path with spaces. (@weshinsley, #661, #663)
 * Fixed a bug that caused the `time()` method fail when some of the chains 
 failed to finish succesfully.
 
-# cmdstanr 0.5.2
+# CmdStanR 0.5.2
 
 * Refactored toolchain installation and checks for R 4.x on Windows and added 
 support for Rtools42. (#645)
@@ -487,13 +487,13 @@ installation _or_ directory containing CmdStan installations. (#643)
 * New vignette on how to handle deprecations using the `$format()` method. (#644)
 
 
-# cmdstanr 0.5.1
+# CmdStanR 0.5.1
 
 * Temporarily disable `format="draws_rvars"` in the `$draws()` method due to a
 bug. Until this is fixed users can make use of `posterior::as_draws_rvars()` to
 convert draws from CmdStanR to the `draws_rvars` format. (#640)
 
-# cmdstanr 0.5.0
+# CmdStanR 0.5.0
 
 ### Bug fixes
 
@@ -571,7 +571,7 @@ Linux distributions running on ARM CPUs are detected. (#531)
 objects from the coda package. (#584, @MatsuuraKentaro)
 
 
-# cmdstanr 0.4.0
+# CmdStanR 0.4.0
 
 ### Bug fixes
 
@@ -619,7 +619,7 @@ paths. (#471)
 draws returned or stored in the object. Changing the format can improve speed
 and memory usage for large models. (#482)
 
-# cmdstanr 0.3.0
+# CmdStanR 0.3.0
 
 ### Bug fixes
 
@@ -654,7 +654,7 @@ arguments for (L)BFGS. (#398)
 developers to import the CmdStanR documentation using roxygen2's
 `@inheritParams`. (#408)
 
-# cmdstanr 0.2.2
+# CmdStanR 0.2.2
 
 ### Bug fixes
 
@@ -669,7 +669,7 @@ developers to import the CmdStanR documentation using roxygen2's
 * Added threading support via `threads` argument for `$optimize()` and `$variational()`
   (was already available via `threads_per_chain` for `$sample()`). (#369)
 
-# cmdstanr 0.2.1
+# CmdStanR 0.2.1
 
 ### Bug fixes
 
@@ -683,7 +683,7 @@ developers to import the CmdStanR documentation using roxygen2's
 on pedantic mode, which warns about issues with the model beyond syntax errors.
 (#361)
 
-# cmdstanr 0.2.0
+# CmdStanR 0.2.0
 
 ### Bug fixes
 
@@ -725,11 +725,11 @@ specifying custom chain IDs. (#319)
 * Added checks if the user has the necessary permissions in the RTools and 
 temporary folders. (#343)
 
-# cmdstanr 0.1.3
+# CmdStanR 0.1.3
 
 * New `$check_syntax()` method for CmdStanModel objects. (#276, #277)
 
-# cmdstanr 0.1.2
+# CmdStanR 0.1.2
 
 * User is notified by message at load time if a new release of CmdStan is
 available. (#265, #273)
@@ -739,13 +739,13 @@ With the addition of the `dir` argument, the file written is not necessarily
 temporary. (#267, #272)
 
 
-# cmdstanr 0.1.1
+# CmdStanR 0.1.1
 
 * New knitr engine `eng_cmdstan()` and function `register_knitr_engine()` that
 allow Stan chunks in R markdown documents to be processed using CmdStanR
 instead of RStan. The new vignette _R Markdown CmdStan Engine_ provides a
 demonstration. (#261, #264, @bearloga)
 
-# cmdstanr 0.1.0
+# CmdStanR 0.1.0
 
 * Beta release

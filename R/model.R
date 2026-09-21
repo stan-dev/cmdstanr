@@ -70,7 +70,7 @@
 #'   value as `list(option = "value")`. See [stan_build_info()] for an example
 #'   and the [`stanc` chapter of the CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for the
-#'   available options. Options that cmdstanr sets from its own arguments
+#'   available options. Options that CmdStanR sets from its own arguments
 #'   cannot be passed here: `include-paths` (use `include_paths`),
 #'   `warn-pedantic` (`pedantic`), `allow-undefined` (`user_header`),
 #'   `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`) and `name` (taken
@@ -79,7 +79,7 @@
 #'   executable was built from this program with these options? The default,
 #'   `NULL`, defers to the `cmdstanr_force_recompile` global option, and to
 #'   `FALSE` when that is unset. Use `force_recompile=TRUE` for changes
-#'   cmdstanr cannot see: a changed toolchain, a CmdStan modified in place, a
+#'   CmdStanR cannot see: a changed toolchain, a CmdStan modified in place, a
 #'   header the user header includes, or a makefile that `make/local` includes.
 #'
 #' @return `cmdstan_model()` returns a [`CmdStanModel`] object.
@@ -2281,7 +2281,7 @@ assert_stan_file_exists <- function(stan_file) {
 #'
 #' Runs a CmdStan model binary with `help-all` to extract valid arguments
 #' and their default values for a given inference method, returning them
-#' with cmdstanr argument names.
+#' with CmdStanR argument names.
 #'
 #' @noRd
 #' @param model_binary Path to the CmdStan model binary.

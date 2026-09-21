@@ -537,7 +537,7 @@ test_that("print.stan_build_info() shows the fragments the spec pins", {
   expect_output(print(missing_x), "no build record", fixed = TRUE)
   expect_output(print(unreadable_x), "could not be read", fixed = TRUE)
   expect_output(print(mismatch_x), "does not match", fixed = TRUE)
-  expect_output(print(newer_x), "newer version of cmdstanr", fixed = TRUE)
+  expect_output(print(newer_x), "newer version of CmdStanR", fixed = TRUE)
   expect_output(print(older_x), "rebuild", fixed = TRUE)
   expect_output(print(available_x), "stan_threads: TRUE", fixed = TRUE)
   expect_output(print(available_x), "stan_mpi: unknown", fixed = TRUE)
