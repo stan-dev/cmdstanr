@@ -406,6 +406,42 @@ test_that("an executable that reports no version is refused", {
   }
 })
 
+test_that("an executable that will not start is an error at every launch", {
+  # Under WSL the chains run a copy through wsl.exe, which starts either way.
+  skip_if(os_is_wsl())
+  stan_file <- local_bernoulli()
+  mocked(expect_mock_compile(built <- cmdstan_model(stan_file)))
+  exe <- built$exe_file()
+  # A script naming an interpreter that does not exist cannot start on macOS
+  # or Linux, and no text file can start on Windows. The record is rebound
+  # to the new contents so nothing rebuilds.
+  record <- read_build_record(exe)$record
+  writeLines("#!/nonexistent/interpreter", exe)
+  record$executable_hash <- hash_file(exe)
+  write_build_record(record, exe)
+  data <- testing_data("bernoulli")
+  expect_cannot_run <- function(object, remedy) {
+    err <- expect_error(
+      object, paste0("The executable at '", exe, "' could not be run: "),
+      fixed = TRUE
+    )
+    expect_true(endsWith(conditionMessage(err), paste0("\n", remedy)))
+  }
+
+  mocked(expect_no_mock_compile(mod <- cmdstan_model(stan_file)))
+  rebuild <- "Run cmdstan_model() with force_recompile = TRUE to rebuild it."
+  expect_cannot_run(mod$sample(data = data, chains = 1), rebuild)
+  expect_cannot_run(mod$optimize(data = data), rebuild)
+  expect_cannot_run(mod$diagnose(data = data), rebuild)
+  expect_cannot_run(mod$cmdstan_defaults(), rebuild)
+
+  adopted <- cmdstan_model(exe_file = exe)
+  expect_cannot_run(
+    adopted$sample(data = data, chains = 1),
+    "There is no Stan file to rebuild it from."
+  )
+})
+
 test_that("a record member with a longer name is not read as the user header", {
   stan_file <- local_bernoulli()
   a <- mock_cmdstan_model(stan_file)

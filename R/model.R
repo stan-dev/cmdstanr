@@ -2160,7 +2160,7 @@ cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
                                         "pathfinder", "laplace")) {
   method <- match.arg(method)
   private$assert_current()
-  parse_cmdstan_args(self$exe_file(), method)
+  parse_cmdstan_args(self$exe_file(), method, self$stan_file())
 }
 CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 
@@ -2287,18 +2287,23 @@ assert_stan_file_exists <- function(stan_file) {
 #' @param model_binary Path to the CmdStan model binary.
 #' @param method Inference method: `"sample"`, `"optimize"`,
 #'   `"variational"`, `"pathfinder"`, or `"laplace"`.
+#' @param stan_file The model's Stan file, for the error when the binary
+#'   will not run.
 #' @return A named list with cmdstanr-style argument names and default
 #'   values.
-parse_cmdstan_args <- function(model_binary, method) {
+parse_cmdstan_args <- function(model_binary, method, stan_file) {
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
       tbb_path()
     ),
-    ret <- wsl_compatible_run(
-      command = wsl_safe_path(model_binary),
-      args = c(method, "help-all"),
-      error_on_status = FALSE
+    ret <- tryCatch(
+      wsl_compatible_run(
+        command = wsl_safe_path(model_binary),
+        args = c(method, "help-all"),
+        error_on_status = FALSE
+      ),
+      error = function(e) stop_cannot_run(model_binary, stan_file, e)
     )
   )
   # CmdStan may write help text to stdout or stderr depending on the platform

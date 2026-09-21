@@ -233,6 +233,10 @@ for `stanc`. Previously only the first space was replaced and the quotes ended
 up in the generated C++. (#1200)
 * `$draws()` on a pathfinder fit now orders the diagnostic columns the same way
 as the other methods. (#1205)
+* An executable that cannot be run, for example one that lost its execute bit
+or was built for another platform, now gives an error naming the executable
+and saying how to rebuild it. Previously the fitting methods and
+`$cmdstan_defaults()` surfaced a raw `processx` error. (#1246)
 
 ## Removed and deprecated
 
