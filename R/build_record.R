@@ -665,8 +665,8 @@ assess_build <- function(expected, current) {
 #' `"unavailable"`, and `reason`, which is `NULL` when the record is available
 #' and otherwise one of `"missing"` (no record beside the executable),
 #' `"unreadable"` (a record that could not be read), `"executable_mismatch"`
-#' (the record describes a different executable, so the one at this path was
-#' replaced after the record was written) or `"unsupported_format"` (written by
+#' (the record describes a different executable, so the one at this path has
+#' changed since the record was written) or `"unsupported_format"` (written by
 #' a CmdStanR that stores records differently, in which case the result also
 #' has a `format_version` field).
 #'
@@ -687,9 +687,12 @@ assess_build <- function(expected, current) {
 #'   * `stanc_options`: the flags as given to stanc, in order.
 #'   For example, `list(O1 = TRUE)` and `list("O1")` both come back as
 #'   `list("--O1")`.
+#'   * `stanc_options_from_make`: the flags `make/local` added to the stanc
+#'   call through `STANCFLAGS`. A flag that `stanc_options` also sets is not
+#'   repeated here since `stanc_options` takes precedence.
 #'   * `include_paths`: a character vector of the directories searched for
-#'   included files. When none were given, this is the Stan program's own
-#'   directory if the program has includes and empty otherwise.
+#'   included files. When none were provided but the Stan program has includes
+#'   this is set to the program's own directory.
 #'
 #' * `dependencies`: A list describing the files the build read. Contains sublists
 #' `stan_file`, `included_files`, `user_header` and `make_local`. `user_header`
@@ -716,10 +719,8 @@ assess_build <- function(expected, current) {
 #' was found in.
 #'
 #' The result leaves out some of what the record holds: the file hashes the
-#' rebuild check compares, the stanc flags CmdStanR added or `make/local`
-#' contributed, the model name given to stanc, and the TBB directory.
-#' `dependencies$make_local` names the file those flags came from, though its
-#' contents may have changed since the build.
+#' rebuild check compares, the stanc flags CmdStanR added itself, the model
+#' name given to stanc, and the TBB directory.
 #'
 #' Absent items and empty items have different interpretations. A field missing
 #' from the result means there was no usable record to read it from. An empty
@@ -752,6 +753,7 @@ stan_build_info <- function(exe_file) {
     info$configuration <- list(
       cpp_options = record$configuration$cpp_options,
       stanc_options = record$configuration$stanc_options,
+      stanc_options_from_make = record$configuration$stanc_options_from_make,
       include_paths = as.character(unlist(record$configuration$include_paths))
     )
     info$dependencies <- public_dependencies(record$dependencies)
@@ -853,8 +855,12 @@ print.stan_build_info <- function(x, ...) {
   stanc_options <- unlist(x$configuration$stanc_options)
   cat("  stanc_options: ", if (length(stanc_options) == 0) "none" else
     paste(stanc_options, collapse = " "), "\n", sep = "")
-  cat("  include_paths: ", paste(x$configuration$include_paths, collapse = ", "),
-    "\n", sep = "")
+  from_make <- unlist(x$configuration$stanc_options_from_make)
+  cat("  stanc_options_from_make: ", if (length(from_make) == 0) "none" else
+    paste(from_make, collapse = " "), "\n", sep = "")
+  include_paths <- x$configuration$include_paths
+  cat("  include_paths: ", if (length(include_paths) == 0) "none" else
+    paste(include_paths, collapse = ", "), "\n", sep = "")
 
   cat("Dependencies:\n")
   path_line <- function(label, entry) {
@@ -896,24 +902,24 @@ build_record_status_line <- function(x) {
   }
   switch(x$record$reason,
     missing = paste0(
-      "Build record: none. There is no build record beside this executable, ",
-      "so only what it reports about itself is known."
+      "Build record: not found. Only what the executable says about itself ",
+      "is known."
     ),
-    unreadable = "Build record: could not be read.",
-    executable_mismatch = paste0(
-      "Build record: does not match this executable, which was replaced ",
-      "after the record was written."
+    unreadable = paste0(
+      "Build record: could not be read. Rebuilding the executable writes a ",
+      "new one."
     ),
+    executable_mismatch =
+      "Build record: does not match. Executable changed after the build.",
     unsupported_format = if (x$format_version > build_record_format_version) {
       paste0(
-        "Build record: written in format ", x$format_version, " by a newer ",
-        "version of CmdStanR. Upgrade CmdStanR to read it."
+        "Build record: format ", x$format_version, " (newer CmdStanR). ",
+        "Upgrade CmdStanR to read it."
       )
     } else {
       paste0(
-        "Build record: written in format ", x$format_version, " by an older ",
-        "version of CmdStanR. To get a record this version reads, rebuild ",
-        "the executable."
+        "Build record: format ", x$format_version, " (older CmdStanR). ",
+        "Rebuild the executable to replace it."
       )
     }
   )

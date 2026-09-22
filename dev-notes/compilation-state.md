@@ -2999,11 +2999,12 @@ shipped yet, so the set can still be chosen freely; after 1.0 it cannot. The has
 fail that test. The artifact hash answers a question the caller can already answer
 by hashing the file whose path they just passed in, and the dependency hashes
 compare against nothing but another record's same field. So do
-`stanc_options_added`, `stanc_options_from_make` and `stanc_name`, which say how
-cmdstanr assembled the stanc command line rather than what was asked of it. `tbb_dir` is out on the same
+`stanc_options_added` and `stanc_name`, which say how cmdstanr assembled the stanc
+command line rather than what was asked of it. `tbb_dir` is out on the same
 test; the record keeps it because Windows needs it at launch (§4). `configuration` keeps
-`include_paths` for diagnosis alone: a caller debugging an include has no other way
-to see where the build searched.
+`include_paths` and `stanc_options_from_make` for diagnosis alone: a caller debugging
+an include has no other way to see where the build searched, and `make/local` can
+change after a build, so the file alone does not say which flags the build saw.
 
 <!-- contract -->
 
@@ -3022,6 +3023,7 @@ list(
   configuration = list(
     cpp_options   = list(STAN_THREADS = "true"),
     stanc_options = list(),
+    stanc_options_from_make = list("--O1"),
     include_paths = "/proj"
   ),
   dependencies = list(

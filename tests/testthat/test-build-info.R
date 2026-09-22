@@ -53,10 +53,15 @@ test_that("an available build record is read in full without launching the execu
   expect_identical(features$stan_version, "2.39.0")
 
   expect_named(
-    result$configuration, c("cpp_options", "stanc_options", "include_paths")
+    result$configuration,
+    c(
+      "cpp_options", "stanc_options", "stanc_options_from_make",
+      "include_paths"
+    )
   )
   expect_equal(result$configuration$cpp_options, list(STAN_THREADS = "true"))
   expect_equal(result$configuration$stanc_options, list("--O1"))
+  expect_equal(result$configuration$stanc_options_from_make, list())
   expect_type(result$configuration$include_paths, "character")
 
   expect_named(
@@ -103,10 +108,25 @@ test_that("fields the record withholds are absent from the result", {
   expect_named(result$dependencies$make_local, c("built_from", "exists"))
 
   expect_false("stanc_options_added" %in% names(result$configuration))
-  expect_false("stanc_options_from_make" %in% names(result$configuration))
   expect_false("stanc_name" %in% names(result$configuration))
   expect_named(
-    result$configuration, c("cpp_options", "stanc_options", "include_paths")
+    result$configuration,
+    c(
+      "cpp_options", "stanc_options", "stanc_options_from_make",
+      "include_paths"
+    )
+  )
+})
+
+test_that("the stanc flags make/local added come back as recorded", {
+  result <- available_result(function(record) {
+    record$configuration$stanc_options_from_make <-
+      list("--O0", "--warn-pedantic")
+    record
+  })
+  expect_equal(
+    result$configuration$stanc_options_from_make,
+    list("--O0", "--warn-pedantic")
   )
 })
 
@@ -464,13 +484,13 @@ test_that("features reported by the binary have the fixed shape", {
   expect_identical(features$stan_version, "2.39.0")
 })
 
-test_that("print.stan_build_info() shows the fragments the spec pins", {
+test_that("print.stan_build_info() output for each record state", {
   unavailable_features <- list(
     stan_threads = NA, stan_mpi = NA, stan_opencl = NA,
     stan_no_range_checks = NA, stan_version = NA_character_
   )
 
-  available_x <- structure(
+  sparse_x <- structure(
     list(
       record = list(status = "available", reason = NULL),
       reported_features = list(
@@ -480,6 +500,7 @@ test_that("print.stan_build_info() shows the fragments the spec pins", {
       configuration = list(
         cpp_options = list(STAN_THREADS = "true"),
         stanc_options = list("--O1"),
+        stanc_options_from_make = list(),
         include_paths = character(0)
       ),
       dependencies = list(
@@ -488,10 +509,10 @@ test_that("print.stan_build_info() shows the fragments the spec pins", {
         user_header = NULL,
         make_local = NULL
       ),
-      cmdstan = list(path = "/opt/cmdstan-2.39.0", version = "2.39.0", exists = FALSE),
-      untracked_dependencies = list(
-        list(kind = "make_local_include", detected_in = "make/local")
-      )
+      cmdstan = list(
+        path = "/opt/cmdstan-2.39.0", version = "2.39.0", exists = FALSE
+      ),
+      untracked_dependencies = list()
     ),
     class = "stan_build_info"
   )
@@ -533,17 +554,50 @@ test_that("print.stan_build_info() shows the fragments the spec pins", {
     class = "stan_build_info"
   )
 
-  expect_output(print(available_x), "available", fixed = TRUE)
-  expect_output(print(missing_x), "no build record", fixed = TRUE)
-  expect_output(print(unreadable_x), "could not be read", fixed = TRUE)
-  expect_output(print(mismatch_x), "does not match", fixed = TRUE)
-  expect_output(print(newer_x), "newer version of CmdStanR", fixed = TRUE)
-  expect_output(print(older_x), "rebuild", fixed = TRUE)
-  expect_output(print(available_x), "stan_threads: TRUE", fixed = TRUE)
-  expect_output(print(available_x), "stan_mpi: unknown", fixed = TRUE)
-  expect_output(print(available_x), "no longer exists", fixed = TRUE)
-  expect_output(
-    print(available_x), "make/local includes another makefile", fixed = TRUE
+  full_x <- structure(
+    list(
+      record = list(status = "available", reason = NULL),
+      reported_features = list(
+        stan_threads = TRUE, stan_mpi = FALSE, stan_opencl = FALSE,
+        stan_no_range_checks = NA, stan_version = "2.39.0"
+      ),
+      configuration = list(
+        cpp_options = list(STAN_THREADS = "true", STAN_CPP_OPTIMS = "true"),
+        stanc_options = list("--O1"),
+        stanc_options_from_make = list("--warn-pedantic"),
+        include_paths = c("/proj/inc", "/proj/shared")
+      ),
+      dependencies = list(
+        stan_file = list(built_from = "/proj/bernoulli.stan", exists = TRUE),
+        included_files = list(
+          list(built_from = "/proj/inc/half.stan", exists = TRUE),
+          list(built_from = "/proj/shared/prior.stan", exists = FALSE)
+        ),
+        user_header = list(built_from = "/proj/helpers.hpp", exists = TRUE),
+        make_local = list(
+          built_from = "/opt/cmdstan-2.39.0/make/local", exists = TRUE
+        )
+      ),
+      cmdstan = list(
+        path = "/opt/cmdstan-2.39.0", version = "2.39.0", exists = TRUE
+      ),
+      untracked_dependencies = list(
+        list(
+          kind = "make_local_include",
+          detected_in = "/opt/cmdstan-2.39.0/make/local"
+        ),
+        list(kind = "user_header_include", detected_in = "/proj/helpers.hpp")
+      )
+    ),
+    class = "stan_build_info"
   )
-  expect_output(expect_invisible(print(available_x)))
+
+  expect_snapshot(print(full_x))
+  expect_snapshot(print(sparse_x))
+  expect_snapshot(print(missing_x))
+  expect_snapshot(print(unreadable_x))
+  expect_snapshot(print(mismatch_x))
+  expect_snapshot(print(newer_x))
+  expect_snapshot(print(older_x))
+  expect_output(expect_invisible(print(sparse_x)))
 })

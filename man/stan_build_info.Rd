@@ -23,8 +23,8 @@ A list of class \code{"stan_build_info"}. Two fields are always there:
 \code{"unavailable"}, and \code{reason}, which is \code{NULL} when the record is available
 and otherwise one of \code{"missing"} (no record beside the executable),
 \code{"unreadable"} (a record that could not be read), \code{"executable_mismatch"}
-(the record describes a different executable, so the one at this path was
-replaced after the record was written) or \code{"unsupported_format"} (written by
+(the record describes a different executable, so the one at this path has
+changed since the record was written) or \code{"unsupported_format"} (written by
 a CmdStanR that stores records differently, in which case the result also
 has a \code{format_version} field).
 \item \code{reported_features}: A list containing what the executable reports about
@@ -46,9 +46,12 @@ comes back as \code{list(STAN_THREADS = "true")}.
 \item \code{stanc_options}: the flags as given to stanc, in order.
 For example, \code{list(O1 = TRUE)} and \code{list("O1")} both come back as
 \code{list("--O1")}.
+\item \code{stanc_options_from_make}: the flags \code{make/local} added to the stanc
+call through \code{STANCFLAGS}. A flag that \code{stanc_options} also sets is not
+repeated here since \code{stanc_options} takes precedence.
 \item \code{include_paths}: a character vector of the directories searched for
-included files. When none were given, this is the Stan program's own
-directory if the program has includes and empty otherwise.
+included files. When none were provided but the Stan program has includes
+this is set to the program's own directory.
 }
 \item \code{dependencies}: A list describing the files the build read. Contains sublists
 \code{stan_file}, \code{included_files}, \code{user_header} and \code{make_local}. \code{user_header}
@@ -74,10 +77,8 @@ was found in.
 }
 
 The result leaves out some of what the record holds: the file hashes the
-rebuild check compares, the stanc flags CmdStanR added or \code{make/local}
-contributed, the model name given to stanc, and the TBB directory.
-\code{dependencies$make_local} names the file those flags came from, though its
-contents may have changed since the build.
+rebuild check compares, the stanc flags CmdStanR added itself, the model
+name given to stanc, and the TBB directory.
 
 Absent items and empty items have different interpretations. A field missing
 from the result means there was no usable record to read it from. An empty
