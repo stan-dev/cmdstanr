@@ -46,6 +46,7 @@ CmdStanArgs <- R6::R6Class(
                           save_cmdstan_config = NULL) {
 
       self$model_name <- model_name
+      self$stan_file <- stan_file
       self$stan_code <- stan_code
       self$exe_file <- exe_file
       self$model_methods_env <- model_methods_env

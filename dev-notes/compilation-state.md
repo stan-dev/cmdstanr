@@ -2379,12 +2379,17 @@ recorded TBB is gone, so none of the reasons above fire and none should: a check
 the one of those a `stat` can see would leave the rest to fail at launch anyway.
 The state is ordinary. Measured, R's own `utils::unzip()` extracts an executable
 without the execute bit where `untar()` and `file.copy()` keep it, so a project
-folder shared as a zip and unpacked from R arrives in it. What has to change is the
-failure text: today a lost bit reaches `cannot start processx process './bern'
-(system error 13, Permission denied)`, the executable's basename in a relative path
-and an errno. #1246's error is the answer, and it belongs at every site that
-launches the model binary (#1261 enumerates the four), not only the adoption
-fallback its own report covers. <!-- contract -->It names the executable, and for a source-backed
+folder shared as a zip and unpacked from R arrives in it. What changed is the
+failure text: before v1.0 a lost bit reached `cannot start processx process
+'./bern' (system error 13, Permission denied)`, the executable's basename in a
+relative path and an errno. #1246's error replaces it at every site that launches
+the model binary (#1261 enumerates the four), not only the adoption fallback its
+own report covers. It covers a process the operating system would not create and,
+from `$cmdstan_defaults()`, one that started but could not answer `help-all`, the
+loader's own message standing as the reason. A chain that starts and dies in the
+loader is reported as a chain that finished unexpectedly, with the loader's output,
+because nothing short of classifying stderr tells that apart from an ordinary
+nonzero exit; the TBB-specific remedy is #1261's. <!-- contract -->It names the executable, and for a source-backed
 model says that `force_recompile = TRUE` rebuilds it; with only an executable (§7)
 there is nothing to rebuild and it says so instead.
 

@@ -463,6 +463,43 @@ check_target_exe <- function(exe) {
   }
 }
 
+#' Turn a failed launch of the model executable into a readable error
+#'
+#' Called when processx could not start the executable, which happens when
+#' the file has lost its execute bit, for example after being unzipped from
+#' R, or was built for another platform, and when the executable started
+#' but could not answer `help-all`, for example because a library it was
+#' linked against is gone. Nothing checks for either ahead of time, so the
+#' launch is where they first show up. processx's own error gives a
+#' relative path like `./bernoulli` and an errno. This one names the
+#' executable, keeps the system's reason (for example "Permission denied")
+#' or the executable's own output, and says how to rebuild it, or that
+#' there is no Stan file to rebuild it from.
+#'
+#' @param exe_file Path to the executable.
+#' @param stan_file The model's Stan file, empty for a model created from an
+#'   executable alone.
+#' @param reason processx's error message, or what the executable printed.
+#' @noRd
+stop_cannot_run <- function(exe_file, stan_file, reason) {
+  system_error <- regmatches(
+    reason, regexec("\\(system error [0-9]+, ([^)]*)\\)", reason)
+  )[[1]]
+  if (length(system_error) == 2) {
+    reason <- system_error[[2]]
+  }
+  remedy <- if (length(stan_file) > 0) {
+    "Run cmdstan_model() with force_recompile = TRUE to rebuild it."
+  } else {
+    "There is no Stan file to rebuild it from."
+  }
+  stop(
+    "The executable at '", exe_file, "' could not be run: ", reason, "\n",
+    remedy,
+    call. = FALSE
+  )
+}
+
 .run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
   procs <- self$procs
   on.exit(procs$cleanup(), add = TRUE)
@@ -515,7 +552,8 @@ check_target_exe <- function(exe) {
         id = chain_id,
         command = self$command(),
         args = self$command_args()[[chain_id]],
-        wd = dirname(self$exe_file()),
+        exe_file = self$exe_file(),
+        stan_file = self$args$stan_file,
         mpi_cmd = mpi_cmd,
         mpi_args = mpi_args
       )
@@ -577,7 +615,8 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
         id = chain_id,
         command = self$command(),
         args = self$command_args()[[chain_id]],
-        wd = dirname(self$exe_file())
+        exe_file = self$exe_file(),
+        stan_file = self$args$stan_file
       )
       procs$mark_proc_start(chain_id)
       procs$set_active_procs(procs$active_procs() + 1)
@@ -612,7 +651,8 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     id = id,
     command = self$command(),
     args = self$command_args()[[id]],
-    wd = dirname(self$exe_file())
+    exe_file = self$exe_file(),
+    stan_file = self$args$stan_file
   )
   procs$set_active_procs(1)
   procs$mark_proc_start(id)
@@ -664,14 +704,21 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
       toolchain_PATH_env_var(),
       tbb_path()
     ),
-    ret <- wsl_compatible_run(
-      command = self$command(),
-      args = self$command_args()[[1]],
-      wd = dirname(self$exe_file()),
-      env = cmdstan_process_env(procs$threads_per_proc()),
-      stderr = stderr_file,
-      stdout = stdout_file,
-      error_on_status = FALSE
+    ret <- tryCatch(
+      wsl_compatible_run(
+        command = self$command(),
+        args = self$command_args()[[1]],
+        wd = dirname(self$exe_file()),
+        env = cmdstan_process_env(procs$threads_per_proc()),
+        stderr = stderr_file,
+        stdout = stdout_file,
+        error_on_status = FALSE
+      ),
+      error = function(e) {
+        stop_cannot_run(
+          self$exe_file(), self$args$stan_file, conditionMessage(e)
+        )
+      }
     )
   )
   if (is.na(ret$status) || ret$status != 0) {
@@ -771,7 +818,8 @@ CmdStanProcs <- R6::R6Class(
     get_proc = function(id) {
       private$processes_[[id]]
     },
-    new_proc = function(id, command, args, wd, mpi_cmd = NULL, mpi_args = NULL) {
+    new_proc = function(id, command, args, exe_file, stan_file,
+                        mpi_cmd = NULL, mpi_args = NULL) {
       if (!is.null(mpi_cmd)) {
         exe_name <- mpi_args[["exe"]]
         mpi_args[["exe"]] <- NULL
@@ -787,14 +835,23 @@ CmdStanProcs <- R6::R6Class(
           toolchain_PATH_env_var(),
           tbb_path()
         ),
-        private$processes_[[id]] <- wsl_compatible_process_new(
-          command = command,
-          args = args,
-          wd = wd,
-          env = cmdstan_process_env(self$threads_per_proc()),
-          stdout = "|",
-          stderr = "|",
-          echo_cmd = is_verbose_mode()
+        private$processes_[[id]] <- tryCatch(
+          wsl_compatible_process_new(
+            command = command,
+            args = args,
+            wd = dirname(exe_file),
+            env = cmdstan_process_env(self$threads_per_proc()),
+            stdout = "|",
+            stderr = "|",
+            echo_cmd = is_verbose_mode()
+          ),
+          error = function(e) {
+            # Under MPI it is the launcher that did not start.
+            if (!is.null(mpi_cmd)) {
+              stop(e)
+            }
+            stop_cannot_run(exe_file, stan_file, conditionMessage(e))
+          }
         )
       )
       invisible(self)
