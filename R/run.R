@@ -475,7 +475,7 @@ check_target_exe <- function(exe) {
 #' executable, keeps the system's reason (for example "Permission denied")
 #' or the executable's own output, and says how to rebuild it, or that
 #' there is no Stan file to rebuild it from. When the TBB the build linked
-#' against is no longer there it says so, since that is the likely cause
+#' against is no longer there it says so, since that's one likely cause
 #' and reinstalling it is the other way out.
 #'
 #' @param exe_file Path to the executable.

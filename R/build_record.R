@@ -367,19 +367,21 @@ reported_features_from_exe <- function(exe_file, tbb_dir = NULL) {
 
 #' Where the record says the TBB is
 #'
-#' The first non-empty of `TBB_LIB` and `TBB_BIN` from the call's
-#' `cpp_options`, then the installation's own copy, which is the order the
-#' makefile links in. The options are read as make receives them: the last
-#' assignment wins and `FALSE` is an empty one. A relative directory is
-#' resolved against the installation, where make runs.
+#' We use `TBB_LIB` if the call set it, otherwise `TBB_BIN`, otherwise the
+#' installation's own copy, which is the order the makefile uses when it
+#' links. The options are read the way make reads them, so the last
+#' assignment wins and `FALSE` counts as empty. A relative directory is
+#' relative to the installation, since that's where make runs. We take the
+#' value as written; `assert_valid_cpp_options()` has already rejected a
+#' make expression, because nothing here could expand it.
 #'
-#' Make can also pick up both variables from `make/local`,
-#' `~/.config/stan/make.local` or the environment. The record does not look
-#' there, so a build configured that way links against one TBB while the
-#' record names the installation's. On Windows the launch puts the recorded
-#' directory on PATH, so such a build runs with the installation's TBB first,
-#' which is what happens today anyway. We decided not to ask make for the real
-#' answer for now, and could reconsider if there is demand for it.
+#' The two variables can also reach make from `make/local`,
+#' `~/.config/stan/make.local` or the environment, and we don't look there.
+#' So a build set up that way links against a different TBB than the record
+#' names, which is the installation's. On Windows that means the launch puts the
+#' installation's TBB on PATH, which is what happened before too. We decided
+#' not to ask make for the real answer for now and can revisit if anyone
+#' needs it.
 #'
 #' @param cpp_options The call's `cpp_options`, as given.
 #' @return The directory. Under WSL it is the Windows path.

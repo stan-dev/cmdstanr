@@ -63,6 +63,27 @@ test_that("assert_valid_cpp_options points an empty user header at NULL", {
   )
 })
 
+test_that("assert_valid_cpp_options wants a literal TBB directory", {
+  expect_error(
+    assert_valid_cpp_options(list(tbb_bin = "$(MATH)lib/tbb")),
+    paste(
+      "`TBB_BIN` must be a literal directory. cmdstanr records it to launch",
+      "the model with the right TBB and doesn't expand make expressions",
+      "like `$(MATH)lib/tbb`."
+    ),
+    fixed = TRUE
+  )
+  expect_error(
+    assert_valid_cpp_options(list(TBB_LIB = "${HOME}/tbb")),
+    "`TBB_LIB` must be a literal directory.",
+    fixed = TRUE
+  )
+  expect_identical(
+    assert_valid_cpp_options(list(TBB_LIB = "/opt/tbb", TBB_BIN = FALSE)),
+    list(TBB_LIB = "/opt/tbb", TBB_BIN = FALSE)
+  )
+})
+
 test_that("assert_valid_cpp_options rejects an unnamed assignment", {
   expect_error(
     assert_valid_cpp_options(list("FOO=1")),
