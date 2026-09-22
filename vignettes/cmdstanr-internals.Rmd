@@ -39,13 +39,15 @@ The `cmdstan_model()` function creates a new `CmdStanModel` object, which stores
 the path to a Stan program as well as the path to a compiled executable.
 
 ```{r compile}
-# Copy the example to a tempfile so the vignette doesn't modify 
-# the CmdStan installation.
+# Copy the example to the temporary directory so the vignette doesn't modify
+# the CmdStan installation
 example_stan_file <- file.path(
   cmdstan_path(), "examples", "bernoulli", "bernoulli.stan"
 )
-stan_file <- tempfile(pattern = "bernoulli-", fileext = ".stan")
+stan_file <- file.path(tempdir(), "bernoulli.stan")
 invisible(file.copy(example_stan_file, stan_file))
+
+# Compile the model
 mod <- cmdstan_model(stan_file)
 mod$print()
 mod$stan_file()
@@ -252,7 +254,22 @@ itself. The file is named after the executable, so `bernoulli` is described by
 `.bernoulli.cmdstanr.json`.
 
 ```{r build-record}
-list.files(dirname(mod$exe_file()), pattern = "cmdstanr.json", all.files = TRUE)
+list.files(
+  dirname(mod$exe_file()), pattern = "bernoulli.*cmdstanr.json", all.files = TRUE
+)
+```
+
+The `$build_info()` method reads the record back. The standalone
+`stan_build_info()` function does the same for a path to an executable when you
+don't have a model object. When there is no usable record it says why and
+reports only what the executable says about itself.
+
+```{r build-info}
+mod$build_info()
+
+# demonstrating stan_build_info even though here we have the model object 
+# so we can use mod$build_info()
+stan_build_info(mod$exe_file())
 ```
 
 If the directory is under version control, we recommend adding the record file

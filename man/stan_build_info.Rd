@@ -23,8 +23,8 @@ A list of class \code{"stan_build_info"}. Two fields are always there:
 \code{"unavailable"}, and \code{reason}, which is \code{NULL} when the record is available
 and otherwise one of \code{"missing"} (no record beside the executable),
 \code{"unreadable"} (a record that could not be read), \code{"executable_mismatch"}
-(the record describes a different executable, so the one at this path was
-replaced after the record was written) or \code{"unsupported_format"} (written by
+(the record describes a different executable, so the one at this path has
+changed since the record was written) or \code{"unsupported_format"} (written by
 a CmdStanR that stores records differently, in which case the result also
 has a \code{format_version} field).
 \item \code{reported_features}: A list containing what the executable reports about

@@ -659,8 +659,8 @@ assess_build <- function(expected, current) {
 #' `"unavailable"`, and `reason`, which is `NULL` when the record is available
 #' and otherwise one of `"missing"` (no record beside the executable),
 #' `"unreadable"` (a record that could not be read), `"executable_mismatch"`
-#' (the record describes a different executable, so the one at this path was
-#' replaced after the record was written) or `"unsupported_format"` (written by
+#' (the record describes a different executable, so the one at this path has
+#' changed since the record was written) or `"unsupported_format"` (written by
 #' a CmdStanR that stores records differently, in which case the result also
 #' has a `format_version` field).
 #'
@@ -852,8 +852,9 @@ print.stan_build_info <- function(x, ...) {
   from_make <- unlist(x$configuration$stanc_options_from_make)
   cat("  stanc_options_from_make: ", if (length(from_make) == 0) "none" else
     paste(from_make, collapse = " "), "\n", sep = "")
-  cat("  include_paths: ", paste(x$configuration$include_paths, collapse = ", "),
-    "\n", sep = "")
+  include_paths <- x$configuration$include_paths
+  cat("  include_paths: ", if (length(include_paths) == 0) "none" else
+    paste(include_paths, collapse = ", "), "\n", sep = "")
 
   cat("Dependencies:\n")
   path_line <- function(label, entry) {
@@ -895,24 +896,24 @@ build_record_status_line <- function(x) {
   }
   switch(x$record$reason,
     missing = paste0(
-      "Build record: none. There is no build record beside this executable, ",
-      "so only what it reports about itself is known."
+      "Build record: not found. Only what the executable says about itself ",
+      "is known."
     ),
-    unreadable = "Build record: could not be read.",
-    executable_mismatch = paste0(
-      "Build record: does not match this executable, which was replaced ",
-      "after the record was written."
+    unreadable = paste0(
+      "Build record: could not be read. Rebuilding the executable writes a ",
+      "new one."
     ),
+    executable_mismatch =
+      "Build record: does not match. Executable changed after the build.",
     unsupported_format = if (x$format_version > build_record_format_version) {
       paste0(
-        "Build record: written in format ", x$format_version, " by a newer ",
-        "version of CmdStanR. Upgrade CmdStanR to read it."
+        "Build record: format ", x$format_version, " (newer CmdStanR). ",
+        "Upgrade CmdStanR to read it."
       )
     } else {
       paste0(
-        "Build record: written in format ", x$format_version, " by an older ",
-        "version of CmdStanR. To get a record this version reads, rebuild ",
-        "the executable."
+        "Build record: format ", x$format_version, " (older CmdStanR). ",
+        "Rebuild the executable to replace it."
       )
     }
   )
