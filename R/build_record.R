@@ -681,9 +681,12 @@ assess_build <- function(expected, current) {
 #'   * `stanc_options`: the flags as given to stanc, in order.
 #'   For example, `list(O1 = TRUE)` and `list("O1")` both come back as
 #'   `list("--O1")`.
+#'   * `stanc_options_from_make`: the flags `make/local` added to the stanc
+#'   call through `STANCFLAGS`. A flag that `stanc_options` also sets is not
+#'   repeated here since `stanc_options` takes precedence.
 #'   * `include_paths`: a character vector of the directories searched for
-#'   included files. When none were given, this is the Stan program's own
-#'   directory if the program has includes and empty otherwise.
+#'   included files. When none were provided but the Stan program has includes
+#'   this is set to the program's own directory.
 #'
 #' * `dependencies`: A list describing the files the build read. Contains sublists
 #' `stan_file`, `included_files`, `user_header` and `make_local`. `user_header`
@@ -710,10 +713,8 @@ assess_build <- function(expected, current) {
 #' was found in.
 #'
 #' The result leaves out some of what the record holds: the file hashes the
-#' rebuild check compares, the stanc flags CmdStanR added or `make/local`
-#' contributed, the model name given to stanc, and the TBB directory.
-#' `dependencies$make_local` names the file those flags came from, though its
-#' contents may have changed since the build.
+#' rebuild check compares, the stanc flags CmdStanR added itself, the model
+#' name given to stanc, and the TBB directory.
 #'
 #' Absent items and empty items have different interpretations. A field missing
 #' from the result means there was no usable record to read it from. An empty
@@ -746,6 +747,7 @@ stan_build_info <- function(exe_file) {
     info$configuration <- list(
       cpp_options = record$configuration$cpp_options,
       stanc_options = record$configuration$stanc_options,
+      stanc_options_from_make = record$configuration$stanc_options_from_make,
       include_paths = as.character(unlist(record$configuration$include_paths))
     )
     info$dependencies <- public_dependencies(record$dependencies)
@@ -847,6 +849,9 @@ print.stan_build_info <- function(x, ...) {
   stanc_options <- unlist(x$configuration$stanc_options)
   cat("  stanc_options: ", if (length(stanc_options) == 0) "none" else
     paste(stanc_options, collapse = " "), "\n", sep = "")
+  from_make <- unlist(x$configuration$stanc_options_from_make)
+  cat("  stanc_options_from_make: ", if (length(from_make) == 0) "none" else
+    paste(from_make, collapse = " "), "\n", sep = "")
   cat("  include_paths: ", paste(x$configuration$include_paths, collapse = ", "),
     "\n", sep = "")
 

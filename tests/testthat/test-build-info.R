@@ -53,10 +53,15 @@ test_that("an available build record is read in full without launching the execu
   expect_identical(features$stan_version, "2.39.0")
 
   expect_named(
-    result$configuration, c("cpp_options", "stanc_options", "include_paths")
+    result$configuration,
+    c(
+      "cpp_options", "stanc_options", "stanc_options_from_make",
+      "include_paths"
+    )
   )
   expect_equal(result$configuration$cpp_options, list(STAN_THREADS = "true"))
   expect_equal(result$configuration$stanc_options, list("--O1"))
+  expect_equal(result$configuration$stanc_options_from_make, list())
   expect_type(result$configuration$include_paths, "character")
 
   expect_named(
@@ -103,10 +108,25 @@ test_that("fields the record withholds are absent from the result", {
   expect_named(result$dependencies$make_local, c("built_from", "exists"))
 
   expect_false("stanc_options_added" %in% names(result$configuration))
-  expect_false("stanc_options_from_make" %in% names(result$configuration))
   expect_false("stanc_name" %in% names(result$configuration))
   expect_named(
-    result$configuration, c("cpp_options", "stanc_options", "include_paths")
+    result$configuration,
+    c(
+      "cpp_options", "stanc_options", "stanc_options_from_make",
+      "include_paths"
+    )
+  )
+})
+
+test_that("the stanc flags make/local added come back as recorded", {
+  result <- available_result(function(record) {
+    record$configuration$stanc_options_from_make <-
+      list("--O0", "--warn-pedantic")
+    record
+  })
+  expect_equal(
+    result$configuration$stanc_options_from_make,
+    list("--O0", "--warn-pedantic")
   )
 })
 
@@ -480,6 +500,7 @@ test_that("print.stan_build_info() shows the fragments the spec pins", {
       configuration = list(
         cpp_options = list(STAN_THREADS = "true"),
         stanc_options = list("--O1"),
+        stanc_options_from_make = list(),
         include_paths = character(0)
       ),
       dependencies = list(

@@ -980,6 +980,7 @@ list(
   configuration = list(
     cpp_options   = list(STAN_THREADS = "true"),
     stanc_options = list(),
+    stanc_options_from_make = list("--O1"),
     include_paths = "/proj"
   ),
   dependencies = list(
