@@ -639,7 +639,7 @@ part of `cmdstan`.
 
 `stan_build_info()` reports the builder with `exists = FALSE`,
 the treatment §7 already gives recorded sources that are gone, and a launch failure
-becomes an error naming the recorded installation, with reinstalling it or
+becomes an error naming the recorded TBB directory, with reinstalling it or
 rebuilding from source as the two remedies.
 
 **A selected installation that is gone is its own error, checked where it is used.**

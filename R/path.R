@@ -441,3 +441,28 @@ tbb_path <- function(dir = NULL) {
   }
   path_to_TBB
 }
+
+#' The TBB directory to put on PATH when launching a model executable
+#'
+#' On Windows there's no rpath, so the executable looks for tbb.dll on PATH and
+#' we need to put a TBB directory there. We use the one from the build record,
+#' i.e., the TBB the model was actually built against, even if the user has
+#' selected a different CmdStan installation since then. If that directory no
+#' longer exists we don't add anything, in which case the executable either uses
+#' whatever TBB is already on PATH or fails to load if there isn't one. If
+#' there's no usable build record we fall back to the selected installation's
+#' TBB, which is what we always did before.
+#'
+#' @param tbb_dir The record's `tbb_dir`, or `NULL` when there is no usable
+#'   record.
+#' @return The directory, or `NULL` when nothing should go on PATH.
+#' @noRd
+tbb_launch_path <- function(tbb_dir) {
+  if (!os_is_windows()) {
+    return(NULL)
+  }
+  if (is.null(tbb_dir)) {
+    return(tbb_path())
+  }
+  if (dir.exists(tbb_dir)) tbb_dir else NULL
+}

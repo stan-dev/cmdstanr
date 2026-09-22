@@ -159,16 +159,17 @@ build_executable <- function(stan_file,
     run_make(
       c(wsl_safe_path(repair_path(tmp_exe)), make_vars, stancflags_make), quiet
     )
+    tbb_dir <- tbb_dir_from_options(cpp_options)
     record <- new_build_record(
       configuration = append(
         configuration, list(stanc_options_from_make = as.list(from_make)),
         after = 3
       ),
-      reported_features = reported_features_from_exe(tmp_exe),
+      reported_features = reported_features_from_exe(tmp_exe, tbb_dir),
       dependencies = current$dependencies,
       executable_hash = hash_file(tmp_exe),
       cmdstan = current$cmdstan,
-      tbb_dir = tbb_dir_from_options(cpp_options),
+      tbb_dir = tbb_dir,
       untracked_dependencies = untracked_dependencies(
         current$dependencies$make_local$built_from, user_header
       )

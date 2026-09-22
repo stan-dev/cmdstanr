@@ -288,13 +288,15 @@ new_build_record <- function(configuration, reported_features, dependencies,
 #' Run an executable's `info` command
 #'
 #' @param exe_file Path to the executable.
+#' @param tbb_dir The TBB directory the build resolved, or `NULL` when there
+#'   is no usable record.
 #' @return The `processx::run()` result. A non-zero exit is not an error.
 #' @noRd
-run_info_cli <- function(exe_file) {
+run_info_cli <- function(exe_file, tbb_dir = NULL) {
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
-      tbb_path()
+      tbb_launch_path(tbb_dir)
     ),
     wsl_compatible_run(
       command = wsl_safe_path(exe_file),
@@ -341,12 +343,14 @@ parse_exe_info_string <- function(ret_stdout) {
 #' every feature unknown rather than failing the build.
 #'
 #' @param exe_file Path to the executable.
+#' @param tbb_dir The TBB directory the build resolved, or `NULL` when there
+#'   is no usable record.
 #' @return A named list of what was kept, empty when nothing was.
 #' @noRd
-reported_features_from_exe <- function(exe_file) {
+reported_features_from_exe <- function(exe_file, tbb_dir = NULL) {
   unknown <- structure(list(), names = character())
   tryCatch({
-    result <- run_info_cli(exe_file)
+    result <- run_info_cli(exe_file, tbb_dir)
     if (result$status != 0) {
       unknown
     } else {

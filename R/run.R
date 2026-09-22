@@ -474,22 +474,39 @@ check_target_exe <- function(exe) {
 #' relative path like `./bernoulli` and an errno. This one names the
 #' executable, keeps the system's reason (for example "Permission denied")
 #' or the executable's own output, and says how to rebuild it, or that
-#' there is no Stan file to rebuild it from.
+#' there is no Stan file to rebuild it from. When the TBB the build linked
+#' against is no longer there it says so, since that is the likely cause
+#' and reinstalling it is the other way out.
 #'
 #' @param exe_file Path to the executable.
 #' @param stan_file The model's Stan file, empty for a model created from an
 #'   executable alone.
 #' @param reason processx's error message, or what the executable printed.
+#' @param tbb_dir The record's `tbb_dir`, or `NULL` without a usable record.
 #' @noRd
-stop_cannot_run <- function(exe_file, stan_file, reason) {
+stop_cannot_run <- function(exe_file, stan_file, reason, tbb_dir = NULL) {
   system_error <- regmatches(
     reason, regexec("\\(system error [0-9]+, ([^)]*)\\)", reason)
   )[[1]]
   if (length(system_error) == 2) {
     reason <- system_error[[2]]
   }
-  remedy <- if (length(stan_file) > 0) {
+  tbb_gone <- !is.null(tbb_dir) && !dir.exists(tbb_dir)
+  if (tbb_gone) {
+    reason <- paste0(
+      reason, "\nThe TBB it was built against at '", tbb_dir,
+      "' no longer exists."
+    )
+  }
+  remedy <- if (length(stan_file) > 0 && tbb_gone) {
+    paste(
+      "Reinstall it there or run cmdstan_model() with force_recompile = TRUE",
+      "to rebuild it."
+    )
+  } else if (length(stan_file) > 0) {
     "Run cmdstan_model() with force_recompile = TRUE to rebuild it."
+  } else if (tbb_gone) {
+    "Reinstall it there; there is no Stan file to rebuild it from."
   } else {
     "There is no Stan file to rebuild it from."
   }
@@ -554,6 +571,7 @@ stop_cannot_run <- function(exe_file, stan_file, reason) {
         args = self$command_args()[[chain_id]],
         exe_file = self$exe_file(),
         stan_file = self$args$stan_file,
+        tbb_dir = self$args$tbb_dir,
         mpi_cmd = mpi_cmd,
         mpi_args = mpi_args
       )
@@ -616,7 +634,8 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
         command = self$command(),
         args = self$command_args()[[chain_id]],
         exe_file = self$exe_file(),
-        stan_file = self$args$stan_file
+        stan_file = self$args$stan_file,
+        tbb_dir = self$args$tbb_dir
       )
       procs$mark_proc_start(chain_id)
       procs$set_active_procs(procs$active_procs() + 1)
@@ -652,7 +671,8 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     command = self$command(),
     args = self$command_args()[[id]],
     exe_file = self$exe_file(),
-    stan_file = self$args$stan_file
+    stan_file = self$args$stan_file,
+    tbb_dir = self$args$tbb_dir
   )
   procs$set_active_procs(1)
   procs$mark_proc_start(id)
@@ -702,7 +722,7 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
-      tbb_path()
+      tbb_launch_path(self$args$tbb_dir)
     ),
     ret <- tryCatch(
       wsl_compatible_run(
@@ -716,7 +736,8 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
       ),
       error = function(e) {
         stop_cannot_run(
-          self$exe_file(), self$args$stan_file, conditionMessage(e)
+          self$exe_file(), self$args$stan_file, conditionMessage(e),
+          self$args$tbb_dir
         )
       }
     )
@@ -818,7 +839,7 @@ CmdStanProcs <- R6::R6Class(
     get_proc = function(id) {
       private$processes_[[id]]
     },
-    new_proc = function(id, command, args, exe_file, stan_file,
+    new_proc = function(id, command, args, exe_file, stan_file, tbb_dir,
                         mpi_cmd = NULL, mpi_args = NULL) {
       if (!is.null(mpi_cmd)) {
         exe_name <- mpi_args[["exe"]]
@@ -833,7 +854,7 @@ CmdStanProcs <- R6::R6Class(
       withr::with_path(
         c(
           toolchain_PATH_env_var(),
-          tbb_path()
+          tbb_launch_path(tbb_dir)
         ),
         private$processes_[[id]] <- tryCatch(
           wsl_compatible_process_new(
@@ -850,7 +871,7 @@ CmdStanProcs <- R6::R6Class(
             if (!is.null(mpi_cmd)) {
               stop(e)
             }
-            stop_cannot_run(exe_file, stan_file, conditionMessage(e))
+            stop_cannot_run(exe_file, stan_file, conditionMessage(e), tbb_dir)
           }
         )
       )

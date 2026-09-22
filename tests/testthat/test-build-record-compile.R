@@ -252,6 +252,53 @@ test_that("tbb_dir is the directory the call named or the installation's", {
   ))
 })
 
+test_that("a launch on Windows puts the recorded TBB directory on PATH", {
+  local_mocked_bindings(os_is_windows = function() TRUE)
+  recorded <- withr::local_tempdir()
+  expect_equal(tbb_launch_path(recorded), recorded)
+  # Gone: nothing goes on PATH rather than some other TBB.
+  expect_null(tbb_launch_path(file.path(recorded, "gone")))
+  # No usable record: the selected installation's.
+  expect_equal(tbb_launch_path(NULL), tbb_path())
+})
+
+test_that("off Windows a launch adds no TBB directory", {
+  local_mocked_bindings(os_is_windows = function() FALSE)
+  expect_null(tbb_launch_path(withr::local_tempdir()))
+  expect_null(tbb_launch_path(NULL))
+})
+
+test_that("the model is launched with the TBB its record names", {
+  stan_file <- local_bernoulli()
+  tbb <- withr::local_tempdir()
+  mod <- mock_compile(
+    stan_file, cpp_options = list(tbb_lib = wsl_safe_path(tbb))
+  )
+  handed <- "unset"
+  local_mocked_bindings(
+    tbb_launch_path = function(tbb_dir) {
+      handed <<- tbb_dir
+      NULL
+    },
+    # Only the model's help-all is mocked; stanc still runs for real.
+    wsl_compatible_run = function(command, args, ...) {
+      if ("help-all" %in% args) {
+        return(list(status = 0L, stdout = "", stderr = ""))
+      }
+      real_wcr(command = command, args = args, ...)
+    }
+  )
+  mod$cmdstan_defaults()
+  expect_true(same_path(handed, tbb))
+
+  # Without a usable record there is nothing to hand over.
+  file.remove(build_record_path(mod$exe_file()))
+  local_mocked_bindings(run_info_cli = function(...) default_info_ret)
+  adopted <- cmdstan_model(exe_file = mod$exe_file())
+  adopted$cmdstan_defaults()
+  expect_null(handed)
+})
+
 test_that("a build with an untracked dependency records it", {
   local_cmdstan_make_local(cpp_options = list("-include other.mk"))
   make_local <- file.path(cmdstan_path(), "make", "local")
