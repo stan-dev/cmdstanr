@@ -22,11 +22,11 @@ local_bernoulli <- function(.local_envir = parent.frame()) {
 local_info_launches <- function(.local_envir = parent.frame()) {
   counter <- new.env()
   counter$n <- 0L
-  real_run_info_cli <- run_info_cli
+  real_run_exe_info <- run_exe_info
   local_mocked_bindings(
-    run_info_cli = function(exe_file, ...) {
+    run_exe_info = function(exe_file, ...) {
       counter$n <- counter$n + 1L
-      real_run_info_cli(exe_file, ...)
+      real_run_exe_info(exe_file, ...)
     },
     .env = .local_envir
   )

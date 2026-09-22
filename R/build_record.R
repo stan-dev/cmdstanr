@@ -292,7 +292,7 @@ new_build_record <- function(configuration, reported_features, dependencies,
 #'   is no usable record.
 #' @return The `processx::run()` result. A non-zero exit is not an error.
 #' @noRd
-run_info_cli <- function(exe_file, tbb_dir = NULL) {
+run_exe_info <- function(exe_file, tbb_dir = NULL) {
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -350,7 +350,7 @@ parse_exe_info_string <- function(ret_stdout) {
 reported_features_from_exe <- function(exe_file, tbb_dir = NULL) {
   unknown <- structure(list(), names = character())
   tryCatch({
-    result <- run_info_cli(exe_file, tbb_dir)
+    result <- run_exe_info(exe_file, tbb_dir)
     if (result$status != 0) {
       unknown
     } else {

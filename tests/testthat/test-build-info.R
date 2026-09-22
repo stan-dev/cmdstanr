@@ -1,6 +1,6 @@
 # Write an example record beside a fake executable and read it back with
 # stan_build_info(). `edit` changes the record before it is written. The
-# record is valid, so the executable must never be run: run_info_cli() is
+# record is valid, so the executable must never be run: run_exe_info() is
 # mocked to count calls and the count must stay zero. Counting matters
 # because reported_features_from_exe() swallows errors, so a mock that
 # only stops would let an unneeded run go unnoticed.
@@ -9,7 +9,7 @@ available_result <- function(edit = identity) {
   write_build_record(edit(example_record(exe)), exe)
   launches <- 0
   local_mocked_bindings(
-    run_info_cli = function(...) launches <<- launches + 1,
+    run_exe_info = function(...) launches <<- launches + 1,
     .package = "cmdstanr"
   )
   result <- stan_build_info(exe)
@@ -113,7 +113,7 @@ test_that("fields the record withholds are absent from the result", {
 test_that("a missing build record falls back to the executable's own info", {
   exe <- local_fake_exe()
   local_mocked_bindings(
-    run_info_cli = function(...) default_info_ret,
+    run_exe_info = function(...) default_info_ret,
     .package = "cmdstanr"
   )
   result <- stan_build_info(exe)
@@ -133,7 +133,7 @@ test_that("an unreadable build record falls back to the executable's own info", 
   jsonlite::write_json(record, build_record_path(exe), auto_unbox = TRUE)
 
   local_mocked_bindings(
-    run_info_cli = function(...) default_info_ret,
+    run_exe_info = function(...) default_info_ret,
     .package = "cmdstanr"
   )
   result <- stan_build_info(exe)
@@ -147,7 +147,7 @@ test_that("an unreadable build record falls back to the executable's own info", 
 
 test_that("an unsupported record format reports its version and nothing else", {
   local_mocked_bindings(
-    run_info_cli = function(...) default_info_ret,
+    run_exe_info = function(...) default_info_ret,
     .package = "cmdstanr"
   )
 
@@ -189,7 +189,7 @@ test_that("an executable mismatch discards the recorded features for the binary'
     "STAN_THREADS=true", "STAN_THREADS=false", mismatched_info$stdout, fixed = TRUE
   )
   local_mocked_bindings(
-    run_info_cli = function(...) mismatched_info,
+    run_exe_info = function(...) mismatched_info,
     .package = "cmdstanr"
   )
   result <- stan_build_info(exe)
@@ -273,7 +273,7 @@ test_that("an empty untracked dependencies list differs from having no record at
 
   exe <- local_fake_exe()
   local_mocked_bindings(
-    run_info_cli = function(...) default_info_ret,
+    run_exe_info = function(...) default_info_ret,
     .package = "cmdstanr"
   )
   missing_result <- stan_build_info(exe)
@@ -314,7 +314,7 @@ test_that("a real user header is reported under dependencies and nowhere else", 
 
   launches <- 0
   local_mocked_bindings(
-    run_info_cli = function(...) launches <<- launches + 1,
+    run_exe_info = function(...) launches <<- launches + 1,
     .package = "cmdstanr"
   )
   result <- stan_build_info(mod$exe_file())
@@ -410,7 +410,7 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
 
   failed_exe <- local_fake_exe("failed")
   local_mocked_bindings(
-    run_info_cli = function(...) list(status = 1, stdout = ""),
+    run_exe_info = function(...) list(status = 1, stdout = ""),
     .package = "cmdstanr"
   )
   expect_error(
@@ -426,7 +426,7 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
 
   no_version_exe <- local_fake_exe("no_version")
   local_mocked_bindings(
-    run_info_cli = function(...) list(status = 0, stdout = "STAN_THREADS=true\n"),
+    run_exe_info = function(...) list(status = 0, stdout = "STAN_THREADS=true\n"),
     .package = "cmdstanr"
   )
   expect_error(
@@ -443,7 +443,7 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
 test_that("features reported by the binary have the fixed shape", {
   exe <- local_fake_exe()
   local_mocked_bindings(
-    run_info_cli = function(...) default_info_ret,
+    run_exe_info = function(...) default_info_ret,
     .package = "cmdstanr"
   )
   result <- stan_build_info(exe)

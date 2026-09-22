@@ -576,7 +576,7 @@ test_that("reported features the record cannot hold are left unknown", {
   exe <- local_fake_exe()
   # A nameless entry and a missing version are both dropped, not written.
   local_mocked_bindings(
-    run_info_cli = function(...) {
+    run_exe_info = function(...) {
       list(status = 0, stdout = " = true\nSTAN_THREADS=true\n")
     }
   )
