@@ -252,20 +252,18 @@ test_that("tbb_dir is the directory the call named or the installation's", {
   ))
 })
 
-test_that("a launch on Windows puts the recorded TBB directory on PATH", {
-  local_mocked_bindings(os_is_windows = function() TRUE)
+test_that("a launch puts the recorded TBB directory on PATH only on Windows", {
   recorded <- withr::local_tempdir()
+  if (!os_is_windows()) {
+    expect_null(tbb_launch_path(recorded))
+    expect_null(tbb_launch_path(NULL))
+    skip("the rest applies on Windows")
+  }
   expect_equal(tbb_launch_path(recorded), recorded)
   # Gone: nothing goes on PATH rather than some other TBB.
   expect_null(tbb_launch_path(file.path(recorded, "gone")))
   # No usable record: the selected installation's.
   expect_equal(tbb_launch_path(NULL), tbb_path())
-})
-
-test_that("off Windows a launch adds no TBB directory", {
-  local_mocked_bindings(os_is_windows = function() FALSE)
-  expect_null(tbb_launch_path(withr::local_tempdir()))
-  expect_null(tbb_launch_path(NULL))
 })
 
 test_that("the model is launched with the TBB its record names", {
@@ -293,7 +291,7 @@ test_that("the model is launched with the TBB its record names", {
 
   # Without a usable record there is nothing to hand over.
   file.remove(build_record_path(mod$exe_file()))
-  local_mocked_bindings(run_info_cli = function(...) default_info_ret)
+  local_mocked_bindings(run_exe_info = function(...) default_info_ret)
   adopted <- cmdstan_model(exe_file = mod$exe_file())
   adopted$cmdstan_defaults()
   expect_null(handed)

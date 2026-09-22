@@ -58,7 +58,7 @@ test_that("the thread count reaches the child process and not the session", {
 })
 
 test_that("WSLENV keeps the entries the session already exports", {
-  local_mocked_bindings(os_is_wsl = function() TRUE, .package = "cmdstanr")
+  skip_if(!os_is_wsl())
 
   withr::local_envvar(WSLENV = "A/u:STAN_NUM_THREADS/u:B/p")
   expect_equal(cmdstan_process_env(4)[["WSLENV"]], "A/u:B/p:STAN_NUM_THREADS/u")
