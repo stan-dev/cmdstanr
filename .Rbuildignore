@@ -16,3 +16,5 @@
 ^dev-notes$
 ^tests/testthat/resources/stan/\..*\.cmdstanr\.json$
 ^tests/testthat/README\.md$
+^AGENTS\.md$
+^CLAUDE\.md$

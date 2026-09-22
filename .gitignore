@@ -8,3 +8,5 @@ inst/doc
 dev-helpers.R
 release-prep.R
 *.DS_Store
+AGENTS.md
+CLAUDE.md
