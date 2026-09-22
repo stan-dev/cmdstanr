@@ -779,11 +779,12 @@ test_that("cmdstan_make_local() still appends a new value for a known variable",
 # Windows toolchain discovery tests ----------------------------------------
 
 test_that("toolchain_PATH_env_var() returns NULL on non-Windows", {
+  skip_if(os_is_windows())
+
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
-  local_mocked_bindings(os_is_windows = function() FALSE)
   expect_null(toolchain_PATH_env_var())
 })
 
@@ -823,7 +824,6 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.1.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -849,7 +849,6 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.1.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -870,6 +869,8 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
 })
 
 test_that("toolchain_PATH_env_var() compares R versions numerically", {
+  skip_if(!os_is_windows())
+
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
@@ -877,7 +878,6 @@ test_that("toolchain_PATH_env_var() compares R versions numerically", {
   rcmd_calls <- 0L
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local_mocked_bindings(
-    os_is_windows = function() TRUE,
     current_r_version = function() numeric_version("4.10.0"),
     .cmdstanr_rcmd = function(...) {
       rcmd_calls <<- rcmd_calls + 1L
@@ -911,7 +911,6 @@ test_that("toolchain_PATH_env_var() uses configured R_TOOLS_SOFT", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
@@ -952,7 +951,6 @@ test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -989,7 +987,6 @@ test_that("toolchain_PATH_env_var() searches PATH when R_TOOLS_SOFT is empty", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) "",
       short_path = function(path) path,
@@ -1026,7 +1023,6 @@ test_that("toolchain_PATH_env_var() returns NULL when both approaches fail", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -1053,7 +1049,6 @@ test_that("toolchain_PATH_env_var() returns NULL when only one tool in PATH", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -1086,7 +1081,6 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -1122,7 +1116,6 @@ test_that("toolchain_PATH_env_var() preserves configured compiler", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
@@ -1167,7 +1160,6 @@ test_that("toolchain_PATH_env_var() preserves configured make", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
@@ -1213,7 +1205,6 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
@@ -1240,34 +1231,26 @@ test_that("is_ucrt_toolchain() returns correct values for R versions", {
   # is_ucrt_toolchain() is TRUE for R 4.2.x – 4.x.x on Windows
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0")
     )
     expect_true(is_ucrt_toolchain())
   })
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.4.0")
     )
     expect_true(is_ucrt_toolchain())
   })
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.1.0")
     )
     expect_false(is_ucrt_toolchain())
   })
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("5.0.0")
     )
-    expect_false(is_ucrt_toolchain())
-  })
-  local({
-    local_mocked_bindings(os_is_windows = function() FALSE)
     expect_false(is_ucrt_toolchain())
   })
 })
