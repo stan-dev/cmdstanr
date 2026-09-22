@@ -288,13 +288,15 @@ new_build_record <- function(configuration, reported_features, dependencies,
 #' Run an executable's `info` command
 #'
 #' @param exe_file Path to the executable.
+#' @param tbb_dir The TBB directory the build resolved, or `NULL` when there
+#'   is no usable record.
 #' @return The `processx::run()` result. A non-zero exit is not an error.
 #' @noRd
-run_info_cli <- function(exe_file) {
+run_exe_info <- function(exe_file, tbb_dir = NULL) {
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
-      tbb_path()
+      tbb_launch_path(tbb_dir)
     ),
     wsl_compatible_run(
       command = wsl_safe_path(exe_file),
@@ -341,12 +343,14 @@ parse_exe_info_string <- function(ret_stdout) {
 #' every feature unknown rather than failing the build.
 #'
 #' @param exe_file Path to the executable.
+#' @param tbb_dir The TBB directory the build resolved, or `NULL` when there
+#'   is no usable record.
 #' @return A named list of what was kept, empty when nothing was.
 #' @noRd
-reported_features_from_exe <- function(exe_file) {
+reported_features_from_exe <- function(exe_file, tbb_dir = NULL) {
   unknown <- structure(list(), names = character())
   tryCatch({
-    result <- run_info_cli(exe_file)
+    result <- run_exe_info(exe_file, tbb_dir)
     if (result$status != 0) {
       unknown
     } else {
@@ -363,19 +367,21 @@ reported_features_from_exe <- function(exe_file) {
 
 #' Where the record says the TBB is
 #'
-#' The first non-empty of `TBB_LIB` and `TBB_BIN` from the call's
-#' `cpp_options`, then the installation's own copy, which is the order the
-#' makefile links in. The options are read as make receives them: the last
-#' assignment wins and `FALSE` is an empty one. A relative directory is
-#' resolved against the installation, where make runs.
+#' We use `TBB_LIB` if the call set it, otherwise `TBB_BIN`, otherwise the
+#' installation's own copy, which is the order the makefile uses when it
+#' links. The options are read the way make reads them, so the last
+#' assignment wins and `FALSE` counts as empty. A relative directory is
+#' relative to the installation, since that's where make runs. We take the
+#' value as written; `assert_valid_cpp_options()` has already rejected a
+#' make expression, because nothing here could expand it.
 #'
-#' Make can also pick up both variables from `make/local`,
-#' `~/.config/stan/make.local` or the environment. The record does not look
-#' there, so a build configured that way links against one TBB while the
-#' record names the installation's. On Windows the launch puts the recorded
-#' directory on PATH, so such a build runs with the installation's TBB first,
-#' which is what happens today anyway. We decided not to ask make for the real
-#' answer for now, and could reconsider if there is demand for it.
+#' The two variables can also reach make from `make/local`,
+#' `~/.config/stan/make.local` or the environment, and we don't look there.
+#' So a build set up that way links against a different TBB than the record
+#' names, which is the installation's. On Windows that means the launch puts the
+#' installation's TBB on PATH, which is what happened before too. We decided
+#' not to ask make for the real answer for now and can revisit if anyone
+#' needs it.
 #'
 #' @param cpp_options The call's `cpp_options`, as given.
 #' @return The directory. Under WSL it is the Windows path.

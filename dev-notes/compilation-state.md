@@ -878,7 +878,7 @@ must not restate it. A rule written in two places is a future inconsistency.
 | `dependencies.included_files` | yes | yes | **ordered sequence**, duplicates preserved (§6) |
 | `executable_hash` | yes | yes | hash of the executable this record describes |
 | `cmdstan` | yes | yes | normalized installation path and version |
-| `tbb_dir` | yes | **no** | the absolute TBB directory the call named, read as `make` receives the call's `cpp_options` (§3: last assignment wins, `FALSE` is an empty one): `TBB_LIB`, or `TBB_BIN` when `TBB_LIB` is empty, which is the order `compiler_flags` uses; resolved against the installation when relative, since `make` runs there; and the installation's own `lib/tbb` when the call named neither. Filled from the call, not asked of `make`: a `TBB_LIB` or `TBB_BIN` set in `make/local`, `~/.config/stan/make.local` or the environment moves the TBB the binary links against and not this field (§6). Recorded because Windows needs it at launch and a later `set_cmdstan_path()` must not move it (#1261 consumes it; no verdict here turns on it). Not compared: both routes it sees are compared already, through `cpp_options` and `cmdstan` |
+| `tbb_dir` | yes | **no** | the absolute TBB directory the call named, read as `make` receives the call's `cpp_options` (§3: last assignment wins, `FALSE` is an empty one): `TBB_LIB`, or `TBB_BIN` when `TBB_LIB` is empty, which is the order `compiler_flags` uses; resolved against the installation when relative, since `make` runs there; and the installation's own `lib/tbb` when the call named neither. The value is taken as written, so a make expression in it (`$(MATH)lib/tbb`) is rejected before the build rather than recorded as a directory that does not exist. Filled from the call, not asked of `make`: a `TBB_LIB` or `TBB_BIN` set in `make/local`, `~/.config/stan/make.local` or the environment moves the TBB the binary links against and not this field (§6). Recorded because Windows needs it at launch and a later `set_cmdstan_path()` must not move it (#1261 consumes it; no verdict here turns on it). Not compared: both routes it sees are compared already, through `cpp_options` and `cmdstan` |
 | `untracked_dependencies` | yes | no | reported (§6), never a trigger |
 | `format_version` | yes | **no** | not a comparison: the reader either reads the record's version or does not, which is an artifact-side reason like unreadable JSON (§6) |
 
@@ -2055,11 +2055,15 @@ the directory is written at build time rather than derived at launch (§4).
 
 **Which TBB the executable is launched with is a launch-side rule, not an
 assessment one.** On macOS and Linux the rpath settles it. On Windows there is no
-rpath and cmdstanr supplies the directory on `PATH`, today the selected
-installation's rather than the builder's (`R/run.R:1238-1247`), which is wrong as
-soon as the two differ. The fix reads `tbb_dir` from the record at the sites that
-launch the model binary and is #1261. It lands after Stage 3, needs no format change
-because the field is already recorded, and changes no verdict here.
+rpath and cmdstanr supplies the directory on `PATH`: the record's `tbb_dir` when
+it still exists, nothing when it is gone, and the selected installation's only
+when there is no usable record (#1261, `tbb_launch_path()`). A gone directory is
+not a reason to substitute another: for a default-layout build that is the
+builder going, and running the binary against whatever installation is selected
+now is the fault #1261 removed, by a second route. The sites that launch an
+installation program, `stanc`, `make` and `bin/stansummary`, keep the selected
+installation's, since that installation owns the program. None of it changes a
+verdict here.
 
 <!-- contract -->
 
@@ -2081,7 +2085,7 @@ deleted. Recording the TBB directory separately from the builder is what lets th
 Windows launch treat a gone builder and a gone TBB as two events, and that build's
 TBB is still there. <!-- contract -->`stan_build_info()` reports the builder with `exists = FALSE`,
 the treatment §7 already gives recorded sources that are gone, and a launch failure
-becomes an error naming the recorded installation, with reinstalling it or
+becomes an error naming the recorded TBB directory, with reinstalling it or
 rebuilding from source as the two remedies.
 
 <!-- /contract -->
@@ -2389,7 +2393,8 @@ from `$cmdstan_defaults()`, one that started but could not answer `help-all`, th
 loader's own message standing as the reason. A chain that starts and dies in the
 loader is reported as a chain that finished unexpectedly, with the loader's output,
 because nothing short of classifying stderr tells that apart from an ordinary
-nonzero exit; the TBB-specific remedy is #1261's. <!-- contract -->It names the executable, and for a source-backed
+nonzero exit. When the record's TBB directory is gone the error says so
+and adds reinstalling it as a remedy (#1261, above). <!-- contract -->It names the executable, and for a source-backed
 model says that `force_recompile = TRUE` rebuilds it; with only an executable (§7)
 there is nothing to rebuild and it says so instead.
 
@@ -3750,8 +3755,8 @@ reports the installed CmdStan, not the one that built the executable, caused by
 `R/model.R:318` and not `dry_run`). Small, user-visible, and the natural work to
 pick up while Stage 0 is in review.
 
-**#1261** (launch the model executable with the TBB its build resolved) is gated
-only on Stage 3 having written `tbb_dir`, and lands any time after it.
+**#1261** (launch the model executable with the TBB its build resolved) needed
+only Stage 3's `tbb_dir` and landed after it.
 
 ---
 

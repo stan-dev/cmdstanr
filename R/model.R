@@ -1066,6 +1066,7 @@ sample <- function(data = NULL,
     standalone_env = private$standalone_functions(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
+    tbb_dir = private$record_$tbb_dir,
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
     data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
@@ -1225,6 +1226,7 @@ sample_mpi <- function(data = NULL,
     standalone_env = private$standalone_functions(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
+    tbb_dir = private$record_$tbb_dir,
     proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
     data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
@@ -1360,6 +1362,7 @@ optimize <- function(data = NULL,
     standalone_env = private$standalone_functions(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
+    tbb_dir = private$record_$tbb_dir,
     proc_ids = 1,
     data_file = process_data(data, model_variables),
     save_latent_dynamics = FALSE,
@@ -1532,6 +1535,7 @@ laplace <- function(data = NULL,
     standalone_env = private$standalone_functions(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
+    tbb_dir = private$record_$tbb_dir,
     proc_ids = 1,
     data_file = process_data(data, model_variables),
     save_latent_dynamics = FALSE,
@@ -1664,6 +1668,7 @@ variational <- function(data = NULL,
     standalone_env = private$standalone_functions(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
+    tbb_dir = private$record_$tbb_dir,
     proc_ids = 1,
     data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
@@ -1846,6 +1851,7 @@ pathfinder <- function(data = NULL,
     standalone_env = private$standalone_functions(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
+    tbb_dir = private$record_$tbb_dir,
     proc_ids = 1,
     data_file = process_data(data, model_variables),
     save_latent_dynamics = FALSE,
@@ -1983,6 +1989,7 @@ generate_quantities <- function(fitted_params,
     standalone_env = private$standalone_functions(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
+    tbb_dir = private$record_$tbb_dir,
     proc_ids = seq_along(fitted_params_files),
     data_file = process_data(data, model_variables),
     seed = seed,
@@ -2055,6 +2062,7 @@ diagnose <- function(data = NULL,
     standalone_env = private$standalone_functions(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
+    tbb_dir = private$record_$tbb_dir,
     proc_ids = 1,
     data_file = process_data(data, model_variables),
     seed = seed,
@@ -2160,7 +2168,9 @@ cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
                                         "pathfinder", "laplace")) {
   method <- match.arg(method)
   private$assert_current()
-  parse_cmdstan_args(self$exe_file(), method, self$stan_file())
+  parse_cmdstan_args(
+    self$exe_file(), method, self$stan_file(), private$record_$tbb_dir
+  )
 }
 CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 
@@ -2289,13 +2299,14 @@ assert_stan_file_exists <- function(stan_file) {
 #'   `"variational"`, `"pathfinder"`, or `"laplace"`.
 #' @param stan_file The model's Stan file, for the error when the binary
 #'   will not run.
+#' @param tbb_dir The record's `tbb_dir`, or `NULL` without a usable record.
 #' @return A named list with cmdstanr-style argument names and default
 #'   values.
-parse_cmdstan_args <- function(model_binary, method, stan_file) {
+parse_cmdstan_args <- function(model_binary, method, stan_file, tbb_dir) {
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
-      tbb_path()
+      tbb_launch_path(tbb_dir)
     ),
     ret <- tryCatch(
       wsl_compatible_run(
@@ -2304,7 +2315,7 @@ parse_cmdstan_args <- function(model_binary, method, stan_file) {
         error_on_status = FALSE
       ),
       error = function(e) {
-        stop_cannot_run(model_binary, stan_file, conditionMessage(e))
+        stop_cannot_run(model_binary, stan_file, conditionMessage(e), tbb_dir)
       }
     )
   )
@@ -2314,7 +2325,8 @@ parse_cmdstan_args <- function(model_binary, method, stan_file) {
     output <- trimws(paste0(ret$stderr, ret$stdout))
     stop_cannot_run(
       model_binary, stan_file,
-      if (nzchar(output)) output else paste("exit status", ret$status)
+      if (nzchar(output)) output else paste("exit status", ret$status),
+      tbb_dir
     )
   }
   # CmdStan may write help text to stdout or stderr depending on the platform

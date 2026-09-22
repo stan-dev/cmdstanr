@@ -22,11 +22,11 @@ local_bernoulli <- function(.local_envir = parent.frame()) {
 local_info_launches <- function(.local_envir = parent.frame()) {
   counter <- new.env()
   counter$n <- 0L
-  real_run_info_cli <- run_info_cli
+  real_run_exe_info <- run_exe_info
   local_mocked_bindings(
-    run_info_cli = function(exe_file) {
+    run_exe_info = function(exe_file, ...) {
       counter$n <- counter$n + 1L
-      real_run_info_cli(exe_file)
+      real_run_exe_info(exe_file, ...)
     },
     .env = .local_envir
   )
@@ -449,12 +449,36 @@ test_that("an executable that starts but cannot answer help-all is an error", {
     )
   })
   expect_error(
-    parse_cmdstan_args("/models/bern", "sample", "/models/bern.stan"),
+    parse_cmdstan_args(
+      "/models/bern", "sample", "/models/bern.stan", tbb_dir = NULL
+    ),
     paste0(
       "^The executable at '/models/bern' could not be run: ",
       "error while loading shared libraries: libtbb.so: not found\n",
       "Run cmdstan_model\\(\\) with force_recompile = TRUE to rebuild it.$"
     )
+  )
+})
+
+test_that("a failed launch says when the recorded TBB is gone", {
+  local_mocked_bindings(wsl_compatible_run = function(...) {
+    list(status = 127L, stdout = "", stderr = "")
+  })
+  gone <- file.path(withr::local_tempdir(), "tbb")
+  expect_error(
+    parse_cmdstan_args("/models/bern", "sample", "/models/bern.stan", gone),
+    paste0(
+      "could not be run: exit status 127\n",
+      "The TBB it was built against at '", gone, "' no longer exists.\n",
+      "Reinstall it there or run cmdstan_model() with force_recompile = TRUE ",
+      "to rebuild it."
+    ),
+    fixed = TRUE
+  )
+  expect_error(
+    parse_cmdstan_args("/models/bern", "sample", character(), gone),
+    "Reinstall it there; there is no Stan file to rebuild it from.",
+    fixed = TRUE
   )
 })
 

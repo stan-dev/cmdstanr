@@ -49,7 +49,8 @@ make_variable_name_pattern <- "[A-Za-z_][A-Za-z0-9_]*"
 #' Every entry must be named and every name must be a Make variable name. The
 #' names are uppercased here so that one spelling reaches everything downstream.
 #' The user header and the stanc flags have their own arguments, so setting them
-#' here is an error.
+#' here is an error. A TBB directory has to be a literal path, since the build
+#' record keeps it as written and never asks make what it expands to.
 #'
 #' @param cpp_options What the user passed, or `NULL`.
 #' @return The options with their names uppercased, or an empty list for
@@ -86,6 +87,19 @@ assert_valid_cpp_options <- function(cpp_options) {
   }
   if ("STANCFLAGS" %in% names(cpp_options)) {
     stop(stancflags_cpp_option_message(), call. = FALSE)
+  }
+  for (tbb_at in which(names(cpp_options) %in% c("TBB_LIB", "TBB_BIN"))) {
+    flags <- cpp_options_to_compile_flags(cpp_options[tbb_at])
+    bad <- grep("$", flags, fixed = TRUE, value = TRUE)
+    if (length(bad) > 0) {
+      stop(
+        "`", names(cpp_options)[[tbb_at]], "` must be a literal directory. ",
+        "cmdstanr records it to launch the model with the right TBB and ",
+        "doesn't expand make expressions like `", sub("^[^=]*=", "", bad[[1]]),
+        "`.",
+        call. = FALSE
+      )
+    }
   }
   cpp_options
 }
