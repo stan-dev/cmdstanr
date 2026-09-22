@@ -89,12 +89,14 @@ assert_valid_cpp_options <- function(cpp_options) {
     stop(stancflags_cpp_option_message(), call. = FALSE)
   }
   for (tbb_at in which(names(cpp_options) %in% c("TBB_LIB", "TBB_BIN"))) {
-    value <- cpp_options[[tbb_at]]
-    if (is.character(value) && any(grepl("$", value, fixed = TRUE))) {
+    flags <- cpp_options_to_compile_flags(cpp_options[tbb_at])
+    bad <- grep("$", flags, fixed = TRUE, value = TRUE)
+    if (length(bad) > 0) {
       stop(
         "`", names(cpp_options)[[tbb_at]], "` must be a literal directory. ",
         "cmdstanr records it to launch the model with the right TBB and ",
-        "doesn't expand make expressions like `", value, "`.",
+        "doesn't expand make expressions like `", sub("^[^=]*=", "", bad[[1]]),
+        "`.",
         call. = FALSE
       )
     }
