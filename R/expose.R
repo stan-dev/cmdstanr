@@ -47,7 +47,9 @@ rcppparallel_tbb <- function() {
   if (!nzchar(lib) || !nzchar(version_h)) {
     return(NULL)
   }
-  list(include = dirname(dirname(version_h)), lib = lib)
+  # R CMD check's temporary library returns backslash paths on Windows
+  list(include = repair_path(dirname(dirname(version_h))),
+       lib = repair_path(lib))
 }
 
 #' Compile C++ that uses the Stan Math library and load it into R
