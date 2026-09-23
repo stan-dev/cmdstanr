@@ -184,6 +184,9 @@ computation, which can be very slow. Set `r_eff = TRUE` for the previous
 behavior. (#1091)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization. (#1274)
+* `fit$init_model_methods()` and `$expose_functions()` gain a `quiet` argument
+that suppresses the messages printed while the methods or functions compile.
+(#914)
 * `install_cmdstan()` now offers to copy the `make/local` flags of the
 current installation into the new one before building it, so the new CmdStan is
 built with the same flags. In an interactive session it shows the previous

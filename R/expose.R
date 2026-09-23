@@ -106,8 +106,8 @@ drop_stale_standalone_functions <- function(env) {
   invisible(TRUE)
 }
 
-expose_model_methods <- function(env, verbose = FALSE) {
-  if (rlang::is_interactive()) {
+expose_model_methods <- function(env, verbose = FALSE, quiet = FALSE) {
+  if (!quiet && rlang::is_interactive()) {
     message("Compiling additional model methods...")
   }
   code <- c(env$hpp_code_,
@@ -282,7 +282,8 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
   invisible(NULL)
 }
 
-expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE) {
+expose_stan_functions <- function(function_env, global = FALSE,
+                                   verbose = FALSE, quiet = FALSE) {
   if (os_is_wsl()) {
     stop("Standalone functions are not currently available with ",
           "WSL CmdStan and will not be compiled",
@@ -301,9 +302,13 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
   drop_stale_standalone_functions(function_env)
   if (function_env$compiled) {
     if (!global) {
-      message("Functions already compiled, nothing to do!")
+      if (!quiet) {
+        message("Functions already compiled, nothing to do!")
+      }
     } else {
-      message("Functions already compiled, copying to global environment")
+      if (!quiet) {
+        message("Functions already compiled, copying to global environment")
+      }
       # Create reference to global environment, avoids NOTE about assigning to global
       pos <- 1
       envir <- as.environment(pos)
@@ -312,7 +317,7 @@ expose_stan_functions <- function(function_env, global = FALSE, verbose = FALSE)
       })
     }
   } else {
-    if (rlang::is_interactive()) {
+    if (!quiet && rlang::is_interactive()) {
       message("Compiling standalone functions...")
     }
     compile_functions(function_env, verbose, global)
