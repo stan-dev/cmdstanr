@@ -2099,6 +2099,9 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   available via the `functions` field of the R6 object.
 #' @param verbose (logical) Should detailed information about generated code be
 #'   printed to the console? Defaults to `FALSE`.
+#' @param quiet (logical) Should the messages saying the functions are being
+#'   compiled, or are already compiled, be suppressed? The default is `FALSE`.
+#'   Compiler output is controlled by `verbose`.
 #' @return `NULL`, invisibly.
 #' @template seealso-docs
 #' @examples
@@ -2128,9 +2131,10 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #' }
 #'
 #'
-expose_functions = function(global = FALSE, verbose = FALSE) {
+expose_functions = function(global = FALSE, verbose = FALSE, quiet = FALSE) {
   private$assert_current()
-  expose_stan_functions(private$standalone_functions(), global, verbose)
+  expose_stan_functions(private$standalone_functions(), global, verbose,
+                         quiet)
   invisible(NULL)
 }
 CmdStanModel$set("public", name = "expose_functions", value = expose_functions)

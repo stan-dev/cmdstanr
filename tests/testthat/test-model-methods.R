@@ -386,3 +386,13 @@ test_that("model methods refuse a fit from an executable alone", {
     "created from an executable alone", fixed = TRUE
   )
 })
+
+test_that("init_model_methods(quiet = TRUE) suppresses the message", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(rcpp_source_stan = function(...) invisible(NULL))
+  env <- new.env()
+  env$hpp_code_ <- "// no code"
+  expect_message(expose_model_methods(env),
+                 "Compiling additional model methods")
+  expect_no_message(expose_model_methods(env, quiet = TRUE))
+})

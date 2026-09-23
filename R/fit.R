@@ -81,8 +81,9 @@ CmdStanFit <- R6::R6Class(
       }
       invisible(self)
     },
-    expose_functions = function(global = FALSE, verbose = FALSE) {
-      expose_stan_functions(self$functions, global, verbose)
+    expose_functions = function(global = FALSE, verbose = FALSE,
+                                 quiet = FALSE) {
+      expose_stan_functions(self$functions, global, verbose, quiet)
       invisible(NULL)
     }
   ),
@@ -379,6 +380,9 @@ CmdStanFit$set("public", name = "init", value = init)
 #'
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
+#' @param quiet (logical) Should the message announcing the compilation be
+#'   suppressed? The default is `FALSE`. Compiler output is controlled by
+#'   `verbose`.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -391,7 +395,7 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
 #'   [hessian()]
 #'
-init_model_methods <- function(seed = 1, verbose = FALSE) {
+init_model_methods <- function(seed = 1, verbose = FALSE, quiet = FALSE) {
   if (model_methods_are_live(private$model_methods_env_)) {
     return(invisible(NULL))
   }
@@ -408,7 +412,7 @@ init_model_methods <- function(seed = 1, verbose = FALSE) {
   }
   if (is.null(private$model_methods_env_$model_ptr)) {
     require_suggested_package("Rcpp")
-    expose_model_methods(private$model_methods_env_, verbose)
+    expose_model_methods(private$model_methods_env_, verbose, quiet)
   }
   if (!model_methods_are_live(private$model_methods_env_)) {
     initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)

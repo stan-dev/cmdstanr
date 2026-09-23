@@ -6,7 +6,7 @@
 \alias{fit-method-expose_functions}
 \title{Expose Stan functions to R}
 \usage{
-expose_functions(global = FALSE, verbose = FALSE)
+expose_functions(global = FALSE, verbose = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{global}{(logical) Should the functions be added to the Global
@@ -15,6 +15,10 @@ available via the \code{functions} field of the R6 object.}
 
 \item{verbose}{(logical) Should detailed information about generated code be
 printed to the console? Defaults to \code{FALSE}.}
+
+\item{quiet}{(logical) Should the messages saying the functions are being
+compiled, or are already compiled, be suppressed? The default is \code{FALSE}.
+Compiler output is controlled by \code{verbose}.}
 }
 \value{
 \code{NULL}, invisibly.

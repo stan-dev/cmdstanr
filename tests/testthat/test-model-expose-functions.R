@@ -527,3 +527,17 @@ test_that("Functions with SUNDIALS/KINSOL methods link correctly", {
   mod <- cmdstan_model(write_stan_file(modcode), force_recompile=TRUE)
   expect_no_error(mod$expose_functions())
 })
+
+test_that("expose_functions(quiet = TRUE) suppresses the messages", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(compile_functions = function(...) invisible(NULL))
+  env <- new.env()
+  env$hpp_code <- "// [[stan::function]]"
+  env$compiled <- FALSE
+  expect_message(expose_stan_functions(env), "Compiling standalone functions")
+  expect_no_message(expose_stan_functions(env, quiet = TRUE))
+  env$compiled <- TRUE
+  env$fun_names <- "f"
+  expect_message(expose_stan_functions(env), "already compiled")
+  expect_no_message(expose_stan_functions(env, quiet = TRUE))
+})
