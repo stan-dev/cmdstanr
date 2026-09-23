@@ -53,10 +53,9 @@ rcppparallel_tbb <- function() {
 #' Compile C++ that uses the Stan Math library and load it into R
 #'
 #' Wraps `Rcpp::sourceCpp()` with the include paths, defines and link
-#' flags CmdStan's make would use for a model, so the model methods and
-#' standalone functions build against the same Stan Math, SUNDIALS and
-#' TBB as the executable. When RcppParallel is installed we build against
-#' its TBB instead, see `rcppparallel_tbb()`.
+#' flags the selected CmdStan installation's make would use for a model,
+#' with RcppParallel's TBB substituted when it is installed, see
+#' `rcppparallel_tbb()`.
 #'
 #' @param code Character string with the C++ source.
 #' @param env Environment the compiled functions are assigned into.
@@ -82,6 +81,11 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
   libs <- paste(sapply(libs, get_cmdstan_flags, make_args = make_args),
                 collapse = " ")
+  if (!is.null(tbb)) {
+    # make's print rule drops the quotes, so quote the paths here
+    cxxflags <- gsub(tbb$include, shQuote(tbb$include), cxxflags, fixed = TRUE)
+    libs <- gsub(tbb$lib, shQuote(tbb$lib), libs, fixed = TRUE)
+  }
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
