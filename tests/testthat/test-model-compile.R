@@ -138,7 +138,7 @@ test_that("a program stanc rejects errors with stanc's message", {
   stan_file <- testing_stan_file("fail")
   expect_error(
     cmdstan_model(stan_file),
-    "Semantic error in '.*fail.stan', line 7"
+    "fail.stan(', line 7|:7:)"
   )
 })
 
@@ -539,7 +539,7 @@ test_that("building errors on removed syntax", {
   }
   "
   stan_file <- write_stan_file(model_code)
-  expect_error(cmdstan_model(stan_file), "Syntax error in '.*', line 4")
+  expect_error(cmdstan_model(stan_file), "Syntax error.*(line 4|:4:)")
 })
 
 test_that("compilation errors if folder with the model name exists", {
