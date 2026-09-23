@@ -3835,22 +3835,22 @@ reintroducing `NA` for unknown in the record reintroduces the collapse. §8 uses
 `NA` in the public result for the opposite reason, and serialization is the whole
 of the difference: what never reaches a file keeps its R type.
 
-`cmdstan_version_compare()` is a third instance, in a different costume: it returns
-`-1` for a version that is missing, `NA`, or empty (`R/path.R:162-164`), so an
-absent version compares as older than everything and every `<` gate fires. That
-fallback is correct where it is used, in install-path code where "no CmdStan"
-should lose every comparison. It is wrong for a model.
-
-The guard is also narrower than "unusable", which matters because it removes the
-temptation to lean on it: a malformed non-empty string never reaches the `-1` at
-all. Both `".."` and `"garbage"` error inside `utils::compareVersion()`, with
-`missing value where TRUE/FALSE needed`; `"garbage"` emits `NAs introduced by
-coercion` first. So the bad-input behaviour is an error, sometimes with a warning
-in front of it, and never the `-1`. Filed as #1260, separately from this design:
-the comparison should not answer a question it was not asked, but fixing it is
-defence in depth rather than what closes this. That is why §7 makes "an adopted
-executable always yields a valid version" a checked invariant rather than an
-observation, and why a model without an executable cannot reach a gate (§8).
+`cmdstan_version_compare()` was a third instance, in a different costume: it
+returned `-1` for a version that was missing, `NA`, or empty, so an absent
+version compared as older than everything and every `<` gate fired. That
+fallback suited the install-path code, where "no CmdStan" should lose every
+comparison, and it was wrong for a model. #1260 removed it: both arguments
+must be non-empty strings, and the two callers that can meet a missing
+version, `cmdstan_default_path()` and the startup check for a newer release,
+handle that case before comparing. A malformed non-empty string never reached
+the `-1` in the first place: both `".."` and `"garbage"` error inside
+`utils::compareVersion()`, with `missing value where TRUE/FALSE needed`;
+`"garbage"` emits `NAs introduced by coercion` first. So the bad-input
+behaviour is an error, sometimes with a warning in front of it. Fixing the
+comparison is defence in depth rather than what closes this: that is why §7
+makes "an adopted executable always yields a valid version" a checked
+invariant rather than an observation, and why a model without an executable
+cannot reach a gate (§8).
 
 <!-- contract -->
 
