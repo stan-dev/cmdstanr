@@ -195,15 +195,12 @@ cmdstan_version_for_comparison <- function(version) {
   sub("-rc[0-9]+$", "", version)
 }
 
-# Scalar comparison of versions numbers. Returns -1, 0, or 1.
-# Empty strings are used when no native or WSL install was found during path discovery.
+# Scalar comparison of version numbers. Returns -1, 0, or 1. Both
+# arguments must be versions, so a caller with a possibly missing one
+# checks that itself first.
 cmdstan_version_compare <- function(version, other) {
-  if (length(version) != 1 || is.na(version) || !nzchar(version)) {
-    return(-1L)
-  }
-  if (length(other) != 1 || is.na(other) || !nzchar(other)) {
-    return(1L)
-  }
+  checkmate::assert_string(version, min.chars = 1)
+  checkmate::assert_string(other, min.chars = 1)
   utils::compareVersion(
     cmdstan_version_for_comparison(version),
     cmdstan_version_for_comparison(other)
@@ -319,11 +316,14 @@ cmdstan_default_path <- function(dir = NULL) {
     if (!nzchar(latest_cmdstan) && !nzchar(latest_wsl_cmdstan)) {
       return(NULL)
     }
-    if (cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
-      return(file.path(wsl_installs_path, latest_wsl_cmdstan))
-    } else {
+    if (!nzchar(latest_wsl_cmdstan)) {
       return(file.path(installs_path, latest_cmdstan))
     }
+    if (!nzchar(latest_cmdstan) ||
+        cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
+      return(file.path(wsl_installs_path, latest_wsl_cmdstan))
+    }
+    return(file.path(installs_path, latest_cmdstan))
   }
   NULL
 }
