@@ -9,10 +9,12 @@ utils::capture.output(
 
 test_that("RcppParallel's TBB works from a library path with a space", {
   skip_if_not_installed("RcppParallel")
+  tbb <- rcppparallel_tbb()
+  skip_if(is.null(tbb), "RcppParallel is built against a system TBB")
   installed <- find.package("RcppParallel")
   lib <- withr::local_tempdir("R library")
   file.copy(installed, lib, recursive = TRUE)
-  copy <- lapply(rcppparallel_tbb(), function(dir) {
+  copy <- lapply(tbb, function(dir) {
     sub(installed, file.path(lib, "RcppParallel"), dir, fixed = TRUE)
   })
   local_mocked_bindings(rcppparallel_tbb = function() copy)
