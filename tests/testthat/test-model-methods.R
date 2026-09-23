@@ -7,6 +7,12 @@ utils::capture.output(
   fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
 )
 
+test_that("model methods load with RcppParallel's TBB in the session", {
+  skip_if_not_installed("RcppParallel")
+  loadNamespace("RcppParallel")
+  expect_no_error(fit$init_model_methods())
+})
+
 test_that("Model methods automatically initialise when needed", {
   expect_no_error(fit$log_prob(unconstrained_variables=c(0.1)))
 })
