@@ -75,7 +75,6 @@ all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-constrain_variables]{$constrain_variables()}} \tab Transform a set of unconstrained parameter values to the constrained scale. \cr
    \code{\link[=fit-method-unconstrain_variables]{$unconstrain_variables()}} \tab Transform a set of parameter values to the unconstrained scale. \cr
    \code{\link[=fit-method-unconstrain_draws]{$unconstrain_draws()}} \tab Transform all parameter draws to the unconstrained scale. \cr
-   \code{\link[=fit-method-variable_skeleton]{$variable_skeleton()}} \tab Helper function to re-structure a vector of constrained parameter values. \cr
 }
 
 }

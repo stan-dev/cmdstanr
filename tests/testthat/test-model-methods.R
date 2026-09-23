@@ -38,19 +38,12 @@ test_that("Methods return correct values", {
   cpars <- fit$constrain_variables(c(0.1))
   cpars_true <- list(
     theta = 0.52497918747894001257,
-    log_lik = rep(-7.2439666007357095268, data_list$N)
+    log_lik = array(rep(-7.2439666007357095268, data_list$N), dim = data_list$N)
   )
   expect_equal(cpars, cpars_true)
 
   expect_equal(fit$constrain_variables(c(0.1), generated_quantities = FALSE),
                list(theta = 0.52497918747894001257))
-
-  skeleton <- list(
-    theta = array(0, dim = 1),
-    log_lik = array(0, dim = data_list$N)
-  )
-
-  expect_equal(fit$variable_skeleton(), skeleton)
 
   unconstrained_variables <- fit$unconstrain_variables(cpars)
   expect_equal(unconstrained_variables, c(0.1))
@@ -338,7 +331,7 @@ test_that("Model methods can be initialised for models with no data", {
   expect_equal(fit$log_prob(5), -12.5)
 })
 
-test_that("Variable skeleton returns correct dimensions for matrices", {
+test_that("constrain_variables() returns the declared shapes", {
 
   stan_file <- write_stan_file("
   data {
@@ -362,15 +355,12 @@ test_that("Variable skeleton returns correct dimensions for matrices", {
                       iter_warmup = 1, iter_sampling = 5)
   )
 
-  target_skeleton <- list(
-    x_real = array(0, dim = 1),
-    x_mat = array(0, dim = c(N, K)),
-    x_vec = array(0, dim = K),
-    x_rowvec = array(0, dim = K)
-  )
-
-  expect_equal(fit$variable_skeleton(),
-                target_skeleton)
+  x <- fit$constrain_variables(rep(0.1, 1 + N * K + 2 * K))
+  expect_length(x$x_real, 1)
+  expect_true(is.numeric(x$x_real))
+  expect_equal(dim(x$x_mat), c(N, K))
+  expect_equal(dim(x$x_vec), K)
+  expect_equal(dim(x$x_rowvec), K)
 })
 
 test_that("model methods refuse a fit from an executable alone", {

@@ -286,6 +286,23 @@ test_that("matching_variables() works", {
     c("alpha", "beta[1]", "beta[2]", "beta[3]")
   )
   expect_equal(length(ret$not_found), 0)
+
+  # tuple elements and complex parts
+  variables <- c("b_tuple:1:1[1]", "b_tuple:1:1[2]", "b_tuple:2[1,1]",
+                 "b_tuple:2[2,1]", "arr_pair[1]:1", "arr_pair[1]:2",
+                 "arr_pair[2]:1", "arr_pair[2]:2", "z[real]", "z[imag]")
+
+  ret <- matching_variables("b_tuple", variables)
+  expect_equal(ret$matching, variables[1:4])
+
+  ret <- matching_variables("b_tuple:2", variables)
+  expect_equal(ret$matching, c("b_tuple:2[1,1]", "b_tuple:2[2,1]"))
+
+  ret <- matching_variables("arr_pair[1]", variables)
+  expect_equal(ret$matching, c("arr_pair[1]:1", "arr_pair[1]:2"))
+
+  ret <- matching_variables("z", variables)
+  expect_equal(ret$matching, c("z[real]", "z[imag]"))
 })
 
 test_that("require_suggested_package() works", {

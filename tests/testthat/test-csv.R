@@ -877,6 +877,16 @@ test_that("read_cmdstan_csv works with diagnose results", {
   expect_equal(diagnose_results$gradients$error, c(9.919e-09, 3.13568e-08, -5.31186e-09, 5.87693e-09))
 })
 
+test_that("repair_variable_names() handles tuple and complex names", {
+  raw <- c("b_tuple:2.1.1", "arr_pair.1:1", "z.real", "zv.1.imag",
+           "nested:2:2.real")
+  repaired <- c("b_tuple:2[1,1]", "arr_pair[1]:1", "z[real]", "zv[1,imag]",
+                "nested:2:2[real]")
+  expect_equal(repair_variable_names(raw), repaired)
+  expect_equal(unrepair_variable_names(repaired), raw)
+  expect_equal(unrepair_variable_names(repair_variable_names(raw)), raw)
+})
+
 test_that("variable_dims() works", {
   expect_null(variable_dims(NULL))
 
@@ -900,6 +910,41 @@ test_that("variable_dims() works", {
   vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,3]", "c[2,2]", "c[2,1]", "b[4]", "b[2]", "b[3]", "b[1]")
   vars_dims <- list(c = c(2,1), b = 1)
   expect_equal(variable_dims(vars), vars_dims)
+
+  # complex parts and tuple elements
+  vars <- c("z[real]", "z[imag]", "zv[1,real]", "zv[1,imag]", "zv[2,real]",
+           "zv[2,imag]", "b_tuple:1:1[1]", "b_tuple:1:1[2]", "b_tuple:2[1,1]",
+           "b_tuple:2[2,1]", "arr_pair[1]:1", "arr_pair[1]:2",
+           "arr_pair[2]:1", "arr_pair[2]:2")
+  expect_equal(variable_dims(vars),
+              list(z = 2, zv = c(2, 2), b_tuple = 1, arr_pair = 2))
+})
+
+test_that("unflatten_variables() and flatten_variables() invert each other", {
+  names <- c("a", "b.1.1", "b.2.1", "b.1.2", "b.2.2", "z.real", "z.imag",
+             "zv.1.real", "zv.1.imag", "zv.2.real", "zv.2.imag", "t:1",
+             "t:2.1", "t:2.2", "at.1:1", "at.1:2", "at.2:1", "at.2:2",
+             "m.1.1:1", "m.1.1:2", "m.2.1:1", "m.2.1:2", "m.1.2:1",
+             "m.1.2:2", "m.2.2:1", "m.2.2:2")
+  values <- seq_along(names)
+  expected <- list(
+    a = 1,
+    b = array(2:5, c(2, 2)),
+    z = 6 + 7i,
+    zv = array(c(8 + 9i, 10 + 11i), 2),
+    t = list(12, array(13:14, 2)),
+    at = list(list(15, 16), list(17, 18)),
+    m = array(list(list(19, 20), list(21, 22), list(23, 24), list(25, 26)),
+             c(2, 2))
+  )
+
+  result <- unflatten_variables(values, names)
+  expect_equal(result, expected)
+
+  repaired <- repair_variable_names(names)
+  expect_equal(unflatten_variables(values, repaired), expected)
+
+  expect_equal(flatten_variables(result), values)
 })
 
 test_that("read_cmdstan_csv works if no variables are specified", {

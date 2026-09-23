@@ -32,7 +32,17 @@
 #' `read_cmdstan_csv()` returns a named list with the following components:
 #'
 #' * `metadata`: A list of the meta information from the run that produced the
-#' CSV file(s). See **Examples** below.
+#' CSV file(s). See **Examples** below. A note about variable names and sizes
+#' reported in `metadata`: `stan_variables` lists the Stan variables and
+#' `stan_variable_sizes` the shape each one's columns fill. A complex variable
+#' gets a trailing dimension of 2 for its real and imaginary parts, and a tuple
+#' the dimensions of its outer array only. Column names use `[i,j]` for indices,
+#' `[real]` and `[imag]` for the parts of a complex number, and `:` for tuple
+#' elements (`tup:2[1,1]` is element `[1,1]` of the matrix in a tuple's second
+#' element, `arr_tup[1]:2` the second element of the first tuple in an array of
+#' tuples). The \pkg{posterior} package treats everything before the last `[` as
+#' the variable name, so it groups the columns of a complex variable but not
+#' those of a tuple.
 #'
 #' The other components in the returned list depend on the method that produced
 #' the CSV file(s).
@@ -670,8 +680,7 @@ unavailable_methods_CmdStanFit_CSV <- c(
   "expose_functions",
   "init_model_methods",
   "log_prob", "grad_log_prob", "hessian",
-  "constrain_variables", "unconstrain_variables", "unconstrain_draws",
-  "variable_skeleton"
+  "constrain_variables", "unconstrain_variables", "unconstrain_draws"
 )
 error_unavailable_CmdStanFit_CSV <- function(...) {
   stop("This method is not available for objects created using as_cmdstan_fit().",
@@ -1000,21 +1009,27 @@ check_csv_metadata_matches <- function(csv_metadata) {
   NULL
 }
 
-# convert names like beta.1.1 to beta[1,1]
+# Convert CmdStan's column names to the bracketed names posterior uses,
+# beta.1.1 to beta[1,1]. Tuple elements are separated by colons and each
+# piece is converted on its own: tup:1.2 to tup:1[2], arr.1:2 to
+# arr[1]:2. A complex number's parts become indices, z.real to z[real].
 repair_variable_names <- function(names) {
-  names <- sub("\\.", "[", names)
-  names <- gsub("\\.", ",", names)
-  names[grep("\\[", names)] <-
-    paste0(names[grep("\\[", names)], "]")
-  names
+  repair <- function(pieces) {
+    pieces <- sub(".", "[", pieces, fixed = TRUE)
+    pieces <- gsub(".", ",", pieces, fixed = TRUE)
+    indexed <- grepl("[", pieces, fixed = TRUE)
+    pieces[indexed] <- paste0(pieces[indexed], "]")
+    paste(pieces, collapse = ":")
+  }
+  pieces <- strsplit(as.character(names), ":", fixed = TRUE)
+  vapply(pieces, repair, character(1))
 }
 
-# convert names like beta[1,1] to beta.1.1
+# convert names like beta[1,1] back to beta.1.1
 unrepair_variable_names <- function(names) {
-  names <- sub("\\[", "\\.", names)
-  names <- gsub(",", "\\.",  names)
-  names <- gsub("\\]", "",  names)
-  names
+  names <- gsub("[", ".", names, fixed = TRUE)
+  names <- gsub(",", ".", names, fixed = TRUE)
+  gsub("]", "", names, fixed = TRUE)
 }
 
 remaining_columns_to_read <- function(requested, currently_read, all) {
@@ -1035,8 +1050,9 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     matched <- as.list(match(requested, all_remaining))
     # loop over requests not exactly matched
     for (id in which(is.na(matched))) {
-      matched[[id]] <-
-        which(startsWith(all_remaining, paste0(requested[id], "[")))
+      prefix <- paste0(requested[id], c("[", ":"))
+      matched[[id]] <- which(startsWith(all_remaining, prefix[1]) |
+                               startsWith(all_remaining, prefix[2]))
     }
     # collect all unread variables
     unread <- all_remaining[unlist(matched)]
@@ -1055,7 +1071,9 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
 #'   individual elements (e.g., `c("beta[1]", "beta[2]")`, not just `"beta"`).
 #' @return A list giving the dimensions of the variables. The equivalent of the
 #'   `par_dims` slot of RStan's stanfit objects, except that scalars have
-#'   dimension `1` instead of `0`.
+#'   dimension `1` instead of `0`. A complex variable's parts are its last
+#'   dimension, of size 2, and a tuple's size is that of its outer array, `1`
+#'   when it isn't in an array.
 #' @note For this function to return the correct dimensions the input must be
 #'   already sorted in ascending order. Since CmdStan always has the variables
 #'   sorted correctly we avoid a sort by not sorting again here.
@@ -1064,19 +1082,101 @@ variable_dims <- function(variable_names = NULL) {
   if (is.null(variable_names)) {
     return(NULL)
   }
+  # the Stan variable each column belongs to
+  variables <- sub("(\\[|:).*", "", variable_names)
   dims <- list()
-  uniq_variable_names <- unique(gsub("\\[.*\\]", "", variable_names))
-  var_names <- gsub("\\]", "", variable_names)
-  for (var in uniq_variable_names) {
-    pattern <- paste0("^", var, "\\[")
-    var_indices <- var_names[grep(pattern, var_names)]
-    var_indices <- gsub(pattern, "", var_indices)
-    if (length(var_indices)) {
-      var_indices <- strsplit(var_indices[length(var_indices)], ",")[[1]]
-      dims[[var]] <- as.numeric(var_indices)
-    } else {
+  for (var in unique(variables)) {
+    last <- variable_names[max(which(variables == var))]
+    # a tuple's size is that of its outer array, before its first element
+    outer <- sub(":.*", "", last)
+    if (!grepl("[", outer, fixed = TRUE)) {
       dims[[var]] <- 1
+    } else {
+      indices <- strsplit(gsub("^.*\\[|\\]$", "", outer), ",")[[1]]
+      indices[indices == "imag"] <- "2"
+      dims[[var]] <- as.numeric(indices)
     }
   }
   dims
+}
+
+#' Rebuild R objects from the scalars of one draw
+#'
+#' CmdStan writes a draw as scalars in column-major order, one column per
+#' element, tuple element or complex part. This is the inverse of
+#' `flatten_variables()`: a scalar comes back as a number, an indexed
+#' variable as an array with its dims, a complex variable as an R complex
+#' scalar or array, a tuple as an unnamed list of its elements, and an
+#' array of tuples as a list of tuples, with a `dim` when the array has
+#' more than one dimension. These are the shapes `$constrain_variables()`
+#' returns and `$unconstrain_variables()`, `init` and `write_stan_json()`
+#' accept.
+#'
+#' @param values Numeric vector, one draw.
+#' @param names The columns' names, CmdStan's or repaired, in the same
+#'   order.
+#' @return A named list with one element per Stan variable.
+#' @noRd
+unflatten_variables <- function(values, names) {
+  names <- unrepair_variable_names(names)
+  variables <- sub("(\\.|:).*", "", names)
+  suffixes <- substring(names, nchar(variables) + 1)
+  groups <- split(seq_along(values),
+                  factor(variables, levels = unique(variables)))
+  lapply(groups, function(i) unflatten_leaves(values[i], suffixes[i]))
+}
+
+# `suffixes` are what follows the variable's name in CmdStan's column
+# names: "" for a scalar, ".1.2" for an element, ":2.1" for a tuple
+# element's element, ".real" and ".imag" for the parts of a complex number.
+unflatten_leaves <- function(values, suffixes) {
+  if (all(suffixes == "")) {
+    return(values)
+  }
+  if (all(suffixes %in% c(".real", ".imag"))) {
+    return(complex(real = values[suffixes == ".real"],
+                   imaginary = values[suffixes == ".imag"]))
+  }
+  if (startsWith(suffixes[1], ":")) {
+    elements <- sub("^:([0-9]+).*", "\\1", suffixes)
+    rest <- sub("^:[0-9]+", "", suffixes)
+    groups <- split(seq_along(values),
+                    factor(elements, levels = unique(elements)))
+    return(unname(lapply(groups, function(i) {
+      unflatten_leaves(values[i], rest[i])
+    })))
+  }
+  # array indices come first, then a tuple element, a complex part, or
+  # nothing
+  indices <- sub("^((\\.[0-9]+)+).*", "\\1", suffixes)
+  rest <- substring(suffixes, nchar(indices) + 1)
+  dims <- strsplit(indices[length(indices)], ".", fixed = TRUE)[[1]][-1]
+  dims <- as.integer(dims)
+  if (all(rest == "")) {
+    return(array(values, dim = dims))
+  }
+  if (all(rest %in% c(".real", ".imag"))) {
+    return(array(unflatten_leaves(values, rest), dim = dims))
+  }
+  cells <- split(seq_along(values),
+                 factor(indices, levels = unique(indices)))
+  cells <- unname(lapply(cells, function(i) {
+    unflatten_leaves(values[i], rest[i])
+  }))
+  if (length(dims) == 1) cells else array(cells, dim = dims)
+}
+
+#' Flatten R objects to the scalars of one draw
+#'
+#' The inverse of `unflatten_variables()`: lists in order, arrays in
+#' column-major order, a complex value as its real and imaginary parts.
+#' @noRd
+flatten_variables <- function(variables) {
+  if (is.list(variables)) {
+    return(unlist(lapply(variables, flatten_variables), use.names = FALSE))
+  }
+  if (is.complex(variables)) {
+    return(as.vector(rbind(Re(variables), Im(variables))))
+  }
+  as.vector(variables)
 }
