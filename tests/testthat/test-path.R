@@ -256,6 +256,7 @@ test_that("CmdStan version helpers handle invalid inputs", {
   expect_identical(cmdstan_min_version(), "2.35.0")
   expect_false(is_supported_cmdstan_version(NULL))
   expect_false(is_supported_cmdstan_version("not-a-version"))
+  expect_error(cmdstan_version_compare("", "2.35.0"))
 })
 
 test_that("CmdStan version helpers use numeric ordering", {
