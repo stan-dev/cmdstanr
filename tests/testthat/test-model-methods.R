@@ -12,7 +12,7 @@ test_that("RcppParallel's TBB works from a library path with a space", {
   tbb <- rcppparallel_tbb()
   skip_if(is.null(tbb), "RcppParallel is built against a system TBB")
   installed <- find.package("RcppParallel")
-  lib <- withr::local_tempdir("R library")
+  lib <- repair_path(withr::local_tempdir("R library"))
   file.copy(installed, lib, recursive = TRUE)
   copy <- lapply(tbb, function(dir) {
     sub(installed, file.path(lib, "RcppParallel"), dir, fixed = TRUE)

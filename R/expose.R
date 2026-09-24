@@ -74,6 +74,10 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   if (!is.null(tbb)) {
     make_args <- c(paste0("TBB_INC=", tbb$include),
                    paste0("TBB_LIB=", tbb$lib), "TBB_INTERFACE_NEW=1")
+    if (.Platform$OS.type == "windows") {
+      # Rtools' linkers reject the ELF-only flag make adds for a system TBB
+      make_args <- c(make_args, "LDFLAGS_TBB_DTAGS=")
+    }
     tbb_dir <- tbb$lib
   }
   cxxflags <- get_cmdstan_flags("CXXFLAGS", make_args)
