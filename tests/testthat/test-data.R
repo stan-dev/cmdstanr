@@ -592,6 +592,27 @@ test_that("write_stan_json() writes a 2-D array of tuples from a list-array", {
   expect_equal(written$x[[2]][[1]], list(`1` = 2, `2` = 1))
 })
 
+test_that("write_stan_json() writes an empty array of tuples", {
+  element <- list(type = "real", dimensions = 0L)
+  declaration <- list(t = list(type = list(element, element), dimensions = 2L))
+
+  file <- tempfile(fileext = ".json")
+  write_stan_json(list(t = array(list(), dim = c(2, 0))), file,
+                  variables = declaration)
+  written <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+
+  expect_equal(written$t, list(list(), list()))
+})
+
+test_that("write_stan_json() writes a list of complex vectors", {
+  file <- tempfile(fileext = ".json")
+  write_stan_json(list(z = list(c(1 + 2i, 3 + 4i), c(5 + 6i, 7 + 8i))), file)
+  written <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+
+  expect_equal(written$z[[1]], list(list(1, 2), list(3, 4)))
+  expect_equal(written$z[[2]], list(list(5, 6), list(7, 8)))
+})
+
 test_that("write_stan_json() writes complex scalars, vectors and matrices", {
   data <- list(zs = 1 + 2i, zvec = c(1 + 2i, 3 + 4i),
               zmat = matrix(c(1 + 10i, 2 + 20i, 3 + 30i, 4 + 40i), 2, 2))

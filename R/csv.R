@@ -1115,21 +1115,31 @@ variable_dims <- function(variable_names = NULL) {
 #' @param values Numeric vector, one draw.
 #' @param names The columns' names, CmdStan's or repaired, in the same
 #'   order.
+#' @param declarations Optional, the variables' entries of `$variables()`,
+#'   to size tuples whose last elements are empty.
 #' @return A named list with one element per Stan variable.
 #' @noRd
-unflatten_variables <- function(values, names) {
+unflatten_variables <- function(values, names, declarations = NULL) {
   names <- unrepair_variable_names(names)
   variables <- sub("(\\.|:).*", "", names)
   suffixes <- substring(names, nchar(variables) + 1)
   groups <- split(seq_along(values),
                   factor(variables, levels = unique(variables)))
-  lapply(groups, function(i) unflatten_leaves(values[i], suffixes[i]))
+  result <- lapply(names(groups), function(var) {
+    unflatten_leaves(values[groups[[var]]], suffixes[groups[[var]]], var)
+  })
+  names(result) <- names(groups)
+  for (var in intersect(names(result), names(declarations))) {
+    result[[var]] <- pad_tuple(result[[var]], declarations[[var]])
+  }
+  result
 }
 
 # `suffixes` are what follows the variable's name in CmdStan's column
 # names: "" for a scalar, ".1.2" for an element, ":2.1" for a tuple
 # element's element, ".real" and ".imag" for the parts of a complex number.
-unflatten_leaves <- function(values, suffixes) {
+# `name` is the variable's name, for the error message.
+unflatten_leaves <- function(values, suffixes, name) {
   if (all(suffixes == "")) {
     return(values)
   }
@@ -1138,32 +1148,65 @@ unflatten_leaves <- function(values, suffixes) {
                    imaginary = values[suffixes == ".imag"]))
   }
   if (startsWith(suffixes[1], ":")) {
-    elements <- sub("^:([0-9]+).*", "\\1", suffixes)
+    elements <- as.integer(sub("^:([0-9]+).*", "\\1", suffixes))
     rest <- sub("^:[0-9]+", "", suffixes)
+    # an element with no columns is empty
     groups <- split(seq_along(values),
-                    factor(elements, levels = unique(elements)))
+                    factor(elements, levels = seq_len(max(elements))))
     return(unname(lapply(groups, function(i) {
-      unflatten_leaves(values[i], rest[i])
+      if (length(i) == 0) {
+        numeric(0)
+      } else {
+        unflatten_leaves(values[i], rest[i], name)
+      }
     })))
   }
   # array indices come first, then a tuple element, a complex part, or
   # nothing
   indices <- sub("^((\\.[0-9]+)+).*", "\\1", suffixes)
   rest <- substring(suffixes, nchar(indices) + 1)
-  dims <- strsplit(indices[length(indices)], ".", fixed = TRUE)[[1]][-1]
-  dims <- as.integer(dims)
+  index <- lapply(strsplit(indices, ".", fixed = TRUE),
+                  function(i) as.integer(i[-1]))
+  dims <- do.call(pmax, index)
+  # column-major position of each column, whatever order they came in
+  position <- vapply(index, function(i) {
+    sum((i - 1) * cumprod(c(1, dims[-length(dims)]))) + 1
+  }, numeric(1))
+  if (length(unique(position)) != prod(dims)) {
+    stop("Variable '", name, "' is missing elements.", call. = FALSE)
+  }
+  ord <- order(position)
+  values <- values[ord]
+  rest <- rest[ord]
+  position <- position[ord]
   if (all(rest == "")) {
     return(array(values, dim = dims))
   }
   if (all(rest %in% c(".real", ".imag"))) {
-    return(array(unflatten_leaves(values, rest), dim = dims))
+    return(array(unflatten_leaves(values, rest, name), dim = dims))
   }
-  cells <- split(seq_along(values),
-                 factor(indices, levels = unique(indices)))
+  cells <- split(seq_along(values), factor(position))
   cells <- unname(lapply(cells, function(i) {
-    unflatten_leaves(values[i], rest[i])
+    unflatten_leaves(values[i], rest[i], name)
   }))
   if (length(dims) == 1) cells else array(cells, dim = dims)
+}
+
+# A tuple's trailing empty elements have no columns; its declaration says
+# how many elements it has
+pad_tuple <- function(x, declaration) {
+  if (!is.list(declaration$type)) {
+    return(x)
+  }
+  if (declaration$dimensions > 0) {
+    element <- list(type = declaration$type, dimensions = 0L)
+    padded <- lapply(x, pad_tuple, declaration = element)
+    return(if (is.null(dim(x))) padded else array(padded, dim = dim(x)))
+  }
+  lapply(seq_along(declaration$type), function(k) {
+    pad_tuple(if (k <= length(x)) x[[k]] else numeric(0),
+              declaration$type[[k]])
+  })
 }
 
 #' Flatten R objects to the scalars of one draw
@@ -1176,7 +1219,8 @@ flatten_variables <- function(variables) {
     return(unlist(lapply(variables, flatten_variables), use.names = FALSE))
   }
   if (is.complex(variables)) {
-    return(as.vector(rbind(Re(variables), Im(variables))))
+    return(as.vector(rbind(as.vector(Re(variables)),
+                           as.vector(Im(variables)))))
   }
   as.vector(variables)
 }

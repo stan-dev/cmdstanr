@@ -11,7 +11,8 @@ unconstrain_variables(variables)
 \item{variables}{(list) A list of parameter values to transform, in the same
 format as provided to the \code{init} argument of the \verb{$sample()} method. A
 tuple is an unnamed list of its elements and a complex value an R
-complex number, as \verb{$constrain_variables()} returns them.}
+complex number, as \verb{$constrain_variables()} returns them. A zero-size
+variable has no unconstrained values and can be left out or included.}
 }
 \value{
 A numeric vector of unconstrained parameter values.

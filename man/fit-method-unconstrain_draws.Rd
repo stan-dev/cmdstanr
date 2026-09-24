@@ -33,7 +33,8 @@ A \verb{posterior::draws_*} object in the format specified by \code{format}.
 The \verb{$unconstrain_draws()} method transforms all parameter draws
 to the unconstrained scale. If called with no arguments, then the draws
 within the fit object are unconstrained. Alternatively, either an existing
-draws object or a character vector of paths to CSV files can be passed.
+draws object or a character vector of paths to CSV files can be passed. A
+zero-size variable has no columns and is skipped.
 }
 \examples{
 \dontrun{

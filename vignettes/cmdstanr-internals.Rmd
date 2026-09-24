@@ -222,10 +222,10 @@ names(variables$generated_quantities)
 ```
 
 Each variable is represented as a list containing the type information
-(currently limited to `real` or `int`) and the number of dimensions. Here
-"number of dimensions" means the number of indexing dimensions in the declared
-Stan variable (scalar = 0, vector = 1, matrix = 2, etc.). See `?variables` for
-more details.
+(`real`, `int` or `complex`, or for a tuple a list of its elements' entries)
+and the number of dimensions. Here "number of dimensions" means the number of
+indexing dimensions in the declared Stan variable (scalar = 0, vector = 1,
+matrix = 2, etc.). See `?variables` for more details.
 
 ```{r variable-type-dims}
 variables$data$J

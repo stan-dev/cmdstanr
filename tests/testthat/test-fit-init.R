@@ -247,6 +247,21 @@ test_that("draws inits are recycled in order when too few are supplied", {
   )
 })
 
+test_that("draws inits are placed by index whatever the column order", {
+  draws <- posterior::as_draws_df(
+    data.frame("x[2]" = 20, "x[1]" = 10, "x[3]" = 30, check.names = FALSE)
+  )
+  model_variables <- list(
+    parameters = list(x = list(type = "real", dimensions = 1L))
+  )
+  local_mocked_bindings(process_init = function(init, ...) init)
+
+  inits <- process_init.draws(draws, num_procs = 1,
+                             model_variables = model_variables)
+
+  expect_equal(inits[[1]]$x, array(c(10, 20, 30), 3))
+})
+
 test_that("Variational method works as init", {
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_vb_init <- mod_logistic$variational(

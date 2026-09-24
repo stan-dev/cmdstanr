@@ -235,7 +235,9 @@ list_to_array <- function(x, name = NULL) {
   if (!all_equal_dim) {
     stop("All matrices/vectors in list '", name, "' must be the same size!", call. = FALSE)
   }
-  all_numeric <- all(sapply(x, function(a) is.numeric(a) || is.logical(a)))
+  all_numeric <- all(sapply(x, function(a) {
+    is.numeric(a) || is.logical(a) || is.complex(a)
+  }))
   if (!all_numeric) {
     stop("All elements in list '", name, "' must be numeric or logical!", call. = FALSE)
   }
@@ -330,7 +332,7 @@ nest_cells <- function(cells, dims) {
     return(unname(cells))
   }
   lapply(seq_len(dims[1]), function(i) {
-    nest_cells(cells[seq(i, length(cells), by = dims[1])], dims[-1])
+    nest_cells(cells[seq_along(cells) %% dims[1] == i %% dims[1]], dims[-1])
   })
 }
 

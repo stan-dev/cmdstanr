@@ -1079,7 +1079,7 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
            paste(bad, collapse = ", "), " contains NA or Inf values!",
            call. = FALSE)
     }
-    unflatten_variables(values, variables)
+    unflatten_variables(values, variables, model_variables$parameters)
   })
   process_init(inits, num_procs, model_variables, warn_partial)
 }

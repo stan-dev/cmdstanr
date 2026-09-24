@@ -96,6 +96,7 @@ test_that("model methods work with tuple and complex variables", {
   expect_true(all(sapply(gq$arr_pair, is.list)))
   expect_true(is.complex(gq$zm))
   expect_equal(dim(gq$zm), c(2, 3))
+  expect_equal(gq$zm, gq$m + 1i * (gq$m + 1))
   expect_equal(dim(gq$z3D), c(4, 2, 3))
   expect_true(is.complex(gq$nested[[2]][[2]]))
 })

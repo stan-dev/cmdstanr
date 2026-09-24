@@ -920,31 +920,51 @@ test_that("variable_dims() works", {
               list(z = 2, zv = c(2, 2), b_tuple = 1, arr_pair = 2))
 })
 
+# the columns of one draw, in the order CmdStan writes them: a scalar, a
+# matrix, complex values, tuples, and arrays of tuples
+draw_names <- c("a", "b.1.1", "b.2.1", "b.1.2", "b.2.2", "z.real", "z.imag",
+                "zv.1.real", "zv.1.imag", "zv.2.real", "zv.2.imag", "t:1",
+                "t:2.1", "t:2.2", "at.1:1", "at.1:2", "at.2:1", "at.2:2",
+                "m.1.1:1", "m.1.1:2", "m.2.1:1", "m.2.1:2", "m.1.2:1",
+                "m.1.2:2", "m.2.2:1", "m.2.2:2", "zm.1.1.real", "zm.1.1.imag",
+                "zm.2.1.real", "zm.2.1.imag", "zm.1.2.real", "zm.1.2.imag",
+                "zm.2.2.real", "zm.2.2.imag")
+draw_values <- seq_along(draw_names)
+draw_expected <- list(
+  a = 1,
+  b = array(2:5, c(2, 2)),
+  z = 6 + 7i,
+  zv = array(c(8 + 9i, 10 + 11i), 2),
+  t = list(12, array(13:14, 2)),
+  at = list(list(15, 16), list(17, 18)),
+  m = array(list(list(19, 20), list(21, 22), list(23, 24), list(25, 26)),
+           c(2, 2)),
+  zm = array(c(27 + 28i, 29 + 30i, 31 + 32i, 33 + 34i), c(2, 2))
+)
+
 test_that("unflatten_variables() and flatten_variables() invert each other", {
-  names <- c("a", "b.1.1", "b.2.1", "b.1.2", "b.2.2", "z.real", "z.imag",
-             "zv.1.real", "zv.1.imag", "zv.2.real", "zv.2.imag", "t:1",
-             "t:2.1", "t:2.2", "at.1:1", "at.1:2", "at.2:1", "at.2:2",
-             "m.1.1:1", "m.1.1:2", "m.2.1:1", "m.2.1:2", "m.1.2:1",
-             "m.1.2:2", "m.2.2:1", "m.2.2:2")
-  values <- seq_along(names)
-  expected <- list(
-    a = 1,
-    b = array(2:5, c(2, 2)),
-    z = 6 + 7i,
-    zv = array(c(8 + 9i, 10 + 11i), 2),
-    t = list(12, array(13:14, 2)),
-    at = list(list(15, 16), list(17, 18)),
-    m = array(list(list(19, 20), list(21, 22), list(23, 24), list(25, 26)),
-             c(2, 2))
-  )
+  result <- unflatten_variables(draw_values, draw_names)
+  expect_equal(result, draw_expected)
 
-  result <- unflatten_variables(values, names)
-  expect_equal(result, expected)
+  repaired <- repair_variable_names(draw_names)
+  expect_equal(unflatten_variables(draw_values, repaired), draw_expected)
 
-  repaired <- repair_variable_names(names)
-  expect_equal(unflatten_variables(values, repaired), expected)
+  expect_equal(flatten_variables(result), draw_values)
+})
 
-  expect_equal(flatten_variables(result), values)
+test_that("unflatten_variables() places columns by index", {
+  set.seed(1)
+  ord <- base::sample(length(draw_names))
+  result <- unflatten_variables(draw_values[ord], draw_names[ord])
+  # the variables come back in the shuffled order they arrived in
+  expect_equal(result[names(draw_expected)], draw_expected)
+
+  expect_error(unflatten_variables(20, "x.2"), "'x' is missing elements")
+  expect_equal(unflatten_variables(9, "t:2"), list(t = list(numeric(0), 9)))
+  real <- list(type = "real", dimensions = 0L)
+  declaration <- list(t = list(type = list(real, real), dimensions = 0L))
+  expect_equal(unflatten_variables(9, "t:1", declaration),
+               list(t = list(9, numeric(0))))
 })
 
 test_that("read_cmdstan_csv works if no variables are specified", {

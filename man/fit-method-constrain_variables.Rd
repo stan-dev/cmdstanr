@@ -26,7 +26,8 @@ A named list with one element per variable. A scalar is a number,
 an indexed variable an array with its dimensions, a complex variable an
 R complex value, a tuple an unnamed list of its elements, and an array
 of tuples a list of those, with a \code{dim} when the array has more than one
-dimension.
+dimension. A zero-size variable has no columns in CmdStan's output and
+is omitted here, as it is from \verb{$draws()}.
 }
 \description{
 The \verb{$constrain_variables()} method transforms input parameters
