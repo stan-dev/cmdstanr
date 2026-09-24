@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit_vb <- testing_fit("logistic", method = "variational", seed = 123)
 fit_vb_sci_not <- testing_fit("logistic", method = "variational", seed = 123, iter = 200000, adapt_iter = 100000)

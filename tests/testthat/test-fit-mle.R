@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit_mle <- testing_fit("logistic", method = "optimize", seed = 123)
 mod <- testing_model("bernoulli")

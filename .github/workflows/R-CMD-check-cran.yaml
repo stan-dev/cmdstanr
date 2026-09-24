@@ -1,0 +1,61 @@
+---
+# Check CmdStanR the way CRAN does: NOT_CRAN unset and no CmdStan
+# installed, so only the tests that need neither run.
+# yamllint disable rule:line-length
+
+name: CRAN check
+
+'on':
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+      - v1.0
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  R-CMD-check-cran:
+    if: "! contains(github.event.head_commit.message, '[ci skip]')"
+    runs-on: ubuntu-latest
+
+    name: ubuntu-latest (release, CRAN)
+
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: "always"
+          extra-packages: any::rcmdcheck, local::.
+
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          _R_CHECK_CRAN_INCOMING_: false
+
+      - name: Show testthat output
+        if: always()
+        run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
+        shell: bash
+
+      - name: Upload check results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cran-check-results
+          path: check

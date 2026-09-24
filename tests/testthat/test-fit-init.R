@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 data_list_schools <- testing_data("schools")

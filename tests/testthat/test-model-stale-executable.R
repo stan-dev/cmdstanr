@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 # What R/model.R's private assert_current() and its callers say about every

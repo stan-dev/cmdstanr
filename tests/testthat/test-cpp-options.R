@@ -305,6 +305,7 @@ data_file <- test_path("resources", "data", "bernoulli.data.json")
 features <- function(mod) mod$.__enclos_env__$private$reported_features_
 
 test_that("a feature inherited from make/local is reported, not requested", {
+  skip_on_cran()
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
   threaded <- paste0(
@@ -331,6 +332,7 @@ test_that("a feature inherited from make/local is reported, not requested", {
 })
 
 test_that("an executable reporting no threading flag is unknown, not off", {
+  skip_on_cran()
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
   info <- "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0"
@@ -350,6 +352,7 @@ test_that("an executable reporting no threading flag is unknown, not off", {
 })
 
 test_that("an executable adopted from live info reports threading as unknown", {
+  skip_on_cran()
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)
   info <- "stan_version_major=2\nstan_version_minor=39\nstan_version_patch=0"

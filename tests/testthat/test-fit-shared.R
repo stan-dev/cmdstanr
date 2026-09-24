@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fits <- list()
 fits[["sample"]] <- testing_fit("logistic", method = "sample",

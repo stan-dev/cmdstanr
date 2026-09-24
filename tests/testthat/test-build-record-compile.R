@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 # No C++ is compiled here: the mock writes a text file where make would have

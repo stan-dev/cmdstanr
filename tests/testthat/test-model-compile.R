@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- cmdstan_example_file()
 local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
