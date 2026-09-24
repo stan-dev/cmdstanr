@@ -293,7 +293,7 @@ test_that("unconstrain_draws returns correct values", {
   expect_equal(as.numeric(x_draws), as.numeric(unconstrained_draws))
 
   expect_message(fit$unconstrain_draws(draws = fit$draws(), inc_warmup = TRUE),
-                 "'inc_warmup' cannot be used with a draws object. Ignoring.")
+                 "`inc_warmup` cannot be used with a draws object. Ignoring.")
 
   # With a lower-bounded constraint, the parameter draws should be the
   # exponentiation of the unconstrained draws

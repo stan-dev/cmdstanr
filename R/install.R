@@ -413,7 +413,7 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (isTRUE(fix)) {
     warning(
-      "The 'fix' argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
+      "The `fix` argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
       call. = FALSE
     )
   }
@@ -770,14 +770,16 @@ build_example <- function(dir, cores, quiet, timeout) {
 build_status_ok <- function(process_log, quiet = FALSE) {
   if (process_log$timeout) {
     if (quiet) {
-      end_warning <-
-        " and running again with 'quiet=FALSE' to see full installation output."
+      end_warning <- paste0(
+        " and running again with `quiet = FALSE` to see full ",
+        "installation output."
+      )
     } else {
       end_warning <- "."
     }
     warning(
       "The build process timed out. ",
-      "Try increasing the value of the 'timeout' argument",
+      "Try increasing the value of the `timeout` argument",
       end_warning,
       call. = FALSE
     )
@@ -786,8 +788,10 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 
   if (is.na(process_log$status) || process_log$status != 0) {
     if (quiet) {
-      end_warning <-
-        " and/or try again with 'quiet=FALSE' to see full installation output."
+      end_warning <- paste0(
+        " and/or try again with `quiet = FALSE` to see full ",
+        "installation output."
+      )
     } else {
       end_warning <- "."
     }
@@ -856,16 +860,16 @@ check_unix_make <- function() {
   if (!nzchar(make_path)) {
     if (os_is_macos()) {
       stop(
-        "The 'make' tool was not found. ",
-        "Please install the command line tools for Mac with 'xcode-select --install' ",
+        "The make tool was not found. ",
+        "Please install the command line tools for Mac with `xcode-select --install` ",
         "or install Xcode from the app store. ",
         "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     } else {
       stop(
-        "The 'make' tool was not found. ",
-        "Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain().",
+        "The make tool was not found. ",
+        "Please install make, restart R, and then run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     }
@@ -880,7 +884,7 @@ check_unix_cpp_compiler <- function() {
     if (os_is_macos()) {
       stop(
         "A suitable C++ compiler was not found. ",
-        "Please install the command line tools for Mac with 'xcode-select --install' ",
+        "Please install the command line tools for Mac with `xcode-select --install` ",
         "or install Xcode from the app store. ",
         "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
@@ -888,7 +892,7 @@ check_unix_cpp_compiler <- function() {
     } else {
       stop(
         "A C++ compiler was not found. ",
-        "Please install the 'clang++' or 'g++' compiler, restart R, ",
+        "Please install the clang++ or g++ compiler, restart R, ",
         "and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )

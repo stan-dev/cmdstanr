@@ -96,7 +96,7 @@ CmdStanRun <- R6::R6Class(
       if (!length(private$latent_dynamics_files_)) {
         stop(
           "No latent dynamics files found. ",
-          "Set 'save_latent_dynamics=TRUE' when fitting the model.",
+          "Set `save_latent_dynamics = TRUE` when fitting the model.",
           call. = FALSE
         )
       }
@@ -259,7 +259,7 @@ CmdStanRun <- R6::R6Class(
       current_files <- self$metric_files(include_failed = TRUE) # used so we get error if 0 files
       if (!length(current_files)) {
         stop(
-          "No metric files found. Make sure to set 'save_metric=TRUE' when fitting the model.",
+          "No metric files found. Make sure to set `save_metric = TRUE` when fitting the model.",
           call. = FALSE
         )
       }

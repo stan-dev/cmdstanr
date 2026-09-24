@@ -33,7 +33,7 @@ assert_valid_stanc_options <- function(stanc_options) {
     if (startsWith(name, "--")) {
       stop("No leading hyphens allowed in stanc options (", name, "). ",
            "Use options without leading hyphens, for example ",
-           "`stanc_options = list('warn-uninitialized')`",
+           "`stanc_options = list(\"warn-uninitialized\")`",
            call. = FALSE)
     }
     # The flag is the part before the first `=`, wherever the name occurs.

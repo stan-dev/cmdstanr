@@ -224,7 +224,7 @@ resolve_cmdstan_path_from_env <- function() {
   if (!dir.exists(path)) {
     warning(
       "CmdStan path not set. Can't find directory specified by environment ",
-      "variable 'CMDSTAN'.",
+      "variable `CMDSTAN`.",
       call. = FALSE
     )
     return(NA_character_)
@@ -238,7 +238,7 @@ resolve_cmdstan_path_from_env <- function() {
   if (is.null(path)) {
     warning(
       "CmdStan path not set. No CmdStan installation found in the path ",
-      "specified by the environment variable 'CMDSTAN'.",
+      "specified by the environment variable `CMDSTAN`.",
       call. = FALSE
     )
     return(NA_character_)

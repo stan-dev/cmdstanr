@@ -110,7 +110,7 @@ warn_if_ignored_msys_toolchain_env <- function() {
     return(invisible(NULL))
   }
   warning(
-    "Environment variable 'CMDSTANR_USE_MSYS_TOOLCHAIN' is deprecated and ignored. ",
+    "Environment variable `CMDSTANR_USE_MSYS_TOOLCHAIN` is deprecated and ignored. ",
     "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer.\n",
     "If you need legacy MSYS toolchain support, use an older CmdStanR release.",
     call. = FALSE

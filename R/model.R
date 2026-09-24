@@ -222,7 +222,7 @@ cmdstan_model <- function(stan_file = NULL,
   if (is.null(exe_file) && is.null(stan_file)) {
     stop(
       "Unable to create a `CmdStanModel` object. ",
-      "Both 'stan_file' and 'exe_file' are undefined.",
+      "Both `stan_file` and `exe_file` are undefined.",
       call. = FALSE
     )
   }
@@ -482,14 +482,14 @@ CmdStanModel <- R6::R6Class(
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
-        warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        warning("`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
         return(NULL)
       }
       private$stan_code_
     },
     print = function(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE)) {
       if (length(private$stan_code_) == 0) {
-        stop("'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        stop("`$print()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
       }
       lines <- self$code()
       if (line_numbers) {
@@ -528,7 +528,7 @@ CmdStanModel <- R6::R6Class(
     },
     hpp_file = function() {
       if (!self$has_stan_file()) {
-        stop("'$hpp_file()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        stop("`$hpp_file()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
       }
       private$hpp_file_
     },
@@ -669,7 +669,7 @@ NULL
 variables <- function() {
   if (length(self$stan_file()) == 0) {
     stop(
-      "'$variables()' cannot be used because the 'CmdStanModel' ",
+      "`$variables()` cannot be used because the `CmdStanModel` ",
       "was not created with a Stan file.",
       call. = FALSE
     )
@@ -757,7 +757,7 @@ check_syntax <- function(pedantic = FALSE,
                          stanc_options = list(),
                          quiet = FALSE) {
   if (length(self$stan_file()) == 0) {
-    stop("'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop("`$check_syntax()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
   check_syntax_stan_file(
@@ -824,7 +824,7 @@ check_syntax_stan_file <- function(stan_file,
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
 #'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
 #'   supply a list of strings which represent options. In that case the options
-#'   are passed to `stanc`. See the
+#'   are passed to stanc. See the
 #'   [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
 #' @param backup (logical) If `TRUE`, create a backup before writing to the
@@ -879,7 +879,7 @@ format <- function(overwrite_file = FALSE,
                    quiet = FALSE) {
   if (length(self$stan_file()) == 0) {
     stop(
-      "'$format()' cannot be used because the 'CmdStanModel'",
+      "`$format()` cannot be used because the `CmdStanModel`",
       " was not created with a Stan file.", call. = FALSE
     )
   }
@@ -1476,7 +1476,7 @@ laplace <- function(data = NULL,
                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   private$assert_current()
   if (!is.null(mode) && !is.null(opt_args)) {
-    stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
+    stop("Cannot specify both `opt_args` and `mode` arguments.", call. = FALSE)
   }
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1491,7 +1491,7 @@ laplace <- function(data = NULL,
       cmdstan_mode <- mode
     } else {
       if (!(is.character(mode) && length(mode) == 1)) {
-        stop("If not NULL or a CmdStanMLE object then 'mode' must be a path to a CSV file.", call. = FALSE)
+        stop("If not NULL or a CmdStanMLE object then `mode` must be a path to a CSV file.", call. = FALSE)
       }
       cmdstan_mode <- as_cmdstan_fit(mode)
     }
@@ -1517,7 +1517,7 @@ laplace <- function(data = NULL,
     if (cmdstan_mode$return_codes() != 0) {
       stop(
         "Optimization failed.\n",
-        "Consider supplying the 'mode' argument or additional optimizer args.",
+        "Consider supplying the `mode` argument or additional optimizer args.",
         call. = FALSE
       )
     }
@@ -1811,10 +1811,10 @@ pathfinder <- function(data = NULL,
   private$assert_current()
   if (!is.null(num_threads)) {
     if (!is.null(threads)) {
-      stop("Cannot specify both 'threads' and deprecated 'num_threads'.", call. = FALSE)
+      stop("Cannot specify both `threads` and deprecated `num_threads`.", call. = FALSE)
     }
     warning(
-      "'num_threads' is deprecated as of CmdStanR 1.0.0 and will be removed in a future release. Please use 'threads' instead.",
+      "`num_threads` is deprecated as of CmdStanR 1.0.0 and will be removed in a future release. Please use `threads` instead.",
       call. = FALSE
     )
     threads <- num_threads

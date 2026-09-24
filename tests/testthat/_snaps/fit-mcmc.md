@@ -18,7 +18,7 @@
       variable mean median sd mad q5 q95 rhat ess_bulk ess_tail
       lp__
       
-      # showing 1 of 5 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 1 of 5 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -49,7 +49,7 @@
       theta_raw[6]
       theta_raw[7]
       
-      # showing 10 of 19 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 10 of 19 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -60,7 +60,7 @@
       lp__
       mu
       
-      # showing 2 of 19 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 2 of 19 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -97,7 +97,7 @@
       theta[1]
       theta[2]
       
-      # showing 2 of 8 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 2 of 8 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -131,5 +131,5 @@
       fit_mcmc$save_metric_files()
     Condition
       Error:
-      ! No metric files found. Make sure to set 'save_metric=TRUE' when fitting the model.
+      ! No metric files found. Make sure to set `save_metric = TRUE` when fitting the model.
 

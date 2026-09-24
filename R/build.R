@@ -358,7 +358,7 @@ inspect_executable <- function(exe_file) {
   features <- reported_features_from_exe(exe_file)
   if (is.null(features[["stan_version"]])) {
     stop(
-      "Running '", exe_file, "' with the argument 'info' did not report a ",
+      "Running '", exe_file, "' with the argument `info` did not report a ",
       "Stan version, so it is either not a CmdStan executable or cannot be ",
       "run.",
       call. = FALSE

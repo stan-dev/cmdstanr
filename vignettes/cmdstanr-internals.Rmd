@@ -133,7 +133,7 @@ in the Stan User's Guide.
 
 Pedantic mode is available when compiling the model or when using the separate
 `$check_syntax()` method of a `CmdStanModel` object. Internally this corresponds
-to setting the `stanc` (Stan transpiler) option `warn-pedantic`. Here we
+to setting the stanc (Stan transpiler) option `warn-pedantic`. Here we
 demonstrate pedantic mode with a Stan program that is syntactically correct but
 is missing a lower bound and a prior for a parameter.
 
