@@ -27,7 +27,8 @@ an indexed variable an array with its dimensions, a complex variable an
 R complex value, a tuple an unnamed list of its elements, and an array
 of tuples a list of those, with a \code{dim} when the array has more than one
 dimension. A zero-size variable has no columns in CmdStan's output and
-is omitted here, as it is from \verb{$draws()}.
+is omitted here, as it is from \verb{$draws()}. A tuple element with no
+columns comes back as \code{numeric(0)}, whatever shape it was declared with.
 }
 \description{
 The \verb{$constrain_variables()} method transforms input parameters

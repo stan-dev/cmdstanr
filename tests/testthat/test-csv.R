@@ -960,11 +960,21 @@ test_that("unflatten_variables() places columns by index", {
   expect_equal(result[names(draw_expected)], draw_expected)
 
   expect_error(unflatten_variables(20, "x.2"), "'x' is missing elements")
+  expect_error(unflatten_variables(10, "z.real"), "'z' is missing elements")
+  expect_error(
+    unflatten_variables(c(10, 20, 30), c("z.1.real", "z.2.real", "z.2.imag")),
+    "'z' is missing elements"
+  )
+  expect_error(unflatten_variables(c(10, 20), c("z.1.real", "z.2.imag")),
+               "'z' is missing elements")
   expect_equal(unflatten_variables(9, "t:2"), list(t = list(numeric(0), 9)))
   real <- list(type = "real", dimensions = 0L)
   declaration <- list(t = list(type = list(real, real), dimensions = 0L))
   expect_equal(unflatten_variables(9, "t:1", declaration),
                list(t = list(9, numeric(0))))
+  expect_equal(unflatten_variables(c(10, 20, 30), c("t:1", "t:2", "t:3"),
+                                   declaration),
+               list(t = list(10, 20, 30)))
 })
 
 test_that("read_cmdstan_csv works if no variables are specified", {

@@ -1144,6 +1144,9 @@ unflatten_leaves <- function(values, suffixes, name) {
     return(values)
   }
   if (all(suffixes %in% c(".real", ".imag"))) {
+    if (!identical(sort(suffixes), c(".imag", ".real"))) {
+      stop("Variable '", name, "' is missing elements.", call. = FALSE)
+    }
     return(complex(real = values[suffixes == ".real"],
                    imaginary = values[suffixes == ".imag"]))
   }
@@ -1182,13 +1185,13 @@ unflatten_leaves <- function(values, suffixes, name) {
   if (all(rest == "")) {
     return(array(values, dim = dims))
   }
-  if (all(rest %in% c(".real", ".imag"))) {
-    return(array(unflatten_leaves(values, rest, name), dim = dims))
-  }
   cells <- split(seq_along(values), factor(position))
   cells <- unname(lapply(cells, function(i) {
     unflatten_leaves(values[i], rest[i], name)
   }))
+  if (all(rest %in% c(".real", ".imag"))) {
+    return(array(unlist(cells), dim = dims))
+  }
   if (length(dims) == 1) cells else array(cells, dim = dims)
 }
 
@@ -1203,10 +1206,10 @@ pad_tuple <- function(x, declaration) {
     padded <- lapply(x, pad_tuple, declaration = element)
     return(if (is.null(dim(x))) padded else array(padded, dim = dim(x)))
   }
-  lapply(seq_along(declaration$type), function(k) {
-    pad_tuple(if (k <= length(x)) x[[k]] else numeric(0),
-              declaration$type[[k]])
-  })
+  declared <- seq_along(declaration$type)
+  x <- c(x, rep(list(numeric(0)), max(0, length(declared) - length(x))))
+  x[declared] <- Map(pad_tuple, x[declared], declaration$type)
+  x
 }
 
 #' Flatten R objects to the scalars of one draw

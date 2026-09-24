@@ -262,6 +262,21 @@ test_that("draws inits are placed by index whatever the column order", {
   expect_equal(inits[[1]]$x, array(c(10, 20, 30), 3))
 })
 
+test_that("draws inits keep tuple elements the model doesn't declare", {
+  draws <- posterior::as_draws_df(
+    data.frame("t:1" = 10, "t:2" = 20, "t:3" = 30, check.names = FALSE)
+  )
+  real <- list(type = "real", dimensions = 0L)
+  model_variables <- list(
+    parameters = list(t = list(type = list(real, real), dimensions = 0L))
+  )
+  expect_error(
+    process_init.draws(draws, num_procs = 1,
+                       model_variables = model_variables),
+    "'t' is a tuple with 2 elements, but 3 were supplied"
+  )
+})
+
 test_that("Variational method works as init", {
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_vb_init <- mod_logistic$variational(

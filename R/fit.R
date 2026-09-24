@@ -673,7 +673,8 @@ CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 #'   R complex value, a tuple an unnamed list of its elements, and an array
 #'   of tuples a list of those, with a `dim` when the array has more than one
 #'   dimension. A zero-size variable has no columns in CmdStan's output and
-#'   is omitted here, as it is from `$draws()`.
+#'   is omitted here, as it is from `$draws()`. A tuple element with no
+#'   columns comes back as `numeric(0)`, whatever shape it was declared with.
 #'
 #' @examples
 #' \dontrun{
