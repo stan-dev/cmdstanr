@@ -26,7 +26,7 @@ executable path is set.
 \item \verb{$cmdstan_version()} returns the version of CmdStan that built the
 executable, as a string.
 \item \verb{$cpp_options()} returns a named list of C++ options, with names in their
-\code{make} spelling.
+make spelling.
 \item \verb{$user_header()} returns the absolute path to the user header as a string,
 or \code{NULL} if the model has no user header.
 \item \verb{$hpp_file()} returns the path to the \code{.hpp} file holding the C++ code

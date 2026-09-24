@@ -55,7 +55,7 @@
 #'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.), written as
 #'   `list(NAME = value)`. Each entry is an assignment you could make in the
 #'   `make/local` file, so `list(CXXFLAGS = "-O3")` rather than `"-O3"`.
-#'   Every entry must be named with a `Make` variable name, in any casing.
+#'   Every entry must be named with a make variable name, in any casing.
 #'   Setting an option to `FALSE` or `NULL` passes an empty assignment such as
 #'   `STAN_THREADS=`. That empties the variable for this build, which turns a
 #'   switch off, and overrides whatever `make/local` sets. See
@@ -68,7 +68,7 @@
 #'   when compiling the model. A flag is given by name without the leading
 #'   hyphens, as `list("O1")` or `list(O1 = TRUE)`, and an option that takes a
 #'   value as `list(option = "value")`. See [stan_build_info()] for an example
-#'   and the [`stanc` chapter of the CmdStan User's
+#'   and the [stanc chapter of the CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for the
 #'   available options. Options that CmdStanR sets from its own arguments
 #'   cannot be passed here: `include-paths` (use `include_paths`),
@@ -596,7 +596,7 @@ CmdStanModel <- R6::R6Class(
 #' * `$cmdstan_version()` returns the version of CmdStan that built the
 #'   executable, as a string.
 #' * `$cpp_options()` returns a named list of C++ options, with names in their
-#'   `make` spelling.
+#'   make spelling.
 #' * `$user_header()` returns the absolute path to the user header as a string,
 #'   or `NULL` if the model has no user header.
 #' * `$hpp_file()` returns the path to the `.hpp` file holding the C++ code
@@ -2191,14 +2191,14 @@ CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 #'   now, so it also works on a model whose executable was replaced or whose
 #'   build record is gone.
 #'
-#'   This method is different than the `$cpp_options()` method, which answers a
+#'   This method is different from the `$cpp_options()` method, which answers a
 #'   narrower question: the C++ options this model object was created with.
 #'   `$build_info()` describes the executable itself, including what it reports
-#'   about its own build when run. The difference is clear when considering a
-#'   model created with `cmdstan_model(exe_file = )` from just an executable
-#'   with no build record: `$cpp_options()` is empty, since no options were
-#'   given, but `$build_info()` still reports whether the executable was built
-#'   with threading, OpenCL and so on.
+#'   about its own build when run. Take a model created with
+#'   `cmdstan_model(exe_file = )` from an executable with no build record:
+#'   `$cpp_options()` is empty, since no options were given, but `$build_info()`
+#'   still reports whether the executable was built with threading, OpenCL and
+#'   so on.
 #'
 #' @return See [stan_build_info()].
 #'
@@ -2304,7 +2304,7 @@ assert_stan_file_exists <- function(stan_file) {
 #' @param stan_file The model's Stan file, for the error when the binary
 #'   will not run.
 #' @param tbb_dir The record's `tbb_dir`, or `NULL` without a usable record.
-#' @return A named list with cmdstanr-style argument names and default
+#' @return A named list with CmdStanR-style argument names and default
 #'   values.
 parse_cmdstan_args <- function(model_binary, method, stan_file, tbb_dir) {
   withr::with_path(

@@ -80,7 +80,7 @@ derived_stanc_option_message <- function(flag) {
     ),
     "allow-undefined" = paste0(
       "`allow-undefined` cannot be set through `stanc_options`. ",
-      "Builds turn it on when a `user_header` is supplied, and ",
+      "It is on whenever a `user_header` is supplied, and ",
       "`$check_syntax()`, `$format()` and `$variables()` always use it."
     ),
     "use-opencl" = paste0(
@@ -123,13 +123,13 @@ stanc_option_supplied <- function(stanc_options, flag) {
   FALSE
 }
 
-#' Turn a `stanc_options` list into `stanc` command line arguments
+#' Turn a `stanc_options` list into stanc command line arguments
 #'
 #' @param stanc_options (list) Named or unnamed stanc options. Logical values
 #'   mark boolean flags and any other value is passed as `--name=value`.
 #' @param quote_values (logical) Quote the arguments for the `STANCFLAGS`
-#'   string handed to Make, which expands it through a shell? Arguments for
-#'   direct `stanc` calls are passed to processx as separate elements and must
+#'   string handed to make, which expands it through a shell? Arguments for
+#'   direct stanc calls are passed to processx as separate elements and must
 #'   be left unquoted (#1227).
 #' @return A character vector of arguments, one per element.
 #' @noRd
@@ -190,8 +190,8 @@ drop_overridden_stancflags <- function(local_flags, call_args) {
 
 #' Build stanc include-path arguments
 #'
-#' Make receives include paths through `STANCFLAGS`, expands the value and hands
-#' it to the shell, so `make_shell_quote()` quotes each path for both (#1230)
+#' Include paths go to make through `STANCFLAGS`, which make expands and hands
+#' to the shell, so `make_shell_quote()` quotes each path for both (#1230)
 #' inside a single `--include-paths=` flag. Direct calls through processx
 #' instead need the flag and comma-separated paths as separate, unquoted
 #' arguments.
@@ -199,10 +199,10 @@ drop_overridden_stancflags <- function(local_flags, call_args) {
 #' @param include_paths A character vector of directories containing files used
 #'   in Stan `#include` directives, or `NULL`.
 #' @param direct_call A logical indicating whether the arguments will be passed
-#'   directly to stanc through processx instead of through Make.
+#'   directly to stanc through processx instead of through make.
 #'
 #' @return `NULL` if `include_paths` is `NULL`; otherwise, a single
-#'   `--include-paths=` argument for Make or two arguments for a direct call.
+#'   `--include-paths=` argument for make or two arguments for a direct call.
 #' @noRd
 include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE) {
   stancflags <- NULL
@@ -224,18 +224,18 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
   stancflags
 }
 
-#' Ask Make for `STANCFLAGS`, one argument per line
+#' Ask make for `STANCFLAGS`, one argument per line
 #'
-#' CmdStan's `print-%` rule echoes a variable through the shell, which strips the
-#' quotes, so `make print-STANCFLAGS` returns `--filename-in-msg='/my dir'` as
-#' two words (#1232). This rule hands `$(STANCFLAGS)` to the shell the way the
-#' stanc recipe does and prints what the shell delivers, so the result holds
+#' CmdStan's `print-%` rule echoes a variable through the shell, which strips
+#' the quotes, so `make print-STANCFLAGS` returns `--filename-in-msg='/my dir'`
+#' as two words (#1232). This rule hands `$(STANCFLAGS)` to the shell the way
+#' the stanc recipe does and prints what the shell delivers, so the result holds
 #' exactly the arguments stanc gets from make. Each line carries a prefix that
 #' tells it apart from other make output. The rule lives in a temporary makefile
 #' rather than an `--eval` argument because users may have a make too old for
-#' `--eval`; the one Apple ships with macOS is. The fragment's first line removes
-#' the fragment from `MAKEFILE_LIST` so a value that reads the list sees the same
-#' makefiles the real build does.
+#' `--eval`; the one Apple ships with macOS is. The fragment's first line
+#' removes the fragment from `MAKEFILE_LIST` so a value that reads the list sees
+#' the same makefiles the real build does.
 #'
 #' @param cmdstan_path (string) The CmdStan directory.
 #' @param make_args (character) Command-line variable assignments (`NAME=value`)

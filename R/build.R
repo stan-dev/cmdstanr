@@ -253,7 +253,10 @@ install_executable <- function(from, to, record) {
         error_on_status = FALSE
       )
       if (is.na(chmod$status) || chmod$status != 0) {
-        stop("Could not make the compiled executable executable.", call. = FALSE)
+        stop(
+          "Could not set the execute bit on the compiled executable.",
+          call. = FALSE
+        )
       }
     }
     write_build_record(record, candidate)

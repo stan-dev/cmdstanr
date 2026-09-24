@@ -302,7 +302,7 @@ test_that("compiling stops on stanc options cmdstanr sets itself", {
   fragments <- list(
     "include-paths" = "Pass the directories with the `include_paths` argument.",
     "warn-pedantic" = "Use `pedantic = TRUE`.",
-    "allow-undefined" = "Builds turn it on when a `user_header` is supplied",
+    "allow-undefined" = "It is on whenever a `user_header` is supplied",
     "use-opencl" = "Use `cpp_options = list(stan_opencl = TRUE)`, which turns it on.",
     "name" = "The model name comes from the name of the Stan file."
   )
@@ -433,7 +433,7 @@ test_that("check_syntax() works", {
   )
   expect_error(
     mod_ok$check_syntax(stanc_options = list("allow-undefined")),
-    "Builds turn it on when a `user_header` is supplied",
+    "It is on whenever a `user_header` is supplied",
     fixed = TRUE
   )
 

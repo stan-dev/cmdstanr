@@ -73,7 +73,7 @@ to compile with the Stan model.}
 model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.), written as
 \code{list(NAME = value)}. Each entry is an assignment you could make in the
 \code{make/local} file, so \code{list(CXXFLAGS = "-O3")} rather than \code{"-O3"}.
-Every entry must be named with a \code{Make} variable name, in any casing.
+Every entry must be named with a make variable name, in any casing.
 Setting an option to \code{FALSE} or \code{NULL} passes an empty assignment such as
 \verb{STAN_THREADS=}. That empties the variable for this build, which turns a
 switch off, and overrides whatever \code{make/local} sets. See
@@ -85,7 +85,7 @@ for using threading.}
 when compiling the model. A flag is given by name without the leading
 hyphens, as \code{list("O1")} or \code{list(O1 = TRUE)}, and an option that takes a
 value as \code{list(option = "value")}. See \code{\link[=stan_build_info]{stan_build_info()}} for an example
-and the \href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{\code{stanc} chapter of the CmdStan User's Guide} for the
+and the \href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{stanc chapter of the CmdStan User's Guide} for the
 available options. Options that CmdStanR sets from its own arguments
 cannot be passed here: \code{include-paths} (use \code{include_paths}),
 \code{warn-pedantic} (\code{pedantic}), \code{allow-undefined} (\code{user_header}),
