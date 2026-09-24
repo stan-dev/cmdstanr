@@ -525,7 +525,7 @@ installation from source. Installation-time compilation builds executables on
 the installing system so they can be reused without recompilation at runtime.
 This is different from including compiled executables in the source package:
 compiled artifacts are generally not portable across platforms, and
-[CRAN source packages may not contain binary executable code](https://cran.r-project.org/web/packages/policies.html#Source-packages).
+[CRAN source packages may not contain binary executable code](https://cran.r-project.org/web/packages/policies.html).
 
 The [`instantiate`](https://wlandau.github.io/instantiate/) package provides a
 current workflow for installation-time compilation. See the `instantiate`

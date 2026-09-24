@@ -479,7 +479,7 @@ fit2 <- readRDS("fit.RDS")
 
 But if your model object is large, then `fit$save_object()` can take a long time
 if saving in the default RDS format. For large objects, we recommend using the
-much faster [`qs2`](https://github.com/traversc/qs2) format. The saved object
+much faster [`qs2`](https://github.com/qsbase/qs2) format. The saved object
 can then be read back into R using `qs2::qs_read()`.
 
 ```{r save_object_qs_full, eval = FALSE}

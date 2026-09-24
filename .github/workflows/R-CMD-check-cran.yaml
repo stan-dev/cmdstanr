@@ -44,8 +44,11 @@ jobs:
           cache: "always"
           extra-packages: any::rcmdcheck, local::.
 
+      # setup-r exports NOT_CRAN=true, which would evaluate the vignettes and
+      # run every test; CRAN leaves it unset.
       - uses: r-lib/actions/check-r-package@v2
         env:
+          NOT_CRAN: false
           _R_CHECK_CRAN_INCOMING_: false
 
       - name: Show testthat output
