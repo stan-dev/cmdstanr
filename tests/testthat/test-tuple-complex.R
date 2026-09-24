@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 tuple_complex_data <- list(
