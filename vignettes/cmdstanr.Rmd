@@ -45,7 +45,7 @@ color_scheme_set("brightblue")
 
 ## Installing CmdStan
 
-CmdStanR requires a working installation of version 2.35 or later of
+CmdStanR requires a working installation of version 2.37 or later of
 [CmdStan](https://mc-stan.org/users/interfaces/cmdstan.html), the command line
 interface to Stan. If you don't have CmdStan installed, CmdStanR can install
 it for you, assuming you have a suitable C++ toolchain. The requirements are
@@ -85,7 +85,7 @@ is useful if your CmdStan installation is not located in the default directory
 that would have been used by `install_cmdstan()` (see #2).
 
 2. If no environment variable is found when loaded but any directory in the form
-`".cmdstan/cmdstan-[version]"`, for example `".cmdstan/cmdstan-2.35.0"`,
+`".cmdstan/cmdstan-[version]"`, for example `".cmdstan/cmdstan-2.37.0"`,
 exists in the user's home directory (`Sys.getenv("HOME")`,
 *not* the current working directory) then the path to the CmdStan with the
 largest version number will be set as the path to CmdStan for the R session.

@@ -170,7 +170,7 @@ test_that("Setting path rejects unsupported CmdStan versions", {
 
   expect_warning(
     set_cmdstan_path(path),
-    "CmdStanR now requires CmdStan v2.35.0 or newer",
+    "CmdStanR now requires CmdStan v2.37.0 or newer",
     fixed = TRUE
   )
   expect_null(.cmdstanr$PATH)
@@ -255,7 +255,7 @@ test_that("cmdstan_default_path() returns NULL for legacy-only cmdstan directory
 })
 
 test_that("CmdStan version helpers handle invalid inputs", {
-  expect_identical(cmdstan_min_version(), "2.35.0")
+  expect_identical(cmdstan_min_version(), "2.37.0")
   expect_false(is_supported_cmdstan_version(NULL))
   expect_false(is_supported_cmdstan_version("not-a-version"))
   expect_error(cmdstan_version_compare("", "2.35.0"))

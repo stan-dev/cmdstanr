@@ -260,8 +260,7 @@ adaptation interval.}
 sampler generates a new sample without changing the current state of the
 Markov chain; only generated quantities may change. This can be useful
 when, for example, trying to generate pseudo-data using the generated
-quantities block. For CmdStan versions before 2.36, \code{fixed_param = TRUE}
-is mandatory if the parameters block is empty.}
+quantities block.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
 during the execution process, such as iteration numbers and elapsed times.
