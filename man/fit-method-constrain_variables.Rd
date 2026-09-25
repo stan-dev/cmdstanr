@@ -22,8 +22,13 @@ parameters implied by newly-constrained parameters (defaults to TRUE).}
 implied by newly-constrained parameters (defaults to TRUE).}
 }
 \value{
-A named list of constrained parameter values and, if requested,
-transformed parameters and generated quantities.
+A named list with one element per variable. A scalar is a number,
+an indexed variable an array with its dimensions, a complex variable an
+R complex value, a tuple an unnamed list of its elements, and an array
+of tuples a list of those, with a \code{dim} when the array has more than one
+dimension. A zero-size variable has no columns in CmdStan's output and
+is omitted here, as it is from \verb{$draws()}. A tuple element with no
+columns comes back as \code{numeric(0)}, whatever shape it was declared with.
 }
 \description{
 The \verb{$constrain_variables()} method transforms input parameters
@@ -38,5 +43,5 @@ fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 }
 \seealso{
 \code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=unconstrain_variables]{unconstrain_variables()}},
-\code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}}, \code{\link[=hessian]{hessian()}}
+\code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=hessian]{hessian()}}
 }

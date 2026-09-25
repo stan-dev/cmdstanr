@@ -4,9 +4,21 @@
 #' @param data (list) A named list of \R objects.
 #' @param file (string) The path to where the data file should be written.
 #' @param always_decimal (logical) Force generate non-integers with decimal
-#' points to better distinguish between integers and floating point values.
-#' If `TRUE` all \R objects in `data` intended for integers must be of integer
-#' type.
+#'   points to better distinguish between integers and floating point values. If
+#'   `TRUE` all \R objects in `data` intended for integers must be of integer
+#'   type.
+#' @param variables (list) Optionally, the Stan declarations of the variables
+#'   in `data`, so that they are written the way the Stan program expects.
+#'   Use `mod$variables()$data` (see [`$variables()`][model-method-variables])
+#'   or `variables_stan_file(stan_file)$data`. Given the declarations, an
+#'   unnamed list is written as a tuple when the variable is a tuple (see
+#'   **Tuples** below), a length-1 value is written as an array when the
+#'   variable is declared with a dimension (see **Scalar vs. length-1 vector**
+#'   below), and a factor is only accepted for an `int` variable. The fitting
+#'   methods of a model compiled from a Stan file pass the declarations
+#'   themselves. Without them every unnamed list is converted to an array, a
+#'   length-1 value is written as a scalar, and every factor is converted to
+#'   its level indices.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -19,6 +31,8 @@
 #' * `data.frame` -> `matrix` (via [data.matrix()]); every column must be
 #' numeric, integer, logical, or factor
 #' * `list` -> `array`
+#' * `complex` -> the pair `[re, im]`; a complex vector or matrix -> an array
+#' of pairs
 #' * `table` -> `vector`, `matrix`, or `array` (depending on dimensions of table)
 #'
 #' ### Factor conversion
@@ -26,10 +40,10 @@
 #' in `levels(x)` rather than the value itself. The default levels are the
 #' sorted unique values, e.g., `factor(c(10, 9, 8))` has levels `8`, `9`, `10`
 #' and is written as `[3, 2, 1]`. An unused level shifts the indices of the
-#' levels after it. The fitting methods of a model compiled from a Stan file
-#' will error if a factor is supplied for a variable that is not declared as
-#' `int`, but if `write_stan_json()` is called directly by the user it has no
-#' declarations to check and so it always does the conversion.
+#' levels after it. With `variables`, which the fitting methods of a model
+#' compiled from a Stan file always pass, a factor for a variable not declared
+#' as `int` is an error. Without them `write_stan_json()` has no declarations
+#' to check and always does the conversion.
 #'
 #' ### List to array conversion
 #' The `list` to `array` conversion is intended to make it easier to prepare
@@ -49,6 +63,18 @@
 #' dimensions `KxLxJ`. Nested lists are not supported: every element of the list
 #' must be a vector, matrix, or array.
 #'
+#' ### Tuples
+#' A tuple is an unnamed list with one element per tuple element, so
+#' `tuple(int, vector[2]) t` is `list(3, c(1.5, 2.5))`, and a nested tuple is
+#' a nested list. An array of tuples is a list of such lists:
+#' `array[2] tuple(real, real) ts` is `list(list(1, 2), list(3, 4))`. For an
+#' array with more than one dimension give the list a `dim` attribute, so
+#' `array[2, 3] tuple(real, real)` is `array(cells, dim = c(2, 3))` with
+#' `cells` a list of the six tuples in the order [array()] fills them, the
+#' first index changing fastest. Since an unnamed list is otherwise converted
+#' to an array, a tuple is only written as one when `variables` declares it as
+#' a tuple. The fitting methods pass the declarations for you.
+#'
 #' ### Scalar vs. length-1 vector
 #' Because \R does not distinguish between a scalar and a vector of length 1, a
 #' length-1 vector like `c(42)` is written to JSON as a scalar (`42`) rather
@@ -60,10 +86,10 @@
 #' * `write_stan_json(list(x = array(42)), file)` writes `"x": [42]`
 #' * `write_stan_json(list(x = array(c(42, 43))), file)` writes `"x": [42, 43]`
 #'
-#' This is only necessary when calling `write_stan_json()` directly. When
-#' passing a data list to the fitting methods of a model compiled from a Stan
-#' file (e.g., `$sample()`), CmdStanR uses the model's variable declarations to
-#' make this correction automatically.
+#' This is only necessary when calling `write_stan_json()` directly without
+#' `variables`. With them, and in the fitting methods of a model compiled from
+#' a Stan file (e.g., `$sample()`), CmdStanR makes this correction from the
+#' declarations.
 #'
 #' @seealso [`$variables()`][model-method-variables] for inspecting the input
 #'   and output variables of a Stan program.
@@ -90,7 +116,28 @@
 #' write_stan_json(data, file)
 #' cat(readLines(file), sep = "\n")
 #'
-write_stan_json <- function(data, file, always_decimal = FALSE) {
+#'
+#' # complex numbers are written as [re, im] pairs
+#' data <- list(z = 1 + 2i, zv = c(1 + 2i, 3 + 4i))
+#' write_stan_json(data, file)
+#' cat(readLines(file), sep = "\n")
+#'
+#'
+#' # tuples need the declarations from the Stan program, see 'variables'
+#' \dontrun{
+#' stan_file <- write_stan_file("
+#' data {
+#'   tuple(int, vector[2]) t;
+#'   array[2] tuple(real, real) ts;
+#' }
+#' ")
+#' data <- list(t = list(3, c(1.5, 2.5)), ts = list(list(1, 2), list(3, 4)))
+#' write_stan_json(data, file, variables = variables_stan_file(stan_file)$data)
+#' cat(readLines(file), sep = "\n")
+#' }
+#'
+write_stan_json <- function(data, file, always_decimal = FALSE,
+                            variables = NULL) {
   if (!is.list(data)) {
     stop("`data` must be a list.", call. = FALSE)
   }
@@ -110,16 +157,8 @@ write_stan_json <- function(data, file, always_decimal = FALSE) {
   }
 
   for (var_name in data_names) {
-    var <- data[[var_name]]
-    if (is.null(var)) {
-      stop("Variable '", var_name, "' is NULL.", call. = FALSE)
-    }
-    validate_data_type(var, var_name)
-    var <- convert_to_array(var, var_name)
-    if (anyNA(var)) {
-      stop("Variable '", var_name, "' has NA values.", call. = FALSE)
-    }
-    data[[var_name]] <- var
+    data[[var_name]] <- convert_variable(data[[var_name]], var_name,
+                                         variables[[var_name]])
   }
 
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
@@ -150,7 +189,8 @@ has_factor <- function(x) {
 # Error if a variable is not one of the types accepted in a data list. Data
 # frames and lists are accepted here and converted by convert_to_array().
 validate_data_type <- function(var, var_name) {
-  if (!is_valid_data_type(var) && !is.data.frame(var) && !is.list(var)) {
+  if (!is_valid_data_type(var) && !is.complex(var) && !is.data.frame(var) &&
+      !is.list(var)) {
     stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
   }
   invisible(NULL)
@@ -195,7 +235,9 @@ list_to_array <- function(x, name = NULL) {
   if (!all_equal_dim) {
     stop("All matrices/vectors in list '", name, "' must be the same size!", call. = FALSE)
   }
-  all_numeric <- all(sapply(x, function(a) is.numeric(a) || is.logical(a)))
+  all_numeric <- all(sapply(x, function(a) {
+    is.numeric(a) || is.logical(a) || is.complex(a)
+  }))
   if (!all_numeric) {
     stop("All elements in list '", name, "' must be numeric or logical!", call. = FALSE)
   }
@@ -203,6 +245,105 @@ list_to_array <- function(x, name = NULL) {
   x <- unlist(x)
   dim(x) <- c(all_dims[[1]], list_length)
   aperm(x, c(element_num_of_dim + 1L, seq_len(element_num_of_dim)))
+}
+
+
+#' Convert one variable to what jsonlite writes as CmdStan reads it
+#'
+#' Used for data and for initial values. The variable's declaration, an
+#' entry of `$variables()`, enables the conversions that need one: a tuple
+#' from a list, factors and rounding for an `int` variable, and a length-1
+#' array kept an array.
+#' @noRd
+convert_variable <- function(var, var_name, declaration = NULL) {
+  if (is.null(var)) {
+    stop("Variable '", var_name, "' is NULL.", call. = FALSE)
+  }
+  if (is.list(declaration$type)) {
+    return(convert_tuple(var, var_name, declaration))
+  }
+  validate_data_type(var, var_name)
+  # Factors are written as level indices, which are only meaningful for
+  # variables declared as int. Handle them before the conversions below,
+  # which replace factors with their codes and drop the factor class.
+  if (identical(declaration$type, "int")) {
+    if (is.factor(var)) {
+      var <- as.integer(var)
+    }
+  } else if (!is.null(declaration) && has_factor(var)) {
+    stop("A factor was supplied for '", var_name, "', which is declared as '",
+         declaration$type, "'.", call. = FALSE)
+  }
+  var <- convert_to_array(var, var_name)
+  if (anyNA(var)) {
+    stop("Variable '", var_name, "' has NA values.", call. = FALSE)
+  }
+  # distinguish between scalars and arrays/vectors of length 1
+  if (isTRUE(declaration$dimensions == 1) && length(var) == 1) {
+    var <- array(var, dim = 1)
+  }
+  if (is.complex(var)) {
+    var <- complex_to_array(var)
+  }
+  # Make sure integer inputs are of integer type to avoid
+  # generating a decimal point in write_stan_json
+  if (identical(declaration$type, "int") && !is.integer(var)) {
+    if (!isTRUE(all(is_wholenumber(var)))) {
+      warning("A non-integer value was supplied for '", var_name, "'!",
+              " It will be truncated to an integer.", call. = FALSE)
+    } else {
+      # Round before setting mode to integer to avoid floating point errors
+      var <- round(var)
+    }
+    mode(var) <- "integer"
+  }
+  var
+}
+
+# A tuple is an unnamed list of its elements, written as a JSON object
+# with keys "1", "2", ...; an array of tuples is a list of tuples, with a
+# dim for more than one array dimension, written as nested JSON arrays.
+convert_tuple <- function(var, var_name, declaration) {
+  if (!is.list(var) || is.data.frame(var)) {
+    stop("Variable '", var_name, "' is declared as a tuple and must be a list.",
+         call. = FALSE)
+  }
+  if (declaration$dimensions > 0) {
+    element <- list(type = declaration$type, dimensions = 0L)
+    cells <- lapply(var, convert_tuple, var_name = var_name,
+                    declaration = element)
+    return(nest_cells(cells, dim(var) %||% length(var)))
+  }
+  if (length(var) != length(declaration$type)) {
+    stop("Variable '", var_name, "' is a tuple with ", length(declaration$type),
+         " elements, but ", length(var), " were supplied.", call. = FALSE)
+  }
+  elements <- lapply(seq_along(var), function(k) {
+    convert_variable(var[[k]], paste0(var_name, ":", k), declaration$type[[k]])
+  })
+  names(elements) <- seq_along(elements)
+  elements
+}
+
+# Nest cells stored in column-major order the way jsonlite nests an
+# array, first index outermost
+nest_cells <- function(cells, dims) {
+  if (length(dims) == 1) {
+    return(unname(cells))
+  }
+  lapply(seq_len(dims[1]), function(i) {
+    nest_cells(cells[seq_along(cells) %% dims[1] == i %% dims[1]], dims[-1])
+  })
+}
+
+# CmdStan reads a complex number as the pair [re, im], and complex
+# containers as arrays of pairs
+complex_to_array <- function(x) {
+  parts <- c(Re(x), Im(x))
+  if (is.null(dim(x)) && length(x) == 1) {
+    return(parts)
+  }
+  array(parts, dim = c(dim(x) %||% length(x), 2))
 }
 
 
@@ -235,50 +376,11 @@ process_data <- function(data, model_variables = NULL) {
           call. = FALSE
         )
       }
-      for (var_name in names(data_variables)) {
-        if (is.null(data[[var_name]])) {
-          stop("Variable '", var_name, "' is NULL.", call. = FALSE)
-        }
-        validate_data_type(data[[var_name]], var_name)
-        # Factors are written as level indices, which are only meaningful for
-        # variables declared as int. Handle them before the conversions below,
-        # which replace factors with their codes and drop the factor class.
-        if (data_variables[[var_name]]$type == "int") {
-          if (is.factor(data[[var_name]])) {
-            data[[var_name]] <- as.integer(data[[var_name]])
-          }
-        } else if (has_factor(data[[var_name]])) {
-          stop("A factor was supplied for '", var_name, "', which is declared as '",
-               data_variables[[var_name]]$type, "'.", call. = FALSE)
-        }
-        # Convert lists and data frames to arrays before the checks below,
-        # which require an atomic object (#817)
-        data[[var_name]] <- convert_to_array(data[[var_name]], var_name)
-        # distinguish between scalars and arrays/vectors of length 1
-        if (length(data[[var_name]]) == 1
-            && data_variables[[var_name]]$dimensions == 1) {
-            data[[var_name]] <- array(data[[var_name]], dim = 1)
-        }
-        # Make sure integer inputs are of integer type to avoid
-        # generating a decimal point in write_stan_json
-        if (data_variables[[var_name]]$type == "int"
-            && !is.integer(data[[var_name]])) {
-          if (!isTRUE(all(is_wholenumber(data[[var_name]])))) {
-            # Don't warn for NULL/NA, as different warnings are used for those
-            if (!isTRUE(anyNA(data[[var_name]]))) {
-              warning("A non-integer value was supplied for '", var_name, "'!",
-                      " It will be truncated to an integer.", call. = FALSE)
-            }
-          } else {
-            # Round before setting mode to integer to avoid floating point errors
-            data[[var_name]] <- round(data[[var_name]])
-          }
-          mode(data[[var_name]]) <- "integer"
-        }
-      }
     }
     path <- tempfile(pattern = "standata-", fileext = ".json")
-    write_stan_json(data = data, file = path, always_decimal = !is.null(model_variables))
+    write_stan_json(data = data, file = path,
+                    always_decimal = !is.null(model_variables),
+                    variables = model_variables$data)
   } else {
     stop("`data` should be a path or a named list.", call. = FALSE)
   }

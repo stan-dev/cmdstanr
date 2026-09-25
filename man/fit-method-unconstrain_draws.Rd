@@ -33,7 +33,8 @@ A \verb{posterior::draws_*} object in the format specified by \code{format}.
 The \verb{$unconstrain_draws()} method transforms all parameter draws
 to the unconstrained scale. If called with no arguments, then the draws
 within the fit object are unconstrained. Alternatively, either an existing
-draws object or a character vector of paths to CSV files can be passed.
+draws object or a character vector of paths to CSV files can be passed. A
+zero-size variable has no columns and is skipped.
 }
 \examples{
 \dontrun{
@@ -52,5 +53,5 @@ unconstrained_draws <- fit_mcmc$unconstrain_draws(draws = fit_mcmc$draws())
 }
 \seealso{
 \code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
-\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=variable_skeleton]{variable_skeleton()}}, \code{\link[=hessian]{hessian()}}
+\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=hessian]{hessian()}}
 }

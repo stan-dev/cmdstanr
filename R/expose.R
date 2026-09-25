@@ -124,28 +124,7 @@ initialize_model_pointer <- function(env, datafile_path, seed = 0) {
   env$model_ptr_ <- ptr_and_rng$model_ptr
   env$model_rng_ <- ptr_and_rng$base_rng
   env$num_upars_ <- env$get_num_upars(env$model_ptr_)
-  env$param_metadata_ <- env$get_param_metadata(env$model_ptr_)
   invisible(NULL)
-}
-
-create_skeleton <- function(param_metadata, model_variables,
-                            transformed_parameters, generated_quantities) {
-  target_params <- names(model_variables$parameters)
-  if (transformed_parameters) {
-    target_params <- c(target_params,
-                       names(model_variables$transformed_parameters))
-  }
-  if (generated_quantities) {
-    target_params <- c(target_params,
-                       names(model_variables$generated_quantities))
-  }
-  lapply(param_metadata[target_params], function(par_dims) {
-    if ((length(par_dims) == 0)) {
-      array(0, dim = 1)
-    } else {
-      array(0, dim = par_dims)
-    }
-  })
 }
 
 get_function_name <- function(fun_start, fun_end, model_lines) {

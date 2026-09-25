@@ -628,8 +628,10 @@ NULL
 #'   Stan program as it is now, without creating a model object or compiling.
 #'
 #'   Each element in the returned object contains a list of variables, with each
-#'   variable represented as a list with information on its scalar type (`real`
-#'   or `int`) and number of dimensions.
+#'   variable represented as a list with information on its scalar type (`real`,
+#'   `int` or `complex`) and number of dimensions. A tuple's `type` is instead
+#'   a list with one such entry per tuple element, nested for nested tuples,
+#'   and its `dimensions` count only the array dimensions around the tuple.
 #'
 #'   The number of dimensions reported is the number of indexing dimensions in
 #'   the declared Stan variable, equivalently the number of indices needed to

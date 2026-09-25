@@ -77,7 +77,9 @@ MCMC the list should contain a sublist for each chain, and for Pathfinder it
 should contain a sublist for each path. For other model fitting methods
 there should be just one sublist. The sublists should have named elements
 corresponding to the parameters for which you are specifying initial
-values. See \strong{Examples}.
+values. See \strong{Examples}. A tuple parameter is given as an unnamed list
+of its elements and a complex parameter as an R complex value, see
+\code{\link[=write_stan_json]{write_stan_json()}}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC and Pathfinder,

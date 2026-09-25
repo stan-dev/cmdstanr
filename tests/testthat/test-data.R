@@ -563,6 +563,111 @@ test_that("factors work for length-1 arrays", {
   expect_equal(jsonlite::read_json(test_file)$a, list(5L))
 })
 
+test_that("write_stan_json() writes a tuple from a list using variables", {
+  variables <- variables_stan_file(testing_stan_file("tuple_complex"))$data
+  data <- list(
+    d_pair = list(3, c(1, 2)),
+    d_arr = list(list(1, 2), list(3, 4)),
+    d_zv = c(5 + 6i, 7 + 8i)
+  )
+  file <- tempfile(fileext = ".json")
+  write_stan_json(data, file, variables = variables, always_decimal = TRUE)
+  written <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+
+  expect_equal(written$d_pair, list(`1` = 3L, `2` = list(1, 2)))
+  expect_length(written$d_arr, 2)
+  expect_equal(written$d_arr[[1]], list(`1` = 1, `2` = 2))
+  expect_equal(written$d_arr[[2]], list(`1` = 3, `2` = 4))
+  expect_equal(written$d_zv, list(list(5, 6), list(7, 8)))
+})
+
+test_that("write_stan_json() writes a 2-D array of tuples from a list-array", {
+  element <- list(type = "real", dimensions = 0L)
+  declaration <- list(x = list(type = list(element, element), dimensions = 2L))
+  x <- array(list(list(1, 1), list(2, 1), list(1, 2), list(2, 2)),
+             dim = c(2, 2))
+
+  file <- tempfile(fileext = ".json")
+  write_stan_json(list(x = x), file, variables = declaration)
+  written <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+
+  expect_equal(written$x[[2]][[1]], list(`1` = 2, `2` = 1))
+})
+
+test_that("write_stan_json() writes an empty array of tuples", {
+  element <- list(type = "real", dimensions = 0L)
+  declaration <- list(t = list(type = list(element, element), dimensions = 2L))
+
+  file <- tempfile(fileext = ".json")
+  write_stan_json(list(t = array(list(), dim = c(2, 0))), file,
+                  variables = declaration)
+  written <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+
+  expect_equal(written$t, list(list(), list()))
+})
+
+test_that("write_stan_json() writes a list of complex vectors", {
+  file <- tempfile(fileext = ".json")
+  write_stan_json(list(z = list(c(1 + 2i, 3 + 4i), c(5 + 6i, 7 + 8i))), file)
+  written <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+
+  expect_equal(written$z[[1]], list(list(1, 2), list(3, 4)))
+  expect_equal(written$z[[2]], list(list(5, 6), list(7, 8)))
+})
+
+test_that("write_stan_json() writes complex scalars, vectors and matrices", {
+  data <- list(zs = 1 + 2i, zvec = c(1 + 2i, 3 + 4i),
+              zmat = matrix(c(1 + 10i, 2 + 20i, 3 + 30i, 4 + 40i), 2, 2))
+  file <- tempfile(fileext = ".json")
+  write_stan_json(data, file)
+  written <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+
+  expect_equal(written$zs, list(1, 2))
+  expect_equal(written$zvec, list(list(1, 2), list(3, 4)))
+  expect_equal(written$zmat[[1]][[1]], list(1, 10))
+  expect_equal(written$zmat[[2]][[2]], list(4, 40))
+})
+
+test_that("write_stan_json() writes a length-1 complex_vector as an array", {
+  declaration <- list(zvec = list(type = "complex", dimensions = 1L))
+  file <- tempfile(fileext = ".json")
+  write_stan_json(list(zvec = 1 + 2i), file, variables = declaration)
+  written <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+
+  expect_equal(written$zvec, list(list(1, 2)))
+})
+
+test_that("write_stan_json() writes an int tuple element without a decimal", {
+  declaration <- list(t = list(type = list(list(type = "int", dimensions = 0L)),
+                               dimensions = 0L))
+  file <- tempfile(fileext = ".json")
+  write_stan_json(list(t = list(3)), file, variables = declaration,
+                  always_decimal = TRUE)
+  expect_equal(readLines(file)[2], "  \"t\": {")
+  expect_equal(trimws(readLines(file)[3]), "\"1\": 3")
+})
+
+test_that("write_stan_json() converts a list to an array without variables", {
+  file <- tempfile(fileext = ".json")
+  write_stan_json(list(x = list(1:3, 4:6)), file)
+  expect_equal(jsonlite::read_json(file, simplifyVector = TRUE)$x,
+              matrix(c(1:3, 4:6), nrow = 2, byrow = TRUE))
+})
+
+test_that("write_stan_json() errors for a tuple given the wrong shape", {
+  element <- list(type = "real", dimensions = 0L)
+  declaration <- list(t = list(type = list(element, element), dimensions = 0L))
+  file <- tempfile(fileext = ".json")
+  expect_error(
+    write_stan_json(list(t = 5), file, variables = declaration),
+    "is declared as a tuple and must be a list"
+  )
+  expect_error(
+    write_stan_json(list(t = list(1, 2, 3)), file, variables = declaration),
+    "is a tuple with 2 elements, but 3 were supplied"
+  )
+})
+
 test_that("Floating-point differences do not cause truncation towards 0", {
   stan_file <- write_stan_file("
   data {
