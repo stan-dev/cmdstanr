@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")
@@ -50,13 +52,13 @@ test_that("sample method works with valid numeric init values", {
 test_that("fitting methods throw errors for invalid init arguments", {
   expect_error(
     mod$sample(data = data_list, chains = 2, init = -10, seed = 123),
-    "If 'init' is numeric it must be a single real number >= 0",
+    "If `init` is numeric it must be a single real number >= 0",
     fixed = TRUE
   )
 
   expect_error(
     mod$sample(data = data_list, init = data.frame(x = 10)),
-    "Invalid 'init' specification",
+    "Invalid `init` specification",
     fixed = TRUE
   )
 
@@ -137,13 +139,13 @@ test_that("error if init list is specified incorrectly", {
   init_list <- list(alpha = 1, beta = c(1,1))
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "If 'init' is a list it must be a list of lists"
+    "If `init` is a list it must be a list of lists"
   )
 
   init_list <- list(init_list)
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "'init' has the wrong length"
+    "`init` has the wrong length"
   )
 
   init_list <- list(
@@ -152,13 +154,13 @@ test_that("error if init list is specified incorrectly", {
   )
   expect_error(
     mod_logistic$optimize(data = data_list_logistic, init = init_list, seed = 123),
-    "'init' has the wrong length"
+    "`init` has the wrong length"
   )
 
   init_list <- list(list(), list())
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "'init' contains empty lists."
+    "`init` contains empty lists."
   )
 
   init_list <- list()
@@ -170,7 +172,7 @@ test_that("error if init list is specified incorrectly", {
   init_list[[2]] = init_list[[1]]
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "'init' contains entries with parameter names that include square-brackets, which is not permitted."
+    "`init` contains entries with parameter names that include square-brackets, which is not permitted."
   )
 
 })
@@ -253,7 +255,7 @@ test_that("init function return value is validated for each init", {
   }
   expect_error(
     process_init(init_fun, num_procs = 2),
-    "If 'init' is a function it must return a single list"
+    "If `init` is a function it must return a single list"
   )
 })
 
@@ -261,7 +263,7 @@ test_that("error if init function specified incorrectly", {
   init_fun <- function(a, b) list(a, b)
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
-    "If 'init' is a function it must have zero arguments or only argument 'chain_id'"
+    "If `init` is a function it must have zero arguments or only argument `chain_id`"
   )
 
   init_fun <- function() {
@@ -269,7 +271,7 @@ test_that("error if init function specified incorrectly", {
   }
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
-    "If 'init' is a function it must return a single list"
+    "If `init` is a function it must return a single list"
   )
 
   init_fun <- function() {
@@ -277,13 +279,13 @@ test_that("error if init function specified incorrectly", {
   }
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
-    "If 'init' is a function it must return a single list"
+    "If `init` is a function it must return a single list"
   )
 
   init_fun <- function() list()
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 1, init = init_fun),
-    "'init' contains empty lists."
+    "`init` contains empty lists."
   )
 })
 

@@ -40,7 +40,7 @@ When the build record is available, there are four more fields:
 \itemize{
 \item \code{configuration}: A list of the options the model was created with.
 \itemize{
-\item \code{cpp_options}: the list of options in their Make spelling, as
+\item \code{cpp_options}: the list of options in their make spelling, as
 \verb{$cpp_options()} reports them. For example, \code{list(stan_threads = TRUE)}
 comes back as \code{list(STAN_THREADS = "true")}.
 \item \code{stanc_options}: the flags as given to stanc, in order.
@@ -53,27 +53,27 @@ repeated here since \code{stanc_options} takes precedence.
 included files. When none were provided but the Stan program has includes
 this is set to the program's own directory.
 }
-\item \code{dependencies}: A list describing the files the build read. Contains sublists
-\code{stan_file}, \code{included_files}, \code{user_header} and \code{make_local}. \code{user_header}
-and \code{make_local} are \code{NULL} when the build had none. \code{included_files} holds
-one entry per file. Each entry has two fields: \code{built_from}, the path the
-file had when the build ran, and \code{exists}, whether that path exists now. A
-path that no longer exists is not necessarily a problem. For example, an \R
-package may build its models at install time in a temporary directory that
-is gone by the time the model is used.
+\item \code{dependencies}: A list describing the files the build read. Contains
+sublists \code{stan_file}, \code{included_files}, \code{user_header} and \code{make_local}.
+\code{user_header} and \code{make_local} are \code{NULL} when the build had none.
+\code{included_files} holds one entry per file. Each entry has two fields:
+\code{built_from}, the path the file had when the build ran, and \code{exists}, whether
+that path exists now. A path that no longer exists is not necessarily a
+problem. For example, an \R package may build its models at install time in a
+temporary directory that is gone by the time the model is used.
 \item \code{cmdstan}: A list containing the \code{path} and \code{version} of the CmdStan
 installation that built the executable, and whether that path still \code{exists}.
 This version and \code{reported_features$stan_version} will typically agree except
 when using a release candidate (\code{cmdstan$version} will have a
 release-candidate suffix whereas \code{reported_features$stan_version} comes from
 the Stan library headers the executable was compiled against and will not).
-\item \code{untracked_dependencies}: A list of files the build depended on that CmdStanR
-cannot follow, so a change to them does not automatically trigger a rebuild.
-An empty list means nothing of the kind was found. Each file is reported as
-a sublist with two fields: \code{kind}, which is \code{"make_local_include"} when
-\code{make/local} includes another makefile or \code{"user_header_include"} when the
-user header includes other headers, and \code{detected_in}, the file the include
-was found in.
+\item \code{untracked_dependencies}: A list of files the build depended on that
+CmdStanR cannot follow, so a change to them does not automatically trigger a
+rebuild. An empty list means nothing of the kind was found. Each file is
+reported as a sublist with two fields: \code{kind}, which is
+\code{"make_local_include"} when \code{make/local} includes another makefile or
+\code{"user_header_include"} when the user header includes other headers, and
+\code{detected_in}, the file the include was found in.
 }
 
 The result leaves out some of what the record holds: the file hashes the

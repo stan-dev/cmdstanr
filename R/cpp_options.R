@@ -7,7 +7,7 @@
 #'
 #' @param cpp_options The user's `cpp_options`, as
 #'   `assert_valid_cpp_options()` returned them.
-#' @return A named list with one value per Make variable.
+#' @return A named list with one value per make variable.
 #' @noRd
 parsed_cpp_options <- function(cpp_options) {
   assignments <- structure(list(), names = character())
@@ -46,7 +46,7 @@ make_variable_name_pattern <- "[A-Za-z_][A-Za-z0-9_]*"
 
 #' Check the `cpp_options` the user supplied and return them
 #'
-#' Every entry must be named and every name must be a Make variable name. The
+#' Every entry must be named and every name must be a make variable name. The
 #' names are uppercased here so that one spelling reaches everything downstream.
 #' The user header and the stanc flags have their own arguments, so setting them
 #' here is an error. A TBB directory has to be a literal path, since the build
@@ -68,7 +68,7 @@ assert_valid_cpp_options <- function(cpp_options) {
     }
     if (!grepl(paste0("^", make_variable_name_pattern, "$"), option_names[[i]])) {
       stop(
-        "`cpp_options` names must be Make variable names, made of letters, ",
+        "`cpp_options` names must be make variable names, made of letters, ",
         "digits and underscores and not starting with a digit. `",
         option_names[[i]], "` is not one.",
         call. = FALSE
@@ -155,7 +155,7 @@ unnamed_cpp_option_message <- function(value) {
   if (grepl("^(-B|--always-make)$", entry)) {
     return(sprintf(
       paste0(
-        "Make flags cannot be passed through `cpp_options`. ",
+        "`cpp_options` cannot pass flags to make. ",
         "`%s` rebuilds everything; pass `force_recompile = TRUE` instead."
       ),
       entry
@@ -166,7 +166,7 @@ unnamed_cpp_option_message <- function(value) {
     path <- sub(makefile_flag_pattern, "\\1", entry)
     return(sprintf(
       paste0(
-        "Make flags cannot be passed through `cpp_options`. ",
+        "`cpp_options` cannot pass flags to make. ",
         "To read another makefile add `include %s` to `make/local`, for example ",
         "`cmdstan_make_local(cpp_options = list(%s))`."
       ),
@@ -175,7 +175,7 @@ unnamed_cpp_option_message <- function(value) {
   }
   if (startsWith(entry, "-")) {
     return(paste0(
-      "Make flags cannot be passed through `cpp_options`. ",
+      "`cpp_options` cannot pass flags to make. ",
       "Set them in `make/local` with `cmdstan_make_local()`, ",
       "for example `MAKEFLAGS += -j4`."
     ))
@@ -240,9 +240,9 @@ assert_valid_threads <- function(threads, features, multiple_chains = FALSE) {
   threaded <- isTRUE(features[["stan_threads"]])
   if (!is.null(threads) && threads > 1 && !threaded) {
     stop(
-      "'", threads_arg, "' is set but the executable does not report ",
+      "`", threads_arg, "` is set but the executable does not report ",
       "threading as enabled.\nRecompile the model with ",
-      "'cpp_options = list(stan_threads = TRUE)'.",
+      "`cpp_options = list(stan_threads = TRUE)`.",
       call. = FALSE
     )
   }
@@ -258,9 +258,9 @@ assert_valid_threads <- function(threads, features, multiple_chains = FALSE) {
 assert_valid_opencl <- function(opencl_ids, features) {
   if (!is.null(opencl_ids) && !isTRUE(features[["stan_opencl"]])) {
     stop(
-      "'opencl_ids' is set but the executable does not report OpenCL as ",
+      "`opencl_ids` is set but the executable does not report OpenCL as ",
       "enabled.\nRecompile the model with ",
-      "'cpp_options = list(stan_opencl = TRUE)'.",
+      "`cpp_options = list(stan_opencl = TRUE)`.",
       call. = FALSE
     )
   }

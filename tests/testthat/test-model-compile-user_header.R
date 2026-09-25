@@ -1,3 +1,5 @@
+skip_on_cran()
+
 local_mocked_stanc <- function(.local_envir = parent.frame()) {
   local_mocked_bindings(
     get_cmdstan_flags = function(flag_name, ...) character(),

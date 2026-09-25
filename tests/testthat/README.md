@@ -21,6 +21,12 @@ against a mocked CmdStan, so nothing is compiled. `test-model-rebuild.R`
 compiles for real and checks the executable that results from a sequence of
 calls.
 
+Every file that needs CmdStan starts with `skip_on_cran()`, and a test
+that needs CmdStan inside an otherwise pure file calls it itself, so on
+CRAN, where nothing is installed, only the pure R tests run. The
+`CRAN check` workflow runs the suite the same way, with no CmdStan
+installed, so a missing skip fails there rather than on CRAN.
+
 Files that compile call `set_cmdstan_path()` at the top. `with_mocked_cli()`
 in `helper-mock-cli.R` stands in for `make` and for the executable's `info`
 call, so a test can go through the build code without a compiler.

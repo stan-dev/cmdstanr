@@ -22,9 +22,9 @@ startup_messages <- function() {
     if (!is.null(deprecated_no_ver_check_option) ||
         !is.na(deprecated_no_ver_check_env)) {
       warning(
-        "The 'CMDSTANR_NO_VER_CHECK' option and environment variable are ",
+        "The `CMDSTANR_NO_VER_CHECK` option and environment variable are ",
         "deprecated as of CmdStanR 1.0.0 and will be removed in a future ",
-        "release. Use lowercase 'cmdstanr_no_ver_check' instead.",
+        "release. Use lowercase `cmdstanr_no_ver_check` instead.",
         call. = FALSE
       )
     }

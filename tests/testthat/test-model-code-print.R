@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -64,12 +66,12 @@ test_that("code() warns and print() errors if only exe and no Stan file", {
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_warning(
     expect_null(mod_exe$code()),
-    "'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file",
+    "`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file",
     fixed = TRUE
   )
   expect_error(
     mod_exe$print(),
-    "'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$print()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 })
@@ -78,7 +80,7 @@ test_that("check_syntax() errors if only exe and no Stan file", {
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
     mod_exe$check_syntax(),
-    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$check_syntax()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 })

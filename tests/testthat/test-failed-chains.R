@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- testing_stan_file("chain_fails")
 stan_program_init_warnings <- testing_stan_file("init_warnings")

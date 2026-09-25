@@ -77,7 +77,7 @@ CmdStanFit <- R6::R6Class(
       base::print(out, row.names = FALSE)
       if (max_rows < total_rows) {
         cat("\n # showing", max_rows, "of", total_rows,
-            "rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)\n")
+            "rows (change via `max_rows` argument or `cmdstanr_max_rows` option)\n")
       }
       invisible(self)
     },
@@ -180,7 +180,7 @@ save_object <- function(file, format = c("rds", "qs2"), ...) {
     saveRDS(self, file = file, ...)
   } else {
     if (!requireNamespace("qs2", quietly = TRUE)) {
-      stop("The 'qs2' package is required for format = \"qs2\".", call. = FALSE)
+      stop("The qs2 package is required for `format = \"qs2\"`.", call. = FALSE)
     }
     qs2::qs_save(self, file = file, ...)
   }
@@ -306,7 +306,7 @@ draws <- function(variables = NULL, inc_warmup = FALSE, format = getOption("cmds
     stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
   }
   if (inc_warmup) {
-    warning("'inc_warmup' is ignored except when used with CmdStanMCMC objects.",
+    warning("`inc_warmup` is ignored except when used with CmdStanMCMC objects.",
             call. = FALSE)
   }
   if (is.null(private$draws_)) {
@@ -629,7 +629,7 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
       }
     } else if (!is.null(draws)) {
       if (inc_warmup) {
-        message("'inc_warmup' cannot be used with a draws object. Ignoring.")
+        message("`inc_warmup` cannot be used with a draws object. Ignoring.")
       }
     }
   } else {
@@ -1340,7 +1340,7 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 code <- function() {
   stan_code <- self$runset$stan_code()
   if (is.null(stan_code)) {
-    warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    warning("`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
   }
   stan_code
 }
@@ -1643,7 +1643,7 @@ CmdStanMCMC <- R6::R6Class(
 loo <- function(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...) {
   require_suggested_package("loo")
   if (length(variables) != 1) {
-    stop("Only a single variable name is allowed for the 'variables' argument.", call. = FALSE)
+    stop("Only a single variable name is allowed for the `variables` argument.", call. = FALSE)
   }
   LLarray <- self$draws(variables, format = "draws_array")
   if (is.logical(r_eff)) {
@@ -2463,7 +2463,7 @@ CmdStanGQ <- R6::R6Class(
         stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
       }
       if (inc_warmup) {
-        warning("'inc_warmup' is ignored except when used with CmdStanMCMC objects.",
+        warning("`inc_warmup` is ignored except when used with CmdStanMCMC objects.",
                 call. = FALSE)
       }
       format <- assert_valid_draws_format(format)

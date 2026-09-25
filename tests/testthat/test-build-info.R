@@ -324,6 +324,7 @@ test_that("untracked dependencies are ordered by kind and deduplicated", {
 })
 
 test_that("a real user header is reported under dependencies and nowhere else", {
+  skip_on_cran()
   stan_file <- file.path(withr::local_tempdir(), "bernoulli_external.stan")
   file.copy(testing_stan_file("bernoulli_external"), stan_file)
   header <- withr::local_tempfile(
@@ -436,7 +437,7 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
   expect_error(
     stan_build_info(failed_exe),
     paste0(
-      "Running '", resolve_path(failed_exe), "' with the argument 'info' did ",
+      "Running '", resolve_path(failed_exe), "' with the argument `info` did ",
       "not report a ",
       "Stan version, so it is either not a CmdStan executable or cannot be ",
       "run."
@@ -452,7 +453,7 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
   expect_error(
     stan_build_info(no_version_exe),
     paste0(
-      "Running '", resolve_path(no_version_exe), "' with the argument 'info' ",
+      "Running '", resolve_path(no_version_exe), "' with the argument `info` ",
       "did not report a Stan version, so it is either not a CmdStan ",
       "executable or cannot be run."
     ),

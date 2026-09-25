@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 fit_vb <- testing_fit("bernoulli", method = "variational", seed = 123)
@@ -67,7 +69,7 @@ test_that("process_fitted_params() works with basic input types", {
 
 test_that("process_fitted_params() errors with bad args", {
   error_msg <- paste0(
-    "'fitted_params' must be a list of paths to CSV files, a CmdStanMCMC, ",
+    "`fitted_params` must be a list of paths to CSV files, a CmdStanMCMC, ",
     "CmdStanMLE, CmdStanLaplace, CmdStanVB, or CmdStanPathfinder object, ",
     "a posterior::draws_array or a posterior::draws_matrix."
   )

@@ -19,7 +19,7 @@
       variable mean median sd mad q5 q95
       lp__
       
-      # showing 1 of 6 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 1 of 6 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -38,7 +38,7 @@
       theta_raw[5]
       theta_raw[6]
       
-      # showing 10 of 20 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 10 of 20 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -84,5 +84,5 @@
       tau
       lp__
       
-      # showing 10 of 11 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 10 of 11 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 

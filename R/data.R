@@ -139,7 +139,7 @@
 write_stan_json <- function(data, file, always_decimal = FALSE,
                             variables = NULL) {
   if (!is.list(data)) {
-    stop("'data' must be a list.", call. = FALSE)
+    stop("`data` must be a list.", call. = FALSE)
   }
   if (!is.character(file) || !nzchar(file)) {
     stop("The supplied filename is invalid!", call. = FALSE)
@@ -149,11 +149,11 @@ write_stan_json <- function(data, file, always_decimal = FALSE,
   if (length(data) > 0 &&
       (length(data_names) == 0 ||
        length(data_names) != sum(nzchar(data_names)))) {
-    stop("All elements in 'data' list must have names.", call. = FALSE)
+    stop("All elements in `data` list must have names.", call. = FALSE)
 
   }
   if (anyDuplicated(data_names) != 0) {
-    stop("Duplicate names not allowed in 'data'.", call. = FALSE)
+    stop("Duplicate names not allowed in `data`.", call. = FALSE)
   }
 
   for (var_name in data_names) {
@@ -382,7 +382,7 @@ process_data <- function(data, model_variables = NULL) {
                     always_decimal = !is.null(model_variables),
                     variables = model_variables$data)
   } else {
-    stop("'data' should be a path or a named list.", call. = FALSE)
+    stop("`data` should be a path or a named list.", call. = FALSE)
   }
   path
 }
@@ -554,7 +554,7 @@ process_fitted_params <- function(fitted_params) {
     paths <- draws_to_csv(posterior::as_draws_array(fitted_params))
   } else {
     stop(
-      "'fitted_params' must be a list of paths to CSV files, ",
+      "`fitted_params` must be a list of paths to CSV files, ",
       "a CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, or ",
       "CmdStanPathfinder object, ",
       "a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)

@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fits <- list()
 fits[["sample"]] <- testing_fit("logistic", method = "sample",
@@ -53,7 +55,7 @@ test_that("saving diagnostic csv output works", {
     if (!(method %in% c("sample", "variational"))) {
       expect_error(
         fit$save_latent_dynamics_files(),
-        "No latent dynamics files found. Set 'save_latent_dynamics=TRUE' when fitting the model",
+        "No latent dynamics files found. Set `save_latent_dynamics = TRUE` when fitting the model",
         fixed = TRUE
       )
       next
@@ -136,7 +138,7 @@ test_that("draws() method returns a 'draws' object", {
     if (method != "sample") {
       expect_warning(
         fit$draws(inc_warmup = TRUE),
-        "'inc_warmup' is ignored except when used with CmdStanMCMC objects"
+        "`inc_warmup` is ignored except when used with CmdStanMCMC objects"
       )
     }
   }
@@ -613,7 +615,7 @@ test_that("code() warns if model not created with Stan file", {
   )
   expect_warning(
     expect_null(fit_exe$code()),
-    "'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file",
+    "`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file",
     fixed = TRUE
   )
 })

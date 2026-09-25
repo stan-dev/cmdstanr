@@ -133,7 +133,7 @@ in the Stan User's Guide.
 
 Pedantic mode is available when compiling the model or when using the separate
 `$check_syntax()` method of a `CmdStanModel` object. Internally this corresponds
-to setting the `stanc` (Stan transpiler) option `warn-pedantic`. Here we
+to setting the stanc (Stan transpiler) option `warn-pedantic`. Here we
 demonstrate pedantic mode with a Stan program that is syntactically correct but
 is missing a lower bound and a prior for a parameter.
 
@@ -153,7 +153,7 @@ model {
 ")
 ```
 
-To turn on pedantic mode when compiling set `pedantic=TRUE` in the call to
+To turn on pedantic mode, set `pedantic = TRUE` in the call to
 `cmdstan_model()`.
 
 ```{r pedantic-compile, collapse = TRUE}
@@ -246,11 +246,11 @@ mod <- cmdstan_model(stan_file, dir = "path/to/directory/for/executable")
 
 ### The build record
 
-Starting with v1.0, to help it determine whether a rebuild is necessary CmdStanR
-writes a hidden JSON file next to the executable that records how the executable
-was built: the Stan file and the files it includes, the options passed to
-`stanc` and `make`, the CmdStan installation, and a hash of the executable
-itself. The file is named after the executable, so `bernoulli` is described by
+Starting with v1.0, CmdStanR writes a hidden JSON file next to the executable so
+it can tell whether a rebuild is needed. The file records how the executable was
+built: the Stan file and the files it includes, the options passed to stanc and
+make, the CmdStan installation, and a hash of the executable itself. The file is
+named after the executable, so `bernoulli` is described by
 `.bernoulli.cmdstanr.json`.
 
 ```{r build-record}
@@ -267,8 +267,8 @@ reports only what the executable says about itself.
 ```{r build-info}
 mod$build_info()
 
-# demonstrating stan_build_info even though here we have the model object 
-# so we can use mod$build_info()
+# demonstrating stan_build_info even though we can use mod$build_info()
+# since we have the model object available
 stan_build_info(mod$exe_file())
 ```
 
@@ -280,7 +280,7 @@ doesn't hide the file from git). You can ignore all record files using
 If the directory is inside an R package, we recommend adding a matching regular
 expression to `.Rbuildignore`, such as `\..*\.cmdstanr\.json$`.
 
-In general, if you move the executable somewhere move the build record with it.
+If you move the executable, move the build record with it.
 If a build step copies the executable somewhere else, such as a CI artifact, a
 container image or a shared build directory, copy the record with it.
 
@@ -293,7 +293,7 @@ changing them does not automatically trigger a rebuild and you should manually
 force recompilation:
 
 - the C++ toolchain
-- environment variables the compiler or `make` reads
+- environment variables the compiler or make reads
 - CmdStan or the Stan Math library modified in place
 - a makefile that `make/local` includes
 - headers that a `user_header` includes
@@ -525,7 +525,7 @@ installation from source. Installation-time compilation builds executables on
 the installing system so they can be reused without recompilation at runtime.
 This is different from including compiled executables in the source package:
 compiled artifacts are generally not portable across platforms, and
-[CRAN source packages may not contain binary executable code](https://cran.r-project.org/web/packages/policies.html#Source-packages).
+[CRAN source packages may not contain binary executable code](https://cran.r-project.org/web/packages/policies.html).
 
 The [`instantiate`](https://wlandau.github.io/instantiate/) package provides a
 current workflow for installation-time compilation. See the `instantiate`

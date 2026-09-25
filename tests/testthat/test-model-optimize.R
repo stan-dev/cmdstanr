@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")
@@ -73,7 +75,7 @@ test_that("optimize() errors with bad combination of arguments", {
   # for all similar args because of how it's implemented)
   expect_error(
     mod$optimize(data = data_list, algorithm = "newton", tol_grad = 0.1),
-    "'tol_grad' can't be used when algorithm is 'newton'"
+    "`tol_grad` can't be used when algorithm is `\"newton\"`"
   )
   expect_error(
     mod$optimize(data = data_list, algorithm = "bfgs", tol_obj = -10),
@@ -81,17 +83,17 @@ test_that("optimize() errors with bad combination of arguments", {
   )
   expect_error(
     mod$optimize(data = data_list, init_alpha = 0.1),
-    "Please specify 'algorithm' in order to use 'init_alpha'"
+    "Please specify `algorithm` in order to use `init_alpha`"
   )
 
   # history size only allowed with lbfgs and must be positive integer
   expect_error(
     mod$optimize(data = data_list, history_size = 1),
-    "'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'"
+    "`history_size` is only allowed if `algorithm` is specified as `\"lbfgs\"`"
   )
   expect_error(
     mod$optimize(data = data_list, algorithm = "bfgs", history_size = 1),
-    "'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'"
+    "`history_size` is only allowed if `algorithm` is specified as `\"lbfgs\"`"
   )
   expect_error(
     mod$optimize(data = data_list, algorithm = "lbfgs", history_size = 1.5),

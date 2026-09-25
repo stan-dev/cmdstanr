@@ -157,7 +157,7 @@ validate_build_record <- function(record) {
     option_name <- names(cpp_options)[[i]]
     field <- paste0("configuration.cpp_options.", option_name)
     if (!grepl(paste0("^", make_variable_name_pattern, "$"), option_name)) {
-      stop_build_record_field(field, "must be named for a Make variable")
+      stop_build_record_field(field, "must be named for a make variable")
     }
     assert_record_shape(cpp_options[[i]], "string", field)
   }
@@ -252,7 +252,7 @@ validate_build_record <- function(record) {
 #' The one place a record is built. The fields go in the schema's order so the
 #' written JSON reads that way too.
 #'
-#' @param configuration The options the build used: `cpp_options` as the Make
+#' @param configuration The options the build used: `cpp_options` as the make
 #'   assignments `parsed_cpp_options()` returns, one per name; `stanc_options`,
 #'   `stanc_options_added` and `stanc_options_from_make` as the argument
 #'   vectors stanc receives; `stanc_name`; and `include_paths` as searched.
@@ -681,7 +681,7 @@ assess_build <- function(expected, current) {
 #' When the build record is available, there are four more fields:
 #'
 #' * `configuration`: A list of the options the model was created with.
-#'   * `cpp_options`: the list of options in their Make spelling, as
+#'   * `cpp_options`: the list of options in their make spelling, as
 #'   `$cpp_options()` reports them. For example, `list(stan_threads = TRUE)`
 #'   comes back as `list(STAN_THREADS = "true")`.
 #'   * `stanc_options`: the flags as given to stanc, in order.
@@ -694,14 +694,14 @@ assess_build <- function(expected, current) {
 #'   included files. When none were provided but the Stan program has includes
 #'   this is set to the program's own directory.
 #'
-#' * `dependencies`: A list describing the files the build read. Contains sublists
-#' `stan_file`, `included_files`, `user_header` and `make_local`. `user_header`
-#' and `make_local` are `NULL` when the build had none. `included_files` holds
-#' one entry per file. Each entry has two fields: `built_from`, the path the
-#' file had when the build ran, and `exists`, whether that path exists now. A
-#' path that no longer exists is not necessarily a problem. For example, an \R
-#' package may build its models at install time in a temporary directory that
-#' is gone by the time the model is used.
+#' * `dependencies`: A list describing the files the build read. Contains
+#' sublists `stan_file`, `included_files`, `user_header` and `make_local`.
+#' `user_header` and `make_local` are `NULL` when the build had none.
+#' `included_files` holds one entry per file. Each entry has two fields:
+#' `built_from`, the path the file had when the build ran, and `exists`, whether
+#' that path exists now. A path that no longer exists is not necessarily a
+#' problem. For example, an \R package may build its models at install time in a
+#' temporary directory that is gone by the time the model is used.
 #'
 #' * `cmdstan`: A list containing the `path` and `version` of the CmdStan
 #' installation that built the executable, and whether that path still `exists`.
@@ -710,13 +710,13 @@ assess_build <- function(expected, current) {
 #' release-candidate suffix whereas `reported_features$stan_version` comes from
 #' the Stan library headers the executable was compiled against and will not).
 #'
-#' * `untracked_dependencies`: A list of files the build depended on that CmdStanR
-#' cannot follow, so a change to them does not automatically trigger a rebuild.
-#' An empty list means nothing of the kind was found. Each file is reported as
-#' a sublist with two fields: `kind`, which is `"make_local_include"` when
-#' `make/local` includes another makefile or `"user_header_include"` when the
-#' user header includes other headers, and `detected_in`, the file the include
-#' was found in.
+#' * `untracked_dependencies`: A list of files the build depended on that
+#' CmdStanR cannot follow, so a change to them does not automatically trigger a
+#' rebuild. An empty list means nothing of the kind was found. Each file is
+#' reported as a sublist with two fields: `kind`, which is
+#' `"make_local_include"` when `make/local` includes another makefile or
+#' `"user_header_include"` when the user header includes other headers, and
+#' `detected_in`, the file the include was found in.
 #'
 #' The result leaves out some of what the record holds: the file hashes the
 #' rebuild check compares, the stanc flags CmdStanR added itself, the model

@@ -1,3 +1,5 @@
+skip_on_cran()
+
 test_that("sample_mpi() works", {
   skip_if(!mpi_toolchain_present())
   mpi_file <- write_stan_file("

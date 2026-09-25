@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 # The decision cmdstan_model() makes: build, reuse, or adopt. No C++ is

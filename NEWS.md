@@ -78,7 +78,7 @@ spelled as make variables: `list(stan_threads = TRUE)` comes back as
 * Every `cpp_options` entry must now be named, with a make variable name. An
 unnamed entry gets an error saying where it belongs: `list(NAME = value)` for a
 plain assignment, `cmdstan_make_local()` for `+=` and the other makefile
-operators. Previously unnamed entries reached `make` but nothing else saw them.
+operators. Previously unnamed entries reached make but nothing else saw them.
 (#1250)
 * `cpp_options = list(stan_threads = FALSE)` now turns threading off, even when
 `make/local` turns it on, and the same holds for `FALSE` on any option.
@@ -107,14 +107,14 @@ error that points at the right argument. (#1258)
 `STANCFLAGS`. (#1258)
 * Named `stanc_options` values such as `list(canonicalize = "deprecations")` and
 numeric ones such as `list("max-line-length" = 78)` now work. Previously the
-named values reached `stanc` shell-quoted, which it rejected, and the numeric
+named values reached stanc shell-quoted, which it rejected, and the numeric
 ones were dropped. (#1227, #1233)
-* A `stanc` error now stops the build immediately and shows `stanc`'s message.
+* A stanc error now stops the build immediately and shows stanc's message.
 Previously it surfaced several steps later. (#1227)
 * An include path that does not exist is now reported by its absolute path.
 (#1227)
 * `$include_paths()` now returns absolute paths, resolved when the model is
-created. Previously a relative include path was resolved on every `stanc` call,
+created. Previously a relative include path was resolved on every stanc call,
 so changing the working directory could point `#include` at the wrong directory.
 (#1229)
 * `#include` directories with spaces in their paths now work. (#820, #1230)
@@ -234,7 +234,7 @@ not created and keeps saved metric files after the fitted model is
 garbage-collected. (#1021)
 * `cmdstan_model()` no longer fails when `MAKEFLAGS` turns on directory
 printing. (#1163)
-* Quoted values in `make/local`'s `STANCFLAGS` now reach `stanc` as one
+* Quoted values in `make/local`'s `STANCFLAGS` now reach stanc as one
 argument. Previously they were split on whitespace. (#1232)
 * `laplace()` no longer overwrites the internally generated optimizer CSV when
 `mode = NULL` and `output_basename` is supplied. The internally generated
@@ -248,7 +248,7 @@ was always 1. (#1187)
 * `$lp_approx()` and `$mle()` now return numeric vectors whatever the
 `cmdstanr_draws_format` option is set to. (#1190)
 * A Stan file name with several spaces, or quotes, now gives a valid model name
-for `stanc`. Previously only the first space was replaced and the quotes ended
+for stanc. Previously only the first space was replaced and the quotes ended
 up in the generated C++. (#1200)
 * `$draws()` on a pathfinder fit now orders the diagnostic columns the same way
 as the other methods. (#1205)

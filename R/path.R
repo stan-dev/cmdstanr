@@ -99,7 +99,7 @@ cmdstan_path <- function() {
   path
 }
 
-#' The selected installation, checked right before a program runs out of it
+#' The selected installation, rechecked right before make or stanc runs from it
 #'
 #' `cmdstan_path()` returns the path cached when it was set, so an
 #' installation deleted since then would otherwise surface as a failure to
@@ -119,9 +119,10 @@ checked_cmdstan_path <- function() {
   path
 }
 
-#' The selected installation's version as its makefile says now, since the
-#' version `cmdstan_version()` caches goes stale when a checkout is rebuilt
-#' in place. A missing installation keeps the cached version.
+#' The selected installation's version, read from its makefile now
+#'
+#' `cmdstan_version()` caches the version, which goes stale when a checkout is
+#' rebuilt in place. A missing installation keeps the cached version.
 #' @noRd
 current_cmdstan_version <- function() {
   path <- cmdstan_path()
@@ -223,7 +224,7 @@ resolve_cmdstan_path_from_env <- function() {
   if (!dir.exists(path)) {
     warning(
       "CmdStan path not set. Can't find directory specified by environment ",
-      "variable 'CMDSTAN'.",
+      "variable `CMDSTAN`.",
       call. = FALSE
     )
     return(NA_character_)
@@ -237,7 +238,7 @@ resolve_cmdstan_path_from_env <- function() {
   if (is.null(path)) {
     warning(
       "CmdStan path not set. No CmdStan installation found in the path ",
-      "specified by the environment variable 'CMDSTAN'.",
+      "specified by the environment variable `CMDSTAN`.",
       call. = FALSE
     )
     return(NA_character_)

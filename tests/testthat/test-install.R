@@ -1,4 +1,6 @@
 # avoid parallel on Mac due to strange intermittent TBB errors on Github Actions
+skip_on_cran()
+
 CORES <- if (os_is_macos()) 1 else 2
 
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
@@ -46,10 +48,10 @@ test_that("install_cmdstan() errors if it times out", {
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
                       cores = CORES, wsl = os_is_wsl()),
-      if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
+      if (dir_exists) "* Removing the existing installation" else paste0("* Installing CmdStan v", ver, " in"),
       fixed = TRUE
     ),
-    "increasing the value of the 'timeout' argument and running again with 'quiet=FALSE'",
+    "increasing the value of the `timeout` argument and running again with `quiet = FALSE`",
     fixed = TRUE
   )
   dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
@@ -58,10 +60,10 @@ test_that("install_cmdstan() errors if it times out", {
     expect_message(
       install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
                       cores = CORES, wsl = os_is_wsl()),
-      if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
+      if (dir_exists) "* Removing the existing installation" else paste0("* Installing CmdStan v", ver, " in"),
       fixed = TRUE
     ),
-    "Try increasing the value of the 'timeout' argument.",
+    "Try increasing the value of the `timeout` argument.",
     fixed = TRUE
   )
 })
@@ -124,11 +126,11 @@ test_that("toolchain checks on Unix work", {
   skip_if(os_is_windows())
   withr::local_envvar(c("PATH" = ""))
   if (os_is_macos()) {
-    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
-    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with `xcode-select --install` or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The make tool was not found. Please install the command line tools for Mac with `xcode-select --install` or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
   } else {
-    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
-    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_cpp <- "A C++ compiler was not found. Please install the clang++ or g++ compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_make <- "The make tool was not found. Please install make, restart R, and then run cmdstanr::check_cmdstan_toolchain()."
   }
   expect_error(
     check_unix_cpp_compiler(),
