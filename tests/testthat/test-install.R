@@ -25,13 +25,13 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 
 test_that("install_cmdstan() errors if installation already exists", {
   install_dir <- cmdstan_default_install_path()
-  dir <- file.path(install_dir, "cmdstan-2.35.0")
+  dir <- file.path(install_dir, "cmdstan-2.37.0")
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
   }
   expect_warning(
     install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    version = "2.35.0", wsl = FALSE),
+                    version = "2.37.0", wsl = FALSE),
     "An installation already exists",
     fixed = TRUE
   )
@@ -70,13 +70,13 @@ test_that("install_cmdstan() errors if it times out", {
 
 test_that("install_cmdstan() errors if invalid version or URL", {
   expect_error(
-    install_cmdstan(version = "2.35.5", wsl = os_is_wsl()),
-    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied version number is valid."
+    install_cmdstan(version = "2.37.5", wsl = os_is_wsl()),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz'\nPlease check if the supplied version number is valid."
   )
   expect_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz",
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz",
                     wsl = os_is_wsl()),
-    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied release URL is valid."
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz'\nPlease check if the supplied release URL is valid."
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
@@ -282,8 +282,8 @@ test_that("install_cmdstan() errors for unsupported CmdStan versions", {
 })
 
 test_that("unsupported release-candidate versions are rejected by the floor check", {
-  expect_false(is_supported_cmdstan_version("2.34.0-rc1"))
-  expect_true(is_supported_cmdstan_version("2.35.0-rc1"))
+  expect_false(is_supported_cmdstan_version("2.36.0-rc1"))
+  expect_true(is_supported_cmdstan_version("2.37.0-rc1"))
   expect_error(
     install_cmdstan(version = "2.34.0-rc1", check_toolchain = FALSE, wsl = os_is_wsl()),
     "Requested CmdStan version (2.34.0-rc1) is unsupported.",
@@ -517,7 +517,7 @@ test_that("install_cmdstan() asks about make/local before downloading", {
 
   expect_error(
     suppressMessages(
-      install_cmdstan(dir = withr::local_tempdir(), version = "2.36.0",
+      install_cmdstan(dir = withr::local_tempdir(), version = "2.37.0",
                       check_toolchain = FALSE)
     ),
     "Download of CmdStan failed"

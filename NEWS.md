@@ -268,7 +268,7 @@ NAs in the variable sizes. (#925)
 ## Removed and deprecated
 
 * Minimum R version increased to 4.0.0. (#1144)
-* CmdStan versions older than 2.35.0 are no longer supported. To use an older
+* CmdStan versions older than 2.37.0 are no longer supported. To use an older
 CmdStan version install an older CmdStanR release from GitHub. (#1144)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
