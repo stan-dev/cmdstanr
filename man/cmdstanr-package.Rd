@@ -69,7 +69,7 @@ and is the same license used for CmdStan and the Stan C++ source code.
 }
 \section{Getting started}{
  CmdStanR requires a working version of CmdStan >=
-2.35. If you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
+2.37. If you already have CmdStan installed see \code{\link[=cmdstan_model]{cmdstan_model()}} to get
 started, otherwise see \code{\link[=install_cmdstan]{install_cmdstan()}} to install CmdStan. The vignette
 \href{https://mc-stan.org/cmdstanr/articles/cmdstanr.html}{\emph{Getting started with CmdStanR}}
 demonstrates the basic functionality of the package.

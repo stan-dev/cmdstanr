@@ -36,7 +36,7 @@
 #' versioned CmdStan installations, the installation with the largest version
 #' number is used.
 #' * If no environment variable is found when loaded but any directory in the
-#' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.35.0"`),
+#' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.37.0"`),
 #' exists in the user's home directory (*not* the current working directory),
 #' then the path to the CmdStan installation with the largest version number is
 #' used for the \R session. On Windows the home directory is determined from
@@ -182,7 +182,7 @@ stop_no_path <- function() {
 }
 
 cmdstan_min_version <- function() {
-  "2.35.0"
+  "2.37.0"
 }
 
 # Normalize versions for comparison. This is intentionally looser than

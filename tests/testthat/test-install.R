@@ -282,8 +282,8 @@ test_that("install_cmdstan() errors for unsupported CmdStan versions", {
 })
 
 test_that("unsupported release-candidate versions are rejected by the floor check", {
-  expect_false(is_supported_cmdstan_version("2.34.0-rc1"))
-  expect_true(is_supported_cmdstan_version("2.35.0-rc1"))
+  expect_false(is_supported_cmdstan_version("2.36.0-rc1"))
+  expect_true(is_supported_cmdstan_version("2.37.0-rc1"))
   expect_error(
     install_cmdstan(version = "2.34.0-rc1", check_toolchain = FALSE, wsl = os_is_wsl()),
     "Requested CmdStan version (2.34.0-rc1) is unsupported.",

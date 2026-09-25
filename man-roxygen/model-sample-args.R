@@ -75,8 +75,7 @@
 #'   sampler generates a new sample without changing the current state of the
 #'   Markov chain; only generated quantities may change. This can be useful
 #'   when, for example, trying to generate pseudo-data using the generated
-#'   quantities block. For CmdStan versions before 2.36, `fixed_param = TRUE`
-#'   is mandatory if the parameters block is empty.
+#'   quantities block.
 #' @param diagnostics (character vector) The diagnostics to automatically check
 #'   and warn about after sampling. Setting this to an empty string `""` or
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the

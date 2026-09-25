@@ -21,7 +21,7 @@
 #' @includeRmd vignettes/children/comparison-with-rstan.md
 #'
 #' @section Getting started: CmdStanR requires a working version of CmdStan >=
-#'   2.35. If you already have CmdStan installed see [cmdstan_model()] to get
+#'   2.37. If you already have CmdStan installed see [cmdstan_model()] to get
 #'   started, otherwise see [install_cmdstan()] to install CmdStan. The vignette
 #'   [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 #'   demonstrates the basic functionality of the package.

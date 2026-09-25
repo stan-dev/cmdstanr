@@ -1021,11 +1021,6 @@ sample <- function(data = NULL,
                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
   private$assert_current()
-  if (cmdstan_version_compare(self$cmdstan_version(), "2.36.0") < 0 &&
-      !fixed_param && !is.null(private$variables_) &&
-      length(private$variables_$parameters) == 0) {
-    stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
-  }
   if (fixed_param) {
     save_warmup <- FALSE
   }
