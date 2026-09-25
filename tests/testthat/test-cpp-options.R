@@ -135,7 +135,7 @@ test_that("assert_valid_cpp_options sends makefile syntax to make/local", {
     expect_error(
       assert_valid_cpp_options(list(entry)),
       paste0(
-        "Make flags cannot be passed through `cpp_options`. Set them in ",
+        "`cpp_options` cannot pass flags to make. Set them in ",
         "`make/local` with `cmdstan_make_local()`, for example ",
         "`MAKEFLAGS += -j4`."
       ),
@@ -162,7 +162,7 @@ test_that("assert_valid_cpp_options rejects -B and --always-make", {
     expect_error(
       assert_valid_cpp_options(list(entry)),
       paste0(
-        "Make flags cannot be passed through `cpp_options`. `", entry,
+        "`cpp_options` cannot pass flags to make. `", entry,
         "` rebuilds everything; pass `force_recompile = TRUE` instead."
       ),
       fixed = TRUE
@@ -175,7 +175,7 @@ test_that("assert_valid_cpp_options sends -f entries to make/local's include", {
     expect_error(
       assert_valid_cpp_options(list(entry)),
       paste0(
-        "Make flags cannot be passed through `cpp_options`. To read another ",
+        "`cpp_options` cannot pass flags to make. To read another ",
         "makefile add `include other.mk` to `make/local`, for example ",
         "`cmdstan_make_local(cpp_options = list(\"include other.mk\"))`."
       ),
@@ -185,7 +185,7 @@ test_that("assert_valid_cpp_options sends -f entries to make/local's include", {
   expect_error(
     assert_valid_cpp_options(list("-f")),
     paste0(
-      "Make flags cannot be passed through `cpp_options`. Set them in ",
+      "`cpp_options` cannot pass flags to make. Set them in ",
       "`make/local` with `cmdstan_make_local()`, for example ",
       "`MAKEFLAGS += -j4`."
     ),
@@ -193,12 +193,12 @@ test_that("assert_valid_cpp_options sends -f entries to make/local's include", {
   )
 })
 
-test_that("assert_valid_cpp_options requires Make variable names", {
+test_that("assert_valid_cpp_options requires make variable names", {
   for (options in list(list("CXXFLAGS+" = "-x"), list("2FOO" = 1))) {
     expect_error(
       assert_valid_cpp_options(options),
       paste0(
-        "`cpp_options` names must be Make variable names, made of letters, ",
+        "`cpp_options` names must be make variable names, made of letters, ",
         "digits and underscores and not starting with a digit. `",
         names(options), "` is not one."
       ),
@@ -264,7 +264,7 @@ test_that("a thread request needs threading reported on", {
   )
   expect_error(
     assert_valid_threads(2L, off, multiple_chains = TRUE),
-    "'threads_per_chain'", fixed = TRUE
+    "`threads_per_chain`", fixed = TRUE
   )
 
   for (features in list(on, off, unknown)) {

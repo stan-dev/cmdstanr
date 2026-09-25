@@ -142,7 +142,7 @@ test_that("threading works with pathfinder()", {
   pathfinder_args$num_threads <- 2
   expect_error(
     do.call(mod$pathfinder, pathfinder_args),
-    "Cannot specify both 'threads' and deprecated 'num_threads'"
+    "Cannot specify both `threads` and deprecated `num_threads`"
   )
   pathfinder_args$threads <- NULL
   pathfinder_args$show_messages <- FALSE

@@ -113,7 +113,7 @@ test_that("write_stan_json errors if NULL variables", {
 test_that("write_stan_json() errors if data is not a list", {
   expect_error(
     write_stan_json(1:10),
-    "'data' must be a list"
+    "`data` must be a list"
   )
 })
 
@@ -266,17 +266,17 @@ test_that("write_stan_json() errors if data frame has columns of invalid type", 
 test_that("write_stan_json() errors if bad names", {
   expect_error(
     write_stan_json(list(x = 1, y = 2, x = 3), file = tempfile()),
-    "Duplicate names not allowed in 'data'"
+    "Duplicate names not allowed in `data`"
   )
 
   expect_error(
     write_stan_json(list(1, 2), tempfile()),
-    "All elements in 'data' list must have names"
+    "All elements in `data` list must have names"
   )
 
   expect_error(
     write_stan_json(list(a = 1, 2), tempfile()),
-    "All elements in 'data' list must have names"
+    "All elements in `data` list must have names"
   )
 })
 

@@ -110,7 +110,7 @@ warn_if_ignored_msys_toolchain_env <- function() {
     return(invisible(NULL))
   }
   warning(
-    "Environment variable 'CMDSTANR_USE_MSYS_TOOLCHAIN' is deprecated and ignored. ",
+    "Environment variable `CMDSTANR_USE_MSYS_TOOLCHAIN` is deprecated and ignored. ",
     "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer.\n",
     "If you need legacy MSYS toolchain support, use an older CmdStanR release.",
     call. = FALSE
@@ -755,11 +755,12 @@ parse_make_print_flag <- function(flag_name, stdout) {
   sub(pattern, "", trimws(lines[matches]), perl = TRUE)
 }
 
-#' Quote words for a `STANCFLAGS` value handed to Make
+#' Quote words for a `STANCFLAGS` value handed to make
 #'
-#' Make expands the value and the shell splits it, so this doubles `$` for Make
-#' and single-quotes any word holding a character the shell could interpret
-#' (#1230). A word made only of characters neither touches stays as it is.
+#' Since make expands the value and the shell then splits it, this doubles `$`
+#' for make and single-quotes any word holding a character the shell could
+#' interpret (#1230). A word made only of characters neither touches stays as
+#' it is.
 #'
 #' @param x (character) Words, one per element.
 #' @return `x` with each element quoted as needed.

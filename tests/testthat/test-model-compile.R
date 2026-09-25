@@ -282,17 +282,17 @@ test_that("compiling stops on hyphens in stanc_options", {
   stan_file <- testing_stan_file("bernoulli")
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list(\"warn-uninitialized\")`",
     fixed = TRUE
   )
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens2),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list(\"warn-uninitialized\")`",
     fixed = TRUE
   )
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens3),
-    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
+    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list(\"warn-uninitialized\")`",
     fixed = TRUE
   )
 })
@@ -302,7 +302,7 @@ test_that("compiling stops on stanc options cmdstanr sets itself", {
   fragments <- list(
     "include-paths" = "Pass the directories with the `include_paths` argument.",
     "warn-pedantic" = "Use `pedantic = TRUE`.",
-    "allow-undefined" = "Builds turn it on when a `user_header` is supplied",
+    "allow-undefined" = "It is on whenever a `user_header` is supplied",
     "use-opencl" = "Use `cpp_options = list(stan_opencl = TRUE)`, which turns it on.",
     "name" = "The model name comes from the name of the Stan file."
   )
@@ -433,7 +433,7 @@ test_that("check_syntax() works", {
   )
   expect_error(
     mod_ok$check_syntax(stanc_options = list("allow-undefined")),
-    "Builds turn it on when a `user_header` is supplied",
+    "It is on whenever a `user_header` is supplied",
     fixed = TRUE
   )
 
@@ -455,7 +455,7 @@ test_that("check_syntax() works", {
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
     mod_exe$check_syntax(),
-    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$check_syntax()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 
@@ -739,17 +739,17 @@ test_that("a model created only with exe_file refuses what needs a Stan file", {
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
     mod_exe$check_syntax(),
-    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$check_syntax()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
   expect_error(
     mod_exe$variables(),
-    "'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$variables()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
   expect_error(
     mod_exe$hpp_file(),
-    "'$hpp_file()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$hpp_file()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 })
@@ -757,7 +757,7 @@ test_that("a model created only with exe_file refuses what needs a Stan file", {
 test_that("cmdstan_model errors with no args ", {
   expect_error(
     cmdstan_model(),
-    "Unable to create a `CmdStanModel` object. Both 'stan_file' and 'exe_file' are undefined.",
+    "Unable to create a `CmdStanModel` object. Both `stan_file` and `exe_file` are undefined.",
     fixed = TRUE
   )
 })
@@ -911,7 +911,7 @@ test_that("format() works", {
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
     mod_exe$format(),
-    "'$format()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$format()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 })

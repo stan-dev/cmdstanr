@@ -436,7 +436,7 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
   expect_error(
     stan_build_info(failed_exe),
     paste0(
-      "Running '", resolve_path(failed_exe), "' with the argument 'info' did ",
+      "Running '", resolve_path(failed_exe), "' with the argument `info` did ",
       "not report a ",
       "Stan version, so it is either not a CmdStan executable or cannot be ",
       "run."
@@ -452,7 +452,7 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
   expect_error(
     stan_build_info(no_version_exe),
     paste0(
-      "Running '", resolve_path(no_version_exe), "' with the argument 'info' ",
+      "Running '", resolve_path(no_version_exe), "' with the argument `info` ",
       "did not report a Stan version, so it is either not a CmdStan ",
       "executable or cannot be run."
     ),

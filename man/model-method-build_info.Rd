@@ -17,14 +17,14 @@ what the result holds. The method reports on the executable as it is
 now, so it also works on a model whose executable was replaced or whose
 build record is gone.
 
-This method is different than the \verb{$cpp_options()} method, which answers a
+This method is different from the \verb{$cpp_options()} method, which answers a
 narrower question: the C++ options this model object was created with.
 \verb{$build_info()} describes the executable itself, including what it reports
-about its own build when run. The difference is clear when considering a
-model created with \code{cmdstan_model(exe_file = )} from just an executable
-with no build record: \verb{$cpp_options()} is empty, since no options were
-given, but \verb{$build_info()} still reports whether the executable was built
-with threading, OpenCL and so on.
+about its own build when run. Take a model created with
+\code{cmdstan_model(exe_file = )} from an executable with no build record:
+\verb{$cpp_options()} is empty, since no options were given, but \verb{$build_info()}
+still reports whether the executable was built with threading, OpenCL and
+so on.
 }
 \examples{
 \dontrun{

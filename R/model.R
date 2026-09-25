@@ -55,7 +55,7 @@
 #'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.), written as
 #'   `list(NAME = value)`. Each entry is an assignment you could make in the
 #'   `make/local` file, so `list(CXXFLAGS = "-O3")` rather than `"-O3"`.
-#'   Every entry must be named with a `Make` variable name, in any casing.
+#'   Every entry must be named with a make variable name, in any casing.
 #'   Setting an option to `FALSE` or `NULL` passes an empty assignment such as
 #'   `STAN_THREADS=`. That empties the variable for this build, which turns a
 #'   switch off, and overrides whatever `make/local` sets. See
@@ -68,7 +68,7 @@
 #'   when compiling the model. A flag is given by name without the leading
 #'   hyphens, as `list("O1")` or `list(O1 = TRUE)`, and an option that takes a
 #'   value as `list(option = "value")`. See [stan_build_info()] for an example
-#'   and the [`stanc` chapter of the CmdStan User's
+#'   and the [stanc chapter of the CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for the
 #'   available options. Options that CmdStanR sets from its own arguments
 #'   cannot be passed here: `include-paths` (use `include_paths`),
@@ -222,7 +222,7 @@ cmdstan_model <- function(stan_file = NULL,
   if (is.null(exe_file) && is.null(stan_file)) {
     stop(
       "Unable to create a `CmdStanModel` object. ",
-      "Both 'stan_file' and 'exe_file' are undefined.",
+      "Both `stan_file` and `exe_file` are undefined.",
       call. = FALSE
     )
   }
@@ -482,14 +482,14 @@ CmdStanModel <- R6::R6Class(
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
-        warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        warning("`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
         return(NULL)
       }
       private$stan_code_
     },
     print = function(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE)) {
       if (length(private$stan_code_) == 0) {
-        stop("'$print()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        stop("`$print()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
       }
       lines <- self$code()
       if (line_numbers) {
@@ -528,7 +528,7 @@ CmdStanModel <- R6::R6Class(
     },
     hpp_file = function() {
       if (!self$has_stan_file()) {
-        stop("'$hpp_file()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+        stop("`$hpp_file()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
       }
       private$hpp_file_
     },
@@ -596,7 +596,7 @@ CmdStanModel <- R6::R6Class(
 #' * `$cmdstan_version()` returns the version of CmdStan that built the
 #'   executable, as a string.
 #' * `$cpp_options()` returns a named list of C++ options, with names in their
-#'   `make` spelling.
+#'   make spelling.
 #' * `$user_header()` returns the absolute path to the user header as a string,
 #'   or `NULL` if the model has no user header.
 #' * `$hpp_file()` returns the path to the `.hpp` file holding the C++ code
@@ -669,7 +669,7 @@ NULL
 variables <- function() {
   if (length(self$stan_file()) == 0) {
     stop(
-      "'$variables()' cannot be used because the 'CmdStanModel' ",
+      "`$variables()` cannot be used because the `CmdStanModel` ",
       "was not created with a Stan file.",
       call. = FALSE
     )
@@ -757,7 +757,7 @@ check_syntax <- function(pedantic = FALSE,
                          stanc_options = list(),
                          quiet = FALSE) {
   if (length(self$stan_file()) == 0) {
-    stop("'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    stop("`$check_syntax()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
   check_syntax_stan_file(
@@ -824,7 +824,7 @@ check_syntax_stan_file <- function(stan_file,
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
 #'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
 #'   supply a list of strings which represent options. In that case the options
-#'   are passed to `stanc`. See the
+#'   are passed to stanc. See the
 #'   [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
 #' @param backup (logical) If `TRUE`, create a backup before writing to the
@@ -879,7 +879,7 @@ format <- function(overwrite_file = FALSE,
                    quiet = FALSE) {
   if (length(self$stan_file()) == 0) {
     stop(
-      "'$format()' cannot be used because the 'CmdStanModel'",
+      "`$format()` cannot be used because the `CmdStanModel`",
       " was not created with a Stan file.", call. = FALSE
     )
   }
@@ -1476,7 +1476,7 @@ laplace <- function(data = NULL,
                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   private$assert_current()
   if (!is.null(mode) && !is.null(opt_args)) {
-    stop("Cannot specify both 'opt_args' and 'mode' arguments.", call. = FALSE)
+    stop("Cannot specify both `opt_args` and `mode` arguments.", call. = FALSE)
   }
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1491,7 +1491,7 @@ laplace <- function(data = NULL,
       cmdstan_mode <- mode
     } else {
       if (!(is.character(mode) && length(mode) == 1)) {
-        stop("If not NULL or a CmdStanMLE object then 'mode' must be a path to a CSV file.", call. = FALSE)
+        stop("If not NULL or a CmdStanMLE object then `mode` must be a path to a CSV file.", call. = FALSE)
       }
       cmdstan_mode <- as_cmdstan_fit(mode)
     }
@@ -1517,7 +1517,7 @@ laplace <- function(data = NULL,
     if (cmdstan_mode$return_codes() != 0) {
       stop(
         "Optimization failed.\n",
-        "Consider supplying the 'mode' argument or additional optimizer args.",
+        "Consider supplying the `mode` argument or additional optimizer args.",
         call. = FALSE
       )
     }
@@ -1811,10 +1811,10 @@ pathfinder <- function(data = NULL,
   private$assert_current()
   if (!is.null(num_threads)) {
     if (!is.null(threads)) {
-      stop("Cannot specify both 'threads' and deprecated 'num_threads'.", call. = FALSE)
+      stop("Cannot specify both `threads` and deprecated `num_threads`.", call. = FALSE)
     }
     warning(
-      "'num_threads' is deprecated as of CmdStanR 1.0.0 and will be removed in a future release. Please use 'threads' instead.",
+      "`num_threads` is deprecated as of CmdStanR 1.0.0 and will be removed in a future release. Please use `threads` instead.",
       call. = FALSE
     )
     threads <- num_threads
@@ -2191,14 +2191,14 @@ CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
 #'   now, so it also works on a model whose executable was replaced or whose
 #'   build record is gone.
 #'
-#'   This method is different than the `$cpp_options()` method, which answers a
+#'   This method is different from the `$cpp_options()` method, which answers a
 #'   narrower question: the C++ options this model object was created with.
 #'   `$build_info()` describes the executable itself, including what it reports
-#'   about its own build when run. The difference is clear when considering a
-#'   model created with `cmdstan_model(exe_file = )` from just an executable
-#'   with no build record: `$cpp_options()` is empty, since no options were
-#'   given, but `$build_info()` still reports whether the executable was built
-#'   with threading, OpenCL and so on.
+#'   about its own build when run. Take a model created with
+#'   `cmdstan_model(exe_file = )` from an executable with no build record:
+#'   `$cpp_options()` is empty, since no options were given, but `$build_info()`
+#'   still reports whether the executable was built with threading, OpenCL and
+#'   so on.
 #'
 #' @return See [stan_build_info()].
 #'
@@ -2304,7 +2304,7 @@ assert_stan_file_exists <- function(stan_file) {
 #' @param stan_file The model's Stan file, for the error when the binary
 #'   will not run.
 #' @param tbb_dir The record's `tbb_dir`, or `NULL` without a usable record.
-#' @return A named list with cmdstanr-style argument names and default
+#' @return A named list with CmdStanR-style argument names and default
 #'   values.
 parse_cmdstan_args <- function(model_binary, method, stan_file, tbb_dir) {
   withr::with_path(

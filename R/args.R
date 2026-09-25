@@ -841,10 +841,10 @@ validate_optimize_args <- function(self) {
     # check that arg is positive or NULL and that algorithm='lbfgs' or 'bfgs' is
     # explicitly specified (error if not or if 'newton')
     if (!is.null(self[[arg]]) && is.null(self$algorithm)) {
-      stop("Please specify 'algorithm' in order to use '", arg, "'.", call. = FALSE)
+      stop("Please specify `algorithm` in order to use `", arg, "`.", call. = FALSE)
     }
     if (!is.null(self[[arg]]) && isTRUE(self$algorithm == "newton")) {
-      stop("'", arg, "' can't be used when algorithm is 'newton'.", call. = FALSE)
+      stop("`", arg, "` can't be used when algorithm is `\"newton\"`.", call. = FALSE)
     }
     checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
   }
@@ -852,7 +852,7 @@ validate_optimize_args <- function(self) {
   # history_size only available for lbfgs
   if (!is.null(self$history_size)) {
     if (!isTRUE(self$algorithm == "lbfgs")) {
-      stop("'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'.", call. = FALSE)
+      stop("`history_size` is only allowed if `algorithm` is specified as `\"lbfgs\"`.", call. = FALSE)
     } else {
       checkmate::assert_integerish(self$history_size, lower = 1, len = 1, null.ok = FALSE)
       self$history_size <- as.integer(self$history_size)
@@ -875,7 +875,7 @@ validate_laplace_args <- function(self) {
   checkmate::assert_flag(self$jacobian, null.ok = FALSE)
   if (self$mode_object$metadata()$jacobian != self$jacobian) {
     stop(
-      "'jacobian' argument to optimize and laplace must match!\n",
+      "`jacobian` argument to optimize and laplace must match!\n",
       "laplace was called with jacobian=", self$jacobian, "\n",
       "optimize was run with jacobian=", as.logical(self$mode_object$metadata()$jacobian),
       call. = FALSE
@@ -1171,13 +1171,13 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
                               warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                               ...) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
-    stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
+    stop("If `init` is a list it must be a list of lists.", call. = FALSE)
   }
   if (length(init) != num_procs) {
-    stop("'init' has the wrong length. See documentation of 'init' argument.", call. = FALSE)
+    stop("`init` has the wrong length. See documentation of `init` argument.", call. = FALSE)
   }
   if (any(sapply(init, function(x) length(x) == 0))) {
-    stop("'init' contains empty lists.", call. = FALSE)
+    stop("`init` contains empty lists.", call. = FALSE)
   }
   if (!is.null(model_variables)) {
     missing_parameter_values <- list()
@@ -1215,9 +1215,9 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
   }
   if (any(grepl("\\[", names(unlist(init))))) {
     stop(
-      "'init' contains entries with parameter names that include square-brackets, which is not permitted. ",
+      "`init` contains entries with parameter names that include square-brackets, which is not permitted. ",
       "To supply inits for a vector, matrix or array of parameters, ",
-      "create a single entry with the parameter's name in the 'init' list ",
+      "create a single entry with the parameter's name in the `init` list ",
       "and specify initial values for the entire parameter container.",
       call. = FALSE)
   }
@@ -1249,8 +1249,8 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
   has_chain_id <- !is.null(args)
   if (has_chain_id) {
     if (!identical(names(args), "chain_id")) {
-      stop("If 'init' is a function it must have zero arguments ",
-           "or only argument 'chain_id'.", call. = FALSE)
+      stop("If `init` is a function it must have zero arguments ",
+           "or only argument `chain_id`.", call. = FALSE)
     }
   }
 
@@ -1258,7 +1258,7 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
   for (i in seq_len(num_procs)) {
     init_list[[i]] <- if (has_chain_id) init(i) else init()
     if (!is.list(init_list[[i]]) || is.data.frame(init_list[[i]])) {
-      stop("If 'init' is a function it must return a single list.", call. = FALSE)
+      stop("If `init` is a function it must return a single list.", call. = FALSE)
     }
   }
   process_init(init_list, num_procs, model_variables, warn_partial)
@@ -1521,14 +1521,14 @@ validate_init <- function(init, num_procs) {
     return(invisible(TRUE))
   }
   if (!is.numeric(init) && !is.character(init)) {
-    stop("Invalid 'init' specification. See documentation of 'init' argument.",
+    stop("Invalid `init` specification. See documentation of `init` argument.",
          call. = FALSE)
   } else if (is.numeric(init) && (length(init) > 1 || init < 0)) {
-    stop("If 'init' is numeric it must be a single real number >= 0.",
+    stop("If `init` is numeric it must be a single real number >= 0.",
          call. = FALSE)
   } else if (is.character(init)) {
     if (length(init) != 1 && length(init) != num_procs) {
-      stop("If 'init' is specified as a character vector, its length must be ",
+      stop("If `init` is specified as a character vector, its length must be ",
            "1 or equal to the number of chains or Pathfinder paths.",
            call. = FALSE)
     }
@@ -1567,7 +1567,7 @@ validate_seed <- function(seed, num_procs) {
   }
   checkmate::assert_integerish(seed, lower = 0)
   if (length(seed) > 1 && length(seed) != num_procs) {
-    stop("If 'seed' is specified it must be a single integer or one per chain.",
+    stop("If `seed` is specified it must be a single integer or one per chain.",
          call. = FALSE)
   }
   invisible(TRUE)
