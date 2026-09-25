@@ -299,6 +299,7 @@ test_that("loo method works if log_lik is available", {
   fit_bernoulli <- testing_fit("bernoulli_log_lik")
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(cores = 1, save_psis = TRUE)), "loo")
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = FALSE)), "loo")
+  expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = TRUE)), "loo")
 
   expect_error(
     fit_bernoulli$loo(variables = c("log_lik", "beta")),
@@ -379,12 +380,17 @@ test_that("draws() works for different formats", {
   expect_true(posterior::is_draws_array(a))
   a <- fit_mcmc$draws(format = "df")
   expect_true(posterior::is_draws_df(a))
+  expect_true(posterior::is_draws_df(fit_mcmc$draws(format = "data.frame")))
 })
 
 test_that("draws() errors if invalid format", {
   expect_error(
     fit_mcmc$draws(format = "bad_format"),
     "The supplied draws format is not valid"
+  )
+  expect_error(
+    fit_mcmc$draws(format = "rvars"),
+    "convert after extracting the draws"
   )
 })
 
@@ -420,6 +426,9 @@ test_that("diagnostic_summary() works", {
     "E-BFMI not computed"
   )
   expect_equal(diagnostics$ebfmi, NA)
+
+  expect_no_message(quiet <- fit$diagnostic_summary(quiet = TRUE))
+  expect_equal(quiet, diagnostics)
 
   expect_equal(fit$diagnostic_summary(""), list())
   expect_equal(fit$diagnostic_summary(NULL), list())

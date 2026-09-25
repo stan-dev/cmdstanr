@@ -297,6 +297,20 @@ test_that("unconstrain_draws returns correct values", {
   expect_message(fit$unconstrain_draws(draws = fit$draws(), inc_warmup = TRUE),
                  "`inc_warmup` cannot be used with a draws object. Ignoring.")
 
+  expect_error(
+    fit$unconstrain_draws(files = fit$output_files(), draws = fit$draws()),
+    "not both"
+  )
+  expect_true(posterior::is_draws_df(fit$unconstrain_draws(format = "df")))
+  expect_true(
+    posterior::is_draws_df(fit$unconstrain_draws(format = "data.frame"))
+  )
+  expect_true(posterior::is_draws_list(fit$unconstrain_draws(format = "list")))
+  expect_error(
+    fit$unconstrain_draws(format = "rvars"),
+    "convert after extracting the draws"
+  )
+
   # With a lower-bounded constraint, the parameter draws should be the
   # exponentiation of the unconstrained draws
   model_code <- "

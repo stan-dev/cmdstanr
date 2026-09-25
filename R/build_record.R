@@ -127,7 +127,8 @@ assert_record_dependency_entry <- function(value, field) {
 
 #' Check a build record against the format version 1 schema
 #'
-#' Every check of a record's fields is here. `new_build_record()` runs it
+#' Every check of a record's fields except `format_version` is here,
+#' `read_build_record()` checks that first. `new_build_record()` runs it
 #' before a record is written and `read_build_record()` after one is read, so
 #' a record that passes when written passes when read. Fields the schema does
 #' not name are ignored. No feature in `reported_features` is required, since
@@ -140,14 +141,6 @@ assert_record_dependency_entry <- function(value, field) {
 #' @noRd
 validate_build_record <- function(record) {
   assert_record_shape(record, "object", "record")
-
-  format_version <- record[["format_version"]]
-  if (!checkmate::test_int(format_version, tol = 0) ||
-      format_version != build_record_format_version) {
-    stop_build_record_field(
-      "format_version", paste0("must be ", build_record_format_version)
-    )
-  }
 
   configuration <- assert_record_member(record, "configuration", "object")
   cpp_options <- assert_record_member(

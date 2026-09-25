@@ -681,7 +681,6 @@ DiagnoseArgs <- R6::R6Class(
 #' @param self A `CmdStanArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_cmdstan_args <- function(self) {
-  validate_exe_file(self$exe_file)
   assert_dir_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
@@ -1073,22 +1072,12 @@ process_init.default <- function(init, ...) {
   return(init)
 }
 
-#' Remove the leftmost dimension if equal to 1
+#' Drop the draw dimension from `draws_of()` of a single draw
 #' @noRd
-#' @param x An array like object
+#' @param x The array `posterior::draws_of()` returns for one draw, whose
+#'   first dimension has length 1.
 .remove_leftmost_dim <- function(x) {
-  dims <- dim(x)
-  if (length(dims) == 1) {
-    return(drop(x))
-  } else if (dims[1] == 1) {
-    new_dims <- dims[-1]
-    # Create a call to subset the array, maintaining all remaining dimensions
-    subset_expr <- as.call(c(as.name("["), list(x), 1, rep(TRUE, length(new_dims)), drop = FALSE))
-    new_x <- eval(subset_expr)
-    return(array(new_x, dim = new_dims))
-  } else {
-    return(x)
-  }
+  array(x, dim = dim(x)[-1])
 }
 
 #' Write initial values to files if provided as posterior `draws` object
@@ -1344,21 +1333,19 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
 
   # resample_draws() needs num_procs distinct candidates
   if (num_procs > num_candidates) {
-    if (inherits(init, "CmdStanPathfinder")) {
-      algo_name <- " Pathfinder "
-      extra_msg <- " Try running Pathfinder with psis_resample=FALSE."
-    } else if (inherits(init, "CmdStanVB")) {
-      algo_name <- " VB "
-      extra_msg <- ""
-    } else if (inherits(init, "CmdStanLaplace")) {
-      algo_name <- " Laplace "
-      extra_msg <- ""
+    algo_name <- switch(
+      class(init)[1],
+      CmdStanPathfinder = "Pathfinder",
+      CmdStanVB = "VB",
+      CmdStanLaplace = "Laplace"
+    )
+    extra_msg <- if (inherits(init, "CmdStanPathfinder")) {
+      " Try running Pathfinder with psis_resample=FALSE."
     } else {
-      algo_name <- ""
-      extra_msg <- ""
+      ""
     }
-    stop(paste0("Not enough distinct draws (", num_procs, ") in", algo_name ,
-                "fit to create inits.", extra_msg))
+    stop(paste0("Not enough distinct draws (", num_procs, ") in ",
+                algo_name, " fit to create inits.", extra_msg))
   }
 
   # CmdStan PSIS-resamples Pathfinder draws only with multiple paths and lp weights
@@ -1492,20 +1479,6 @@ process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
 
 
 # Validation helpers ------------------------------------------------------
-
-#' Validate exe file exists
-#' @noRd
-#' @param exe_file Path to executable.
-#' @return Either throws an error or returns `invisible(TRUE)`
-validate_exe_file <- function(exe_file) {
-  if (!length(exe_file) ||
-      !nzchar(exe_file) ||
-      !file.exists(exe_file)) {
-    stop("There is no executable at '", exe_file, "'.", call. = FALSE)
-  }
-  invisible(TRUE)
-}
-
 
 #' Validate initial values
 #'

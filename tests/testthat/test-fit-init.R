@@ -282,4 +282,25 @@ test_that("Draws Object with NA or Inf throws error", {
   draws_df[1, 4] = NA
   expect_error(mod_logistic$sample(
     data = data_list_logistic, seed = 1234, refresh=0, init = draws_df[1:4, ]), "alpha, beta contains NA or Inf values!")
+
+  mod_bern <- testing_model("bernoulli")
+  fit_bern <- testing_fit("bernoulli", method = "laplace", refresh = 0)
+  draws_bern <- fit_bern$draws()
+  draws_bern[1, "theta"] <- NA
+  expect_error(
+    mod_bern$sample(data = testing_data("bernoulli"), chains = 1,
+                    refresh = 0, init = draws_bern[1, ]),
+    "Variable: theta contains NA or Inf values!"
+  )
+})
+
+test_that("a fit used as init must share parameters with the model", {
+  fit_logistic <- testing_fit("logistic", method = "sample", refresh = 0)
+  expect_error(
+    testing_model("bernoulli")$sample(
+      data = testing_data("bernoulli"), chains = 1, refresh = 0,
+      init = fit_logistic
+    ),
+    "None of the names of the parameters"
+  )
 })

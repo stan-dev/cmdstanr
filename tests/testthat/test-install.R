@@ -242,15 +242,19 @@ test_that("Install from release file works", {
     "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
     destfile)
 
-  expect_message(
-    expect_output(
-      install_cmdstan(dir = dir, cores = CORES, quiet = FALSE, overwrite = TRUE,
-                      release_file = destfile,
-                      wsl = os_is_wsl()),
-      "Compiling C++ code",
+  expect_warning(
+    expect_message(
+      expect_output(
+        install_cmdstan(dir = dir, cores = CORES, quiet = FALSE,
+                        overwrite = TRUE, release_file = destfile,
+                        version = "2.37.0", wsl = os_is_wsl()),
+        "Compiling C++ code",
+        fixed = TRUE
+      ),
+      "CmdStan path set",
       fixed = TRUE
     ),
-    "CmdStan path set",
+    "release_file and release_url/version shouldn't both be specified",
     fixed = TRUE
   )
 })
