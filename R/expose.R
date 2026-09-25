@@ -25,18 +25,77 @@ check_sundials_fpic <- function(verbose) {
   }
 }
 
+#' RcppParallel's TBB, to build R-loaded code against
+#'
+#' CmdStan bundles TBB 2020.3 and RcppParallel ships oneTBB under the
+#' same library name (`libtbb.dylib`, `tbb.dll`, `libtbb.so.2`). Once
+#' one copy is in the process, code linked against the other fails to
+#' load: model methods built after rstan or brms loaded RcppParallel's,
+#' or RcppParallel itself after the methods loaded CmdStan's. Building
+#' the methods against RcppParallel's copy whenever it is installed
+#' avoids both orders. Stan Math supports oneTBB through
+#' `TBB_INTERFACE_NEW`.
+#'
+#' @return A list with RcppParallel's `include` and `lib` directories,
+#'   or `NULL` when RcppParallel is not installed with its oneTBB.
+#' @noRd
+rcppparallel_tbb <- function() {
+  arch <- .Platform$r_arch
+  lib <- system.file(paste(c("lib", arch[nzchar(arch)]), collapse = "/"),
+                     package = "RcppParallel")
+  version_h <- system.file("include/tbb/version.h", package = "RcppParallel")
+  if (!nzchar(lib) || !nzchar(version_h)) {
+    return(NULL)
+  }
+  # R CMD check's temporary library returns backslash paths on Windows
+  list(include = repair_path(dirname(dirname(version_h))),
+       lib = repair_path(lib))
+}
+
+#' Compile C++ that uses the Stan Math library and load it into R
+#'
+#' Wraps `Rcpp::sourceCpp()` with the include paths, defines and link
+#' flags the selected CmdStan installation's make would use for a model,
+#' with RcppParallel's TBB substituted when it is installed, see
+#' `rcppparallel_tbb()`.
+#'
+#' @param code Character string with the C++ source.
+#' @param env Environment the compiled functions are assigned into.
+#' @param verbose Logical. Print compiler output and, on Linux, the
+#'   SUNDIALS rebuild output?
+#' @param ... Passed to `Rcpp::sourceCpp()`.
+#' @return `NULL`, invisibly.
+#' @noRd
 rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   check_sundials_fpic(verbose)
-  cxxflags <- get_cmdstan_flags("CXXFLAGS")
-  cppflags <- get_cmdstan_flags("CPPFLAGS")
+  tbb <- rcppparallel_tbb()
+  make_args <- character()
+  tbb_dir <- tbb_path()
+  if (!is.null(tbb)) {
+    make_args <- c(paste0("TBB_INC=", tbb$include),
+                   paste0("TBB_LIB=", tbb$lib), "TBB_INTERFACE_NEW=1")
+    if (.Platform$OS.type == "windows") {
+      # Rtools' linkers reject the ELF-only flag make adds for a system TBB
+      make_args <- c(make_args, "LDFLAGS_TBB_DTAGS=")
+    }
+    tbb_dir <- tbb$lib
+  }
+  cxxflags <- get_cmdstan_flags("CXXFLAGS", make_args)
+  cppflags <- get_cmdstan_flags("CPPFLAGS", make_args)
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
   libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
-  libs <- paste(sapply(libs, get_cmdstan_flags), collapse = " ")
+  libs <- paste(sapply(libs, get_cmdstan_flags, make_args = make_args),
+                collapse = " ")
+  if (!is.null(tbb)) {
+    # make's print rule drops the quotes, so quote the paths here
+    cxxflags <- gsub(tbb$include, shQuote(tbb$include), cxxflags, fixed = TRUE)
+    libs <- gsub(tbb$lib, shQuote(tbb$lib), libs, fixed = TRUE)
+  }
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
   }
-  withr::with_path(repair_path(file.path(cmdstan_path(),"stan/lib/stan_math/lib/tbb")),
+  withr::with_path(tbb_dir,
     withr::with_makevars(
       c(
         USE_CXX14 = 1,

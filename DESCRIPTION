@@ -58,7 +58,8 @@ Suggests:
     qs2,
     rmarkdown,
     testthat (>= 3.3.0),
-    Rcpp
+    Rcpp,
+    RcppParallel
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0

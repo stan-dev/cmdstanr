@@ -9,6 +9,33 @@ utils::capture.output(
   fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
 )
 
+test_that("RcppParallel's TBB works from a library path with a space", {
+  skip_if_not_installed("RcppParallel")
+  tbb <- rcppparallel_tbb()
+  skip_if(is.null(tbb), "RcppParallel is built against a system TBB")
+  installed <- find.package("RcppParallel")
+  lib <- repair_path(withr::local_tempdir("R library"))
+  file.copy(installed, lib, recursive = TRUE)
+  copy <- lapply(tbb, function(dir) {
+    sub(installed, file.path(lib, "RcppParallel"), dir, fixed = TRUE)
+  })
+  local_mocked_bindings(rcppparallel_tbb = function() copy)
+  code <- paste(
+    "#include <Rcpp.h>",
+    "#include <tbb/version.h>",
+    "// [[Rcpp::export]]",
+    "int tbb_interface_version() { return TBB_INTERFACE_VERSION; }",
+    sep = "\n"
+  )
+  expect_no_error(rcpp_source_stan(code, new.env()))
+})
+
+test_that("model methods load with RcppParallel's TBB in the session", {
+  skip_if_not_installed("RcppParallel")
+  loadNamespace("RcppParallel")
+  expect_no_error(fit$init_model_methods())
+})
+
 test_that("Model methods automatically initialise when needed", {
   expect_no_error(fit$log_prob(unconstrained_variables=c(0.1)))
 })
