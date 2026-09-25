@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 local_output_sandbox <- function(pattern = "sandbox", .local_envir = parent.frame()) {

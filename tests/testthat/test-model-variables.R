@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 test_that("$variables() work correctly with example models", {

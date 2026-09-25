@@ -1,4 +1,6 @@
 # avoid parallel on Mac due to strange intermittent TBB errors on Github Actions
+skip_on_cran()
+
 CORES <- if (os_is_macos()) 1 else 2
 
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")

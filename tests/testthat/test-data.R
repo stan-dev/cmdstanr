@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 fit_vb <- testing_fit("bernoulli", method = "variational", seed = 123)

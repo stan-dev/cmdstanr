@@ -1,4 +1,6 @@
 # Standalone functions not expected to work on WSL yet
+skip_on_cran()
+
 skip_if(os_is_wsl())
 
 set_cmdstan_path()

@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 mod_gq <- testing_model("bernoulli_ppc")

@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 # The standalone functions do what the model methods do, from a file alone.

@@ -324,6 +324,7 @@ test_that("untracked dependencies are ordered by kind and deduplicated", {
 })
 
 test_that("a real user header is reported under dependencies and nowhere else", {
+  skip_on_cran()
   stan_file <- file.path(withr::local_tempdir(), "bernoulli_external.stan")
   file.copy(testing_stan_file("bernoulli_external"), stan_file)
   header <- withr::local_tempfile(
