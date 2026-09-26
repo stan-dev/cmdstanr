@@ -47,14 +47,17 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../index.html" aria-label="Go to homepage"><span class="fa fa-home fa-lg"></span></a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages">
 <li><a class="external-link dropdown-item" href="https://mc-stan.org/bayesplot">bayesplot</a></li>
+    <li><a class="dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/loo">loo</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/posterior">posterior</a></li>
+    <li><a class="external-link dropdown-item" href="https://mc-stan.org/priorsense/">priorsense</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/projpred">projpred</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/rstan">rstan</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/rstanarm">rstanarm</a></li>
@@ -96,7 +99,7 @@
 Jonah Gabry and Ben Bales</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/vignettes/profiling.Rmd" class="external-link"><code>vignettes/profiling.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/update-pkgdown-navbar/vignettes/profiling.Rmd" class="external-link"><code>vignettes/profiling.Rmd</code></a></small>
       <div class="d-none name"><code>profiling.Rmd</code></div>
     </div>
 
@@ -210,8 +213,8 @@ documentation</a>.</p>
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 139692327561024 0.004695454  0.003780872  0.000914582       34174
-2 likelihood 139692327561024 0.617397470  0.482992730  0.134404740       51261
+1     priors 139805768578880 0.005417648  0.004417819  0.000999829       34174
+2 likelihood 139805768578880 0.621366880  0.486712880  0.134654000       51261
   no_chain_stack autodiff_calls no_autodiff_calls
 1          34174          17087                 1
 2       34191087          17087                 1</code></pre>
@@ -259,8 +262,8 @@ like for the previous one.</p>
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 139684924098368 0.004313201  0.003354664  0.000958537       35712
-2 likelihood 139684924098368 0.404652810  0.403636350  0.001016457       53568
+1     priors 140067316881216 0.004620173  0.003460495  0.001159678       35712
+2 likelihood 140067316881216 0.408931480  0.407846910  0.001084564       53568
   no_chain_stack autodiff_calls no_autodiff_calls
 1          35712          17856                 1
 2          17856          17856                 1</code></pre>
@@ -287,7 +290,7 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span> <span class="op">/</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 2.747969e-07 3.613258e-05</code></pre>
+<pre><code>[1] 3.170626e-07 3.636489e-05</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
@@ -297,7 +300,7 @@ CmdStan stores the profiling data in CSV files in a temporary location.
 The paths of the profiling CSV files can be retrieved using <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$profile_files()</code></a>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/RtmpKHbFrb/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609222226-01-8ee418.csv"</code></pre>
+<pre><code>[1] "/tmp/Rtmp7U3dSO/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609262350-01-8ee3f3.csv"</code></pre>
 <p>These can be saved to a more permanent location with the <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$save_profile_files()</code></a>
 method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">

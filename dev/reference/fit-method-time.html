@@ -34,13 +34,16 @@ and does not include the time taken to run the $optimize() method."><meta proper
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../index.html" aria-label="Go to homepage"><span class="fa fa-home fa-lg"></span></a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Functions</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages"><li><a class="external-link dropdown-item" href="https://mc-stan.org/bayesplot">bayesplot</a></li>
+    <li><a class="dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/loo">loo</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/posterior">posterior</a></li>
+    <li><a class="external-link dropdown-item" href="https://mc-stan.org/priorsense/">priorsense</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/projpred">projpred</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/rstan">rstan</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/rstanarm">rstanarm</a></li>
@@ -67,7 +70,7 @@ and does not include the time taken to run the $optimize() method."><meta proper
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Report timing of CmdStan runs</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R" class="external-link"><code>R/fit.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/update-pkgdown-navbar/R/fit.R" class="external-link"><code>R/fit.R</code></a></small>
       <div class="d-none name"><code>fit-method-time.Rd</code></div>
     </div>
 
@@ -106,36 +109,36 @@ times are reported as zero.</p></li>
 <span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.4700632</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.465457</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $chains</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   chain_id warmup sampling total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        1  0.017    0.053 0.070</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2        2  0.017    0.052 0.069</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3        3  0.018    0.050 0.068</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4        4  0.017    0.051 0.068</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        1  0.017    0.054 0.071</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2        2  0.017    0.054 0.071</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3        3  0.018    0.051 0.069</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4        4  0.017    0.053 0.070</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"variational"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1125793</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1116595</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit_optim</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"optimize"</span>, jacobian <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1115298</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1110339</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># use fit_optim to draw samples from laplace approximation</span></span></span>
 <span class="r-in"><span><span class="va">fit_laplace</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"laplace"</span>, mode <span class="op">=</span> <span class="va">fit_optim</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span> <span class="co"># just time for drawing sample not for running optimize</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1112099</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1112483</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span> <span class="op">+</span> <span class="va">fit_optim</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span> <span class="co"># total time</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2227397</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2222822</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
