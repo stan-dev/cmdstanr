@@ -8,9 +8,15 @@ fits[["variational"]] <- testing_fit("logistic", method = "variational",
                                      seed = 123, save_latent_dynamics = TRUE)
 fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
 fits[["laplace"]] <- testing_fit("logistic", method = "laplace", seed = 123)
+fits[["pathfinder"]] <- testing_fit("logistic", method = "pathfinder",
+                                    seed = 123)
 fit_bern <- testing_fit("bernoulli", method = "sample", seed = 123)
-fits[["generate_quantities"]] <- testing_fit("bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern, seed = 123)
-all_methods <- c("sample", "optimize", "laplace", "variational", "generate_quantities")
+fits[["generate_quantities"]] <- testing_fit(
+  "bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern,
+  seed = 123
+)
+all_methods <- c("sample", "optimize", "laplace", "variational", "pathfinder",
+                 "generate_quantities")
 
 
 test_that("*_files() methods return the right number of paths", {
@@ -214,6 +220,16 @@ test_that("save_object() method works with qs2 format", {
   fit2 <- qs2::qs_read(temp_qs_file)
   expect_identical(fit2$summary(), fit$summary())
   expect_identical(fit2$return_codes(), fit$return_codes())
+})
+
+test_that("save_object() says when qs2 is not installed", {
+  local_mocked_bindings(
+    requireNamespace = function(...) FALSE, .package = "base"
+  )
+  expect_error(
+    fits[["sample"]]$save_object(tempfile(fileext = ".qs2"), format = "qs2"),
+    "qs2 package is required"
+  )
 })
 
 test_that("save_object() method works with profiles", {

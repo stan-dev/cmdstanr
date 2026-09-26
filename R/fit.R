@@ -41,11 +41,6 @@ CmdStanFit <- R6::R6Class(
       self$runset$num_procs()
     },
     print = function(variables = NULL, ..., digits = 2, max_rows = getOption("cmdstanr_max_rows", 10)) {
-      if (is.null(private$draws_) &&
-          !length(self$output_files(include_failed = FALSE))) {
-        stop("Fitting failed. Unable to print.", call. = FALSE)
-      }
-
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
       all_variables <- self$metadata()$variables
@@ -301,9 +296,6 @@ draws <- function(variables = NULL, inc_warmup = FALSE, format = getOption("cmds
     format <- "draws_matrix"
   } else {
     format <- assert_valid_draws_format(format)
-  }
-  if (!length(self$output_files(include_failed = FALSE))) {
-    stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
   }
   if (inc_warmup) {
     warning("`inc_warmup` is ignored except when used with CmdStanMCMC objects.",
@@ -609,9 +601,7 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
                               format = getOption("cmdstanr_draws_format", "draws_array"),
                               inc_warmup = FALSE) {
   self$init_model_methods()
-  if (!(format %in% valid_draws_formats())) {
-    stop("Invalid draws format requested!", call. = FALSE)
-  }
+  format <- assert_valid_draws_format(format)
   if (!is.null(files) || !is.null(draws)) {
     if (!is.null(files) && !is.null(draws)) {
       stop("Either a list of CSV files or a draws object can be passed, not both",
@@ -1260,9 +1250,6 @@ CmdStanFit$set("public", name = "output", value = output)
 #'
 metadata <- function() {
   if (is.null(private$metadata_)) {
-    if (!length(self$output_files(include_failed = FALSE))) {
-      stop("Fitting failed. Unable to retrieve the metadata.", call. = FALSE)
-    }
     private$read_csv_()
   }
   private$metadata_
@@ -1538,7 +1525,8 @@ CmdStanMCMC <- R6::R6Class(
     inv_metric_ = NULL,
     read_csv_ = function(variables = NULL, sampler_diagnostics = NULL, format = getOption("cmdstanr_draws_format", "draws_array")) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
+        stop("No chains finished successfully. There is no output to read.",
+             call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),
@@ -1762,10 +1750,6 @@ sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr
   if (isTRUE(private$metadata_$algorithm == "fixed_param")) {
     stop("There are no sampler diagnostics when fixed_param = TRUE.", call. = FALSE)
   }
-  if (is.null(private$sampler_diagnostics_) &&
-      !length(self$output_files(include_failed = FALSE))) {
-    stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.", call. = FALSE)
-  }
   to_read <- remaining_columns_to_read(
     requested = NULL,
     currently_read = posterior::variables(private$sampler_diagnostics_),
@@ -1928,9 +1912,6 @@ CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summar
 #' }
 #'
 inv_metric <- function(matrix = TRUE) {
-  if (!length(self$output_files(include_failed = FALSE))) {
-    stop("No chains finished successfully. Unable to retrieve the inverse metrics.", call. = FALSE)
-  }
   if (is.null(private$inv_metric_)) {
     private$read_csv_(variables = "", sampler_diagnostics = "")
   }
@@ -2058,7 +2039,7 @@ CmdStanMLE <- R6::R6Class(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Optimization failed. Unable to retrieve the draws.", call. = FALSE)
+        stop("Optimization failed. There is no output to read.", call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
       private$draws_ <- csv_contents$point_estimates
@@ -2192,7 +2173,8 @@ CmdStanLaplace <- R6::R6Class(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Laplace inference failed. Unable to retrieve the draws.", call. = FALSE)
+        stop("Laplace inference failed. There is no output to read.",
+             call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
       private$draws_ <- csv_contents$draws
@@ -2309,7 +2291,8 @@ CmdStanVB <- R6::R6Class(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Variational inference failed. Unable to retrieve the draws.", call. = FALSE)
+        stop("Variational inference failed. There is no output to read.",
+             call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
       private$draws_ <- csv_contents$draws
@@ -2404,7 +2387,7 @@ CmdStanPathfinder <- R6::R6Class(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Pathfinder failed. Unable to retrieve the draws.", call. = FALSE)
+        stop("Pathfinder failed. There is no output to read.", call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
       private$draws_ <- csv_contents$draws
@@ -2496,9 +2479,6 @@ CmdStanGQ <- R6::R6Class(
     },
     # override CmdStanFit draws method
     draws = function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
-      if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
-      }
       if (inc_warmup) {
         warning("`inc_warmup` is ignored except when used with CmdStanMCMC objects.",
                 call. = FALSE)
@@ -2538,7 +2518,8 @@ CmdStanGQ <- R6::R6Class(
     # inherits draws_ and metadata_ slots from CmdStanFit
     read_csv_ = function(variables = NULL, format = getOption("cmdstanr_draws_format", "draws_array")) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
+        stop("Generating quantities for all MCMC chains failed. ",
+             "There is no output to read.", call. = FALSE)
       }
       csv_contents <- read_cmdstan_csv(
         files = self$output_files(include_failed = FALSE),

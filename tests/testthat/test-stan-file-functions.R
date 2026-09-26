@@ -60,6 +60,22 @@ test_that("format_stan_file() formats a program", {
     format_stan_file(include_model$stan_file, canonicalize = list("includes")),
     "real divide_real_by_two", fixed = TRUE
   )
+
+  expect_output(
+    format_stan_file(stan_file, canonicalize = TRUE), "  real y;", fixed = TRUE
+  )
+  long_line <- withr::local_tempfile(
+    lines = paste0(
+      "parameters {real y;} model {y ~ normal(0, ",
+      paste(rep("1", 20), collapse = " + "), ");}"
+    ),
+    fileext = ".stan"
+  )
+  expect_gt(max(nchar(capture.output(format_stan_file(long_line)))), 30)
+  format_stan_file(
+    long_line, max_line_length = 30, overwrite_file = TRUE, backup = FALSE
+  )
+  expect_true(all(nchar(readLines(long_line)) <= 30))
 })
 
 test_that("variables_stan_file() reports a program's variables", {

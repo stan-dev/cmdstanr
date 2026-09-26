@@ -223,7 +223,9 @@ test_that("process_fitted_params() works with draws_array", {
 
 test_that("process_fitted_params() works with draws_array without lp__", {
   fit <- testing_fit("logistic", method = "sample", seed = 123)
-  fit_params_files <- process_fitted_params(posterior::subset_draws(fit$draws(), variables = c("alpha", "beta[1]", "beta[2]", "beta[3]")))
+  fit_params_files <- process_fitted_params(posterior::subset_draws(
+    fit$draws(), variable = c("alpha", "beta[1]", "beta[2]", "beta[3]")
+  ))
   expect_true(all(file.exists(fit_params_files)))
   chain <- 1
   for(file in fit_params_files) {

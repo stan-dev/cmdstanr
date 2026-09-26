@@ -226,6 +226,25 @@ test_that("cmdstan_default_path() orders install directories by CmdStan version"
   )
 })
 
+test_that("cmdstan_default_path() prefers a release over its rc", {
+  installs <- withr::local_tempdir(pattern = "cmdstan-rc-installs")
+  dir.create(file.path(installs, "cmdstan-2.36.0-rc1"))
+  expect_equal(
+    cmdstan_default_path(dir = installs),
+    file.path(installs, "cmdstan-2.36.0-rc1")
+  )
+  dir.create(file.path(installs, "cmdstan-2.36.0"))
+  expect_equal(
+    cmdstan_default_path(dir = installs), file.path(installs, "cmdstan-2.36.0")
+  )
+})
+
+test_that("set_cmdstan_path() errors when the makefile has no version line", {
+  path <- withr::local_tempdir(pattern = "cmdstan-no-version")
+  writeLines("STAN ?= stan/", file.path(path, "makefile"))
+  expect_error(set_cmdstan_path(path), "missing a version number")
+})
+
 test_that("cmdstan_default_path() returns NULL for empty custom install directories", {
   installs <- withr::local_tempdir(pattern = "cmdstan-empty-installs")
 
