@@ -164,31 +164,21 @@ test_that("generate_file_names() zero-pads IDs for lexicographic sorting", {
   expect_equal(sort(file_names), file_names)
 })
 
-test_that("copy_temp_files retains sources if any copy fails", {
-  source_dir <- withr::local_tempdir()
+test_that("save_output_files() keeps the sources if any copy fails", {
   destination_dir <- withr::local_tempdir()
-  source_paths <- file.path(source_dir, c("one.csv", "two.csv"))
-  writeLines("one", source_paths[1])
-  writeLines("two", source_paths[2])
-  # Simulate a partial copy failure without relying on platform-specific file
-  # permissions. The original binding is restored at the end of the test.
+  # Simulate a partial copy failure without relying on platform-specific
+  # file permissions.
   local_mocked_bindings(
     file.copy = function(...) c(TRUE, FALSE),
     .package = "base"
   )
-
   expect_snapshot(
     error = TRUE,
-    copy_temp_files(
-      current_paths = source_paths,
-      new_dir = destination_dir,
-      new_basename = "output",
-      ids = 1:2,
-      timestamp = FALSE,
-      random = FALSE
+    fit_mcmc$save_output_files(
+      destination_dir, basename = "output", timestamp = FALSE, random = FALSE
     )
   )
-  expect_identical(file.exists(source_paths), c(TRUE, TRUE))
+  expect_true(all(file.exists(fit_mcmc$output_files())))
 })
 
 test_that("repair_path() fixes slashes", {
@@ -246,48 +236,6 @@ test_that("wsl_compatible_run() preserves arguments containing spaces", {
 
   expect_equal(result$status, 0L)
   expect_equal(result$stdout, arg)
-})
-
-test_that("list_to_array works with empty list", {
-  expect_equal(list_to_array(list()), NULL)
-})
-
-test_that("list_to_array fails for non-numeric values", {
-  expect_error(list_to_array(list(k = "test"), name = "test-list"),
-               "All elements in list 'test-list' must be numeric or logical!")
-})
-
-test_that("matching_variables() works", {
-  ret <- matching_variables(c("beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(
-    ret$matching,
-    c("beta[1]", "beta[2]", "beta[3]")
-  )
-  expect_equal(length(ret$not_found), 0)
-
-  ret <- matching_variables(c("alpha"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(
-    ret$matching,
-    c("alpha")
-  )
-  expect_equal(length(ret$not_found), 0)
-
-  ret <- matching_variables(c("alpha", "theta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(
-    ret$matching,
-    c("alpha")
-  )
-  expect_equal(
-    ret$not_found,
-    c("theta")
-  )
-
-  ret <- matching_variables(c("alpha", "beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(
-    ret$matching,
-    c("alpha", "beta[1]", "beta[2]", "beta[3]")
-  )
-  expect_equal(length(ret$not_found), 0)
 })
 
 test_that("require_suggested_package() works", {

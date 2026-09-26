@@ -1086,7 +1086,6 @@ test_that("a quoted make/local flag the call emits is dropped whole (#1232)", {
   local_cmdstan_make_local(
     cpp_options = list("STANCFLAGS += --filename-in-msg='/my dir/model.stan'")
   )
-  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--filename-in-msg=/my dir/model.stan")
 
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)

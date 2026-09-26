@@ -122,26 +122,39 @@ test_that("install_cmdstan() works with version and release_url", {
   set_cmdstan_path()
 })
 
-test_that("toolchain checks on Unix work", {
+test_that("check_cmdstan_toolchain() reports what is missing on Unix", {
   skip_if(os_is_windows())
-  withr::local_envvar(c("PATH" = ""))
+  make <- Sys.which("make")
   if (os_is_macos()) {
-    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with `xcode-select --install` or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
-    err_msg_make <- "The make tool was not found. Please install the command line tools for Mac with `xcode-select --install` or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_cpp <- paste0(
+      "A suitable C++ compiler was not found. Please install the command ",
+      "line tools for Mac with `xcode-select --install` or install Xcode ",
+      "from the app store. Then restart R and run ",
+      "cmdstanr::check_cmdstan_toolchain()."
+    )
+    err_msg_make <- paste0(
+      "The make tool was not found. Please install the command line tools ",
+      "for Mac with `xcode-select --install` or install Xcode from the app ",
+      "store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    )
   } else {
-    err_msg_cpp <- "A C++ compiler was not found. Please install the clang++ or g++ compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
-    err_msg_make <- "The make tool was not found. Please install make, restart R, and then run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_cpp <- paste0(
+      "A C++ compiler was not found. Please install the clang++ or g++ ",
+      "compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
+    )
+    err_msg_make <- paste0(
+      "The make tool was not found. Please install make, restart R, and ",
+      "then run cmdstanr::check_cmdstan_toolchain()."
+    )
   }
-  expect_error(
-    check_unix_cpp_compiler(),
-    err_msg_cpp,
-    fixed = TRUE
-  )
-  expect_error(
-    check_unix_make(),
-    err_msg_make,
-    fixed = TRUE
-  )
+  withr::local_envvar(c(PATH = ""))
+  expect_error(check_cmdstan_toolchain(), err_msg_make, fixed = TRUE)
+
+  # make is checked first, so a PATH with make alone reaches the compiler check
+  only_make <- withr::local_tempdir()
+  file.symlink(make, file.path(only_make, "make"))
+  withr::local_envvar(c(PATH = only_make))
+  expect_error(check_cmdstan_toolchain(), err_msg_cpp, fixed = TRUE)
 })
 
 test_that("clean and rebuild works", {
@@ -1224,11 +1237,11 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
   })
 })
 
-test_that("check_rtools4x_windows_toolchain() stops when no toolchain found", {
+test_that("check_cmdstan_toolchain() stops with no Windows toolchain", {
   skip_if(!os_is_windows())
 
   local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
-  expect_snapshot(error = TRUE, check_rtools4x_windows_toolchain())
+  expect_snapshot(error = TRUE, check_cmdstan_toolchain())
 })
 
 test_that("is_ucrt_toolchain() returns correct values for R versions", {

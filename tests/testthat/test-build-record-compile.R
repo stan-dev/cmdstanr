@@ -306,9 +306,8 @@ test_that("a build with an untracked dependency records it", {
   stan_file <- local_bernoulli()
   mod <- mock_compile(stan_file)
 
-  record <- read_build_record(mod$exe_file())$record
   expect_equal(
-    record$untracked_dependencies,
+    mod$build_info()$untracked_dependencies,
     list(list(kind = "make_local_include", detected_in = make_local))
   )
 })
