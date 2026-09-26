@@ -14,10 +14,10 @@
       Error:
       ! The Windows toolchain path contains spaces or parentheses, and CmdStanR could not convert it to a usable short path. Please install or move the toolchain to a path without spaces or parentheses, restart R, and then run cmdstanr::check_cmdstan_toolchain().
 
-# check_rtools4x_windows_toolchain() stops when no toolchain found
+# check_cmdstan_toolchain() stops with no Windows toolchain
 
     Code
-      check_rtools4x_windows_toolchain()
+      check_cmdstan_toolchain()
     Condition
       Error:
       ! CmdStanR could not find both make and a C++ compiler in R's configured toolchain or on PATH.

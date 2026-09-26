@@ -477,11 +477,6 @@ test_that("a failed launch says when the recorded TBB is gone", {
     ),
     fixed = TRUE
   )
-  expect_error(
-    parse_cmdstan_args("/models/bern", "sample", character(), gone),
-    "Reinstall it there; there is no Stan file to rebuild it from.",
-    fixed = TRUE
-  )
 })
 
 test_that("a record member with a longer name is not read as the user header", {

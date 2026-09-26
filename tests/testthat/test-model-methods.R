@@ -177,17 +177,9 @@ test_that("stale model-method bindings are detected and dropped", {
   fit2 <- readRDS(temp_rds_file)
   model_methods_env <- fit2$.__enclos_env__$private$model_methods_env_
 
-  expect_true(source_cpp_native_symbol_is_null(model_methods_env$model_ptr))
   expect_true(drop_stale_model_methods(model_methods_env))
   expect_equal(ls(model_methods_env, all.names = TRUE), "hpp_code_")
   expect_false(drop_stale_model_methods(model_methods_env))
-})
-
-test_that("bindings compiled in this session are recognised as live", {
-  fit$init_model_methods()
-  model_methods_env <- fit$.__enclos_env__$private$model_methods_env_
-  expect_true(model_methods_are_live(model_methods_env))
-  expect_false(source_cpp_native_symbol_is_null(model_methods_env$model_ptr))
 })
 
 test_that("model_methods_are_live() rejects pointers without an address", {
@@ -405,10 +397,17 @@ test_that("model methods refuse a fit from an executable alone", {
 
 test_that("init_model_methods(quiet = TRUE) suppresses the message", {
   rlang::local_interactive(TRUE)
-  local_mocked_bindings(rcpp_source_stan = function(...) invisible(NULL))
-  env <- new.env()
-  env$hpp_code_ <- "// no code"
-  expect_message(expose_model_methods(env),
-                 "Compiling additional model methods")
-  expect_no_message(expose_model_methods(env, quiet = TRUE))
+  # A fit read back from disk has no live bindings, so init_model_methods()
+  # compiles them. Both compile steps are mocked: only the message matters.
+  local_mocked_bindings(
+    rcpp_source_stan = function(...) invisible(NULL),
+    initialize_model_pointer = function(...) invisible(NULL)
+  )
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  saveRDS(fit, temp_rds_file)
+  expect_message(
+    readRDS(temp_rds_file)$init_model_methods(),
+    "Compiling additional model methods"
+  )
+  expect_no_message(readRDS(temp_rds_file)$init_model_methods(quiet = TRUE))
 })

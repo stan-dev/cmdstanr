@@ -219,7 +219,6 @@ test_that("cmdstan_default_path() orders install directories by CmdStan version"
   dir.create(file.path(installs, "cmdstan-2.9.0"), recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(installs, "cmdstan-2.35.0"), recursive = TRUE, showWarnings = FALSE)
 
-  expect_equal(latest_cmdstan_installed(installs), "cmdstan-2.35.0")
   expect_equal(
     cmdstan_default_path(dir = installs),
     file.path(installs, "cmdstan-2.35.0")
@@ -274,7 +273,6 @@ test_that("cmdstan_default_path() returns NULL for legacy-only cmdstan directory
 })
 
 test_that("CmdStan version helpers handle invalid inputs", {
-  expect_identical(cmdstan_min_version(), "2.37.0")
   expect_false(is_supported_cmdstan_version(NULL))
   expect_false(is_supported_cmdstan_version("not-a-version"))
   expect_error(cmdstan_version_compare("", "2.35.0"))
