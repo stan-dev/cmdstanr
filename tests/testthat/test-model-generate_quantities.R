@@ -15,7 +15,7 @@ ok_arg_values <- list(
 
 # using any of these should cause optimize() to error
 bad_arg_values <- list(
-  fitter_params = "NOT_A_FILE",
+  fitted_params = "NOT_A_FILE",
   data = "NOT_A_FILE",
   seed = "NOT_A_SEED",
   parallel_chains = -20
@@ -43,6 +43,57 @@ test_that("generate_quantities() method errors for any invalid argument before c
     args[[nm]] <- bad_arg_values[[nm]]
     expect_error(do.call(mod_gq$generate_quantities, args), regexp = nm)
   }
+})
+
+test_that("generate_quantities() rejects fitted_params it cannot read", {
+  error_msg <- paste0(
+    "`fitted_params` must be a list of paths to CSV files, a CmdStanMCMC, ",
+    "CmdStanMLE, CmdStanLaplace, CmdStanVB, or CmdStanPathfinder object, ",
+    "a posterior::draws_array or a posterior::draws_matrix."
+  )
+  expect_error(
+    mod_gq$generate_quantities(fitted_params = 5, data = data_list),
+    error_msg, fixed = TRUE
+  )
+  expect_error(
+    mod_gq$generate_quantities(fitted_params = NULL, data = data_list),
+    error_msg, fixed = TRUE
+  )
+
+  # saveRDS() keeps neither the draws nor the CSV files behind them
+  skip_if(os_is_wsl())
+  fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
+  temp_file <- tempfile(fileext = ".rds")
+  saveRDS(fit_tmp, file = temp_file)
+  rm(fit_tmp)
+  gc()
+  expect_error(
+    mod_gq$generate_quantities(
+      fitted_params = readRDS(temp_file), data = data_list
+    ),
+    "Unable to obtain draws from the fit object."
+  )
+})
+
+test_that("generate_quantities() reads a fit whose CSV files are gone", {
+  fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
+  temp_file <- tempfile(fileext = ".rds")
+  fit_tmp$save_object(temp_file)
+  rm(fit_tmp)
+  gc()
+  fit_tmp <- readRDS(temp_file)
+  expect_false(any(file.exists(fit_tmp$output_files())))
+  expect_gq_output(
+    gq_tmp <- mod_gq$generate_quantities(
+      fitted_params = fit_tmp, data = data_list, seed = 1
+    )
+  )
+  expect_gq_output(
+    gq_ref <- mod_gq$generate_quantities(
+      fitted_params = fit, data = data_list, seed = 1
+    )
+  )
+  expect_equal(gq_tmp$draws(), gq_ref$draws())
 })
 
 test_that("generate_quantities work for different chains and parallel_chains", {

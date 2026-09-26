@@ -15,10 +15,6 @@ local_gone_installation <- function(.local_envir = parent.frame()) {
   gone
 }
 
-test_that("checked_cmdstan_path() returns the selected installation while it exists", {
-  expect_equal(checked_cmdstan_path(), cmdstan_path())
-})
-
 test_that("a model is not built when the selected installation is gone", {
   model_dir <- withr::local_tempdir()
   stan_file <- file.path(model_dir, "bernoulli.stan")

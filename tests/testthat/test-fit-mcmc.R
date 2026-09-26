@@ -39,6 +39,11 @@ test_that("draws() stops for unknown variables", {
     "Can't find the following variable(s) in the output: ABCD, EFGH",
     fixed = TRUE
   )
+  expect_error(
+    fit_mcmc$draws(variables = c("alpha", "ABCD")),
+    "Can't find the following variable(s) in the output: ABCD",
+    fixed = TRUE
+  )
 })
 
 test_that("draws() works when gradually adding variables", {
