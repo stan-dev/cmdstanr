@@ -72,10 +72,10 @@ test_that("format_stan_file() formats a program", {
     fileext = ".stan"
   )
   expect_gt(max(nchar(capture.output(format_stan_file(long_line)))), 30)
-  expect_true(all(
-    nchar(capture.output(format_stan_file(long_line, max_line_length = 30)))
-    <= 30
-  ))
+  format_stan_file(
+    long_line, max_line_length = 30, overwrite_file = TRUE, backup = FALSE
+  )
+  expect_true(all(nchar(readLines(long_line)) <= 30))
 })
 
 test_that("variables_stan_file() reports a program's variables", {
