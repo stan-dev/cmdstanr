@@ -1049,4 +1049,12 @@ test_that("read_cmdstan_csv() reads compressed CSV files", {
 
   fit <- as_cmdstan_fit(gz_files)
   expect_equal(fit$draws(), as_cmdstan_fit(csv_files)$draws())
+
+  for (file in c(gz_files[1], bz2_files[1])) {
+    corrupt <- tempfile(fileext = if (grepl("\\.gz$", file)) ".csv.gz" else ".csv.bz2")
+    bytes <- readBin(file, "raw", n = file.info(file)$size)
+    writeBin(head(bytes, -8), corrupt)
+    withr::defer(unlink(corrupt))
+    expect_error(read_cmdstan_csv(corrupt), "truncated or corrupt")
+  }
 })

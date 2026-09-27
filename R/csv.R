@@ -173,6 +173,9 @@ read_cmdstan_csv <- function(files,
   }
   format <- assert_valid_draws_format(format)
   assert_file_exists(files, access = "r", extension = c("csv", "csv.gz", "csv.bz2"))
+  for (file in files) {
+    check_compressed_csv(file)
+  }
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -282,18 +285,23 @@ read_cmdstan_csv <- function(files,
   }
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
   num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
+  selected <- unique(c(sampler_diagnostics, variables))
   for (output_file in files) {
     fread_cmd <- build_fread_cmd(output_file, "^#", invert = TRUE)
-    if (length(sampler_diagnostics) > 0) {
-      post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
-      warmup_sd_id <- length(warmup_sampler_diagnostics) + 1
+    if (length(selected) > 0) {
       suppressWarnings(
-        post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- data.table::fread(
+        csv_data <- data.table::fread(
           cmd = fread_cmd,
-          select = sampler_diagnostics,
+          select = selected,
           data.table = FALSE
         )
       )
+    }
+    if (length(sampler_diagnostics) > 0) {
+      post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
+      warmup_sd_id <- length(warmup_sampler_diagnostics) + 1
+      post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <-
+        csv_data[, sampler_diagnostics, drop = FALSE]
       if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
         warmup_sampler_diagnostics[[warmup_sd_id]] <-
           post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws, , drop = FALSE]
@@ -308,13 +316,7 @@ read_cmdstan_csv <- function(files,
     if (length(variables) > 0) {
       draws_list_id <- length(draws) + 1
       warmup_draws_list_id <- length(warmup_draws) + 1
-      suppressWarnings(
-        draws[[draws_list_id]] <- data.table::fread(
-          cmd = fread_cmd,
-          select = variables,
-          data.table = FALSE
-        )
-      )
+      draws[[draws_list_id]] <- csv_data[, variables, drop = FALSE]
       if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
         warmup_draws[[warmup_draws_list_id]] <-
           draws[[draws_list_id]][1:num_warmup_draws, , drop = FALSE]
@@ -691,52 +693,114 @@ parse_generated_quantities_time <- function(line) {
   time
 }
 
-# Build a command for data.table::fread() that filters CSV lines via grep.
-# Handles gzip (.gz) and bzip2 (.bz2) compressed files.
-# @param file Path to the CSV file (possibly compressed)
-# @param pattern Regex pattern to filter by
-# @param invert If TRUE, exclude matching lines (grep -v)
+find_csv_tool <- function(name, file) {
+  path <- if (os_is_windows()) {
+    withr::with_path(
+      c(toolchain_PATH_env_var()),
+      Sys.which(paste0(name, ".exe"))
+    )
+  } else {
+    Sys.which(name)
+  }
+
+  if (!nzchar(path)) {
+    stop(
+      "'",
+      name,
+      "' is required to read '",
+      basename(file),
+      "' but was not found on the PATH.",
+      call. = FALSE
+    )
+  }
+
+  if (os_is_windows()) unname(path) else name
+}
+
+check_compressed_csv <- function(file) {
+  tool <- switch(
+    tolower(tools::file_ext(file)),
+    gz = "gzip",
+    bz2 = "bzip2",
+    NULL
+  )
+
+  if (is.null(tool)) {
+    return(invisible(NULL))
+  }
+
+  file_path <- if (os_is_windows()) {
+    wsl_safe_path(file, revert = TRUE)
+  } else {
+    path.expand(file)
+  }
+
+  status <- processx::run(
+    find_csv_tool(tool, file),
+    c("-t", file_path),
+    error_on_status = FALSE
+  )$status
+
+  if (status != 0) {
+    stop(
+      "Compressed CSV '",
+      basename(file),
+      "' is truncated or corrupt.",
+      call. = FALSE
+    )
+  }
+
+  invisible(NULL)
+}
+
 build_fread_cmd <- function(file, pattern, invert = FALSE) {
-  if (grepl("\\.gz$", file, ignore.case = TRUE)) {
-    decompress <- "gzip"
-  } else if (grepl("\\.bz2$", file, ignore.case = TRUE)) {
-    decompress <- "bzip2"
+  decompress <- switch(
+    tolower(tools::file_ext(file)),
+    gz = "gzip",
+    bz2 = "bzip2",
+    NULL
+  )
+
+  windows <- os_is_windows()
+  quote <- if (windows) '"' else "'"
+
+  file_path <- if (windows) {
+    wsl_safe_path(file, revert = TRUE)
   } else {
-    decompress <- NULL
+    path.expand(file)
   }
-  if (os_is_windows()) {
-    quote <- '"'
-    file_path <- wsl_safe_path(file, revert = TRUE)
-    find_tool <- function(name) {
-      path <- withr::with_path(
-        c(toolchain_PATH_env_var()),
-        Sys.which(paste0(name, ".exe"))
-      )
-      if (!nzchar(path)) {
-        stop("'", name, "' is required to read '", basename(file),
-             "' but was not found on the PATH.", call. = FALSE)
-      }
-      paste0(quote, repair_path(path), quote)
-    }
-  } else {
-    quote <- "'"
-    file_path <- path.expand(file)
-    find_tool <- function(name) {
-      if (!nzchar(Sys.which(name))) {
-        stop("'", name, "' is required to read '", basename(file),
-             "' but was not found on the PATH.", call. = FALSE)
-      }
-      name
+
+  find_tool <- function(name) {
+    tool <- find_csv_tool(name, file)
+    if (windows) {
+      paste0(quote, repair_path(tool), quote)
+    } else {
+      tool
     }
   }
+
   v_flag <- if (invert) "-v " else ""
-  grep_cmd <- paste0(find_tool("grep"), " --color=never ", v_flag,
-                     quote, pattern, quote)
   file_arg <- paste0(quote, file_path, quote)
+
+  grep_cmd <- paste0(
+    find_tool("grep"),
+    " --color=never ",
+    v_flag,
+    quote,
+    pattern,
+    quote
+  )
+
   if (is.null(decompress)) {
     paste(grep_cmd, file_arg)
   } else {
-    paste(find_tool(decompress), "-dc", file_arg, "|", grep_cmd)
+    paste(
+      find_tool(decompress),
+      "-dc",
+      file_arg,
+      "|",
+      grep_cmd
+    )
   }
 }
 
