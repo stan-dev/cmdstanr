@@ -655,14 +655,20 @@ latest_released_version <- function(quiet=TRUE, ...) {
   sub("v", "", release$tag_name)
 }
 
-try_download <- function(download_url, destination_file,
-                          quiet = TRUE) {
+try_download <- function(
+  download_url,
+  destination_file,
+  quiet = TRUE,
+  headers = github_auth_token()
+) {
   download_status <- try(
     suppressWarnings(
-      utils::download.file(url = download_url,
-                           destfile = destination_file,
-                           quiet = quiet,
-                           headers = github_auth_token())
+      utils::download.file(
+        url = download_url,
+        destfile = destination_file,
+        quiet = quiet,
+        headers = headers
+      )
     ),
     silent = TRUE
   )
@@ -670,20 +676,51 @@ try_download <- function(download_url, destination_file,
 }
 
 # download with retries and pauses
-download_with_retries <- function(download_url,
-                                  destination_file,
-                                  retries = 5,
-                                  pause_sec = 5,
-                                  quiet = TRUE) {
-    download_rc <- try_download(download_url, destination_file,
-                                quiet = quiet)
-    num_retries <- 0
-    while (num_retries < retries && inherits(download_rc, "try-error")) {
-      Sys.sleep(pause_sec)
-      num_retries <- num_retries + 1
-      download_rc <- try_download(download_url, destination_file, quiet = quiet)
+download_with_retries <- function(
+  download_url,
+  destination_file,
+  retries = 5,
+  pause_sec = 5,
+  quiet = TRUE
+) {
+  download_rc <- try_download(
+    download_url,
+    destination_file,
+    quiet = quiet
+  )
+
+  if (
+    inherits(download_rc, "try-error") &&
+      nzchar(Sys.getenv("GITHUB_PAT"))
+  ) {
+    download_no_pat <- try_download(
+      download_url,
+      destination_file,
+      quiet = quiet,
+      headers = NULL
+    )
+
+    if (!inherits(download_no_pat, "try-error")) {
+      warning(
+        "GitHub download failed with GITHUB_PAT but succeeded without it. ",
+        "Check whether GITHUB_PAT is valid.",
+        call. = FALSE
+      )
+      return(download_no_pat)
     }
-    download_rc
+  }
+
+  num_retries <- 0
+  while (num_retries < retries && inherits(download_rc, "try-error")) {
+    Sys.sleep(pause_sec)
+    num_retries <- num_retries + 1
+    download_rc <- try_download(
+      download_url,
+      destination_file,
+      quiet = quiet
+    )
+  }
+  download_rc
 }
 
 build_cmdstan <- function(dir,

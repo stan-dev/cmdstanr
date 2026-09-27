@@ -231,6 +231,121 @@ test_that("Download failures return error message", {
     "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
 })
 
+test_that("download_with_retries() retries without GITHUB_PAT after failure", {
+  withr::local_envvar(c(GITHUB_PAT = "bad-token"))
+  calls <- character()
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(download_url, destination_file, quiet = TRUE, headers) {
+      auth <- if (missing(headers)) {
+        "with_pat"
+      } else if (is.null(headers)) {
+        "without_pat"
+      } else {
+        "custom_headers"
+      }
+      calls <<- c(calls, auth)
+
+      if (length(calls) == 1L) {
+        return(download_error)
+      }
+      0L
+    }
+  )
+
+  expect_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      pause_sec = 0
+    ),
+    "GitHub download failed with GITHUB_PAT but succeeded without it.",
+    fixed = TRUE
+  )
+  expect_identical(result, 0L)
+  expect_identical(calls, c("with_pat", "without_pat"))
+})
+
+test_that("download_with_retries() skips no-PAT retry when GITHUB_PAT is unset", {
+  withr::local_envvar(c(GITHUB_PAT = NA))
+  calls <- character()
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(download_url, destination_file, quiet = TRUE, headers) {
+      calls <<- c(calls, if (missing(headers)) "default" else "explicit")
+      download_error
+    }
+  )
+
+  result <- download_with_retries(
+    "https://example.com/file",
+    tempfile(),
+    retries = 1,
+    pause_sec = 0
+  )
+
+  expect_s3_class(result, "try-error")
+  expect_identical(calls, c("default", "default"))
+})
+
+test_that("download_with_retries() resumes normal retries if no-PAT retry fails", {
+  withr::local_envvar(c(GITHUB_PAT = "bad-token"))
+  calls <- character()
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(download_url, destination_file, quiet = TRUE, headers) {
+      auth <- if (missing(headers)) {
+        "with_pat"
+      } else if (is.null(headers)) {
+        "without_pat"
+      } else {
+        "custom_headers"
+      }
+      calls <<- c(calls, auth)
+
+      if (length(calls) < 3L) {
+        return(download_error)
+      }
+      0L
+    }
+  )
+
+  result <- download_with_retries(
+    "https://example.com/file",
+    tempfile(),
+    retries = 1,
+    pause_sec = 0
+  )
+
+  expect_identical(result, 0L)
+  expect_identical(calls, c("with_pat", "without_pat", "with_pat"))
+})
+
+test_that("download_with_retries() does not retry after initial success", {
+  withr::local_envvar(c(GITHUB_PAT = "valid-token"))
+  calls <- 0L
+
+  local_mocked_bindings(
+    try_download = function(download_url, destination_file, quiet = TRUE, headers) {
+      calls <<- calls + 1L
+      expect_true(missing(headers))
+      0L
+    }
+  )
+
+  result <- download_with_retries(
+    "https://example.com/file",
+    tempfile(),
+    pause_sec = 0
+  )
+
+  expect_identical(result, 0L)
+  expect_identical(calls, 1L)
+})
+
 test_that("Install from release file works", {
   dir <- tempdir(check = TRUE)
 
