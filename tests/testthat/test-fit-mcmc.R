@@ -463,87 +463,8 @@ test_that("sampler_diagnostics() throws informative error when fixed_param=TRUE"
   )
 })
 
-test_that("save_bundle() and read_cmdstan_fit_bundle() round trip", {
-  skip_on_cran()
-  dir <- withr::local_tempdir()
-  fit <- testing_fit(
-    "logistic",
-    method = "sample",
-    chains = 2,
-    chain_ids = c(3, 10),
-    refresh = 0
-  )
-  original_files <- fit$output_files()
-  bundle_dir <- file.path(dir, "fit_bundle")
-
-  saved_files <- fit$save_bundle(bundle_dir, basename = "myfit")
-  expect_setequal(basename(saved_files), c("myfit-3.csv", "myfit-10.csv"))
-  expect_true(all(file.exists(saved_files)))
-
-  unlink(original_files)
-  fit2 <- read_cmdstan_fit_bundle(bundle_dir, check_diagnostics = FALSE)
-  expect_s3_class(fit2, "CmdStanMCMC")
-  expect_equal(fit2$num_chains(), 2)
-  expect_equal(fit2$metadata()$id, c(3, 10))
-  expect_s3_class(fit2$draws("beta"), "draws_array")
-})
-
-test_that("bundle save and load do not materialize posterior draws", {
-  skip_on_cran()
-  dir <- withr::local_tempdir()
-  fit <- testing_fit("logistic", method = "sample", chains = 2, refresh = 0)
-  bundle_dir <- file.path(dir, "fit_bundle")
-
-  expect_null(fit$.__enclos_env__$private$draws_)
-  fit$save_bundle(bundle_dir)
-  expect_null(fit$.__enclos_env__$private$draws_)
-
-  fit2 <- read_cmdstan_fit_bundle(bundle_dir, check_diagnostics = FALSE)
-  expect_null(fit2$.__enclos_env__$private$draws_)
-  expect_equal(fit2$num_chains(), 2)
-  expect_null(fit2$.__enclos_env__$private$draws_)
-  fit2$metadata()
-  expect_null(fit2$.__enclos_env__$private$draws_)
-
-  draws_beta <- fit2$draws("beta")
-  expect_equal(
-    posterior::variables(draws_beta),
-    c("beta[1]", "beta[2]", "beta[3]")
-  )
-  expect_equal(
-    posterior::variables(fit2$.__enclos_env__$private$draws_),
-    c("beta[1]", "beta[2]", "beta[3]")
-  )
-})
-
-test_that("read_cmdstan_fit_bundle() rejects non-MCMC output", {
-  skip_on_cran()
-  dir <- withr::local_tempdir()
-  fit <- testing_fit("logistic", method = "variational", refresh = 0)
-  bundle_dir <- file.path(dir, "vb_bundle")
-  fit$save_output_files(
-    dir = bundle_dir,
-    basename = "vbfit",
-    timestamp = FALSE,
-    random = FALSE
-  )
-
-  expect_error(
-    read_cmdstan_fit_bundle(bundle_dir, check_diagnostics = FALSE),
-    "Bundle contains non-MCMC output"
-  )
-})
-
-test_that("CSV-backed fixed_param fits skip sampler diagnostics", {
-  skip_on_cran()
+test_that("as_cmdstan_fit handles fixed_param output", {
   fit <- as_cmdstan_fit(fit_mcmc_fixed_param$output_files())
-  expect_s3_class(fit, "CmdStanMCMC")
-  expect_identical(fit$metadata()$algorithm, "fixed_param")
-
-  dir <- withr::local_tempdir()
-  bundle_dir <- file.path(dir, "fixed_param_bundle")
-  fit_mcmc_fixed_param$save_bundle(bundle_dir)
-  fit <- read_cmdstan_fit_bundle(bundle_dir)
   expect_s3_class(fit, "CmdStanMCMC")
   expect_identical(fit$metadata()$algorithm, "fixed_param")
 })

@@ -1419,7 +1419,6 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  |:----------|:---------------|
 #'  [`$materialize()`][fit-method-materialize] | Read all draws and diagnostics into memory. |
 #'  [`$save_object()`][fit-method-save_object] |  Save fitted model object to a file. |
-#'  [`$save_bundle()`][fit-method-save_bundle] | Save output CSV files as a reloadable bundle. |
 #'  [`$output_files()`][fit-method-output_files] |  Return paths to output CSV files. |
 #'  [`$save_output_files()`][fit-method-save_output_files] |  Save output CSV files to a specified location. |
 #'  [`$data_file()`][fit-method-data_file] |  Return the path to the JSON data file. |
@@ -1960,79 +1959,6 @@ num_chains <- function() {
   super$num_procs()
 }
 CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
-
-#' Save an MCMC fit as a CSV bundle
-#'
-#' @name fit-method-save_bundle
-#' @aliases save_bundle
-#' @description The `$save_bundle()` method copies the CmdStan output CSV files
-#'   to an empty directory without materializing posterior draws. The bundle can
-#'   be loaded later with [read_cmdstan_fit_bundle()].
-#'
-#' @param dir (string) Path to the bundle directory. The directory is created if
-#'   it does not exist and must otherwise be empty.
-#' @param basename (string) Base filename for the CSV files. If `NULL` (the
-#'   default), the model name is used. Files are named
-#'   `basename-<chain-id>.csv`.
-#'
-#' @return A character vector of saved CSV file paths, invisibly.
-#'
-#' @seealso [read_cmdstan_fit_bundle()]
-#'
-#' @examples
-#' \dontrun{
-#' fit <- cmdstanr_example("logistic", method = "sample")
-#' fit$save_bundle("my_fit_bundle")
-#' fit2 <- read_cmdstan_fit_bundle("my_fit_bundle")
-#' fit2$summary("beta")
-#' }
-save_bundle <- function(dir, basename = NULL) {
-  if (is.null(basename)) {
-    if (!is.null(self$runset)) {
-      basename <- self$runset$model_name()
-    } else {
-      basename <- private$metadata_$model_name
-    }
-  }
-  if (!is.character(basename) ||
-      length(basename) != 1L ||
-      is.na(basename) ||
-      !nzchar(basename) ||
-      grepl("[/\\\\]", basename)) {
-    stop("'basename' must be a non-empty file name.", call. = FALSE)
-  }
-  if (dir.exists(dir) &&
-      length(list.files(dir, all.files = TRUE, no.. = TRUE))) {
-    stop("Bundle directory must be empty: ", dir, call. = FALSE)
-  }
-  if (!dir.exists(dir)) {
-    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  }
-  if (!dir.exists(dir)) {
-    stop("Failed to create bundle directory: ", dir, call. = FALSE)
-  }
-
-  output_files <- self$output_files(include_failed = FALSE)
-  if (!length(output_files)) {
-    stop("No successful chains to save.", call. = FALSE)
-  }
-  chain_ids <- vapply(
-    output_files,
-    function(file) as.integer(read_csv_metadata(file)$id),
-    integer(1)
-  )
-  new_paths <- file.path(dir, paste0(basename, "-", chain_ids, ".csv"))
-  copied <- file.copy(output_files, new_paths, overwrite = FALSE)
-  if (!all(copied)) {
-    unlink(new_paths[copied])
-    stop(
-      "Failed to copy all CSV files to bundle directory: ", dir,
-      call. = FALSE
-    )
-  }
-  invisible(new_paths)
-}
-CmdStanMCMC$set("public", name = "save_bundle", value = save_bundle)
 
 
 # CmdStanMLE -------------------------------------------------------------

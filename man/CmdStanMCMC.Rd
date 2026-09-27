@@ -47,7 +47,6 @@ methods, all of which have their own (linked) documentation pages.
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-materialize]{$materialize()}} \tab Read all draws and diagnostics into memory. \cr
    \code{\link[=fit-method-save_object]{$save_object()}} \tab Save fitted model object to a file. \cr
-   \code{\link[=fit-method-save_bundle]{$save_bundle()}} \tab Save output CSV files as a reloadable bundle. \cr
    \code{\link[=fit-method-output_files]{$output_files()}} \tab Return paths to output CSV files. \cr
    \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
    \code{\link[=fit-method-data_file]{$data_file()}} \tab Return the path to the JSON data file. \cr

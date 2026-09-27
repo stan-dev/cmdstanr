@@ -89,7 +89,8 @@
 #' The CSV files do not contain all of the information available to the model
 #' fitting methods, the Stan source, the console output, or the paths to most
 #' input and auxiliary files, so the reconstructed object has a reduced set of
-#' methods.
+#' methods. For large MCMC fits, `lazy = TRUE` leaves posterior draws in the CSV
+#' files until requested by `$draws()`.
 #'
 #' Only the following methods are available for every reconstructed object:
 #' `$draws()`, `$lp()`, `$materialize()`, `$metadata()`, `$output_files()`,
@@ -125,6 +126,10 @@
 #' fit2 <- as_cmdstan_fit(csv_files)
 #' fit2$print("beta")
 #' str(fit2$draws())
+#'
+#' # For large MCMC fits, leave posterior draws on disk until requested
+#' fit3 <- as_cmdstan_fit(csv_files, lazy = TRUE)
+#' fit3$draws("beta")
 #'
 #'
 #' # Using read_cmdstan_csv()
@@ -513,13 +518,30 @@ read_cmdstan_csv <- function(files,
 #'   diagnostic checks be performed after reading in the files? The default is
 #'   `TRUE` but set to `FALSE` to avoid checking for problems with divergences
 #'   and treedepth.
+#' @param lazy (logical) For models fit using MCMC, should posterior draws stay
+#'   in the CSV files until requested? The default is `FALSE`. If `TRUE`,
+#'   `variables` must be `NULL`. Calls to `$draws()` then read only the requested
+#'   variables.
 #'
 as_cmdstan_fit <- function(files,
                            variables = NULL,
                            check_diagnostics = TRUE,
-                           format = getOption("cmdstanr_draws_format")) {
-  csv_contents <- read_cmdstan_csv(files, variables = variables, format = format)
+                           format = getOption("cmdstanr_draws_format"),
+                           lazy = FALSE) {
+  checkmate::assert_flag(lazy)
+  if (lazy && !is.null(variables)) {
+    stop("'variables' must be NULL when 'lazy = TRUE'.", call. = FALSE)
+  }
+  csv_contents <- read_cmdstan_csv(
+    files,
+    variables = if (lazy) "" else variables,
+    sampler_diagnostics = if (lazy && !check_diagnostics) "" else NULL,
+    format = format
+  )
   method <- csv_contents$metadata$method
+  if (lazy && method != "sample") {
+    stop("'lazy = TRUE' is only supported for MCMC output.", call. = FALSE)
+  }
   if (!is.null(variables)) {
     if (method == "sample") {
       variables <- posterior::variables(csv_contents$post_warmup_draws)
@@ -538,61 +560,6 @@ as_cmdstan_fit <- function(files,
     "pathfinder" = CmdStanPathfinder_CSV$new(csv_contents, files),
     "laplace" = CmdStanLaplace_CSV$new(csv_contents, files)
   )
-}
-
-
-#' Read a CmdStanMCMC fit from a bundle directory
-#'
-#' @description `read_cmdstan_fit_bundle()` reads CmdStan CSV files saved by
-#'   [`$save_bundle()`][fit-method-save_bundle] and reconstructs a CSV-backed
-#'   [`CmdStanMCMC`] object. Metadata is parsed immediately; posterior draws are
-#'   read only when requested. As with [as_cmdstan_fit()], methods that require
-#'   the original CmdStan run are unavailable.
-#'
-#' @export
-#' @param path (string) Path to the bundle directory containing CSV files.
-#' @param check_diagnostics (logical) Should diagnostic checks be performed after
-#'   reading in the files? The default is `TRUE`.
-#'
-#' @return A CSV-backed [`CmdStanMCMC`] object.
-#'
-#' @seealso [`$save_bundle()`][fit-method-save_bundle], [as_cmdstan_fit()],
-#'   [read_cmdstan_csv()]
-#'
-#' @examples
-#' \dontrun{
-#' fit <- cmdstanr_example("logistic", method = "sample")
-#' fit$save_bundle("my_fit_bundle")
-#' fit2 <- read_cmdstan_fit_bundle("my_fit_bundle")
-#' fit2$summary("beta")
-#' }
-read_cmdstan_fit_bundle <- function(path, check_diagnostics = TRUE) {
-  if (!dir.exists(path)) {
-    stop("Bundle directory does not exist: ", path, call. = FALSE)
-  }
-  csv_files <- list.files(path, pattern = "\\.csv$", full.names = TRUE, all.files = TRUE)
-  if (!length(csv_files)) {
-    stop("No CSV files found in bundle directory: ", path, call. = FALSE)
-  }
-  csv_files <- normalizePath(csv_files, mustWork = TRUE)
-  chain_ids <- vapply(
-    csv_files,
-    function(file) as.integer(read_csv_metadata(file)$id),
-    integer(1)
-  )
-  csv_files <- csv_files[order(chain_ids)]
-  csv_contents <- read_cmdstan_csv(
-    csv_files,
-    variables = "",
-    sampler_diagnostics = ""
-  )
-  if (!identical(csv_contents$metadata$method, "sample")) {
-    stop(
-      "Bundle contains non-MCMC output. read_cmdstan_fit_bundle() only supports MCMC.",
-      call. = FALSE
-    )
-  }
-  CmdStanMCMC_CSV$new(csv_contents, csv_files, check_diagnostics)
 }
 
 

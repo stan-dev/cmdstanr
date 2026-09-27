@@ -976,6 +976,46 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
   )
 })
 
+test_that("as_cmdstan_fit can lazily load MCMC draws", {
+  fit <- suppressMessages(
+    as_cmdstan_fit(fit_logistic_thin_1$output_files(), lazy = TRUE)
+  )
+  private <- fit$.__enclos_env__$private
+
+  expect_null(private$draws_)
+  expect_equal(fit$num_chains(), 2)
+  expect_null(private$draws_)
+  expect_equal(fit$metadata()$model_name, "logistic")
+  expect_null(private$draws_)
+
+  draws <- fit$draws("beta")
+  expect_equal(
+    posterior::variables(draws),
+    c("beta[1]", "beta[2]", "beta[3]")
+  )
+  expect_equal(
+    posterior::variables(private$draws_),
+    c("beta[1]", "beta[2]", "beta[3]")
+  )
+})
+
+test_that("as_cmdstan_fit validates lazy reconstruction", {
+  expect_error(
+    as_cmdstan_fit(
+      fit_logistic_thin_1$output_files(),
+      variables = "beta",
+      lazy = TRUE
+    ),
+    "'variables' must be NULL when 'lazy = TRUE'",
+    fixed = TRUE
+  )
+  expect_error(
+    as_cmdstan_fit(fit_logistic_optimize$output_files(), lazy = TRUE),
+    "'lazy = TRUE' is only supported for MCMC output",
+    fixed = TRUE
+  )
+})
+
 test_that("as_cmdstan_fit can check MCMC diagnostics", {
   fit_schools <- suppressMessages(
     testing_fit("schools", chains = 2,
