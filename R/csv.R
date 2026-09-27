@@ -541,6 +541,61 @@ as_cmdstan_fit <- function(files,
 }
 
 
+#' Read a CmdStanMCMC fit from a bundle directory
+#'
+#' @description `read_cmdstan_fit_bundle()` reads CmdStan CSV files saved by
+#'   [`$save_bundle()`][fit-method-save_bundle] and reconstructs a CSV-backed
+#'   [`CmdStanMCMC`] object. Metadata is parsed immediately; posterior draws are
+#'   read only when requested. As with [as_cmdstan_fit()], methods that require
+#'   the original CmdStan run are unavailable.
+#'
+#' @export
+#' @param path (string) Path to the bundle directory containing CSV files.
+#' @param check_diagnostics (logical) Should diagnostic checks be performed after
+#'   reading in the files? The default is `TRUE`.
+#'
+#' @return A CSV-backed [`CmdStanMCMC`] object.
+#'
+#' @seealso [`$save_bundle()`][fit-method-save_bundle], [as_cmdstan_fit()],
+#'   [read_cmdstan_csv()]
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic", method = "sample")
+#' fit$save_bundle("my_fit_bundle")
+#' fit2 <- read_cmdstan_fit_bundle("my_fit_bundle")
+#' fit2$summary("beta")
+#' }
+read_cmdstan_fit_bundle <- function(path, check_diagnostics = TRUE) {
+  if (!dir.exists(path)) {
+    stop("Bundle directory does not exist: ", path, call. = FALSE)
+  }
+  csv_files <- list.files(path, pattern = "\\.csv$", full.names = TRUE, all.files = TRUE)
+  if (!length(csv_files)) {
+    stop("No CSV files found in bundle directory: ", path, call. = FALSE)
+  }
+  csv_files <- normalizePath(csv_files, mustWork = TRUE)
+  chain_ids <- vapply(
+    csv_files,
+    function(file) as.integer(read_csv_metadata(file)$id),
+    integer(1)
+  )
+  csv_files <- csv_files[order(chain_ids)]
+  csv_contents <- read_cmdstan_csv(
+    csv_files,
+    variables = "",
+    sampler_diagnostics = ""
+  )
+  if (!identical(csv_contents$metadata$method, "sample")) {
+    stop(
+      "Bundle contains non-MCMC output. read_cmdstan_fit_bundle() only supports MCMC.",
+      call. = FALSE
+    )
+  }
+  CmdStanMCMC_CSV$new(csv_contents, csv_files, check_diagnostics)
+}
+
+
 # internal ----------------------------------------------------------------
 
 # CmdStanFit_CSV -------------------------------------------------------------
@@ -565,7 +620,8 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
       private$warmup_draws_ <- csv_contents$warmup_draws
       private$draws_ <- csv_contents$post_warmup_draws
-      if (check_diagnostics) {
+      if (check_diagnostics &&
+          !isTRUE(private$metadata_$algorithm == "fixed_param")) {
         invisible(self$diagnostic_summary())
       }
       invisible(self)
@@ -578,7 +634,7 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$time_
     },
     num_chains = function() {
-      posterior::nchains(self$draws())
+      length(private$output_files_)
     }
   ),
   private = list(
