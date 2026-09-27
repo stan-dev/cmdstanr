@@ -977,15 +977,17 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
 })
 
 test_that("as_cmdstan_fit can lazily load MCMC draws", {
-  fit <- suppressMessages(
-    as_cmdstan_fit(fit_logistic_thin_1$output_files(), lazy = TRUE)
+  fit <- as_cmdstan_fit(
+    fit_logistic_thin_1$output_files(),
+    lazy = TRUE,
+    check_diagnostics = FALSE
   )
   private <- fit$.__enclos_env__$private
 
   expect_null(private$draws_)
   expect_equal(fit$num_chains(), 2)
   expect_null(private$draws_)
-  expect_equal(fit$metadata()$model_name, "logistic")
+  expect_equal(fit$metadata()$model_name, "logistic_model")
   expect_null(private$draws_)
 
   draws <- fit$draws("beta")
