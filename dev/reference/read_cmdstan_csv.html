@@ -66,7 +66,7 @@ CmdStan CSV files using the as_cmdstan_fit() function."><meta property="og:image
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Read CmdStan CSV files into R</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/update-pkgdown-navbar/R/csv.R" class="external-link"><code>R/csv.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/csv.R" class="external-link"><code>R/csv.R</code></a></small>
       <div class="d-none name"><code>read_cmdstan_csv.Rd</code></div>
     </div>
 
@@ -216,10 +216,10 @@ CmdStanR</p></div>
 <span class="r-in"><span><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span>, save_warmup <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">csv_files</span> <span class="op">&lt;-</span> <span class="va">fit1</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">csv_files</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/Rtmp0YxrAm/logistic-202609262349-01-3d7334.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/Rtmp0YxrAm/logistic-202609262349-02-3d7334.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/Rtmp0YxrAm/logistic-202609262349-03-3d7334.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/Rtmp0YxrAm/logistic-202609262349-04-3d7334.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpJq5tsp/logistic-202609270029-01-3d722c.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/RtmpJq5tsp/logistic-202609270029-02-3d722c.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/RtmpJq5tsp/logistic-202609270029-03-3d722c.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/RtmpJq5tsp/logistic-202609270029-04-3d722c.csv"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Creating fitting model objects with as_cmdstan_fit()</span></span></span>
 <span class="r-in"><span></span></span>
@@ -248,7 +248,7 @@ CmdStanR</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_major  : num 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_minor  : num 40</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_patch  : num 0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ start_datetime      : chr "2026-09-26 23:49:24 UTC"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ start_datetime      : chr "2026-09-27 00:29:44 UTC"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ method              : chr "sample"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ save_warmup         : int 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ thin                : num 1</span>
@@ -269,7 +269,7 @@ CmdStanR</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ seed                : num 1.12e+09</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ refresh             : num 100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ sig_figs            : num 8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ profile_file        : chr "/tmp/Rtmp0YxrAm/logistic-profile-202609262349-01-092062.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ profile_file        : chr "/tmp/RtmpJq5tsp/logistic-profile-202609270029-01-091f5a.csv"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ save_cmdstan_config : int 0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stanc_version       : chr "stanc3 v2.40.0"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</span>
@@ -285,9 +285,9 @@ CmdStanR</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ threads_per_chain   : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ time                :'data.frame':	4 obs. of  4 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain_id: num [1:4] 1 2 3 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.052 0.053 0.053 0.052</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.051 0.054 0.053 0.053</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.103 0.107 0.106 0.105</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.039 0.039 0.04 0.039</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.038 0.04 0.039 0.039</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.077 0.079 0.079 0.078</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_variable_sizes :List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ lp__   : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ alpha  : num 1</span>
@@ -299,9 +299,9 @@ CmdStanR</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ total : int NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ chains:'data.frame':	4 obs. of  4 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain_id: num [1:4] 1 2 3 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.052 0.053 0.053 0.052</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.051 0.054 0.053 0.053</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.103 0.107 0.106 0.105</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.039 0.039 0.04 0.039</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.038 0.04 0.039 0.039</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.077 0.079 0.079 0.078</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ inv_metric                     :List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 1: num [1:4] 0.0451 0.0558 0.0488 0.0628</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 2: num [1:4] 0.0517 0.0579 0.0483 0.0656</span>

@@ -84,7 +84,7 @@ as_cmdstan_fit() documentation for details."><meta property="og:image" content="
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Save output and data files</h1>
-      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/update-pkgdown-navbar/R/fit.R" class="external-link"><code>R/fit.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stan-dev/cmdstanr/blob/master/R/fit.R" class="external-link"><code>R/fit.R</code></a></small>
       <div class="d-none name"><code>fit-method-save_output_files.Rd</code></div>
     </div>
 
@@ -208,10 +208,10 @@ with multiple MCMC chains the data file is the same.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/Rtmp0YxrAm/logistic-202609262345-01-749bb1.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/Rtmp0YxrAm/logistic-202609262345-02-749bb1.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/Rtmp0YxrAm/logistic-202609262345-03-749bb1.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/Rtmp0YxrAm/logistic-202609262345-04-749bb1.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpJq5tsp/logistic-202609270025-01-749aa9.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/RtmpJq5tsp/logistic-202609270025-02-749aa9.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/RtmpJq5tsp/logistic-202609270025-03-749aa9.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/RtmpJq5tsp/logistic-202609270025-04-749aa9.csv"</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">data_file</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/home/runner/work/_temp/Library/cmdstanr/logistic.data.json"</span>
 <span class="r-in"><span></span></span>
@@ -219,22 +219,22 @@ with multiple MCMC chains the data file is the same.</p>
 <span class="r-in"><span><span class="va">my_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_output_files</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">my_dir</span>, basename <span class="op">=</span> <span class="st">"banana"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Moved 4 files and set internal paths to new locations:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/banana-202609262345-01-546968.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/banana-202609262345-02-546968.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/banana-202609262345-03-546968.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/banana-202609262345-04-546968.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/banana-202609270025-01-546860.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/banana-202609270025-02-546860.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/banana-202609270025-03-546860.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/banana-202609270025-04-546860.csv</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_output_files</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">my_dir</span>, basename <span class="op">=</span> <span class="st">"tomato"</span>, timestamp <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Moved 4 files and set internal paths to new locations:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/tomato-01-1f3e67.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/tomato-02-1f3e67.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/tomato-03-1f3e67.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/tomato-04-1f3e67.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/tomato-01-1f3d5f.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/tomato-02-1f3d5f.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/tomato-03-1f3d5f.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/tomato-04-1f3d5f.csv</span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="fu">save_output_files</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">my_dir</span>, basename <span class="op">=</span> <span class="st">"lettuce"</span>, timestamp <span class="op">=</span> <span class="cn">FALSE</span>, random <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Moved 4 files and set internal paths to new locations:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/lettuce-01.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/lettuce-02.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/lettuce-03.csv</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/Rtmp0YxrAm/lettuce-04.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/lettuce-01.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/lettuce-02.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/lettuce-03.csv</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> - /tmp/RtmpJq5tsp/lettuce-04.csv</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
