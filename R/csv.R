@@ -173,9 +173,6 @@ read_cmdstan_csv <- function(files,
   }
   format <- assert_valid_draws_format(format)
   assert_file_exists(files, access = "r", extension = c("csv", "csv.gz", "csv.bz2"))
-  for (file in files) {
-    check_compressed_csv(file)
-  }
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -188,7 +185,13 @@ read_cmdstan_csv <- function(files,
   file_idx <- 0
   for (output_file in files) {
     file_idx <- length(csv_metadata) + 1
-    csv_metadata[[file_idx]] <- read_csv_metadata(output_file)
+    csv_metadata[[file_idx]] <- tryCatch(
+      read_csv_metadata(output_file),
+      error = function(e) {
+        check_compressed_csv(output_file)
+        stop(e)
+      }
+    )
   }
   if (file_idx > 1) {
     check_csv_metadata_matches(csv_metadata)
@@ -234,6 +237,9 @@ read_cmdstan_csv <- function(files,
   }
   metadata$time <- time
   if (metadata$method == "diagnose") {
+    for (file in files) {
+      check_compressed_csv(file)
+    }
     gradients <- metadata$gradients
     metadata$gradients <- NULL
     lp <- metadata$lp
@@ -286,13 +292,18 @@ read_cmdstan_csv <- function(files,
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
   num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
   selected <- unique(c(sampler_diagnostics, variables))
+  if (length(selected) == 0L) {
+    for (file in files) {
+      check_compressed_csv(file)
+    }
+  }
   for (output_file in files) {
-    fread_cmd <- build_fread_cmd(output_file, "^#", invert = TRUE)
     if (length(selected) > 0) {
       suppressWarnings(
-        csv_data <- data.table::fread(
-          cmd = fread_cmd,
+        csv_data <- fread_csv(
+          output_file,
           select = selected,
+          comment.char = "#",
           data.table = FALSE
         )
       )
@@ -740,7 +751,6 @@ check_compressed_csv <- function(file) {
     c("-t", file_path),
     error_on_status = FALSE
   )$status
-
   if (status != 0) {
     stop(
       "Compressed CSV '",
@@ -753,7 +763,7 @@ check_compressed_csv <- function(file) {
   invisible(NULL)
 }
 
-build_fread_cmd <- function(file, pattern, invert = FALSE) {
+build_fread_cmd <- function(file, pattern = NULL) {
   decompress <- switch(
     tolower(tools::file_ext(file)),
     gz = "gzip",
@@ -762,7 +772,7 @@ build_fread_cmd <- function(file, pattern, invert = FALSE) {
   )
 
   windows <- os_is_windows()
-  quote <- if (windows) '"' else "'"
+  quote <- if (windows) "\"" else "'"
 
   file_path <- if (windows) {
     wsl_safe_path(file, revert = TRUE)
@@ -779,13 +789,21 @@ build_fread_cmd <- function(file, pattern, invert = FALSE) {
     }
   }
 
-  v_flag <- if (invert) "-v " else ""
   file_arg <- paste0(quote, file_path, quote)
+
+  # No preprocessing needed for an ordinary CSV.
+  if (is.null(pattern) && is.null(decompress)) {
+    return(NULL)
+  }
+
+  # For data reads, decompression is the entire command.
+  if (is.null(pattern)) {
+    return(paste(find_tool(decompress), "-dc", file_arg))
+  }
 
   grep_cmd <- paste0(
     find_tool("grep"),
     " --color=never ",
-    v_flag,
     quote,
     pattern,
     quote
@@ -804,6 +822,21 @@ build_fread_cmd <- function(file, pattern, invert = FALSE) {
   }
 }
 
+fread_csv <- function(file, pattern = NULL, ...) {
+  cmd <- build_fread_cmd(file, pattern)
+  if (is.null(cmd)) {
+    return(data.table::fread(file = file, ...))
+  }
+
+  tryCatch(
+    data.table::fread(cmd = cmd, ...),
+    error = function(e) {
+      check_compressed_csv(file)
+      stop(e)
+    }
+  )
+}
+
 #' Reads the sampling arguments and the diagonal of the
 #' inverse mass matrix from the comments in a CSV file.
 #'
@@ -814,6 +847,9 @@ build_fread_cmd <- function(file, pattern, invert = FALSE) {
 #'
 read_csv_metadata <- function(csv_file) {
   assert_file_exists(csv_file, access = "r", extension = c("csv", "csv.gz", "csv.bz2"))
+  if (file.info(csv_file)$size == 0L) {
+    stop("Supplied CSV file is corrupt!", call. = FALSE)
+  }
   inv_metric_next <- FALSE
   csv_file_info <- list()
   csv_file_info$inv_metric <- NULL
@@ -825,10 +861,10 @@ read_csv_metadata <- function(csv_file) {
   warmup_time <- 0
   sampling_time <- 0
   total_time <- 0
-  fread_cmd <- build_fread_cmd(csv_file, "^[#a-zA-Z]", invert = FALSE)
-  suppressWarnings(
-    metadata <- data.table::fread(
-      cmd = fread_cmd,
+  metadata <- suppressWarnings(
+    fread_csv(
+      csv_file,
+      pattern = "^[#a-zA-Z]",
       colClasses = "character",
       stringsAsFactors = FALSE,
       fill = TRUE,

@@ -83,13 +83,13 @@ test_that("read_cmdstan_csv() fails if the file does not exist", {
 test_that("read_cmdstan_csv() fails with empty csv file", {
   file_path <- test_path("resources", "csv", "empty.csv")
   file.create(file_path)
-  error_msg <- if (utils::packageVersion("data.table") >= "1.18.0") {
-    "External command failed"
-  } else {
-    "Supplied CSV file is corrupt"
-  }
-  expect_error(read_cmdstan_csv(file_path), error_msg, fixed = TRUE)
-  file.remove(file_path)
+  withr::defer(unlink(file_path))
+
+  expect_error(
+    read_cmdstan_csv(file_path),
+    "Supplied CSV file is corrupt!",
+    fixed = TRUE
+  )
 })
 
 test_that("read_cmdstan_csv() fails with the no params listed", {
@@ -1047,6 +1047,20 @@ test_that("read_cmdstan_csv() reads compressed CSV files", {
   expect_equal(read_cmdstan_csv(bz2_files), expected)
   expect_equal(read_cmdstan_csv(c(csv_files[1], gz_files[2])), expected)
 
+  expected_filtered <- read_cmdstan_csv(
+    csv_files,
+    variables = "mu",
+    sampler_diagnostics = "divergent__"
+  )
+  expect_equal(
+    read_cmdstan_csv(
+      gz_files,
+      variables = "mu",
+      sampler_diagnostics = "divergent__"
+    ),
+    expected_filtered
+  )
+
   fit <- as_cmdstan_fit(gz_files)
   expect_equal(fit$draws(), as_cmdstan_fit(csv_files)$draws())
 
@@ -1055,6 +1069,44 @@ test_that("read_cmdstan_csv() reads compressed CSV files", {
     bytes <- readBin(file, "raw", n = file.info(file)$size)
     writeBin(head(bytes, -8), corrupt)
     withr::defer(unlink(corrupt))
+
+    expect_error(read_cmdstan_csv(corrupt), "truncated or corrupt")
+    expect_error(
+      read_cmdstan_csv(corrupt, variables = "", sampler_diagnostics = ""),
+      "truncated or corrupt"
+    )
+  }
+
+  partial_csv <- tempfile(fileext = ".csv")
+  writeLines(head(readLines(csv_files[1]), 5), partial_csv)
+  partial_gz <- compress_csv(partial_csv, "csv.gz")
+  partial_bz2 <- compress_csv(partial_csv, "csv.bz2")
+  withr::defer(unlink(c(partial_csv, partial_gz, partial_bz2)))
+
+  for (file in c(partial_gz, partial_bz2)) {
+    corrupt <- tempfile(fileext = if (grepl("\\.gz$", file)) ".csv.gz" else ".csv.bz2")
+    bytes <- readBin(file, "raw", n = file.info(file)$size)
+    writeBin(head(bytes, -8), corrupt)
+    withr::defer(unlink(corrupt))
+
+    expect_error(read_cmdstan_csv(corrupt), "truncated or corrupt")
+  }
+
+  diagnose_csv <- test_path("resources", "csv", "logistic-diagnose.csv")
+  diagnose_gz <- compress_csv(diagnose_csv, "csv.gz")
+  diagnose_bz2 <- compress_csv(diagnose_csv, "csv.bz2")
+  withr::defer(unlink(c(diagnose_gz, diagnose_bz2)))
+
+  expected_diagnose <- read_cmdstan_csv(diagnose_csv)
+  expect_equal(read_cmdstan_csv(diagnose_gz), expected_diagnose)
+  expect_equal(read_cmdstan_csv(diagnose_bz2), expected_diagnose)
+
+  for (file in c(diagnose_gz, diagnose_bz2)) {
+    corrupt <- tempfile(fileext = if (grepl("\\.gz$", file)) ".csv.gz" else ".csv.bz2")
+    bytes <- readBin(file, "raw", n = file.info(file)$size)
+    writeBin(head(bytes, -8), corrupt)
+    withr::defer(unlink(corrupt))
+
     expect_error(read_cmdstan_csv(corrupt), "truncated or corrupt")
   }
 })
