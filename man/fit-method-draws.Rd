@@ -36,8 +36,8 @@ are the following.
 separate. To combine the chains use any of the other formats (e.g.
 \code{"draws_matrix"}).
 \item For point estimates from optimization and approximate draws from
-variational inference the default is
-\code{\link[posterior:draws_array]{"draws_matrix"}}.
+variational inference, Laplace approximation, and Pathfinder the default is
+\code{\link[posterior:draws_matrix]{"draws_matrix"}}.
 }
 
 To use a different format it can be specified as the full name of the
@@ -65,11 +65,15 @@ variable).
 \item For standalone \link[=model-method-generate-quantities]{generated quantities}, a
 3-D \code{\link[posterior:draws_array]{draws_array}} object (iteration x chain x
 variable).
-\item For \link[=model-method-variational]{variational inference}, a 2-D
-\code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable) because
-there are no chains. An additional variable \code{lp_approx__} is also included,
-which is the log density of the variational approximation to the posterior
-evaluated at each of the draws.
+\item For \link[=model-method-variational]{variational inference} and
+\link[=model-method-laplace]{Laplace approximation}, a 2-D
+\code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable). An
+additional variable \code{lp_approx__} containing the log density of the
+corresponding approximation is also included.
+\item For \link[=model-method-pathfinder]{Pathfinder}, a 2-D
+\code{\link[posterior:draws_matrix]{draws_matrix}} object (draw x variable).
+Additional variables \code{lp_approx__} and \code{path__} are also included, with
+\code{path__} identifying the path associated with each draw.
 \item For \link[=model-method-optimize]{optimization}, a 1-row
 \code{\link[posterior:draws_matrix]{draws_matrix}} with one column per variable. These
 are \emph{not} actually draws, just point estimates stored in the \code{draws_matrix}
@@ -77,13 +81,16 @@ format. See \code{\link[=fit-method-mle]{$mle()}} to extract them as a numeric v
 }
 }
 \description{
-Extract posterior draws after MCMC or approximate posterior
-draws after variational approximation using formats provided by the
-\pkg{posterior} package.
+Extract draws or point estimates from fitted model objects using
+formats provided by the \pkg{posterior} package. Depending on the fitting
+method, these are posterior draws from MCMC, approximate posterior draws
+from variational inference, Laplace approximation, or Pathfinder,
+standalone generated quantities, or a point estimate from optimization.
 
 The variables include the parameters, transformed parameters, and
-generated quantities from the Stan program as well as \code{lp__}, the total
-log probability (\code{target}) accumulated in the model block.
+generated quantities from the Stan program as well as \code{lp__}, the
+target log density evaluated by Stan, up to an additive constant. See
+\code{\link[=fit-method-lp]{$lp()}} for details.
 }
 \examples{
 \dontrun{
@@ -121,7 +128,4 @@ head(fit$draws("beta")) # a matrix by default
 head(fit$draws("beta", format = "df"))
 }
 
-}
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }

@@ -16,7 +16,7 @@
 #'   Stan program.
 #' @param dir (string) An optional path to the directory where the file will be
 #'   written. If omitted, a global option `cmdstanr_write_stan_file_dir` is
-#'   used. If the global options is not set, [temporary directory][base::tempdir]
+#'   used. If the global option is not set, [temporary directory][base::tempdir]
 #'   is used.
 #' @param basename (string) If `dir` is specified, optionally the basename to
 #'   use for the file created. If not specified a file name is generated
@@ -26,6 +26,9 @@
 #' @param hash_salt (string) Text to add to the model code prior to hashing to
 #'   determine the file name if `basename` is not set.
 #' @return The path to the file.
+#'
+#' @seealso [print_stan_file()], [cmdstan_model()], and
+#'   [cmdstanr_global_options]
 #'
 #' @examples
 #' # stan program as a single string
@@ -134,6 +137,8 @@ write_stan_file <- function(code,
 #' print_stan_file("path/to/model.stan", fold = TRUE)
 #' ```
 #' ````
+#'
+#' @seealso [write_stan_file()] and [cmdstan_model()]
 #'
 #' @examples
 #' stan_file <- write_stan_file("

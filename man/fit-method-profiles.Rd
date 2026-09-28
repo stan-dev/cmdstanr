@@ -53,6 +53,3 @@ fit$profiles()
 }
 
 }
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
-}

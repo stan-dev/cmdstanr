@@ -8,6 +8,10 @@ A \code{CmdStanMCMC} object is the fitted model object returned by
 the \code{\link[=model-method-sample]{$sample()}} method of a \code{\link{CmdStanModel}} object.
 Like \code{CmdStanModel} objects, \code{CmdStanMCMC} objects are \link[R6:R6Class]{R6}
 objects.
+
+Objects created from CSV files using \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} have a reduced set
+of available methods. See \strong{Reconstructed fitted model objects} in the
+\code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} documentation for details.
 }
 \section{Methods}{
  \code{CmdStanMCMC} objects have the following associated
@@ -16,10 +20,11 @@ methods, all of which have their own (linked) documentation pages.
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=fit-method-draws]{$draws()}} \tab Return posterior draws using formats from the \pkg{posterior} package. \cr
    \code{\link[=fit-method-sampler_diagnostics]{$sampler_diagnostics()}} \tab Return sampler diagnostics as a \code{\link[posterior:draws_array]{draws_array}}. \cr
-   \code{\link[=fit-method-lp]{$lp()}} \tab Return the total log probability density (\code{target}). \cr
+   \code{\link[=fit-method-lp]{$lp()}} \tab Return the target log density (\code{lp__}) evaluated by Stan. \cr
    \code{\link[=fit-method-inv_metric]{$inv_metric()}} \tab Return the inverse metric for each chain. \cr
    \code{\link[=fit-method-init]{$init()}} \tab Return user-specified initial values. \cr
    \code{\link[=fit-method-metadata]{$metadata()}} \tab Return a list of metadata gathered from the CmdStan CSV files. \cr
+   \code{\link[=fit-method-profiles]{$profiles()}} \tab Return profiling data. \cr
    \code{\link[=fit-method-num_chains]{$num_chains()}} \tab Return the number of MCMC chains. \cr
    \code{\link[=fit-method-code]{$code()}} \tab Return Stan code as a character vector. \cr
 }
@@ -33,17 +38,27 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-diagnostic_summary]{$diagnostic_summary()}} \tab Get summaries of sampler diagnostics and warning messages. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_summary()}} \tab Run and print CmdStan's \code{bin/stansummary}. \cr
    \code{\link[=fit-method-cmdstan_summary]{$cmdstan_diagnose()}} \tab Run and print CmdStan's \code{bin/diagnose}. \cr
-   \code{\link[=fit-method-loo]{$loo()}} \tab Run \code{\link[loo:loo]{loo::loo.array()}} for approximate LOO-CV \cr
+   \code{\link[=fit-method-loo]{$loo()}} \tab Run \code{\link[loo:loo.array]{loo::loo.array()}} for approximate LOO-CV \cr
 }
 
 }
 
 \subsection{Save fitted model object and temporary files}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
+   \code{\link[=fit-method-materialize]{$materialize()}} \tab Read all draws and diagnostics into memory. \cr
    \code{\link[=fit-method-save_object]{$save_object()}} \tab Save fitted model object to a file. \cr
+   \code{\link[=fit-method-output_files]{$output_files()}} \tab Return paths to output CSV files. \cr
    \code{\link[=fit-method-save_output_files]{$save_output_files()}} \tab Save output CSV files to a specified location. \cr
+   \code{\link[=fit-method-data_file]{$data_file()}} \tab Return the path to the JSON data file. \cr
    \code{\link[=fit-method-save_data_file]{$save_data_file()}} \tab Save JSON data file to a specified location. \cr
+   \code{\link[=fit-method-latent_dynamics_files]{$latent_dynamics_files()}} \tab Return paths to diagnostic CSV files. \cr
    \code{\link[=fit-method-save_latent_dynamics_files]{$save_latent_dynamics_files()}} \tab Save diagnostic CSV files to a specified location. \cr
+   \code{\link[=fit-method-profile_files]{$profile_files()}} \tab Return paths to profiling CSV files. \cr
+   \code{\link[=fit-method-save_profile_files]{$save_profile_files()}} \tab Save profiling CSV files to a specified location. \cr
+   \code{\link[=fit-method-save_config_files]{$config_files()}} \tab Return paths to CmdStan configuration JSON files. \cr
+   \code{\link[=fit-method-save_config_files]{$save_config_files()}} \tab Save CmdStan configuration JSON files to a specified location. \cr
+   \code{\link[=fit-method-save_metric_files]{$metric_files()}} \tab Return paths to metric JSON files. \cr
+   \code{\link[=fit-method-save_metric_files]{$save_metric_files()}} \tab Save metric JSON files to a specified location. \cr
 }
 
 }
@@ -63,7 +78,7 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-init_model_methods]{$init_model_methods()}} \tab Expose methods for log-probability, gradients, parameter constraining and unconstraining. \cr
    \code{\link[=fit-method-log_prob]{$log_prob()}} \tab Calculate log-prob. \cr
    \code{\link[=fit-method-grad_log_prob]{$grad_log_prob()}} \tab Calculate log-prob and gradient. \cr
-   \code{\link[=fit-method-hessian]{$hessian()}} \tab Calculate log-prob, gradient, and hessian. \cr
+   \code{\link[=fit-method-hessian]{$hessian()}} \tab Calculate log-prob, gradient, and Hessian. \cr
    \code{\link[=fit-method-constrain_variables]{$constrain_variables()}} \tab Transform a set of unconstrained parameter values to the constrained scale. \cr
    \code{\link[=fit-method-unconstrain_variables]{$unconstrain_variables()}} \tab Transform a set of parameter values to the unconstrained scale. \cr
    \code{\link[=fit-method-unconstrain_draws]{$unconstrain_draws()}} \tab Transform all parameter draws to the unconstrained scale. \cr
@@ -84,7 +99,7 @@ The Stan and CmdStan documentation:
 \item CmdStan User’s Guide: \href{https://mc-stan.org/docs/cmdstan-guide/}{mc-stan.org/docs/cmdstan-guide}
 }
 
-Other fitted model objects: 
+Other fitted model objects:
 \code{\link{CmdStanDiagnose}},
 \code{\link{CmdStanGQ}},
 \code{\link{CmdStanLaplace}},

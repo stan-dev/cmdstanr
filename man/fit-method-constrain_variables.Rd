@@ -21,6 +21,10 @@ parameters implied by newly-constrained parameters (defaults to TRUE).}
 \item{generated_quantities}{(logical) Whether to return generated quantities
 implied by newly-constrained parameters (defaults to TRUE).}
 }
+\value{
+A named list of constrained parameter values and, if requested,
+transformed parameters and generated quantities.
+}
 \description{
 The \verb{$constrain_variables()} method transforms input parameters
 to the constrained scale.
@@ -33,7 +37,6 @@ fit_mcmc$constrain_variables(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 
 }
 \seealso{
-\code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
-\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}},
-\code{\link[=hessian]{hessian()}}
+\code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=unconstrain_variables]{unconstrain_variables()}},
+\code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}}, \code{\link[=hessian]{hessian()}}
 }

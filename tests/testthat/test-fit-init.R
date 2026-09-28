@@ -95,6 +95,158 @@ test_that("Multi Pathfinder method with calculate_lp as false works as init", {
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
+test_that("Pathfinder fit initializations use the intended weights", {
+  # These draws have four different importance weights, so this test can focus
+  # on whether uniform or Pareto-smoothed weights are used.
+  draws <- posterior::as_draws_df(data.frame(
+    theta = 1:4,
+    lp__ = c(1, 2, 4, 8),
+    lp_approx__ = 0
+  ))
+  # This fake Pathfinder fit supplies draws and metadata without running CmdStan.
+  pathfinder_fit <- function(num_paths, psis_resample, calculate_lp) {
+    structure(
+      list(
+        draws = function(format) draws,
+        metadata = function() list(
+          num_paths = num_paths,
+          psis_resample = psis_resample,
+          calculate_lp = calculate_lp
+        ),
+        return_codes = function() 0
+      ),
+      class = "CmdStanPathfinder"
+    )
+  }
+
+  weights_seen <- list()
+  pareto_smooth_calls <- 0L
+  # Return known Pareto-smoothed weights and record which weights are used to
+  # select the initialization draws.
+  local_mocked_bindings(
+    pareto_smooth = function(x, ...) {
+      pareto_smooth_calls <<- pareto_smooth_calls + 1L
+      seq_along(x)
+    },
+    resample_draws = function(x, ndraws, weights = NULL, ...) {
+      weights_seen[[length(weights_seen) + 1L]] <<- weights
+      x[seq_len(ndraws), , drop = FALSE]
+    },
+    .package = "posterior"
+  )
+  local_mocked_bindings(process_init = function(init, ...) init)
+
+  # Test, in order: output resampled by CmdStan, output not resampled, a
+  # single-path fit, and a fit without calculated log densities.
+  process_init.CmdStanPathfinder(pathfinder_fit(4, TRUE, TRUE), 2)
+  process_init.CmdStanPathfinder(pathfinder_fit(4, FALSE, TRUE), 2)
+  process_init.CmdStanPathfinder(pathfinder_fit(1, TRUE, TRUE), 2)
+  process_init.CmdStanPathfinder(pathfinder_fit(4, TRUE, FALSE), 2)
+
+  expect_equal(weights_seen, list(rep(1, 4), 1:4, 1:4, rep(1, 4)))
+  expect_equal(pareto_smooth_calls, 2L)
+})
+
+test_that("Pathfinder init candidates are distinct target parameter vectors", {
+  draws <- posterior::as_draws_df(data.frame(
+    theta = c(1, 1, 2, 3),
+    unused = c(10, 20, 30, 40),
+    lp__ = c(1, 1, 1, 1),
+    lp_approx__ = 0
+  ))
+  model_variables <- list(
+    parameters = list(theta = list(dimensions = 0L))
+  )
+  pathfinder_fit <- structure(
+    list(
+      draws = function(format) draws,
+      metadata = function() list(
+        num_paths = 4,
+        psis_resample = TRUE,
+        calculate_lp = TRUE,
+        stan_variables = c("theta", "unused")
+      ),
+      return_codes = function() 0
+    ),
+    class = "CmdStanPathfinder"
+  )
+
+  candidates_seen <- NULL
+  weights_seen <- NULL
+  method_seen <- NULL
+  local_mocked_bindings(
+    pareto_smooth = function(...) stop("Pareto smoothing should not be used"),
+    resample_draws = function(x, ndraws, weights = NULL, method, ...) {
+      candidates_seen <<- x
+      weights_seen <<- weights
+      method_seen <<- method
+      x[seq_len(ndraws), , drop = FALSE]
+    },
+    .package = "posterior"
+  )
+  local_mocked_bindings(process_init = function(init, ...) init)
+
+  expect_no_error(
+    process_init.CmdStanPathfinder(pathfinder_fit, 3, model_variables)
+  )
+
+  expect_equal(candidates_seen$theta, c(1, 2, 3))
+  expect_equal(weights_seen, c(2, 1, 1))
+  expect_equal(method_seen, "simple_no_replace")
+  expect_snapshot(
+    error = TRUE,
+    process_init.CmdStanPathfinder(pathfinder_fit, 4, model_variables)
+  )
+})
+
+test_that("VB and Laplace inits error with the right algorithm label", {
+  # theta collapses to a single distinct candidate, so requesting more inits
+  # than that triggers the "not enough distinct draws" error and exercises the
+  # per-algorithm label used in the message.
+  draws <- posterior::as_draws_df(data.frame(theta = c(1, 1)))
+  model_variables <- list(
+    parameters = list(theta = list(dimensions = 0L))
+  )
+  make_fit <- function(cls) structure(
+    list(
+      draws = function(format) draws,
+      metadata = function() list(stan_variables = "theta"),
+      return_codes = function() 0
+    ),
+    class = cls
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    process_init.CmdStanVB(make_fit("CmdStanVB"), 2, model_variables)
+  )
+  expect_snapshot(
+    error = TRUE,
+    process_init.CmdStanLaplace(make_fit("CmdStanLaplace"), 2, model_variables)
+  )
+})
+
+test_that("draws inits are recycled in order when too few are supplied", {
+  draws <- posterior::as_draws_df(data.frame(theta = c(10, 20)))
+  model_variables <- list(
+    parameters = list(theta = list(dimensions = 0L))
+  )
+  # Return the prepared init lists instead of writing them to JSON files so the
+  # test can inspect which draw is assigned to each chain or path.
+  local_mocked_bindings(process_init = function(init, ...) init)
+
+  inits <- process_init.draws(
+    draws,
+    num_procs = 5,
+    model_variables = model_variables
+  )
+
+  expect_equal(
+    vapply(inits, `[[`, numeric(1), "theta"),
+    c(10, 20, 10, 20, 10)
+  )
+})
+
 test_that("Variational method works as init", {
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_vb_init <- mod_logistic$variational(

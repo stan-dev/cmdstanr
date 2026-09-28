@@ -6,7 +6,10 @@
 \alias{fit-method-print}
 \alias{print.CmdStanMCMC}
 \alias{print.CmdStanMLE}
+\alias{print.CmdStanLaplace}
 \alias{print.CmdStanVB}
+\alias{print.CmdStanPathfinder}
+\alias{print.CmdStanGQ}
 \title{Compute a summary table of estimates and diagnostics}
 \usage{
 summary(variables = NULL, ...)
@@ -35,7 +38,11 @@ fitted model object itself. The \verb{$print()} method may also be faster than
 \verb{$summary()} because it is designed to only compute the summary statistics
 for the variables that will actually fit in the printed output whereas
 \verb{$summary()} will compute them for all of the specified variables in order
-to be able to return them to the user. See \strong{Examples}.
+to be able to return them to the user. The \verb{$print()} method accepts the
+same \code{variables} and \code{...} arguments as \verb{$summary()}. It also has a \code{digits}
+argument for the number of digits to display after the decimal point
+(default \code{2}) and a \code{max_rows} argument for the maximum number of rows to
+print (default \code{getOption("cmdstanr_max_rows", 10)}). See \strong{Examples}.
 }
 \examples{
 \dontrun{
@@ -84,7 +91,4 @@ for assessing convergence of MCMC (with discussion).
 https://avehtari.github.io/rhat_ess/ess_comparison.html
 (for ESS diagnostics such as \code{ess_bulk} and \code{ess_tail}).
 }
-}
-\seealso{
-\code{\link{CmdStanMCMC}}, \code{\link{CmdStanMLE}}, \code{\link{CmdStanLaplace}}, \code{\link{CmdStanVB}}, \code{\link{CmdStanGQ}}
 }

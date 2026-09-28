@@ -9,6 +9,24 @@ testing_stan_file <- function(name) {
   test_path("resources", "stan", paste0(name, ".stan"))
 }
 
+local_include_model_with_spaces <- function(.local_envir = parent.frame()) {
+  model_dir <- withr::local_tempdir(
+    pattern = "include path",
+    .local_envir = .local_envir
+  )
+  source_files <- c(
+    testing_stan_file("bernoulli_include"),
+    testing_stan_file("divide_real_by_two")
+  )
+  if (!all(file.copy(source_files, model_dir))) {
+    stop("Failed to copy Stan include test fixtures.", call. = FALSE)
+  }
+  list(
+    stan_file = file.path(model_dir, "bernoulli_include.stan"),
+    include_paths = model_dir
+  )
+}
+
 cmdstan_example_file <- function() {
   # stan program in different directory from the others
   file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")

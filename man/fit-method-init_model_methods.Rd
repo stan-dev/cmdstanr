@@ -13,6 +13,9 @@ init_model_methods(seed = 1, verbose = FALSE)
 
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
 }
+\value{
+\code{NULL}, invisibly.
+}
 \description{
 The \verb{$init_model_methods()} method compiles and initializes the
 \code{log_prob}, \code{grad_log_prob}, \code{hessian}, \code{constrain_variables},
@@ -20,7 +23,7 @@ The \verb{$init_model_methods()} method compiles and initializes the
 available as methods of the fitted model object. This requires the
 additional \pkg{Rcpp} package.
 
-If a model or fit object was saved with \code{\link[base:readRDS]{base::saveRDS()}} and later
+If a model or fit object was saved with \code{\link[base:saveRDS]{base::saveRDS()}} and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
 the current R session when this method is called.
 

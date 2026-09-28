@@ -42,7 +42,7 @@ expect_call_compilation <- function(constructor_call) {
 #' @param ... arguments passed to mod$compile()
 expect_no_recompilation <- function(mod, ...) {
   if(length(mod$exe_file()) == 0 || !file.exists(mod$exe_file())) {
-    fail(sprint("Model executable '%s' does not exist, cannot test if recompilation is triggerred.", mod$exe_file()))
+    fail(sprint("Model executable '%s' does not exist, cannot test if recompilation is triggered.", mod$exe_file()))
   }
 
   before_mtime <- file.mtime(mod$exe_file())
@@ -128,7 +128,7 @@ expect_equal_ignore_order <- function(object, expected, ...) {
 
 expect_not_true <- function(...) expect_false(isTRUE(...))
 
-# strips numeric values (which may change slightly with different hardware or compilers) 
+# strips numeric values (which may change slightly with different hardware or compilers)
 # allowing us to still verify names, ordering, column headers, row counts, etc.
 transform_print_snapshot <- function(x) {
   vapply(x, function(line) {

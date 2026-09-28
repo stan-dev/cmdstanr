@@ -7,6 +7,11 @@
 #'   See the first few sections of the CmdStan
 #'   [installation guide](https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html)
 #'   for details on the C++ toolchain required for installing CmdStan.
+#'   If the CmdStan installation currently in use has a non-empty `make/local`
+#'   file, the flags in it can be copied to the new installation before
+#'   it is built, so that no rebuild is needed afterwards. In an interactive
+#'   session `install_cmdstan()` shows the file and asks. See the
+#'   `copy_make_local` argument to decide without being asked.
 #'
 #'   The `rebuild_cmdstan()` function cleans and rebuilds the CmdStan
 #'   installation. Use this function in case of any issues when compiling models.
@@ -29,7 +34,9 @@
 #' @export
 #' @param dir (string) The path to the directory in which to install CmdStan.
 #'   The default is to install it in a directory called `.cmdstan` within the
-#'   user's home directory (i.e, `file.path(Sys.getenv("HOME"), ".cmdstan")`).
+#'   user's home directory. On Windows the home directory is determined from
+#'   `USERPROFILE`, falling back to `HOMEDRIVE` and `HOMEPATH`. On other
+#'   platforms it is determined from `HOME`.
 #' @param cores (integer) The number of CPU cores to use to parallelize building
 #'   CmdStan and speed up installation. If `cores` is not specified then the
 #'   default is to look for the option `"mc.cores"`, which can be set for an
@@ -45,27 +52,48 @@
 #'   is `FALSE`, in which case an informative error is thrown instead of
 #'   overwriting the user's installation.
 #' @param timeout (positive real) Timeout (in seconds) for the build stage of
-#'   the installation.
+#'   the installation. The default is 1200 seconds for `install_cmdstan()` and
+#'   600 seconds for `rebuild_cmdstan()`.
 #' @param version (string) The CmdStan release version to install. The default
 #'   is `NULL`, which downloads the latest stable release from
 #'   <https://github.com/stan-dev/cmdstan/releases>.
 #' @param release_url (string) The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
-#'   The URL should point to the tarball (`.tar.gz.` file) itself, e.g.,
+#'   The URL should point to the tarball (`.tar.gz` file) itself, e.g.,
 #'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param release_file (string) A file path to a CmdStan release tar.gz file
 #'   downloaded from the releases page: <https://github.com/stan-dev/cmdstan/releases>.
-#'   For example: `release_file=""./cmdstan-2.35.0.tar.gz"`. If `release_file` is
+#'   For example: `release_file="./cmdstan-2.35.0.tar.gz"`. If `release_file` is
 #'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
 #'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
 #'   the use of clang for compilation.
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
-#'   that the required toolchain is installed and properly configured. The
+#'   that the required toolchain is installed and properly configured? The
 #'   default is `TRUE`.
 #' @param wsl (logical) Should CmdStan be installed and run through the Windows
 #'  Subsystem for Linux (WSL). The default is `FALSE`.
+#' @param copy_make_local (logical) Should the `make/local` file of the CmdStan
+#'   installation currently in use be copied to the new installation? The copy
+#'   happens before CmdStan is built, so the flags are already in effect for
+#'   that build. The default is `NULL`, which shows the previous `make/local`
+#'   and asks in an interactive session, and copies nothing otherwise. The
+#'   question comes before the download, so that the rest of the installation
+#'   runs unattended.
+#'   Use `TRUE` or `FALSE` to decide without being asked. Flags given in
+#'   `cpp_options` are written after the copied ones and therefore take precedence.
+#'
+#' @return
+#' If a build fails or times out, `install_cmdstan()` issues a warning and
+#' invisibly returns the process result.
+#'
+#' For `cmdstan_make_local()`, if `cpp_options = NULL` then the existing
+#' contents of `make/local` are returned without writing anything; otherwise,
+#' the updated contents are returned.
+#'
+#' @seealso [set_cmdstan_path()], [cmdstan_default_install_path()], and
+#'   [cmdstan_default_path()]
 #'
 #' @examples
 #' \dontrun{
@@ -92,7 +120,9 @@ install_cmdstan <- function(dir = NULL,
                             release_file = NULL,
                             cpp_options = list(),
                             check_toolchain = TRUE,
-                            wsl = FALSE) {
+                            wsl = FALSE,
+                            copy_make_local = NULL) {
+  checkmate::assert_flag(copy_make_local, null.ok = TRUE)
   warn_if_ignored_msys_toolchain_env()
   # Use environment variable to record WSL usage throughout install,
   # post-installation will simply check for 'wsl-' prefix in cmdstan path
@@ -110,14 +140,34 @@ install_cmdstan <- function(dir = NULL,
   if (check_toolchain) {
     check_cmdstan_toolchain(quiet = quiet)
   }
+  # Read the make/local of the installation in use before anything is
+  # downloaded, so that its flags can be offered to the new installation
+  # *before* it is built (see maybe_copy_make_local() below). With
+  # overwrite=TRUE the directory is deleted further down, so this is the last
+  # chance to see the file at all.
   make_local_msg <- NULL
+  previous_make_local <- NULL
+  old_cmdstan_path <- NULL
   if (!is.null(cmdstan_version(error_on_NA = FALSE))) {
+    old_cmdstan_path <- cmdstan_path()
     current_make_local_contents <- cmdstan_make_local()
-    if (length(current_make_local_contents) > 0) {
-      old_cmdstan_path <- cmdstan_path()
-      make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", cmdstan_path(), "\"))")
+    # cmdstan_make_local() returns "" for a make/local that exists but is
+    # empty, which carries no flags and is not worth reporting either
+    if (length(current_make_local_contents) > 0 &&
+        !identical(current_make_local_contents, "")) {
+      previous_make_local <- current_make_local_contents
+      make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", old_cmdstan_path, "\"))")
     }
   }
+  # Ask now, before the version is announced and before an existing
+  # installation is removed. Argument or answer decides whether the
+  # post-build message below is shown.
+  copy_make_local_decided <- !is.null(copy_make_local) || rlang::is_interactive()
+  copy_make_local <- resolve_copy_make_local(
+    previous_make_local,
+    old_cmdstan_path,
+    copy_make_local
+  )
   if (is.null(dir)) {
     dir <- cmdstan_default_install_path(wsl = wsl)
     if (!dir.exists(dir)) {
@@ -225,6 +275,12 @@ install_cmdstan <- function(dir = NULL,
     assert_supported_requested_cmdstan_version(extracted_version, source = "archive")
   }
 
+  # Carry the previous installation's makefile flags over before the build, so
+  # that the build already uses them. Written first, so that cpp_options and
+  # the platform flags below take precedence over an inherited assignment.
+  maybe_copy_make_local(dir_cmdstan, previous_make_local, old_cmdstan_path,
+                        copy_make_local)
+
   cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
   # Setting up native M1 compilation of CmdStan and its downstream libraries
   if (is_rosetta2()) {
@@ -270,13 +326,16 @@ install_cmdstan <- function(dir = NULL,
 
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
   set_cmdstan_path(dir_cmdstan)
-  if (!is.null(make_local_msg) && old_cmdstan_path != cmdstan_path()) {
+  if (report_uncopied_make_local(make_local_msg, copy_make_local_decided,
+                                 old_cmdstan_path, cmdstan_path())) {
     message(
       "\nThe previous installation of CmdStan had a non-empty make/local file.\n",
       "If you wish to copy the file to the new installation, run the following commands:\n",
       "\n",
       make_local_msg,
-      "\nrebuild_cmdstan(cores = ...)"
+      "\nrebuild_cmdstan(cores = ...)",
+      "\n\nNext time, install_cmdstan(copy_make_local = TRUE) copies the flags\n",
+      "before the build, so that no rebuild is needed."
     )
   }
   if (isTRUE(wsl)) {
@@ -300,10 +359,8 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #' @export
 #' @param append (logical) For `cmdstan_make_local()`, should the listed
 #'   makefile flags be appended to the end of the existing `make/local` file?
-#'   The default is `TRUE`. If `FALSE` the file is overwritten.
-#' @return For `cmdstan_make_local()`, if `cpp_options=NULL` then the existing
-#'   contents of `make/local` are returned without writing anything, otherwise
-#'   the updated contents are returned.
+#'   The default is `TRUE`. If `FALSE` the file is overwritten. When appending,
+#'   a flag that is already in `make/local` is not written again.
 #'
 cmdstan_make_local <- function(dir = cmdstan_path(),
                                cpp_options = NULL,
@@ -325,24 +382,40 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
         }
       }
     }
-    write(built_flags, file = make_local_path, append = append)
+    if (append && file.exists(make_local_path)) {
+      existing <- suppressWarnings(readLines(make_local_path, warn = FALSE))
+      built_flags <- built_flags[!make_flag_already_applies(built_flags, existing)]
+    }
+    if (length(built_flags) > 0 || !append) {
+      write(built_flags, file = make_local_path, append = append)
+    }
   }
-  if (file.exists(make_local_path)) {
-    return(trimws(strsplit(trimws(readChar(make_local_path, file.info(make_local_path)$size)), "\n")[[1]]))
-  } else {
+  make_local_contents <- tryCatch(
+    suppressWarnings(readLines(make_local_path, warn = FALSE)),
+    error = function(e) NULL
+  )
+  if (is.null(make_local_contents)) {
     return(NULL)
   }
+  if (length(make_local_contents) == 0) {
+    return("")
+  }
+  trimws(strsplit(trimws(
+    paste(make_local_contents, collapse = "\n")
+  ), "\n", fixed = TRUE)[[1]])
 }
 
 #' @rdname install_cmdstan
 #' @export
-#' @param fix As of v1.0 this argument is deprecated and ignored and only
-#'   retained for compatibility.
+#' @param fix Deprecated and will be removed in a future release. This argument
+#'   is ignored and retained only for compatibility.
 #'
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (isTRUE(fix)) {
-    warning("The 'fix' argument is deprecated and will be removed in a future release.",
-            call. = FALSE)
+    warning(
+      "The 'fix' argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
+      call. = FALSE
+    )
   }
   warn_if_ignored_msys_toolchain_env()
   if (os_is_windows()) {
@@ -366,6 +439,172 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 
 
 # internal ----------------------------------------------------------------
+
+#' Should the finished installation point out the `make/local` left behind?
+#'
+#' An explicit `copy_make_local`, or a prompt they answered, has
+#' settled it already. Reinstalling over the same path is excluded
+#' too: the `make/local` the message tells them to read has been
+#' overwritten by then.
+#'
+#' @noRd
+#' @param make_local_msg (string or `NULL`) The suggested command, `NULL` when
+#'   the previous installation had no flags.
+#' @param decided (logical) Was the copy question settled during the install?
+#' @param old_path,new_path (string or `NULL`) Previous and new installation.
+#' @return `TRUE` if the message should be shown.
+report_uncopied_make_local <- function(make_local_msg, decided, old_path, new_path) {
+  !is.null(make_local_msg) && !isTRUE(decided) && !identical(old_path, new_path)
+}
+
+#' Decide whether the previous installation's makefile flags should be reused
+#'
+#' Asked before the download starts. The flags themselves can
+#' only be written once the new installation has been unpacked.
+#'
+#' @noRd
+#' @param previous_contents (character vector) `make/local` of the installation
+#'   that was in use, as returned by `cmdstan_make_local()`.
+#' @param previous_path (string) Where those contents came from.
+#' @param copy_make_local (logical or `NULL`) `TRUE`/`FALSE` decide directly.
+#'   `NULL` asks in an interactive session and declines otherwise, so that
+#'   scripts, R CMD check and CI never block on a prompt.
+#' @return `TRUE` if the flags should be copied. An explicit `TRUE` with
+#'   nothing to copy returns `FALSE` and reports why.
+resolve_copy_make_local <- function(previous_contents,
+                                    previous_path,
+                                    copy_make_local = NULL) {
+  if (length(previous_contents) == 0 || identical(previous_contents, "")) {
+    if (isTRUE(copy_make_local)) {
+      # An explicit request that cannot be honoured
+      if (is.null(previous_path)) {
+        message("* copy_make_local = TRUE, but no CmdStan installation is ",
+                "currently in use, so there are no makefile flags to copy.")
+      } else {
+        message("* copy_make_local = TRUE, but ", previous_path,
+                " has an empty or missing make/local, so there is nothing to copy.")
+      }
+    }
+    return(FALSE)
+  }
+  if (!is.null(copy_make_local)) {
+    return(isTRUE(copy_make_local))
+  }
+  rlang::is_interactive() && prompt_copy_make_local(previous_contents, previous_path)
+}
+
+#' Carry the makefile flags of the previous CmdStan installation over to a
+#' freshly unpacked one, before it is built.
+#'
+#' @noRd
+#' @param dir_cmdstan (string) The new installation.
+#' @param previous_contents (character vector) `make/local` of the installation
+#'   that was in use, as returned by `cmdstan_make_local()`.
+#' @param previous_path (string) Where those contents came from.
+#' @param copy_make_local (logical) The resolved answer.
+#' @return `TRUE` if the flags were written to the new installation.
+maybe_copy_make_local <- function(dir_cmdstan,
+                                  previous_contents,
+                                  previous_path,
+                                  copy_make_local) {
+  if (!isTRUE(copy_make_local) ||
+      length(previous_contents) == 0 ||
+      identical(previous_contents, "")) {
+    return(FALSE)
+  }
+  cmdstan_make_local(
+    dir = dir_cmdstan,
+    cpp_options = as.list(previous_contents),
+    append = TRUE
+  )
+  message("* Copied make/local from ", previous_path)
+  TRUE
+}
+
+# Show the previous make/local and ask whether to reuse it. Separate from
+# resolve_copy_make_local() so that tests can mock the answer.
+prompt_copy_make_local <- function(previous_contents, previous_path) {
+  message(
+    "\nThe CmdStan installation in ", previous_path,
+    " has a non-empty make/local:\n",
+    paste0("  ", previous_contents, collapse = "\n")
+  )
+  answer <- read_line("Copy these makefile flags to the new installation? [y/N] ")
+  tolower(trimws(answer)) %in% c("y", "yes")
+}
+
+# Thin wrapper around readline() so that tests can answer the prompt.
+read_line <- function(prompt) {
+  readline(prompt)
+}
+
+#' Would make already apply these flags, given the current `make/local`?
+#'
+#' Lines are compared as text, following the two rules of make that matter
+#' here. A plain assignment only counts while it is the last one for that
+#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
+#' further down is a real change, not a duplicate. `+=` accumulates, so a
+#' second identical `+=` line adds nothing, unless a plain assignment in
+#' between has reset the variable and dropped what the first one added.
+#'
+#' A line ending in a backslash and the lines it continues are one assignment
+#' to make, so they are written as they are rather than checked line by line.
+#' The file's own last line can be the one being continued.
+#'
+#' @noRd
+#' @param flags (character vector) Flags about to be appended.
+#' @param existing (character vector) Current contents of `make/local`.
+#' @return A logical vector of the same length as `flags`.
+make_flag_already_applies <- function(flags, existing) {
+  flags <- trimws(flags)
+  existing <- trimws(existing)
+  continued <- endsWith(flags, "\\") |
+    utils::tail(continues_previous(c(existing, flags)), length(flags))
+  applies <- logical(length(flags))
+  for (i in seq_along(flags)) {
+    applies[i] <- !continued[i] && make_line_already_applies(flags[i], existing)
+    if (!applies[i]) {
+      existing <- c(existing, flags[i])
+    }
+  }
+  applies
+}
+
+# Would make already apply this one line, given the current make/local?
+# Same rules as above.
+make_line_already_applies <- function(line, existing) {
+  variable <- make_assignment_part(line, "\\1")
+  if (is.na(variable)) {
+    return(line %in% existing)
+  }
+  existing_variable <- make_assignment_part(existing, "\\1")
+  assignments <- which(!is.na(existing_variable) & existing_variable == variable)
+  if (make_assignment_part(line, "\\2") == "+=") {
+    # A plain assignment drops what earlier += lines added, so only the
+    # lines after the last one count.
+    existing_operator <- make_assignment_part(existing, "\\2")
+    resets <- assignments[existing_operator[assignments] %in% c("=", ":=")]
+    if (length(resets) > 0) {
+      assignments <- assignments[assignments > max(resets)]
+    }
+    return(line %in% existing[assignments])
+  }
+  length(assignments) > 0 && identical(existing[max(assignments)], line)
+}
+
+# Variable name ("\\1") or operator ("\\2") of a makefile assignment, NA for
+# lines that do not assign anything, such as comments, blanks, and the rest of
+# a continued line.
+make_assignment_part <- function(lines, part) {
+  pattern <- "^([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*(\\+=|:=|\\?=|=).*$"
+  assigns <- grepl(pattern, lines) & !continues_previous(lines)
+  ifelse(assigns, sub(pattern, part, lines), NA_character_)
+}
+
+# TRUE for a line that continues the one before it
+continues_previous <- function(lines) {
+  c(FALSE, endsWith(lines, "\\"))[seq_along(lines)]
+}
 
 check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
   if (dir.exists(dir_cmdstan)) {
@@ -471,7 +710,7 @@ build_cmdstan <- function(dir,
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) },
         timeout = timeout
@@ -496,7 +735,7 @@ clean_cmdstan <- function(dir = cmdstan_path(),
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) }
       )
@@ -519,7 +758,7 @@ build_example <- function(dir, cores, quiet, timeout) {
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
-        spinner = quiet,
+        spinner = quiet && use_spinner(),
         error_on_status = FALSE,
         stderr_callback = function(x, p) { if (quiet) message(x) },
         timeout = timeout
@@ -597,54 +836,13 @@ check_wsl_toolchain <- function() {
 }
 
 check_rtools4x_windows_toolchain <- function(quiet = FALSE) {
-  rtools_path <- rtools4x_home_path()
-  rtools_version <- paste0("Rtools", rtools4x_version())
-  # If RTOOLS4X_HOME is not set (the env. variable gets set on install)
-  # we assume that RTools 40 is not installed.
-  if (!nzchar(rtools_path)) {
+  toolchain_path <- toolchain_PATH_env_var()
+  if (is.null(toolchain_path)) {
     stop(
-      "\n", rtools_version, " was not found but is required to run CmdStan with R version ",
-      R.version$major, ".", R.version$minor, ".",
-      "\nPlease install or reinstall the appropriate Rtools version for this R installation,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  # If RTools is installed in a path with spaces or brackets
-  # we error as this path is not valid
-  if (grepl("\\(|)| ", rtools_path)) {
-    stop(
-      "\n", rtools_version, " is installed in a path with spaces or brackets, which is not supported.",
-      "\nPlease reinstall the appropriate Rtools version for this R installation to a valid path,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  usr_bin <- repair_path(file.path(rtools_path, "usr", "bin"))
-  # Fail early with a clear message if the base make tool is missing
-  make_found <- any(file.exists(file.path(usr_bin, c("make.exe", "mingw32-make.exe"))))
-  if (!make_found) {
-    stop(
-      "\n", rtools_version, " is missing the required 'make' executable in ", usr_bin, ".",
-      "\nPlease reinstall the appropriate Rtools version for this R installation,",
-      "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
-      call. = FALSE
-    )
-  }
-  candidates <- rtools4x_toolchain_candidates()
-  # Validate candidate toolchains here so build errors later are not opaque
-  has_usable_toolchain <- any(vapply(candidates, is_rtools4x_toolchain_usable, logical(1)))
-  if (!has_usable_toolchain) {
-    if (length(candidates) == 0) {
-      candidates_message <- "\n- <none>"
-    } else {
-      candidates_message <- paste0("\n- ", paste(candidates, collapse = "\n- "))
-    }
-    stop(
-      "\n", rtools_version, " does not contain a supported C++ toolchain.",
-      "\nChecked the following paths:",
-      candidates_message,
-      "\nPlease reinstall the appropriate Rtools version for this R installation,",
+      "CmdStanR could not find both make and a C++ compiler in R's ",
+      "configured toolchain or on PATH.",
+      "\nPlease install or reinstall the appropriate Rtools version for this ",
+      "R installation, or add a compatible toolchain to PATH,",
       "\nrestart R, and then run cmdstanr::check_cmdstan_toolchain().",
       call. = FALSE
     )
@@ -730,107 +928,71 @@ cmdstan_arch_suffix <- function(version = NULL) {
   paste0("-linux-", selected_arch)
 }
 
+# Thin wrapper around `tools::Rcmd()` to allow mocking
+.cmdstanr_rcmd <- function(...) tools::Rcmd(...)
+
 toolchain_PATH_env_var <- function() {
-  if (!os_is_windows()) {
-    return(NULL)
+  # Return a previously successful lookup if available
+  # For non-windows systems the initialized path stays NULL
+  if (!is.null(.cmdstanr$TOOLCHAIN_PATH) || !os_is_windows()) {
+    return(.cmdstanr$TOOLCHAIN_PATH)
   }
-  rtools_home <- rtools4x_home_path()
-  if (!nzchar(rtools_home)) {
-    return(NULL)
-  }
-  paste0(
-    repair_path(file.path(rtools_home, "usr", "bin")), ";",
-    rtools4x_toolchain_path()
-  )
-}
 
-#' Ordered candidate RTools toolchain bin paths
-#'
-#' On x86_64, candidate order is ABI-aware so legacy fallback paths are tried
-#' in an order compatible with the current R toolchain.
-#'
-#' @noRd
-#' @return A character vector of normalized candidate toolchain bin paths
-rtools4x_toolchain_candidates <- function() {
-  rtools_home <- rtools4x_home_path()
-  if (!nzchar(rtools_home)) {
-    return(character())
-  }
-  # Prefer the modern static toolchain first, then ABI-compatible legacy
-  # fallbacks for older Rtools layouts
-  toolchains <- if (arch_is_aarch64()) {
-    "aarch64-w64-mingw32.static.posix"
-  } else if (is_ucrt_toolchain()) {
-    c("x86_64-w64-mingw32.static.posix", "ucrt64", "mingw64")
+  # Lookup the configured toolchain location for the installation
+  # This variable is set at installation since R 4.2
+  #  e.g., 'C:/rtools45/x86_64-w64-mingw32.static.posix'
+  # R 4.0 and R 4.1 did not set the R_TOOLS_SOFT config variable, so
+  # we use the RTOOLS40_HOME environment variable instead
+  if (current_r_version() < "4.2.0") {
+    rtools40_home <- Sys.getenv("RTOOLS40_HOME", "C:\\rtools40")
+    r_arch <- ifelse(Sys.getenv("R_ARCH") == "/i386", "mingw32", "mingw64")
+    rtools_soft <- file.path(rtools40_home, r_arch)
   } else {
-    c("x86_64-w64-mingw32.static.posix", "mingw64", "ucrt64")
-  }
-  repair_path(file.path(rtools_home, toolchains, "bin"))
-}
-
-# A candidate is usable if the directory exists and contains a g++ executable
-is_rtools4x_toolchain_usable <- function(path) {
-  if (!nzchar(path) || !dir.exists(path)) {
-    return(FALSE)
-  }
-  any(file.exists(file.path(path, c("g++.exe", "g++"))))
-}
-
-#' Resolve the preferred RTools toolchain bin path
-#'
-#' Returns the first usable path from `rtools4x_toolchain_candidates()`. If no
-#' candidate is usable, returns the first candidate for deterministic diagnostics.
-#'
-#' @noRd
-#' @return A single path string, or `""` if no candidates are available.
-rtools4x_toolchain_path <- function() {
-  candidates <- rtools4x_toolchain_candidates()
-  if (length(candidates) == 0) {
-    return("")
-  }
-  # Return the first usable candidate (ordered by preference above).
-  usable <- vapply(candidates, is_rtools4x_toolchain_usable, logical(1))
-  if (any(usable)) {
-    return(candidates[which(usable)[1]])
-  }
-  candidates[1]
-}
-
-rtools4x_version <- function() {
-  rtools_ver <- NULL
-
-  if (R.version$minor < "2.0") {
-    rtools_ver <- "40"
-  } else if (R.version$minor < "3.0") {
-    rtools_ver <- "42"
-  } else if (R.version$minor < "4.0") {
-    rtools_ver <- "43"
-  } else if (R.version$minor < "5.0") {
-    rtools_ver <- "44"
-  } else {
-    rtools_ver <- "45"
-  }
-  rtools_ver
-}
-
-rtools4x_home_path <- function() {
-  rtools_ver <- rtools4x_version()
-  if (arch_is_aarch64()) {
-    rtools_ver <- paste0(rtools_ver, "_AARCH64")
-  }
-  path <- Sys.getenv(paste0("RTOOLS", rtools_ver, "_HOME"))
-
-  if (!nzchar(path)) {
-    default_path <- repair_path(file.path(paste0("C:/rtools", rtools_ver)))
-    if (arch_is_aarch64()) {
-      default_path <- paste0(default_path, "-aarch64")
-    }
-    if (dir.exists(default_path)) {
-      path <- default_path
+    rtools_soft <- tryCatch(
+      suppressWarnings(
+        .cmdstanr_rcmd(c("config", "R_TOOLS_SOFT"), stdout = TRUE)
+      ),
+      error = function(e) ""
+    )
+    if (!is.null(attr(rtools_soft, "status")) || length(rtools_soft) != 1L) {
+      rtools_soft <- ""
+    } else {
+      rtools_soft <- trimws(rtools_soft)
     }
   }
 
-  path
+  rtools_bin_dir <- file.path(dirname(rtools_soft), "usr", "bin")
+  rtools_cpp_dir <- file.path(rtools_soft, "bin")
+
+  # R 4.2+ prepends the toolchain directory to PATH, so it will be found first
+  if (!nzchar(rtools_soft) ||
+      !file.exists(file.path(rtools_bin_dir, "make.exe"))) {
+    make_path <- Sys.which("make")
+    rtools_bin_dir <- ifelse(nzchar(make_path), dirname(make_path), "")
+  }
+  if (!nzchar(rtools_soft) ||
+      !file.exists(file.path(rtools_cpp_dir, "c++.exe"))) {
+    cpp_path <- Sys.which("c++")
+    rtools_cpp_dir <- ifelse(nzchar(cpp_path), dirname(cpp_path), "")
+  }
+
+  if (rtools_bin_dir != "" && rtools_cpp_dir != "") {
+    toolchain_dirs <- unique(
+      repair_path(short_path(c(rtools_bin_dir, rtools_cpp_dir)))
+    )
+    if (any(grepl("[() ]", toolchain_dirs))) {
+      stop(
+        "The Windows toolchain path contains spaces or parentheses, and ",
+        "CmdStanR could not convert it to a usable short path. Please install ",
+        "or move the toolchain to a path without spaces or parentheses, ",
+        "restart R, and then run cmdstanr::check_cmdstan_toolchain().",
+        call. = FALSE
+      )
+    }
+    .cmdstanr$TOOLCHAIN_PATH <- paste(toolchain_dirs, collapse = ";")
+  }
+
+  .cmdstanr$TOOLCHAIN_PATH
 }
 
 assert_supported_requested_cmdstan_version <- function(version, source = "version") {

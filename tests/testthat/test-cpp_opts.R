@@ -37,6 +37,92 @@ test_that("validate_cpp_options works", {
   expect_warning(validate_cpp_options(list(STAN_OPENCL = FALSE)))
 })
 
+test_that("cpp option lookup is exact and case-insensitive", {
+  cpp_options <- list(STAN_THREADS = TRUE)
+  expect_identical(cpp_option_value(cpp_options, "stan_threads"), TRUE)
+  expect_named(cpp_options, "STAN_THREADS")
+
+  expect_identical(
+    cpp_option_value(
+      list(stan_threads = FALSE, STAN_THREADS = TRUE),
+      "stan_threads"
+    ),
+    TRUE
+  )
+  expect_identical(
+    cpp_option_value(
+      list(STAN_THREADS = TRUE, stan_threads = FALSE),
+      "stan_threads"
+    ),
+    FALSE
+  )
+  expect_null(
+    cpp_option_value(
+      list(STAN_OPENCL = TRUE, stan_opencl = NULL),
+      "stan_opencl"
+    )
+  )
+  expect_null(cpp_option_value(list(stan_opencl_x = TRUE), "stan_opencl"))
+})
+
+test_that("cpp option checks are case-insensitive", {
+  expect_identical(
+    assert_valid_threads(2L, list(STAN_THREADS = TRUE)),
+    2L
+  )
+  expect_identical(
+    assert_valid_threads(2L, list(stan_threads = TRUE)),
+    2L
+  )
+  expect_identical(
+    assert_valid_opencl(c(0L, 0L), list(STAN_OPENCL = TRUE)),
+    c(0L, 0L)
+  )
+  expect_identical(
+    assert_valid_opencl(c(0L, 0L), list(stan_opencl = TRUE)),
+    c(0L, 0L)
+  )
+})
+
+test_that("lowercase stan_threads behavior remains unchanged", {
+  expect_null(assert_valid_threads(NULL, list(stan_threads = FALSE)))
+  expect_null(assert_valid_threads(NULL, list(stan_threads = "dummy string")))
+  expect_snapshot({
+    assert_valid_threads(2L, list(stan_threads = FALSE))
+    assert_valid_threads(2L, list(stan_threads = "dummy string"))
+  })
+})
+
+test_that("cpp option checks prefer the last case-insensitive match", {
+  expect_identical(
+    assert_valid_threads(
+      2L,
+      list(stan_threads = FALSE, STAN_THREADS = TRUE)
+    ),
+    2L
+  )
+  expect_identical(
+    assert_valid_opencl(
+      c(0L, 0L),
+      list(stan_opencl = NULL, STAN_OPENCL = TRUE)
+    ),
+    c(0L, 0L)
+  )
+})
+
+test_that("uppercase stan_threads requires a thread count", {
+  expect_snapshot(
+    error = TRUE,
+    assert_valid_threads(NULL, list(STAN_THREADS = TRUE))
+  )
+})
+
+test_that("cpp option checks do not use partial matching", {
+  expect_snapshot(
+    error = TRUE,
+    assert_valid_opencl(c(0L, 0L), list(stan_opencl_x = TRUE))
+  )
+})
 
 test_that("exe_info cpp_options comparison works", {
   exe_info_all_flags_off <- exe_info_style_cpp_options(list())
@@ -67,5 +153,43 @@ test_that("exe_info cpp_options comparison works", {
   expect_warning(
     expect_true(exe_info_reflects_cpp_options(list(), list())),
     "Recompiling is recommended"
+  )
+})
+
+test_that("exe_info comparison reads cpp_options the way make does", {
+  # Upper-case, as model_compile_info() reports it.
+  disabled <- list(STAN_THREADS = FALSE)
+
+  # An unnamed raw assignment is as much a request as a named one; reading the
+  # list's names cannot see it.
+  expect_not_true(
+    exe_info_reflects_cpp_options(disabled, list("STAN_THREADS=TRUE"))
+  )
+
+  # Every duplicate reaches make and a makefile takes the last, so the order
+  # decides which of these agrees.
+  expect_true(exe_info_reflects_cpp_options(
+    disabled,
+    list(stan_threads = TRUE, stan_threads = NULL)
+  ))
+  expect_not_true(exe_info_reflects_cpp_options(
+    disabled,
+    list(stan_threads = NULL, stan_threads = TRUE)
+  ))
+
+  # A vector value expands into one assignment per element. This used to error.
+  expect_not_true(exe_info_reflects_cpp_options(
+    disabled,
+    list(stan_threads = c(TRUE, FALSE))
+  ))
+
+  # Non-empty enables whatever the value, so FALSE does not ask for "off".
+  expect_not_true(
+    exe_info_reflects_cpp_options(disabled, list(stan_threads = FALSE))
+  )
+
+  # An option the binary cannot report is unverifiable, not a mismatch.
+  expect_true(
+    exe_info_reflects_cpp_options(disabled, list(my_custom_make_flag = TRUE))
   )
 })

@@ -2,7 +2,7 @@
 % Please edit documentation in R/path.R
 \name{cmdstan_default_path}
 \alias{cmdstan_default_path}
-\title{cmdstan_default_path}
+\title{Path to the installation of CmdStan with the most recent release version}
 \usage{
 cmdstan_default_path(dir = NULL)
 }
@@ -14,13 +14,13 @@ Path to the CmdStan installation with the most recent release
 version, or \code{NULL} if no installation found.
 }
 \description{
-Returns the path to the installation of CmdStan with the most recent release
-version.
-}
-\details{
 For Windows systems with WSL CmdStan installs, if there are side-by-side WSL
 and native installs with the same version then the WSL is preferred.
 Otherwise, the most recent release is chosen, regardless of whether it is
 native or WSL.
+}
+\seealso{
+\code{\link[=install_cmdstan]{install_cmdstan()}}, \code{\link[=set_cmdstan_path]{set_cmdstan_path()}}, and
+\code{\link[=cmdstan_default_install_path]{cmdstan_default_install_path()}}
 }
 \keyword{internal}

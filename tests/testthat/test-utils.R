@@ -135,8 +135,280 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
   expect_output(delete_and_run(), "Checking sampler transitions treedepth")
 })
 
+test_that("get_standalone_hpp() reports stanc failures", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- file.path(model_dir, "model.stan")
+  hpp_file <- file.path(model_dir, "model.hpp")
+  writeLines("parameters { real y; } model { y ~ std_normal(); }", stan_file)
+  writeLines("// partial output", hpp_file)
+  local_mocked_bindings(
+    wsl_compatible_run = function(...) {
+      list(
+        status = 124L,
+        stdout = "",
+        stderr = "stanc: invalid canonicalize value"
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    get_standalone_hpp(
+      stan_file,
+      "--canonicalize='deprecations'"
+    )
+  )
+  expect_false(file.exists(hpp_file))
+})
+
+test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
+  stan_file <- withr::local_tempfile(fileext = ".stan")
+  local_mocked_bindings(
+    wsl_compatible_run = function(...) {
+      list(
+        status = 1L,
+        stdout = "",
+        stderr = "Syntax error: Use the auto-format flag to stanc"
+      )
+    }
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    get_standalone_hpp(stan_file, character())
+  )
+})
+
 
 # misc --------------------------------------------------------------------
+
+test_that("generate_file_names() zero-pads IDs for lexicographic sorting", {
+  expect_equal(
+    generate_file_names(
+      basename = "output",
+      ids = 1:10,
+      timestamp = FALSE,
+      random = FALSE
+    ),
+    paste0("output-", sprintf("%02d", 1:10), ".csv")
+  )
+
+  file_names <- generate_file_names(
+    basename = "output",
+    ids = 1:100,
+    timestamp = FALSE,
+    random = FALSE
+  )
+  expect_equal(
+    file_names[c(1, 9, 10, 100)],
+    paste0("output-", c("001", "009", "010", "100"), ".csv")
+  )
+  expect_equal(sort(file_names), file_names)
+})
+
+test_that("copy_temp_files retains sources if any copy fails", {
+  source_dir <- withr::local_tempdir()
+  destination_dir <- withr::local_tempdir()
+  source_paths <- file.path(source_dir, c("one.csv", "two.csv"))
+  writeLines("one", source_paths[1])
+  writeLines("two", source_paths[2])
+  # Simulate a partial copy failure without relying on platform-specific file
+  # permissions. The original binding is restored at the end of the test.
+  local_mocked_bindings(
+    file.copy = function(...) c(TRUE, FALSE),
+    .package = "base"
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    copy_temp_files(
+      current_paths = source_paths,
+      new_dir = destination_dir,
+      new_basename = "output",
+      ids = 1:2,
+      timestamp = FALSE,
+      random = FALSE
+    )
+  )
+  expect_identical(file.exists(source_paths), c(TRUE, TRUE))
+})
+
+local_exe_fixture <- function(destination_exists = TRUE,
+                              .local_envir = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = .local_envir)
+  fixture <- list(
+    dir = dir,
+    from = file.path(dir, "compiled-exe"),
+    to = file.path(dir, "model-exe")
+  )
+  writeLines("new executable", fixture$from)
+  # Compiled by make, so executable. Installation has to preserve that.
+  Sys.chmod(fixture$from, "0755", use_umask = FALSE)
+  if (destination_exists) {
+    writeLines("old executable", fixture$to)
+  }
+  fixture
+}
+
+# POSIX execute permissions are not available through Windows R, including WSL.
+expect_installed_executable <- function(path) {
+  expect_identical(readLines(path), "new executable")
+  if (!os_is_windows()) {
+    expect_identical(file.access(path, mode = 1)[[1]], 0L)
+  }
+}
+
+# Replace platform-specific directory spellings and random filenames without
+# hiding separator regressions in paths created by install_executable().
+exe_path_transform <- function(fixture) {
+  dirs <- unique(c(
+    fixture$dir,
+    repair_path(fixture$dir),
+    gsub("\\\\", "/", fixture$dir)
+  ))
+  function(lines) {
+    for (dir in dirs) {
+      lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
+    }
+    gsub("exe-(new|old)-[0-9a-f]+", "exe-\\1-<random>", lines)
+  }
+}
+
+# Make the n-th file.rename() call fail, optionally warning first, as base does.
+local_failing_file_rename <- function(fail_on,
+                                      warn = FALSE,
+                                      .local_envir = parent.frame()) {
+  real_file_rename <- base::file.rename
+  calls <- 0
+  local_mocked_bindings(
+    file.rename = function(from, to) {
+      calls <<- calls + 1
+      if (calls %in% fail_on) {
+        if (warn) warning("cannot rename file")
+        return(FALSE)
+      }
+      real_file_rename(from, to)
+    },
+    .package = "base",
+    .env = .local_envir
+  )
+}
+
+test_that("install_executable() installs when there is no existing executable", {
+  fixture <- local_exe_fixture(destination_exists = FALSE)
+
+  expect_null(install_executable(fixture$from, fixture$to))
+  expect_installed_executable(fixture$to)
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() replaces an executable and removes the backup", {
+  fixture <- local_exe_fixture()
+
+  expect_null(install_executable(fixture$from, fixture$to))
+  expect_installed_executable(fixture$to)
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() refuses to install over a directory", {
+  fixture <- local_exe_fixture(destination_exists = FALSE)
+  dir.create(fixture$to)
+  writeLines("important", file.path(fixture$to, "data.txt"))
+
+  # Directories satisfy file.exists(), so reject them before staging or renaming.
+  # Both $exe_file(path) and exe_file= can pass a directory here.
+  expect_error(
+    install_executable(fixture$from, fixture$to),
+    "is a directory",
+    fixed = TRUE
+  )
+  expect_true(dir.exists(fixture$to))
+  expect_identical(readLines(file.path(fixture$to, "data.txt")), "important")
+  expect_setequal(
+    list.files(fixture$dir),
+    basename(c(fixture$from, fixture$to))
+  )
+})
+
+test_that("install_executable() leaves the destination alone if staging fails", {
+  fixture <- local_exe_fixture()
+  local_mocked_bindings(file.copy = function(...) FALSE, .package = "base")
+
+  expect_snapshot(
+    error = TRUE,
+    install_executable(fixture$from, fixture$to),
+    transform = exe_path_transform(fixture)
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() leaves the destination alone if the backup fails", {
+  fixture <- local_exe_fixture()
+  local_failing_file_rename(fail_on = 1)
+
+  expect_snapshot(
+    error = TRUE,
+    install_executable(fixture$from, fixture$to),
+    transform = exe_path_transform(fixture)
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() restores the backup if the install fails", {
+  fixture <- local_exe_fixture()
+  local_failing_file_rename(fail_on = 2)
+
+  expect_snapshot(
+    error = TRUE,
+    install_executable(fixture$from, fixture$to),
+    transform = exe_path_transform(fixture)
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+})
+
+test_that("install_executable() keeps the backup if it cannot be restored", {
+  fixture <- local_exe_fixture()
+  local_failing_file_rename(fail_on = c(2, 3))
+
+  expect_snapshot(
+    error = TRUE,
+    install_executable(fixture$from, fixture$to),
+    transform = exe_path_transform(fixture)
+  )
+  # The destination is gone, so the error has to name a real recovery path.
+  expect_false(file.exists(fixture$to))
+  leftover <- setdiff(list.files(fixture$dir), basename(fixture$from))
+  expect_match(leftover, "^exe-old-")
+  expect_identical(readLines(file.path(fixture$dir, leftover)), "old executable")
+})
+
+test_that("install_executable() rolls back when warnings are errors", {
+  fixture <- local_exe_fixture()
+  # file.rename() warnings must not interrupt rollback when warn = 2.
+  local_failing_file_rename(fail_on = 2, warn = TRUE)
+  withr::local_options(warn = 2)
+
+  expect_error(
+    install_executable(fixture$from, fixture$to),
+    "previously compiled executable has been restored",
+    fixed = TRUE
+  )
+  expect_identical(readLines(fixture$to), "old executable")
+})
+
+test_that("install_executable() reports a backup it could not remove", {
+  fixture <- local_exe_fixture()
+  local_mocked_bindings(unlink = function(...) 1L, .package = "base")
+
+  # Return the backup without warning so the caller can commit state first.
+  expect_no_warning(leftover <- install_executable(fixture$from, fixture$to))
+  expect_identical(readLines(fixture$to), "new executable")
+  expect_true(file.exists(leftover))
+  expect_identical(readLines(leftover), "old executable")
+})
 
 test_that("repair_path() fixes slashes", {
   # all slashes should be single "/", and no trailing slash
@@ -154,17 +426,57 @@ test_that("repair_path works with multiple paths", {
   expect_equal(repair_path(c("a//b\\c/", "d\\e//f")), c("a/b/c", "d/e/f"))
 })
 
+test_that("wsl_safe_path() works with multiple paths", {
+  skip_if_not(os_is_wsl())
+  expect_equal(
+    wsl_safe_path(
+      c(
+        "/mnt/c/project/init-1.json",
+        "/mnt/d/project/init-2.json",
+        "relative/init-3.json"
+      ),
+      revert = TRUE
+    ),
+    c(
+      "C:/project/init-1.json",
+      "D:/project/init-2.json",
+      "relative/init-3.json"
+    )
+  )
+  expect_equal(
+    wsl_safe_path(
+      paste0(wsl_dir_prefix(), c("/tmp/init-1.json", "/tmp/init-2.json"))
+    ),
+    c("/tmp/init-1.json", "/tmp/init-2.json")
+  )
+})
+
+test_that("wsl_compatible_run() preserves arguments containing spaces", {
+  skip_if_not(os_is_wsl())
+  arg <- "--filename-in-msg=model filename with spaces.stan"
+  result <- wsl_compatible_run(
+    command = "printf",
+    args = c("%s", arg),
+    wd = cmdstan_path()
+  )
+
+  expect_equal(result$status, 0L)
+  expect_equal(result$stdout, arg)
+})
+
 test_that("list_to_array works with empty list", {
   expect_equal(list_to_array(list()), NULL)
 })
 
 test_that("list_to_array fails for non-numeric values", {
   expect_error(list_to_array(list(k = "test"), name = "test-list"),
-               "All elements in list 'test-list' must be numeric!")
+               "All elements in list 'test-list' must be numeric or logical!")
 })
 
 test_that("cmdstan_make_local() works", {
-  exisiting_make_local <- cmdstan_make_local()
+  # Backup only, cmdstan_make_local() is the thing being tested.
+  local_make_local_backup()
+
   make_local_path <- file.path(cmdstan_path(), "make", "local")
   if (file.exists(make_local_path)) {
     file.remove(make_local_path)
@@ -193,7 +505,218 @@ test_that("cmdstan_make_local() works", {
                ))
   expect_equal(cmdstan_make_local(cpp_options = list("TEST4" = TRUE), append = FALSE),
                c("TEST4=true"))
-  cmdstan_make_local(cpp_options = as.list(exisiting_make_local), append = FALSE)
+})
+
+test_that("cmdstan_make_local() preserves empty make/local behavior", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(dir, "make", "local"))
+
+  expect_identical(cmdstan_make_local(dir = dir), "")
+})
+
+test_that("cmdstan_make_local() reads back written make flags", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_null(cmdstan_make_local(dir = dir))
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXX" = "clang++", STAN_THREADS = TRUE)
+    ),
+    c("CXX=clang++", "STAN_THREADS=true")
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("PRECOMPILED_HEADERS" = FALSE)),
+    c("CXX=clang++", "STAN_THREADS=true", "PRECOMPILED_HEADERS=false")
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("CXX" = "g++"), append = FALSE),
+    "CXX=g++"
+  )
+})
+
+test_that("cmdstan_make_local() does not append flags that are already present", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  make_local_path <- file.path(dir, "make", "local")
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false"),
+    make_local_path
+  )
+
+  # A flag already in the file is not written again.
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false")
+  )
+
+  # Copying the make/local of a previous installation, as suggested by
+  # install_cmdstan(), adds only the flags that are new.
+  previous_install <- c(
+    "CXXFLAGS += -Wno-deprecated-declarations",
+    "PRECOMPILED_HEADERS=false",
+    "O = 3"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = as.list(previous_install)),
+    c(previous_install[1:2], "O = 3")
+  )
+
+  # Leading/trailing whitespace does not defeat the check.
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("  O = 3  ")),
+    c(previous_install[1:2], "O = 3")
+  )
+})
+
+test_that("cmdstan_make_local() appends a flag that a later line has overridden", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    "STAN_THREADS=true"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = FALSE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false")
+  )
+  # make applies the last assignment, so threading is off at this point and
+  # turning it back on is a real change rather than a duplicate
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
+  )
+  # ... and now it is the last assignment again
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
+  )
+})
+
+test_that("cmdstan_make_local() appends a += flag that a later assignment has wiped", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3"),
+    file.path(dir, "make", "local")
+  )
+
+  # CXXFLAGS=-O3 dropped what the += line added, so adding it back is a real
+  # change rather than a duplicate
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3",
+      "CXXFLAGS += -Wno-deprecated-declarations")
+  )
+  # ... and now it is in force again
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3",
+      "CXXFLAGS += -Wno-deprecated-declarations")
+  )
+})
+
+test_that("cmdstan_make_local() checks flags in one call against each other", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STAN_THREADS=false", file.path(dir, "make", "local"))
+
+  # The second flag is a duplicate of the file but not of what the file will
+  # contain once the first flag is written, so both are needed to end up
+  # with threading off
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list(STAN_THREADS = TRUE, STAN_THREADS = FALSE)
+    ),
+    c("STAN_THREADS=false", "STAN_THREADS=true", "STAN_THREADS=false")
+  )
+})
+
+test_that("cmdstan_make_local() leaves line continuations alone", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(c("CXXFLAGS += \\", "  -O2"), file.path(dir, "make", "local"))
+
+  # The opener matches a line in the file, but dropping it would leave a bare
+  # "-O3" that make cannot parse
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "  -O3")
+    ),
+    c("CXXFLAGS += \\", "-O2", "CXXFLAGS += \\", "-O3")
+  )
+})
+
+test_that("cmdstan_make_local() counts a line continuation as an assignment", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("CXXFLAGS=-O2", file.path(dir, "make", "local"))
+
+  # The last CXXFLAGS=-O2 matches the file, but the continued += in between
+  # changes CXXFLAGS, so writing it again is what makes -O2 the final value
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "  -O3", CXXFLAGS = "-O2")
+    ),
+    c("CXXFLAGS=-O2", "CXXFLAGS += \\", "-O3", "CXXFLAGS=-O2")
+  )
+})
+
+test_that("cmdstan_make_local() does not read a continued line as an assignment", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STAN_THREADS=true", file.path(dir, "make", "local"))
+
+  # The first FOO=bar is part of the CXXFLAGS value, so the second one is the
+  # only assignment to FOO and has to be written
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+    ),
+    c("STAN_THREADS=true", "CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+  )
+  # Same when the continued line is already in the file
+  writeLines(c("CXXFLAGS += \\", "FOO=bar"), file.path(dir, "make", "local"))
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(FOO = "bar")),
+    c("CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+  )
+  # And when the file ends with a backslash, so that the first new flag
+  # continues the file's last line
+  writeLines(c("FOO=bar", "CXXFLAGS += \\"), file.path(dir, "make", "local"))
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(FOO = "bar")),
+    c("FOO=bar", "CXXFLAGS += \\", "FOO=bar")
+  )
+})
+
+test_that("cmdstan_make_local() still appends a new value for a known variable", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STANCFLAGS=--O1", file.path(dir, "make", "local"))
+
+  # Same variable, different value: make lets the last assignment win, so this
+  # must not be treated as a duplicate.
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STANCFLAGS = "--Oexperimental")),
+    c("STANCFLAGS=--O1", "STANCFLAGS=--Oexperimental")
+  )
 })
 
 test_that("matching_variables() works", {
@@ -234,6 +757,30 @@ test_that("require_suggested_package() works", {
     require_suggested_package("not_a_real_package"),
     "Please install the 'not_a_real_package' package to use this function."
   )
+})
+
+test_that("use_spinner() respects the cmdstanr_spinner option", {
+  # rlang::is_interactive() is FALSE while testing, so simulate an interactive
+  # session. The option and env var are cleared so that the tests don't inherit
+  # them from the session running the tests.
+  withr::local_options(list(rlang_interactive = TRUE, cmdstanr_spinner = NULL))
+  withr::local_envvar(IN_PKGDOWN = NA)
+  expect_true(use_spinner())
+  withr::with_options(list(cmdstanr_spinner = FALSE), expect_false(use_spinner()))
+  withr::with_options(list(cmdstanr_spinner = TRUE), expect_true(use_spinner()))
+})
+
+test_that("use_spinner() is FALSE unless interactive", {
+  withr::local_options(list(cmdstanr_spinner = NULL))
+  withr::local_envvar(IN_PKGDOWN = NA)
+
+  withr::local_options(rlang_interactive = FALSE)
+  expect_false(use_spinner())
+  withr::with_options(list(cmdstanr_spinner = TRUE), expect_false(use_spinner()))
+
+  withr::local_options(rlang_interactive = TRUE)
+  withr::local_envvar(IN_PKGDOWN = "true")
+  expect_false(use_spinner())
 })
 
 test_that("as_mcmc.list() works", {
@@ -386,4 +933,182 @@ test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/loca
       list(stdout = make_run$stdout)
     }
   )
+})
+
+test_that("local_make_local_backup() heals residue and nests", {
+  make_local_path <- file.path(cmdstan_path(), "make", "local")
+  original <- if (file.exists(make_local_path)) {
+    readBin(make_local_path, "raw", file.size(make_local_path))
+  } else {
+    NULL
+  }
+  withr::defer({
+    if (is.null(original)) {
+      unlink(make_local_path)
+    } else {
+      writeBin(original, make_local_path)
+    }
+    unlink(make_local_backup_path())
+  })
+  contents <- function() {
+    if (file.exists(make_local_path)) readLines(make_local_path) else character()
+  }
+
+  # A run killed before its restore leaves residue in make/local and its backup
+  # behind. The next call must heal from the backup, not adopt the residue.
+  if (is.null(original)) {
+    file.create(make_local_backup_path())
+  } else {
+    writeBin(original, make_local_backup_path())
+  }
+  cat("KILLED_RUN_RESIDUE=true\n", file = make_local_path, append = TRUE)
+
+  local({
+    local_cmdstan_make_local(cpp_options = list(OUTER_OPTION = "true"))
+    expect_false(any(grepl("KILLED_RUN_RESIDUE", contents())))
+    expect_true(any(grepl("OUTER_OPTION", contents())))
+
+    # A nested call restores to the outer state, not to the original.
+    local({
+      local_cmdstan_make_local(cpp_options = list(INNER_OPTION = "true"))
+      expect_true(any(grepl("INNER_OPTION", contents())))
+    })
+    expect_false(any(grepl("INNER_OPTION", contents())))
+    expect_true(any(grepl("OUTER_OPTION", contents())))
+    # The inner call must not have released the backup the outer one holds.
+    expect_true(file.exists(make_local_backup_path()))
+  })
+
+  expect_false(file.exists(make_local_backup_path()))
+  restored <- if (file.exists(make_local_path)) {
+    readBin(make_local_path, "raw", file.size(make_local_path))
+  } else {
+    NULL
+  }
+  expect_identical(restored, original)
+})
+
+test_that("local_make_local_backup() stops when file backup creation fails", {
+  fake_cmdstan <- withr::local_tempdir()
+  dir.create(file.path(fake_cmdstan, "make"))
+  make_local_path <- file.path(fake_cmdstan, "make", "local")
+  writeLines("ORIGINAL=true", make_local_path)
+  make_local_backup$held <- FALSE
+  withr::defer(make_local_backup$held <- FALSE)
+  local_mocked_bindings(cmdstan_path = function() fake_cmdstan)
+  local_mocked_bindings(file.copy = function(...) FALSE, .package = "base")
+
+  expect_snapshot(
+    error = TRUE,
+    local({
+      local_make_local_backup()
+    }),
+    transform = function(lines) {
+      gsub(fake_cmdstan, "<fake-cmdstan>", lines, fixed = TRUE)
+    }
+  )
+
+  expect_identical(readLines(make_local_path), "ORIGINAL=true")
+  expect_false(file.exists(make_local_backup_path()))
+  expect_false(make_local_backup$held)
+})
+
+test_that("local_make_local_backup() stops when sentinel creation fails", {
+  fake_cmdstan <- withr::local_tempdir()
+  dir.create(file.path(fake_cmdstan, "make"))
+  make_local_path <- file.path(fake_cmdstan, "make", "local")
+  make_local_backup$held <- FALSE
+  withr::defer(make_local_backup$held <- FALSE)
+  local_mocked_bindings(cmdstan_path = function() fake_cmdstan)
+  local_mocked_bindings(file.create = function(...) FALSE, .package = "base")
+
+  expect_snapshot(
+    error = TRUE,
+    local({
+      local_make_local_backup()
+    }),
+    transform = function(lines) {
+      gsub(fake_cmdstan, "<fake-cmdstan>", lines, fixed = TRUE)
+    }
+  )
+
+  expect_false(file.exists(make_local_path))
+  expect_false(file.exists(make_local_backup_path()))
+  expect_false(make_local_backup$held)
+})
+
+test_that("local_make_local_backup() retains a failed recovery backup", {
+  fake_cmdstan <- withr::local_tempdir()
+  dir.create(file.path(fake_cmdstan, "make"))
+  make_local_path <- file.path(fake_cmdstan, "make", "local")
+  writeLines("ORIGINAL=true", make_local_path)
+  make_local_backup$held <- FALSE
+  withr::defer(make_local_backup$held <- FALSE)
+  local_mocked_bindings(cmdstan_path = function() fake_cmdstan)
+  real_file_copy <- file.copy
+  copies <- 0L
+  with_mocked_bindings(
+    expect_snapshot(
+      error = TRUE,
+      local({
+        local_make_local_backup()
+        writeLines("MUTATED=true", make_local_path)
+      }),
+      transform = function(lines) {
+        gsub(fake_cmdstan, "<fake-cmdstan>", lines, fixed = TRUE)
+      }
+    ),
+    file.copy = function(...) {
+      copies <<- copies + 1L
+      if (copies == 1L) real_file_copy(...) else FALSE
+    },
+    .package = "base"
+  )
+
+  expect_identical(readLines(make_local_path), "MUTATED=true")
+  expect_true(file.exists(make_local_backup_path()))
+  expect_identical(readLines(make_local_backup_path()), "ORIGINAL=true")
+  expect_false(make_local_backup$held)
+
+  local({
+    local_make_local_backup()
+  })
+  expect_identical(readLines(make_local_path), "ORIGINAL=true")
+  expect_false(file.exists(make_local_backup_path()))
+})
+
+test_that("restore_cmdstan_make_local() preserves the backup when verification fails", {
+  fake_cmdstan <- withr::local_tempdir()
+  dir.create(file.path(fake_cmdstan, "make"))
+  make_local_path <- file.path(fake_cmdstan, "make", "local")
+  backup_path <- file.path(
+    fake_cmdstan,
+    "make",
+    "local.cmdstanr-test-backup"
+  )
+  writeLines("MUTATED=true", make_local_path)
+  writeLines("ORIGINAL=true", backup_path)
+  local_mocked_bindings(cmdstan_path = function() fake_cmdstan)
+  real_file_size <- file.size
+  local_mocked_bindings(
+    file.size = function(path) {
+      if (length(path) == 1 && path %in% c(make_local_path, backup_path)) {
+        return(NA_real_)
+      }
+      real_file_size(path)
+    },
+    file.copy = function(...) FALSE,
+    .package = "base"
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    restore_cmdstan_make_local(),
+    transform = function(lines) {
+      gsub(fake_cmdstan, "<fake-cmdstan>", lines, fixed = TRUE)
+    }
+  )
+
+  expect_identical(readLines(make_local_path), "MUTATED=true")
+  expect_identical(file.exists(backup_path), TRUE)
 })

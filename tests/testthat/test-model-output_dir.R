@@ -29,24 +29,22 @@ test_that("all fitting methods work with output_dir", {
       call_args$save_metric <- TRUE
     }
     fit <- do.call(testing_fit, call_args)
-    # WSL path manipulations result in a short path which slightly differs
-    # from the original tempdir(), so need to normalise both for comparison
+    # Normalize to account for platform-specific path representations.
     expect_equal(normalizePath(fit$runset$args$output_dir),
                  normalizePath(method_dir))
     files <- normalizePath(list.files(method_dir, full.names = TRUE))
+    expect_equal(files[grepl("\\.csv$", files)],
+                 normalizePath(fit$output_files()))
     if (method == "sample") {
       mult <- 3
       expect_equal(files[grepl("metric", files)],
-                   normalizePath(sapply(fit$metric_files(), wsl_safe_path, revert = TRUE,
-                                        USE.NAMES = FALSE)))
+                   normalizePath(fit$metric_files()))
       expect_equal(files[grepl("config", files)],
-                   normalizePath(sapply(fit$config_files(), wsl_safe_path, revert = TRUE,
-                                        USE.NAMES = FALSE)))
+                   normalizePath(fit$config_files()))
     } else {
       mult <- 2
       expect_equal(files[grepl("config", files)],
-                   normalizePath(sapply(fit$config_files(), wsl_safe_path, revert = TRUE,
-                                        USE.NAMES = FALSE)))
+                   normalizePath(fit$config_files()))
     }
     expect_equal(length(list.files(method_dir)), mult * fit$num_procs())
 
@@ -55,7 +53,7 @@ test_that("all fitting methods work with output_dir", {
     fit <- testing_fit("bernoulli", method = method, seed = 123,
                        output_basename = "custom")
     n_files <- length(fit$output_files())
-    files <- paste0("custom-", 1:n_files, ".csv")
+    files <- sprintf("custom-%02d.csv", seq_len(n_files))
     expect_equal(basename(fit$output_files()), files)
   }
 
@@ -68,6 +66,83 @@ test_that("all fitting methods work with output_dir", {
   expect_equal(
     sum(grepl("diagnostic", files)),
     fit$num_procs()
+  )
+  expect_equal(
+    normalizePath(fit$latent_dynamics_files()),
+    normalizePath(list.files(
+      file.path(sandbox, "sample"),
+      pattern = "diagnostic",
+      full.names = TRUE
+    ))
+  )
+})
+
+test_that("explicit WSL output paths are usable by Windows R", {
+  skip_if_not(os_is_wsl())
+  output_dir <- local_output_sandbox("wsl-output-dir")
+  mod <- testing_model("logistic_profiling")
+  utils::capture.output(
+    fit <- mod$sample(
+      data = testing_data("logistic"),
+      chains = 1,
+      parallel_chains = 1,
+      seed = 123,
+      refresh = 0,
+      output_dir = output_dir,
+      save_latent_dynamics = TRUE,
+      save_cmdstan_config = TRUE,
+      save_metric = TRUE
+    )
+  )
+  paths <- c(
+    fit$output_files(),
+    fit$latent_dynamics_files(),
+    fit$profile_files(),
+    fit$config_files(),
+    fit$metric_files()
+  )
+  expect_equal(file.exists(paths), rep(TRUE, length(paths)))
+  expect_equal(
+    normalizePath(dirname(paths)),
+    rep(normalizePath(output_dir), length(paths))
+  )
+  expect_output(fit$cmdstan_summary(), "Inference for Stan model")
+  expect_output(fit$cmdstan_diagnose(), "Processing complete")
+
+  # All generated file types should remain usable when moved by Windows R.
+  save_root <- local_output_sandbox("wsl-save-files")
+  save_dirs <- file.path(
+    save_root,
+    c("output", "diagnostic", "profile", "config", "metric")
+  )
+  for (dir in save_dirs) {
+    dir.create(dir)
+  }
+  saved_paths <- suppressMessages(c(
+    fit$save_output_files(save_dirs[1]),
+    fit$save_latent_dynamics_files(save_dirs[2]),
+    fit$save_profile_files(save_dirs[3]),
+    fit$save_config_files(save_dirs[4]),
+    fit$save_metric_files(save_dirs[5])
+  ))
+  expect_equal(file.exists(saved_paths), rep(TRUE, length(saved_paths)))
+})
+
+test_that("explicit WSL UNC output_dir remains supported", {
+  skip_if_not(os_is_wsl())
+  # This covers explicit output only; #1113's temporary input paths are separate.
+  output_dir <- repair_path(file.path(wsl_dir_prefix(), wsl_tempdir()))
+  withr::defer(unlink(output_dir, recursive = TRUE))
+  fit <- testing_fit(
+    "bernoulli",
+    method = "optimize",
+    output_dir = output_dir
+  )
+
+  expect_equal(file.exists(fit$output_files()), TRUE)
+  expect_equal(
+    normalizePath(dirname(fit$output_files())),
+    normalizePath(output_dir)
   )
 })
 

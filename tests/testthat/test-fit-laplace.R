@@ -41,6 +41,19 @@ test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
   expect_equal(length(lg), length(lp))
 })
 
+test_that("lp_approx() ignores non-matrix default draws formats", {
+  expected <- fit_laplace$draws(
+    variables = "lp_approx__",
+    format = "draws_matrix"
+  )
+  expected <- as.numeric(expected[, "lp_approx__"])
+
+  for (format in c("draws_array", "draws_df")) {
+    withr::local_options(list(cmdstanr_draws_format = format))
+    expect_equal(fit_laplace$lp_approx(), expected)
+  }
+})
+
 test_that("time() method works after laplace", {
   run_times <- fit_laplace$time()
   checkmate::expect_list(run_times, names = "strict", any.missing = FALSE)

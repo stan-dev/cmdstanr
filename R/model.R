@@ -102,7 +102,7 @@
 #' fit_vb$summary()
 #' mcmc_hist(fit_vb$draws("theta"))
 #'
-#' # Run 'pathfinder' method, a new alternative to the variational method
+#' # Run the Pathfinder variational inference method
 #' fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
 #' fit_pf$summary()
 #' mcmc_hist(fit_pf$draws("theta"))
@@ -181,20 +181,30 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
-#'  `$stan_file()` | Return the file path to the Stan program. |
-#'  `$code()` | Return Stan program as a character vector. |
-#'  `$print()`|  Print readable version of Stan program. |
+#'  [`$stan_file()`][model-method-model-info] | Return the file path to the Stan program. |
+#'  [`$has_stan_file()`][model-method-model-info] | Check whether the model was created with a Stan file. |
+#'  [`$code()`][model-method-model-info] | Return Stan program as a character vector. |
+#'  [`$print()`][model-method-model-info] | Print readable version of Stan program. |
 #'  [`$check_syntax()`][model-method-check_syntax]  |  Check Stan syntax without having to compile. |
 #'  [`$format()`][model-method-format]  |  Format and canonicalize the Stan model code. |
+#'
+#'  ## Model information
+#'
+#'  |**Method**|**Description**|
+#'  |:----------|:---------------|
+#'  [`$model_name()`][model-method-model-info] | Return the model name. |
+#'  [`$include_paths()`][model-method-model-info] | Return the Stan include paths. |
+#'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version associated with the model. |
+#'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
 #'
 #'  ## Compilation
 #'
 #'  |**Method**|**Description**|
 #'  |:----------|:---------------|
 #'  [`$compile()`][model-method-compile]  |  Compile Stan program. |
-#'  [`$exe_file()`][model-method-compile] |  Return the file path to the compiled executable. |
-#'  [`$hpp_file()`][model-method-compile] |  Return the file path to the `.hpp` file containing the generated C++ code. |
-#'  [`$save_hpp_file()`][model-method-compile] |  Save the `.hpp` file containing the generated C++ code. |
+#'  [`$exe_file()`][model-method-model-info] |  Return or set the file path to the compiled executable. |
+#'  [`$hpp_file()`][model-method-model-info] |  Return the file path to the `.hpp` file containing the generated C++ code. |
+#'  [`$save_hpp_file()`][model-method-model-info] |  Save the `.hpp` file containing the generated C++ code. |
 #'  [`$expose_functions()`][model-method-expose_functions] |  Expose Stan functions for use in R. |
 #'  [`$cmdstan_defaults()`][model-method-cmdstan_defaults] |  Get CmdStan default argument values for a method. |
 #'
@@ -211,6 +221,7 @@ cmdstan_model <- function(stan_file = NULL, exe_file = NULL, compile = TRUE, ...
 #'  [`$sample()`][model-method-sample] |  Run CmdStan's `"sample"` method, return [`CmdStanMCMC`] object. |
 #'  [`$sample_mpi()`][model-method-sample_mpi] |  Run CmdStan's `"sample"` method with [MPI](https://mc-stan.org/math/md_doxygen_2parallelism__support_2mpi__parallelism.html), return [`CmdStanMCMC`] object. |
 #'  [`$optimize()`][model-method-optimize] |  Run CmdStan's `"optimize"` method, return [`CmdStanMLE`] object. |
+#'  [`$laplace()`][model-method-laplace] |  Run CmdStan's `"laplace"` method, return [`CmdStanLaplace`] object. |
 #'  [`$variational()`][model-method-variational] |  Run CmdStan's `"variational"` method, return [`CmdStanVB`] object. |
 #'  [`$pathfinder()`][model-method-pathfinder] |  Run CmdStan's `"pathfinder"` method, return [`CmdStanPathfinder`] object. |
 #'  [`$generate_quantities()`][model-method-generate-quantities] |  Run CmdStan's `"generate quantities"` method, return [`CmdStanGQ`] object. |
@@ -231,7 +242,14 @@ CmdStanModel <- R6::R6Class(
     cpp_options_ = list(),
     stanc_options_ = list(),
     include_paths_ = NULL,
+    user_header_ = NULL,
     using_user_header_ = FALSE,
+    # Build inputs that have changed since the current executable was produced.
+    user_header_dirty_ = FALSE,
+    include_paths_dirty_ = FALSE,
+    # Options this object passed to make. By contrast, cpp_options_ may also
+    # contain values discovered from executable metadata or make/local.
+    built_cpp_options_ = NULL,
     precompile_cpp_options_ = NULL,
     precompile_stanc_options_ = NULL,
     precompile_include_paths_ = NULL,
@@ -245,33 +263,51 @@ CmdStanModel <- R6::R6Class(
       private$dir_ <- args$dir
       self$functions <- new.env()
       self$functions$compiled <- FALSE
+      # No generated C++ until a compilation commits some.
+      self$functions$existing_exe <- TRUE
       if (!is.null(stan_file)) {
         assert_file_exists(stan_file, access = "r", extension = c("stan", "stanfunctions"))
         checkmate::assert_flag(compile)
-        private$stan_file_ <- absolute_path(stan_file)
+        private$stan_file_ <- resolve_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
-        private$model_name_ <- sub(" ", "_", strip_ext(basename(private$stan_file_)))
-        private$precompile_cpp_options_ <- args$cpp_options %||% list()
+        private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$stan_file_)))
         private$precompile_stanc_options_ <- assert_valid_stanc_options(args$stanc_options) %||% list()
-        if (!is.null(args$user_header) || !is.null(args$cpp_options[["USER_HEADER"]]) ||
-            !is.null(args$cpp_options[["user_header"]])) {
-          private$using_user_header_ <- TRUE
+        # Resolve headers here so compile = FALSE preserves an explicit NULL.
+        # names(args) distinguishes NULL from an omitted argument.
+        resolved_header <- resolve_user_header(
+          user_header = args$user_header,
+          supplied = "user_header" %in% names(args),
+          cpp_options = args$cpp_options %||% list()
+        )
+        if (!compile) {
+          # compile() reports this conflict when compilation is requested.
+          warn_user_header_conflict(resolved_header$conflict)
         }
+        # Keep only the host path here. Persisting the WSL path would break reuse
+        # on WSL1.
+        private$precompile_cpp_options_ <- resolved_header$cpp_options
+        # Use the header supplied to cmdstan_model() as the baseline for change
+        # detection.
+        private$user_header_ <- resolve_path(resolved_header$user_header)
+        private$using_user_header_ <- !is.null(resolved_header$user_header)
         if (is.null(args$include_paths) && any(grepl("#include" , private$stan_code_))) {
-          private$precompile_include_paths_ <- dirname(stan_file)
+          private$precompile_include_paths_ <- dirname(private$stan_file_)
         } else {
-          private$precompile_include_paths_ <- args$include_paths
+          private$precompile_include_paths_ <- resolve_path(args$include_paths)
         }
       }
       if (!is.null(exe_file)) {
         ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
-        private$exe_file_ <- repair_path(absolute_path(exe_file))
+        private$exe_file_ <- resolve_path(exe_file)
         if (is.null(stan_file)) {
           assert_file_exists(private$exe_file_, access = "r", extension = ext)
-          private$model_name_ <- sub(" ", "_", strip_ext(basename(private$exe_file_)))
+          private$model_name_ <- gsub(" ", "_", strip_ext(basename(private$exe_file_)))
         }
+        private$include_paths_ <-
+          private$precompile_include_paths_ %||% resolve_path(args$include_paths)
       }
-      if (!is.null(stan_file) && compile) {
+      compiled_here <- !is.null(stan_file) && compile
+      if (compiled_here) {
         self$compile(...)
       }
 
@@ -280,23 +316,18 @@ CmdStanModel <- R6::R6Class(
       # in the future, will be set only if/when we have a binary
       # as the version the model was compiled with
       private$cmdstan_version_ <- cmdstan_version()
-      if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        cpp_options <- model_compile_info(self$exe_file(), self$cmdstan_version())
-        for (cpp_option_name in names(cpp_options)) {
-          if (cpp_option_name != "stan_version" &&
-              (!is.logical(cpp_options[[cpp_option_name]]) || isTRUE(cpp_options[[cpp_option_name]]))) {
-            private$cpp_options_[[cpp_option_name]] <- cpp_options[[cpp_option_name]]
-          }
-        }
+      # compile() reads the metadata itself on both of its exits.
+      if (!compiled_here &&
+          length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
+        private$cpp_options_ <- merge_exe_info_cpp_options(
+          private$cpp_options_,
+          model_compile_info(self$exe_file(), self$cmdstan_version())
+        )
       }
       invisible(self)
     },
     include_paths = function() {
-      if (length(self$exe_file()) > 0 && file.exists(self$exe_file())) {
-        return(private$include_paths_)
-      } else {
-        return(private$precompile_include_paths_)
-      }
+      private$include_paths_ %||% private$precompile_include_paths_
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
@@ -345,7 +376,7 @@ CmdStanModel <- R6::R6Class(
     },
     hpp_file = function() {
       if (!length(private$hpp_file_)) {
-        stop("The .hpp file does not exists. Please (re)compile the model.", call. = FALSE)
+        stop("The .hpp file does not exist. Please (re)compile the model.", call. = FALSE)
       }
       private$hpp_file_
     },
@@ -364,6 +395,64 @@ CmdStanModel <- R6::R6Class(
     }
   )
 )
+
+# CmdStanModel information methods ---------------------------------------------
+
+#' Access information from a `CmdStanModel` object
+#'
+#' @name model-method-model-info
+#' @family CmdStanModel methods
+#'
+#' @description These methods access information stored in a [`CmdStanModel`]
+#'   object, print its Stan program, and manage paths to its executable and
+#'   generated C++ file.
+#'
+#'   ```
+#'   stan_file()
+#'   has_stan_file()
+#'   code()
+#'   print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
+#'   model_name()
+#'   exe_file(path = NULL)
+#'   include_paths()
+#'   cmdstan_version()
+#'   cpp_options()
+#'   hpp_file()
+#'   save_hpp_file(dir = NULL)
+#'   ```
+#'
+#' @param line_numbers (logical) Should line numbers be printed? The default is
+#'   `getOption("cmdstanr_print_line_numbers", FALSE)`.
+#' @param path (string) The path to a model executable. If `NULL` (the default),
+#'   `$exe_file()` returns the current path. Otherwise, the stored path is
+#'   updated before being returned.
+#' @param dir (string) The directory in which to save the `.hpp` file. The
+#'   default is the directory containing the Stan program.
+#'
+#' @return
+#' * `$stan_file()` returns a path as a string, or `character(0)` if the model
+#'   was created without a Stan file.
+#' * `$has_stan_file()` returns `TRUE` if the model was created with a Stan file
+#'   and `FALSE` otherwise.
+#' * `$code()` returns a character vector with one element per line of Stan
+#'   code, or `NULL` if the model was created without a Stan file.
+#' * `$print()` returns the [`CmdStanModel`] object invisibly.
+#' * `$model_name()` returns the model name as a string.
+#' * `$exe_file()` returns a path as a string, or `character(0)` if no
+#'   executable path is set.
+#' * `$include_paths()` returns a character vector of absolute paths or `NULL`.
+#' * `$cmdstan_version()` returns a CmdStan version as a string.
+#' * `$cpp_options()` returns a named list of C++ options.
+#' * `$hpp_file()` returns the path to the `.hpp` file as a string when C++ code
+#'   was generated while compiling this model object. It errors if no `.hpp`
+#'   path is available, such as when an up-to-date executable was reused.
+#' * `$save_hpp_file()` requires an available `.hpp` file. It moves the file to
+#'   `dir`, updates the stored path, and returns the new path invisibly.
+#'
+#' @seealso [`$compile()`][model-method-compile] and [cmdstan_model()]
+#' @template seealso-docs
+#'
+NULL
 
 # CmdStanModel methods -----------------------------------
 
@@ -384,49 +473,81 @@ CmdStanModel <- R6::R6Class(
 #'   is possible to set `compile=FALSE` in the call to `cmdstan_model()` and
 #'   subsequently call the `$compile()` method directly.
 #'
-#'   After compilation, the paths to the executable and the `.hpp` file
-#'   containing the generated C++ code are available via the `$exe_file()` and
-#'   `$hpp_file()` methods. The default is to create the executable in the same
-#'   directory as the Stan program and to write the generated C++ code in a
-#'   temporary directory. To save the C++ code to a non-temporary location use
-#'   `$save_hpp_file(dir)`.
+#'   After compilation, the path to the executable is available via
+#'   [`$exe_file()`][model-method-model-info]. If compilation generated C++ code
+#'   instead of reusing an up-to-date executable, its path is also available via
+#'   [`$hpp_file()`][model-method-model-info]. Use `force_recompile=TRUE` to
+#'   force generation of the C++ code. By default, the executable is created in
+#'   the same directory as the Stan program and the generated C++ code is
+#'   written to a temporary directory. To save the C++ code to a non-temporary
+#'   location use
+#'   [`$save_hpp_file(dir)`][model-method-model-info].
 #'
 #' @param quiet (logical) Should the verbose output from CmdStan during
 #'   compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
 #'   output.
 #' @param dir (string) The path to the directory in which to store the CmdStan
-#'   executable (or `.hpp` file if using `$save_hpp_file()`). The default is the
-#'   same location as the Stan program.
+#'   executable. The default is the same location as the Stan program.
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   section](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
-#'   the Stan Reference Manual. **Note:** to do a pedantic check for a model
+#'   the Stan User's Guide. **Note:** to do a pedantic check for a model
 #'   without compiling it or for a model that is already compiled the
 #'   [`$check_syntax()`][model-method-check_syntax] method can be used instead.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
-#'   program.
+#'   program. Relative paths are resolved against the working directory when
+#'   the model object is created (or when `$compile()` is called) and stored as
+#'   absolute paths, so subsequent changes to the working directory do not
+#'   affect them. If `$compile()` is called again without `include_paths`, the
+#'   most recently supplied paths are reused, and changing them forces
+#'   recompilation. Edits to the included files themselves do not; see
+#'   `force_recompile`.
 #' @param user_header (string) The path to a C++ file (with a .hpp extension)
-#'   to compile with the Stan model.
+#'   to compile with the Stan model. If `$compile()` is called again without
+#'   `user_header`, the most recently supplied header is reused, and changing
+#'   it forces recompilation. Pass `user_header = NULL` to compile without one.
+#'   A header can also be supplied via `cpp_options` as `USER_HEADER` or
+#'   `user_header`; the `user_header` argument takes precedence over both.
+#'   See `force_recompile` for the case of a header supplied for a program
+#'   whose executable is already up to date.
 #' @param cpp_options (list) Any makefile options to be used when compiling the
-#'   model (`STAN_THREADS`, `STAN_MPI`, `STAN_OPENCL`, etc.). Anything you would
+#'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.). Anything you would
 #'   otherwise write in the `make/local` file. For an example of using threading
-#'   see the Stan case study
-#'   [Reduce Sum: A Minimal Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'   see the Stan case study [Reduce Sum: A Minimal
+#'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
+#'   **Note:** For historical reasons, CmdStan treats some options as enabled
+#'   whenever their `Make` variable is non-empty. In particular, setting
+#'   `stan_threads` to `FALSE` passes `STAN_THREADS=FALSE` to `Make`, which
+#'   still enables threading! To leave threading disabled, either omit
+#'   `stan_threads` entirely, which leaves any setting in `make/local` in
+#'   place, or set it to `NULL`, which passes an empty `STAN_THREADS=` and so
+#'   overrides `make/local` too.
 #' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
 #'   when compiling the model. See the **Examples** section below as well as the
-#'   `stanc` chapter of the CmdStan Guide for more details on available options:
-#'   https://mc-stan.org/docs/cmdstan-guide/stanc.html.
-#' @param force_recompile (logical) Should the model be recompiled even if was
-#'   not modified since last compiled. The default is `FALSE`. Can also be set
-#'   via a global `cmdstanr_force_recompile` option.
+#'   [`stanc` chapter of the CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for more details
+#'   on available options.
+#' @param force_recompile (logical) Should the model be recompiled even if it
+#'   has not been modified since it was last compiled? The default is `FALSE`.
+#'   Can also be set via a global `cmdstanr_force_recompile` option.
+#'
+#'   Only the Stan program itself and the user header (if any) are checked for
+#'   modification. Files pulled in by `#include` directives are not, at any
+#'   depth, so editing an included file does not on its own trigger
+#'   recompilation. Use `force_recompile = TRUE` after changing one. Similarly,
+#'   when a model object is created for a Stan program whose executable already
+#'   exists and is up to date, CmdStanR cannot tell which `user_header` or
+#'   `include_paths` that executable was built with, so supplying different
+#'   ones does not force a rebuild.
 #' @param compile_model_methods (logical) Compile additional model methods
-#'   (`log_prob()`, `grad_log_prob()`, `constrain_variables()`,
-#'   `unconstrain_variables()`). Note: the compiled model-method bindings are
-#'   not preserved in a usable form when saving a model object. If you plan to
-#'   save and reload the model object before model fitting, we recommend instead
+#'   (`log_prob()`, `grad_log_prob()`, `hessian()`, `constrain_variables()`,
+#'   `unconstrain_variables()`, `unconstrain_draws()`, and
+#'   `variable_skeleton()`). Note: the compiled model-method bindings are not
+#'   preserved in a usable form when saving a model object. If you plan to save
+#'   and reload the model object before model fitting, we recommend instead
 #'   waiting to compile the model methods until after fitting via
 #'   [`fit$init_model_methods()`][fit-method-init_model_methods].
 #' @param compile_standalone (logical) Should functions in the Stan model be
@@ -441,26 +562,35 @@ CmdStanModel <- R6::R6Class(
 #'   executable and adding its path to the [`CmdStanModel`] object, but it also
 #'   returns the [`CmdStanModel`] object invisibly.
 #'
-#'   After compilation, the `$exe_file()`, `$hpp_file()`, and `$save_hpp_file()`
-#'   methods can be used and return file paths.
+#'   The [`$exe_file()`][model-method-model-info] method returns the executable
+#'   path. If compilation generated C++ code, the
+#'   [`$hpp_file()`][model-method-model-info] and
+#'   [`$save_hpp_file()`][model-method-model-info] methods can also be used. See
+#'   their linked documentation for return values.
 #'
 #' @seealso The [`$check_syntax()`][model-method-check_syntax] method to check
-#'   Stan syntax or enable pedantic model without compiling.
+#'   Stan syntax or enable pedantic mode without compiling.
 #' @template seealso-docs
 #'
 #' @examples
 #' \dontrun{
-#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' stan_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #'
 #' # by default compilation happens when cmdstan_model() is called.
 #' # to delay compilation until calling the $compile() method set compile=FALSE
-#' mod <- cmdstan_model(file, compile = FALSE)
+#' mod <- cmdstan_model(stan_file, compile = FALSE)
 #' mod$compile()
 #' mod$exe_file()
 #'
-#' # turn on threading support (for using functions that support within-chain parallelization)
-#' mod$compile(force_recompile = TRUE, cpp_options = list(stan_threads = TRUE))
-#' mod$exe_file()
+#' # turn on threading support for using functions that support within-chain
+#' # parallelization or running multiple pathfinder paths in parallel
+#' # (here we compile a copy of the model in a temporary directory so that the
+#' # executable compiled without threading above is not overwritten)
+#' stan_file_threads <- file.path(tempdir(), "bernoulli.stan")
+#' file.copy(stan_file, stan_file_threads)
+#' mod_threads <- cmdstan_model(stan_file_threads, compile = FALSE)
+#' mod_threads$compile(cpp_options = list(stan_threads = TRUE))
+#' mod_threads$cpp_options()
 #'
 #' # turn on pedantic mode
 #' file_pedantic <- write_stan_file("
@@ -471,10 +601,16 @@ CmdStanModel <- R6::R6Class(
 #'   sigma ~ exponential(1);
 #' }
 #' ")
-#' mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
-#'
+#' mod <- cmdstan_model(file_pedantic, compile = FALSE)
+#' mod$compile(pedantic = TRUE)
+#' # same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)
 #' }
 #'
+# Keep requested build inputs after a failure, but update executable-derived
+# state only after installation succeeds. user_header_dirty_ and
+# include_paths_dirty_ stay set until those inputs are compiled successfully.
+# exe_file_ and cmdstan_version_ also describe dry runs. exe_file_ is updated
+# on no-ops as well.
 compile <- function(quiet = TRUE,
                     dir = NULL,
                     pedantic = FALSE,
@@ -494,17 +630,32 @@ compile <- function(quiet = TRUE,
     )
   }
   assert_stan_file_exists(self$stan_file())
+  # missing() distinguishes an omitted header from user_header = NULL.
+  user_header_supplied <- !missing(user_header)
+  cpp_options_supplied <- length(cpp_options) > 0
   if (length(cpp_options) == 0 && !is.null(private$precompile_cpp_options_)) {
     cpp_options <- private$precompile_cpp_options_
   }
+  # Precompile options still need mismatch checks even though they were not
+  # passed to this call.
+  cpp_options_available <- length(cpp_options) > 0
   if (length(stanc_options) == 0 && !is.null(private$precompile_stanc_options_)) {
     stanc_options <- private$precompile_stanc_options_
   }
   stanc_options <- assert_valid_stanc_options(stanc_options)
-  if (is.null(include_paths) && !is.null(private$precompile_include_paths_)) {
-    include_paths <- private$precompile_include_paths_
+  previous_include_paths <-
+    private$include_paths_ %||% private$precompile_include_paths_
+  if (is.null(include_paths)) {
+    include_paths <- previous_include_paths
   }
-  private$include_paths_ <- include_paths
+  resolved_include_paths <- resolve_path(include_paths)
+  # Keep this dirty flag set across failed builds. Include-path order affects
+  # resolution. The first configured value is initial state, not a change.
+  private$include_paths_dirty_ <- isTRUE(private$include_paths_dirty_) ||
+    (length(previous_include_paths) > 0 &&
+       !same_path(resolved_include_paths, previous_include_paths))
+  private$include_paths_ <- resolved_include_paths
+  include_paths <- private$include_paths_
   if (is.null(dir) && !is.null(private$dir_)) {
     dir <- absolute_path(private$dir_)
   } else if (!is.null(dir)) {
@@ -513,9 +664,6 @@ compile <- function(quiet = TRUE,
   if (!is.null(dir)) {
     dir <- repair_path(dir)
     assert_dir_exists(dir, access = "rw")
-    if (length(self$exe_file()) != 0) {
-      private$exe_file_ <- file.path(dir, basename(self$exe_file()))
-    }
   }
 
   exe <- resolve_exe_path(dir, private$dir_, self$exe_file(), self$stan_file())
@@ -525,49 +673,61 @@ compile <- function(quiet = TRUE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  if (isTRUE(cpp_options$stan_opencl)) {
+  if (isTRUE(cpp_option_value(cpp_options, "stan_opencl"))) {
     stanc_options[["use-opencl"]] <- TRUE
   }
 
-  # Note that unlike cpp_options["USER_HEADER"], the user_header variable is deliberately
-  # not transformed with wsl_safe_path() as that breaks the check below on WSLv1
-  if (!is.null(user_header)) {
-    if (!is.null(cpp_options[["USER_HEADER"]]) || !is.null(cpp_options[["user_header"]])) {
-      warning("User header specified both via user_header argument and via cpp_options arguments")
-    }
+  resolved_header <- resolve_user_header(
+    user_header = user_header,
+    supplied = user_header_supplied,
+    cpp_options = cpp_options,
+    cpp_options_supplied = cpp_options_supplied,
+    previous = private$user_header_
+  )
+  warn_user_header_conflict(resolved_header$conflict)
+  user_header <- resolved_header$user_header
+  cpp_options <- resolved_header$cpp_options
 
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(user_header))
+  using_user_header <- !is.null(user_header)
+  if (using_user_header) {
     stanc_options[["allow-undefined"]] <- TRUE
-    private$using_user_header_ <- TRUE
-  } else if (!is.null(cpp_options[["USER_HEADER"]])) {
-    if (!is.null(cpp_options[["user_header"]])) {
-      warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
-    }
-
-    user_header <- cpp_options[["USER_HEADER"]]
-    cpp_options[["USER_HEADER"]] <- wsl_safe_path(absolute_path(cpp_options[["USER_HEADER"]]))
-    private$using_user_header_ <- TRUE
-  } else if (!is.null(cpp_options[["user_header"]])) {
-    user_header <- cpp_options[["user_header"]]
-    cpp_options[["user_header"]] <- wsl_safe_path(absolute_path(cpp_options[["user_header"]]))
-    private$using_user_header_ <- TRUE
+    # Keep user_header as a host path for the WSL1 file check below.
+    user_header <- resolve_path(user_header)
   }
 
+  # Save the request before anything can fail so a failed build can be retried.
+  # Keep the dirty flag set until a build succeeds.
+  private$user_header_dirty_ <- isTRUE(private$user_header_dirty_) ||
+    !same_path(user_header, private$user_header_)
+  private$user_header_ <- user_header
+  private$using_user_header_ <- using_user_header
 
-  if (!is.null(user_header)) {
-    user_header <- absolute_path(user_header) # As mentioned above, just absolute, not wsl_safe_path()
+  if (using_user_header) {
     if (!file.exists(user_header)) {
       stop(paste0("User header file '", user_header, "' does not exist."), call. = FALSE)
     }
+    cpp_options[[resolved_header$spelling]] <- wsl_safe_path(user_header)
   }
+
+  # Do not adopt an executable from a new destination. Its generated C++ and
+  # metadata may not match this object.
+  exe_changed <- length(private$exe_file_) > 0 && !same_path(exe, private$exe_file_)
 
   # compile if:
   # - the user forced compilation,
   # - the executable does not exist
+  # - the destination is not the executable this object already describes
+  # - the user header in use is not the one the executable was built against
+  # - the include paths in use are not the ones the executable was built against
   # - the stan model was changed since last compilation
   # - a user header is used and the user header changed since last compilation (#813)
-  self$exe_file(exe)
   if (!file.exists(exe)) {
+    force_recompile <- TRUE
+  } else if (exe_changed) {
+    force_recompile <- TRUE
+  } else if (isTRUE(private$user_header_dirty_)) {
+    force_recompile <- TRUE
+  } else if (isTRUE(private$include_paths_dirty_)) {
     force_recompile <- TRUE
   } else if (file.exists(self$stan_file())
              && file.mtime(exe) < file.mtime(self$stan_file())) {
@@ -582,17 +742,75 @@ compile <- function(quiet = TRUE,
     if (rlang::is_interactive()) {
       message("Model executable is up to date!")
     }
-    private$cpp_options_ <- cpp_options
-    private$precompile_cpp_options_ <- NULL
-    private$precompile_stanc_options_ <- NULL
-    private$precompile_include_paths_ <- NULL
-    self$functions$existing_exe <- TRUE
+    # A no-op must not record options that were not compiled into the executable.
+    # hpp_code is present only when this object built the executable.
+    built_here <- !is.null(self$functions$hpp_code)
+
+    # Treat unreadable executable metadata as unavailable.
+    exe_info <- tryCatch(
+      model_compile_info(exe, self$cmdstan_version()),
+      error = function(e) NULL
+    )
+
+    # Add options reported as enabled by the executable and keep recorded values
+    # for anything it cannot report.
+    recorded_cpp_options <-
+      merge_exe_info_cpp_options(private$cpp_options_, exe_info)
+
+    # A no-op cannot apply requested cpp_options. Warn instead of recording them
+    # as fact. It would be preferable to rebuild on mismatch (see #1019).
+    options_mismatch <- FALSE
+    if (cpp_options_available) {
+      if (built_here) {
+        # Options reported by the executable but absent from built_options came
+        # from make/local, so a rebuild would inherit them again.
+        built_options <- private$built_cpp_options_
+        inherited <- merge_exe_info_cpp_options(list(), exe_info)
+        # Parse make flags so unnamed assignments also count as explicit.
+        explicit <- names(parsed_cpp_options(built_options)$assignments)
+        inherited <- inherited[!tolower(names(inherited)) %in% explicit]
+        # Command-line options override make/local.
+        options_mismatch <- cpp_options_disagree(
+          c(inherited, cpp_options),
+          c(inherited, built_options)
+        )
+      } else if (length(exe_info) > 0) {
+        # For adopted executables, compare only reported options. The rest are
+        # unknown, not mismatches. It would be preferable to record build
+        # provenance alongside the executable (see #1238).
+        options_mismatch <-
+          !isTRUE(exe_info_reflects_cpp_options(exe_info, cpp_options))
+      }
+    }
+
+    # existing_exe means this object has no generated C++ for the executable.
+    if (length(private$exe_file_) == 0) {
+      self$functions$existing_exe <- TRUE
+    } else {
+      self$functions$existing_exe <- is.null(self$functions$hpp_code)
+    }
+    private$cpp_options_ <- recorded_cpp_options
+    private$exe_file_ <- exe
+    # Update state before warning because warn = 2 turns the warning into an error.
+    if (options_mismatch) {
+      warning(
+        "The 'cpp_options' recorded or reported for the existing executable ",
+        "do not match the ones requested. The executable was not rebuilt, so ",
+        "this call did not apply them. Use 'force_recompile = TRUE' to ",
+        "rebuild the model.",
+        call. = FALSE
+      )
+    }
     return(invisible(self))
   } else {
     if (rlang::is_interactive()) {
       message("Compiling Stan program...")
     }
   }
+
+  # Resolve the CmdStan version before replacing the executable because this
+  # lookup can fail.
+  compiled_cmdstan_version <- cmdstan_version()
 
   if (os_is_wsl() && (compile_model_methods || compile_standalone)) {
     warning("Additional model methods and standalone functions are not ",
@@ -609,44 +827,29 @@ compile <- function(quiet = TRUE,
   if (os_is_windows() && !os_is_wsl()) {
     tmp_exe <- utils::shortPathName(tmp_exe)
   }
-  private$hpp_file_ <- paste0(temp_file_no_ext, ".hpp")
+  hpp_file <- paste0(temp_file_no_ext, ".hpp")
 
   stancflags_val <- include_paths_stanc3_args(include_paths)
 
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
-    } else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
-    }
-  }
-  stancflags_combined <- stanc_built_options
+  stancflags_combined <- stanc_options_to_args(stanc_options, quote_values = TRUE)
+  stancflags_direct <- stanc_options_to_args(stanc_options)
   stancflags_local <- get_cmdstan_flags("STANCFLAGS")
   if (length(stancflags_local) > 0) {
     stancflags_combined <- c(stancflags_combined, stancflags_local)
+    stancflags_direct <- c(stancflags_direct, stancflags_local)
   }
-  stanc_inc_paths <- include_paths_stanc3_args(include_paths, standalone_call = TRUE)
-  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_combined)
-  self$functions$hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
-  private$model_methods_env_ <- new.env()
-  private$model_methods_env_$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_combined))
-  self$functions$external <- !is.null(user_header)
-  self$functions$existing_exe <- FALSE
+  stanc_inc_paths <- include_paths_stanc3_args(include_paths, direct_call = TRUE)
+  stancflags_standalone <- c("--standalone-functions", stanc_inc_paths, stancflags_direct)
+  standalone_hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
+  model_methods_env <- new.env()
+  model_methods_env$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
   if (!dry_run) {
-
-    if (compile_standalone) {
-      expose_stan_functions(self$functions, !quiet)
-    }
 
     withr::with_envvar(
       c("HOME" = short_path(Sys.getenv("HOME"))),
@@ -663,7 +866,7 @@ compile <- function(quiet = TRUE,
           wd = cmdstan_path(),
           echo = !quiet || is_verbose_mode(),
           echo_cmd = is_verbose_mode(),
-          spinner = quiet && rlang::is_interactive() && !identical(Sys.getenv("IN_PKGDOWN"), "true"),
+          spinner = quiet && use_spinner(),
           stderr_callback = function(x, p) {
             if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
               message(x)
@@ -701,39 +904,75 @@ compile <- function(quiet = TRUE,
       )
     )
     if (is.na(run_log$status) || run_log$status != 0) {
-      err_msg <- "An error occured during compilation! See the message above for more information."
-      if (grepl("auto-format flag to stanc", run_log$stderr)) {
-        format_msg <- "\nTo fix deprecated or removed syntax please see ?cmdstanr::format for an example."
-        err_msg <- paste(err_msg, format_msg)
-      }
-      stop(err_msg, call. = FALSE)
+      stop("An error occurred during compilation! See the message above for more information.",
+           call. = FALSE)
     }
-    if (file.exists(exe)) {
-      file.remove(exe)
-    }
-    file.copy(tmp_exe, exe, overwrite = TRUE)
-    if (os_is_wsl()) {
-      res <- processx::run(
-        command = "wsl",
-        args = c("chmod", "+x", wsl_safe_path(exe)),
-        error_on_status = FALSE
+    # Finish fallible work before installing the executable. Write the model-method
+    # header after make because make uses the same path.
+    stan_code <- readLines(temp_stan_file)
+    writeLines(model_methods_env$hpp_code_,
+               con = wsl_safe_path(hpp_file, revert = TRUE))
+
+    # Clear functions in place to preserve existing references. Because the public
+    # field can be replaced, verify it is a mutable environment before installing.
+    if (!is.environment(self$functions) ||
+        environmentIsLocked(self$functions)) {
+      stop(
+        "The model's 'functions' environment is missing or locked, so the ",
+        "compiled model could not be recorded. The executable was not replaced.",
+        call. = FALSE
       )
     }
 
-    writeLines(private$model_methods_env_$hpp_code_,
-               con = wsl_safe_path(private$hpp_file_, revert = TRUE))
+    leftover_backup <- install_executable(tmp_exe, exe)
+
+    # Commit executable-derived state only after installation succeeds.
+    rm(list = ls(self$functions, all.names = TRUE), envir = self$functions)
+    self$functions$compiled <- FALSE
+    self$functions$hpp_code <- standalone_hpp_code
+    self$functions$external <- using_user_header
+    self$functions$existing_exe <- FALSE
+    private$stan_code_ <- stan_code
+    private$variables_ <- NULL
+    private$user_header_dirty_ <- FALSE
+    private$include_paths_dirty_ <- FALSE
+    private$hpp_file_ <- hpp_file
+    private$model_methods_env_ <- model_methods_env
+    private$cpp_options_ <- cpp_options
+    private$built_cpp_options_ <- cpp_options
+    private$precompile_cpp_options_ <- NULL
+    private$precompile_stanc_options_ <- NULL
+    private$precompile_include_paths_ <- NULL
   } # End - if(!dry_run)
 
-  private$cmdstan_version_ <- cmdstan_version()
+  # These fields also describe dry runs, so update them outside the commit block.
+  private$cmdstan_version_ <- compiled_cmdstan_version
   private$exe_file_ <- exe
-  private$cpp_options_ <- cpp_options
-  private$precompile_cpp_options_ <- NULL
-  private$precompile_stanc_options_ <- NULL
-  private$precompile_include_paths_ <- NULL
 
   if (!dry_run) {
+    # Learn options the executable reports that were never passed, such as ones
+    # inherited from make/local. Ahead of the exposures, which can fail.
+    exe_info <- tryCatch(
+      model_compile_info(exe, self$cmdstan_version()),
+      error = function(e) NULL
+    )
+    private$cpp_options_ <-
+      merge_exe_info_cpp_options(private$cpp_options_, exe_info)
+
+    # Run optional exposure only after executable state is committed.
+    if (compile_standalone) {
+      expose_stan_functions(self$functions, verbose = !quiet)
+    }
     if (compile_model_methods) {
       expose_model_methods(env = private$model_methods_env_, verbose = !quiet)
+    }
+    if (!is.null(leftover_backup)) {
+      # Warn last because warn = 2 aborts the remaining work.
+      warning(
+        "The previously compiled executable could not be removed. ",
+        "It has been left at '", leftover_backup, "'.",
+        call. = FALSE
+      )
     }
   }
   invisible(self)
@@ -750,25 +989,44 @@ CmdStanModel$set("public", name = "compile", value = compile)
 #'   a list, each element representing a Stan model block: `data`, `parameters`,
 #'   `transformed_parameters` and `generated_quantities`.
 #'
-#'   Each element contains a list of variables, with each variables represented
-#'   as a list with infromation on its scalar type (`real` or `int`) and
+#'   Each element contains a list of variables, with each variable represented
+#'   as a list with information on its scalar type (`real` or `int`) and
 #'   number of dimensions.
+#'
+#'   The number of dimensions reported is the number of indexing dimensions in
+#'   the declared Stan variable, equivalently the number of indices needed to
+#'   access one scalar element. This means a scalar has 0 dimensions, a vector
+#'   or one-dimensional array has 1, and a matrix or two-dimensional array has
+#'   2. Array dimensions are added to any vector or matrix dimensions, so
+#'   `array[J] matrix[N, K]` has 3 dimensions. See **Examples**.
 #'
 #'   `transformed data` is not included, as variables in that block are not
 #'   part of the model's input or output.
 #'
-#' @return The `$variables()` returns a list with information on input and
-#'   output variables for each of the Stan model blocks.
+#' @return The method returns a list with information on input and output
+#'   variables for each of the Stan model blocks.
+#'
+#' @seealso [write_stan_json()] for writing data for CmdStan.
 #'
 #' @examples
 #' \dontrun{
-#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' stan_file <- write_stan_file("
+#' data {
+#'   int N;
+#'   array[2, 3] int y;
+#' }
+#' parameters {
+#'   real alpha;
+#'   vector[N] beta;
+#'   array[2] matrix[3, 4] theta;
+#' }
+#' ")
 #'
-#' # create a `CmdStanModel` object, compiling the model is not required
-#' mod <- cmdstan_model(file, compile = FALSE)
+#' # create a CmdStanModel object, compiling the model is not required
+#' mod <- cmdstan_model(stan_file, compile = FALSE)
 #'
-#' mod$variables()
-#'
+#' vars <- mod$variables()
+#' str(vars)
 #' }
 #'
 variables <- function() {
@@ -799,13 +1057,13 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #'
 #' @description The `$check_syntax()` method of a [`CmdStanModel`] object
 #'   checks the Stan program for syntax errors and returns `TRUE` (invisibly) if
-#'   parsing succeeds. If invalid syntax in found an error is thrown.
+#'   parsing succeeds. If invalid syntax is found an error is thrown.
 #'
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
 #'   `FALSE`. Pedantic mode attempts to warn you about potential issues in your
 #'   Stan program beyond syntax errors. For details see the [*Pedantic mode*
 #'   chapter](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html) in
-#'   the Stan Reference Manual.
+#'   the Stan User's Guide.
 #' @param include_paths (character vector) Paths to directories where Stan
 #'   should look for files specified in `#include` directives in the Stan
 #'   program.
@@ -861,6 +1119,9 @@ check_syntax <- function(pedantic = FALSE,
   if (is.null(include_paths) && !is.null(self$include_paths())) {
     include_paths <- self$include_paths()
   }
+  if (private$using_user_header_) {
+    stanc_options[["allow-undefined"]] <- TRUE
+  }
 
   temp_hpp_file <- tempfile(pattern = "model-", fileext = ".hpp")
   stanc_options[["o"]] <- wsl_safe_path(temp_hpp_file)
@@ -869,22 +1130,15 @@ check_syntax <- function(pedantic = FALSE,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
 
-  stancflags_val <- include_paths_stanc3_args(include_paths)
+  stancflags_val <- include_paths_stanc3_args(
+    include_paths,
+    direct_call = TRUE
+  )
 
   if (is.null(stanc_options[["name"]])) {
     stanc_options[["name"]] <- paste0(self$model_name(), "_model")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]]))) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", stanc_options[[i]]))
-    } else {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name, "=", stanc_options[[i]]))
-    }
-  }
+  stanc_built_options <- stanc_options_to_args(stanc_options)
 
   withr::with_path(
     c(
@@ -897,7 +1151,7 @@ check_syntax <- function(pedantic = FALSE,
       wd = cmdstan_path(),
       echo = is_verbose_mode(),
       echo_cmd = is_verbose_mode(),
-      spinner = quiet && rlang::is_interactive(),
+      spinner = quiet && use_spinner(),
       stderr_callback = function(x, p) {
         message(x)
       },
@@ -923,11 +1177,11 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #' @family CmdStanModel methods
 #'
 #' @description The `$format()` method of a [`CmdStanModel`] object
-#'   runs stanc's auto-formatter on the model code. Either saves the formatted
-#'   model directly back to the file or prints it for inspection.
+#'   runs stanc's auto-formatter on the model code. It either saves the
+#'   formatted model directly back to the file or prints it for inspection.
 #'
 #' @param overwrite_file (logical) Should the formatted code be written back
-#'   to the input model file. The default is `FALSE`.
+#'   to the input model file? The default is `FALSE`.
 #' @param canonicalize (list or logical) Defines whether or not the compiler
 #'   should 'canonicalize' the Stan model, removing things like deprecated syntax.
 #'   Default is `FALSE`. If `TRUE`, all canonicalizations are run. You can also
@@ -935,17 +1189,19 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 #'   are passed to `stanc`. See the
 #'   [User's guide section](https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing)
 #'   for available canonicalization options.
-#' @param backup (logical) If `TRUE`, create stanfile.bak backups before
-#'   writing to the file. Disable this option if you're sure you have other
-#'   copies of the file or are using a version control system like Git. Defaults
-#'   to `TRUE`. The value is ignored if `overwrite_file = FALSE`.
+#' @param backup (logical) If `TRUE`, create a backup before writing to the
+#'   file. The backup filename is the Stan filename followed by
+#'   `.bak-YYYYMMDDHHMMSS`, where the final digits encode the timestamp. Disable
+#'   this option if you're sure you have other copies of the file or are using a
+#'   version control system like Git. Defaults to `TRUE`. The value is ignored
+#'   if `overwrite_file = FALSE`.
 #' @param max_line_length (integer) The maximum length of a line when formatting.
 #'   The default is `NULL`, which defers to the default line length of stanc.
 #' @param quiet (logical) Should informational messages be suppressed? The
 #'   default is `FALSE`.
 #'
-#' @return The `$format()` method returns `TRUE` (invisibly) if the model
-#'   is valid.
+#' @return The `$format()` method returns `TRUE` (invisibly) if formatting
+#'   succeeds.
 #'
 #' @template seealso-docs
 #'
@@ -992,34 +1248,24 @@ format <- function(overwrite_file = FALSE,
     max_line_length,
     lower = 1, len = 1, null.ok = TRUE
   )
-  stanc_options <- private$precompile_stanc_options_
-  stancflags_val <- include_paths_stanc3_args(self$include_paths())
-  stanc_options["auto-format"] <- TRUE
+  stanc_options <- as.list(private$precompile_stanc_options_)
+  stancflags_val <- include_paths_stanc3_args(
+    self$include_paths(),
+    direct_call = TRUE
+  )
+  if (private$using_user_header_) {
+    stanc_options[["allow-undefined"]] <- TRUE
+  }
+  stanc_options[["auto-format"]] <- TRUE
   if (!is.null(max_line_length)) {
-    stanc_options["max-line-length"] <- max_line_length
+    stanc_options[["max-line-length"]] <- max_line_length
   }
   if (isTRUE(canonicalize)) {
-    stanc_options["print-canonical"] <- TRUE
+    stanc_options[["print-canonical"]] <- TRUE
   } else if (is.list(canonicalize) && length(canonicalize) > 0){
-    stanc_options["canonicalize"] <- paste0(canonicalize, collapse = ",")
+    stanc_options[["canonicalize"]] <- paste0(canonicalize, collapse = ",")
   }
-  stanc_built_options <- c()
-  for (i in seq_len(length(stanc_options))) {
-    option_name <- names(stanc_options)[i]
-    if (isTRUE(as.logical(stanc_options[[i]])) && !is.numeric(stanc_options[[i]])) {
-      stanc_built_options <- c(stanc_built_options, paste0("--", option_name))
-    } else if (is.null(option_name) || !nzchar(option_name)) {
-      stanc_built_options <- c(
-        stanc_built_options,
-        paste0("--", stanc_options[[i]])
-      )
-    } else {
-      stanc_built_options <- c(
-        stanc_built_options,
-        paste0("--", option_name, "=", stanc_options[[i]])
-      )
-    }
-  }
+  stanc_built_options <- stanc_options_to_args(stanc_options)
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
@@ -1061,6 +1307,8 @@ format <- function(overwrite_file = FALSE,
   cat(run_log$stdout, file = out_file, sep = "\n")
   if (isTRUE(overwrite_file)) {
     private$stan_code_ <- readLines(self$stan_file())
+    # Force variables() to reparse the formatted source.
+    private$variables_ <- NULL
   }
 
   invisible(TRUE)
@@ -1076,15 +1324,17 @@ CmdStanModel$set("public", name = "format", value = format)
 #' @description The `$sample()` method of a [`CmdStanModel`] object runs Stan's
 #'   main Markov chain Monte Carlo algorithm.
 #'
-#'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
-#'   for more details.
-#'
 #'   After model fitting any diagnostics specified via the `diagnostics`
 #'   argument will be checked and warnings will be printed if warranted.
 #'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
+#'
 #' @template model-common-args
+#' @template model-save-latent-dynamics-arg
 #' @template model-sample-args
 #' @param show_progress_bar (logical). When `TRUE`, registers a progress bar to
 #'   display sampling progress via the `progressr` framework. The user is
@@ -1148,7 +1398,8 @@ sample <- function(data = NULL,
                    show_progress_bar = FALSE,
                    suppress_iteration_messages = NULL) {
 
-  if (self$cmdstan_version() < "2.36.0" && !fixed_param) {
+  if (cmdstan_version_compare(self$cmdstan_version(), "2.36.0") < 0 &&
+      !fixed_param) {
     if (self$has_stan_file() && file.exists(self$stan_file())) {
       if (!is.null(self$variables()) && length(self$variables()$parameters) == 0) {
         stop("Model contains no parameters. Please use 'fixed_param = TRUE'.", call. = FALSE)
@@ -1258,12 +1509,12 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'
 #'   An example of compiling with MPI:
 #'   ```
-#'   mpi_options = list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+#'   mpi_options = list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 #'   mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 #'   ```
 #'   The C++ options that must be supplied to the
 #'   [compile][model-method-compile] call are:
-#'   - `STAN_MPI`: Enables the use of MPI with Stan if `TRUE`.
+#'   - `stan_mpi`: Enables the use of MPI with Stan if `TRUE`.
 #'   - `CXX`: The name of the MPI C++ compiler wrapper. Typically `"mpicxx"`.
 #'   - `TBB_CXX_TYPE`: The C++ compiler the MPI wrapper wraps. Typically `"gcc"`
 #'   on Linux and `"clang"` on macOS.
@@ -1303,7 +1554,7 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'
 #' @examples
 #' \dontrun{
-#' # mpi_options <- list(STAN_MPI=TRUE, CXX="mpicxx", TBB_CXX_TYPE="gcc")
+#' # mpi_options <- list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
 #' # mod <- cmdstan_model("model.stan", cpp_options = mpi_options)
 #' # fit <- mod$sample_mpi(..., mpi_args = list("n" = 4))
 #' }
@@ -1405,27 +1656,25 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' @family CmdStanModel methods
 #'
 #' @description The `$optimize()` method of a [`CmdStanModel`] object runs
-#'   Stan's optimizer to find a posterior mode. If the Jacobian adjustment is
-#'   not included (the default), the optimization returns parameter values that
-#'   correspond to a mode of the target in the constrained space (if such mode
-#'   exists). Thus this option is useful for any optimization where we want to
-#'   find the mode in the original constrained parameter space. If the Jacobian
-#'   adjustment is included, the optimization returns parameter values that
-#'   correspond to a mode in the unconstrained space. This is useful, for
-#'   example, if we want to make a distributional approximation of the posterior
-#'   at the mode (see, [Laplace sampling][model-method-laplace], for which the
-#'   Jacobian adjustment needs to be included for correct results). If the model
-#'   has only unconstrained parameters, there is no effect from including the
-#'   Jacobian. See the
-#'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/index.html)
-#'   for more details.
+#'   Stan's optimizer. Without the Jacobian adjustment (the default),
+#'   optimization finds a mode of the target in the original constrained
+#'   parameter space (if the mode exists). With the adjustment, it finds a mode
+#'   of the corresponding density in the unconstrained parameter space.
+#'
+#'   The `jacobian` argument does not determine whether prior terms are
+#'   included. Every contribution to the Stan program's `target`, including
+#'   prior terms, is included under either setting. The Jacobian adjustment is
+#'   particularly useful when making a distributional approximation in the
+#'   unconstrained space (see [Laplace sampling][model-method-laplace]). If the
+#'   model has only unconstrained parameters, including the Jacobian has no
+#'   effect. See the [CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/index.html) for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
 #'   installed version of CmdStan. See the [CmdStan User’s
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
-#'   default arguments. The default values can also be obtained by checking the
-#'   metadata of an example model, e.g.,
-#'   `cmdstanr_example(method="optimize")$metadata()`.
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @param threads (positive integer) If the model was
@@ -1439,11 +1688,12 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   the CmdStan User's Guide. The default values can also be obtained by
 #'   running `cmdstanr_example(method="optimize")$metadata()`.
 #' @param jacobian (logical) Whether or not to use the Jacobian adjustment for
-#'   constrained variables. For historical reasons, the default is `FALSE`,
-#'   meaning optimization finds a mode of the target in the original constrained
-#'   parameter space. Setting it to `TRUE` finds a mode in the unconstrained
-#'   space. See the CmdStan User's Guide for more details. For use later with
-#'   [`$laplace()`][model-method-laplace] the `jacobian` argument should
+#'   constrained variables. For historical reasons, the default is `FALSE`.
+#'   `FALSE` finds a mode of the target in the constrained parameter space and
+#'   `TRUE` finds a mode in the unconstrained space. This argument does not
+#'   control whether prior terms are included. See the **Description** section
+#'   and the CmdStan User's Guide for more details. For use later with
+#'   [`$laplace()`][model-method-laplace], the `jacobian` argument should
 #'   typically be set to `TRUE`.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
@@ -1470,7 +1720,6 @@ optimize <- function(data = NULL,
                      seed = NULL,
                      refresh = NULL,
                      init = NULL,
-                     save_latent_dynamics = FALSE,
                      output_dir = getOption("cmdstanr_output_dir"),
                      output_basename = NULL,
                      sig_figs = NULL,
@@ -1521,7 +1770,7 @@ optimize <- function(data = NULL,
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data, model_variables),
-    save_latent_dynamics = save_latent_dynamics,
+    save_latent_dynamics = FALSE,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -1547,21 +1796,21 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' @description The `$laplace()` method of a [`CmdStanModel`] object produces a
 #'   sample from a normal approximation centered at the mode of a distribution
-#'   in the unconstrained space. If the mode is a maximum a posteriori (MAP)
-#'   estimate, the samples provide an estimate of the mean and standard
-#'   deviation of the posterior distribution. If the mode is a maximum
-#'   likelihood estimate (MLE), the sample provides an estimate of the standard
-#'   error of the likelihood. Whether the mode is the MAP or MLE depends on
-#'   the value of the `jacobian` argument when running optimization. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   in the unconstrained space. When the mode was found with the Jacobian
+#'   adjustment, the draws provide an estimate of the mean and standard
+#'   deviation of the posterior distribution. See the `jacobian` argument below
+#'   for how this setting relates to the value used when running optimization,
+#'   and the [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan.
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
 #' @inheritParams model-method-optimize
-#' @param save_latent_dynamics Ignored for this method.
 #' @param mode (multiple options) The mode to center the approximation at. One
 #'   of the following:
 #'   * A [`CmdStanMLE`] object from a previous run of [`$optimize()`][model-method-optimize].
@@ -1577,10 +1826,11 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' @param draws (positive integer) The number of draws to take.
 #' @param jacobian (logical) Whether or not to enable the Jacobian adjustment
 #'   for constrained parameters. The default is `TRUE`. See the
-#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace-sampling.html)
+#'   [Laplace Sampling](https://mc-stan.org/docs/cmdstan-guide/laplace_sample_config.html)
 #'   section of the CmdStan User's Guide for more details. If `mode` is not
 #'   `NULL` then the value of `jacobian` must match the value used when
-#'   optimization was originally run. If `mode` is `NULL` then the value of
+#'   optimization was originally run so the mode and the Laplace approximation
+#'   use the same target density. If `mode` is `NULL` then the value of
 #'   `jacobian` specified here is used when running optimization.
 #'
 #' @return A [`CmdStanLaplace`] object.
@@ -1617,7 +1867,6 @@ laplace <- function(data = NULL,
                     seed = NULL,
                     refresh = NULL,
                     init = NULL,
-                    save_latent_dynamics = FALSE,
                     output_dir = getOption("cmdstanr_output_dir"),
                     output_basename = NULL,
                     sig_figs = NULL,
@@ -1655,14 +1904,17 @@ laplace <- function(data = NULL,
     }
   } else { # mode = NULL, run optimize()
     checkmate::assert_list(opt_args, any.missing = FALSE, names = "unique", null.ok = TRUE)
+    mode_output_basename <- output_basename
+    if (!is.null(mode_output_basename)) {
+      mode_output_basename <- paste0(mode_output_basename, "-mode")
+    }
     args <- list(
       data = data,
       seed = seed,
       refresh = refresh,
       init = init,
-      save_latent_dynamics = FALSE,
       output_dir = output_dir,
-      output_basename = output_basename,
+      output_basename = mode_output_basename,
       sig_figs = sig_figs,
       threads = threads,
       opencl_ids = opencl_ids,
@@ -1727,9 +1979,13 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan.
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
+#' @template model-save-latent-dynamics-arg
 #' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., when using the Stan
@@ -1862,13 +2118,18 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
 #'
 #' @template model-common-args
-#' @param num_threads (positive integer) If the model was
+#' @param threads (positive integer) If the model was
 #'   [compiled][model-method-compile] with threading support, the number of
 #'   threads to use in parallelized sections (e.g., for multi-path pathfinder
 #'   as well as `reduce_sum`).
+#' @param num_threads Deprecated and will be removed in a future release. Use
+#'   `threads` instead.
 #' @param init_alpha (positive real) The initial step size parameter.
 #' @param tol_obj (positive real) Convergence tolerance on changes in objective function value.
 #' @param tol_rel_obj (positive real) Convergence tolerance on relative changes in objective function value.
@@ -1881,16 +2142,27 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   pathfinder should return. The number of draws PSIS sampling samples from
 #'   will be equal to `single_path_draws * num_paths`.
 #' @param draws (positive integer) Number of draws to return after performing
-#'   pareto smooted importance sampling (PSIS). This should be smaller than
-#'   `single_path_draws * num_paths` (future versions of CmdStan will throw a
-#'   warning).
-#' @param num_paths (positive integer) Number of single pathfinders to run.
+#'   Pareto smoothed importance sampling (PSIS). This should be smaller than
+#'   `single_path_draws * num_paths`.
+#' @param num_paths (positive integer) Number of single pathfinders to run. The
+#'   default is `4`. The paths are run sequentially unless the model was
+#'   [compiled][model-method-compile] with `cpp_options = list(stan_threads =
+#'   TRUE)` and `threads` is set, so running multiple paths in parallel requires
+#'   both.
 #' @param max_lbfgs_iters (positive integer) The maximum number of iterations
 #'   for LBFGS.
 #' @param num_elbo_draws (positive integer) Number of draws to make when
 #'   calculating the ELBO of the approximation at each iteration of LBFGS.
-#' @param save_single_paths (logical) Whether to save the results of single
-#'   pathfinder runs in multi-pathfinder.
+#' @param save_single_paths (logical) Whether to save the output from each
+#'   single-Pathfinder run. For a multi-path run, CmdStan writes one Stan CSV
+#'   file containing draws and one JSON file containing the L-BFGS and ELBO
+#'   iterations for each path. For a single-path run, the main output CSV
+#'   contains the draws and CmdStan writes an additional JSON file. The
+#'   auxiliary files are written to `output_dir`, or to a temporary directory
+#'   if `output_dir = NULL`. They are not included in the paths returned by the
+#'   fitted object's `$output_files()` method. See the [CmdStan User's
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder_config.html#single-path-pathfinder-outputs)
+#'   for details.
 #' @param psis_resample (logical) Whether to perform pareto smoothed importance sampling.
 #'  If `TRUE`, the number of draws returned will be equal to `draws`.
 #'  If `FALSE`, the number of draws returned will be equal to `single_path_draws * num_paths`.
@@ -1900,8 +2172,6 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'  ELBO in the pathfinder steps. All other draws will have a log probability of `NA`.
 #'  A value of `FALSE` will also turn off pareto smoothed importance sampling as the
 #'  lp calculation is needed for PSIS.
-#' @param save_single_paths (logical) Whether to save the results of single
-#'   pathfinder runs in multi-pathfinder.
 #' @return A [`CmdStanPathfinder`] object.
 #'
 #' @references
@@ -1921,10 +2191,10 @@ pathfinder <- function(data = NULL,
                        seed = NULL,
                        refresh = NULL,
                        init = NULL,
-                       save_latent_dynamics = FALSE,
                        output_dir = getOption("cmdstanr_output_dir"),
                        output_basename = NULL,
                        sig_figs = NULL,
+                       threads = NULL,
                        opencl_ids = NULL,
                        num_threads = NULL,
                        init_alpha = NULL,
@@ -1945,11 +2215,21 @@ pathfinder <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+  if (!is.null(num_threads)) {
+    if (!is.null(threads)) {
+      stop("Cannot specify both 'threads' and deprecated 'num_threads'.", call. = FALSE)
+    }
+    warning(
+      "'num_threads' is deprecated as of CmdStanR 1.0.0 and will be removed in a future release. Please use 'threads' instead.",
+      call. = FALSE
+    )
+    threads <- num_threads
+  }
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    threads_per_proc = assert_valid_threads(num_threads, self$cpp_options())
+    threads_per_proc = assert_valid_threads(threads, self$cpp_options())
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1982,7 +2262,7 @@ pathfinder <- function(data = NULL,
     exe_file = self$exe_file(),
     proc_ids = 1,
     data_file = process_data(data, model_variables),
-    save_latent_dynamics = save_latent_dynamics,
+    save_latent_dynamics = FALSE,
     seed = seed,
     init = init,
     refresh = refresh,
@@ -1991,7 +2271,6 @@ pathfinder <- function(data = NULL,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, self$cpp_options()),
     model_variables = model_variables,
-    num_threads = num_threads,
     save_cmdstan_config = save_cmdstan_config
   )
   runset <- CmdStanRun$new(args, procs)
@@ -2011,20 +2290,33 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #'   runs Stan's standalone generated quantities to obtain generated quantities
 #'   based on previously fitted parameters.
 #'
+#'   Any argument left as `NULL` will default to the default value used by the
+#'   installed version of CmdStan. See the [CmdStan User’s
+#'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
+#'   default arguments. These values are also available via the
+#'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
+#'
 #' @inheritParams model-method-sample
 #' @param fitted_params (multiple options) The parameter draws to use. One of
 #'   the following:
-#'  * A [CmdStanMCMC] or [CmdStanVB] fitted model object.
-#'  * A [posterior::draws_array] (for MCMC) or [posterior::draws_matrix] (for
-#'  VB) object returned by CmdStanR's [`$draws()`][fit-method-draws] method.
+#'  * A [CmdStanMCMC], [CmdStanMLE], [CmdStanLaplace], [CmdStanVB], or
+#'  [CmdStanPathfinder] fitted model object.
+#'  * A [posterior::draws_array] or [posterior::draws_matrix] object returned by
+#'  CmdStanR's [`$draws()`][fit-method-draws] method.
 #'  * A character vector of paths to CmdStan CSV output files.
 #'
-#' NOTE: if you plan on making many calls to `$generate_quantities()` then the
-#' most efficient option is to pass the paths of the CmdStan CSV output files
-#' (this avoids CmdStanR having to rewrite the draws contained in the fitted
-#' model object to CSV each time). If you no longer have the CSV files you can
-#' use [draws_to_csv()] once to write them and then pass the resulting file
-#' paths to `$generate_quantities()` as many times as needed.
+#' For a [CmdStanMLE] object, optimization supplies one point estimate, so
+#' generated quantities that use RNG functions produce only one simulation.
+#' For [CmdStanLaplace], [CmdStanVB], and [CmdStanPathfinder] objects, generated
+#' quantities are evaluated once per approximate draw.
+#'
+#' NOTE: CmdStan CSV paths are used directly. A [CmdStanMCMC] object also reuses
+#' its original output files when they are available. If any of those files are
+#' unavailable, CmdStanR writes the in-memory draws to temporary CSV files.
+#' Other fitted model objects and posterior draws objects are converted to
+#' temporary CSV files on each call. For repeated calls that require this
+#' conversion, we recommend using [draws_to_csv()] once and passing the
+#' resulting paths to `$generate_quantities()`.
 #'
 #' @return A [`CmdStanGQ`] object.
 #'
@@ -2132,6 +2424,12 @@ CmdStanModel$set("public", name = "generate_quantities", value = generate_quanti
 #'   finite differences. Discrepancies between the two indicate that there is
 #'   a problem with the model or initial states or else there is a bug in Stan.
 #'
+#'   Unlike other CmdStan methods, `$diagnose()` does not expose `show_messages`
+#'   or `show_exceptions` arguments. CmdStan's standard output is not printed
+#'   during execution, while standard error is always displayed. The captured
+#'   console output can be inspected with the returned object's
+#'   [`$output()`][fit-method-output] method.
+#'
 #' @inheritParams model-method-sample
 #' @param epsilon (positive real) The finite difference step size. Default
 #'   value is 1e-6.
@@ -2139,6 +2437,9 @@ CmdStanModel$set("public", name = "generate_quantities", value = generate_quanti
 #'
 #' @return A [`CmdStanDiagnose`] object.
 #'
+#' @seealso The [`$gradients()`][fit-method-gradients] method for accessing the
+#'   gradients and the [`$output()`][fit-method-output] method for displaying
+#'   the captured console output.
 #' @template seealso-docs
 #' @inherit CmdStanDiagnose examples
 #'
@@ -2197,8 +2498,8 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   `compile_standalone` argument to the [`$compile()`][model-method-compile]
 #'   method.
 #'
-#'   This method is also available for fitted model objects ([`CmdStanMCMC`], [`CmdStanVB`], etc.).
-#'   See **Examples**.
+#'   This method is also available for all fitted model objects. See
+#'   **Examples**.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
@@ -2208,6 +2509,7 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   available via the `functions` field of the R6 object.
 #' @param verbose (logical) Should detailed information about generated code be
 #'   printed to the console? Defaults to `FALSE`.
+#' @return `NULL`, invisibly.
 #' @template seealso-docs
 #' @examples
 #' \dontrun{
@@ -2252,16 +2554,16 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 #' @description The `$cmdstan_defaults()` method of a [`CmdStanModel`]
 #'   object queries the compiled model binary for the default argument
 #'   values used by a given inference method. The returned list uses
-#'   cmdstanr-style argument names (e.g., `iter_sampling` instead of
+#'   CmdStanR-style argument names (e.g., `iter_sampling` instead of
 #'   CmdStan's `num_samples`).
 #'
 #'   The model must be compiled before calling this method.
 #'
-#' @param method (string) The inference method whose defaults to
-#'   retrieve. One of `"sample"`, `"optimize"`, `"variational"`,
-#'   `"pathfinder"`, or `"laplace"`.
+#' @param method (string) The inference method for which to retrieve default
+#'   argument values. One of `"sample"`, `"optimize"`, `"variational"`,
+#'   `"pathfinder"`, or `"laplace"`. The default is `"sample"`.
 #' @return A named list of default argument values for the specified
-#'   method, with cmdstanr-style argument names.
+#'   method, with CmdStanR-style argument names.
 #'
 #' @template seealso-docs
 #'
@@ -2316,19 +2618,67 @@ assert_stan_file_exists <- function(stan_file) {
   }
 }
 
-include_paths_stanc3_args <- function(include_paths = NULL, standalone_call = FALSE) {
+#' Turn a `stanc_options` list into `stanc` command line arguments
+#'
+#' @param stanc_options (list) Named or unnamed stanc options. Logical values
+#'   mark boolean flags and any other value is passed as `--name=value`.
+#' @param quote_values (logical) Single-quote option values? Only the
+#'   `STANCFLAGS` string handed to Make needs quoting, because Make expands it
+#'   through a shell. Arguments for direct `stanc` calls are passed to processx
+#'   as separate elements and must be left unquoted (#1227).
+#' @return A character vector of arguments, one per element.
+#' @noRd
+stanc_options_to_args <- function(stanc_options, quote_values = FALSE) {
+  args <- c()
+  for (i in seq_len(length(stanc_options))) {
+    option_name <- names(stanc_options)[i]
+    option_value <- stanc_options[[i]]
+    if (is.null(option_name) || !nzchar(option_name)) {
+      # Unnamed options are already flag names, e.g. list("allow-undefined")
+      args <- c(args, paste0("--", option_value))
+    } else if (is.logical(option_value)) {
+      # TRUE emits a bare flag, FALSE leaves the flag out entirely
+      if (isTRUE(option_value)) {
+        args <- c(args, paste0("--", option_name))
+      }
+    } else if (isTRUE(quote_values) && option_name != "name") {
+      # Quoting the model name mangles the generated namespace
+      args <- c(args, paste0("--", option_name, "=", "'", option_value, "'"))
+    } else {
+      args <- c(args, paste0("--", option_name, "=", option_value))
+    }
+  }
+  args
+}
+
+#' Build stanc include-path arguments
+#'
+#' Make receives include paths through `STANCFLAGS` and needs paths containing
+#' spaces to be shell-quoted within a single `--include-paths=` flag. Direct
+#' calls through processx instead need the flag and comma-separated paths as
+#' separate, unquoted arguments.
+#'
+#' @param include_paths A character vector of directories containing files used
+#'   in Stan `#include` directives, or `NULL`.
+#' @param direct_call A logical indicating whether the arguments will be passed
+#'   directly to stanc through processx instead of through Make.
+#'
+#' @return `NULL` if `include_paths` is `NULL`; otherwise, a single
+#'   `--include-paths=` argument for Make or two arguments for a direct call.
+#' @noRd
+include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
     assert_dir_exists(include_paths, access = "r")
     include_paths <- sapply(absolute_path(include_paths), wsl_safe_path)
     # Calling stanc3 directly through processx::run does not need quoting
-    if (!isTRUE(standalone_call)) {
+    if (!isTRUE(direct_call)) {
       paths_w_space <- grep(" ", include_paths)
       include_paths[paths_w_space] <- paste0("'", include_paths[paths_w_space], "'")
     }
     include_paths <- paste0(include_paths, collapse = ",")
     include_paths_flag <- "--include-paths="
-    if (isTRUE(standalone_call)) {
+    if (isTRUE(direct_call)) {
       stancflags <- c(stancflags, "--include-paths", include_paths)
     } else {
       stancflags <- paste0(stancflags, include_paths_flag, include_paths)
@@ -2348,7 +2698,10 @@ model_variables <- function(stan_file, include_paths = NULL, allow_undefined = F
     command = stanc_cmd(),
     args = c(wsl_safe_path(stan_file),
               "--info",
-              include_paths_stanc3_args(include_paths),
+              include_paths_stanc3_args(
+                include_paths,
+                direct_call = TRUE
+              ),
               allow_undefined_arg),
     wd = cmdstan_path(),
     echo = FALSE,

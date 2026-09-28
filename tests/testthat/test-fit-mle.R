@@ -10,6 +10,17 @@ test_that("mle and lp methods work after optimization", {
   checkmate::expect_numeric(fit_mle$lp(), len = 1)
 })
 
+test_that("mle() ignores non-matrix default draws formats", {
+  expected <- fit_mle$draws(format = "draws_matrix")
+  expected <- expected[, colnames(expected) != "lp__", drop = FALSE]
+  expected <- stats::setNames(as.numeric(expected), posterior::variables(expected))
+
+  for (format in c("draws_array", "draws_df")) {
+    withr::local_options(list(cmdstanr_draws_format = format))
+    expect_equal(fit_mle$mle(), expected)
+  }
+})
+
 test_that("summary method works after optimization", {
   x <- fit_mle$summary()
   expect_s3_class(x, "draws_summary")

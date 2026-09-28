@@ -14,18 +14,32 @@ startup_messages <- function() {
     default = identical(tolower(Sys.getenv("cmdstanr_no_ver_check")), "true")
   ))
   if (!skip_version_check) {
-    # check if they used the old all caps version
-    skip_version_check <- isTRUE(getOption(
+    deprecated_no_ver_check_option <- getOption("CMDSTANR_NO_VER_CHECK")
+    deprecated_no_ver_check_env <- Sys.getenv(
       "CMDSTANR_NO_VER_CHECK",
-      default = identical(tolower(Sys.getenv("CMDSTANR_NO_VER_CHECK")), "true")
-    ))
+      unset = NA_character_
+    )
+    if (!is.null(deprecated_no_ver_check_option) ||
+        !is.na(deprecated_no_ver_check_env)) {
+      warning(
+        "The 'CMDSTANR_NO_VER_CHECK' option and environment variable are ",
+        "deprecated as of CmdStanR 1.0.0 and will be removed in a future ",
+        "release. Use lowercase 'cmdstanr_no_ver_check' instead.",
+        call. = FALSE
+      )
+    }
+    # fall back to the deprecated all-caps setting
+    skip_version_check <- isTRUE(
+      deprecated_no_ver_check_option %||%
+        identical(tolower(deprecated_no_ver_check_env), "true")
+    )
   }
   if (!skip_version_check) {
     latest_version <- try(suppressWarnings(latest_released_version(retries = 0)), silent = TRUE)
     current_version <- try(cmdstan_version(), silent = TRUE)
     if (!inherits(latest_version, "try-error")
         && !inherits(current_version, "try-error")
-        && latest_version > current_version) {
+        && cmdstan_version_compare(latest_version, current_version) > 0) {
       packageStartupMessage(
         "\nA newer version of CmdStan is available. See ?install_cmdstan() to install it.",
         "\nTo disable this check set option or environment variable cmdstanr_no_ver_check=TRUE."
@@ -35,46 +49,7 @@ startup_messages <- function() {
 }
 
 cmdstanr_initialize <- function() {
-  # First check for environment variable CMDSTAN, but if not found
-  # then see if default
-  path <- Sys.getenv("CMDSTAN")
-  if (isTRUE(nzchar(path))) { # CMDSTAN environment variable found
-    if (dir.exists(path)) {
-      path <- absolute_path(path)
-      suppressWarnings(suppressMessages(set_cmdstan_path(path)))
-      if (is.null(cmdstan_version(error_on_NA = FALSE))) {
-        path <- cmdstan_default_path(dir = path)
-        if (is.null(path)) {
-          warning(
-            "No CmdStan installation found in the path specified ",
-            "by the environment variable 'CMDSTAN'.",
-            call. = FALSE
-          )
-          .cmdstanr$PATH <- NULL
-          .cmdstanr$VERSION <- NULL
-          .cmdstanr$WSL <- FALSE
-        } else {
-          set_cmdstan_path(path)
-        }
-      }
-    } else {
-      warning(
-        "Can't find directory specified by environment variable 'CMDSTAN'. ",
-        "Path not set.",
-        call. = FALSE
-      )
-      .cmdstanr$PATH <- NULL
-      .cmdstanr$VERSION <- NULL
-      .cmdstanr$WSL <- FALSE
-    }
-
-  } else { # environment variable not found
-    path <- cmdstan_default_path()
-    if (!is.null(path)) {
-      suppressMessages(set_cmdstan_path(path))
-    }
-  }
-
+  suppressMessages(set_cmdstan_path())
   .cmdstanr$TEMP_DIR <- tempdir(check = TRUE)
   invisible(TRUE)
 }

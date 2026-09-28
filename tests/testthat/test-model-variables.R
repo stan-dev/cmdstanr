@@ -39,7 +39,7 @@ test_that("$variables() work correctly with example models", {
   expect_equal(mod$variables()$parameters$beta$dimensions, 1)
 })
 
-test_that("$variables() work correctly with example models", {
+test_that("$variables() work correctly with multidimensional variables", {
   code <- "
   data {
     array[1,2,3,4,5,6,7,8] int y;
@@ -68,6 +68,59 @@ test_that("$variables() work correctly with example models", {
   expect_equal(mod$variables()$transformed_parameters$p$dimensions, 3)
   expect_equal(mod$variables()$transformed_parameters$pp$type, "real")
   expect_equal(mod$variables()$transformed_parameters$pp$dimensions, 3)
+})
+
+test_that("$variables() is refreshed when the model is recompiled", {
+  model_dir <- withr::local_tempdir()
+  stan_file <- write_stan_file(
+    "
+    parameters {
+      real alpha;
+    }
+    model {
+      alpha ~ std_normal();
+    }
+    ",
+    dir = model_dir,
+    basename = "issue1228.stan"
+  )
+  mod <- cmdstan_model(stan_file)
+  expect_equal(names(mod$variables()$parameters), "alpha")
+
+  write_stan_file(
+    "
+    parameters {
+      real beta;
+    }
+    model {
+      beta ~ std_normal();
+    }
+    ",
+    dir = model_dir,
+    basename = "issue1228.stan"
+  )
+  # editing the file alone doesn't invalidate the cached variables
+  expect_equal(names(mod$variables()$parameters), "alpha")
+
+  # the edited file is newer than the executable, so this recompiles
+  mod$compile()
+  expect_equal(names(mod$variables()$parameters), "beta")
+
+  # the fitting methods validate inits against the refreshed variables
+  expect_no_message(
+    utils::capture.output(
+      mod$sample(
+        chains = 1,
+        iter_warmup = 10,
+        iter_sampling = 10,
+        refresh = 0,
+        init = list(list(beta = 0)),
+        diagnostics = NULL,
+        show_messages = FALSE
+      )
+    ),
+    message = "Init values were only set for a subset of parameters"
+  )
 })
 
 test_that("$variables() errors on no stan_file", {
@@ -102,7 +155,7 @@ test_that("$variables() works with #includes, both pre and post compilation.", {
     }
   "
   model_code <- "
-    #include data.stan
+    #include includes/data.stan
     parameters {
       vector[N] y;
     }
@@ -111,18 +164,30 @@ test_that("$variables() works with #includes, both pre and post compilation.", {
     }
   "
 
-  model_file <- write_stan_file(code = model_code)
-  data_file <- write_stan_file(code = data_code, basename = "data.stan")
+  model_dir <- withr::local_tempdir(pattern = "include path")
+  include_dir <- file.path(model_dir, "includes")
+  dir.create(include_dir, recursive = TRUE)
+  model_file <- write_stan_file(code = model_code, dir = model_dir)
+  write_stan_file(code = data_code, basename = "data.stan", dir = include_dir)
 
-  mod <- cmdstan_model(
+  mod_explicit <- cmdstan_model(
     stan_file = model_file,
-    include_paths = dirname(data_file),
+    include_paths = model_dir,
     compile = FALSE
   )
 
-  vars_pre <- mod$variables()
-  mod$compile()
-  vars_post <- mod$variables()
+  vars_pre <- mod_explicit$variables()
+  mod_explicit$compile()
+  mod_explicit_post <- cmdstan_model(
+    stan_file = model_file,
+    exe_file = mod_explicit$exe_file(),
+    include_paths = model_dir,
+    compile = FALSE
+  )
+  vars_post <- mod_explicit_post$variables()
 
   expect_equal(vars_pre, vars_post)
+
+  mod_automatic <- cmdstan_model(stan_file = model_file, compile = FALSE)
+  expect_equal(mod_automatic$variables(), vars_pre)
 })

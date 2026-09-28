@@ -40,6 +40,7 @@ bad_arg_values <- list(
   refresh = -1,
   init = "maybe :P",
   seed = -80,
+  threads = "NOT_THREADS",
   init_alpha = "cat.jpeg",
   init_alpha = -3,
   tol_obj = -1,
@@ -102,6 +103,12 @@ expect_pathfinder_output <- function(object, num_chains = NULL) {
 test_that("Pathfinder Runs", {
   expect_pathfinder_output(fit <- mod$pathfinder(data=data_list, seed=1234, refresh = 0))
   expect_s3_class(fit, "CmdStanPathfinder")
+  expected_variables <- c("lp__", "lp_approx__", "path__", "theta")
+  if (cmdstan_version() < "2.37.0") {
+    # the path__ column was added to pathfinder output in CmdStan 2.37
+    expected_variables <- setdiff(expected_variables, "path__")
+  }
+  expect_equal(posterior::variables(fit$draws()), expected_variables)
 })
 
 test_that("pathfinder() method works with data files", {
@@ -123,14 +130,52 @@ test_that("pathfinder() method works with init file", {
   expect_pathfinder_output(mod$pathfinder(data = data_file_r, init = init_file))
 })
 
-test_that("pathfinder() method works with init function and default paths", {
-  init_function <- function() { list(theta = 0.5) }
-  expect_pathfinder_output(mod$pathfinder(data = data_file_r, init = init_function))
+test_that("pathfinder() method passes one init to each path", {
+  init_function <- function(chain_id) {
+    list(theta = chain_id / 5)
+  }
+  expect_pathfinder_output(
+    fit <- mod$pathfinder(
+      data = data_file_r,
+      init = init_function,
+      refresh = 0,
+      seed = 123
+    )
+  )
+
+  # The function returns a different value for each of the four default paths.
+  expect_equal(vapply(fit$init(), `[[`, numeric(1), "theta"), (1:4) / 5)
 })
 
 test_that("pathfinder() method runs when all arguments specified", {
   expect_pathfinder_output(fit <- do.call(mod$pathfinder, ok_arg_values))
   expect_s3_class(fit, "CmdStanPathfinder")
+})
+
+test_that("pathfinder() saves single path outputs", {
+  output_dir <- withr::local_tempdir()
+
+  expect_pathfinder_output(
+    fit <- mod$pathfinder(
+      data = data_list,
+      output_dir = output_dir,
+      output_basename = "pathfinder",
+      seed = 123,
+      refresh = 0,
+      num_paths = 2,
+      single_path_draws = 10,
+      draws = 10,
+      save_single_paths = TRUE
+    )
+  )
+
+  expect_equal(basename(fit$output_files()), "pathfinder-01.csv")
+  single_path_files <- file.path(output_dir, paste0(
+    "pathfinder-01_path_",
+    rep(1:2, each = 2),
+    c(".csv", ".json")
+  ))
+  expect_equal(file.exists(single_path_files), rep(TRUE, 4))
 })
 
 test_that("pathfinder() method runs when the stan file is removed", {

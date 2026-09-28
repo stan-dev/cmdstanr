@@ -120,7 +120,7 @@ test_that("sample() method runs when the stan file is removed", {
   )
 })
 
-test_that("sample() prints informational messages depening on show_exceptions", {
+test_that("sample() prints informational messages depending on show_exceptions", {
   mod_info_msg <- testing_model("info_message")
   expect_sample_output(
     expect_message(
@@ -321,7 +321,7 @@ test_that("Correct behavior if fixed_param not set when the model has no paramet
   )
 
   reset_cmdstan_version(m)
-  if (cmdstan_version() >= "2.36.0") {
+  if (cmdstan_version_compare(cmdstan_version(), "2.36.0") >= 0) {
     # as of 2.36.0 we don't need fixed_param if no parameters
     expect_no_error(
       utils::capture.output(

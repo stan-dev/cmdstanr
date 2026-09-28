@@ -91,7 +91,7 @@ test_that("install_cmdstan() works with version and release_url", {
   expect_message(
     expect_output(
       install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
+                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
                       wsl = os_is_wsl()),
       "Compiling C++ code",
       fixed = TRUE
@@ -103,7 +103,7 @@ test_that("install_cmdstan() works with version and release_url", {
     expect_message(
       expect_output(
         install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                        version = "2.36.0",
+                        version = "2.37.0",
                         # the URL is intentionally invalid to test that the version has higher priority
                         release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
                         wsl = os_is_wsl()),
@@ -116,8 +116,8 @@ test_that("install_cmdstan() works with version and release_url", {
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.36.0")))
-  set_cmdstan_path(cmdstan_default_path())
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
+  set_cmdstan_path()
 })
 
 test_that("toolchain checks on Unix work", {
@@ -143,6 +143,7 @@ test_that("toolchain checks on Unix work", {
 })
 
 test_that("clean and rebuild works", {
+  set_cmdstan_path()
   expect_output(
     rebuild_cmdstan(cores = CORES),
     paste0("CmdStan v", cmdstan_version(), " built"),
@@ -160,15 +161,15 @@ test_that("github_download_url constructs correct url", {
 test_that("extract_cmdstan_version_from_archive_name parses realistic inputs", {
   expect_equal(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz"
+      "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz"
     ),
-    "2.36.0"
+    "2.37.0"
   )
   expect_equal(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0-linux-arm64.tar.gz"
+      "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0-linux-arm64.tar.gz"
     ),
-    "2.36.0"
+    "2.37.0"
   )
   expect_equal(
     extract_cmdstan_version_from_archive_name(
@@ -184,7 +185,7 @@ test_that("extract_cmdstan_version_from_archive_name parses realistic inputs", {
   )
   expect_null(
     extract_cmdstan_version_from_archive_name(
-      "https://github.com/stan-dev/cmdstan/releases/tag/v2.36.0"
+      "https://github.com/stan-dev/cmdstan/releases/tag/v2.37.0"
     )
   )
 })
@@ -233,10 +234,10 @@ test_that("Download failures return error message", {
 test_that("Install from release file works", {
   dir <- tempdir(check = TRUE)
 
-  destfile <- file.path(dir, "cmdstan-2.36.0.tar.gz")
+  destfile <- file.path(dir, "cmdstan-2.37.0.tar.gz")
 
   download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.36.0/cmdstan-2.36.0.tar.gz",
+    "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
     destfile)
 
   expect_message(
@@ -303,205 +304,707 @@ test_that("deprecated CMDSTANR_USE_MSYS_TOOLCHAIN is ignored with warning", {
   })
 })
 
-test_that("rtools4x_toolchain_path prefers static-posix when available", {
-  skip_if(arch_is_aarch64())
-  env_var <- paste0(
-    "RTOOLS", rtools4x_version(),
-    if (arch_is_aarch64()) "_AARCH64" else "",
-    "_HOME"
-  )
-  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-pref-")
-  dir.create(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin"),
-             recursive = TRUE, showWarnings = FALSE)
-  dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
-             recursive = TRUE, showWarnings = FALSE)
-  file.create(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin", "g++.exe"))
-  file.create(file.path(fake_rtools_home, "mingw64", "bin", "g++.exe"))
-
-  withr::with_envvar(setNames(fake_rtools_home, env_var), {
-    expect_equal(
-      rtools4x_toolchain_path(),
-      repair_path(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin"))
-    )
-  })
-})
-
-test_that("rtools4x_toolchain_path falls back to mingw64 for legacy layouts", {
-  skip_if(arch_is_aarch64())
-  env_var <- paste0(
-    "RTOOLS", rtools4x_version(),
-    if (arch_is_aarch64()) "_AARCH64" else "",
-    "_HOME"
-  )
-  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-fallback-")
-  dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
-             recursive = TRUE, showWarnings = FALSE)
-  file.create(file.path(fake_rtools_home, "mingw64", "bin", "g++.exe"))
-
-  withr::with_envvar(setNames(fake_rtools_home, env_var), {
-    expect_equal(
-      rtools4x_toolchain_path(),
-      repair_path(file.path(fake_rtools_home, "mingw64", "bin"))
-    )
-  })
-})
-
-test_that("rtools4x_toolchain_path prefers ABI-compatible legacy fallback", {
-  skip_if(arch_is_aarch64())
-  env_var <- paste0(
-    "RTOOLS", rtools4x_version(),
-    if (arch_is_aarch64()) "_AARCH64" else "",
-    "_HOME"
-  )
-  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-abi-")
-  dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
-             recursive = TRUE, showWarnings = FALSE)
-  dir.create(file.path(fake_rtools_home, "ucrt64", "bin"),
-             recursive = TRUE, showWarnings = FALSE)
-  file.create(file.path(fake_rtools_home, "mingw64", "bin", "g++.exe"))
-  file.create(file.path(fake_rtools_home, "ucrt64", "bin", "g++.exe"))
-
-  withr::with_envvar(setNames(fake_rtools_home, env_var), {
-    local({
-      local_mocked_bindings(is_ucrt_toolchain = function() FALSE)
-      expect_equal(
-        rtools4x_toolchain_path(),
-        repair_path(file.path(fake_rtools_home, "mingw64", "bin"))
-      )
-    })
-    local({
-      local_mocked_bindings(is_ucrt_toolchain = function() TRUE)
-      expect_equal(
-        rtools4x_toolchain_path(),
-        repair_path(file.path(fake_rtools_home, "ucrt64", "bin"))
-      )
-    })
-  })
-})
-
-test_that("check_rtools4x_windows_toolchain reports checked toolchain paths", {
-  env_var <- paste0(
-    "RTOOLS", rtools4x_version(),
-    if (arch_is_aarch64()) "_AARCH64" else "",
-    "_HOME"
-  )
-  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-invalid-")
-  dir.create(file.path(fake_rtools_home, "usr", "bin"),
-             recursive = TRUE, showWarnings = FALSE)
-  file.create(file.path(fake_rtools_home, "usr", "bin", "make.exe"))
-  if (arch_is_aarch64()) {
-    dir.create(file.path(fake_rtools_home, "aarch64-w64-mingw32.static.posix", "bin"),
-               recursive = TRUE, showWarnings = FALSE)
-  } else {
-    dir.create(file.path(fake_rtools_home, "x86_64-w64-mingw32.static.posix", "bin"),
-               recursive = TRUE, showWarnings = FALSE)
-    dir.create(file.path(fake_rtools_home, "ucrt64", "bin"),
-               recursive = TRUE, showWarnings = FALSE)
-    dir.create(file.path(fake_rtools_home, "mingw64", "bin"),
-               recursive = TRUE, showWarnings = FALSE)
-  }
-
-  withr::with_envvar(setNames(fake_rtools_home, env_var), {
-    expect_error(
-      check_rtools4x_windows_toolchain(),
-      "Checked the following paths:",
-      fixed = TRUE
-    )
-  })
-})
-
-test_that("toolchain_PATH_env_var() handles missing and configured Rtools homes", {
-  local({
-    local_mocked_bindings(os_is_windows = function() FALSE)
-    expect_null(toolchain_PATH_env_var())
-  })
-  local({
-    local_mocked_bindings(
-      os_is_windows = function() TRUE,
-      rtools4x_home_path = function() ""
-    )
-    expect_null(toolchain_PATH_env_var())
-  })
-  local({
-    local_mocked_bindings(
-      os_is_windows = function() TRUE,
-      rtools4x_home_path = function() "C:/rtools",
-      rtools4x_toolchain_path = function() "C:/rtools/ucrt64/bin",
-      repair_path = function(path) path
-    )
-    expect_equal(
-      toolchain_PATH_env_var(),
-      "C:/rtools/usr/bin;C:/rtools/ucrt64/bin"
-    )
-  })
-})
-
-test_that("check_rtools4x_windows_toolchain reports missing Rtools and make", {
-  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-missing-")
-
-  local({
-    local_mocked_bindings(
-      rtools4x_home_path = function() "",
-      rtools4x_version = function() "44"
-    )
-    expect_error(
-      check_rtools4x_windows_toolchain(),
-      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
-      fixed = TRUE
-    )
-  })
-
-  dir.create(file.path(fake_rtools_home, "usr", "bin"),
-             recursive = TRUE, showWarnings = FALSE)
-  local({
-    local_mocked_bindings(
-      rtools4x_home_path = function() fake_rtools_home,
-      rtools4x_version = function() "44"
-    )
-    expect_error(
-      check_rtools4x_windows_toolchain(),
-      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
-      fixed = TRUE
-    )
-  })
-})
-
-test_that("check_rtools4x_windows_toolchain validates install path and empty candidates", {
-  local({
-    local_mocked_bindings(
-      rtools4x_home_path = function() "C:/Program Files/Rtools44",
-      rtools4x_version = function() "44"
-    )
-    expect_error(
-      check_rtools4x_windows_toolchain(),
-      "Please reinstall the appropriate Rtools version for this R installation to a valid path",
-      fixed = TRUE
-    )
-  })
-
-  fake_rtools_home <- withr::local_tempdir(pattern = "rtools-home-empty-")
-  dir.create(file.path(fake_rtools_home, "usr", "bin"),
-             recursive = TRUE, showWarnings = FALSE)
-  file.create(file.path(fake_rtools_home, "usr", "bin", "make.exe"))
-
-  local({
-    local_mocked_bindings(
-      rtools4x_home_path = function() fake_rtools_home,
-      rtools4x_version = function() "44",
-      rtools4x_toolchain_candidates = function() character()
-    )
-    expect_error(
-      check_rtools4x_windows_toolchain(),
-      "restart R, and then run cmdstanr::check_cmdstan_toolchain()",
-      fixed = TRUE
-    )
-  })
-})
-
 test_that("check_cmdstan_toolchain(fix = TRUE) is deprecated", {
-  expect_warning(
-    check_cmdstan_toolchain(fix = TRUE),
-    "The 'fix' argument is deprecated and will be removed in a future release",
+  expect_snapshot(
+    check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+  )
+})
+
+# Reusing the previous installation's make/local -----------------------------
+
+# A directory that looks enough like a CmdStan installation for
+# cmdstan_make_local() to write into it.
+fake_cmdstan_dir <- function(contents = NULL, envir = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = envir)
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  if (!is.null(contents)) {
+    writeLines(contents, file.path(dir, "make", "local"))
+  }
+  dir
+}
+
+test_that("maybe_copy_make_local() copies the previous flags when asked to", {
+  new_dir <- fake_cmdstan_dir()
+  previous <- c("CXXFLAGS += -march=native", "STAN_THREADS=true")
+
+  expect_message(
+    expect_true(
+      maybe_copy_make_local(new_dir, previous, "/old/cmdstan", copy_make_local = TRUE)
+    ),
+    "Copied make/local from /old/cmdstan",
     fixed = TRUE
   )
+  expect_equal(cmdstan_make_local(dir = new_dir), previous)
+})
+
+test_that("maybe_copy_make_local() does nothing when told not to copy", {
+  new_dir <- fake_cmdstan_dir()
+
+  expect_false(
+    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan",
+                          copy_make_local = FALSE)
+  )
+  expect_false(file.exists(file.path(new_dir, "make", "local")))
+})
+
+test_that("maybe_copy_make_local() never asks anything", {
+  # The question is asked by resolve_copy_make_local() before the download.
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt after the download")
+  )
+
+  new_dir <- fake_cmdstan_dir()
+  expect_false(
+    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan", NULL)
+  )
+  expect_false(file.exists(file.path(new_dir, "make", "local")))
+})
+
+test_that("maybe_copy_make_local() ignores a missing or empty make/local", {
+  # cmdstan_make_local() returns NULL when there is no file and "" when the
+  # file is empty.
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), NULL, "/old/cmdstan", TRUE))
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), "", "/old/cmdstan", TRUE))
+  expect_false(
+    maybe_copy_make_local(fake_cmdstan_dir(), character(0), "/old/cmdstan", TRUE)
+  )
+})
+
+test_that("resolve_copy_make_local() takes an explicit answer without asking", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt when told what to do")
+  )
+
+  expect_true(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", TRUE))
+  expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", FALSE))
+})
+
+test_that("resolve_copy_make_local() does not prompt in a non-interactive session", {
+  rlang::local_interactive(FALSE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt when not interactive")
+  )
+
+  expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+})
+
+test_that("resolve_copy_make_local() follows the answer to the prompt", {
+  rlang::local_interactive(TRUE)
+
+  local({
+    local_mocked_bindings(prompt_copy_make_local = function(...) TRUE)
+    expect_true(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+  })
+  local({
+    local_mocked_bindings(prompt_copy_make_local = function(...) FALSE)
+    expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+  })
+})
+
+test_that("resolve_copy_make_local() does not ask when there is nothing to copy", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt without flags to copy")
+  )
+
+  # Nothing was requested, so a make/local with no flags is a non-event
+  expect_no_message(expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", NULL)))
+  expect_no_message(expect_false(resolve_copy_make_local("", "/old/cmdstan", NULL)))
+  expect_no_message(
+    expect_false(resolve_copy_make_local(character(0), "/old/cmdstan", NULL))
+  )
+  expect_no_message(expect_false(resolve_copy_make_local("", "/old/cmdstan", FALSE)))
+})
+
+test_that("resolve_copy_make_local() reports an explicit TRUE it cannot honour", {
+  # Otherwise the flags silently fail to arrive and the user finds out weeks
+  # later, from a model that compiles differently.
+
+  # An installation is in use, but it has no flags to copy: name it, because
+  # that is what reveals a cmdstan_path() pointing somewhere unexpected.
+  expect_message(
+    expect_false(resolve_copy_make_local("", "/old/cmdstan", TRUE)),
+    "/old/cmdstan has an empty or missing make/local",
+    fixed = TRUE
+  )
+  expect_message(
+    expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", TRUE)),
+    "nothing to copy",
+    fixed = TRUE
+  )
+
+  # No installation in use at all: there is no path to name
+  expect_message(
+    expect_false(resolve_copy_make_local(NULL, NULL, TRUE)),
+    "no CmdStan installation is currently in use",
+    fixed = TRUE
+  )
+})
+
+test_that("report_uncopied_make_local() only reports an unanswered question", {
+  msg <- "cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"/old\"))"
+
+  # Non-interactive with copy_make_local = NULL: nobody was ever asked
+  expect_true(report_uncopied_make_local(msg, FALSE, "/old", "/new"))
+
+  # Answered, by argument or by prompt: saying it again would suggest a
+  # rebuild the user has already declined
+  expect_false(report_uncopied_make_local(msg, TRUE, "/old", "/new"))
+
+  # Previous installation had no flags
+  expect_false(report_uncopied_make_local(NULL, FALSE, "/old", "/new"))
+
+  # Reinstall over the same path: the file the message points at is gone
+  expect_false(report_uncopied_make_local(msg, FALSE, "/old", "/old"))
+})
+
+test_that("copied flags are written before cpp_options, which win", {
+  # Order matters: an inherited assignment must not override what the user
+  # asked install_cmdstan() for, and make takes the last assignment.
+  new_dir <- fake_cmdstan_dir()
+  suppressMessages(
+    maybe_copy_make_local(new_dir, "STANCFLAGS=--O1", "/old/cmdstan",
+                          copy_make_local = TRUE)
+  )
+  cmdstan_make_local(
+    dir = new_dir,
+    cpp_options = list(STANCFLAGS = "--Oexperimental"),
+    append = TRUE
+  )
+
+  expect_equal(
+    cmdstan_make_local(dir = new_dir),
+    c("STANCFLAGS=--O1", "STANCFLAGS=--Oexperimental")
+  )
+})
+
+test_that("prompt_copy_make_local() shows the flags and reads the answer", {
+  local_mocked_bindings(read_line = function(...) "y")
+  expect_message(
+    expect_true(prompt_copy_make_local("STAN_THREADS=true", "/old/cmdstan")),
+    "STAN_THREADS=true",
+    fixed = TRUE
+  )
+
+  local_mocked_bindings(read_line = function(...) "")
+  expect_message(
+    expect_false(prompt_copy_make_local("STAN_THREADS=true", "/old/cmdstan")),
+    "/old/cmdstan",
+    fixed = TRUE
+  )
+})
+
+test_that("install_cmdstan() asks about make/local before downloading", {
+  rlang::local_interactive(TRUE)
+  events <- character()
+  local_mocked_bindings(
+    cmdstan_version = function(...) "2.36.0",
+    cmdstan_make_local = function(...) "STAN_THREADS=true",
+    cmdstan_path = function(...) "/old/cmdstan",
+    prompt_copy_make_local = function(...) {
+      events <<- c(events, "prompt")
+      FALSE
+    },
+    download_with_retries = function(...) {
+      events <<- c(events, "download")
+      try(stop("no downloads in tests"), silent = TRUE)
+    }
+  )
+
+  expect_error(
+    suppressMessages(
+      install_cmdstan(dir = withr::local_tempdir(), version = "2.36.0",
+                      check_toolchain = FALSE)
+    ),
+    "Download of CmdStan failed"
+  )
+  expect_equal(events, c("prompt", "download"))
+})
+
+test_that("install_cmdstan() rejects a non-logical copy_make_local", {
+  expect_error(
+    install_cmdstan(copy_make_local = "yes", check_toolchain = FALSE),
+    "copy_make_local"
+  )
+})
+
+# Windows toolchain discovery tests ----------------------------------------
+
+test_that("toolchain_PATH_env_var() returns NULL on non-Windows", {
+  skip_if(os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  expect_null(toolchain_PATH_env_var())
+})
+
+test_that("toolchain_PATH_env_var() caches result after first call", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+
+  # First call should populate the cache
+  first_result <- toolchain_PATH_env_var()
+  expect_identical(.cmdstanr$TOOLCHAIN_PATH, first_result)
+
+  # Second call should return cached value without re-running lookup
+  second_result <- toolchain_PATH_env_var()
+  expect_identical(second_result, first_result)
+})
+
+test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_home <- utils::shortPathName(withr::local_tempdir(pattern = "rtools40-home-"))
+  fake_cpp_dir <- file.path(fake_home, "mingw64", "bin")
+  fake_bin_dir <- file.path(fake_home, "usr", "bin")
+
+  # Create the expected directory structure for R 4.0/4.1
+  dir.create(fake_cpp_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(fake_bin_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_cpp_dir, "c++.exe"))
+  file.create(file.path(fake_bin_dir, "make.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.1.0"),
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    withr::local_envvar(c(RTOOLS40_HOME = fake_home, R_ARCH = "/x64"))
+    result <- toolchain_PATH_env_var()
+    expect_false(is.null(result))
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(
+        c(fake_bin_dir, fake_cpp_dir),
+        winslash = "/",
+        mustWork = TRUE
+      )
+    )
+  })
+
+  fake_cpp_dir <- file.path(fake_home, "mingw32", "bin")
+  dir.create(fake_cpp_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_cpp_dir, "c++.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.1.0"),
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    withr::local_envvar(c(RTOOLS40_HOME = fake_home, R_ARCH = "/i386"))
+    result <- toolchain_PATH_env_var()
+    expect_false(is.null(result))
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(
+        c(fake_bin_dir, fake_cpp_dir),
+        winslash = "/",
+        mustWork = TRUE
+      )
+    )
+  })
+})
+
+test_that("toolchain_PATH_env_var() compares R versions numerically", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_home <- withr::local_tempdir(pattern = "rtools-home-")
+  rcmd_calls <- 0L
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local_mocked_bindings(
+    current_r_version = function() numeric_version("4.10.0"),
+    .cmdstanr_rcmd = function(...) {
+      rcmd_calls <<- rcmd_calls + 1L
+      file.path(fake_home, "toolchain")
+    }
+  )
+  withr::local_envvar(c(PATH = ""))
+
+  result <- toolchain_PATH_env_var()
+
+  expect_identical(rcmd_calls, 1L)
+  expect_null(result)
+})
+
+test_that("toolchain_PATH_env_var() uses configured R_TOOLS_SOFT", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_home <- withr::local_tempdir(pattern = "rtools-home-")
+  fake_soft <- file.path(fake_home, "toolchain")
+  fake_bin_dir <- file.path(fake_home, "usr", "bin")
+  fake_cpp_dir <- file.path(fake_soft, "bin")
+  dir.create(fake_bin_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(fake_cpp_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_bin_dir, "make.exe"))
+  file.create(file.path(fake_cpp_dir, "c++.exe"))
+  file.create(file.path(fake_cpp_dir, "g++.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
+      short_path = function(path) path,
+      repair_path = function(path) {
+        paste0(
+          "repaired:",
+          normalizePath(path, winslash = "/", mustWork = TRUE)
+        )
+      }
+    )
+    local_mocked_bindings(
+      Sys.which = function(command) stop("PATH fallback should not be used."),
+      .package = "base"
+    )
+    result <- toolchain_PATH_env_var()
+    expected_dirs <- normalizePath(
+      c(fake_bin_dir, fake_cpp_dir),
+      winslash = "/",
+      mustWork = TRUE
+    )
+    expect_identical(
+      result,
+      paste(paste0("repaired:", expected_dirs), collapse = ";")
+    )
+  })
+})
+
+test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", {
+  skip_if(!os_is_windows())
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_bin <- withr::local_tempdir(pattern = "rtools-fallback-")
+  file.create(file.path(fake_bin, "make.exe"))
+  file.create(file.path(fake_bin, "c++.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    local_mocked_bindings(
+      .cmdstanr_rcmd = function(..., stdout = FALSE) {
+        warning("Rcmd config failed")
+        structure(
+          "ERROR: no information for variable 'R_TOOLS_SOFT'",
+          status = 1L
+        )
+      }
+    )
+    withr::local_envvar(c(PATH = fake_bin))
+    expect_no_warning(result <- toolchain_PATH_env_var())
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(fake_bin, winslash = "/", mustWork = TRUE)
+    )
+  })
+})
+
+test_that("toolchain_PATH_env_var() searches PATH when R_TOOLS_SOFT is empty", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_bin <- withr::local_tempdir(pattern = "rtools-fallback-")
+  file_exists_calls <- character()
+  which_calls <- character()
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      .cmdstanr_rcmd = function(..., stdout = FALSE) "",
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    local_mocked_bindings(
+      file.exists = function(path) {
+        file_exists_calls <<- c(file_exists_calls, path)
+        path %in% c("/usr/bin/make.exe", "/bin/c++.exe")
+      },
+      Sys.which = function(command) {
+        which_calls <<- c(which_calls, command)
+        file.path(fake_bin, paste0(command, ".exe"))
+      },
+      .package = "base"
+    )
+    result <- toolchain_PATH_env_var()
+    expect_identical(file_exists_calls, character())
+    expect_identical(which_calls, c("make", "c++"))
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(fake_bin, winslash = "/", mustWork = TRUE)
+    )
+  })
+})
+
+test_that("toolchain_PATH_env_var() returns NULL when both approaches fail", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    # Mock .cmdstanr_rcmd to return empty string
+    local_mocked_bindings(
+      .cmdstanr_rcmd = function(..., stdout = FALSE) ""
+    )
+    withr::local_envvar(c(PATH = ""))
+    result <- toolchain_PATH_env_var()
+    expect_null(result)
+  })
+})
+
+test_that("toolchain_PATH_env_var() returns NULL when only one tool in PATH", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_bin <- withr::local_tempdir(pattern = "rtools-partial-")
+  file.create(file.path(fake_bin, "make"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    # Mock .cmdstanr_rcmd to return empty (triggers fallback)
+    local_mocked_bindings(
+      .cmdstanr_rcmd = function(..., stdout = FALSE) ""
+    )
+    withr::local_envvar(c(PATH = fake_bin))
+    result <- toolchain_PATH_env_var()
+    # Should return NULL because c++ was not found
+    expect_null(result)
+  })
+})
+
+test_that("toolchain_PATH_env_var() falls back to PATH when executables missing at R_TOOLS_SOFT", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_soft <- withr::local_tempdir(pattern = "rtools-soft-")
+  dir.create(file.path(fake_soft, "bin"), recursive = TRUE, showWarnings = FALSE)
+  # Note: no make.exe or c++.exe created
+
+  fake_bin <- withr::local_tempdir(pattern = "rtools-path-")
+  file.create(file.path(fake_bin, "make.exe"))
+  file.create(file.path(fake_bin, "c++.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    # Rcmd returns a valid path, but executables don't exist there
+    local_mocked_bindings(
+      .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft
+    )
+    withr::local_envvar(c(PATH = fake_bin))
+    result <- toolchain_PATH_env_var()
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(fake_bin, winslash = "/", mustWork = TRUE)
+    )
+  })
+})
+
+test_that("toolchain_PATH_env_var() preserves configured compiler", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_home <- withr::local_tempdir(pattern = "rtools-home-")
+  fake_soft <- file.path(fake_home, "toolchain")
+  fake_cpp_dir <- file.path(fake_soft, "bin")
+  fake_path_dir <- file.path(fake_home, "path", "bin")
+  dir.create(fake_cpp_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(fake_path_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_cpp_dir, "c++.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    local_mocked_bindings(
+      Sys.which = function(command) {
+        if (command != "make") {
+          stop("Compiler PATH fallback should not be used.")
+        }
+        file.path(fake_path_dir, "make.exe")
+      },
+      .package = "base"
+    )
+    result <- toolchain_PATH_env_var()
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(
+        c(fake_path_dir, fake_cpp_dir),
+        winslash = "/",
+        mustWork = TRUE
+      )
+    )
+  })
+})
+
+test_that("toolchain_PATH_env_var() preserves configured make", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_home <- withr::local_tempdir(pattern = "rtools-home-")
+  fake_soft <- file.path(fake_home, "toolchain")
+  fake_bin_dir <- file.path(fake_home, "usr", "bin")
+  fake_path_dir <- file.path(fake_home, "path", "bin")
+  dir.create(fake_bin_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(fake_path_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_bin_dir, "make.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    local_mocked_bindings(
+      Sys.which = function(command) {
+        if (command != "c++") {
+          stop("Make PATH fallback should not be used.")
+        }
+        file.path(fake_path_dir, "c++.exe")
+      },
+      .package = "base"
+    )
+    result <- toolchain_PATH_env_var()
+    result_dirs <- strsplit(result, ";", fixed = TRUE)[[1]]
+    expect_identical(
+      normalizePath(result_dirs, winslash = "/", mustWork = TRUE),
+      normalizePath(
+        c(fake_bin_dir, fake_path_dir),
+        winslash = "/",
+        mustWork = TRUE
+      )
+    )
+  })
+})
+
+test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
+  skip_if(!os_is_windows())
+
+  old_cache <- .cmdstanr$TOOLCHAIN_PATH
+  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+
+  fake_home <- withr::local_tempdir(pattern = "rtools path-")
+  fake_soft <- file.path(fake_home, "toolchain")
+  fake_bin_dir <- file.path(fake_home, "usr", "bin")
+  fake_cpp_dir <- file.path(fake_soft, "bin")
+  dir.create(fake_bin_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(fake_cpp_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(fake_bin_dir, "make.exe"))
+  file.create(file.path(fake_cpp_dir, "c++.exe"))
+
+  .cmdstanr$TOOLCHAIN_PATH <- NULL
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0"),
+      .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
+      short_path = function(path) path,
+      repair_path = function(path) path
+    )
+    local_mocked_bindings(
+      Sys.which = function(command) stop("PATH fallback should not be used."),
+      .package = "base"
+    )
+    expect_snapshot(error = TRUE, toolchain_PATH_env_var())
+  })
+})
+
+test_that("check_rtools4x_windows_toolchain() stops when no toolchain found", {
+  skip_if(!os_is_windows())
+
+  local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
+  expect_snapshot(error = TRUE, check_rtools4x_windows_toolchain())
+})
+
+test_that("is_ucrt_toolchain() returns correct values for R versions", {
+  skip_if(!os_is_windows())
+
+  # is_ucrt_toolchain() is TRUE for R 4.2.x – 4.x.x on Windows
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.2.0")
+    )
+    expect_true(is_ucrt_toolchain())
+  })
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.4.0")
+    )
+    expect_true(is_ucrt_toolchain())
+  })
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("4.1.0")
+    )
+    expect_false(is_ucrt_toolchain())
+  })
+  local({
+    local_mocked_bindings(
+      current_r_version = function() numeric_version("5.0.0")
+    )
+    expect_false(is_ucrt_toolchain())
+  })
 })
