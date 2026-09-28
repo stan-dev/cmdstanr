@@ -1097,6 +1097,19 @@ test_that("read_cmdstan_csv() reads compressed CSV files", {
   expect_equal(read_cmdstan_csv(diagnose_bz2), expected_diagnose)
 })
 
+test_that("read_cmdstan_csv() reads WSL mount paths", {
+  skip_if_not(os_is_wsl())
+  csv_files <- normalizePath(c(
+    test_path("resources", "csv", "model1-1-warmup.csv"),
+    test_path("resources", "csv", "model1-2-warmup.csv")
+  ), winslash = "/")
+  gz_file <- compress_csv(csv_files[2], "csv.gz")
+  withr::defer(unlink(gz_file))
+  mnt_files <- wsl_safe_path(c(csv_files[1], gz_file))
+  expect_match(mnt_files, "^/mnt/")
+  expect_equal(read_cmdstan_csv(mnt_files), read_cmdstan_csv(csv_files))
+})
+
 test_that("read_cmdstan_csv() errors for a truncated compressed CSV file", {
   csv_file <- test_path("resources", "csv", "model1-1-warmup.csv")
   gz_file <- compress_csv(csv_file, "csv.gz")

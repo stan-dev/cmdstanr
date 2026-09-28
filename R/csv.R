@@ -165,6 +165,8 @@ read_cmdstan_csv <- function(files,
                              variables = NULL,
                              sampler_diagnostics = NULL,
                              format = getOption("cmdstanr_draws_format", NULL)) {
+  temp_files <- character()
+  withr::defer(unlink(temp_files))
   # If the CSV files are stored in the WSL filesystem then it is significantly
   # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
   if (os_is_wsl() && any(grepl("^//wsl", files))) {
@@ -176,6 +178,7 @@ read_cmdstan_csv <- function(files,
     )
 
     files <- file.path(temp_storage, basename(files))
+    temp_files <- c(temp_files, files)
   }
   format <- assert_valid_draws_format(format)
   assert_file_exists(
@@ -183,11 +186,12 @@ read_cmdstan_csv <- function(files,
     access = "r",
     extension = c("csv", "csv.gz", "csv.bz2")
   )
-  decompressed <- character()
-  on.exit(unlink(decompressed), add = TRUE)
+  files <- wsl_safe_path(files, revert = TRUE)
   for (i in grep("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)) {
-    files[i] <- decompress_csv(files[i])
-    decompressed <- c(decompressed, files[i])
+    out <- tempfile(fileext = ".csv")
+    temp_files <- c(temp_files, out)
+    decompress_csv(files[i], out)
+    files[i] <- out
   }
   metadata <- NULL
   warmup_draws <- list()
@@ -738,30 +742,31 @@ find_csv_tool <- function(name, file) {
 
 #' Decompress a compressed CmdStan CSV file
 #'
-#' Decompresses a `.csv.gz` or `.csv.bz2` file into a temporary `.csv` file
-#' and errors if gzip or bzip2 doesn't finish cleanly.
+#' Runs gzip or bzip2 to write the contents of a `.csv.gz` or `.csv.bz2`
+#' file to `out` and errors if the tool doesn't finish cleanly.
+#' `read_cmdstan_csv()` picks `out` and deletes it when it's done, so a
+#' partial file from a failed or interrupted run gets cleaned up too.
 #'
 #' @param file (string) Path to the compressed CSV file.
-#' @return The path to the decompressed temporary file.
+#' @param out (string) Path to write the decompressed CSV to.
+#' @return `out`, invisibly.
 #' @noRd
 #'
-decompress_csv <- function(file) {
+decompress_csv <- function(file, out) {
   tool <- if (grepl("gz$", file, ignore.case = TRUE)) "gzip" else "bzip2"
-  out <- tempfile(fileext = ".csv")
   res <- processx::run(
     find_csv_tool(tool, file),
-    c("-dc", path.expand(wsl_safe_path(file, revert = TRUE))),
+    c("-dc", path.expand(file)),
     stdout = out,
     error_on_status = FALSE
   )
   if (res$status != 0) {
-    unlink(out)
     stop(
       "Compressed CSV '", basename(file), "' is truncated or corrupt.",
       call. = FALSE
     )
   }
-  out
+  invisible(out)
 }
 
 #' Reads the sampling arguments and the diagonal of the
