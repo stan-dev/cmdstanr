@@ -4,6 +4,8 @@ on:
   # build dev site on merged pushes
   push:
     branches: [main, master]
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
   # build full site on releases
   release:
     types: [published]
@@ -13,6 +15,10 @@ name: pkgdown.yaml
 
 jobs:
   pkgdown:
+    # For PRs, only run when the PR has the build-website label.
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'build-website')
     runs-on: ubuntu-latest
     # Only restrict concurrency for non-PR jobs
     concurrency:
@@ -38,7 +44,7 @@ jobs:
 
       - name: Install CmdStan
         run: Rscript -e "cmdstanr::install_cmdstan()"
-      
+    
       - name: Build site
         run: |
           pkgdown::build_site_github_pages(
@@ -49,8 +55,20 @@ jobs:
         shell: Rscript {0}
 
       - name: Deploy to GitHub pages 🚀
+        if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           clean: false
           branch: gh-pages
           folder: docs
+
+      - name: Deploy PR preview
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          clean: true
+          branch: gh-pages
+          folder: docs
+          target-folder: prs/${{ github.event.pull_request.number }}
