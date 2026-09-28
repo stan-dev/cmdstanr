@@ -427,35 +427,27 @@ test_that("repair_path works with multiple paths", {
 })
 
 test_that("wsl_safe_path() works with multiple paths", {
-  with_mocked_bindings(
-    {
-      expect_equal(
-        wsl_safe_path(
-          c(
-            "/mnt/c/project/init-1.json",
-            "/mnt/d/project/init-2.json",
-            "relative/init-3.json"
-          ),
-          revert = TRUE
-        ),
-        c(
-          "C:/project/init-1.json",
-          "D:/project/init-2.json",
-          "relative/init-3.json"
-        )
-      )
-      expect_equal(
-        wsl_safe_path(
-          c(
-            "//wsl$/Ubuntu/tmp/init-1.json",
-            "//wsl$/Ubuntu/tmp/init-2.json"
-          )
-        ),
-        c("/tmp/init-1.json", "/tmp/init-2.json")
-      )
-    },
-    os_is_wsl = function() TRUE,
-    wsl_dir_prefix = function(...) "//wsl$/Ubuntu"
+  skip_if_not(os_is_wsl())
+  expect_equal(
+    wsl_safe_path(
+      c(
+        "/mnt/c/project/init-1.json",
+        "/mnt/d/project/init-2.json",
+        "relative/init-3.json"
+      ),
+      revert = TRUE
+    ),
+    c(
+      "C:/project/init-1.json",
+      "D:/project/init-2.json",
+      "relative/init-3.json"
+    )
+  )
+  expect_equal(
+    wsl_safe_path(
+      paste0(wsl_dir_prefix(), c("/tmp/init-1.json", "/tmp/init-2.json"))
+    ),
+    c("/tmp/init-1.json", "/tmp/init-2.json")
   )
 })
 
