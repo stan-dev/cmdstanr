@@ -213,8 +213,8 @@ documentation</a>.</p>
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 140549949634368 0.003290739  0.002549802  0.000740937       34174
-2 likelihood 140549949634368 0.504786590  0.390429680  0.114356910       51261
+1     priors 140333187708736 0.002602534  0.002024655  0.000577879       34174
+2 likelihood 140333187708736 0.342184310  0.259616680  0.082567632       51261
   no_chain_stack autodiff_calls no_autodiff_calls
 1          34174          17087                 1
 2       34191087          17087                 1</code></pre>
@@ -261,12 +261,12 @@ like for the previous one.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
-        name       thread_id  total_time forward_time reverse_time chain_stack
-1 likelihood 139814240782144 0.334118440  0.333222880  0.000895563       53568
-2     priors 139814240782144 0.003383385  0.002600368  0.000783017       35712
+        name       thread_id total_time forward_time reverse_time chain_stack
+1     priors 139672548951872 0.00269333  0.002114579  0.000578751       35712
+2 likelihood 139672548951872 0.23507874  0.234468670  0.000610070       53568
   no_chain_stack autodiff_calls no_autodiff_calls
-1          17856          17856                 1
-2          35712          17856                 1</code></pre>
+1          35712          17856                 1
+2          17856          17856                 1</code></pre>
 <p>We can see from the <code>total_time</code> column that the
 likelihood computation is faster than in the previous model.</p>
 </div>
@@ -290,7 +290,7 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span> <span class="op">/</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 1.925873e-07 2.954214e-05</code></pre>
+<pre><code>[1] 1.523108e-07 2.002600e-05</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
@@ -300,7 +300,7 @@ CmdStan stores the profiling data in CSV files in a temporary location.
 The paths of the profiling CSV files can be retrieved using <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$profile_files()</code></a>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/RtmpPUWBre/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609270030-01-8ee2c1.csv"</code></pre>
+<pre><code>[1] "/tmp/RtmpwauJ7o/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609292307-01-8ee2fb.csv"</code></pre>
 <p>These can be saved to a more permanent location with the <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$save_profile_files()</code></a>
 method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">

@@ -2,6 +2,11 @@
 
 ## cmdstanr (development version)
 
+- [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
+  now waits longer for WSL to respond and says so when it doesn’t,
+  instead of reporting that no WSL distribution is installed.
+  ([\#1297](https://github.com/stan-dev/cmdstanr/issues/1297))
+
 - `$log_prob()`, `$grad_log_prob()`, and other model methods are now
   faster after initialization because they avoid repeated stale-binding
   checks. ([\#1274](https://github.com/stan-dev/cmdstanr/issues/1274))
