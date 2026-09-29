@@ -4,7 +4,7 @@
 checks the Stan program for syntax errors and returns TRUE (invisibly) if
 parsing succeeds. If invalid syntax is found an error is thrown."><meta property="og:description" content="The $check_syntax() method of a CmdStanModel object
 checks the Stan program for syntax errors and returns TRUE (invisibly) if
-parsing succeeds. If invalid syntax is found an error is thrown."><meta property="og:image" content="https://mc-stan.org/cmdstanr/pr/1296/logo.svg"><meta name="robots" content="noindex"></head><body>
+parsing succeeds. If invalid syntax is found an error is thrown."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -34,7 +34,7 @@ parsing succeeds. If invalid syntax is found an error is thrown."><meta property
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages"><li><a class="external-link dropdown-item" href="https://mc-stan.org/bayesplot">bayesplot</a></li>
-    <li><a class="external-link dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
+    <li><a class="dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/loo">loo</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/posterior">posterior</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/priorsense/">priorsense</a></li>
@@ -122,7 +122,7 @@ is valid.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>The CmdStanR website
-(<a href="https://mc-stan.org/cmdstanr/" class="external-link">mc-stan.org/cmdstanr</a>) for online
+(<a href="https://mc-stan.org/cmdstanr/">mc-stan.org/cmdstanr</a>) for online
 documentation and tutorials.</p>
 <p>The Stan and CmdStan documentation:</p><ul><li><p>Stan documentation: <a href="https://mc-stan.org/users/documentation/" class="external-link">mc-stan.org/users/documentation</a></p></li>
 <li><p>CmdStan User’s Guide: <a href="https://mc-stan.org/docs/cmdstan-guide/" class="external-link">mc-stan.org/docs/cmdstan-guide</a></p></li>
@@ -168,11 +168,11 @@ documentation and tutorials.</p>
 <span class="r-in"><span><span class="co"># pedantic mode will warn that lambda should be constrained to be positive</span></span></span>
 <span class="r-in"><span><span class="co"># and that lambda has no prior distribution</span></span></span>
 <span class="r-in"><span><span class="va">mod</span><span class="op">$</span><span class="fu">check_syntax</span><span class="op">(</span>pedantic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/Rtmp8F1YDI/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/RtmpiwuNEX/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     The parameter lambda has no priors. This means either no prior is</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     provided, or the prior(s) depend on data variables. In the later case,</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     this may be a false positive.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/Rtmp8F1YDI/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Warning in '/tmp/RtmpiwuNEX/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     A poisson distribution is given parameter lambda as a rate parameter</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     (argument 1), but lambda was not constrained to be strictly positive.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Stan program is syntactically correct</span>

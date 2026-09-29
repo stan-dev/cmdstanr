@@ -32,7 +32,7 @@ argument for details.
 
 ## See also
 
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md)
 
 ## Examples
 

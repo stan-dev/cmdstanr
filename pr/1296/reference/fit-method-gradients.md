@@ -14,7 +14,7 @@ A data frame containing the gradients for all parameters.
 
 ## See also
 
-[`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanDiagnose.md)
+[`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/reference/CmdStanDiagnose.md)
 
 ## Examples
 

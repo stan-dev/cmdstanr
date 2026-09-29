@@ -59,7 +59,7 @@ the same order as the column names.
 
 ## See also
 
-[`$generate_quantities()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md)
+[`$generate_quantities()`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md)
 for using the generated CSV files
 
 ## Examples
@@ -70,10 +70,10 @@ draws <- posterior::example_draws()
 
 draws_csv_files <- draws_to_csv(draws)
 print(draws_csv_files)
-#> [1] "/tmp/Rtmp8F1YDI/fittedParams-202609292233-01-193953.csv"
-#> [2] "/tmp/Rtmp8F1YDI/fittedParams-202609292233-02-193953.csv"
-#> [3] "/tmp/Rtmp8F1YDI/fittedParams-202609292233-03-193953.csv"
-#> [4] "/tmp/Rtmp8F1YDI/fittedParams-202609292233-04-193953.csv"
+#> [1] "/tmp/RtmpiwuNEX/fittedParams-202609292323-01-193905.csv"
+#> [2] "/tmp/RtmpiwuNEX/fittedParams-202609292323-02-193905.csv"
+#> [3] "/tmp/RtmpiwuNEX/fittedParams-202609292323-03-193905.csv"
+#> [4] "/tmp/RtmpiwuNEX/fittedParams-202609292323-04-193905.csv"
 
 # draws_csv_files <- draws_to_csv(draws,
 #                                 sampler_diagnostics = sampler_diagnostics,

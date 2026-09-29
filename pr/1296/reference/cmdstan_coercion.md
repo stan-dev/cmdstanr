@@ -40,12 +40,11 @@ generic, as returned by the dispatched method.
 
 ## See also
 
-[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md),
-[CmdStanMCMC](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md),
-[CmdStanMLE](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md),
-[CmdStanLaplace](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md),
-[CmdStanVB](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md),
-[CmdStanPathfinder](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md),
-[CmdStanGQ](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanGQ.md),
-and
-[CmdStanDiagnose](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanDiagnose.md)
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md),
+[CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md),
+[CmdStanMLE](https://mc-stan.org/cmdstanr/reference/CmdStanMLE.md),
+[CmdStanLaplace](https://mc-stan.org/cmdstanr/reference/CmdStanLaplace.md),
+[CmdStanVB](https://mc-stan.org/cmdstanr/reference/CmdStanVB.md),
+[CmdStanPathfinder](https://mc-stan.org/cmdstanr/reference/CmdStanPathfinder.md),
+[CmdStanGQ](https://mc-stan.org/cmdstanr/reference/CmdStanGQ.md), and
+[CmdStanDiagnose](https://mc-stan.org/cmdstanr/reference/CmdStanDiagnose.md)

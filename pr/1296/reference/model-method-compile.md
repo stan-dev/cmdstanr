@@ -1,30 +1,30 @@
 # Compile a Stan program
 
 The `$compile()` method of a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
 object checks the syntax of the Stan program, translates the program to
 C++, and creates a compiled executable. To just check the syntax of a
 Stan program without compiling it use the
-[`$check_syntax()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md)
+[`$check_syntax()`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md)
 method instead.
 
 In most cases the user does not need to explicitly call the `$compile()`
 method as compilation will occur when calling
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md).
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md).
 However it is possible to set `compile=FALSE` in the call to
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
 and subsequently call the `$compile()` method directly.
 
 After compilation, the path to the executable is available via
-[`$exe_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md).
+[`$exe_file()`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md).
 If compilation generated C++ code instead of reusing an up-to-date
 executable, its path is also available via
-[`$hpp_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md).
+[`$hpp_file()`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md).
 Use `force_recompile=TRUE` to force generation of the C++ code. By
 default, the executable is created in the same directory as the Stan
 program and the generated C++ code is written to a temporary directory.
 To save the C++ code to a non-temporary location use
-[`$save_hpp_file(dir)`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md).
+[`$save_hpp_file(dir)`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md).
 
 ## Usage
 
@@ -65,7 +65,7 @@ compile(
   section](https://mc-stan.org/docs/stan-users-guide/pedantic-mode.html)
   in the Stan User's Guide. **Note:** to do a pedantic check for a model
   without compiling it or for a model that is already compiled the
-  [`$check_syntax()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md)
+  [`$check_syntax()`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md)
   method can be used instead.
 
 - include_paths:
@@ -132,19 +132,19 @@ compile(
 - compile_model_methods:
 
   (logical) Compile additional model methods
-  ([`log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-log_prob.md),
-  [`grad_log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-grad_log_prob.md),
-  [`hessian()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-hessian.md),
-  [`constrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-constrain_variables.md),
-  [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_variables.md),
-  [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_draws.md),
+  ([`log_prob()`](https://mc-stan.org/cmdstanr/reference/fit-method-log_prob.md),
+  [`grad_log_prob()`](https://mc-stan.org/cmdstanr/reference/fit-method-grad_log_prob.md),
+  [`hessian()`](https://mc-stan.org/cmdstanr/reference/fit-method-hessian.md),
+  [`constrain_variables()`](https://mc-stan.org/cmdstanr/reference/fit-method-constrain_variables.md),
+  [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/reference/fit-method-unconstrain_variables.md),
+  [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-unconstrain_draws.md),
   and
-  [`variable_skeleton()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-variable_skeleton.md)).
+  [`variable_skeleton()`](https://mc-stan.org/cmdstanr/reference/fit-method-variable_skeleton.md)).
   Note: the compiled model-method bindings are not preserved in a usable
   form when saving a model object. If you plan to save and reload the
   model object before model fitting, we recommend instead waiting to
   compile the model methods until after fitting via
-  [`fit$init_model_methods()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-init_model_methods.md).
+  [`fit$init_model_methods()`](https://mc-stan.org/cmdstanr/reference/fit-method-init_model_methods.md).
 
 - compile_standalone:
 
@@ -152,7 +152,7 @@ compile(
   If `TRUE` the functions will be available via the `functions` field in
   the compiled model object. This can also be done after compilation
   using the
-  [`$expose_functions()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md)
+  [`$expose_functions()`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md)
   method.
 
 - dry_run:
@@ -164,25 +164,25 @@ compile(
 
 The `$compile()` method is called for its side effect of creating the
 executable and adding its path to the
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
 object, but it also returns the
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
 object invisibly.
 
 The
-[`$exe_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md)
+[`$exe_file()`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md)
 method returns the executable path. If compilation generated C++ code,
 the
-[`$hpp_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md)
+[`$hpp_file()`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md)
 and
-[`$save_hpp_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md)
+[`$save_hpp_file()`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md)
 methods can also be used. See their linked documentation for return
 values.
 
 ## See also
 
 The
-[`$check_syntax()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md)
+[`$check_syntax()`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md)
 method to check Stan syntax or enable pedantic mode without compiling.
 
 The CmdStanR website
@@ -198,20 +198,20 @@ The Stan and CmdStan documentation:
   [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
-[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md),
-[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-cmdstan_defaults.md),
-[`model-method-diagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-diagnose.md),
-[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md),
-[`model-method-format`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-format.md),
-[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md),
-[`model-method-laplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
-[`model-method-model-info`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md),
-[`model-method-optimize`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md),
-[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md),
-[`model-method-sample`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md),
-[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample_mpi.md),
-[`model-method-variables`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variables.md),
-[`model-method-variational`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
+[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md),
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/reference/model-method-cmdstan_defaults.md),
+[`model-method-diagnose`](https://mc-stan.org/cmdstanr/reference/model-method-diagnose.md),
+[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md),
+[`model-method-format`](https://mc-stan.org/cmdstanr/reference/model-method-format.md),
+[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md),
+[`model-method-laplace`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md),
+[`model-method-optimize`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.md),
+[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md),
+[`model-method-sample`](https://mc-stan.org/cmdstanr/reference/model-method-sample.md),
+[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/reference/model-method-sample_mpi.md),
+[`model-method-variables`](https://mc-stan.org/cmdstanr/reference/model-method-variables.md),
+[`model-method-variational`](https://mc-stan.org/cmdstanr/reference/model-method-variational.md)
 
 ## Examples
 
@@ -254,7 +254,7 @@ model {
 ")
 mod <- cmdstan_model(file_pedantic, compile = FALSE)
 mod$compile(pedantic = TRUE)
-#> Warning in '/tmp/Rtmp8F1YDI/model-1cd74ba8aa71.stan', line 6, column 2 to column 7:
+#> Warning in '/tmp/RtmpiwuNEX/model-1c893e78b671.stan', line 6, column 2 to column 7:
 #>     Parameter sigma is given a exponential distribution, which has strictly
 #>     positive support, but sigma was not constrained to be strictly positive.
 # same as mod <- cmdstan_model(file_pedantic, pedantic = TRUE)

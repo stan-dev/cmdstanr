@@ -9,8 +9,8 @@ generated quantities, or a point estimate from optimization.
 The variables include the parameters, transformed parameters, and
 generated quantities from the Stan program as well as `lp__`, the target
 log density evaluated by Stan, up to an additive constant. See
-[`$lp()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-lp.md)
-for details.
+[`$lp()`](https://mc-stan.org/cmdstanr/reference/fit-method-lp.md) for
+details.
 
 ## Usage
 
@@ -45,7 +45,7 @@ draws(
 
   (logical) Should warmup draws be included? Defaults to `FALSE`.
   Ignored except when used with
-  [CmdStanMCMC](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
+  [CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md)
   objects.
 
 - format:
@@ -86,21 +86,21 @@ draws(
 Depends on the value of `format`. The defaults are:
 
 - For
-  [MCMC](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md),
+  [MCMC](https://mc-stan.org/cmdstanr/reference/model-method-sample.md),
   a 3-D
   [`draws_array`](https://mc-stan.org/posterior/reference/draws_array.html)
   object (iteration x chain x variable).
 
 - For standalone [generated
-  quantities](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md),
+  quantities](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md),
   a 3-D
   [`draws_array`](https://mc-stan.org/posterior/reference/draws_array.html)
   object (iteration x chain x variable).
 
 - For [variational
-  inference](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
+  inference](https://mc-stan.org/cmdstanr/reference/model-method-variational.md)
   and [Laplace
-  approximation](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
+  approximation](https://mc-stan.org/cmdstanr/reference/model-method-laplace.md),
   a 2-D
   [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html)
   object (draw x variable). An additional variable `lp_approx__`
@@ -108,7 +108,7 @@ Depends on the value of `format`. The defaults are:
   included.
 
 - For
-  [Pathfinder](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md),
+  [Pathfinder](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md),
   a 2-D
   [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html)
   object (draw x variable). Additional variables `lp_approx__` and
@@ -116,12 +116,12 @@ Depends on the value of `format`. The defaults are:
   associated with each draw.
 
 - For
-  [optimization](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md),
+  [optimization](https://mc-stan.org/cmdstanr/reference/model-method-optimize.md),
   a 1-row
   [`draws_matrix`](https://mc-stan.org/posterior/reference/draws_matrix.html)
   with one column per variable. These are *not* actually draws, just
   point estimates stored in the `draws_matrix` format. See
-  [`$mle()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-mle.md)
+  [`$mle()`](https://mc-stan.org/cmdstanr/reference/fit-method-mle.md)
   to extract them as a numeric vector.
 
 ## Examples

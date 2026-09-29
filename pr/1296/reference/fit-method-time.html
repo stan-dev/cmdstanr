@@ -10,7 +10,7 @@ generated quantities additional information is provided about the run
 times of individual chains or processes. For MCMC, timing information is
 also provided for the warmup and sampling phases. For Laplace approximation
 the reported time includes only the time for drawing the approximate sample
-and does not include the time taken to run the $optimize() method."><meta property="og:image" content="https://mc-stan.org/cmdstanr/pr/1296/logo.svg"><meta name="robots" content="noindex"></head><body>
+and does not include the time taken to run the $optimize() method."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -40,7 +40,7 @@ and does not include the time taken to run the $optimize() method."><meta proper
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages"><li><a class="external-link dropdown-item" href="https://mc-stan.org/bayesplot">bayesplot</a></li>
-    <li><a class="external-link dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
+    <li><a class="dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/loo">loo</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/posterior">posterior</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/priorsense/">priorsense</a></li>
@@ -109,36 +109,36 @@ times are reported as zero.</p></li>
 <span class="r-in"><span><span class="va">fit_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.4648283</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.471025</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $chains</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   chain_id warmup sampling total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        1  0.017    0.050 0.067</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2        2  0.016    0.049 0.065</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3        3  0.017    0.047 0.064</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4        4  0.017    0.048 0.065</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        1  0.017    0.051 0.068</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2        2  0.017    0.050 0.067</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3        3  0.018    0.048 0.066</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4        4  0.017    0.050 0.067</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit_vb</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"variational"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_vb</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1101272</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1117249</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">fit_optim</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"optimize"</span>, jacobian <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_optim</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1098013</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1112423</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># use fit_optim to draw samples from laplace approximation</span></span></span>
 <span class="r-in"><span><span class="va">fit_laplace</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"laplace"</span>, mode <span class="op">=</span> <span class="va">fit_optim</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span> <span class="co"># just time for drawing sample not for running optimize</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $total</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1098988</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1110141</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">fit_laplace</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span> <span class="op">+</span> <span class="va">fit_optim</span><span class="op">$</span><span class="fu">time</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">total</span> <span class="co"># total time</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2197001</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2222564</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

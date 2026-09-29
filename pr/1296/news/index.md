@@ -2,11 +2,16 @@
 
 ## cmdstanr (development version)
 
+- [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
+  now waits longer for WSL to respond and says so when it doesn’t,
+  instead of reporting that no WSL distribution is installed.
+  ([\#1297](https://github.com/stan-dev/cmdstanr/issues/1297))
+
 - `$log_prob()`, `$grad_log_prob()`, and other model methods are now
   faster after initialization because they avoid repeated stale-binding
   checks. ([\#1274](https://github.com/stan-dev/cmdstanr/issues/1274))
 
-- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
   now offers to copy the `make/local` flags of the current installation
   into the new one before building it, so the new CmdStan is built with
   the same flags. In an interactive session it shows the previous
@@ -14,7 +19,7 @@
   `TRUE` or `FALSE`.
   ([\#1267](https://github.com/stan-dev/cmdstanr/issues/1267))
 
-- [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+- [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
   now skips flags that are already in `make/local`. Previously copying
   the flags of a previous installation after every upgrade added the
   same lines again each time.
@@ -59,7 +64,7 @@
   deprecated as of CmdStanR 1.0.0; use the lowercase
   `cmdstanr_no_ver_check` forms instead.
 
-- [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+- [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
   now locates Windows toolchains using `R_TOOLS_SOFT` and falls back to
   `PATH`, improving support for alternate R distributions and future
   Rtools releases.
@@ -111,7 +116,7 @@
   running. ([\#1235](https://github.com/stan-dev/cmdstanr/issues/1235))
 
 - A `user_header` supplied to
-  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
+  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
   is now used by a later `$compile()`. Previously it was only honored
   when the model was compiled immediately.
   ([\#1234](https://github.com/stan-dev/cmdstanr/issues/1234))
@@ -173,7 +178,7 @@
   ([\#1019](https://github.com/stan-dev/cmdstanr/issues/1019),
   [\#1235](https://github.com/stan-dev/cmdstanr/issues/1235))
 
-- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
+- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
   no longer runs the model executable twice to read its build metadata.
   ([\#1236](https://github.com/stan-dev/cmdstanr/issues/1236))
 
@@ -261,21 +266,21 @@
   retaining their selection frequency.
   ([\#1207](https://github.com/stan-dev/cmdstanr/issues/1207))
 
-- [`pathfinder()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md)
+- [`pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md)
   now passes separately supplied initial values to every path instead of
   using only the first path’s initial values.
   ([\#1206](https://github.com/stan-dev/cmdstanr/issues/1206))
 
-- [`pathfinder()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md)
+- [`pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md)
   now respects `save_single_paths = TRUE` instead of always passing `0`
   to CmdStan.
 
-- [`pathfinder()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md)
+- [`pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md)
   now uses `threads` argument (`num_threads` is deprecated), to be
   consistent with other methods.
 
 - The `num_paths` documentation for
-  [`pathfinder()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md)
+  [`pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md)
   now notes that running multiple paths in parallel requires compiling
   with `cpp_options = list(stan_threads = TRUE)` and setting `threads`.
   ([\#896](https://github.com/stan-dev/cmdstanr/issues/896))
@@ -298,17 +303,17 @@
   checking syntax also respects this option, and is no longer shown when
   knitting. ([\#486](https://github.com/stan-dev/cmdstanr/issues/486))
 
-- [`save_metric_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+- [`save_metric_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
   now gives an informative error when metric files were not created and
   keeps saved metric files after the fitted model is garbage-collected.
   ([\#1021](https://github.com/stan-dev/cmdstanr/issues/1021))
 
-- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
+- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
   no longer fails when `MAKEFLAGS` enables directory-printing output
   while reading `STANCFLAGS` from `make`.
   ([\#1163](https://github.com/stan-dev/cmdstanr/issues/1163))
 
-- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
+- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
   now retains include paths when initialized with both a Stan file and a
   precompiled executable
   ([\#1094](https://github.com/stan-dev/cmdstanr/issues/1094)).
@@ -320,11 +325,11 @@
 
 - `$generate_quantities()` now reports per-process execution times with
   CmdStan 2.39 or newer, and
-  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md)
+  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md)
   returns these times from standalone generated quantities CSV files.
   ([\#1168](https://github.com/stan-dev/cmdstanr/issues/1168))
 
-- [`laplace()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md)
+- [`laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.md)
   no longer overwrites the internally generated optimizer CSV when
   `mode = NULL` and `output_basename` is supplied. The internally
   generated optimizer CSV now uses the filename
@@ -351,9 +356,9 @@
   ([\#1061](https://github.com/stan-dev/cmdstanr/issues/1061))
 
   - `read_sample_csv()`
-    ([`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md))
+    ([`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md))
   - `write_stan_tempfile()`
-    ([`write_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_file.md))
+    ([`write_stan_file()`](https://mc-stan.org/cmdstanr/reference/write_stan_file.md))
   - `jacobian_adjustment` argument to `fit$log_prob()` and similar
     methods (`jacobian` argument)
   - `output_samples` argument to `model$variational()` (`draws`
@@ -384,7 +389,7 @@
   [\#1065](https://github.com/stan-dev/cmdstanr/issues/1065),
   [\#1054](https://github.com/stan-dev/cmdstanr/issues/1054))
 - Improve error messages when calling
-  [`sampler_diagnostics()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-sampler_diagnostics.md)
+  [`sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.md)
   with `fixed_param=TRUE`
 - Improve numerical stability in calculation of effective sample size
   during `loo` method
@@ -493,7 +498,7 @@
   [\#905](https://github.com/stan-dev/cmdstanr/issues/905)
   [\#910](https://github.com/stan-dev/cmdstanr/issues/910)
 - Add a format argument to the
-  [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_draws.md)
+  [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-unconstrain_draws.md)
   method to specify draws format of return by
   [@andrjohns](https://github.com/andrjohns) in
   [\#886](https://github.com/stan-dev/cmdstanr/issues/886)
@@ -658,15 +663,15 @@
 #### Major new features
 
 - New
-  [`expose_functions()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md)
+  [`expose_functions()`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md)
   method to expose Stan functions to R by
   [@andrjohns](https://github.com/andrjohns) in
   [\#702](https://github.com/stan-dev/cmdstanr/issues/702). See
-  [`?expose_functions`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md).
+  [`?expose_functions`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md).
 - New methods for accessing log_prob, grad_log_prob, hessian,
   un/constrain variables by [@andrjohns](https://github.com/andrjohns)
   in [\#701](https://github.com/stan-dev/cmdstanr/issues/701). See
-  [`?init_model_methods`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-init_model_methods.md).
+  [`?init_model_methods`](https://mc-stan.org/cmdstanr/reference/fit-method-init_model_methods.md).
 
 #### Other changes
 
@@ -745,7 +750,7 @@
 
 - On Windows, users can now install and use CmdStan with WSL (Windows
   Subsystem for Linux). Set `wsl=TRUE` in
-  [`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+  [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
   to install CmdStan for use with WSL. This can offer significant
   speedups compared to native Windows execution.
   ([\#677](https://github.com/stan-dev/cmdstanr/issues/677),
@@ -754,7 +759,7 @@
 #### Bug fixes
 
 - In
-  [`cmdstan_default_path()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_default_path.md)
+  [`cmdstan_default_path()`](https://mc-stan.org/cmdstanr/reference/cmdstan_default_path.md)
   we now ignore directories inside `.cmdstan` that don’t start with
   `"cmdstan-"`.
   ([\#651](https://github.com/stan-dev/cmdstanr/issues/651))
@@ -771,7 +776,7 @@
   to the `cmdstanr_write_stan_file_dir` global option.
 
 - Fixed a bug that caused the
-  [`time()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-time.md)
+  [`time()`](https://mc-stan.org/cmdstanr/reference/fit-method-time.md)
   method fail when some of the chains failed to finish succesfully.
 
 ## cmdstanr 0.5.2
@@ -814,13 +819,13 @@
 - Default directory changed to `.cmdstan` instead of `.cmdstanr` so that
   CmdStanPy and CmdStanR can use the same CmdStan installations. Using
   `.cmdstanr` will continue to be supported until version 1.0 but
-  [`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+  [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
   will now default to `.cmdstan` and CmdStanR will first look for
   `.cmdstan` before falling back on `.cmdstanr`.
   ([\#454](https://github.com/stan-dev/cmdstanr/issues/454))
 
 - New method
-  [`diagnose()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-diagnose.md)
+  [`diagnose()`](https://mc-stan.org/cmdstanr/reference/model-method-diagnose.md)
   for CmdstanModel objects exposes CmdStan’s `diagnose` method for
   comparing Stan’s gradient computations to gradients computed via
   finite differences.
@@ -839,7 +844,7 @@
   ([\#564](https://github.com/stan-dev/cmdstanr/issues/564))
 
 - Added a convenience argument `user_header` to `$compile()` and
-  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
+  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
   that simplifies the use of an external .hpp file to compile with the
   model.
 
@@ -870,7 +875,7 @@
   `$draws()` method provided for convenience.
   ([\#532](https://github.com/stan-dev/cmdstanr/issues/532))
 
-- [`write_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_file.md)
+- [`write_stan_file()`](https://mc-stan.org/cmdstanr/reference/write_stan_file.md)
   now choose file names deterministically based on the code so that
   models do not get unnecessarily recompiled when calling the function
   multiple times with the same code.
@@ -878,11 +883,11 @@
   [@martinmodrak](https://github.com/martinmodrak))
 
 - The `dir` argument for
-  [`write_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_file.md)
+  [`write_stan_file()`](https://mc-stan.org/cmdstanr/reference/write_stan_file.md)
   can now be set with a global option.
   ([\#537](https://github.com/stan-dev/cmdstanr/issues/537))
 
-- [`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md)
+- [`write_stan_json()`](https://mc-stan.org/cmdstanr/reference/write_stan_json.md)
   now handles data of class `"table"`. Tables are converted to vector,
   matrix, or array depending on the dimensions of the table.
   ([\#528](https://github.com/stan-dev/cmdstanr/issues/528))
@@ -895,13 +900,13 @@
   large numbers.
   ([\#538](https://github.com/stan-dev/cmdstanr/issues/538))
 
-- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
   now automatically installs the Linux ARM CmdStan when Linux
   distributions running on ARM CPUs are detected.
   ([\#531](https://github.com/stan-dev/cmdstanr/issues/531))
 
 - New function
-  [`as_mcmc.list()`](https://mc-stan.org/cmdstanr/pr/1296/reference/as_mcmc.list.md)
+  [`as_mcmc.list()`](https://mc-stan.org/cmdstanr/reference/as_mcmc.list.md)
   for converting CmdStanMCMC objects to mcmc.list objects from the coda
   package. ([\#584](https://github.com/stan-dev/cmdstanr/issues/584),
   [@MatsuuraKentaro](https://github.com/MatsuuraKentaro))
@@ -923,11 +928,11 @@
 #### New features
 
 - New function
-  [`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md)
+  [`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md)
   that creates CmdStanMCMC/MLE/VB objects directly from CmdStan CSV
   files. ([\#412](https://github.com/stan-dev/cmdstanr/issues/412))
 
-- [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md)
+- [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md)
   now also returns chain run times for MCMC sampling CSV files.
   ([\#414](https://github.com/stan-dev/cmdstanr/issues/414))
 
@@ -955,7 +960,7 @@
   [@wlandau](https://github.com/wlandau))
 
 - New `error_on_NA` argument for
-  [`cmdstan_version()`](https://mc-stan.org/cmdstanr/pr/1296/reference/set_cmdstan_path.md)
+  [`cmdstan_version()`](https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.md)
   to optionally return `NULL` (instead of erroring) if the CmdStan path
   is not found
   ([\#467](https://github.com/stan-dev/cmdstanr/issues/467),
@@ -971,7 +976,7 @@
   ([\#471](https://github.com/stan-dev/cmdstanr/issues/471))
 
 - New `format` argument for `$draws()`, `$sampler_diagnostics()`,
-  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md),
+  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md),
   and `as_cmdstan_fit`(). This controls the format of the draws returned
   or stored in the object. Changing the format can improve speed and
   memory usage for large models.
@@ -1049,18 +1054,18 @@
 #### Bug fixes
 
 - Fixed bug with processing stanc_options in
-  [`check_syntax()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md).
+  [`check_syntax()`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md).
   ([\#345](https://github.com/stan-dev/cmdstanr/issues/345))
 
 - Fixed bug on access to one variable via
-  [`draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md).
+  [`draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.md).
   ([\#348](https://github.com/stan-dev/cmdstanr/issues/348))
 
 #### New features
 
-- [`compile()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
+- [`compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md)
   and
-  [`check_syntax()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md)
+  [`check_syntax()`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md)
   methods gain argument `pedantic` for turning on pedantic mode, which
   warns about issues with the model beyond syntax errors.
   ([\#361](https://github.com/stan-dev/cmdstanr/issues/361))
@@ -1070,7 +1075,7 @@
 #### Bug fixes
 
 - Fix potential indexing error if using
-  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md)
+  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md)
   with CSV files created by CmdStan without CmdStanR.
   ([\#291](https://github.com/stan-dev/cmdstanr/issues/291),
   [\#292](https://github.com/stan-dev/cmdstanr/issues/292),
@@ -1082,7 +1087,7 @@
   [\#293](https://github.com/stan-dev/cmdstanr/issues/293))
 
 - Fix trailing slashes issue for `dir` in
-  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
+  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
   and `output_dir` in fitting methods.
   ([\#281](https://github.com/stan-dev/cmdstanr/issues/281),
   [\#294](https://github.com/stan-dev/cmdstanr/issues/294))
@@ -1113,13 +1118,13 @@
   [`data.table::fread()`](https://rdrr.io/pkg/data.table/man/fread.html).
   ([\#318](https://github.com/stan-dev/cmdstanr/issues/318))
 
-- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
   gains argument `version` for specifying which version of CmdStan to
   install. ([\#300](https://github.com/stan-dev/cmdstanr/issues/300),
   [\#308](https://github.com/stan-dev/cmdstanr/issues/308))
 
 - New function
-  [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+  [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
   that checks if the appropriate toolchains are available.
   ([\#289](https://github.com/stan-dev/cmdstanr/issues/289))
 
@@ -1147,7 +1152,7 @@
   ([\#265](https://github.com/stan-dev/cmdstanr/issues/265),
   [\#273](https://github.com/stan-dev/cmdstanr/issues/273))
 
-- [`write_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_file.md)
+- [`write_stan_file()`](https://mc-stan.org/cmdstanr/reference/write_stan_file.md)
   replaces `write_stan_tempfile()`, which is now deprecated. With the
   addition of the `dir` argument, the file written is not necessarily
   temporary. ([\#267](https://github.com/stan-dev/cmdstanr/issues/267),
@@ -1156,9 +1161,9 @@
 ## cmdstanr 0.1.1
 
 - New knitr engine
-  [`eng_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/eng_cmdstan.md)
+  [`eng_cmdstan()`](https://mc-stan.org/cmdstanr/reference/eng_cmdstan.md)
   and function
-  [`register_knitr_engine()`](https://mc-stan.org/cmdstanr/pr/1296/reference/register_knitr_engine.md)
+  [`register_knitr_engine()`](https://mc-stan.org/cmdstanr/reference/register_knitr_engine.md)
   that allow Stan chunks in R markdown documents to be processed using
   CmdStanR instead of RStan. The new vignette *R Markdown CmdStan
   Engine* provides a demonstration.

@@ -22,7 +22,7 @@
 <!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="R Interface to CmdStan">
 <meta name="description" content="A lightweight interface to Stan &lt;https://mc-stan.org&gt;. The CmdStanR interface is an alternative to RStan that calls the command line interface for compilation and running algorithms instead of interfacing with C++ via Rcpp. This has many benefits including always being compatible with the latest version of Stan, fewer installation errors, fewer unexpected crashes in RStudio, and a more permissive license.">
 <meta property="og:description" content="A lightweight interface to Stan &lt;https://mc-stan.org&gt;. The CmdStanR interface is an alternative to RStan that calls the command line interface for compilation and running algorithms instead of interfacing with C++ via Rcpp. This has many benefits including always being compatible with the latest version of Stan, fewer installation errors, fewer unexpected crashes in RStudio, and a more permissive license.">
-<meta property="og:image" content="https://mc-stan.org/cmdstanr/pr/1296/logo.svg">
+<meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg">
 <meta name="robots" content="noindex">
 </head>
 <body>
@@ -57,7 +57,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages">
 <li><a class="external-link dropdown-item" href="https://mc-stan.org/bayesplot">bayesplot</a></li>
-    <li><a class="external-link dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
+    <li><a class="dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/loo">loo</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/posterior">posterior</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/priorsense/">priorsense</a></li>
@@ -105,8 +105,8 @@
 <p>CmdStanR is a lightweight interface to <a href="https://mc-stan.org" class="external-link">Stan</a> for R users (see <a href="https://github.com/stan-dev/cmdstanpy" class="external-link">CmdStanPy</a> for Python).</p>
 <p>If you are new to CmdStanR we recommend starting with these vignettes:</p>
 <ul>
-<li><p><a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html" class="external-link"><em>Getting started with CmdStanR</em></a></p></li>
-<li><p><a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html" class="external-link"><em>How does CmdStanR work?</em></a></p></li>
+<li><p><a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html"><em>Getting started with CmdStanR</em></a></p></li>
+<li><p><a href="https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html"><em>How does CmdStanR work?</em></a></p></li>
 </ul>
 </div>
 <div class="section level3">
@@ -129,7 +129,7 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># we recommend running this in a fresh R session or restarting your current session</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'https://stan-dev.r-universe.dev'</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>This does not install the vignettes, which take a long time to build, but they are always available online at <a href="https://mc-stan.org/cmdstanr/articles/" class="external-link uri">https://mc-stan.org/cmdstanr/articles/</a>.</p>
+<p>This does not install the vignettes, which take a long time to build, but they are always available online at <a href="https://mc-stan.org/cmdstanr/articles/" class="uri">https://mc-stan.org/cmdstanr/articles/</a>.</p>
 <p>To instead install the latest development version of the package from GitHub use</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
@@ -138,7 +138,7 @@
 <div class="section level4">
 <h4 id="installing-cmdstan">Installing CmdStan<a class="anchor" aria-label="anchor" href="#installing-cmdstan"></a>
 </h4>
-<p>If you don’t already have CmdStan installed then, in addition to installing the R package, it is also necessary to install CmdStan using CmdStanR’s <code><a href="reference/install_cmdstan.html">install_cmdstan()</a></code> function. A suitable C++ toolchain is also required. Instructions are provided in the <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html" class="external-link"><em>Getting started with CmdStanR</em></a> vignette.</p>
+<p>If you don’t already have CmdStan installed then, in addition to installing the R package, it is also necessary to install CmdStan using CmdStanR’s <code><a href="reference/install_cmdstan.html">install_cmdstan()</a></code> function. A suitable C++ toolchain is also required. Instructions are provided in the <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html"><em>Getting started with CmdStanR</em></a> vignette.</p>
 </div>
 </div>
 <div class="section level3">

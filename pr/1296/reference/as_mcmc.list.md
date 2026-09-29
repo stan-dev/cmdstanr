@@ -17,8 +17,7 @@ as_mcmc.list(x)
 
 - x:
 
-  A
-  [CmdStanMCMC](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
+  A [CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md)
   object.
 
 ## Value
@@ -27,8 +26,8 @@ An `mcmc.list` object compatible with the coda package.
 
 ## See also
 
-[`$draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md),
-[CmdStanMCMC](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md),
+[`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.md),
+[CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md),
 and
 [`posterior::as_draws()`](https://mc-stan.org/posterior/reference/draws.html)
 

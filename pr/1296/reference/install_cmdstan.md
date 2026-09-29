@@ -176,10 +176,10 @@ otherwise, the updated contents are returned.
 
 ## See also
 
-[`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/pr/1296/reference/set_cmdstan_path.md),
-[`cmdstan_default_install_path()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_default_install_path.md),
+[`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.md),
+[`cmdstan_default_install_path()`](https://mc-stan.org/cmdstanr/reference/cmdstan_default_install_path.md),
 and
-[`cmdstan_default_path()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_default_path.md)
+[`cmdstan_default_path()`](https://mc-stan.org/cmdstanr/reference/cmdstan_default_path.md)
 
 ## Examples
 

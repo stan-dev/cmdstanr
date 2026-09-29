@@ -3,13 +3,13 @@
 Warnings and summaries of sampler diagnostics. To instead get the
 underlying values of the sampler diagnostics for each iteration and
 chain use the
-[`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-sampler_diagnostics.md)
+[`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.md)
 method.
 
 Currently parameter-specific diagnostics like R-hat and effective sample
 size are *not* handled by this method. Those diagnostics are provided
 via the
-[`$summary()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-summary.md)
+[`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.md)
 method (using
 [`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html)).
 
@@ -50,9 +50,9 @@ possible elements and their values are:
 
 ## See also
 
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md)
 and the
-[`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-sampler_diagnostics.md)
+[`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.md)
 method
 
 ## Examples

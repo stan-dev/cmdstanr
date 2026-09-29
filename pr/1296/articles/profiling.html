@@ -54,7 +54,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages">
 <li><a class="external-link dropdown-item" href="https://mc-stan.org/bayesplot">bayesplot</a></li>
-    <li><a class="external-link dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
+    <li><a class="dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/loo">loo</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/posterior">posterior</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/priorsense/">priorsense</a></li>
@@ -119,7 +119,7 @@ often not possible to make up for model problems with just brute force
 computation. For ideas on how to address performance of your model from
 a statistical perspective, see Gelman et al. (2020).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/" class="external-link">cmdstanr</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/">cmdstanr</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/install_cmdstan.html">check_cmdstan_toolchain</a></span><span class="op">(</span>quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -204,7 +204,7 @@ statements.</p>
 <div class="section level3">
 <h3 id="accessing-the-profiling-information-from-r">Accessing the profiling information from R<a class="anchor" aria-label="anchor" href="#accessing-the-profiling-information-from-r"></a>
 </h3>
-<p>The raw profiling information can then be accessed with the <a href="https://mc-stan.org/cmdstanr/reference/fit-method-profiles.html" class="external-link"><code>$profiles()</code></a>
+<p>The raw profiling information can then be accessed with the <a href="https://mc-stan.org/cmdstanr/reference/fit-method-profiles.html"><code>$profiles()</code></a>
 method, which returns a list containing one data frame per chain
 (profiles across multiple chains are not automatically aggregated).
 Details on the column names are available in the <a href="https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file" class="external-link">CmdStan
@@ -212,9 +212,9 @@ documentation</a>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
-        name       thread_id total_time forward_time reverse_time chain_stack
-1     priors 139757301090112  0.0040872  0.003179147  0.000908053       34174
-2 likelihood 139757301090112  0.6142716  0.494668420  0.119603150       51261
+        name       thread_id  total_time forward_time reverse_time chain_stack
+1     priors 140155789702976 0.004442209  0.003455918  0.000986291       34174
+2 likelihood 140155789702976 0.640435320  0.495513120  0.144922200       51261
   no_chain_stack autodiff_calls no_autodiff_calls
 1          34174          17087                 1
 2       34191087          17087                 1</code></pre>
@@ -262,8 +262,8 @@ like for the previous one.</p>
 <code class="sourceCode R"><span><span class="va">fit_glm</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code>[[1]]
         name       thread_id  total_time forward_time reverse_time chain_stack
-1     priors 139928332461888 0.004345236  0.003510103  0.000835133       35712
-2 likelihood 139928332461888 0.428787060  0.427880680  0.000906386       53568
+1     priors 140269966948160 0.004248331  0.003248859  0.000999472       35712
+2 likelihood 140269966948160 0.412780800  0.411602480  0.001178319       53568
   no_chain_stack autodiff_calls no_autodiff_calls
 1          35712          17856                 1
 2          17856          17856                 1</code></pre>
@@ -290,18 +290,18 @@ more stable across runs with different seeds). To compute these, use the
 <code class="sourceCode R"><span><span class="va">profile_chain_1</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="fu">profiles</span><span class="op">(</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">per_gradient_timing</span> <span class="op">&lt;-</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">total_time</span> <span class="op">/</span> <span class="va">profile_chain_1</span><span class="op">$</span><span class="va">autodiff_calls</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">per_gradient_timing</span><span class="op">)</span> <span class="co"># two elements for the two profile statements in the model</span></span></code></pre></div>
-<pre><code>[1] 2.391994e-07 3.594964e-05</code></pre>
+<pre><code>[1] 2.599759e-07 3.748085e-05</code></pre>
 </div>
 <div class="section level3">
 <h3 id="accessing-and-saving-the-profile-files">Accessing and saving the profile files<a class="anchor" aria-label="anchor" href="#accessing-and-saving-the-profile-files"></a>
 </h3>
 <p>After sampling (or optimization or variational inference) finishes,
 CmdStan stores the profiling data in CSV files in a temporary location.
-The paths of the profiling CSV files can be retrieved using <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html" class="external-link"><code>$profile_files()</code></a>.</p>
+The paths of the profiling CSV files can be retrieved using <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$profile_files()</code></a>.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="fu">profile_files</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code>[1] "/tmp/Rtmp8yyBdI/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609292244-01-8ee468.csv"</code></pre>
-<p>These can be saved to a more permanent location with the <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html" class="external-link"><code>$save_profile_files()</code></a>
+<pre><code>[1] "/tmp/RtmpIhwgTk/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609292334-01-8ee3d4.csv"</code></pre>
+<p>These can be saved to a more permanent location with the <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html"><code>$save_profile_files()</code></a>
 method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># see ?save_profile_files for info on optional arguments</span></span>

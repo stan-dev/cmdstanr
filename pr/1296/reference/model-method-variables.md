@@ -1,7 +1,7 @@
 # Input and output variables of a Stan program
 
 The `$variables()` method of a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
 object returns a list, each element representing a Stan model block:
 `data`, `parameters`, `transformed_parameters` and
 `generated_quantities`.
@@ -34,24 +34,24 @@ for each of the Stan model blocks.
 
 ## See also
 
-[`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md)
+[`write_stan_json()`](https://mc-stan.org/cmdstanr/reference/write_stan_json.md)
 for writing data for CmdStan.
 
 Other CmdStanModel methods:
-[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md),
-[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-cmdstan_defaults.md),
-[`model-method-compile`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md),
-[`model-method-diagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-diagnose.md),
-[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md),
-[`model-method-format`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-format.md),
-[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md),
-[`model-method-laplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
-[`model-method-model-info`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md),
-[`model-method-optimize`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md),
-[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md),
-[`model-method-sample`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md),
-[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample_mpi.md),
-[`model-method-variational`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
+[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md),
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/reference/model-method-cmdstan_defaults.md),
+[`model-method-compile`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md),
+[`model-method-diagnose`](https://mc-stan.org/cmdstanr/reference/model-method-diagnose.md),
+[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md),
+[`model-method-format`](https://mc-stan.org/cmdstanr/reference/model-method-format.md),
+[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md),
+[`model-method-laplace`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md),
+[`model-method-optimize`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.md),
+[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md),
+[`model-method-sample`](https://mc-stan.org/cmdstanr/reference/model-method-sample.md),
+[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/reference/model-method-sample_mpi.md),
+[`model-method-variational`](https://mc-stan.org/cmdstanr/reference/model-method-variational.md)
 
 ## Examples
 

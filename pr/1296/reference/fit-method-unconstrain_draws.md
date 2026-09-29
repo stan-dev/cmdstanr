@@ -45,12 +45,12 @@ A `posterior::draws_*` object in the format specified by `format`.
 
 ## See also
 
-[`log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-log_prob.md),
-[`grad_log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-grad_log_prob.md),
-[`constrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-constrain_variables.md),
-[`unconstrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_variables.md),
-[`variable_skeleton()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-variable_skeleton.md),
-[`hessian()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-hessian.md)
+[`log_prob()`](https://mc-stan.org/cmdstanr/reference/fit-method-log_prob.md),
+[`grad_log_prob()`](https://mc-stan.org/cmdstanr/reference/fit-method-grad_log_prob.md),
+[`constrain_variables()`](https://mc-stan.org/cmdstanr/reference/fit-method-constrain_variables.md),
+[`unconstrain_variables()`](https://mc-stan.org/cmdstanr/reference/fit-method-unconstrain_variables.md),
+[`variable_skeleton()`](https://mc-stan.org/cmdstanr/reference/fit-method-variable_skeleton.md),
+[`hessian()`](https://mc-stan.org/cmdstanr/reference/fit-method-hessian.md)
 
 ## Examples
 

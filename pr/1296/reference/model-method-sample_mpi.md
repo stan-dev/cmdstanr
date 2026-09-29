@@ -1,11 +1,11 @@
 # Run Stan's MCMC algorithms with MPI
 
 The `$sample_mpi()` method of a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
 object is identical to the `$sample()` method but with support for MPI
 (message passing interface). The target audience for MPI are those with
 large computer clusters. For other users, the
-[`$sample()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md)
+[`$sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.md)
 method provides both parallelization of chains and threading support for
 within-chain parallelization.
 
@@ -20,7 +20,7 @@ An example of compiling with MPI:
     mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 
 The C++ options that must be supplied to the
-[compile](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
+[compile](https://mc-stan.org/cmdstanr/reference/model-method-compile.md)
 call are:
 
 - `stan_mpi`: Enables the use of MPI with Stan if `TRUE`.
@@ -84,9 +84,9 @@ sample_mpi(
   - A named list of R objects with the names corresponding to variables
     declared in the data block of the Stan program. Internally this list
     is then written to JSON for CmdStan using
-    [`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md).
+    [`write_stan_json()`](https://mc-stan.org/cmdstanr/reference/write_stan_json.md).
     See
-    [`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md)
+    [`write_stan_json()`](https://mc-stan.org/cmdstanr/reference/write_stan_json.md)
     for details on the conversions performed on R objects before they
     are passed to Stan.
 
@@ -141,7 +141,7 @@ sample_mpi(
     initial values for all or some parameters. For MCMC and Pathfinder,
     if only a single file is provided it will be reused for all chains
     and paths. See
-    [`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md)
+    [`write_stan_json()`](https://mc-stan.org/cmdstanr/reference/write_stan_json.md)
     to write R objects to JSON files compatible with CmdStan.
 
   - A list of lists containing initial values for all or some
@@ -160,12 +160,12 @@ sample_mpi(
     chain or path number, starting at 1. See **Examples**.
 
   - A
-    [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md),
-    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md),
-    [`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md),
-    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md),
+    [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md),
+    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/reference/CmdStanMLE.md),
+    [`CmdStanVB`](https://mc-stan.org/cmdstanr/reference/CmdStanVB.md),
+    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/reference/CmdStanPathfinder.md),
     or
-    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md)
+    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/reference/CmdStanLaplace.md)
     fit object. If the fit object's parameters are only a subset of the
     model parameters then the other parameters will be drawn by Stan's
     default initialization. The fit object must have at least some
@@ -174,15 +174,15 @@ sample_mpi(
     initialization per chain or path, the inits are drawn from the fit
     object without replacement, so it must contain at least as many
     draws as the number of chains/paths. For
-    [`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md),
-    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md),
+    [`CmdStanVB`](https://mc-stan.org/cmdstanr/reference/CmdStanVB.md),
+    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/reference/CmdStanLaplace.md),
     and
-    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md)
+    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/reference/CmdStanPathfinder.md)
     fit objects the draws must additionally be *distinct*. A
-    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md)
+    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/reference/CmdStanMLE.md)
     fit object is the exception: its single draw (the mode) is used to
     initialize every chain or path. When a
-    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md)
+    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/reference/CmdStanPathfinder.md)
     fit object is used as the init, if CmdStan actually performed PSIS
     resampling (which requires `num_paths > 1`, `psis_resample = TRUE`,
     and `calculate_lp = TRUE`), CmdStanR selects from the returned draws
@@ -194,9 +194,9 @@ sample_mpi(
     `calculate_lp = FALSE`, uniform weights are used because importance
     weights cannot be calculated. PSIS resampling is used to select the
     draws for
-    [`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md),
+    [`CmdStanVB`](https://mc-stan.org/cmdstanr/reference/CmdStanVB.md),
     and
-    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md)
+    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/reference/CmdStanLaplace.md)
     fit objects.
 
   - A type inheriting from
@@ -219,7 +219,7 @@ sample_mpi(
   controlled by the user's CmdStan installation. The default is `FALSE`,
   which is appropriate for almost every use case. To save temporary
   diagnostic files permanently, use
-  [`$save_latent_dynamics_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md).
+  [`$save_latent_dynamics_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md).
 
 - output_dir:
 
@@ -235,7 +235,7 @@ sample_mpi(
   - If `NULL` (the default), then the CSV files are written to a
     temporary directory and only saved permanently if the user calls one
     of the `$save_*` methods of the fitted model object (e.g.,
-    [`$save_output_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)).
+    [`$save_output_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)).
     These temporary files are removed when the fitted model object is
     [garbage collected](https://rdrr.io/r/base/gc.html) (manually or
     automatically).
@@ -368,7 +368,7 @@ sample_mpi(
   (positive integer) The number of significant figures (up to a maximum
   of 18) to use when storing the output values. If `NULL` (the default),
   the default from the installed CmdStan version is used. Use
-  [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-cmdstan_defaults.md)
+  [`$cmdstan_defaults()`](https://mc-stan.org/cmdstanr/reference/model-method-cmdstan_defaults.md)
   to check that default. Increasing this value will result in larger
   output CSV files and thus an increased usage of disk space.
 
@@ -377,7 +377,7 @@ sample_mpi(
   (logical) When `TRUE` (the default), prints all output during the
   execution process, such as iteration numbers and elapsed times. If the
   output is silenced then the
-  [`$output()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-output.md)
+  [`$output()`](https://mc-stan.org/cmdstanr/reference/fit-method-output.md)
   method of the resulting fit object can be used to display the silenced
   messages.
 
@@ -388,7 +388,7 @@ sample_mpi(
   you wish to silence these messages, but this is not usually
   recommended unless you are very confident that the model is correct up
   to numerical error. If the messages are silenced then the
-  [`$output()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-output.md)
+  [`$output()`](https://mc-stan.org/cmdstanr/reference/fit-method-output.md)
   method of the resulting fit object can be used to display the silenced
   messages.
 
@@ -399,22 +399,22 @@ sample_mpi(
   can be used to prevent CmdStanR from automatically reading in the
   sampler diagnostics from CSV if you wish to manually read in the
   results and validate them yourself, for example using
-  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md).
+  [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md).
   The currently available diagnostics are `"divergences"`,
   `"treedepth"`, and `"ebfmi"` (the default is to check all of them).
 
   These diagnostics are also available after fitting. The
-  [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-sampler_diagnostics.md)
+  [`$sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.md)
   method provides access to the diagnostic values for each iteration and
   the
-  [`$diagnostic_summary()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-diagnostic_summary.md)
+  [`$diagnostic_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-diagnostic_summary.md)
   method provides summaries of the diagnostics and can regenerate the
   warning messages.
 
   Diagnostics like R-hat and effective sample size are *not* currently
   available via the `diagnostics` argument but can be checked after
   fitting using the
-  [`$summary()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-summary.md)
+  [`$summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.md)
   method.
 
 - save_cmdstan_config:
@@ -427,8 +427,7 @@ sample_mpi(
 
 ## Value
 
-A
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
+A [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md)
 object.
 
 ## References
@@ -457,20 +456,20 @@ The Stan Math Library's documentation
 support in Stan.
 
 Other CmdStanModel methods:
-[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md),
-[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-cmdstan_defaults.md),
-[`model-method-compile`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md),
-[`model-method-diagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-diagnose.md),
-[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md),
-[`model-method-format`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-format.md),
-[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md),
-[`model-method-laplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
-[`model-method-model-info`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md),
-[`model-method-optimize`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md),
-[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md),
-[`model-method-sample`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md),
-[`model-method-variables`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variables.md),
-[`model-method-variational`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
+[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md),
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/reference/model-method-cmdstan_defaults.md),
+[`model-method-compile`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md),
+[`model-method-diagnose`](https://mc-stan.org/cmdstanr/reference/model-method-diagnose.md),
+[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md),
+[`model-method-format`](https://mc-stan.org/cmdstanr/reference/model-method-format.md),
+[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md),
+[`model-method-laplace`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md),
+[`model-method-optimize`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.md),
+[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md),
+[`model-method-sample`](https://mc-stan.org/cmdstanr/reference/model-method-sample.md),
+[`model-method-variables`](https://mc-stan.org/cmdstanr/reference/model-method-variables.md),
+[`model-method-variational`](https://mc-stan.org/cmdstanr/reference/model-method-variational.md)
 
 ## Examples
 

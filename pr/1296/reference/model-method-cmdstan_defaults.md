@@ -1,7 +1,7 @@
 # Get CmdStan default argument values
 
 The `$cmdstan_defaults()` method of a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
 object queries the compiled model binary for the default argument values
 used by a given inference method. The returned list uses CmdStanR-style
 argument names (e.g., `iter_sampling` instead of CmdStan's
@@ -45,20 +45,20 @@ The Stan and CmdStan documentation:
   [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
-[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md),
-[`model-method-compile`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md),
-[`model-method-diagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-diagnose.md),
-[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md),
-[`model-method-format`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-format.md),
-[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md),
-[`model-method-laplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
-[`model-method-model-info`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md),
-[`model-method-optimize`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md),
-[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md),
-[`model-method-sample`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md),
-[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample_mpi.md),
-[`model-method-variables`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variables.md),
-[`model-method-variational`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
+[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md),
+[`model-method-compile`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md),
+[`model-method-diagnose`](https://mc-stan.org/cmdstanr/reference/model-method-diagnose.md),
+[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md),
+[`model-method-format`](https://mc-stan.org/cmdstanr/reference/model-method-format.md),
+[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md),
+[`model-method-laplace`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md),
+[`model-method-optimize`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.md),
+[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md),
+[`model-method-sample`](https://mc-stan.org/cmdstanr/reference/model-method-sample.md),
+[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/reference/model-method-sample_mpi.md),
+[`model-method-variables`](https://mc-stan.org/cmdstanr/reference/model-method-variables.md),
+[`model-method-variational`](https://mc-stan.org/cmdstanr/reference/model-method-variational.md)
 
 ## Examples
 
