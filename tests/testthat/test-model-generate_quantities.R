@@ -55,15 +55,24 @@ test_that("generate_quantities work for different chains and parallel_chains", {
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
   )
-  mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE))
-  expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2)
+  # The existing executable is unthreaded and is not rebuilt, so do not report
+  # the requested thread count (#1019).
+  expect_warning(
+    mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE)),
+    "do not match the ones requested"
   )
-  expect_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
-    "2 thread(s) per chain",
+  threads_output <- capture.output(
+    expect_warning(
+      mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
+      "'threads_per_chain' is set but the model was not compiled with"
+    )
+  )
+  expect_match(
+    paste(threads_output, collapse = "\n"),
+    "Running standalone generated quantities after ",
     fixed = TRUE
   )
+  expect_false(any(grepl("thread(s) per chain", threads_output, fixed = TRUE)))
 })
 
 test_that("generate_quantities works with draws_array", {

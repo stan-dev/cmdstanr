@@ -73,6 +73,59 @@ model_compile_info <- function(exe_file, version) {
   info
 }
 
+# Merge build options reported by the executable. Ignore STAN_VERSION and false
+# flags (passing FLAG=FALSE back to CmdStan can enable the flag).
+merge_exe_info_cpp_options <- function(cpp_options, exe_info) {
+  for (option_name in names(exe_info)) {
+    value <- exe_info[[option_name]]
+    if (tolower(option_name) != "stan_version" &&
+        (!is.logical(value) || isTRUE(value))) {
+      cpp_options[[option_name]] <- value
+    }
+  }
+  cpp_options
+}
+
+# Normalize the flags sent to make. Assignment names are case-insensitive and
+# the last value wins. Nonassignments keep their order. Headers are handled
+# separately.
+parsed_cpp_options <- function(cpp_options) {
+  assignments <- list()
+  opaque <- character()
+  for (flag in cpp_options_to_compile_flags(cpp_options)) {
+    if (!grepl("^[A-Za-z_][A-Za-z0-9_]*=", flag)) {
+      opaque <- c(opaque, flag)
+      next
+    }
+    option_name <- tolower(sub("=.*$", "", flag))
+    if (option_name %in% c("user_header", "stan_version")) {
+      next
+    }
+    assignments[[option_name]] <- sub("^[^=]*=", "", flag)
+  }
+  list(assignments = assignments, opaque = opaque)
+}
+
+normalized_cpp_options <- function(cpp_options) {
+  parsed <- parsed_cpp_options(cpp_options)
+  reduced <- character()
+  if (length(parsed$assignments) > 0) {
+    reduced <- paste0(
+      names(parsed$assignments), "=",
+      unlist(parsed$assignments, use.names = FALSE)
+    )
+  }
+  c(sort(reduced), parsed$opaque)
+}
+
+# Omitted recorded options count as changes because cpp_options are one-shot.
+cpp_options_disagree <- function(requested, recorded) {
+  !identical(
+    normalized_cpp_options(requested),
+    normalized_cpp_options(recorded)
+  )
+}
+
 # convert to compile flags --------------------
 # from list(flag1=TRUE, flag2=FALSE) to "FLAG1=TRUE\nFLAG2=FALSE"
 cpp_options_to_compile_flags <- function(cpp_options) {
@@ -126,6 +179,78 @@ validate_cpp_options <- function(cpp_options) {
     )
   }
   cpp_options
+}
+
+# user headers ---------------------------------------------------------
+# Resolve one header and remove both header spellings from cpp_options.
+# Precedence is explicit user_header (including NULL), USER_HEADER,
+# user_header, then previous. `supplied` distinguishes NULL from omission.
+# `cpp_options_supplied` limits conflict warnings to this call.
+resolve_user_header <- function(user_header,
+                                supplied,
+                                cpp_options,
+                                cpp_options_supplied = TRUE,
+                                previous = NULL) {
+  # Use positions so duplicate options follow make's last-value-wins behavior.
+  upper_at <- which(names(cpp_options) == "USER_HEADER")
+  lower_at <- which(names(cpp_options) == "user_header")
+  last_of <- function(positions) {
+    if (length(positions) == 0) {
+      NULL
+    } else {
+      cpp_options[[positions[[length(positions)]]]]
+    }
+  }
+  # NULL is still present here because it emits an empty USER_HEADER= assignment.
+  has_upper <- length(upper_at) > 0
+  has_lower <- length(lower_at) > 0
+  from_upper <- last_of(upper_at)
+  from_lower <- last_of(lower_at)
+  conflict <- NULL
+  spelling <- "USER_HEADER"
+
+  if (supplied) {
+    if (cpp_options_supplied && (has_upper || has_lower)) {
+      conflict <- "argument"
+    }
+    header <- user_header
+  } else if (has_upper) {
+    if (has_lower) {
+      conflict <- "cpp_options"
+    }
+    header <- from_upper
+  } else if (has_lower) {
+    header <- from_lower
+    spelling <- "user_header"
+  } else {
+    header <- previous
+  }
+
+  # Validate the value now and check file existence when compiling.
+  if (!is.null(header)) {
+    checkmate::assert_string(header, .var.name = "user_header")
+  }
+  # Guarded because x[-integer(0)] is empty.
+  header_at <- c(upper_at, lower_at)
+  if (length(header_at) > 0) {
+    cpp_options <- cpp_options[-header_at]
+  }
+
+  list(
+    user_header = header,
+    spelling = spelling,
+    cpp_options = cpp_options,
+    conflict = conflict
+  )
+}
+
+warn_user_header_conflict <- function(conflict) {
+  if (identical(conflict, "argument")) {
+    warning("User header specified both via user_header argument and via cpp_options arguments")
+  } else if (identical(conflict, "cpp_options")) {
+    warning('User header specified both via cpp_options[["USER_HEADER"]] and cpp_options[["user_header"]].', call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 # check specific options for validity ---------------------------------
@@ -206,11 +331,17 @@ exe_info_reflects_cpp_options <- function(exe_info, cpp_options) {
   }
   if (is.null(cpp_options)) return(TRUE)
 
-  cpp_options <- exe_info_style_cpp_options(cpp_options)[tolower(names(cpp_options))]
-  overlap <- names(cpp_options)[names(cpp_options) %in% names(exe_info)]
+  # Compare only options reported by the executable. Other options are unknown.
+  # Parse the emitted flags so duplicates and unnamed assignments match make.
+  assignments <- parsed_cpp_options(cpp_options)$assignments
+  reported <- intersect(names(assignments), tolower(names(exe_info)))
 
-  if (length(overlap) == 0) TRUE else all.equal(
-    exe_info[overlap],
-    cpp_options[overlap]
-  )
+  for (option_name in reported) {
+    # CmdStan treats any nonempty make value as enabled.
+    requested <- nzchar(assignments[[option_name]])
+    if (requested != isTRUE(cpp_option_value(exe_info, option_name))) {
+      return(FALSE)
+    }
+  }
+  TRUE
 }

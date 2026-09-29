@@ -155,3 +155,41 @@ test_that("exe_info cpp_options comparison works", {
     "Recompiling is recommended"
   )
 })
+
+test_that("exe_info comparison reads cpp_options the way make does", {
+  # Upper-case, as model_compile_info() reports it.
+  disabled <- list(STAN_THREADS = FALSE)
+
+  # An unnamed raw assignment is as much a request as a named one; reading the
+  # list's names cannot see it.
+  expect_not_true(
+    exe_info_reflects_cpp_options(disabled, list("STAN_THREADS=TRUE"))
+  )
+
+  # Every duplicate reaches make and a makefile takes the last, so the order
+  # decides which of these agrees.
+  expect_true(exe_info_reflects_cpp_options(
+    disabled,
+    list(stan_threads = TRUE, stan_threads = NULL)
+  ))
+  expect_not_true(exe_info_reflects_cpp_options(
+    disabled,
+    list(stan_threads = NULL, stan_threads = TRUE)
+  ))
+
+  # A vector value expands into one assignment per element. This used to error.
+  expect_not_true(exe_info_reflects_cpp_options(
+    disabled,
+    list(stan_threads = c(TRUE, FALSE))
+  ))
+
+  # Non-empty enables whatever the value, so FALSE does not ask for "off".
+  expect_not_true(
+    exe_info_reflects_cpp_options(disabled, list(stan_threads = FALSE))
+  )
+
+  # An option the binary cannot report is unverifiable, not a mismatch.
+  expect_true(
+    exe_info_reflects_cpp_options(disabled, list(my_custom_make_flag = TRUE))
+  )
+})

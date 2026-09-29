@@ -392,21 +392,24 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   [hessian()]
 #'
 init_model_methods <- function(seed = 1, verbose = FALSE) {
+  if (model_methods_are_live(private$model_methods_env_)) {
+    return(invisible(NULL))
+  }
   if (os_is_wsl()) {
     stop("Additional model methods are not currently available with ",
           "WSL CmdStan and will not be compiled",
           call. = FALSE)
   }
-  require_suggested_package("Rcpp")
   drop_stale_model_methods(private$model_methods_env_)
   if (length(private$model_methods_env_$hpp_code_) == 0) {
     stop("Model methods cannot be used with a pre-compiled Stan executable, ",
           "the model must be compiled again", call. = FALSE)
   }
   if (is.null(private$model_methods_env_$model_ptr)) {
+    require_suggested_package("Rcpp")
     expose_model_methods(private$model_methods_env_, verbose)
   }
-  if (!("model_ptr_" %in% ls(private$model_methods_env_))) {
+  if (!model_methods_are_live(private$model_methods_env_)) {
     initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
   }
   invisible(NULL)
