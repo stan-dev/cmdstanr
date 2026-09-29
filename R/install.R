@@ -671,10 +671,7 @@ try_download <- function(
         headers = headers
       ),
       warning = function(w) {
-        warning_message <- conditionMessage(w)
-        if (grepl("HTTP status was", warning_message, fixed = TRUE)) {
-          download_warning <<- warning_message
-        }
+        download_warning <<- conditionMessage(w)
         invokeRestart("muffleWarning")
       }
     ),
@@ -710,7 +707,7 @@ download_with_retries <- function(
 
     if (
       !is.null(headers) &&
-        isTRUE(grepl("401|403", attr(download_rc, "http_status")))
+        isTRUE(grepl("'40[13] [^']*'$", attr(download_rc, "http_status")))
     ) {
       warning(
         "GitHub download failed with GITHUB_PAT. Retrying without it. ",
