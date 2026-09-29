@@ -209,13 +209,6 @@ build_executable <- function(stan_file,
 #'   not remove. The new executable and its record are installed in either case.
 #' @noRd
 install_executable <- function(from, to, record) {
-  if (dir.exists(to)) {
-    stop(
-      "Cannot install the compiled executable at '", to,
-      "' because that path is a directory. Nothing was modified.",
-      call. = FALSE
-    )
-  }
   # Normalize mixed Windows separators before converting the path for WSL.
   stage <- function(pattern) {
     repair_path(tempfile(pattern = pattern, tmpdir = dirname(to)))

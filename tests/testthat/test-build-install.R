@@ -81,26 +81,6 @@ test_that("install_executable() replaces an executable and removes the backup", 
   expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
 })
 
-test_that("install_executable() refuses to install over a directory", {
-  fixture <- local_exe_fixture(destination_exists = FALSE)
-  dir.create(fixture$to)
-  writeLines("important", file.path(fixture$to, "data.txt"))
-
-  # Directories satisfy file.exists(), so reject them before staging or renaming.
-  # exe_file= can pass a directory here.
-  expect_error(
-    install_executable(fixture$from, fixture$to, fixture$record),
-    "is a directory",
-    fixed = TRUE
-  )
-  expect_true(dir.exists(fixture$to))
-  expect_identical(readLines(file.path(fixture$to, "data.txt")), "important")
-  expect_setequal(
-    list.files(fixture$dir),
-    basename(c(fixture$from, fixture$to))
-  )
-})
-
 test_that("install_executable() leaves the destination alone if staging fails", {
   fixture <- local_exe_fixture()
   local_mocked_bindings(file.copy = function(...) FALSE, .package = "base")

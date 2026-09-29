@@ -807,9 +807,6 @@ CmdStanProcs <- R6::R6Class(
     show_stdout_messages = function () {
       private$show_stdout_messages_
     },
-    show_stderr_messages = function () {
-      private$show_stderr_messages_
-    },
     num_procs = function() {
       private$num_procs_
     },

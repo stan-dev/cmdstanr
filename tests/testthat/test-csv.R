@@ -1051,6 +1051,8 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
     error = TRUE,
     fits$laplace$mode()
   )
+
+  expect_length(fits$mcmc$inv_metric(), fit_logistic_thin_1$num_chains())
 })
 
 test_that("as_cmdstan_fit can check MCMC diagnostics", {

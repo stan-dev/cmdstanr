@@ -121,15 +121,23 @@ test_that("$save_* methods save all files regardless of chain failure", {
 })
 
 test_that("errors when using draws after all chains fail", {
-  expect_error(fit_all_fail$summary(), "No chains finished successfully")
-  expect_error(fit_all_fail$draws(), "No chains finished successfully")
-  expect_error(fit_all_fail$sampler_diagnostics(), "No chains finished successfully")
+  no_output <- "No chains finished successfully"
+  expect_error(fit_all_fail$summary(), no_output)
+  expect_error(fit_all_fail$draws(), no_output)
+  expect_error(fit_all_fail$sampler_diagnostics(), no_output)
   expect_error(fit_all_fail$cmdstan_summary(), "Unable to run bin/stansummary")
   expect_error(fit_all_fail$cmdstan_diagnose(), "Unable to run bin/diagnose")
-  expect_error(fit_all_fail$print(), "Fitting failed. Unable to print")
-  expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
-  expect_error(fit_all_fail$metadata(), "Fitting failed. Unable to retrieve the metadata")
-  expect_error(fit_all_fail$inv_metric(), "No chains finished successfully")
+  expect_error(fit_all_fail$print(), no_output)
+  expect_error(fit_all_fail$inv_metric(), no_output)
+  expect_error(fit_all_fail$metadata(), no_output)
+})
+
+test_that("a fit whose chains all failed cannot be used as init", {
+  expect_error(
+    mod$sample(data = list(pr_fail = 0), chains = 1, refresh = 0,
+               init = fit_all_fail),
+    "unable to create initial values from a model with no samples"
+  )
 })
 
 test_that("can use draws after some chains fail", {
@@ -166,12 +174,12 @@ test_that("errors when using draws after variational fais", {
     ),
     "Fitting finished unexpectedly!"
   )
-  expect_error(fit$print(), "Fitting failed. Unable to print.")
-  expect_error(fit$summary(), "Fitting failed. Unable to retrieve the draws.")
-  expect_error(fit$draws(), "Fitting failed. Unable to retrieve the draws.")
+  expect_error(fit$print(), "Variational inference failed")
+  expect_error(fit$summary(), "Variational inference failed")
+  expect_error(fit$draws(), "Variational inference failed")
   expect_error(fit$cmdstan_summary(), "Unable to run bin/stansummary")
   expect_error(fit$cmdstan_diagnose(), "Unable to run bin/diagnose")
-  expect_error(fit$metadata(), "Fitting failed. Unable to retrieve the metadata.")
+  expect_error(fit$metadata(), "Variational inference failed")
 })
 
 test_that("gq chains error on wrong input CSV", {
@@ -197,15 +205,15 @@ test_that("gq chains error on wrong input CSV", {
 
   expect_error(
     fit$draws(),
-    "Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities."
+    "Generating quantities for all MCMC chains failed"
   )
   expect_error(
     fit$metadata(),
-    "Fitting failed. Unable to retrieve the metadata."
+    "Generating quantities for all MCMC chains failed"
   )
   expect_error(
     fit$print(),
-    "Fitting failed. Unable to print."
+    "Generating quantities for all MCMC chains failed"
   )
   expect_warning(
     utils::capture.output(

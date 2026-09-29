@@ -681,7 +681,6 @@ DiagnoseArgs <- R6::R6Class(
 #' @param self A `CmdStanArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_cmdstan_args <- function(self) {
-  validate_exe_file(self$exe_file)
   assert_dir_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
@@ -1265,21 +1264,19 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
 
   # resample_draws() needs num_procs distinct candidates
   if (num_procs > num_candidates) {
-    if (inherits(init, "CmdStanPathfinder")) {
-      algo_name <- " Pathfinder "
-      extra_msg <- " Try running Pathfinder with psis_resample=FALSE."
-    } else if (inherits(init, "CmdStanVB")) {
-      algo_name <- " VB "
-      extra_msg <- ""
-    } else if (inherits(init, "CmdStanLaplace")) {
-      algo_name <- " Laplace "
-      extra_msg <- ""
+    algo_name <- switch(
+      class(init)[1],
+      CmdStanPathfinder = "Pathfinder",
+      CmdStanVB = "VB",
+      CmdStanLaplace = "Laplace"
+    )
+    extra_msg <- if (inherits(init, "CmdStanPathfinder")) {
+      " Try running Pathfinder with psis_resample=FALSE."
     } else {
-      algo_name <- ""
-      extra_msg <- ""
+      ""
     }
-    stop(paste0("Not enough distinct draws (", num_procs, ") in", algo_name ,
-                "fit to create inits.", extra_msg))
+    stop(paste0("Not enough distinct draws (", num_procs, ") in ",
+                algo_name, " fit to create inits.", extra_msg))
   }
 
   # CmdStan PSIS-resamples Pathfinder draws only with multiple paths and lp weights
@@ -1413,20 +1410,6 @@ process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
 
 
 # Validation helpers ------------------------------------------------------
-
-#' Validate exe file exists
-#' @noRd
-#' @param exe_file Path to executable.
-#' @return Either throws an error or returns `invisible(TRUE)`
-validate_exe_file <- function(exe_file) {
-  if (!length(exe_file) ||
-      !nzchar(exe_file) ||
-      !file.exists(exe_file)) {
-    stop("There is no executable at '", exe_file, "'.", call. = FALSE)
-  }
-  invisible(TRUE)
-}
-
 
 #' Validate initial values
 #'

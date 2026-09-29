@@ -84,3 +84,11 @@ test_that("check_syntax() errors if only exe and no Stan file", {
     fixed = TRUE
   )
 })
+
+test_that("print(line_numbers = TRUE) numbers the lines", {
+  lines <- mod$code()
+  expect_equal(
+    capture.output(mod$print(line_numbers = TRUE)),
+    paste(base::format(seq_along(lines)), lines, sep = ": ")
+  )
+})

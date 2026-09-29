@@ -76,7 +76,7 @@ test_that("no error when checking estimates after failure", {
     fit <- cmdstanr_example("schools", method = "optimize", seed = 123), # optim ålways fails for this
     "Fitting finished unexpectedly"
   )
-  expect_error(fit$summary(), "Fitting failed. Unable to retrieve the draws.")
+  expect_error(fit$summary(), "Optimization failed")
 })
 
 test_that("draws() works for different formats", {
