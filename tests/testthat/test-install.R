@@ -313,10 +313,11 @@ test_that("download_with_retries() keeps GITHUB_PAT after non-auth failure", {
   expect_identical(calls, c("token valid-token", "token valid-token"))
 })
 
-test_that("download_with_retries() retries without auth when GITHUB_PAT is unset", {
+test_that("download_with_retries() doesn't blame a token that isn't set", {
   withr::local_envvar(c(GITHUB_PAT = NA))
   calls <- character()
-  download_error <- try(stop("download failed"), silent = TRUE)
+  rate_limit_error <- try(stop("download failed"), silent = TRUE)
+  attr(rate_limit_error, "http_status") <- "HTTP status was '403 Forbidden'"
 
   local_mocked_bindings(
     try_download = function(
@@ -326,7 +327,7 @@ test_that("download_with_retries() retries without auth when GITHUB_PAT is unset
       headers = github_auth_token()
     ) {
       calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
-      download_error
+      rate_limit_error
     }
   )
 
