@@ -13,4 +13,6 @@
 ^vignettes/articles-online-only$
 ^release-prep\.R$
 ^\.vscode$
+^[.]?air[.]toml$
+^jarl\.toml$
 ^dev-notes$
