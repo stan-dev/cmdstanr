@@ -246,40 +246,6 @@ test_that("try_download() captures the HTTP status warning", {
   expect_match(attr(result, "http_status"), "401 Unauthorized", fixed = TRUE)
 })
 
-test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
-  withr::local_envvar(c(GITHUB_PAT = "bad-token"))
-  calls <- character()
-  auth_error <- try(stop("download failed"), silent = TRUE)
-  attr(auth_error, "http_status") <- "HTTP status was '401 Unauthorized'"
-
-  local_mocked_bindings(
-    try_download = function(
-      download_url,
-      destination_file,
-      quiet = TRUE,
-      headers = github_auth_token()
-    ) {
-      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
-      if (length(calls) == 1L) {
-        return(auth_error)
-      }
-      0L
-    }
-  )
-
-  expect_warning(
-    result <- download_with_retries(
-      "https://example.com/file",
-      tempfile(),
-      pause_sec = 0
-    ),
-    "Retrying without it.",
-    fixed = TRUE
-  )
-  expect_identical(result, 0L)
-  expect_identical(calls, c("token bad-token", "none"))
-})
-
 test_that("download_with_retries() keeps GITHUB_PAT after non-auth failure", {
   withr::local_envvar(c(GITHUB_PAT = "valid-token"))
   calls <- character()
@@ -344,7 +310,7 @@ test_that("download_with_retries() doesn't blame a token that isn't set", {
   expect_identical(calls, c("none", "none"))
 })
 
-test_that("download_with_retries() keeps auth dropped after auth failure", {
+test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
   withr::local_envvar(c(GITHUB_PAT = "bad-token"))
   calls <- character()
   auth_error <- try(stop("download failed"), silent = TRUE)
@@ -359,10 +325,7 @@ test_that("download_with_retries() keeps auth dropped after auth failure", {
       headers = github_auth_token()
     ) {
       calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
-      if (length(calls) == 1L) {
-        return(auth_error)
-      }
-      download_error
+      switch(length(calls), auth_error, download_error, 0L)
     }
   )
 
@@ -377,7 +340,7 @@ test_that("download_with_retries() keeps auth dropped after auth failure", {
     fixed = TRUE
   )
 
-  expect_s3_class(result, "try-error")
+  expect_identical(result, 0L)
   expect_identical(calls, c("token bad-token", "none", "none"))
 })
 
