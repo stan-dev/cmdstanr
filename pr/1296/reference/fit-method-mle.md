@@ -1,21 +1,21 @@
 # Extract point estimate after optimization
 
 The `$mle()` method is only available for
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
+[`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md)
 objects. The method name is retained for historical reasons. It returns
 the point estimate as a numeric vector with one element per variable.
 The returned vector does *not* include `lp__`, the target log density
 evaluated by Stan, up to an additive constant. `lp__` is available via
 the
-[`$lp()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-lp.md)
+[`$lp()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-lp.md)
 method and also included in the
-[`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
+[`$draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md)
 method.
 
 With `jacobian = FALSE`, the point estimate is a mode of the target in
 the constrained parameter space. With `jacobian = TRUE`, it is a mode of
 the corresponding density in the unconstrained parameter space. See
-[`$optimize()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md)
+[`$optimize()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md)
 and the CmdStan User's Guide for more details.
 
 ## Usage
@@ -38,7 +38,7 @@ A numeric vector. See **Examples**.
 
 ## See also
 
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
+[`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md)
 
 ## Examples
 

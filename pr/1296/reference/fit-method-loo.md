@@ -19,7 +19,7 @@ loo(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...)
   (string) The name of the variable in the Stan program containing the
   pointwise log-likelihood. The default is to look for `"log_lik"`. This
   argument is passed to the
-  [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
+  [`$draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md)
   method.
 
 - r_eff:
@@ -49,7 +49,7 @@ loo(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...)
   correction for problematic observations. The default is `FALSE`. Using
   `moment_match=TRUE` will result in compiling the additional methods
   described in
-  [fit-method-init_model_methods](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init_model_methods.md).
+  [fit-method-init_model_methods](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-init_model_methods.md).
   This allows CmdStanR to automatically supply the functions for the
   `log_lik_i`, `unconstrain_pars`, `log_prob_upars`, and
   `log_lik_i_upars` arguments to

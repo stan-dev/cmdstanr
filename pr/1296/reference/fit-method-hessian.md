@@ -26,12 +26,12 @@ A named list with elements `log_prob`, `grad_log_prob`, and `hessian`.
 
 ## See also
 
-[`log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md),
-[`grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md),
-[`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
-[`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md),
-[`unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md),
-[`variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md)
+[`log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-log_prob.md),
+[`grad_log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-grad_log_prob.md),
+[`constrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-constrain_variables.md),
+[`unconstrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_variables.md),
+[`unconstrain_draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_draws.md),
+[`variable_skeleton()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-variable_skeleton.md)
 
 ## Examples
 

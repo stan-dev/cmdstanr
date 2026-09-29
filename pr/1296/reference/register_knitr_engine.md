@@ -1,7 +1,7 @@
 # Register CmdStanR's knitr engine for Stan
 
 Registers CmdStanR's knitr engine
-[`eng_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/eng_cmdstan.md)
+[`eng_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/eng_cmdstan.md)
 for processing Stan chunks. Refer to the vignette [R Markdown CmdStan
 Engine](https://mc-stan.org/cmdstanr/articles/r-markdown.html) for a
 demonstration.
@@ -59,4 +59,4 @@ the `cmdstan` engine with `override = FALSE`.
 
 ## See also
 
-[`eng_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/eng_cmdstan.md)
+[`eng_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/eng_cmdstan.md)

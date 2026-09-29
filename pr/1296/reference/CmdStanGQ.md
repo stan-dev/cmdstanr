@@ -1,9 +1,9 @@
 # CmdStanGQ objects
 
 A `CmdStanGQ` object is the fitted model object returned by the
-[`$generate_quantities()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md)
+[`$generate_quantities()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md)
 method of a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
 object.
 
 ## Methods
@@ -16,58 +16,58 @@ have their own (linked) documentation pages.
 |  |  |
 |----|----|
 | **Method** | **Description** |
-| [`$draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md) | Return the generated quantities as a [`draws_array`](https://mc-stan.org/posterior/reference/draws_array.html). |
-| [`$fitted_params_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-fitted_params_files.md) | Return paths to the fitted-parameter CSV files. |
-| [`$metadata()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-metadata.md) | Return a list of metadata gathered from the CmdStan CSV files. |
-| [`$profiles()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-profiles.md) | Return profiling data. |
-| [`$num_chains()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-num_chains.md) | Return the number of chains used for generated quantities. |
-| [`$code()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-code.md) | Return Stan code as a character vector. |
+| [`$draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md) | Return the generated quantities as a [`draws_array`](https://mc-stan.org/posterior/reference/draws_array.html). |
+| [`$fitted_params_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-fitted_params_files.md) | Return paths to the fitted-parameter CSV files. |
+| [`$metadata()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-metadata.md) | Return a list of metadata gathered from the CmdStan CSV files. |
+| [`$profiles()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-profiles.md) | Return profiling data. |
+| [`$num_chains()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-num_chains.md) | Return the number of chains used for generated quantities. |
+| [`$code()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-code.md) | Return Stan code as a character vector. |
 
 ### Summarize inferences
 
 |  |  |
 |----|----|
 | **Method** | **Description** |
-| [`$print()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-summary.md) | Print a summary of the generated quantities. |
-| [`$summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-summary.md) | Run [`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html). |
+| [`$print()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-summary.md) | Print a summary of the generated quantities. |
+| [`$summary()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-summary.md) | Run [`posterior::summarise_draws()`](https://mc-stan.org/posterior/reference/draws_summary.html). |
 
 ### Save fitted model object and temporary files
 
 |  |  |
 |----|----|
 | **Method** | **Description** |
-| [`$materialize()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-materialize.md) | Read all generated quantities into memory. |
-| [`$save_object()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_object.md) | Save fitted model object to a file. |
-| [`$output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Return paths to output CSV files. |
-| [`$save_output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save output CSV files to a specified location. |
-| [`$data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Return the path to the JSON data file. |
-| [`$save_data_file()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save JSON data file to a specified location. |
-| [`$profile_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Return paths to profiling CSV files. |
-| [`$save_profile_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md) | Save profiling CSV files to a specified location. |
+| [`$materialize()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-materialize.md) | Read all generated quantities into memory. |
+| [`$save_object()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_object.md) | Save fitted model object to a file. |
+| [`$output_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md) | Return paths to output CSV files. |
+| [`$save_output_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md) | Save output CSV files to a specified location. |
+| [`$data_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md) | Return the path to the JSON data file. |
+| [`$save_data_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md) | Save JSON data file to a specified location. |
+| [`$profile_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md) | Return paths to profiling CSV files. |
+| [`$save_profile_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md) | Save profiling CSV files to a specified location. |
 
 ### Report run times, console output, return codes
 
 |  |  |
 |----|----|
 | **Method** | **Description** |
-| [`$time()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-time.md) | Report total and process-specific run times. |
-| [`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md) | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
-| [`$return_codes()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-return_codes.md) | Return the return codes from the CmdStan runs. |
+| [`$time()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-time.md) | Report total and process-specific run times. |
+| [`$output()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-output.md) | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
+| [`$return_codes()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-return_codes.md) | Return the return codes from the CmdStan runs. |
 
 ### Expose Stan functions and additional methods to R
 
 |  |  |
 |----|----|
 | **Method** | **Description** |
-| [`$expose_functions()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md) | Expose Stan functions for use in R. |
-| [`$init_model_methods()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-init_model_methods.md) | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
-| [`$log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-log_prob.md) | Calculate log-prob. |
-| [`$grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md) | Calculate log-prob and gradient. |
-| [`$hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md) | Calculate log-prob, gradient, and Hessian. |
-| [`$constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md) | Transform a set of unconstrained parameter values to the constrained scale. |
-| [`$unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md) | Transform a set of parameter values to the unconstrained scale. |
-| [`$unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md) | Transform all parameter draws to the unconstrained scale. |
-| [`$variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md) | Helper function to re-structure a vector of constrained parameter values. |
+| [`$expose_functions()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md) | Expose Stan functions for use in R. |
+| [`$init_model_methods()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-init_model_methods.md) | Expose methods for log-probability, gradients, parameter constraining and unconstraining. |
+| [`$log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-log_prob.md) | Calculate log-prob. |
+| [`$grad_log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-grad_log_prob.md) | Calculate log-prob and gradient. |
+| [`$hessian()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-hessian.md) | Calculate log-prob, gradient, and Hessian. |
+| [`$constrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-constrain_variables.md) | Transform a set of unconstrained parameter values to the constrained scale. |
+| [`$unconstrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_variables.md) | Transform a set of parameter values to the unconstrained scale. |
+| [`$unconstrain_draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_draws.md) | Transform all parameter draws to the unconstrained scale. |
+| [`$variable_skeleton()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-variable_skeleton.md) | Helper function to re-structure a vector of constrained parameter values. |
 
 ## See also
 
@@ -84,12 +84,12 @@ The Stan and CmdStan documentation:
   [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other fitted model objects:
-[`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanDiagnose.md),
-[`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md),
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
-[`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md),
-[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md)
+[`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanDiagnose.md),
+[`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md),
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md),
+[`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md),
+[`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md),
+[`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md)
 
 ## Examples
 

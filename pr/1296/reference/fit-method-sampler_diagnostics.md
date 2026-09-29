@@ -3,7 +3,7 @@
 Extract the values of sampler diagnostics for each iteration and chain
 of MCMC. To instead get summaries of these diagnostics and associated
 warning messages use the
-[`$diagnostic_summary()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-diagnostic_summary.md)
+[`$diagnostic_summary()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-diagnostic_summary.md)
 method.
 
 ## Usage
@@ -24,7 +24,7 @@ sampler_diagnostics(
 - format:
 
   (string) The draws format to return. See
-  [draws](https://mc-stan.org/cmdstanr/dev/reference/fit-method-draws.md)
+  [draws](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md)
   for details.
 
 ## Value
@@ -37,7 +37,7 @@ MCMC algorithm are `"accept_stat__"`, `"stepsize__"`, `"treedepth__"`,
 
 ## See also
 
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md)
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
 
 ## Examples
 

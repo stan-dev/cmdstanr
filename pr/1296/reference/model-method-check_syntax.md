@@ -1,7 +1,7 @@
 # Check syntax of a Stan program
 
 The `$check_syntax()` method of a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
 object checks the Stan program for syntax errors and returns `TRUE`
 (invisibly) if parsing succeeds. If invalid syntax is found an error is
 thrown.
@@ -36,7 +36,7 @@ check_syntax(
 
   (list) Any other Stan-to-C++ transpiler options to be used when
   compiling the model. See the documentation for the
-  [`$compile()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
+  [`$compile()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
   method for details.
 
 - quiet:
@@ -66,20 +66,20 @@ The Stan and CmdStan documentation:
   [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
-[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md),
-[`model-method-compile`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md),
-[`model-method-diagnose`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md),
-[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
-[`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
-[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
-[`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
-[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
-[`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
-[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
-[`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
-[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample_mpi.md),
-[`model-method-variables`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variables.md),
-[`model-method-variational`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md)
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-cmdstan_defaults.md),
+[`model-method-compile`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md),
+[`model-method-diagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-diagnose.md),
+[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md),
+[`model-method-format`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-format.md),
+[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md),
+[`model-method-laplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md),
+[`model-method-optimize`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md),
+[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md),
+[`model-method-sample`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md),
+[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample_mpi.md),
+[`model-method-variables`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variables.md),
+[`model-method-variational`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
 
 ## Examples
 
@@ -107,11 +107,11 @@ mod$check_syntax()
 # pedantic mode will warn that lambda should be constrained to be positive
 # and that lambda has no prior distribution
 mod$check_syntax(pedantic = TRUE)
-#> Warning in '/tmp/RtmpbnhmZL/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:
+#> Warning in '/tmp/Rtmp8F1YDI/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 8, column 2 to column 14:
 #>     The parameter lambda has no priors. This means either no prior is
 #>     provided, or the prior(s) depend on data variables. In the later case,
 #>     this may be a false positive.
-#> Warning in '/tmp/RtmpbnhmZL/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:
+#> Warning in '/tmp/Rtmp8F1YDI/model_287cd4f50e093cb87805d29fd774bdf8.stan', line 11, column 14 to column 20:
 #>     A poisson distribution is given parameter lambda as a rate parameter
 #>     (argument 1), but lambda was not constrained to be strictly positive.
 #> Stan program is syntactically correct

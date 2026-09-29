@@ -1,7 +1,7 @@
 # Run Stan's diagnose method
 
 The `$diagnose()` method of a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
 object runs Stan's basic diagnostic feature that will calculate the
 gradients of the initial state and compare them with gradients
 calculated by finite differences. Discrepancies between the two indicate
@@ -13,7 +13,7 @@ Unlike other CmdStan methods, `$diagnose()` does not expose
 output is not printed during execution, while standard error is always
 displayed. The captured console output can be inspected with the
 returned object's
-[`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md)
+[`$output()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-output.md)
 method.
 
 ## Usage
@@ -40,9 +40,9 @@ diagnose(
   - A named list of R objects with the names corresponding to variables
     declared in the data block of the Stan program. Internally this list
     is then written to JSON for CmdStan using
-    [`write_stan_json()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_json.md).
+    [`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md).
     See
-    [`write_stan_json()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_json.md)
+    [`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md)
     for details on the conversions performed on R objects before they
     are passed to Stan.
 
@@ -80,7 +80,7 @@ diagnose(
     initial values for all or some parameters. For MCMC and Pathfinder,
     if only a single file is provided it will be reused for all chains
     and paths. See
-    [`write_stan_json()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_json.md)
+    [`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md)
     to write R objects to JSON files compatible with CmdStan.
 
   - A list of lists containing initial values for all or some
@@ -99,12 +99,12 @@ diagnose(
     chain or path number, starting at 1. See **Examples**.
 
   - A
-    [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md),
-    [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md),
+    [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md),
+    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md),
+    [`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md),
+    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md),
     or
-    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md)
+    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md)
     fit object. If the fit object's parameters are only a subset of the
     model parameters then the other parameters will be drawn by Stan's
     default initialization. The fit object must have at least some
@@ -113,15 +113,15 @@ diagnose(
     initialization per chain or path, the inits are drawn from the fit
     object without replacement, so it must contain at least as many
     draws as the number of chains/paths. For
-    [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
-    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md),
+    [`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md),
+    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md),
     and
-    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
+    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md)
     fit objects the draws must additionally be *distinct*. A
-    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
+    [`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md)
     fit object is the exception: its single draw (the mode) is used to
     initialize every chain or path. When a
-    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanPathfinder.md)
+    [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md)
     fit object is used as the init, if CmdStan actually performed PSIS
     resampling (which requires `num_paths > 1`, `psis_resample = TRUE`,
     and `calculate_lp = TRUE`), CmdStanR selects from the returned draws
@@ -133,9 +133,9 @@ diagnose(
     `calculate_lp = FALSE`, uniform weights are used because importance
     weights cannot be calculated. PSIS resampling is used to select the
     draws for
-    [`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md),
+    [`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md),
     and
-    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md)
+    [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md)
     fit objects.
 
   - A type inheriting from
@@ -164,7 +164,7 @@ diagnose(
   - If `NULL` (the default), then the CSV files are written to a
     temporary directory and only saved permanently if the user calls one
     of the `$save_*` methods of the fitted model object (e.g.,
-    [`$save_output_files()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_output_files.md)).
+    [`$save_output_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)).
     These temporary files are removed when the fitted model object is
     [garbage collected](https://rdrr.io/r/base/gc.html) (manually or
     automatically).
@@ -191,15 +191,15 @@ diagnose(
 ## Value
 
 A
-[`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanDiagnose.md)
+[`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanDiagnose.md)
 object.
 
 ## See also
 
 The
-[`$gradients()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-gradients.md)
+[`$gradients()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-gradients.md)
 method for accessing the gradients and the
-[`$output()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-output.md)
+[`$output()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-output.md)
 method for displaying the captured console output.
 
 The CmdStanR website
@@ -215,20 +215,20 @@ The Stan and CmdStan documentation:
   [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
-[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),
-[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md),
-[`model-method-compile`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md),
-[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
-[`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
-[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
-[`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
-[`model-method-model-info`](https://mc-stan.org/cmdstanr/dev/reference/model-method-model-info.md),
-[`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
-[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
-[`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
-[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample_mpi.md),
-[`model-method-variables`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variables.md),
-[`model-method-variational`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md)
+[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md),
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-cmdstan_defaults.md),
+[`model-method-compile`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md),
+[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md),
+[`model-method-format`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-format.md),
+[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md),
+[`model-method-laplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
+[`model-method-model-info`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md),
+[`model-method-optimize`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md),
+[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md),
+[`model-method-sample`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md),
+[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample_mpi.md),
+[`model-method-variables`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variables.md),
+[`model-method-variational`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
 
 ## Examples
 

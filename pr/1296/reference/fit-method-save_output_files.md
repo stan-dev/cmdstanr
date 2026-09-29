@@ -1,7 +1,7 @@
 # Save output and data files
 
 Fitted model objects returned directly by a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
 method have methods for saving (moving to a specified location) files
 created by CmdStanR, including CmdStan output CSV files and input data
 files. These methods move the files from their current location
@@ -13,11 +13,11 @@ The versions without the `save_` prefix (e.g., `$output_files()`) return
 the current file paths without moving any files.
 
 Objects created by
-[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md)
 support `$output_files()` but not the other methods documented on this
 page because the original CmdStan run is unavailable. See
 **Reconstructed fitted model objects** in the
-[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md)
 documentation for details.
 
 ## Usage
@@ -109,9 +109,9 @@ the form `basename-timestamp-id-random.csv`, where
 `basename-diagnostic-timestamp-id-random.csv`. The
 `$latent_dynamics_files()` and `$save_latent_dynamics_files()` methods
 apply only to
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md)
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
 and
-[`CmdStanVB`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanVB.md)
+[`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md)
 objects created with `save_latent_dynamics = TRUE`.
 
 `$save_profile_files()` uses the pattern
@@ -135,10 +135,10 @@ because even with multiple MCMC chains the data file is the same.
 # \dontrun{
 fit <- cmdstanr_example()
 fit$output_files()
-#> [1] "/tmp/RtmpbnhmZL/logistic-202609291542-01-749b2e.csv"
-#> [2] "/tmp/RtmpbnhmZL/logistic-202609291542-02-749b2e.csv"
-#> [3] "/tmp/RtmpbnhmZL/logistic-202609291542-03-749b2e.csv"
-#> [4] "/tmp/RtmpbnhmZL/logistic-202609291542-04-749b2e.csv"
+#> [1] "/tmp/Rtmp8F1YDI/logistic-202609292238-01-749c13.csv"
+#> [2] "/tmp/Rtmp8F1YDI/logistic-202609292238-02-749c13.csv"
+#> [3] "/tmp/Rtmp8F1YDI/logistic-202609292238-03-749c13.csv"
+#> [4] "/tmp/Rtmp8F1YDI/logistic-202609292238-04-749c13.csv"
 fit$data_file()
 #> [1] "/home/runner/work/_temp/Library/cmdstanr/logistic.data.json"
 
@@ -146,21 +146,21 @@ fit$data_file()
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "banana")
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpbnhmZL/banana-202609291542-01-5468e5.csv
-#> - /tmp/RtmpbnhmZL/banana-202609291542-02-5468e5.csv
-#> - /tmp/RtmpbnhmZL/banana-202609291542-03-5468e5.csv
-#> - /tmp/RtmpbnhmZL/banana-202609291542-04-5468e5.csv
+#> - /tmp/Rtmp8F1YDI/banana-202609292238-01-5469ca.csv
+#> - /tmp/Rtmp8F1YDI/banana-202609292238-02-5469ca.csv
+#> - /tmp/Rtmp8F1YDI/banana-202609292238-03-5469ca.csv
+#> - /tmp/Rtmp8F1YDI/banana-202609292238-04-5469ca.csv
 fit$save_output_files(dir = my_dir, basename = "tomato", timestamp = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpbnhmZL/tomato-01-1f3de4.csv
-#> - /tmp/RtmpbnhmZL/tomato-02-1f3de4.csv
-#> - /tmp/RtmpbnhmZL/tomato-03-1f3de4.csv
-#> - /tmp/RtmpbnhmZL/tomato-04-1f3de4.csv
+#> - /tmp/Rtmp8F1YDI/tomato-01-1f3ec9.csv
+#> - /tmp/Rtmp8F1YDI/tomato-02-1f3ec9.csv
+#> - /tmp/Rtmp8F1YDI/tomato-03-1f3ec9.csv
+#> - /tmp/Rtmp8F1YDI/tomato-04-1f3ec9.csv
 fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpbnhmZL/lettuce-01.csv
-#> - /tmp/RtmpbnhmZL/lettuce-02.csv
-#> - /tmp/RtmpbnhmZL/lettuce-03.csv
-#> - /tmp/RtmpbnhmZL/lettuce-04.csv
+#> - /tmp/Rtmp8F1YDI/lettuce-01.csv
+#> - /tmp/Rtmp8F1YDI/lettuce-02.csv
+#> - /tmp/Rtmp8F1YDI/lettuce-03.csv
+#> - /tmp/Rtmp8F1YDI/lettuce-04.csv
 # }
 ```

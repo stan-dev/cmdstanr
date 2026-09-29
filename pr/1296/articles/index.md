@@ -5,7 +5,7 @@
 Installing CmdStan, fitting models, and accessing results.
 
 - [Getting started with
-  CmdStanR](https://mc-stan.org/cmdstanr/dev/articles/cmdstanr.md):
+  CmdStanR](https://mc-stan.org/cmdstanr/pr/1296/articles/cmdstanr.md):
 
 ### More details
 
@@ -14,12 +14,12 @@ is written to CSV and read back into R, profiling Stan programs, running
 Stan on GPUs, and using CmdStanR in R Markdown documents.
 
 - [How does CmdStanR
-  work?](https://mc-stan.org/cmdstanr/dev/articles/cmdstanr-internals.md):
+  work?](https://mc-stan.org/cmdstanr/pr/1296/articles/cmdstanr-internals.md):
 - [Working with
-  posteriors](https://mc-stan.org/cmdstanr/dev/articles/posterior.md):
+  posteriors](https://mc-stan.org/cmdstanr/pr/1296/articles/posterior.md):
 - [R Markdown CmdStan
-  Engine](https://mc-stan.org/cmdstanr/dev/articles/r-markdown.md):
+  Engine](https://mc-stan.org/cmdstanr/pr/1296/articles/r-markdown.md):
 - [Profiling Stan programs with
-  CmdStanR](https://mc-stan.org/cmdstanr/dev/articles/profiling.md):
+  CmdStanR](https://mc-stan.org/cmdstanr/pr/1296/articles/profiling.md):
 - [Running Stan on the GPU with
-  OpenCL](https://mc-stan.org/cmdstanr/dev/articles/articles-online-only/opencl.md):
+  OpenCL](https://mc-stan.org/cmdstanr/pr/1296/articles/articles-online-only/opencl.md):

@@ -16,7 +16,7 @@ The fitted model object, invisibly.
 
 ## See also
 
-[`save_object`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-save_object.md)
+[`save_object`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_object.md)
 
 ## Examples
 

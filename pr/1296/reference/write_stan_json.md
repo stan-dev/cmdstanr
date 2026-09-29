@@ -101,7 +101,7 @@ declarations to make this correction automatically.
 
 ## See also
 
-[`$variables()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variables.md)
+[`$variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variables.md)
 for inspecting the input and output variables of a Stan program.
 
 ## Examples

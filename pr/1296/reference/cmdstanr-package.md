@@ -61,15 +61,15 @@ directly from R.
 
 CmdStanR requires a working version of CmdStan \>= 2.35. If you already
 have CmdStan installed see
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
 to get started, otherwise see
-[`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
+[`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
 to install CmdStan. The vignette [*Getting started with
 CmdStanR*](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 demonstrates the basic functionality of the package.
 
 For a list of global [options](https://rdrr.io/r/base/options.html) see
-[cmdstanr_global_options](https://mc-stan.org/cmdstanr/dev/reference/cmdstanr_global_options.md).
+[cmdstanr_global_options](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstanr_global_options.md).
 
 ## See also
 
@@ -240,7 +240,7 @@ fit_mcmc <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.1 seconds.
 #> 
 
 # Use 'posterior' package for summaries
@@ -499,7 +499,7 @@ fit_mcmc_w_init_fun <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2 <- mod$sample(
   data = stan_data,
@@ -518,7 +518,7 @@ fit_mcmc_w_init_fun_2 <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_mcmc_w_init_fun_2$init()
 #> [[1]]
@@ -550,7 +550,7 @@ fit_mcmc_w_init_list <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_optim_w_init_list <- mod$optimize(
   data = stan_data,

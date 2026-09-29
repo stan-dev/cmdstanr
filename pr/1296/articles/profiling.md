@@ -57,7 +57,7 @@ and likelihood calculations with `profile` statements.
 In general we recommend using a separate `.stan` file, but for
 convenience in this vignette we’ll write the Stan program as a string
 and use
-[`write_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/write_stan_file.md)
+[`write_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_file.md)
 to write it to a temporary file.
 
 ``` r
@@ -123,12 +123,12 @@ fit$profiles()
 ```
 
     [[1]]
-            name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140544706840384 0.630836970  0.485997180  0.144839790       51261
-    2     priors 140544706840384 0.005538273  0.004595795  0.000942478       34174
+            name       thread_id total_time forward_time reverse_time chain_stack
+    1     priors 139757301090112  0.0040872  0.003179147  0.000908053       34174
+    2 likelihood 139757301090112  0.6142716  0.494668420  0.119603150       51261
       no_chain_stack autodiff_calls no_autodiff_calls
-    1       34191087          17087                 1
-    2          34174          17087                 1
+    1          34174          17087                 1
+    2       34191087          17087                 1
 
 The `total_time`, `forward_time`, and `reverse_time` columns are
 measured in seconds.
@@ -186,8 +186,8 @@ fit_glm$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1     priors 140127763683136 0.004767674  0.003824259  0.000943415       35712
-    2 likelihood 140127763683136 0.424395140  0.423364280  0.001030862       53568
+    1     priors 139928332461888 0.004345236  0.003510103  0.000835133       35712
+    2 likelihood 139928332461888 0.428787060  0.427880680  0.000906386       53568
       no_chain_stack autodiff_calls no_autodiff_calls
     1          35712          17856                 1
     2          17856          17856                 1
@@ -220,7 +220,7 @@ per_gradient_timing <- profile_chain_1$total_time / profile_chain_1$autodiff_cal
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 3.691912e-05 3.241220e-07
+    [1] 2.391994e-07 3.594964e-05
 
 ### Accessing and saving the profile files
 
@@ -234,7 +234,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/RtmpLAqoBh/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609291548-01-8ee3a1.csv"
+    [1] "/tmp/Rtmp8yyBdI/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202609292244-01-8ee468.csv"
 
 These can be saved to a more permanent location with the
 [`$save_profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html)

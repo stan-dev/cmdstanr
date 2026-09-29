@@ -61,10 +61,10 @@ The path to the file.
 
 ## See also
 
-[`print_stan_file()`](https://mc-stan.org/cmdstanr/dev/reference/print_stan_file.md),
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md),
+[`print_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/print_stan_file.md),
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md),
 and
-[cmdstanr_global_options](https://mc-stan.org/cmdstanr/dev/reference/cmdstanr_global_options.md)
+[cmdstanr_global_options](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstanr_global_options.md)
 
 ## Examples
 
@@ -85,7 +85,7 @@ model {
 
 f <- write_stan_file(stan_program)
 print(f)
-#> [1] "/tmp/RtmpbnhmZL/model_0fc14724391f86141648501cc6535151.stan"
+#> [1] "/tmp/Rtmp8F1YDI/model_0fc14724391f86141648501cc6535151.stan"
 
 lines <- readLines(f)
 print(lines)

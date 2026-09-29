@@ -26,12 +26,12 @@ A numeric scalar containing the log probability.
 
 ## See also
 
-[`grad_log_prob()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-grad_log_prob.md),
-[`constrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-constrain_variables.md),
-[`unconstrain_variables()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_variables.md),
-[`unconstrain_draws()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-unconstrain_draws.md),
-[`variable_skeleton()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-variable_skeleton.md),
-[`hessian()`](https://mc-stan.org/cmdstanr/dev/reference/fit-method-hessian.md)
+[`grad_log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-grad_log_prob.md),
+[`constrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-constrain_variables.md),
+[`unconstrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_variables.md),
+[`unconstrain_draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_draws.md),
+[`variable_skeleton()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-variable_skeleton.md),
+[`hessian()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-hessian.md)
 
 ## Examples
 

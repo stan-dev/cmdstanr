@@ -1,7 +1,7 @@
 # Access information from a `CmdStanModel` object
 
 These methods access information stored in a
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
 object, print its Stan program, and manage paths to its executable and
 generated C++ file.
 
@@ -47,7 +47,7 @@ generated C++ file.
   code, or `NULL` if the model was created without a Stan file.
 
 - `$print()` returns the
-  [`CmdStanModel`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanModel.md)
+  [`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
   object invisibly.
 
 - `$model_name()` returns the model name as a string.
@@ -73,9 +73,9 @@ generated C++ file.
 
 ## See also
 
-[`$compile()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md)
+[`$compile()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
 and
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/dev/reference/cmdstan_model.md)
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
 
 The CmdStanR website
 ([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
@@ -90,17 +90,17 @@ The Stan and CmdStan documentation:
   [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
 
 Other CmdStanModel methods:
-[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/dev/reference/model-method-check_syntax.md),
-[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/dev/reference/model-method-cmdstan_defaults.md),
-[`model-method-compile`](https://mc-stan.org/cmdstanr/dev/reference/model-method-compile.md),
-[`model-method-diagnose`](https://mc-stan.org/cmdstanr/dev/reference/model-method-diagnose.md),
-[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/dev/reference/model-method-expose_functions.md),
-[`model-method-format`](https://mc-stan.org/cmdstanr/dev/reference/model-method-format.md),
-[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/dev/reference/model-method-generate-quantities.md),
-[`model-method-laplace`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
-[`model-method-optimize`](https://mc-stan.org/cmdstanr/dev/reference/model-method-optimize.md),
-[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/dev/reference/model-method-pathfinder.md),
-[`model-method-sample`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample.md),
-[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/dev/reference/model-method-sample_mpi.md),
-[`model-method-variables`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variables.md),
-[`model-method-variational`](https://mc-stan.org/cmdstanr/dev/reference/model-method-variational.md)
+[`model-method-check_syntax`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md),
+[`model-method-cmdstan_defaults`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-cmdstan_defaults.md),
+[`model-method-compile`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md),
+[`model-method-diagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-diagnose.md),
+[`model-method-expose_functions`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md),
+[`model-method-format`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-format.md),
+[`model-method-generate-quantities`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md),
+[`model-method-laplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
+[`model-method-optimize`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md),
+[`model-method-pathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md),
+[`model-method-sample`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md),
+[`model-method-sample_mpi`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample_mpi.md),
+[`model-method-variables`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variables.md),
+[`model-method-variational`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)

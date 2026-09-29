@@ -1,10 +1,10 @@
 # Extract the number of chains
 
 The `$num_chains()` method returns the number of chains in a
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md)
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
 object or the number of chains used for standalone generated quantities
 in a
-[`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md)
+[`CmdStanGQ`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanGQ.md)
 object.
 
 ## Usage
@@ -19,8 +19,8 @@ An integer.
 
 ## See also
 
-[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMCMC.md),
-[`CmdStanGQ`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanGQ.md)
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md),
+[`CmdStanGQ`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanGQ.md)
 
 ## Examples
 

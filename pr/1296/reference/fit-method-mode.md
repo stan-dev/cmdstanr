@@ -2,11 +2,11 @@
 
 The `$mode()` method returns the mode used to center the Laplace
 approximation. This method is only available for
-[`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md)
+[`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md)
 objects returned by
-[`$laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md),
+[`$laplace()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
 not objects reconstructed using
-[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md).
+[`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md).
 
 ## Usage
 
@@ -17,10 +17,10 @@ mode()
 ## Value
 
 A
-[`CmdStanMLE`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanMLE.md)
+[`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md)
 object.
 
 ## See also
 
-[`CmdStanLaplace`](https://mc-stan.org/cmdstanr/dev/reference/CmdStanLaplace.md),
-[`$laplace()`](https://mc-stan.org/cmdstanr/dev/reference/model-method-laplace.md)
+[`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md),
+[`$laplace()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md)
