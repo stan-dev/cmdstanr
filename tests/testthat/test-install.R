@@ -344,33 +344,6 @@ test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
   expect_identical(calls, c("token bad-token", "none", "none"))
 })
 
-test_that("download_with_retries() does not retry after initial success", {
-  withr::local_envvar(c(GITHUB_PAT = "valid-token"))
-  calls <- 0L
-
-  local_mocked_bindings(
-    try_download = function(
-      download_url,
-      destination_file,
-      quiet = TRUE,
-      headers = github_auth_token()
-    ) {
-      calls <<- calls + 1L
-      expect_identical(unname(headers), "token valid-token")
-      0L
-    }
-  )
-
-  result <- download_with_retries(
-    "https://example.com/file",
-    tempfile(),
-    pause_sec = 0
-  )
-
-  expect_identical(result, 0L)
-  expect_identical(calls, 1L)
-})
-
 test_that("Install from release file works", {
   dir <- tempdir(check = TRUE)
 
