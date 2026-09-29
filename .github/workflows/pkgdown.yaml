@@ -5,7 +5,7 @@ on:
   push:
     branches: [main, master]
   pull_request:
-    types: [opened, reopened, synchronize, labeled]
+    types: [opened, reopened, synchronize, labeled, closed]
   # build full site on releases
   release:
     types: [published]
@@ -18,7 +18,11 @@ jobs:
     # For PRs, only run when the PR has the build-website label.
     if: >-
       github.event_name != 'pull_request' ||
-      contains(github.event.pull_request.labels.*.name, 'build-website')
+      (
+        github.event.action != 'closed' &&
+        contains(github.event.pull_request.labels.*.name, 'build-website') &&
+        (github.event.action != 'labeled' || github.event.label.name == 'build-website')
+      )
     runs-on: ubuntu-latest
     concurrency:
       group: pkgdown-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
@@ -45,20 +49,53 @@ jobs:
         run: Rscript -e "cmdstanr::install_cmdstan()"
     
       - name: Build site
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          override <- list()
+
+          pr_number <- Sys.getenv("PR_NUMBER")
+          if (nzchar(pr_number)) {
+            override <- list(
+              url = paste0(pkgdown::as_pkgdown(".")$meta$url, "/pr/", pr_number),
+              template = list(
+                params = list(noindex = TRUE)
+              )
+            )
+          }
+
           pkgdown::build_site_github_pages(
-            dest_dir = "docs",
-            lazy = FALSE, # change to TRUE if runner times out.
+            lazy = FALSE,
             run_dont_run = TRUE,
-            new_process = TRUE
+            new_process = TRUE,
+            override = override
           )
         shell: Rscript {0}
 
-      - name: Get pkgdown destination
+      - name: Prepare PR preview
         if: github.event_name == 'pull_request'
         id: pkgdown-dest
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          echo "folder=$(Rscript -e 'cat(fs::path_rel(pkgdown::as_pkgdown(".", override = list(destination = "docs"))$dst_path))')" >> "$GITHUB_OUTPUT"
+          folder="$(Rscript -e 'cat(fs::path_rel(pkgdown::as_pkgdown(".", override = list(destination = "docs"))$dst_path))')"
+          prefix="$(Rscript -e 'cat(pkgdown::as_pkgdown(".", override = list(destination = "docs"))$prefix)')"
+          base_url="$(Rscript -e 'cat(pkgdown::as_pkgdown(".")$meta$url)')"
+
+          if [ -n "$prefix" ]; then
+            preview_url="${base_url}/pr/${PR_NUMBER}"
+            from="${preview_url}/${prefix}"
+            to="${preview_url}/"
+
+            grep -rlZ -F \
+              --include='*.html' \
+              --include='*.json' \
+              --include='*.xml' \
+              -- "$from" "$folder" |
+              xargs -0 -r sed -i "s|$from|$to|g"
+          fi
+
+          echo "folder=$folder" >> "$GITHUB_OUTPUT"
 
       - name: Deploy PR preview
         # Forks cannot deploy the site
