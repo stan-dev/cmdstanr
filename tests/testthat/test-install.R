@@ -231,24 +231,37 @@ test_that("Download failures return error message", {
     "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
 })
 
-test_that("download_with_retries() retries without GITHUB_PAT after failure", {
+test_that("try_download() captures the HTTP status warning", {
+  local_mocked_bindings(
+    download.file = function(...) {
+      warning("cannot open URL: HTTP status was '401 Unauthorized'")
+      stop("download failed")
+    },
+    .package = "utils"
+  )
+
+  result <- try_download("https://example.com/file", tempfile())
+
+  expect_s3_class(result, "try-error")
+  expect_match(attr(result, "http_status"), "401 Unauthorized", fixed = TRUE)
+})
+
+test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
   withr::local_envvar(c(GITHUB_PAT = "bad-token"))
   calls <- character()
-  download_error <- try(stop("download failed"), silent = TRUE)
+  auth_error <- try(stop("download failed"), silent = TRUE)
+  attr(auth_error, "http_status") <- "HTTP status was '401 Unauthorized'"
 
   local_mocked_bindings(
-    try_download = function(download_url, destination_file, quiet = TRUE, headers) {
-      auth <- if (missing(headers)) {
-        "with_pat"
-      } else if (is.null(headers)) {
-        "without_pat"
-      } else {
-        "custom_headers"
-      }
-      calls <<- c(calls, auth)
-
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
       if (length(calls) == 1L) {
-        return(download_error)
+        return(auth_error)
       }
       0L
     }
@@ -260,68 +273,111 @@ test_that("download_with_retries() retries without GITHUB_PAT after failure", {
       tempfile(),
       pause_sec = 0
     ),
-    "GitHub download failed with GITHUB_PAT but succeeded without it.",
+    "Retrying without it.",
     fixed = TRUE
   )
   expect_identical(result, 0L)
-  expect_identical(calls, c("with_pat", "without_pat"))
+  expect_identical(calls, c("token bad-token", "none"))
 })
 
-test_that("download_with_retries() skips no-PAT retry when GITHUB_PAT is unset", {
-  withr::local_envvar(c(GITHUB_PAT = NA))
+test_that("download_with_retries() keeps GITHUB_PAT after non-auth failure", {
+  withr::local_envvar(c(GITHUB_PAT = "valid-token"))
   calls <- character()
   download_error <- try(stop("download failed"), silent = TRUE)
 
   local_mocked_bindings(
-    try_download = function(download_url, destination_file, quiet = TRUE, headers) {
-      calls <<- c(calls, if (missing(headers)) "default" else "explicit")
-      download_error
-    }
-  )
-
-  result <- download_with_retries(
-    "https://example.com/file",
-    tempfile(),
-    retries = 1,
-    pause_sec = 0
-  )
-
-  expect_s3_class(result, "try-error")
-  expect_identical(calls, c("default", "default"))
-})
-
-test_that("download_with_retries() resumes normal retries if no-PAT retry fails", {
-  withr::local_envvar(c(GITHUB_PAT = "bad-token"))
-  calls <- character()
-  download_error <- try(stop("download failed"), silent = TRUE)
-
-  local_mocked_bindings(
-    try_download = function(download_url, destination_file, quiet = TRUE, headers) {
-      auth <- if (missing(headers)) {
-        "with_pat"
-      } else if (is.null(headers)) {
-        "without_pat"
-      } else {
-        "custom_headers"
-      }
-      calls <<- c(calls, auth)
-
-      if (length(calls) < 3L) {
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      if (length(calls) == 1L) {
         return(download_error)
       }
       0L
     }
   )
 
-  result <- download_with_retries(
-    "https://example.com/file",
-    tempfile(),
-    retries = 1,
-    pause_sec = 0
+  expect_no_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    )
   )
 
   expect_identical(result, 0L)
-  expect_identical(calls, c("with_pat", "without_pat", "with_pat"))
+  expect_identical(calls, c("token valid-token", "token valid-token"))
+})
+
+test_that("download_with_retries() retries without auth when GITHUB_PAT is unset", {
+  withr::local_envvar(c(GITHUB_PAT = NA))
+  calls <- character()
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      download_error
+    }
+  )
+
+  expect_no_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    )
+  )
+
+  expect_s3_class(result, "try-error")
+  expect_identical(calls, c("none", "none"))
+})
+
+test_that("download_with_retries() keeps auth dropped after auth failure", {
+  withr::local_envvar(c(GITHUB_PAT = "bad-token"))
+  calls <- character()
+  auth_error <- try(stop("download failed"), silent = TRUE)
+  attr(auth_error, "http_status") <- "HTTP status was '401 Unauthorized'"
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      if (length(calls) == 1L) {
+        return(auth_error)
+      }
+      download_error
+    }
+  )
+
+  expect_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    ),
+    "Retrying without it.",
+    fixed = TRUE
+  )
+
+  expect_s3_class(result, "try-error")
+  expect_identical(calls, c("token bad-token", "none", "none"))
 })
 
 test_that("download_with_retries() does not retry after initial success", {
@@ -329,9 +385,14 @@ test_that("download_with_retries() does not retry after initial success", {
   calls <- 0L
 
   local_mocked_bindings(
-    try_download = function(download_url, destination_file, quiet = TRUE, headers) {
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
       calls <<- calls + 1L
-      expect_true(missing(headers))
+      expect_identical(unname(headers), "token valid-token")
       0L
     }
   )

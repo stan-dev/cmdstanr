@@ -661,17 +661,27 @@ try_download <- function(
   quiet = TRUE,
   headers = github_auth_token()
 ) {
+  download_warning <- NULL
   download_status <- try(
-    suppressWarnings(
+    withCallingHandlers(
       utils::download.file(
         url = download_url,
         destfile = destination_file,
         quiet = quiet,
         headers = headers
-      )
+      ),
+      warning = function(w) {
+        warning_message <- conditionMessage(w)
+        if (grepl("HTTP status was", warning_message, fixed = TRUE)) {
+          download_warning <<- warning_message
+        }
+        invokeRestart("muffleWarning")
+      }
     ),
     silent = TRUE
   )
+
+  attr(download_status, "http_status") <- download_warning
   download_status
 }
 
@@ -683,42 +693,39 @@ download_with_retries <- function(
   pause_sec = 5,
   quiet = TRUE
 ) {
-  download_rc <- try_download(
-    download_url,
-    destination_file,
-    quiet = quiet
-  )
-
-  if (
-    inherits(download_rc, "try-error") &&
-      nzchar(Sys.getenv("GITHUB_PAT"))
-  ) {
-    download_no_pat <- try_download(
-      download_url,
-      destination_file,
-      quiet = quiet,
-      headers = NULL
-    )
-
-    if (!inherits(download_no_pat, "try-error")) {
-      warning(
-        "GitHub download failed with GITHUB_PAT but succeeded without it. ",
-        "Check whether GITHUB_PAT is valid.",
-        call. = FALSE
-      )
-      return(download_no_pat)
-    }
-  }
-
+  headers <- github_auth_token()
   num_retries <- 0
-  while (num_retries < retries && inherits(download_rc, "try-error")) {
-    Sys.sleep(pause_sec)
-    num_retries <- num_retries + 1
+
+  repeat {
     download_rc <- try_download(
       download_url,
       destination_file,
-      quiet = quiet
+      quiet = quiet,
+      headers = headers
     )
+
+    if (!inherits(download_rc, "try-error")) {
+      break
+    }
+
+    if (
+      !is.null(headers) &&
+        isTRUE(grepl("401|403", attr(download_rc, "http_status")))
+    ) {
+      warning(
+        "GitHub download failed with GITHUB_PAT. Retrying without it. ",
+        "Check whether GITHUB_PAT is valid.",
+        call. = FALSE
+      )
+      headers <- NULL
+      next
+    }
+
+    if (num_retries >= retries) {
+      break
+    }
+    Sys.sleep(pause_sec)
+    num_retries <- num_retries + 1
   }
   download_rc
 }
