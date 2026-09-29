@@ -166,12 +166,7 @@ read_cmdstan_csv <- function(files,
                              sampler_diagnostics = NULL,
                              format = getOption("cmdstanr_draws_format", NULL)) {
   temp_dir <- withr::local_tempdir()
-  toolchain_path <- toolchain_PATH_env_var()
-  if (!is.null(toolchain_path)) {
-    withr::local_path(
-        strsplit(toolchain_path, .Platform$path.sep, fixed = TRUE)[[1]]
-    )
-  }
+  withr::local_path(toolchain_PATH_env_var())
   # If the CSV files are stored in the WSL filesystem then it is significantly
   # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
   if (os_is_wsl() && any(grepl("^//wsl", files))) {
@@ -709,6 +704,10 @@ parse_generated_quantities_time <- function(line) {
 
 #' Decompress a compressed CmdStan CSV file
 #'
+#' Runs gzip or bzip2 to write the contents of a `.csv.gz` or `.csv.bz2`
+#' file to a new file in `dir` and errors if the tool doesn't finish
+#' cleanly.
+#'
 #' @param file (string) Path to the compressed CSV file.
 #' @param dir (string) Directory for the temporary decompressed CSV.
 #' @return Path to the temporary CSV.
@@ -753,16 +752,17 @@ read_csv_metadata <- function(csv_file) {
   warmup_time <- 0
   sampling_time <- 0
   total_time <- 0
-  metadata <- processx::run(
+  grep_out <- withr::local_tempfile()
+  status <- processx::run(
     "grep",
     c("--color=never", "^[#a-zA-Z]", path.expand(csv_file)),
+    stdout = grep_out,
     error_on_status = FALSE
-  )
-  if (is.na(metadata$status) || metadata$status != 0) {
+  )$status
+  if (is.na(status) || status != 0) {
     stop("Supplied CSV file is corrupt!", call. = FALSE)
   }
-  metadata <- strsplit(metadata$stdout, "\r?\n")[[1]]
-  for (line in metadata) {
+  for (line in readLines(grep_out)) {
     if (!startsWith(line, "#") && is.null(csv_file_info[["variables"]])) {
       # if no # at the start of line, the line is the CSV header
       all_names <- strsplit(line, ",")[[1]]
