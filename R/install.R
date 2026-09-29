@@ -804,7 +804,15 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 }
 
 check_wsl_toolchain <- function() {
-  if (!wsl_installed()) {
+  installed <- wsl_installed()
+  if (is.na(installed)) {
+    stop("\n", "WSL did not respond, so CmdStanR could not tell whether ",
+         "a WSL distribution is installed.",
+         "\n", "If WSL is still starting, wait a moment and run ",
+         "`check_cmdstan_toolchain()` again.",
+         call. = FALSE)
+  }
+  if (!installed) {
     stop("\n", "A WSL distribution is not installed or is not accessible.",
          "\n", "Please see the Microsoft documentation for guidance on installing WSL: ",
          "\n", "https://docs.microsoft.com/en-us/windows/wsl/install",
