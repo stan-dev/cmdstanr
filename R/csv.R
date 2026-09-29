@@ -165,20 +165,16 @@ read_cmdstan_csv <- function(files,
                              variables = NULL,
                              sampler_diagnostics = NULL,
                              format = getOption("cmdstanr_draws_format", NULL)) {
-  temp_files <- character()
-  withr::defer(unlink(temp_files))
+  temp_dir <- withr::local_tempdir()
   # If the CSV files are stored in the WSL filesystem then it is significantly
   # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
   if (os_is_wsl() && any(grepl("^//wsl", files))) {
     wsl_files <- sapply(files, wsl_safe_path)
-    temp_storage <- tempdir(check = TRUE)
     csv_copy <- processx::run(
-      "wsl", c("cp", wsl_files, wsl_safe_path(temp_storage)),
+      "wsl", c("cp", wsl_files, wsl_safe_path(temp_dir)),
       error_on_status = FALSE
     )
-
-    files <- file.path(temp_storage, basename(files))
-    temp_files <- c(temp_files, files)
+    files <- file.path(temp_dir, basename(files))
   }
   format <- assert_valid_draws_format(format)
   assert_file_exists(
@@ -188,8 +184,7 @@ read_cmdstan_csv <- function(files,
   )
   files <- wsl_safe_path(files, revert = TRUE)
   for (i in grep("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)) {
-    out <- tempfile(fileext = ".csv")
-    temp_files <- c(temp_files, out)
+    out <- tempfile(tmpdir = temp_dir, fileext = ".csv")
     decompress_csv(files[i], out)
     files[i] <- out
   }

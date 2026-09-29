@@ -1110,6 +1110,19 @@ test_that("read_cmdstan_csv() reads WSL mount paths", {
   expect_equal(read_cmdstan_csv(mnt_files), read_cmdstan_csv(csv_files))
 })
 
+test_that("read_cmdstan_csv() leaves inputs outside WSL in place", {
+  skip_if_not(os_is_wsl())
+  wsl_files <- testing_fit("logistic", method = "sample")$output_files()
+  expect_match(wsl_files, "^//wsl")
+  local_file <- tempfile(fileext = ".csv")
+  file.copy(wsl_files[2], local_file)
+  expect_equal(
+    read_cmdstan_csv(c(wsl_files[1], local_file)),
+    read_cmdstan_csv(wsl_files[1:2])
+  )
+  expect_true(file.exists(local_file))
+})
+
 test_that("read_cmdstan_csv() errors for a truncated compressed CSV file", {
   csv_file <- test_path("resources", "csv", "model1-1-warmup.csv")
   gz_file <- compress_csv(csv_file, "csv.gz")
