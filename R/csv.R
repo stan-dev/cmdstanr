@@ -166,13 +166,19 @@ read_cmdstan_csv <- function(files,
                              sampler_diagnostics = NULL,
                              format = getOption("cmdstanr_draws_format", NULL)) {
   temp_dir <- withr::local_tempdir()
+  toolchain_path <- toolchain_PATH_env_var()
+  if (!is.null(toolchain_path)) {
+    withr::local_path(
+        strsplit(toolchain_path, .Platform$path.sep, fixed = TRUE)[[1]]
+    )
+  }
   # If the CSV files are stored in the WSL filesystem then it is significantly
   # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
   if (os_is_wsl() && any(grepl("^//wsl", files))) {
     wsl_files <- sapply(files, wsl_safe_path)
-    csv_copy <- processx::run(
+    processx::run(
       "wsl", c("cp", wsl_files, wsl_safe_path(temp_dir)),
-      error_on_status = FALSE
+      error_on_status = TRUE
     )
     files <- file.path(temp_dir, basename(files))
   }
@@ -184,9 +190,7 @@ read_cmdstan_csv <- function(files,
   )
   files <- wsl_safe_path(files, revert = TRUE)
   for (i in grep("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)) {
-    out <- tempfile(tmpdir = temp_dir, fileext = ".csv")
-    decompress_csv(files[i], out)
-    files[i] <- out
+    files[i] <- decompress_csv(files[i], temp_dir)
   }
   metadata <- NULL
   warmup_draws <- list()
@@ -703,59 +707,23 @@ parse_generated_quantities_time <- function(line) {
   time
 }
 
-#' Find a command line tool used to read CSV files
-#'
-#' Looks for the tool on the PATH, and on Windows also in the Rtools
-#' toolchain.
-#'
-#' @param name (string) The name of the tool, e.g. `"gzip"`.
-#' @param file (string) The CSV file that needs the tool, used in the error
-#'   message if the tool isn't found.
-#' @return The full path to the tool on Windows, otherwise `name`.
-#' @noRd
-#'
-find_csv_tool <- function(name, file) {
-  path <- if (os_is_windows()) {
-    withr::with_path(
-      c(toolchain_PATH_env_var()),
-      Sys.which(paste0(name, ".exe"))
-    )
-  } else {
-    Sys.which(name)
-  }
-
-  if (!nzchar(path)) {
-    stop(
-      name, " is required to read '", basename(file),
-      "' but was not found on the PATH.",
-      call. = FALSE
-    )
-  }
-
-  if (os_is_windows()) unname(path) else name
-}
-
 #' Decompress a compressed CmdStan CSV file
 #'
-#' Runs gzip or bzip2 to write the contents of a `.csv.gz` or `.csv.bz2`
-#' file to `out` and errors if the tool doesn't finish cleanly.
-#' `read_cmdstan_csv()` picks `out` and deletes it when it's done, so a
-#' partial file from a failed or interrupted run gets cleaned up too.
-#'
 #' @param file (string) Path to the compressed CSV file.
-#' @param out (string) Path to write the decompressed CSV to.
-#' @return `out`, invisibly.
+#' @param dir (string) Directory for the temporary decompressed CSV.
+#' @return Path to the temporary CSV.
 #' @noRd
 #'
-decompress_csv <- function(file, out) {
-  tool <- if (grepl("gz$", file, ignore.case = TRUE)) "gzip" else "bzip2"
-  res <- processx::run(
-    find_csv_tool(tool, file),
+decompress_csv <- function(file, dir) {
+  out <- tempfile(tmpdir = dir, fileext = ".csv")
+  tool <- if (endsWith(tolower(file), ".gz")) "gzip" else "bzip2"
+  status <- processx::run(
+    tool,
     c("-dc", path.expand(file)),
     stdout = out,
     error_on_status = FALSE
-  )
-  if (res$status != 0) {
+  )$status
+  if (is.na(status) || status != 0) {
     stop(
       "Compressed CSV '", basename(file), "' is truncated or corrupt.",
       call. = FALSE
@@ -785,34 +753,16 @@ read_csv_metadata <- function(csv_file) {
   warmup_time <- 0
   sampling_time <- 0
   total_time <- 0
-  if (os_is_windows()) {
-    grep_path_repaired <- repair_path(find_csv_tool("grep", csv_file))
-    grep_path_quotes <- paste0('"', grep_path_repaired, '"')
-    fread_cmd <- paste0(
-      grep_path_quotes,
-      " \"^[#a-zA-Z]\" --color=never \"",
-      wsl_safe_path(csv_file, revert = TRUE),
-      "\""
-    )
-  } else {
-    fread_cmd <- paste0(
-      "grep '^[#a-zA-Z]' --color=never '", path.expand(csv_file), "'"
-    )
-  }
-  metadata <- tryCatch(
-    suppressWarnings(data.table::fread(
-      cmd = fread_cmd,
-      colClasses = "character",
-      stringsAsFactors = FALSE,
-      fill = TRUE,
-      sep = "",
-      header = FALSE
-    )),
-    error = function(e) {
-      stop("Supplied CSV file is corrupt!", call. = FALSE)
-    }
+  metadata <- processx::run(
+    "grep",
+    c("--color=never", "^[#a-zA-Z]", path.expand(csv_file)),
+    error_on_status = FALSE
   )
-  for (line in metadata[[1]]) {
+  if (is.na(metadata$status) || metadata$status != 0) {
+    stop("Supplied CSV file is corrupt!", call. = FALSE)
+  }
+  metadata <- strsplit(metadata$stdout, "\r?\n")[[1]]
+  for (line in metadata) {
     if (!startsWith(line, "#") && is.null(csv_file_info[["variables"]])) {
       # if no # at the start of line, the line is the CSV header
       all_names <- strsplit(line, ",")[[1]]
