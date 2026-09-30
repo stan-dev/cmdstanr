@@ -18,3 +18,4 @@
 ^tests/testthat/README\.md$
 ^AGENTS\.md$
 ^CLAUDE\.md$
+^\.claude$

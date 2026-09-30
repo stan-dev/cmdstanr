@@ -195,6 +195,8 @@ built with the same flags. In an interactive session it shows the previous
 * `cmdstan_make_local()` now skips flags that are already in `make/local`.
 Previously copying the flags of a previous installation after every upgrade
 added the same lines again each time. (#1266)
+* `install_cmdstan()` now retries a download without the token if GitHub rejects
+the one in `GITHUB_PAT`, and warns the token may not be valid. (#909)
 * Chain IDs in generated file names are now zero-padded to at least two digits, 
 for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
@@ -219,6 +221,9 @@ standalone generated quantities CSV files. (#1168)
 
 ## Bug fixes
 
+* `check_cmdstan_toolchain()` now waits longer for WSL to respond and says so
+when it doesn't, instead of reporting that no WSL distribution is installed.
+(#1297)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * The `save_latent_dynamics` argument is now limited to `$sample()`, 
