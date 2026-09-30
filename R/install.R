@@ -655,35 +655,76 @@ latest_released_version <- function(quiet=TRUE, ...) {
   sub("v", "", release$tag_name)
 }
 
-try_download <- function(download_url, destination_file,
-                          quiet = TRUE) {
+try_download <- function(
+  download_url,
+  destination_file,
+  quiet = TRUE,
+  headers = github_auth_token()
+) {
+  download_warning <- NULL
   download_status <- try(
-    suppressWarnings(
-      utils::download.file(url = download_url,
-                           destfile = destination_file,
-                           quiet = quiet,
-                           headers = github_auth_token())
+    withCallingHandlers(
+      utils::download.file(
+        url = download_url,
+        destfile = destination_file,
+        quiet = quiet,
+        headers = headers
+      ),
+      warning = function(w) {
+        download_warning <<- conditionMessage(w)
+        invokeRestart("muffleWarning")
+      }
     ),
     silent = TRUE
   )
+
+  attr(download_status, "http_status") <- download_warning
   download_status
 }
 
 # download with retries and pauses
-download_with_retries <- function(download_url,
-                                  destination_file,
-                                  retries = 5,
-                                  pause_sec = 5,
-                                  quiet = TRUE) {
-    download_rc <- try_download(download_url, destination_file,
-                                quiet = quiet)
-    num_retries <- 0
-    while (num_retries < retries && inherits(download_rc, "try-error")) {
-      Sys.sleep(pause_sec)
-      num_retries <- num_retries + 1
-      download_rc <- try_download(download_url, destination_file, quiet = quiet)
+download_with_retries <- function(
+  download_url,
+  destination_file,
+  retries = 5,
+  pause_sec = 5,
+  quiet = TRUE
+) {
+  headers <- github_auth_token()
+  num_retries <- 0
+
+  repeat {
+    download_rc <- try_download(
+      download_url,
+      destination_file,
+      quiet = quiet,
+      headers = headers
+    )
+
+    if (!inherits(download_rc, "try-error")) {
+      break
     }
-    download_rc
+
+    if (
+      !is.null(headers) &&
+        isTRUE(grepl("'40[13] [^']*'$", attr(download_rc, "http_status")))
+    ) {
+      warning(
+        "GitHub download failed with GITHUB_PAT. Retrying without it. ",
+        "Check whether GITHUB_PAT is valid.",
+        call. = FALSE
+      )
+      headers <- NULL
+      next
+    }
+
+    if (num_retries >= retries) {
+      break
+    }
+    Sys.sleep(pause_sec)
+    num_retries <- num_retries + 1
+  }
+  download_rc
 }
 
 build_cmdstan <- function(dir,

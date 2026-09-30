@@ -231,6 +231,119 @@ test_that("Download failures return error message", {
     "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
 })
 
+test_that("try_download() captures the HTTP status warning", {
+  local_mocked_bindings(
+    download.file = function(...) {
+      warning("cannot open URL: HTTP status was '401 Unauthorized'")
+      stop("download failed")
+    },
+    .package = "utils"
+  )
+
+  result <- try_download("https://example.com/file", tempfile())
+
+  expect_s3_class(result, "try-error")
+  expect_match(attr(result, "http_status"), "401 Unauthorized", fixed = TRUE)
+})
+
+test_that("download_with_retries() keeps GITHUB_PAT after non-auth failure", {
+  withr::local_envvar(c(GITHUB_PAT = "valid-token"))
+  calls <- character()
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      if (length(calls) == 1L) {
+        return(download_error)
+      }
+      0L
+    }
+  )
+
+  expect_no_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    )
+  )
+
+  expect_identical(result, 0L)
+  expect_identical(calls, c("token valid-token", "token valid-token"))
+})
+
+test_that("download_with_retries() doesn't blame a token that isn't set", {
+  withr::local_envvar(c(GITHUB_PAT = NA))
+  calls <- character()
+  rate_limit_error <- try(stop("download failed"), silent = TRUE)
+  attr(rate_limit_error, "http_status") <- "HTTP status was '403 Forbidden'"
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      rate_limit_error
+    }
+  )
+
+  expect_no_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    )
+  )
+
+  expect_s3_class(result, "try-error")
+  expect_identical(calls, c("none", "none"))
+})
+
+test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
+  withr::local_envvar(c(GITHUB_PAT = "bad-token"))
+  calls <- character()
+  auth_error <- try(stop("download failed"), silent = TRUE)
+  attr(auth_error, "http_status") <- "HTTP status was '401 Unauthorized'"
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      switch(length(calls), auth_error, download_error, 0L)
+    }
+  )
+
+  expect_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    ),
+    "Retrying without it.",
+    fixed = TRUE
+  )
+
+  expect_identical(result, 0L)
+  expect_identical(calls, c("token bad-token", "none", "none"))
+})
+
 test_that("Install from release file works", {
   dir <- tempdir(check = TRUE)
 
