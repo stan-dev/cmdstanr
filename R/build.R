@@ -699,9 +699,9 @@ rebuild_reasons <- function(reasons, current) {
 #' @return Does not return.
 #' @noRd
 stop_stale_executable <- function(lines) {
-  rlang::abort(
+  stop(errorCondition(
     paste(lines, collapse = "\n"),
     class = "cmdstanr_stale_executable",
     call = NULL
-  )
+  ))
 }
