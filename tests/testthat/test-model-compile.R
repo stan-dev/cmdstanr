@@ -1,7 +1,13 @@
 skip_on_cran()
 
 set_cmdstan_path()
-stan_program <- cmdstan_example_file()
+# A copy of the CmdStan example, so the builds here leave the example
+# directory alone. repair_path() drops the "//" tempdir() has on macOS,
+# matching what the model stores.
+stan_program <- repair_path(
+  file.path(withr::local_tempdir(), "bernoulli.stan")
+)
+file.copy(cmdstan_example_file(), stan_program)
 local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 mod <- cmdstan_model(stan_file = stan_program)
 
@@ -816,10 +822,9 @@ test_that("cmdstan_model works with user_header", {
 })
 
 test_that("cpp_options names reach make uppercased and values verbatim", {
-  file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   expect_error(
     cmdstan_model(
-      file,
+      stan_program,
       cpp_options = list("CXXFLAGS_OPTIM += -Dsomething_not_used"),
       force_recompile = TRUE
     ),
@@ -830,7 +835,7 @@ test_that("cpp_options names reach make uppercased and values verbatim", {
   withr::with_options(list("cmdstanr_verbose" = TRUE),
     out <- utils::capture.output(
       mod <- cmdstan_model(
-        file,
+        stan_program,
         cpp_options = list(CXXFLAGS_OPTIM = "-Dsomething_not_used"),
         force_recompile = TRUE
       )
