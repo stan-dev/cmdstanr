@@ -387,6 +387,7 @@ compiles and never mutates state.** Callers differ:
 |---|---|
 | `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
 | any operation that runs or derives state from the binary | **errors** |
+| `$is_current()` | **returns `FALSE`**, and `TRUE` when nothing fired |
 
 The assessment returns its reasons as names, one per trigger that fired or the one
 reason the record could not be used, and the caller words them (§6). The executable
@@ -440,6 +441,7 @@ the fitting methods.
 | Behaviour | Members |
 |---|---|
 | **Validate, and error on any trigger** | `$sample()`, `$sample_mpi()`, `$optimize()`, `$laplace()`, `$variational()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`, `$cmdstan_defaults()`, `$expose_functions()` |
+| **Validate, and return the verdict; never errors on a trigger** | `$is_current()` |
 | **Rebuild, printing every reason** | `cmdstan_model()` itself, the constructor. `compile_stan_file()` is the other build entry point, but returns a path rather than a model |
 | **Snapshot of the built model; no validation** | `$code()`, `$variables()`, `$print()`, `$functions` |
 | **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()`, `$user_header()` |

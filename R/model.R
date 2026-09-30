@@ -308,6 +308,7 @@ compile_stan_file <- function(stan_file,
 #'  |:----------|:---------------|
 #'  [`$exe_file()`][model-method-model-info] |  Return the file path to the compiled executable. |
 #'  [`$build_info()`][model-method-build_info] |  Report how the executable was built, from its build record. |
+#'  [`$is_current()`][model-method-is_current] |  Check whether the model can run without a rebuild. |
 #'  [`$cmdstan_version()`][model-method-model-info] | Return the CmdStan version that built the executable. |
 #'  [`$cpp_options()`][model-method-model-info] | Return the C++ options associated with the model. |
 #'  [`$user_header()`][model-method-model-info] | Return the path to the user header, if the model has one. |
@@ -377,7 +378,9 @@ CmdStanModel <- R6::R6Class(
         }
         return(invisible(self))
       }
-      assert_stan_file_exists(private$stan_file_)
+      if (!file.exists(private$stan_file_)) {
+        stop_stale_executable(stan_file_gone_message(private$stan_file_))
+      }
       current <- read_current_build(
         private$stan_file_, private$include_paths_, private$user_header_, exe
       )
@@ -2216,6 +2219,50 @@ build_info <- function() {
 CmdStanModel$set("public", name = "build_info", value = build_info)
 
 
+#' Check whether the model can run without a rebuild
+#'
+#' @name model-method-is_current
+#' @aliases is_current
+#' @family CmdStanModel methods
+#'
+#' @description The `$is_current()` method of a [`CmdStanModel`] object runs
+#'   the check that `$sample()` and the other fitting methods run before they
+#'   start, and returns the answer instead of raising an error. It returns
+#'   `TRUE` when the executable is still the one the object was created with
+#'   and, for a model created from a Stan file, nothing the executable was
+#'   built from has changed: the Stan file and its includes, the user header,
+#'   the build options and the CmdStan installation. It returns `FALSE` when
+#'   any of those changed or when the Stan file or the executable is gone,
+#'   which is when the fitting methods refuse to run. Call `cmdstan_model()`
+#'   again to rebuild.
+#'
+#'   A package that keeps a `CmdStanModel` inside a saved fit can call it to
+#'   decide whether to rebuild before running the model again.
+#'
+#' @return `TRUE` or `FALSE`.
+#'
+#' @template seealso-docs
+#'
+#' @examples
+#' \dontrun{
+#' mod <- cmdstan_model(
+#'   file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' )
+#' mod$is_current()
+#' }
+#'
+is_current <- function() {
+  tryCatch(
+    {
+      private$assert_current()
+      TRUE
+    },
+    cmdstanr_stale_executable = function(e) FALSE
+  )
+}
+CmdStanModel$set("public", name = "is_current", value = is_current)
+
+
 
 # internal ----------------------------------------------------------------
 #' The error for a build argument supplied with no `stan_file`
@@ -2273,14 +2320,26 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
   invisible(NULL)
 }
 
+#' The message for a model whose Stan file has been removed
+#'
+#' Shared by the source operations, which raise it as a plain error, and
+#' `assert_current()`, which raises it as the staleness error so that
+#' `$is_current()` can catch it.
+#'
+#' @param stan_file The path the model was created from.
+#' @return A string.
+#' @noRd
+stan_file_gone_message <- function(stan_file) {
+  paste0(
+    "The Stan file '", stan_file, "' this model was created from no longer ",
+    "exists. To run the executable without its program, create the model ",
+    "with `cmdstan_model(exe_file = )`."
+  )
+}
+
 assert_stan_file_exists <- function(stan_file) {
   if (!file.exists(stan_file)) {
-    stop(
-      "The Stan file '", stan_file, "' this model was created from no longer ",
-      "exists. To run the executable without its program, create the model ",
-      "with `cmdstan_model(exe_file = )`.",
-      call. = FALSE
-    )
+    stop(stan_file_gone_message(stan_file), call. = FALSE)
   }
 }
 

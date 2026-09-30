@@ -31,6 +31,7 @@ methods, many of which have their own (linked) documentation pages:
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=model-method-model-info]{$exe_file()}} \tab Return the file path to the compiled executable. \cr
    \code{\link[=model-method-build_info]{$build_info()}} \tab Report how the executable was built, from its build record. \cr
+   \code{\link[=model-method-is_current]{$is_current()}} \tab Check whether the model can run without a rebuild. \cr
    \code{\link[=model-method-model-info]{$cmdstan_version()}} \tab Return the CmdStan version that built the executable. \cr
    \code{\link[=model-method-model-info]{$cpp_options()}} \tab Return the C++ options associated with the model. \cr
    \code{\link[=model-method-model-info]{$user_header()}} \tab Return the path to the user header, if the model has one. \cr

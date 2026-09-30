@@ -5,7 +5,8 @@ set_cmdstan_path()
 # What R/model.R's private assert_current() and its callers say about every
 # public member: whether it checks that the executable is still the one the
 # object was built against before it does anything else. "disk" reads the
-# executable and its record as they are now, on purpose.
+# executable and its record as they are now, on purpose, and "verdict" runs
+# the check and returns the answer instead of erroring.
 member_class <- c(
   sample = "checked", sample_mpi = "checked", optimize = "checked",
   laplace = "checked", variational = "checked", pathfinder = "checked",
@@ -18,7 +19,7 @@ member_class <- c(
   cmdstan_version = "accessor", cpp_options = "accessor",
   user_header = "accessor",
   check_syntax = "source", format = "source",
-  build_info = "disk",
+  build_info = "disk", is_current = "verdict",
   initialize = "plumbing", clone = "plumbing"
 )
 
@@ -119,4 +120,29 @@ test_that("assert_current() names an altered or missing executable", {
     mod$sample(), paste0("there is no executable at '", mod$exe_file(), "'"),
     fixed = TRUE, class = "cmdstanr_stale_executable"
   )
+})
+
+test_that("$is_current() says whether a checked method would run", {
+  stan_file <- write_stan_file(
+    "parameters { real y; } model { y ~ std_normal(); }",
+    dir = withr::local_tempdir()
+  )
+  mod <- mock_cmdstan_model(stan_file)
+  expect_true(mod$is_current())
+
+  code <- readLines(stan_file)
+  writeLines(c(code, "// a change"), stan_file)
+  expect_false(mod$is_current())
+  writeLines(code, stan_file)
+  expect_true(mod$is_current())
+
+  file.remove(stan_file)
+  expect_false(mod$is_current())
+  expect_error(
+    mod$sample(), "this model was created from no longer exists",
+    fixed = TRUE, class = "cmdstanr_stale_executable"
+  )
+  writeLines(code, stan_file)
+  file.remove(mod$exe_file())
+  expect_false(mod$is_current())
 })
