@@ -12,6 +12,11 @@
   checks. ([\#1274](https://github.com/stan-dev/cmdstanr/issues/1274))
 
 - [`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
+  now retries a download without the token if GitHub rejects the one in
+  `GITHUB_PAT`, and warns the token may not be valid.
+  ([\#909](https://github.com/stan-dev/cmdstanr/issues/909))
+
+- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
   now offers to copy the `make/local` flags of the current installation
   into the new one before building it, so the new CmdStan is built with
   the same flags. In an interactive session it shows the previous
