@@ -363,7 +363,7 @@ CmdStanModel <- R6::R6Class(
     # from has changed. $build_info() doesn't call it since it reads whatever is
     # on disk now. Report every problem with stop_stale_executable() so that
     # $is_current() can catch it.
-    assert_current = function() {
+    assert_current_ = function() {
       exe <- private$exe_file_
       if (!self$has_stan_file()) {
         if (!file.exists(exe)) {
@@ -406,11 +406,11 @@ CmdStanModel <- R6::R6Class(
       invisible(self)
     },
     # The C++ for the standalone functions, generated from the Stan file the
-    # first time it's needed, after assert_current() checks the file is the one
+    # first time it's needed, after assert_current_() checks the file is the one
     # the executable was built from. Generating it in the constructor would run
     # stanc for a feature most models never use. Empty for a model without a
     # Stan file.
-    standalone_functions = function() {
+    standalone_functions_ = function() {
       if (self$has_stan_file() && is.null(self$functions$hpp_code)) {
         configuration <- private$record_$configuration
         self$functions$hpp_code <- get_standalone_hpp(
@@ -1028,7 +1028,7 @@ sample <- function(data = NULL,
                    save_metric = getOption("cmdstanr_save_metric", FALSE),
                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
-  private$assert_current()
+  private$assert_current_()
   if (fixed_param) {
     save_warmup <- FALSE
   }
@@ -1066,7 +1066,7 @@ sample <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_functions(),
+    standalone_env = private$standalone_functions_(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
@@ -1190,7 +1190,7 @@ sample_mpi <- function(data = NULL,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
-  private$assert_current()
+  private$assert_current_()
 
   if (fixed_param) {
     chains <- 1
@@ -1226,7 +1226,7 @@ sample_mpi <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_functions(),
+    standalone_env = private$standalone_functions_(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
@@ -1337,7 +1337,7 @@ optimize <- function(data = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
                      save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
-  private$assert_current()
+  private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1362,7 +1362,7 @@ optimize <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_functions(),
+    standalone_env = private$standalone_functions_(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
@@ -1477,7 +1477,7 @@ laplace <- function(data = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
-  private$assert_current()
+  private$assert_current_()
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both `opt_args` and `mode` arguments.", call. = FALSE)
   }
@@ -1535,7 +1535,7 @@ laplace <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_functions(),
+    standalone_env = private$standalone_functions_(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
@@ -1643,7 +1643,7 @@ variational <- function(data = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
                         save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
-  private$assert_current()
+  private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stderr_messages = show_exceptions,
@@ -1668,7 +1668,7 @@ variational <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_functions(),
+    standalone_env = private$standalone_functions_(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
@@ -1811,7 +1811,7 @@ pathfinder <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
-  private$assert_current()
+  private$assert_current_()
   if (!is.null(num_threads)) {
     if (!is.null(threads)) {
       stop("Cannot specify both `threads` and deprecated `num_threads`.", call. = FALSE)
@@ -1851,7 +1851,7 @@ pathfinder <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_functions(),
+    standalone_env = private$standalone_functions_(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
@@ -1971,7 +1971,7 @@ generate_quantities <- function(fitted_params,
                                 opencl_ids = NULL,
                                 show_messages = TRUE,
                                 show_exceptions = TRUE) {
-  private$assert_current()
+  private$assert_current_()
   fitted_params_files <- process_fitted_params(fitted_params)
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
@@ -1989,7 +1989,7 @@ generate_quantities <- function(fitted_params,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_functions(),
+    standalone_env = private$standalone_functions_(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
@@ -2046,7 +2046,7 @@ diagnose <- function(data = NULL,
                      output_basename = NULL,
                      epsilon = NULL,
                      error = NULL) {
-  private$assert_current()
+  private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
     show_stdout_messages = FALSE,
@@ -2062,7 +2062,7 @@ diagnose <- function(data = NULL,
     stan_file = self$stan_file(),
     stan_code = suppressWarnings(self$code()),
     model_methods_env = private$model_methods_env_,
-    standalone_env = private$standalone_functions(),
+    standalone_env = private$standalone_functions_(),
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
@@ -2135,8 +2135,8 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'
 #'
 expose_functions = function(global = FALSE, verbose = FALSE, quiet = FALSE) {
-  private$assert_current()
-  expose_stan_functions(private$standalone_functions(), global, verbose,
+  private$assert_current_()
+  expose_stan_functions(private$standalone_functions_(), global, verbose,
                          quiet)
   invisible(NULL)
 }
@@ -2174,7 +2174,7 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
                                         "pathfinder", "laplace")) {
   method <- match.arg(method)
-  private$assert_current()
+  private$assert_current_()
   parse_cmdstan_args(
     self$exe_file(), method, self$stan_file(), private$record_$tbb_dir
   )
@@ -2262,7 +2262,7 @@ CmdStanModel$set("public", name = "build_info", value = build_info)
 is_current <- function() {
   tryCatch(
     {
-      private$assert_current()
+      private$assert_current_()
       TRUE
     },
     cmdstanr_stale_executable = function(e) FALSE
