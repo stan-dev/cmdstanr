@@ -702,27 +702,30 @@ wsl_compatible_process_new <- function(...) {
   do.call(processx::process$new, run_args)
 }
 
+#' Check whether a WSL distribution answers
+#'
+#' Runs `wsl uname`. The call can hang on GitHub Actions while WSL
+#' starts, so we wait a bounded time and report a timeout separately
+#' from a missing distribution.
+#'
+#' @noRd
+#' @return `TRUE` if the command exited with status 0, `FALSE` if it
+#'   exited with another status or could not be started, `NA` if it
+#'   was still running after 15 seconds.
 wsl_installed <- function() {
-  tryCatch({
-    # Call can hang indefinitely on Github actions, so explicitly kill
-    p <- processx::process$new("wsl", "uname")
-    for(i in 1:50) {
-      Sys.sleep(0.1)
-      if (!p$is_alive()) {
-        break
-      }
-    }
-    if (p$is_alive()) {
-      p$kill()
-      FALSE
-    } else {
-      status <- p$get_exit_status()
-      if (is.null(status)) {
-        FALSE
-      }
-      isTRUE(status == 0)
-    }
-  }, error = function(e) { FALSE }, finally = function(ret) { ret })
+  p <- tryCatch(
+    processx::process$new("wsl", "uname"),
+    error = function(e) NULL
+  )
+  if (is.null(p)) {
+    return(FALSE)
+  }
+  p$wait(timeout = 15000)
+  if (p$is_alive()) {
+    p$kill()
+    return(NA)
+  }
+  isTRUE(p$get_exit_status() == 0)
 }
 
 wsl_distro_name <- function() {
