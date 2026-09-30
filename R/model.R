@@ -361,7 +361,8 @@ CmdStanModel <- R6::R6Class(
     # this first. It checks that the executable is the one this object was
     # built with and, for a model with a Stan file, that nothing it was built
     # from has changed. $build_info() doesn't call it since it reads whatever is
-    # on disk now.
+    # on disk now. Report every problem with stop_stale_executable() so that
+    # $is_current() can catch it.
     assert_current = function() {
       exe <- private$exe_file_
       if (!self$has_stan_file()) {
@@ -379,7 +380,11 @@ CmdStanModel <- R6::R6Class(
         return(invisible(self))
       }
       if (!file.exists(private$stan_file_)) {
-        stop_stale_executable(stan_file_gone_message(private$stan_file_))
+        stop_stale_executable(paste0(
+          "The Stan file '", private$stan_file_, "' this model was created ",
+          "from no longer exists. To run the executable without its program, ",
+          "create the model with `cmdstan_model(exe_file = )`."
+        ))
       }
       current <- read_current_build(
         private$stan_file_, private$include_paths_, private$user_header_, exe
@@ -2234,7 +2239,10 @@ CmdStanModel$set("public", name = "build_info", value = build_info)
 #'   the build options and the CmdStan installation. It returns `FALSE` when
 #'   any of those changed or when the Stan file or the executable is gone,
 #'   which is when the fitting methods refuse to run. Call `cmdstan_model()`
-#'   again to rebuild.
+#'   again to rebuild. It errors rather than answering when the check itself
+#'   can't run, which happens when stanc rejects the program or can't find an
+#'   included file, when the user header is gone, or when no CmdStan
+#'   installation is set.
 #'
 #'   A package that keeps a `CmdStanModel` inside a saved fit can call it to
 #'   decide whether to rebuild before running the model again.
@@ -2320,26 +2328,13 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
   invisible(NULL)
 }
 
-#' The message for a model whose Stan file has been removed
-#'
-#' Shared by the source operations, which raise it as a plain error, and
-#' `assert_current()`, which raises it as the staleness error so that
-#' `$is_current()` can catch it.
-#'
-#' @param stan_file The path the model was created from.
-#' @return A string.
-#' @noRd
-stan_file_gone_message <- function(stan_file) {
-  paste0(
-    "The Stan file '", stan_file, "' this model was created from no longer ",
-    "exists. To run the executable without its program, create the model ",
-    "with `cmdstan_model(exe_file = )`."
-  )
-}
-
 assert_stan_file_exists <- function(stan_file) {
   if (!file.exists(stan_file)) {
-    stop(stan_file_gone_message(stan_file), call. = FALSE)
+    stop(
+      "The Stan file '", stan_file, "' this model was created from no longer ",
+      "exists.",
+      call. = FALSE
+    )
   }
 }
 

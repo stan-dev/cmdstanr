@@ -1328,7 +1328,7 @@ compiles and never mutates state.** Callers differ:
 |---|---|
 | `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
 | any operation that runs or derives state from the binary | **errors** |
-| `$is_current()` | **returns `FALSE`**, and `TRUE` when nothing fired |
+| `$is_current()` | **returns `FALSE`**, also when the Stan file it would resolve is gone, and `TRUE` when nothing fired |
 
 The assessment returns its reasons as names, one per trigger that fired or the one
 reason the record could not be used, and the caller words them (§6). The executable
@@ -1336,8 +1336,8 @@ is current when the vector is empty.
 
 <!-- /contract -->
 
-These are one assessment with two responses, not two contracts. Stating them as one
-contract is what makes §5 and §6 look like they disagree.
+These are one assessment with three responses, not three contracts. Stating them as
+one contract is what makes §5 and §6 look like they disagree.
 
 ### What the assessment is given
 
@@ -1384,9 +1384,9 @@ re-resolution, saying so. The include paths come from the expected side, so
 **A re-resolution that fails is an error, not a verdict.** `stanc --info` can fail:
 a syntax error in the program, an include that does not resolve under the paths in
 force, a stanc that will not run. The caller then has nothing to hand the engine,
-and the engine is not called. At `cmdstan_model()` and at every guarded method alike
-the failure is raised as an error carrying stanc's own message, so nothing runs and
-nothing rebuilds. <!-- /contract --> Rebuilding would be wrong twice over: the build's own stanc call
+and the engine is not called. At `cmdstan_model()`, at every guarded method and at
+`$is_current()` alike the failure is raised as an error carrying stanc's own
+message, so nothing runs, nothing rebuilds and no verdict is returned. <!-- /contract --> Rebuilding would be wrong twice over: the build's own stanc call
 fails at the same point, and a program stanc rejects is the user's to fix. Nor is it
 a third engine state. The engine sees resolved hashes or a statement that resolution
 was skipped (above), and a failed resolution is neither, because it never reaches
@@ -1480,12 +1480,17 @@ excluded for the reason given below; `$clone()` is called and asserted not to er
 
 Three entries need their reasoning stated.
 
+<!-- contract -->
+
 **`$is_current()` is the public form of the assessment.** It runs exactly what the
-guarded methods run, including the refusal of a model whose Stan file is gone, and
-answers `FALSE` where they would error, so the two can never disagree about whether
-a model runs. Anything else it raised on, such as no CmdStan installation to assess
-against, is still an error, since there is no verdict to report. It reads the
-filesystem on every call, as the next section requires.
+guarded methods run and answers `FALSE` where they would raise the staleness error,
+so the two can never disagree about whether a model runs. The refusal of a model
+whose Stan file is gone is made before anything is resolved, so it is a verdict and
+raises the staleness error like every other refusal. A failure the guarded methods
+raise as a plain error, a re-resolution that fails (above) or no CmdStan
+installation to assess against, is the same error from `$is_current()`, since there
+is no verdict to report. <!-- /contract --> It reads the filesystem on every call, as the
+next section requires.
 
 **`$check_syntax()` and `$format()` never touch the executable.** They run `stanc`
 against source. Validating there would demand a current binary in order to answer a

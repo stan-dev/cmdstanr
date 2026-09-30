@@ -20,7 +20,10 @@ built from has changed: the Stan file and its includes, the user header,
 the build options and the CmdStan installation. It returns \code{FALSE} when
 any of those changed or when the Stan file or the executable is gone,
 which is when the fitting methods refuse to run. Call \code{cmdstan_model()}
-again to rebuild.
+again to rebuild. It errors rather than answering when the check itself
+can't run, which happens when stanc rejects the program or can't find an
+included file, when the user header is gone, or when no CmdStan
+installation is set.
 
 A package that keeps a \code{CmdStanModel} inside a saved fit can call it to
 decide whether to rebuild before running the model again.
