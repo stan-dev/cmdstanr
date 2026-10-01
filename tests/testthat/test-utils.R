@@ -227,6 +227,10 @@ test_that("wsl_safe_path() works with multiple paths", {
     wsl_safe_path(paste0(prefix, c("/tmp/init-1.json", "/tmp/init-2.json"))),
     c("/tmp/init-1.json", "/tmp/init-2.json")
   )
+  expect_equal(
+    wsl_safe_path(paste0(prefix, "/tmp\\init-3.json")),
+    "/tmp/init-3.json"
+  )
 })
 
 test_that("wsl_compatible_run() preserves arguments containing spaces", {
