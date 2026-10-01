@@ -1801,7 +1801,8 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #'   possible elements and their values are:
 #'   * `"num_divergent"`: A vector of the number of divergences per chain.
 #'   * `"num_max_treedepth"`: A vector of the number of times `max_treedepth` was hit per chain.
-#'   * `"ebfmi"`: A vector of E-BFMI values per chain.
+#'   * `"ebfmi"`: A vector of E-BFMI values per chain, `NA` for a chain whose
+#'   energy never changes (a model with no parameters).
 #'
 #' @seealso [`CmdStanMCMC`] and the
 #'   [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] method

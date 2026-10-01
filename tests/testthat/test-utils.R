@@ -116,6 +116,10 @@ test_that("check_ebfmi and computing ebfmi works", {
   energy_df <- posterior::as_draws(data.frame("somethingelse" = 0))
   expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
   expect_warning(ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
+
+  energy_df <- posterior::as_draws(data.frame("energy__" = rep(0, 10)))
+  expect_no_message(expect_no_warning(check_ebfmi(energy_df)))
+  expect_equal(as.numeric(ebfmi(energy_df)), NA_real_)
 })
 
 

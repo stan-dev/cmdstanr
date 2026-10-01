@@ -339,7 +339,9 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
         warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
       } else {
         efbmi_per_chain <- apply(energy, 2, function(x) {
-          (sum(diff(x)^2) / length(x)) / stats::var(x)
+          # constant energy (a model with no parameters) has no E-BFMI
+          v <- stats::var(x)
+          if (!isTRUE(v > 0)) NA_real_ else (sum(diff(x)^2) / length(x)) / v
         })
       }
     }
@@ -349,15 +351,8 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
 
 check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.3) {
   efbmi_per_chain <- ebfmi(post_warmup_sampler_diagnostics)
-  nan_efbmi_count <- sum(is.nan(efbmi_per_chain))
-  efbmi_below_threshold <- sum(efbmi_per_chain < threshold)
-  if (nan_efbmi_count > 0) {
-    message(
-      "Warning: ", nan_efbmi_count, " of ", length(efbmi_per_chain),
-      " chains have a NaN E-BFMI.\n",
-      "See https://mc-stan.org/misc/warnings for details.\n"
-    )
-  } else if (efbmi_below_threshold > 0) {
+  efbmi_below_threshold <- sum(efbmi_per_chain < threshold, na.rm = TRUE)
+  if (efbmi_below_threshold > 0) {
     message(
       "Warning: ", efbmi_below_threshold, " of ", length(efbmi_per_chain),
       " chains had an E-BFMI less than ", threshold, ".\n",

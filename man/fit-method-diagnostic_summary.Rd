@@ -25,7 +25,8 @@ possible elements and their values are:
 \itemize{
 \item \code{"num_divergent"}: A vector of the number of divergences per chain.
 \item \code{"num_max_treedepth"}: A vector of the number of times \code{max_treedepth} was hit per chain.
-\item \code{"ebfmi"}: A vector of E-BFMI values per chain.
+\item \code{"ebfmi"}: A vector of E-BFMI values per chain, \code{NA} for a chain whose
+energy never changes (a model with no parameters).
 }
 }
 \description{
