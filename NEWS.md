@@ -265,6 +265,8 @@ warning about a NaN E-BFMI.
 * `install_cmdstan()` now always downloads with R's libcurl method. Previously, 
 with the option set to `"curl"`, a bad `GITHUB_PAT` left a GitHub error page 
 in place of the download instead of triggering a retry without the token.
+* On WSL a failed copy of the executable or the output CSV files now gives
+an error at the copy instead of later when the run or read can't find the file.
 * On Windows a model executable is now launched with the TBB it was built
 against. Previously the selected CmdStan installation's TBB was used, which was
 wrong once `set_cmdstan_path()` had selected a different one. (#1261)
