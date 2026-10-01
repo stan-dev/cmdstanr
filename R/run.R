@@ -859,7 +859,10 @@ CmdStanProcs <- R6::R6Class(
             env = cmdstan_process_env(self$threads_per_proc()),
             stdout = "|",
             stderr = "|",
-            echo_cmd = is_verbose_mode()
+            echo_cmd = is_verbose_mode(),
+            # kill CmdStan when this R process dies without unwinding,
+            # for example a future worker torn down on interrupt (#1086)
+            supervise = TRUE
           ),
           error = function(e) {
             # Under MPI it is the launcher that did not start.
