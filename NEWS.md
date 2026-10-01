@@ -260,6 +260,8 @@ as the other methods. (#1205)
 or was built for another platform, now gives an error naming the executable
 and saying how to rebuild it. Previously the fitting methods and
 `$cmdstan_defaults()` surfaced a raw `processx` error. (#1246)
+* A model with no parameters no longer ends every `$sample()` call with a
+warning about a NaN E-BFMI.
 * On Windows a model executable is now launched with the TBB it was built
 against. Previously the selected CmdStan installation's TBB was used, which was
 wrong once `set_cmdstan_path()` had selected a different one. (#1261)
