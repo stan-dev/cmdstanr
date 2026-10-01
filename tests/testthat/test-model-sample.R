@@ -302,11 +302,13 @@ test_that("A model with no parameters samples without fixed_param", {
   "
   stan_file <- write_stan_file(code)
   m <- cmdstan_model(stan_file)
-  expect_no_error(
+  expect_no_message(
     utils::capture.output(
-      fit <- m$sample(iter_warmup = 10, iter_sampling = 10, diagnostics = NULL)
-    )
+      fit <- m$sample(iter_warmup = 10, iter_sampling = 10)
+    ),
+    message = "E-BFMI"
   )
+  expect_equal(fit$diagnostic_summary(quiet = TRUE)$ebfmi, rep(NA_real_, 4))
 })
 
 
