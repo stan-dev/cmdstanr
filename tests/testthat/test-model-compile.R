@@ -113,9 +113,9 @@ test_that("the model name stanc receives comes from the file name", {
     cmdstan_model(stan_program, quiet = FALSE, force_recompile = TRUE)
   )
   if(os_is_windows() && !os_is_wsl()) {
-    out_no_name <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--o"
+    out_no_name <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+'?--filename-in-msg=[^[:space:]]+'?[[:space:]]+--o"
   } else {
-    out_no_name <- "bin/stanc --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--o"
+    out_no_name <- "bin/stanc --name=bernoulli_model[[:space:]]+'?--filename-in-msg=[^[:space:]]+'?[[:space:]]+--o"
   }
   expect_output(print(out), out_no_name)
 
@@ -1060,9 +1060,9 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
     cmdstan_model(stan_program, quiet = FALSE, force_recompile = TRUE)
   )
   if(os_is_windows() && !os_is_wsl()) {
-    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+'?--filename-in-msg=[^[:space:]]+'?[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   } else {
-    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+'?--filename-in-msg=[^[:space:]]+'?[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
 
