@@ -264,6 +264,9 @@ and saying how to rebuild it. Previously the fitting methods and
 * On Windows a model executable is now launched with the TBB it was built
 against. Previously the selected CmdStan installation's TBB was used, which was
 wrong once `set_cmdstan_path()` had selected a different one. (#1261)
+* When using CmdStan through WSL, a data or init file on the WSL filesystem is
+now found when R spells its path with backslashes, as it does for temporary
+files when `TMPDIR` points at the `//wsl$` share. (#1113)
 
 ## Removed and deprecated
 

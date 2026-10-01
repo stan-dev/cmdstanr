@@ -537,11 +537,12 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
       # through the //wsl$ share. Host paths already carry a drive or a share.
       path <- paste0(wsl_dir_prefix(), path)
     }
-  } else if (grepl("^//wsl", path)) {
-    path <- gsub(wsl_dir_prefix(), "", path, fixed = TRUE)
   } else {
-    path_already_safe <- grepl("^/mnt/", path)
-    if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
+    # R on Windows spells its temp paths with backslashes (#1113)
+    path <- repair_path(path)
+    if (grepl("^//wsl", path)) {
+      path <- gsub(wsl_dir_prefix(), "", path, fixed = TRUE)
+    } else if (!grepl("^/mnt/", path) && !is.na(path)) {
       base_file <- basename(path)
       path <- dirname(path)
       abs_path <- repair_path(utils::shortPathName(path))
