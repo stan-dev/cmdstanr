@@ -264,6 +264,9 @@ and saying how to rebuild it. Previously the fitting methods and
 * On Windows a model executable is now launched with the TBB it was built
 against. Previously the selected CmdStan installation's TBB was used, which was
 wrong once `set_cmdstan_path()` had selected a different one. (#1261)
+* CmdStan processes are now killed when the R process that started them dies
+without running its cleanup, for example a future worker interrupted from the
+parent session. Previously they kept running as orphans. (#1086)
 
 ## Removed and deprecated
 
