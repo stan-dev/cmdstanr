@@ -282,7 +282,7 @@ test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
   a <- mock_cmdstan_model(stan_file)
 
   writeLines("CMDSTAN_VERSION := 2.40.0", file.path(install_dir, "makefile"))
-  # assert_current() first, while the executable is still the one a was
+  # assert_current_() first, while the executable is still the one a was
   # built with
   expect_error(
     a$cmdstan_defaults(), "the selected CmdStan changed",

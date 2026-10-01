@@ -373,7 +373,7 @@ facts_from_record <- function(record) {
 #' What is on disk for an executable built from a Stan program
 #'
 #' The `current` argument of `assess_build()`. `build_executable()` and
-#' `assert_current()` both come here, so they cannot assemble it differently.
+#' `assert_current_()` both come here, so they cannot assemble it differently.
 #' The sources are hashed only when the selected CmdStan is the one in the
 #' record, because the selected stanc resolves them and a different CmdStan
 #' already forces a rebuild. `info`, the `stanc --info` output they were
@@ -583,7 +583,7 @@ model_name_from_path <- function(path) {
 }
 
 
-# what build_executable() and assert_current() say --------------------------
+# what build_executable() and assert_current_() say --------------------------
 
 #' What `build_executable()` says before it builds or reuses
 #'
@@ -699,9 +699,9 @@ rebuild_reasons <- function(reasons, current) {
 #' @return Does not return.
 #' @noRd
 stop_stale_executable <- function(lines) {
-  rlang::abort(
+  stop(errorCondition(
     paste(lines, collapse = "\n"),
     class = "cmdstanr_stale_executable",
     call = NULL
-  )
+  ))
 }

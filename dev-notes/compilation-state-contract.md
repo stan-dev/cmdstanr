@@ -387,6 +387,7 @@ compiles and never mutates state.** Callers differ:
 |---|---|
 | `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
 | any operation that runs or derives state from the binary | **errors** |
+| `$is_current()` | **returns `FALSE`**, also when the Stan file it would resolve is gone, and `TRUE` when nothing fired |
 
 The assessment returns its reasons as names, one per trigger that fired or the one
 reason the record could not be used, and the caller words them (§6). The executable
@@ -416,9 +417,9 @@ re-resolution, saying so. The include paths come from the expected side, so
 **A re-resolution that fails is an error, not a verdict.** `stanc --info` can fail:
 a syntax error in the program, an include that does not resolve under the paths in
 force, a stanc that will not run. The caller then has nothing to hand the engine,
-and the engine is not called. At `cmdstan_model()` and at every guarded method alike
-the failure is raised as an error carrying stanc's own message, so nothing runs and
-nothing rebuilds.
+and the engine is not called. At `cmdstan_model()`, at every guarded method and at
+`$is_current()` alike the failure is raised as an error carrying stanc's own
+message, so nothing runs, nothing rebuilds and no verdict is returned.
 
 ### [What the error says](compilation-state.md#what-the-error-says)
 
@@ -440,6 +441,7 @@ the fitting methods.
 | Behaviour | Members |
 |---|---|
 | **Validate, and error on any trigger** | `$sample()`, `$sample_mpi()`, `$optimize()`, `$laplace()`, `$variational()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`, `$cmdstan_defaults()`, `$expose_functions()` |
+| **Validate, and return the verdict; never errors on a trigger** | `$is_current()` |
 | **Rebuild, printing every reason** | `cmdstan_model()` itself, the constructor. `compile_stan_file()` is the other build entry point, but returns a path rather than a model |
 | **Snapshot of the built model; no validation** | `$code()`, `$variables()`, `$print()`, `$functions` |
 | **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()`, `$user_header()` |
@@ -448,6 +450,15 @@ the fitting methods.
 | **Reads the executable on disk as it is now; no validation** | `$build_info()` (§8) |
 | **R6 plumbing; no validation** | `$initialize()`, `$clone()` |
 | **Removed** | `$compile()` (§8) |
+
+**`$is_current()` is the public form of the assessment.** It runs exactly what the
+guarded methods run and answers `FALSE` where they would raise the staleness error,
+so the two can never disagree about whether a model runs. The refusal of a model
+whose Stan file is gone is made before anything is resolved, so it is a verdict and
+raises the staleness error like every other refusal. A failure the guarded methods
+raise as a plain error, a re-resolution that fails (above) or no CmdStan
+installation to assess against, is the same error from `$is_current()`, since there
+is no verdict to report.
 
 **Functions exposed by `$expose_functions()` are a snapshot, like `$code()`.**
 

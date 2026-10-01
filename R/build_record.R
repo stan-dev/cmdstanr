@@ -595,7 +595,7 @@ compare_build_records <- function(recorded, current,
 #'
 #' @param expected What the executable must match: `configuration`, the
 #'   options it should have been built with, which `build_executable()`
-#'   resolves from its arguments and `assert_current()` takes from the model
+#'   resolves from its arguments and `assert_current_()` takes from the model
 #'   object's record; and `executable_hash`, the executable the model object
 #'   was created with, or `NULL` from `build_executable()`, where there is no
 #'   model object yet.

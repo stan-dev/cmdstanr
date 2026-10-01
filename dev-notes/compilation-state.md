@@ -1328,6 +1328,7 @@ compiles and never mutates state.** Callers differ:
 |---|---|
 | `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
 | any operation that runs or derives state from the binary | **errors** |
+| `$is_current()` | **returns `FALSE`**, also when the Stan file it would resolve is gone, and `TRUE` when nothing fired |
 
 The assessment returns its reasons as names, one per trigger that fired or the one
 reason the record could not be used, and the caller words them (§6). The executable
@@ -1335,8 +1336,8 @@ is current when the vector is empty.
 
 <!-- /contract -->
 
-These are one assessment with two responses, not two contracts. Stating them as one
-contract is what makes §5 and §6 look like they disagree.
+These are one assessment with three responses, not three contracts. Stating them as
+one contract is what makes §5 and §6 look like they disagree.
 
 ### What the assessment is given
 
@@ -1383,9 +1384,9 @@ re-resolution, saying so. The include paths come from the expected side, so
 **A re-resolution that fails is an error, not a verdict.** `stanc --info` can fail:
 a syntax error in the program, an include that does not resolve under the paths in
 force, a stanc that will not run. The caller then has nothing to hand the engine,
-and the engine is not called. At `cmdstan_model()` and at every guarded method alike
-the failure is raised as an error carrying stanc's own message, so nothing runs and
-nothing rebuilds. <!-- /contract --> Rebuilding would be wrong twice over: the build's own stanc call
+and the engine is not called. At `cmdstan_model()`, at every guarded method and at
+`$is_current()` alike the failure is raised as an error carrying stanc's own
+message, so nothing runs, nothing rebuilds and no verdict is returned. <!-- /contract --> Rebuilding would be wrong twice over: the build's own stanc call
 fails at the same point, and a program stanc rejects is the user's to fix. Nor is it
 a third engine state. The engine sees resolved hashes or a statement that resolution
 was skipped (above), and a failed resolution is neither, because it never reaches
@@ -1433,9 +1434,9 @@ latency is unpredictable, not that the number is large.
 the fitting methods. <!-- /contract --> "At least" is not implementable, so the full public surface is
 classified here. Three counts are involved because the surface moves underneath the
 table. `CmdStanModel` carries twenty-seven public methods and one public field
-today and twenty-eight at 1.0 (§3 adds `$user_header()`, §8 removes `$compile()`
-and adds `$build_info()`), while the table below has twenty-nine method rows,
-being the union of both. It
+today and twenty-nine at 1.0 (§3 adds `$user_header()`, §8 removes `$compile()`
+and adds `$build_info()`, and this section adds `$is_current()`), while the table
+below has thirty method rows, being the union of both. It
 classifies the removed member rather than omitting it, so no count is wrong; they
 answer different questions and the test below depends on which one it asks. The two
 build entry points are listed for their behaviour and neither is a member of the
@@ -1443,7 +1444,7 @@ class.
 
 The completeness claim should be enforced: `CmdStanModel$public_methods` and
 `$public_fields` enumerate the live surface, so a test can compare it against the
-twenty-eight non-removed method rows and the one field, and fail on any member that
+twenty-nine non-removed method rows and the one field, and fail on any member that
 appears without a classification, asserting `$compile()`'s absence separately.
 Otherwise this table decays the first time someone adds a method, which is the
 failure the `$initialize()` and `$clone()` entries below already guard against by
@@ -1465,6 +1466,7 @@ excluded for the reason given below; `$clone()` is called and asserted not to er
 | Behaviour | Members |
 |---|---|
 | **Validate, and error on any trigger** | `$sample()`, `$sample_mpi()`, `$optimize()`, `$laplace()`, `$variational()`, `$pathfinder()`, `$generate_quantities()`, `$diagnose()`, `$cmdstan_defaults()`, `$expose_functions()` |
+| **Validate, and return the verdict; never errors on a trigger** | `$is_current()` |
 | **Rebuild, printing every reason** | `cmdstan_model()` itself, the constructor. `compile_stan_file()` is the other build entry point, but returns a path rather than a model |
 | **Snapshot of the built model; no validation** | `$code()`, `$variables()`, `$print()`, `$functions` |
 | **Accessor; no validation, never errors** | `$stan_file()`, `$has_stan_file()`, `$model_name()`, `$exe_file()`, `$include_paths()`, `$cmdstan_version()`, `$cpp_options()`, `$user_header()` |
@@ -1476,7 +1478,19 @@ excluded for the reason given below; `$clone()` is called and asserted not to er
 
 <!-- /contract -->
 
-Two entries need their reasoning stated.
+Three entries need their reasoning stated.
+
+<!-- contract -->
+
+**`$is_current()` is the public form of the assessment.** It runs exactly what the
+guarded methods run and answers `FALSE` where they would raise the staleness error,
+so the two can never disagree about whether a model runs. The refusal of a model
+whose Stan file is gone is made before anything is resolved, so it is a verdict and
+raises the staleness error like every other refusal. A failure the guarded methods
+raise as a plain error, a re-resolution that fails (above) or no CmdStan
+installation to assess against, is the same error from `$is_current()`, since there
+is no verdict to report. <!-- /contract --> It reads the filesystem on every call, as the
+next section requires.
 
 **`$check_syntax()` and `$format()` never touch the executable.** They run `stanc`
 against source. Validating there would demand a current binary in order to answer a
@@ -1556,9 +1570,11 @@ One knock-on for consumers. brms currently decides whether to rebuild by reading
 anything asks us for a verdict at all. That code is ours to change, so it is not a
 constraint on #1253. <!-- contract -->What must hold is that a caller can ask whether a usable
 executable exists without triggering an error. `$exe_file()` provides it, and the
-table above settles that it stays a plain accessor that never errors. <!-- /contract --> A public form
-of the assessment may be added later for callers wanting a fuller answer; that would
-not change the accessor's contract. What is ruled out is leaving no way to ask.
+table above settles that it stays a plain accessor that never errors. <!-- /contract -->
+`$is_current()` is the fuller answer for callers that want the whole assessment
+rather than the file check, and brms moves to it in its 1.0 pull request (#1258).
+It does not change the accessor's contract. What is ruled out is leaving no way to
+ask.
 
 ### Introspection is a construction-time snapshot
 

@@ -50,6 +50,9 @@ with it. (#1258)
 Because the check reads the Stan file, a model created from one needs that file
 whenever it runs. To run an executable without its Stan file, create the model
 with `cmdstan_model(exe_file = )`. (#1255)
+* The new `$is_current()` method runs that same check and returns `TRUE` or
+`FALSE` instead of raising that error, so a package that keeps a `CmdStanModel`
+inside a saved fit can decide whether to rebuild before running it. (#1258)
 * A failed compilation leaves the previous executable in place. Previously a
 failure at the C++ stage could leave the old executable paired with model
 methods generated from the new program, and a failed installation could leave
