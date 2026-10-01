@@ -239,6 +239,7 @@ Other contributors:
   \item Ven Popov [contributor]
   \item Visruth Srimath Kandali [contributor]
   \item Aki Vehtari [contributor]
+  \item Katrina Brock [contributor]
 }
 
 }

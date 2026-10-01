@@ -970,7 +970,7 @@ format_stan_file <- function(stan_file,
 #'   argument will be checked and warnings will be printed if warranted.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the [CmdStan User’s
+#'   installed version of CmdStan. See the [CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
 #'   default arguments. These values are also available via the
 #'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
@@ -1272,7 +1272,7 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/index.html) for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the [CmdStan User’s
+#'   installed version of CmdStan. See the [CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
 #'   default arguments. These values are also available via the
 #'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
@@ -1400,11 +1400,11 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'   adjustment, the draws provide an estimate of the mean and standard
 #'   deviation of the posterior distribution. See the `jacobian` argument below
 #'   for how this setting relates to the value used when running optimization,
-#'   and the [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   and the [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the [CmdStan User’s
+#'   installed version of CmdStan. See the [CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
 #'   default arguments. These values are also available via the
 #'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
@@ -1574,11 +1574,11 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #'   fully factorized Gaussian for the approximation; the `algorithm="fullrank"`
 #'   option uses a Gaussian with a full-rank covariance matrix for the
 #'   approximation. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the [CmdStan User’s
+#'   installed version of CmdStan. See the [CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
 #'   default arguments. These values are also available via the
 #'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
@@ -1712,11 +1712,11 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   posterior. Finally Pathfinder draws from that normal
 #'   approximation and returns the draws transformed to the
 #'   constrained scale. See the
-#'   [CmdStan User’s Guide](https://mc-stan.org/docs/cmdstan-guide/)
+#'   [CmdStan User's Guide](https://mc-stan.org/docs/cmdstan-guide/)
 #'   for more details.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the [CmdStan User’s
+#'   installed version of CmdStan. See the [CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
 #'   default arguments. These values are also available via the
 #'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
@@ -1761,14 +1761,14 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #'   fitted object's `$output_files()` method. See the [CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/pathfinder_config.html#single-path-pathfinder-outputs)
 #'   for details.
-#' @param psis_resample (logical) Whether to perform pareto smoothed importance sampling.
+#' @param psis_resample (logical) Whether to perform Pareto smoothed importance sampling.
 #'  If `TRUE`, the number of draws returned will be equal to `draws`.
 #'  If `FALSE`, the number of draws returned will be equal to `single_path_draws * num_paths`.
 #' @param calculate_lp (logical) Whether to calculate the log probability of the draws.
 #' If `TRUE`, the log probability will be calculated and given in the output.
 #' If `FALSE`, the log probability will only be returned for draws used to determine the
 #'  ELBO in the pathfinder steps. All other draws will have a log probability of `NA`.
-#'  A value of `FALSE` will also turn off pareto smoothed importance sampling as the
+#'  A value of `FALSE` will also turn off Pareto smoothed importance sampling as the
 #'  lp calculation is needed for PSIS.
 #' @return A [`CmdStanPathfinder`] object.
 #'
@@ -1888,7 +1888,7 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #'   based on previously fitted parameters.
 #'
 #'   Any argument left as `NULL` will default to the default value used by the
-#'   installed version of CmdStan. See the [CmdStan User’s
+#'   installed version of CmdStan. See the [CmdStan User's
 #'   Guide](https://mc-stan.org/docs/cmdstan-guide/) for more details on the
 #'   default arguments. These values are also available via the
 #'   [`$cmdstan_defaults`][model-method-cmdstan_defaults] method.
