@@ -112,7 +112,8 @@ error that points at the right argument. (#1258)
 * Named `stanc_options` values such as `list(canonicalize = "deprecations")` and
 numeric ones such as `list("max-line-length" = 78)` now work. Previously the
 named values reached stanc shell-quoted, which it rejected, and the numeric
-ones were dropped. (#1227, #1233)
+ones were dropped. A value holding a space, a quote or a `$` now also reaches
+stanc intact through make. (#1227, #1233, #1263)
 * A stanc error now stops the build immediately and shows stanc's message.
 Previously it surfaced several steps later. (#1227)
 * An include path that does not exist is now reported by its absolute path.
