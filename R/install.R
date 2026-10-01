@@ -667,6 +667,7 @@ try_download <- function(
       utils::download.file(
         url = download_url,
         destfile = destination_file,
+        method = "libcurl",
         quiet = quiet,
         headers = headers
       ),
@@ -682,7 +683,6 @@ try_download <- function(
   download_status
 }
 
-# download with retries and pauses
 download_with_retries <- function(
   download_url,
   destination_file,
@@ -690,6 +690,8 @@ download_with_retries <- function(
   pause_sec = 5,
   quiet = TRUE
 ) {
+  # R's default of 60 seconds may be too short for the CmdStan tarball
+  withr::local_options(timeout = max(300, getOption("timeout")))
   headers <- github_auth_token()
   num_retries <- 0
 
