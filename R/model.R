@@ -604,7 +604,9 @@ CmdStanModel <- R6::R6Class(
 #' * `$cmdstan_version()` returns the version of CmdStan that built the
 #'   executable, as a string.
 #' * `$cpp_options()` returns a named list of C++ options, with names in their
-#'   make spelling.
+#'   make spelling and values as the strings make received: `TRUE` comes back
+#'   as `"TRUE"` and `FALSE` as `""`. To ask whether the executable was built
+#'   with a feature, use `$build_info()`, which reports logicals.
 #' * `$user_header()` returns the absolute path to the user header as a string,
 #'   or `NULL` if the model has no user header.
 #' * `$hpp_file()` returns the path to the `.hpp` file holding the C++ code
