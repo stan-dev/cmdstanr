@@ -63,6 +63,7 @@ jobs:
             }
 
             override <- list(
+              url = paste0(pkg$meta$url, "/pr/", pr_number),
               template = list(
                 params = list(noindex = TRUE)
               )
@@ -76,18 +77,6 @@ jobs:
             override = override
           )
         shell: Rscript {0}
-
-      - name: Fix PR search URLs
-        if: github.event_name == 'pull_request'
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          base_url="$(Rscript -e 'cat(pkgdown::as_pkgdown(".")$meta$url)')"
-          preview_url="${base_url}/pr/${PR_NUMBER}"
-
-          sed -i \
-            "s|\"path\":\"${base_url}/|\"path\":\"${preview_url}/|g" \
-            docs/search.json
 
       - name: Deploy PR preview
         # Forks cannot deploy the site
