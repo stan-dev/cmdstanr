@@ -3,7 +3,7 @@
 .RData
 .Ruserdata
 .vscode/*
-
+/docs/
 inst/doc
 dev-helpers.R
 release-prep.R
