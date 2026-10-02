@@ -32,14 +32,10 @@ expect_no_recompilation <- function(model_call) {
 }
 
 expect_sample_output <- function(object, num_chains = NULL) {
-
+  # the rest of the banner line depends on parallel_chains
   output <- "Running MCMC with"
   if (!is.null(num_chains)) {
-    if (num_chains == 1) {
-      output <- paste(output, num_chains, "chain")
-    } else {
-      output <- paste(output, num_chains, "sequential chain")
-    }
+    output <- paste0(output, " ", num_chains, " ")
   }
   expect_output(object, output)
 }
