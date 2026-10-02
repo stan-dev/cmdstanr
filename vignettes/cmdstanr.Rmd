@@ -18,9 +18,9 @@ vignette: >
 
 ## Introduction
 
-CmdStanR (Command Stan R) is a lightweight interface to
-[Stan](https://mc-stan.org/) for R users that provides an alternative to the
-traditional [RStan](https://mc-stan.org/rstan/) interface. See the [*Comparison
+CmdStanR (Command Stan R) is an interface to [Stan](https://mc-stan.org/) for
+R users and an alternative to the [RStan](https://mc-stan.org/rstan/)
+interface. See the [*Comparison
 with RStan*](#comparison-with-rstan) section later in this vignette for more
 details on how the two interfaces differ.
 

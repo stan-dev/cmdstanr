@@ -96,6 +96,17 @@ test_that("sample() method works with data files", {
   expect_s3_class(fit_json, "CmdStanMCMC")
 })
 
+test_that("sample() finds a data file on the WSL filesystem", {
+  skip_if_not(os_is_wsl())
+  # R on Windows spells temp paths with backslashes, as in #1113
+  data_dir <- file.path(wsl_dir_prefix(), wsl_tempdir())
+  withr::defer(unlink(data_dir, recursive = TRUE))
+  data_file <- paste0(data_dir, "\\standata.json")
+  write_stan_json(data_list, data_file)
+  expect_sample_output(fit <- mod$sample(data = data_file, chains = 1), 1)
+  expect_s3_class(fit, "CmdStanMCMC")
+})
+
 test_that("sample() method works with init file", {
   init_list <- list(theta = 0.5)
   init_file <- tempfile(
@@ -302,11 +313,13 @@ test_that("A model with no parameters samples without fixed_param", {
   "
   stan_file <- write_stan_file(code)
   m <- cmdstan_model(stan_file)
-  expect_no_error(
+  expect_no_message(
     utils::capture.output(
-      fit <- m$sample(iter_warmup = 10, iter_sampling = 10, diagnostics = NULL)
-    )
+      fit <- m$sample(iter_warmup = 10, iter_sampling = 10)
+    ),
+    message = "E-BFMI"
   )
+  expect_equal(fit$diagnostic_summary(quiet = TRUE)$ebfmi, rep(NA_real_, 4))
 })
 
 

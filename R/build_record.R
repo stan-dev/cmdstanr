@@ -595,7 +595,7 @@ compare_build_records <- function(recorded, current,
 #'
 #' @param expected What the executable must match: `configuration`, the
 #'   options it should have been built with, which `build_executable()`
-#'   resolves from its arguments and `assert_current()` takes from the model
+#'   resolves from its arguments and `assert_current_()` takes from the model
 #'   object's record; and `executable_hash`, the executable the model object
 #'   was created with, or `NULL` from `build_executable()`, where there is no
 #'   model object yet.
@@ -676,7 +676,7 @@ assess_build <- function(expected, current) {
 #' * `configuration`: A list of the options the model was created with.
 #'   * `cpp_options`: the list of options in their make spelling, as
 #'   `$cpp_options()` reports them. For example, `list(stan_threads = TRUE)`
-#'   comes back as `list(STAN_THREADS = "true")`.
+#'   comes back as `list(STAN_THREADS = "TRUE")`.
 #'   * `stanc_options`: the flags as given to stanc, in order.
 #'   For example, `list(O1 = TRUE)` and `list("O1")` both come back as
 #'   `list("--O1")`.

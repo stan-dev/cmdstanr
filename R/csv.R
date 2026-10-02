@@ -173,9 +173,8 @@ read_cmdstan_csv <- function(files,
   if (os_is_wsl() && any(grepl("^//wsl", files))) {
     wsl_files <- sapply(files, wsl_safe_path)
     temp_storage <- tempdir(check = TRUE)
-    csv_copy <- processx::run(
-      "wsl", c("cp", wsl_files, wsl_safe_path(temp_storage)),
-      error_on_status = FALSE
+    wsl_compatible_run(
+      command = "cp", args = c(wsl_files, wsl_safe_path(temp_storage))
     )
 
     files <- file.path(temp_storage, basename(files))

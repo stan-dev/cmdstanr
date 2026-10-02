@@ -50,6 +50,9 @@ with it. (#1258)
 Because the check reads the Stan file, a model created from one needs that file
 whenever it runs. To run an executable without its Stan file, create the model
 with `cmdstan_model(exe_file = )`. (#1255)
+* The new `$is_current()` method runs that same check and returns `TRUE` or
+`FALSE` instead of raising that error, so a package that keeps a `CmdStanModel`
+inside a saved fit can decide whether to rebuild before running it. (#1258)
 * A failed compilation leaves the previous executable in place. Previously a
 failure at the C++ stage could leave the old executable paired with model
 methods generated from the new program, and a failed installation could leave
@@ -73,8 +76,9 @@ the model is created, with `dir`. (#1253)
 executable, not the version at `cmdstan_path()`. (#1249)
 * `$cpp_options()` now returns exactly the options the model was created with,
 spelled as make variables: `list(stan_threads = TRUE)` comes back as
-`STAN_THREADS`. What the executable reports about its own build has moved to
-`stan_build_info()`. (#1019, #1258)
+`STAN_THREADS`, with the value `"TRUE"` (the string make received, so `FALSE`
+comes back as `""`). What the executable reports about its own build has moved
+to `stan_build_info()`. (#1019, #1258)
 * Every `cpp_options` entry must now be named, with a make variable name. An
 unnamed entry gets an error saying where it belongs: `list(NAME = value)` for a
 plain assignment, `cmdstan_make_local()` for `+=` and the other makefile
@@ -108,7 +112,8 @@ error that points at the right argument. (#1258)
 * Named `stanc_options` values such as `list(canonicalize = "deprecations")` and
 numeric ones such as `list("max-line-length" = 78)` now work. Previously the
 named values reached stanc shell-quoted, which it rejected, and the numeric
-ones were dropped. (#1227, #1233)
+ones were dropped. A value holding a space, a quote or a `$` now also reaches
+stanc intact through make. (#1227, #1233, #1263)
 * A stanc error now stops the build immediately and shows stanc's message.
 Previously it surfaced several steps later. (#1227)
 * An include path that does not exist is now reported by its absolute path.
@@ -200,6 +205,8 @@ built with the same flags. In an interactive session it shows the previous
 * `cmdstan_make_local()` now skips flags that are already in `make/local`.
 Previously copying the flags of a previous installation after every upgrade
 added the same lines again each time. (#1266)
+* `install_cmdstan()` now retries a download without the token if GitHub rejects
+the one in `GITHUB_PAT`, and warns the token may not be valid. (#909)
 * Chain IDs in generated file names are now zero-padded to at least two digits, 
 for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
@@ -224,6 +231,9 @@ standalone generated quantities CSV files. (#1168)
 
 ## Bug fixes
 
+* `check_cmdstan_toolchain()` now waits longer for WSL to respond and says so
+when it doesn't, instead of reporting that no WSL distribution is installed.
+(#1297)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * The `save_latent_dynamics` argument is now limited to `$sample()`, 
@@ -256,6 +266,13 @@ as the other methods. (#1205)
 or was built for another platform, now gives an error naming the executable
 and saying how to rebuild it. Previously the fitting methods and
 `$cmdstan_defaults()` surfaced a raw `processx` error. (#1246)
+* A model with no parameters no longer ends every `$sample()` call with a
+warning about a NaN E-BFMI.
+* `install_cmdstan()` now always downloads with R's libcurl method. Previously, 
+with the option set to `"curl"`, a bad `GITHUB_PAT` left a GitHub error page 
+in place of the download instead of triggering a retry without the token.
+* On WSL a failed copy of the executable or the output CSV files now gives
+an error at the copy instead of later when the run or read can't find the file.
 * On Windows a model executable is now launched with the TBB it was built
 against. Previously the selected CmdStan installation's TBB was used, which was
 wrong once `set_cmdstan_path()` had selected a different one. (#1261)
@@ -264,6 +281,12 @@ reports their names and sizes, a tuple's name selects all of its columns in
 `$draws()` and the other methods with a `variables` argument, and the model
 methods accept and return them. Previously reading such a fit warned about
 NAs in the variable sizes. (#925)
+* When using CmdStan through WSL, a data or init file on the WSL filesystem is
+now found when R spells its path with backslashes, as it does for temporary
+files when `TMPDIR` points at the `//wsl$` share. (#1113)
+* CmdStan processes are now killed when the R process that started them dies
+without running its cleanup, for example a future worker interrupted from the
+parent session. Previously they kept running as orphans. (#1086)
 
 ## Removed and deprecated
 

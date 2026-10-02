@@ -137,7 +137,7 @@ runs Stan's standalone generated quantities to obtain generated quantities
 based on previously fitted parameters.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide} for more details on the
 default arguments. These values are also available via the
 \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
@@ -203,6 +203,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},

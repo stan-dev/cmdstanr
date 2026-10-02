@@ -340,7 +340,9 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
         warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
       } else {
         efbmi_per_chain <- apply(energy, 2, function(x) {
-          (sum(diff(x)^2) / length(x)) / stats::var(x)
+          # constant energy (a model with no parameters) has no E-BFMI
+          v <- stats::var(x)
+          if (!isTRUE(v > 0)) NA_real_ else (sum(diff(x)^2) / length(x)) / v
         })
       }
     }
@@ -350,15 +352,8 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
 
 check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.3) {
   efbmi_per_chain <- ebfmi(post_warmup_sampler_diagnostics)
-  nan_efbmi_count <- sum(is.nan(efbmi_per_chain))
-  efbmi_below_threshold <- sum(efbmi_per_chain < threshold)
-  if (nan_efbmi_count > 0) {
-    message(
-      "Warning: ", nan_efbmi_count, " of ", length(efbmi_per_chain),
-      " chains have a NaN E-BFMI.\n",
-      "See https://mc-stan.org/misc/warnings for details.\n"
-    )
-  } else if (efbmi_below_threshold > 0) {
+  efbmi_below_threshold <- sum(efbmi_per_chain < threshold, na.rm = TRUE)
+  if (efbmi_below_threshold > 0) {
     message(
       "Warning: ", efbmi_below_threshold, " of ", length(efbmi_per_chain),
       " chains had an E-BFMI less than ", threshold, ".\n",
@@ -538,11 +533,12 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
       # through the //wsl$ share. Host paths already carry a drive or a share.
       path <- paste0(wsl_dir_prefix(), path)
     }
-  } else if (grepl("^//wsl", path)) {
-    path <- gsub(wsl_dir_prefix(), "", path, fixed = TRUE)
   } else {
-    path_already_safe <- grepl("^/mnt/", path)
-    if (os_is_wsl() && !isTRUE(path_already_safe) && !is.na(path)) {
+    # R on Windows spells its temp paths with backslashes (#1113)
+    path <- repair_path(path)
+    if (grepl("^//wsl", path)) {
+      path <- gsub(wsl_dir_prefix(), "", path, fixed = TRUE)
+    } else if (!grepl("^/mnt/", path) && !is.na(path)) {
       base_file <- basename(path)
       path <- dirname(path)
       abs_path <- repair_path(utils::shortPathName(path))
@@ -593,27 +589,30 @@ wsl_compatible_process_new <- function(...) {
   do.call(processx::process$new, run_args)
 }
 
+#' Check whether a WSL distribution answers
+#'
+#' Runs `wsl uname`. The call can hang on GitHub Actions while WSL
+#' starts, so we wait a bounded time and report a timeout separately
+#' from a missing distribution.
+#'
+#' @noRd
+#' @return `TRUE` if the command exited with status 0, `FALSE` if it
+#'   exited with another status or could not be started, `NA` if it
+#'   was still running after 15 seconds.
 wsl_installed <- function() {
-  tryCatch({
-    # Call can hang indefinitely on Github actions, so explicitly kill
-    p <- processx::process$new("wsl", "uname")
-    for(i in 1:50) {
-      Sys.sleep(0.1)
-      if (!p$is_alive()) {
-        break
-      }
-    }
-    if (p$is_alive()) {
-      p$kill()
-      FALSE
-    } else {
-      status <- p$get_exit_status()
-      if (is.null(status)) {
-        FALSE
-      }
-      isTRUE(status == 0)
-    }
-  }, error = function(e) { FALSE }, finally = function(ret) { ret })
+  p <- tryCatch(
+    processx::process$new("wsl", "uname"),
+    error = function(e) NULL
+  )
+  if (is.null(p)) {
+    return(FALSE)
+  }
+  p$wait(timeout = 15000)
+  if (p$is_alive()) {
+    p$kill()
+    return(NA)
+  }
+  isTRUE(p$get_exit_status() == 0)
 }
 
 wsl_distro_name <- function() {

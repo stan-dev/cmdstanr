@@ -209,7 +209,7 @@ if \code{output_dir = NULL}. They are not included in the paths returned by the
 fitted object's \verb{$output_files()} method. See the \href{https://mc-stan.org/docs/cmdstan-guide/pathfinder_config.html#single-path-pathfinder-outputs}{CmdStan User's Guide}
 for details.}
 
-\item{psis_resample}{(logical) Whether to perform pareto smoothed importance sampling.
+\item{psis_resample}{(logical) Whether to perform Pareto smoothed importance sampling.
 If \code{TRUE}, the number of draws returned will be equal to \code{draws}.
 If \code{FALSE}, the number of draws returned will be equal to \code{single_path_draws * num_paths}.}
 
@@ -217,7 +217,7 @@ If \code{FALSE}, the number of draws returned will be equal to \code{single_path
 If \code{TRUE}, the log probability will be calculated and given in the output.
 If \code{FALSE}, the log probability will only be returned for draws used to determine the
 ELBO in the pathfinder steps. All other draws will have a log probability of \code{NA}.
-A value of \code{FALSE} will also turn off pareto smoothed importance sampling as the
+A value of \code{FALSE} will also turn off Pareto smoothed importance sampling as the
 lp calculation is needed for PSIS.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
@@ -255,11 +255,11 @@ lowest estimated Kullback-Leibler (KL) divergence to the true
 posterior. Finally Pathfinder draws from that normal
 approximation and returns the draws transformed to the
 constrained scale. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
+\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide}
 for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide} for more details on the
 default arguments. These values are also available via the
 \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
@@ -404,6 +404,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},

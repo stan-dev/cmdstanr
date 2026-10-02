@@ -42,7 +42,7 @@ When the build record is available, there are four more fields:
 \itemize{
 \item \code{cpp_options}: the list of options in their make spelling, as
 \verb{$cpp_options()} reports them. For example, \code{list(stan_threads = TRUE)}
-comes back as \code{list(STAN_THREADS = "true")}.
+comes back as \code{list(STAN_THREADS = "TRUE")}.
 \item \code{stanc_options}: the flags as given to stanc, in order.
 For example, \code{list(O1 = TRUE)} and \code{list("O1")} both come back as
 \code{list("--O1")}.

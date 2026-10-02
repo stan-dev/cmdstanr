@@ -43,8 +43,7 @@ CmdStanRun <- R6::R6Class(
         file.copy(from = args$exe_file,
                   to = file.path(wsl_dir_prefix(), wsl_tmpdir))
         args$exe_file <- file.path(wsl_tmpdir, basename(args$exe_file))
-        processx::run("wsl", args = c("chmod", "+x", args$exe_file),
-                      error_on_status = FALSE)
+        wsl_compatible_run(command = "chmod", args = c("+x", args$exe_file))
       }
       invisible(self)
     },
@@ -859,7 +858,10 @@ CmdStanProcs <- R6::R6Class(
             env = cmdstan_process_env(self$threads_per_proc()),
             stdout = "|",
             stderr = "|",
-            echo_cmd = is_verbose_mode()
+            echo_cmd = is_verbose_mode(),
+            # kill CmdStan when this R process dies without unwinding,
+            # for example a future worker torn down on interrupt (#1086)
+            supervise = TRUE
           ),
           error = function(e) {
             # Under MPI it is the launcher that did not start.

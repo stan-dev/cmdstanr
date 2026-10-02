@@ -222,11 +222,11 @@ implements two ADVI algorithms: the \code{algorithm="meanfield"} option uses a
 fully factorized Gaussian for the approximation; the \code{algorithm="fullrank"}
 option uses a Gaussian with a full-rank covariance matrix for the
 approximation. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
+\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide}
 for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide} for more details on the
 default arguments. These values are also available via the
 \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
@@ -371,6 +371,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
