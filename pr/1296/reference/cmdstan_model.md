@@ -1,10 +1,10 @@
 # Create a new CmdStanModel object
 
 Create a new
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
 object from a file containing a Stan program or from an existing Stan
 executable. The
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
 object stores the path to a Stan program and compiled executable (once
 created), and provides methods for fitting the model using Stan's
 algorithms.
@@ -24,7 +24,7 @@ cmdstan_model(stan_file = NULL, exe_file = NULL, compile = TRUE, ...)
 
   (string) The path to a `.stan` file containing a Stan program. The
   helper function
-  [`write_stan_file()`](https://mc-stan.org/cmdstanr/reference/write_stan_file.md)
+  [`write_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_file.md)
   is provided for cases when it is more convenient to specify the Stan
   program as a string. If `stan_file` is not specified then `exe_file`
   must be specified.
@@ -40,30 +40,30 @@ cmdstan_model(stan_file = NULL, exe_file = NULL, compile = TRUE, ...)
 
   (logical) Do compilation? The default is `TRUE`. If `FALSE`
   compilation can be done later via the
-  [`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md)
+  [`$compile()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
   method.
 
 - ...:
 
   Optionally, additional arguments to pass to the
-  [`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md)
+  [`$compile()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
   method if `compile=TRUE`. These options include specifying the
   directory for saving the executable, turning on pedantic mode,
   specifying include paths, configuring C++ options, and more. See
-  [`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md)
+  [`$compile()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
   for details.
 
 ## Value
 
 A
-[`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
 object.
 
 ## See also
 
-[`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md),
-[`$compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md),
-[`$check_syntax()`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md)
+[`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md),
+[`$compile()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md),
+[`$check_syntax()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md)
 
 The CmdStanR website
 ([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
@@ -497,7 +497,7 @@ fit_mcmc_w_init_list <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.3 seconds.
+#> Total execution time: 0.2 seconds.
 #> 
 fit_optim_w_init_list <- mod$optimize(
   data = stan_data,

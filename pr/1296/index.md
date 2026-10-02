@@ -57,7 +57,7 @@ remotes::install_github("stan-dev/cmdstanr")
 If you don’t already have CmdStan installed then, in addition to
 installing the R package, it is also necessary to install CmdStan using
 CmdStanR’s
-[`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
+[`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
 function. A suitable C++ toolchain is also required. Instructions are
 provided in the [*Getting started with
 CmdStanR*](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
@@ -70,7 +70,7 @@ from anyone! If you are interested in contributing, please [comment on
 an open issue or open a new
 one](https://github.com/stan-dev/cmdstanr/issues) on GitHub. For more
 details, please check
-[CONTRIBUTING.md](https://mc-stan.org/cmdstanr/CONTRIBUTING.md).
+[CONTRIBUTING.md](https://mc-stan.org/cmdstanr/pr/1296/CONTRIBUTING.md).
 
 ### License
 

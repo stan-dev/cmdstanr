@@ -16,5 +16,5 @@ A character vector of file paths.
 
 ## See also
 
-[`CmdStanGQ`](https://mc-stan.org/cmdstanr/reference/CmdStanGQ.md),
-[`$generate_quantities()`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md)
+[`CmdStanGQ`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanGQ.md),
+[`$generate_quantities()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md)

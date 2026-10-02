@@ -57,7 +57,7 @@ as_cmdstan_fit(
 
   (string) The format for storing the draws or point estimates. The
   default depends on the method used to fit the model. See
-  [draws](https://mc-stan.org/cmdstanr/reference/fit-method-draws.md)
+  [draws](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md)
   for details, in particular the note about speed and memory for models
   with many parameters.
 
@@ -70,11 +70,12 @@ as_cmdstan_fit(
 ## Value
 
 `as_cmdstan_fit()` returns a fitted model object
-([CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md),
-[CmdStanVB](https://mc-stan.org/cmdstanr/reference/CmdStanVB.md), etc.).
-A fitted model object created this way has some limitations compared to
-fitted model objects created directly by a model fitting method. See the
-**Reconstructed fitted model objects** section below for details.
+([CmdStanMCMC](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md),
+[CmdStanVB](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md),
+etc.). A fitted model object created this way has some limitations
+compared to fitted model objects created directly by a model fitting
+method. See the **Reconstructed fitted model objects** section below for
+details.
 
 `read_cmdstan_csv()` returns a named list with the following components:
 
@@ -85,12 +86,12 @@ The other components in the returned list depend on the method that
 produced the CSV file(s).
 
 For
-[MCMC](https://mc-stan.org/cmdstanr/reference/model-method-sample.md)
+[MCMC](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md)
 the returned list also includes the following components:
 
 - `time`: Run time information for the individual chains. The returned
   object is the same as for the
-  [\$time()](https://mc-stan.org/cmdstanr/reference/fit-method-time.md)
+  [\$time()](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-time.md)
   method except the total run time can't be inferred from the CSV files
   (the chains may have been run in parallel) and is therefore `NA`.
 
@@ -120,16 +121,16 @@ the returned list also includes the following components:
   the sampler diagnostic variables.
 
 For
-[optimization](https://mc-stan.org/cmdstanr/reference/model-method-optimize.md)
+[optimization](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md)
 the returned list also includes the following components:
 
 - `point_estimates`: Point estimates for the model parameters.
 
 For the
-[laplace](https://mc-stan.org/cmdstanr/reference/model-method-laplace.md),
-[pathfinder](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md)
+[laplace](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md),
+[pathfinder](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md)
 and
-[variational](https://mc-stan.org/cmdstanr/reference/model-method-variational.md)
+[variational](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
 methods, the returned list also includes the following components:
 
 - `draws`: A
@@ -138,13 +139,13 @@ methods, the returned list also includes the following components:
   approximate posterior distribution.
 
 For [standalone generated
-quantities](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md)
+quantities](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md)
 the returned list also includes the following components:
 
 - `time`: Run time information for the individual processes, with one
   row in the `chains` data frame per CSV file. The returned object is
   the same as for the
-  [\$time()](https://mc-stan.org/cmdstanr/reference/fit-method-time.md)
+  [\$time()](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-time.md)
   method except the total run time can't be inferred directly from the
   CSV files (they may have been generated in parallel) and is therefore
   `NA`. For CmdStan versions before 2.39 the individual process times
@@ -184,9 +185,9 @@ method produces an informative error.
 
 ## See also
 
-[`draws_to_csv()`](https://mc-stan.org/cmdstanr/reference/draws_to_csv.md)
+[`draws_to_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/draws_to_csv.md)
 for creating compatible CSV files and
-[`$output_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
+[`$output_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
 for locating files created by CmdStanR
 
 ## Examples
@@ -197,10 +198,10 @@ for locating files created by CmdStanR
 fit1 <- cmdstanr_example("logistic", method = "sample", save_warmup = TRUE)
 csv_files <- fit1$output_files()
 print(csv_files)
-#> [1] "/tmp/RtmpiwuNEX/logistic-202609292333-01-3d7348.csv"
-#> [2] "/tmp/RtmpiwuNEX/logistic-202609292333-02-3d7348.csv"
-#> [3] "/tmp/RtmpiwuNEX/logistic-202609292333-03-3d7348.csv"
-#> [4] "/tmp/RtmpiwuNEX/logistic-202609292333-04-3d7348.csv"
+#> [1] "/tmp/Rtmpdlq1S2/logistic-202610020004-01-3d7320.csv"
+#> [2] "/tmp/Rtmpdlq1S2/logistic-202610020004-02-3d7320.csv"
+#> [3] "/tmp/Rtmpdlq1S2/logistic-202610020004-03-3d7320.csv"
+#> [4] "/tmp/Rtmpdlq1S2/logistic-202610020004-04-3d7320.csv"
 
 # Creating fitting model objects with as_cmdstan_fit()
 
@@ -229,7 +230,7 @@ str(x)
 #>   ..$ stan_version_major  : num 2
 #>   ..$ stan_version_minor  : num 40
 #>   ..$ stan_version_patch  : num 0
-#>   ..$ start_datetime      : chr "2026-09-29 23:33:25 UTC"
+#>   ..$ start_datetime      : chr "2026-10-02 00:04:29 UTC"
 #>   ..$ method              : chr "sample"
 #>   ..$ save_warmup         : int 1
 #>   ..$ thin                : num 1
@@ -250,7 +251,7 @@ str(x)
 #>   ..$ seed                : num 1.12e+09
 #>   ..$ refresh             : num 100
 #>   ..$ sig_figs            : num 8
-#>   ..$ profile_file        : chr "/tmp/RtmpiwuNEX/logistic-profile-202609292333-01-092076.csv"
+#>   ..$ profile_file        : chr "/tmp/Rtmpdlq1S2/logistic-profile-202610020004-01-09204e.csv"
 #>   ..$ save_cmdstan_config : int 0
 #>   ..$ stanc_version       : chr "stanc3 v2.40.0"
 #>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...
@@ -266,9 +267,9 @@ str(x)
 #>   ..$ threads_per_chain   : num 1
 #>   ..$ time                :'data.frame': 4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.05 0.05 0.052 0.05
-#>   .. ..$ sampling: num [1:4] 0.048 0.051 0.05 0.05
-#>   .. ..$ total   : num [1:4] 0.098 0.101 0.102 0.1
+#>   .. ..$ warmup  : num [1:4] 0.053 0.054 0.053 0.053
+#>   .. ..$ sampling: num [1:4] 0.051 0.054 0.053 0.053
+#>   .. ..$ total   : num [1:4] 0.104 0.108 0.106 0.106
 #>   ..$ stan_variable_sizes :List of 4
 #>   .. ..$ lp__   : num 1
 #>   .. ..$ alpha  : num 1
@@ -280,9 +281,9 @@ str(x)
 #>   ..$ total : int NA
 #>   ..$ chains:'data.frame':   4 obs. of  4 variables:
 #>   .. ..$ chain_id: num [1:4] 1 2 3 4
-#>   .. ..$ warmup  : num [1:4] 0.05 0.05 0.052 0.05
-#>   .. ..$ sampling: num [1:4] 0.048 0.051 0.05 0.05
-#>   .. ..$ total   : num [1:4] 0.098 0.101 0.102 0.1
+#>   .. ..$ warmup  : num [1:4] 0.053 0.054 0.053 0.053
+#>   .. ..$ sampling: num [1:4] 0.051 0.054 0.053 0.053
+#>   .. ..$ total   : num [1:4] 0.104 0.108 0.106 0.106
 #>  $ inv_metric                     :List of 4
 #>   ..$ 1: num [1:4] 0.0451 0.0558 0.0488 0.0628
 #>   ..$ 2: num [1:4] 0.0517 0.0579 0.0483 0.0656

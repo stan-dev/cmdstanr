@@ -10,7 +10,7 @@ method returns the stdout and stderr of all chains as a list of character
 vectors if id=NULL. If the id argument is specified it instead pretty
 prints the console output for a single chain.
 For optimization, Laplace approximation, variational inference, and
-Pathfinder, $output() just pretty prints the console output."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
+Pathfinder, $output() just pretty prints the console output."><meta property="og:image" content="https://mc-stan.org/cmdstanr/pr/1296/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -40,7 +40,7 @@ Pathfinder, $output() just pretty prints the console output."><meta property="og
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages"><li><a class="external-link dropdown-item" href="https://mc-stan.org/bayesplot">bayesplot</a></li>
-    <li><a class="dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
+    <li><a class="external-link dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/loo">loo</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/posterior">posterior</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/priorsense/">priorsense</a></li>
@@ -143,17 +143,17 @@ other cases, <code>NULL</code> invisibly.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> random</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   seed = 1099664120</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> output</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   file = /tmp/RtmpiwuNEX/logistic-202609292328-01-249fb9.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   file = /tmp/Rtmpdlq1S2/logistic-202610012359-01-249f91.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   diagnostic_file =  (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   refresh = 100 (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sig_figs = 8 (Default)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   profile_file = /tmp/RtmpiwuNEX/logistic-profile-202609292328-01-4dc330.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   profile_file = /tmp/Rtmpdlq1S2/logistic-profile-202610012359-01-4dc308.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   save_cmdstan_config = false (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> num_threads = 1 (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 8e-06 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 7e-06 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -180,9 +180,9 @@ other cases, <code>NULL</code> invisibly.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 1900 / 2000 [ 95%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 2000 / 2000 [100%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  Elapsed Time: 0.017 seconds (Warm-up)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                0.052 seconds (Sampling)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                0.069 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Elapsed Time: 0.021 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                0.062 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                0.083 seconds (Total)</span>
 <span class="r-in"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="va">fit_mcmc</span><span class="op">$</span><span class="fu">output</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 4</span>
@@ -215,11 +215,11 @@ other cases, <code>NULL</code> invisibly.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> random</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   seed = 1792129562</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> output</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   file = /tmp/RtmpiwuNEX/logistic-202609292328-01-616a20.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   file = /tmp/Rtmpdlq1S2/logistic-202610012359-01-6169f8.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   diagnostic_file =  (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   refresh = 100 (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sig_figs = 8 (Default)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   profile_file = /tmp/RtmpiwuNEX/logistic-profile-202609292328-01-3c994c.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   profile_file = /tmp/Rtmpdlq1S2/logistic-profile-202610012359-01-3c9924.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   save_cmdstan_config = false (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> num_threads = 1 (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -253,11 +253,11 @@ other cases, <code>NULL</code> invisibly.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> random</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   seed = 1973439605</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> output</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   file = /tmp/RtmpiwuNEX/logistic-202609292328-01-07c584.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   file = /tmp/Rtmpdlq1S2/logistic-202610012359-01-07c55c.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   diagnostic_file =  (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   refresh = 100 (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sig_figs = 8 (Default)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   profile_file = /tmp/RtmpiwuNEX/logistic-profile-202609292328-01-5807db.csv</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   profile_file = /tmp/Rtmpdlq1S2/logistic-profile-202610012359-01-5807b3.csv</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   save_cmdstan_config = false (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> num_threads = 1 (Default)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -269,8 +269,8 @@ other cases, <code>NULL</code> invisibly.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 8e-06 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gradient evaluation took 7e-06 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>

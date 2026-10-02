@@ -5,275 +5,275 @@
 An overview of the package and how it differs from
 [RStan](https://mc-stan.org/rstan).
 
-- [`cmdstanr-package`](https://mc-stan.org/cmdstanr/reference/cmdstanr-package.md)
-  [`cmdstanr`](https://mc-stan.org/cmdstanr/reference/cmdstanr-package.md)
-  [`CmdStanR`](https://mc-stan.org/cmdstanr/reference/cmdstanr-package.md)
+- [`cmdstanr-package`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstanr-package.md)
+  [`cmdstanr`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstanr-package.md)
+  [`CmdStanR`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstanr-package.md)
   : CmdStanR: the R interface to CmdStan
-- [`cmdstanr_global_options`](https://mc-stan.org/cmdstanr/reference/cmdstanr_global_options.md)
+- [`cmdstanr_global_options`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstanr_global_options.md)
   : CmdStanR global options
 
 ## Installing and setting the path to CmdStan
 
 Install CmdStan, assuming the necessary C++ toolchain.
 
-- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
-  [`rebuild_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
-  [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
-  [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
+- [`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+  [`rebuild_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+  [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
+  [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
   : Install CmdStan or clean and rebuild an existing installation
-- [`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.md)
-  [`cmdstan_path()`](https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.md)
-  [`cmdstan_version()`](https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.md)
+- [`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/pr/1296/reference/set_cmdstan_path.md)
+  [`cmdstan_path()`](https://mc-stan.org/cmdstanr/pr/1296/reference/set_cmdstan_path.md)
+  [`cmdstan_version()`](https://mc-stan.org/cmdstanr/pr/1296/reference/set_cmdstan_path.md)
   : Get or set the file path to the CmdStan installation
 
 ## Running CmdStan from R
 
 Run CmdStan from R.
 
-- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
+- [`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
   : Create a new CmdStanModel object
 
-- [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.md)
+- [`CmdStanModel`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanModel.md)
   : CmdStanModel objects
 
-- [`check_syntax()`](https://mc-stan.org/cmdstanr/reference/model-method-check_syntax.md)
+- [`check_syntax()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-check_syntax.md)
   : Check syntax of a Stan program
 
-- [`cmdstan_defaults()`](https://mc-stan.org/cmdstanr/reference/model-method-cmdstan_defaults.md)
+- [`cmdstan_defaults()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-cmdstan_defaults.md)
   : Get CmdStan default argument values
 
-- [`compile()`](https://mc-stan.org/cmdstanr/reference/model-method-compile.md)
+- [`compile()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
   : Compile a Stan program
 
-- [`diagnose()`](https://mc-stan.org/cmdstanr/reference/model-method-diagnose.md)
+- [`diagnose()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-diagnose.md)
   : Run Stan's diagnose method
 
-- [`expose_functions()`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md)
+- [`expose_functions()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md)
   : Expose Stan functions to R
 
-- [`format()`](https://mc-stan.org/cmdstanr/reference/model-method-format.md)
+- [`format()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-format.md)
   : Run stanc's auto-formatter on the model code.
 
-- [`generate_quantities()`](https://mc-stan.org/cmdstanr/reference/model-method-generate-quantities.md)
+- [`generate_quantities()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-generate-quantities.md)
   : Run Stan's standalone generated quantities method
 
-- [`laplace()`](https://mc-stan.org/cmdstanr/reference/model-method-laplace.md)
+- [`laplace()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-laplace.md)
   : Run Stan's Laplace algorithm
 
-- [`model-method-model-info`](https://mc-stan.org/cmdstanr/reference/model-method-model-info.md)
+- [`model-method-model-info`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-model-info.md)
   :
 
   Access information from a `CmdStanModel` object
 
-- [`optimize()`](https://mc-stan.org/cmdstanr/reference/model-method-optimize.md)
+- [`optimize()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-optimize.md)
   : Run Stan's optimization algorithms
 
-- [`pathfinder()`](https://mc-stan.org/cmdstanr/reference/model-method-pathfinder.md)
+- [`pathfinder()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-pathfinder.md)
   : Run Stan's Pathfinder Variational Inference Algorithm
 
-- [`sample()`](https://mc-stan.org/cmdstanr/reference/model-method-sample.md)
+- [`sample()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample.md)
   : Run Stan's MCMC algorithms
 
-- [`sample_mpi()`](https://mc-stan.org/cmdstanr/reference/model-method-sample_mpi.md)
+- [`sample_mpi()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-sample_mpi.md)
   : Run Stan's MCMC algorithms with MPI
 
-- [`variables()`](https://mc-stan.org/cmdstanr/reference/model-method-variables.md)
+- [`variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variables.md)
   : Input and output variables of a Stan program
 
-- [`variational()`](https://mc-stan.org/cmdstanr/reference/model-method-variational.md)
+- [`variational()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-variational.md)
   : Run Stan's variational approximation algorithms
 
-- [`cmdstanr_example()`](https://mc-stan.org/cmdstanr/reference/cmdstanr_example.md)
-  [`print_example_program()`](https://mc-stan.org/cmdstanr/reference/cmdstanr_example.md)
+- [`cmdstanr_example()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstanr_example.md)
+  [`print_example_program()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstanr_example.md)
   : Fit models for use in examples
 
 ## Fitted model objects and methods
 
-- [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.md)
+- [`CmdStanMCMC`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMCMC.md)
   : CmdStanMCMC objects
 
-- [`CmdStanMLE`](https://mc-stan.org/cmdstanr/reference/CmdStanMLE.md) :
-  CmdStanMLE objects
+- [`CmdStanMLE`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanMLE.md)
+  : CmdStanMLE objects
 
-- [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/reference/CmdStanLaplace.md)
+- [`CmdStanLaplace`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanLaplace.md)
   : CmdStanLaplace objects
 
-- [`CmdStanVB`](https://mc-stan.org/cmdstanr/reference/CmdStanVB.md) :
-  CmdStanVB objects
+- [`CmdStanVB`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanVB.md)
+  : CmdStanVB objects
 
-- [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/reference/CmdStanPathfinder.md)
+- [`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanPathfinder.md)
   : CmdStanPathfinder objects
 
-- [`CmdStanGQ`](https://mc-stan.org/cmdstanr/reference/CmdStanGQ.md) :
-  CmdStanGQ objects
+- [`CmdStanGQ`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanGQ.md)
+  : CmdStanGQ objects
 
-- [`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/reference/CmdStanDiagnose.md)
+- [`CmdStanDiagnose`](https://mc-stan.org/cmdstanr/pr/1296/reference/CmdStanDiagnose.md)
   : CmdStanDiagnose objects
 
-- [`cmdstan_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.md)
-  [`cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/reference/fit-method-cmdstan_summary.md)
+- [`cmdstan_summary()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-cmdstan_summary.md)
+  [`cmdstan_diagnose()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-cmdstan_summary.md)
   :
 
   Run CmdStan's `stansummary` and `diagnose` utilities
 
-- [`code()`](https://mc-stan.org/cmdstanr/reference/fit-method-code.md)
+- [`code()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-code.md)
   : Return Stan code
 
-- [`constrain_variables()`](https://mc-stan.org/cmdstanr/reference/fit-method-constrain_variables.md)
+- [`constrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-constrain_variables.md)
   : Transform a set of unconstrained parameter values to the constrained
   scale
 
-- [`diagnostic_summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-diagnostic_summary.md)
+- [`diagnostic_summary()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-diagnostic_summary.md)
   : Sampler diagnostic summaries and warnings
 
-- [`draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.md)
+- [`draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md)
   : Extract posterior draws
 
-- [`fitted_params_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-fitted_params_files.md)
+- [`fitted_params_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-fitted_params_files.md)
   : Extract the fitted-parameter CSV files used for generated quantities
 
-- [`grad_log_prob()`](https://mc-stan.org/cmdstanr/reference/fit-method-grad_log_prob.md)
+- [`grad_log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-grad_log_prob.md)
   : Calculate the log-probability and the gradient w.r.t. each input for
   a given vector of unconstrained parameters
 
-- [`gradients()`](https://mc-stan.org/cmdstanr/reference/fit-method-gradients.md)
+- [`gradients()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-gradients.md)
   : Extract gradients after diagnostic mode
 
-- [`hessian()`](https://mc-stan.org/cmdstanr/reference/fit-method-hessian.md)
+- [`hessian()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-hessian.md)
   : Calculate the log-probability, the gradient w.r.t. each input, and
   the Hessian for a given vector of unconstrained parameters
 
-- [`init()`](https://mc-stan.org/cmdstanr/reference/fit-method-init.md)
+- [`init()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-init.md)
   : Extract user-specified initial values
 
-- [`init_model_methods()`](https://mc-stan.org/cmdstanr/reference/fit-method-init_model_methods.md)
+- [`init_model_methods()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-init_model_methods.md)
   : Compile additional methods for accessing the model log-probability
   function and parameter constraining and unconstraining.
 
-- [`inv_metric()`](https://mc-stan.org/cmdstanr/reference/fit-method-inv_metric.md)
+- [`inv_metric()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-inv_metric.md)
   : Extract inverse metric (inverse mass matrix) after MCMC
 
-- [`log_prob()`](https://mc-stan.org/cmdstanr/reference/fit-method-log_prob.md)
+- [`log_prob()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-log_prob.md)
   : Calculate the log-probability given a provided vector of
   unconstrained parameters.
 
-- [`loo()`](https://mc-stan.org/cmdstanr/reference/fit-method-loo.md) :
-  Leave-one-out cross-validation (LOO-CV)
+- [`loo()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-loo.md)
+  : Leave-one-out cross-validation (LOO-CV)
 
-- [`lp()`](https://mc-stan.org/cmdstanr/reference/fit-method-lp.md)
-  [`lp_approx()`](https://mc-stan.org/cmdstanr/reference/fit-method-lp.md)
+- [`lp()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-lp.md)
+  [`lp_approx()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-lp.md)
   : Extract log probability (target)
 
-- [`materialize()`](https://mc-stan.org/cmdstanr/reference/fit-method-materialize.md)
+- [`materialize()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-materialize.md)
   : Materialize model object
 
-- [`metadata()`](https://mc-stan.org/cmdstanr/reference/fit-method-metadata.md)
+- [`metadata()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-metadata.md)
   : Extract metadata from CmdStan CSV files
 
-- [`mle()`](https://mc-stan.org/cmdstanr/reference/fit-method-mle.md) :
-  Extract point estimate after optimization
+- [`mle()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-mle.md)
+  : Extract point estimate after optimization
 
-- [`mode()`](https://mc-stan.org/cmdstanr/reference/fit-method-mode.md)
+- [`mode()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-mode.md)
   : Extract the mode used for a Laplace approximation
 
-- [`num_chains()`](https://mc-stan.org/cmdstanr/reference/fit-method-num_chains.md)
+- [`num_chains()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-num_chains.md)
   : Extract the number of chains
 
-- [`output()`](https://mc-stan.org/cmdstanr/reference/fit-method-output.md)
+- [`output()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-output.md)
   : Access console output
 
-- [`profiles()`](https://mc-stan.org/cmdstanr/reference/fit-method-profiles.md)
+- [`profiles()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-profiles.md)
   : Return profiling data
 
-- [`return_codes()`](https://mc-stan.org/cmdstanr/reference/fit-method-return_codes.md)
+- [`return_codes()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-return_codes.md)
   : Extract return codes from CmdStan
 
-- [`sampler_diagnostics()`](https://mc-stan.org/cmdstanr/reference/fit-method-sampler_diagnostics.md)
+- [`sampler_diagnostics()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-sampler_diagnostics.md)
   : Extract sampler diagnostics after MCMC
 
-- [`save_object()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_object.md)
+- [`save_object()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_object.md)
   : Save fitted model object to a file
 
-- [`save_output_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`save_latent_dynamics_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`save_profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`save_data_file()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`save_config_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`save_metric_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`output_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`latent_dynamics_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`data_file()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`config_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
-  [`metric_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.md)
+- [`save_output_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`save_latent_dynamics_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`save_profile_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`save_data_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`save_config_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`save_metric_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`output_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`profile_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`latent_dynamics_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`data_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`config_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
+  [`metric_files()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-save_output_files.md)
   : Save output and data files
 
-- [`summary()`](https://mc-stan.org/cmdstanr/reference/fit-method-summary.md)
+- [`summary()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-summary.md)
   : Compute a summary table of estimates and diagnostics
 
-- [`time()`](https://mc-stan.org/cmdstanr/reference/fit-method-time.md)
+- [`time()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-time.md)
   : Report timing of CmdStan runs
 
-- [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-unconstrain_draws.md)
+- [`unconstrain_draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_draws.md)
   : Transform all parameter draws to the unconstrained scale
 
-- [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/reference/fit-method-unconstrain_variables.md)
+- [`unconstrain_variables()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-unconstrain_variables.md)
   : Transform a set of parameter values to the unconstrained scale
 
-- [`variable_skeleton()`](https://mc-stan.org/cmdstanr/reference/fit-method-variable_skeleton.md)
+- [`variable_skeleton()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-variable_skeleton.md)
   :
 
   Return the variable skeleton for `relist`
 
-- [`expose_functions()`](https://mc-stan.org/cmdstanr/reference/model-method-expose_functions.md)
+- [`expose_functions()`](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-expose_functions.md)
   : Expose Stan functions to R
 
 ## Other tools
 
-- [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md)
-  [`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/reference/read_cmdstan_csv.md)
+- [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md)
+  [`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/pr/1296/reference/read_cmdstan_csv.md)
   : Read CmdStan CSV files into R
 
-- [`write_stan_json()`](https://mc-stan.org/cmdstanr/reference/write_stan_json.md)
+- [`write_stan_json()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_json.md)
   : Write data to a JSON file readable by CmdStan
 
-- [`write_stan_file()`](https://mc-stan.org/cmdstanr/reference/write_stan_file.md)
+- [`write_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_file.md)
   : Write Stan code to a file
 
-- [`print_stan_file()`](https://mc-stan.org/cmdstanr/reference/print_stan_file.md)
+- [`print_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/print_stan_file.md)
   : Print a Stan file with syntax highlighting in Quarto and R Markdown
 
-- [`draws_to_csv()`](https://mc-stan.org/cmdstanr/reference/draws_to_csv.md)
+- [`draws_to_csv()`](https://mc-stan.org/cmdstanr/pr/1296/reference/draws_to_csv.md)
   : Write posterior draws objects to CSV files suitable for running
   standalone generated quantities with CmdStan.
 
-- [`as_mcmc.list()`](https://mc-stan.org/cmdstanr/reference/as_mcmc.list.md)
+- [`as_mcmc.list()`](https://mc-stan.org/cmdstanr/pr/1296/reference/as_mcmc.list.md)
   :
 
   Convert `CmdStanMCMC` to `mcmc.list`
 
-- [`as_draws(`*`<CmdStanMCMC>`*`)`](https://mc-stan.org/cmdstanr/reference/as_draws.CmdStanMCMC.md)
-  [`as_draws(`*`<CmdStanMLE>`*`)`](https://mc-stan.org/cmdstanr/reference/as_draws.CmdStanMCMC.md)
-  [`as_draws(`*`<CmdStanLaplace>`*`)`](https://mc-stan.org/cmdstanr/reference/as_draws.CmdStanMCMC.md)
-  [`as_draws(`*`<CmdStanVB>`*`)`](https://mc-stan.org/cmdstanr/reference/as_draws.CmdStanMCMC.md)
-  [`as_draws(`*`<CmdStanGQ>`*`)`](https://mc-stan.org/cmdstanr/reference/as_draws.CmdStanMCMC.md)
-  [`as_draws(`*`<CmdStanPathfinder>`*`)`](https://mc-stan.org/cmdstanr/reference/as_draws.CmdStanMCMC.md)
+- [`as_draws(`*`<CmdStanMCMC>`*`)`](https://mc-stan.org/cmdstanr/pr/1296/reference/as_draws.CmdStanMCMC.md)
+  [`as_draws(`*`<CmdStanMLE>`*`)`](https://mc-stan.org/cmdstanr/pr/1296/reference/as_draws.CmdStanMCMC.md)
+  [`as_draws(`*`<CmdStanLaplace>`*`)`](https://mc-stan.org/cmdstanr/pr/1296/reference/as_draws.CmdStanMCMC.md)
+  [`as_draws(`*`<CmdStanVB>`*`)`](https://mc-stan.org/cmdstanr/pr/1296/reference/as_draws.CmdStanMCMC.md)
+  [`as_draws(`*`<CmdStanGQ>`*`)`](https://mc-stan.org/cmdstanr/pr/1296/reference/as_draws.CmdStanMCMC.md)
+  [`as_draws(`*`<CmdStanPathfinder>`*`)`](https://mc-stan.org/cmdstanr/pr/1296/reference/as_draws.CmdStanMCMC.md)
   :
 
   Create a `draws` object from a CmdStanR fitted model object
 
-- [`as.CmdStanMCMC()`](https://mc-stan.org/cmdstanr/reference/cmdstan_coercion.md)
-  [`as.CmdStanMLE()`](https://mc-stan.org/cmdstanr/reference/cmdstan_coercion.md)
-  [`as.CmdStanLaplace()`](https://mc-stan.org/cmdstanr/reference/cmdstan_coercion.md)
-  [`as.CmdStanVB()`](https://mc-stan.org/cmdstanr/reference/cmdstan_coercion.md)
-  [`as.CmdStanPathfinder()`](https://mc-stan.org/cmdstanr/reference/cmdstan_coercion.md)
-  [`as.CmdStanGQ()`](https://mc-stan.org/cmdstanr/reference/cmdstan_coercion.md)
-  [`as.CmdStanDiagnose()`](https://mc-stan.org/cmdstanr/reference/cmdstan_coercion.md)
+- [`as.CmdStanMCMC()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_coercion.md)
+  [`as.CmdStanMLE()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_coercion.md)
+  [`as.CmdStanLaplace()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_coercion.md)
+  [`as.CmdStanVB()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_coercion.md)
+  [`as.CmdStanPathfinder()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_coercion.md)
+  [`as.CmdStanGQ()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_coercion.md)
+  [`as.CmdStanDiagnose()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_coercion.md)
   : Coercion methods for CmdStan objects
 
 ## Using CmdStanR with knitr and R Markdown
 
-- [`register_knitr_engine()`](https://mc-stan.org/cmdstanr/reference/register_knitr_engine.md)
+- [`register_knitr_engine()`](https://mc-stan.org/cmdstanr/pr/1296/reference/register_knitr_engine.md)
   : Register CmdStanR's knitr engine for Stan
-- [`eng_cmdstan()`](https://mc-stan.org/cmdstanr/reference/eng_cmdstan.md)
+- [`eng_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/eng_cmdstan.md)
   : CmdStan knitr engine for Stan

@@ -40,7 +40,7 @@ toolchain. The requirements are described in the CmdStan Guide:
 - <https://mc-stan.org/docs/cmdstan-guide/cmdstan-installation.html>
 
 To double check that your toolchain is set up properly you can call the
-[`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
+[`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
 function:
 
 ``` r
@@ -71,7 +71,7 @@ automate this to avoid having to manually set the path every session:
     the largest version number is used. This is useful if your CmdStan
     installation is not located in the default directory that would have
     been used by
-    [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
+    [`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
     (see \#2).
 
 2.  If no environment variable is found when loaded but any directory in
@@ -81,14 +81,14 @@ automate this to avoid having to manually set the path every session:
     path to the CmdStan with the largest version number will be set as
     the path to CmdStan for the R session. This is the same as the
     default directory that
-    [`install_cmdstan()`](https://mc-stan.org/cmdstanr/reference/install_cmdstan.md)
+    [`install_cmdstan()`](https://mc-stan.org/cmdstanr/pr/1296/reference/install_cmdstan.md)
     uses to install the latest version of CmdStan, so if that’s how you
     installed CmdStan you shouldn’t need to manually set the path to
     CmdStan when loading CmdStanR.
 
 If neither of these applies (or you want to subsequently change the
 path) you can use the
-[`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.md)
+[`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/pr/1296/reference/set_cmdstan_path.md)
 function:
 
 ``` r
@@ -98,9 +98,9 @@ set_cmdstan_path(PATH_TO_CMDSTAN)
 
 To check the path to the CmdStan installation and the CmdStan version
 number you can use
-[`cmdstan_path()`](https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.md)
+[`cmdstan_path()`](https://mc-stan.org/cmdstanr/pr/1296/reference/set_cmdstan_path.md)
 and
-[`cmdstan_version()`](https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.md):
+[`cmdstan_version()`](https://mc-stan.org/cmdstanr/pr/1296/reference/set_cmdstan_path.md):
 
 ``` r
 
@@ -119,7 +119,7 @@ cmdstan_version()
 ## Compiling a model
 
 The
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
 function creates a new
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/reference/CmdStanModel.html)
 object from a file containing a Stan program. Under the hood, CmdStan is

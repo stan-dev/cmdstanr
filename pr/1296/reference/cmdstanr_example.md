@@ -53,7 +53,7 @@ print_example_program(example = c("logistic", "schools", "schools_ncp"))
 - force_recompile:
 
   Passed to the
-  [\$compile()](https://mc-stan.org/cmdstanr/reference/model-method-compile.md)
+  [\$compile()](https://mc-stan.org/cmdstanr/pr/1296/reference/model-method-compile.md)
   method.
 
 ## Value
@@ -64,9 +64,9 @@ printing the Stan code.
 
 ## See also
 
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
 for fitting your own Stan programs and
-[`print_stan_file()`](https://mc-stan.org/cmdstanr/reference/print_stan_file.md)
+[`print_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/print_stan_file.md)
 for displaying Stan source files
 
 ## Examples

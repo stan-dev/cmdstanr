@@ -56,9 +56,9 @@ To make the code block collapsible:
 
 ## See also
 
-[`write_stan_file()`](https://mc-stan.org/cmdstanr/reference/write_stan_file.md)
+[`write_stan_file()`](https://mc-stan.org/cmdstanr/pr/1296/reference/write_stan_file.md)
 and
-[`cmdstan_model()`](https://mc-stan.org/cmdstanr/reference/cmdstan_model.md)
+[`cmdstan_model()`](https://mc-stan.org/cmdstanr/pr/1296/reference/cmdstan_model.md)
 
 ## Examples
 

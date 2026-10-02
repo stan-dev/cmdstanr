@@ -1,7 +1,7 @@
 # Save fitted model object to a file
 
 This method calls
-[`$materialize()`](https://mc-stan.org/cmdstanr/reference/fit-method-materialize.md)
+[`$materialize()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-materialize.md)
 internally to ensure that all posterior draws and diagnostics are saved
 when saving a fitted model object. Because the contents of the CmdStan
 output CSV files are only read into R lazily (i.e., as needed), the
@@ -49,7 +49,7 @@ The fitted model object, invisibly.
 
 ## See also
 
-[`materialize`](https://mc-stan.org/cmdstanr/reference/fit-method-materialize.md)
+[`materialize`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-materialize.md)
 
 ## Examples
 

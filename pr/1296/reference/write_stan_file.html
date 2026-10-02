@@ -14,7 +14,7 @@ of the Stan code, and the file is not overwritten if it already has correct
 contents. This means that calling this function multiple times with the same
 Stan code will reuse the compiled model. This also however means that the
 function is potentially not thread-safe. Using hash_salt = Sys.getpid()
-should ensure thread-safety in the rare cases when it is needed."><meta property="og:image" content="https://mc-stan.org/cmdstanr/logo.svg"><meta name="robots" content="noindex"></head><body>
+should ensure thread-safety in the rare cases when it is needed."><meta property="og:image" content="https://mc-stan.org/cmdstanr/pr/1296/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -44,7 +44,7 @@ should ensure thread-safety in the rare cases when it is needed."><meta property
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-other-packages" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Other Packages</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-other-packages"><li><a class="external-link dropdown-item" href="https://mc-stan.org/bayesplot">bayesplot</a></li>
-    <li><a class="dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
+    <li><a class="external-link dropdown-item" href="https://mc-stan.org/cmdstanr">cmdstanr</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/loo">loo</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/posterior">posterior</a></li>
     <li><a class="external-link dropdown-item" href="https://mc-stan.org/priorsense/">priorsense</a></li>
@@ -162,7 +162,7 @@ determine the file name if <code>basename</code> is not set.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">write_stan_file</span><span class="op">(</span><span class="va">stan_program</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpiwuNEX/model_0fc14724391f86141648501cc6535151.stan"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/Rtmpdlq1S2/model_0fc14724391f86141648501cc6535151.stan"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">lines</span><span class="op">)</span></span></span>

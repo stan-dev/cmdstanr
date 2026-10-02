@@ -2,7 +2,7 @@
 
 Create a `draws` object supported by the posterior package. These
 methods are just wrappers around CmdStanR's
-[`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.md)
+[`$draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md)
 method provided for convenience.
 
 ## Usage
@@ -36,7 +36,7 @@ as_draws(x, ...)
 - ...:
 
   Optional arguments passed to the
-  [`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.md)
+  [`$draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md)
   method (e.g., `variables`, `inc_warmup`, etc.).
 
 ## Value
@@ -52,7 +52,7 @@ method after creating the `draws` object.
 
 ## See also
 
-[`$draws()`](https://mc-stan.org/cmdstanr/reference/fit-method-draws.md)
+[`$draws()`](https://mc-stan.org/cmdstanr/pr/1296/reference/fit-method-draws.md)
 and
 [`posterior::as_draws()`](https://mc-stan.org/posterior/reference/draws.html)
 
