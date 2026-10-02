@@ -1,0 +1,42 @@
+# Transform a set of parameter values to the unconstrained scale
+
+The `$unconstrain_variables()` method transforms input parameters to the
+unconstrained scale.
+
+## Usage
+
+``` r
+unconstrain_variables(variables)
+```
+
+## Arguments
+
+- variables:
+
+  (list) A list of parameter values to transform, in the same format as
+  provided to the `init` argument of the `$sample()` method. A tuple is
+  an unnamed list of its elements and a complex value an R complex
+  number, as `$constrain_variables()` returns them. A zero-size variable
+  has no unconstrained values and can be left out or included.
+
+## Value
+
+A numeric vector of unconstrained parameter values.
+
+## See also
+
+[`log_prob()`](https://mc-stan.org/cmdstanr/pr/1287/reference/fit-method-log_prob.md),
+[`grad_log_prob()`](https://mc-stan.org/cmdstanr/pr/1287/reference/fit-method-grad_log_prob.md),
+[`constrain_variables()`](https://mc-stan.org/cmdstanr/pr/1287/reference/fit-method-constrain_variables.md),
+[`unconstrain_draws()`](https://mc-stan.org/cmdstanr/pr/1287/reference/fit-method-unconstrain_draws.md),
+[`hessian()`](https://mc-stan.org/cmdstanr/pr/1287/reference/fit-method-hessian.md)
+
+## Examples
+
+``` r
+# \dontrun{
+fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
+fit_mcmc$unconstrain_variables(list(alpha = 0.5, beta = c(0.7, 1.1, 0.2)))
+#> [1] 0.5 0.7 1.1 0.2
+# }
+```
