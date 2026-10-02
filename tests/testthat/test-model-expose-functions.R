@@ -72,6 +72,24 @@ functions {
   tuple(int, tuple(array[] complex_vector, array[] complex_vector))  rtn_nest_tuple_complex_vec_array(tuple(int, tuple(array[] complex_vector, array[] complex_vector)) x) { return x; }
   tuple(int, tuple(array[] complex_row_vector, array[] complex_row_vector))  rtn_nest_tuple_complex_rowvec_array(tuple(int, tuple(array[] complex_row_vector, array[] complex_row_vector)) x) { return x; }
   tuple(int, tuple(array[] complex_matrix, array[] complex_matrix))  rtn_nest_tuple_complex_matrix_array(tuple(int, tuple(array[] complex_matrix, array[] complex_matrix)) x) { return x; }
+
+  real wrap_normal_rng(real mu, real sigma) { return normal_rng(mu, sigma); }
+
+  // algebra_solver_newton links SUNDIALS/KINSOL
+  vector linear_system(vector y, vector theta, data array[] real x_r,
+                       data array[] int x_i) {
+    return y - theta;
+  }
+  vector call_solver(vector guess, vector theta, data array[] real x_r,
+                     data array[] int x_i) {
+    return algebra_solver_newton(linear_system, guess, theta, x_r, x_i);
+  }
+
+  // class is a C++ keyword, allowed as a local inside a function body
+  real add_one(real x) {
+    real class = 1;
+    return x + class;
+  }
 }"
 stan_prog <- paste(function_decl,
                   paste(readLines(testing_stan_file("bernoulli")),
@@ -332,7 +350,7 @@ test_that("$expose_functions() warns but doesn't error if no functions", {
       x ~ std_normal();
     }
   ")
-  mod1 <- cmdstan_model(stan_no_funs_block, force_recompile = TRUE)
+  mod1 <- mock_cmdstan_model(stan_no_funs_block)
   expect_warning(
     mod1$expose_functions(),
     "No standalone functions found to compile and expose to R"
@@ -343,7 +361,7 @@ test_that("$expose_functions() warns but doesn't error if no functions", {
    functions {
    }
   ")
-  mod2 <- cmdstan_model(stan_empty_funs_block, force_recompile = TRUE)
+  mod2 <- mock_cmdstan_model(stan_empty_funs_block)
   expect_warning(
     mod2$expose_functions(),
     "No standalone functions found to compile and expose to R"
@@ -352,25 +370,12 @@ test_that("$expose_functions() warns but doesn't error if no functions", {
 })
 
 test_that("rng functions can be exposed", {
-  function_decl <- "functions { real wrap_normal_rng(real mu, real sigma) { return normal_rng(mu, sigma); } }"
-  stan_prog <- paste(function_decl,
-                     paste(readLines(testing_stan_file("bernoulli")),
-                           collapse = "\n"),
-                     collapse = "\n")
-  model <- write_stan_file(stan_prog)
-  data_list <- testing_data("bernoulli")
-  mod <- cmdstan_model(model, force_recompile = TRUE)
-  utils::capture.output(
-    fit <- mod$sample(data = data_list)
-  )
-
-  fit$expose_functions()
   set.seed(10)
-  res1_1 <- fit$functions$wrap_normal_rng(5,10)
-  res2_1 <- fit$functions$wrap_normal_rng(5,10)
+  res1_1 <- mod$functions$wrap_normal_rng(5, 10)
+  res2_1 <- mod$functions$wrap_normal_rng(5, 10)
   set.seed(10)
-  res1_2 <- fit$functions$wrap_normal_rng(5,10)
-  res2_2 <- fit$functions$wrap_normal_rng(5,10)
+  res1_2 <- mod$functions$wrap_normal_rng(5, 10)
+  res2_2 <- mod$functions$wrap_normal_rng(5, 10)
 
   expect_equal(res1_1, res1_2)
   expect_equal(res2_1, res2_2)
@@ -387,7 +392,7 @@ test_that("Overloaded functions give meaningful errors", {
   }
   "
 
-  funmod <- cmdstan_model(write_stan_file(funcode), force_recompile = TRUE)
+  funmod <- mock_cmdstan_model(write_stan_file(funcode))
   expect_error(funmod$expose_functions(),
                "Overloaded functions are currently not able to be exposed to R! The following overloaded functions were found: fun1, fun3")
 })
@@ -413,7 +418,7 @@ test_that("Reserved names in Stan code give the same error", {
   "
   )
 
-  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  funmod <- mock_cmdstan_model(stan_file)
   expect_error(
     funmod$expose_functions(),
     reserved_names_msg(c("min", "max", "class")),
@@ -432,7 +437,7 @@ test_that("Multiple reserved C++ keywords in Stan code give the same error", {
   "
   )
 
-  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  funmod <- mock_cmdstan_model(stan_file)
   expect_error(
     funmod$expose_functions(),
     reserved_names_msg(c("template", "class", "namespace", "private")),
@@ -441,35 +446,7 @@ test_that("Multiple reserved C++ keywords in Stan code give the same error", {
 })
 
 test_that("Reserved keywords in Stan function bodies are allowed", {
-  stan_file <- write_stan_file(
-    "
-  functions {
-    real add_one(real x) {
-      real class = 1;
-      return x + class;
-    }
-  }
-  "
-  )
-
-  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
-  expect_no_error(funmod$expose_functions())
-  expect_equal(funmod$functions$add_one(2), 3)
-})
-
-test_that("Stan code with no reserved names exposes functions", {
-  stan_file <- write_stan_file(
-    "
-  functions {
-    real add_pair(real left, real right) {
-      return left + right;
-    }
-  }
-  "
-  )
-
-  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
-  expect_no_error(funmod$expose_functions())
+  expect_equal(mod$functions$add_one(2), 3)
 })
 
 # Bug in exposing external, skip for now
@@ -493,20 +470,9 @@ test_that("Stan code with no reserved names exposes functions", {
 # })
 
 test_that("Exposing functions works on a model built from a reused executable", {
-  stan_file <- write_stan_file("
-    functions {
-      real a_plus_b(real a, real b) { return a + b; }
-    }
-    parameters { real x; }
-    model { x ~ std_normal(); }
-  ")
-  mod1 <- cmdstan_model(stan_file, force_recompile = TRUE)
-  mod1$expose_functions()
-  expect_equal(7.5, mod1$functions$a_plus_b(5, 2.5))
-
-  mod2 <- cmdstan_model(stan_file)
+  mod2 <- expect_no_recompilation(cmdstan_model(model))
   mod2$expose_functions()
-  expect_equal(7.5, mod2$functions$a_plus_b(5, 2.5))
+  expect_equal(mod2$functions$rtn_int(10), 10)
 })
 
 test_that("functions cannot be exposed from an executable alone", {
@@ -517,17 +483,11 @@ test_that("functions cannot be exposed from an executable alone", {
 })
 
 test_that("Functions with SUNDIALS/KINSOL methods link correctly", {
-  modcode <- "
-    functions {
-      vector dummy_functor(vector guess, vector theta, data array[] real tails, data array[] int x_i) {
-        return [1, 1]';
-      }
-      vector call_solver(vector guess, vector theta, data array[] real tails, data array[] int x_i) {
-        return algebra_solver_newton(dummy_functor, guess, theta, tails, x_i);
-      }
-    }"
-  mod <- cmdstan_model(write_stan_file(modcode), force_recompile=TRUE)
-  expect_no_error(mod$expose_functions())
+  expect_equal(
+    mod$functions$call_solver(c(0, 0), c(1, 2), c(0), c(0L)),
+    c(1, 2),
+    tolerance = 1e-6
+  )
 })
 
 test_that("expose_functions(quiet = TRUE) suppresses the messages", {

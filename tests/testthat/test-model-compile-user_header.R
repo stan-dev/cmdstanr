@@ -137,8 +137,6 @@ w_path <- function(f) {
   x
 }
 
-local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS" = "false"))
-
 hpp <- "
 #include <stan/math.hpp>
 #include <boost/math/tools/promotion.hpp>
