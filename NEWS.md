@@ -1,5 +1,8 @@
 # cmdstanr (development version)
 
+* `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
+CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
+`.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)
 * `check_cmdstan_toolchain()` now waits longer for WSL to respond and
 says so when it doesn't, instead of reporting that no WSL distribution
 is installed. (#1297)

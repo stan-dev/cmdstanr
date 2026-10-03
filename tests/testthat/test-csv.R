@@ -83,13 +83,25 @@ test_that("read_cmdstan_csv() fails if the file does not exist", {
 test_that("read_cmdstan_csv() fails with empty csv file", {
   file_path <- test_path("resources", "csv", "empty.csv")
   file.create(file_path)
-  error_msg <- if (utils::packageVersion("data.table") >= "1.18.0") {
-    "External command failed"
-  } else {
-    "Supplied CSV file is corrupt"
-  }
-  expect_error(read_cmdstan_csv(file_path), error_msg, fixed = TRUE)
-  file.remove(file_path)
+  withr::defer(unlink(file_path))
+
+  expect_error(
+    read_cmdstan_csv(file_path),
+    "Supplied CSV file is corrupt!",
+    fixed = TRUE
+  )
+})
+
+test_that("read_cmdstan_csv() errors for a file with no CmdStan header", {
+  file_path <- tempfile(fileext = ".csv")
+  writeLines(c("1,2", "3,4"), file_path)
+  withr::defer(unlink(file_path))
+
+  expect_error(
+    read_cmdstan_csv(file_path),
+    "Supplied CSV file is corrupt!",
+    fixed = TRUE
+  )
 })
 
 test_that("read_cmdstan_csv() fails with the no params listed", {
@@ -1023,4 +1035,101 @@ test_that("as_cmdstan_fit filters variables across methods", {
   expect_equal(posterior::variables(pathfinder$draws()), pathfinder_vars)
   expect_equal(pathfinder$summary()$variable, pathfinder_vars)
   expect_equal(pathfinder$metadata()$variables, pathfinder_vars)
+})
+
+compress_csv <- function(src, ext) {
+  dest <- tempfile(fileext = paste0(".", ext))
+  con <- if (identical(ext, "csv.gz")) {
+    gzfile(dest, "wt")
+  } else {
+    bzfile(dest, "wt")
+  }
+  writeLines(readLines(src), con)
+  close(con)
+  dest
+}
+
+truncate_file <- function(file) {
+  out <- tempfile(fileext = sub("^.*\\.csv", ".csv", file))
+  bytes <- readBin(file, "raw", n = file.info(file)$size)
+  writeBin(head(bytes, -8), out)
+  out
+}
+
+test_that("read_cmdstan_csv() reads compressed CSV files", {
+  csv_files <- c(
+    test_path("resources", "csv", "model1-1-warmup.csv"),
+    test_path("resources", "csv", "model1-2-warmup.csv")
+  )
+  expected <- read_cmdstan_csv(csv_files)
+  gz_files <- vapply(csv_files, compress_csv, ext = "csv.gz", character(1))
+  bz2_files <- vapply(csv_files, compress_csv, ext = "csv.bz2", character(1))
+  withr::defer(unlink(c(gz_files, bz2_files)))
+
+  expect_equal(read_cmdstan_csv(gz_files), expected)
+  expect_equal(read_cmdstan_csv(bz2_files), expected)
+  expect_equal(read_cmdstan_csv(c(csv_files[1], gz_files[2])), expected)
+
+  expected_filtered <- read_cmdstan_csv(
+    csv_files,
+    variables = "mu",
+    sampler_diagnostics = "divergent__"
+  )
+  expect_equal(
+    read_cmdstan_csv(
+      gz_files,
+      variables = "mu",
+      sampler_diagnostics = "divergent__"
+    ),
+    expected_filtered
+  )
+
+  fit <- as_cmdstan_fit(gz_files)
+  expect_equal(fit$draws(), as_cmdstan_fit(csv_files)$draws())
+
+  diagnose_csv <- test_path("resources", "csv", "logistic-diagnose.csv")
+  diagnose_gz <- compress_csv(diagnose_csv, "csv.gz")
+  diagnose_bz2 <- compress_csv(diagnose_csv, "csv.bz2")
+  withr::defer(unlink(c(diagnose_gz, diagnose_bz2)))
+
+  expected_diagnose <- read_cmdstan_csv(diagnose_csv)
+  expect_equal(read_cmdstan_csv(diagnose_gz), expected_diagnose)
+  expect_equal(read_cmdstan_csv(diagnose_bz2), expected_diagnose)
+})
+
+test_that("read_cmdstan_csv() reads WSL mount paths", {
+  skip_if_not(os_is_wsl())
+  csv_files <- normalizePath(c(
+    test_path("resources", "csv", "model1-1-warmup.csv"),
+    test_path("resources", "csv", "model1-2-warmup.csv")
+  ), winslash = "/")
+  gz_file <- compress_csv(csv_files[2], "csv.gz")
+  withr::defer(unlink(gz_file))
+  mnt_files <- wsl_safe_path(c(csv_files[1], gz_file))
+  expect_match(mnt_files, "^/mnt/")
+  expect_equal(read_cmdstan_csv(mnt_files), read_cmdstan_csv(csv_files))
+})
+
+test_that("read_cmdstan_csv() leaves inputs outside WSL in place", {
+  skip_if_not(os_is_wsl())
+  wsl_files <- testing_fit("logistic", method = "sample")$output_files()
+  expect_match(wsl_files, "^//wsl")
+  local_file <- tempfile(fileext = ".csv")
+  file.copy(wsl_files[2], local_file)
+  expect_equal(
+    read_cmdstan_csv(c(wsl_files[1], local_file)),
+    read_cmdstan_csv(wsl_files[1:2])
+  )
+  expect_true(file.exists(local_file))
+})
+
+test_that("read_cmdstan_csv() errors for a truncated compressed CSV file", {
+  csv_file <- test_path("resources", "csv", "model1-1-warmup.csv")
+  gz_file <- compress_csv(csv_file, "csv.gz")
+  bz2_file <- compress_csv(csv_file, "csv.bz2")
+  truncated <- c(truncate_file(gz_file), truncate_file(bz2_file))
+  withr::defer(unlink(c(gz_file, bz2_file, truncated)))
+
+  expect_error(read_cmdstan_csv(truncated[1]), "truncated or corrupt")
+  expect_error(read_cmdstan_csv(truncated[2]), "truncated or corrupt")
 })
