@@ -58,7 +58,17 @@ to fitted model objects created directly by a model fitting method. See the
 \code{read_cmdstan_csv()} returns a named list with the following components:
 \itemize{
 \item \code{metadata}: A list of the meta information from the run that produced the
-CSV file(s). See \strong{Examples} below.
+CSV file(s). See \strong{Examples} below. A note about variable names and sizes
+reported in \code{metadata}: \code{stan_variables} lists the Stan variables and
+\code{stan_variable_sizes} the shape each one's columns fill. A complex variable
+gets a trailing dimension of 2 for its real and imaginary parts, and a tuple
+the dimensions of its outer array only. Column names use \verb{[i,j]} for indices,
+\verb{[real]} and \verb{[imag]} for the parts of a complex number, and \code{:} for tuple
+elements (\code{tup:2[1,1]} is element \verb{[1,1]} of the matrix in a tuple's second
+element, \code{arr_tup[1]:2} the second element of the first tuple in an array of
+tuples). The \pkg{posterior} package treats everything before the last \code{[} as
+the variable name, so it groups the columns of a complex variable but not
+those of a tuple.
 }
 
 The other components in the returned list depend on the method that produced

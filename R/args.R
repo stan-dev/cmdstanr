@@ -1023,42 +1023,6 @@ validate_pathfinder_args <- function(self) {
 
 # Init helpers ------------------------------------------------------------
 
-#' Build a model_variables structure from a draws object
-#'
-#' When a model has been created without a Stan file,
-#' `model$variables()` is unavailable. This helper infers parameter
-#' names and dimensions from `posterior::variables(as_draws_df(...))`.
-#' In that representation containers are expanded (e.g. `beta[1]`,
-#' `gamma[1,2]`) while scalars appear as bare names (e.g. `sigma`).
-#' The number of dimensions is inferred from the index pattern:
-#' `mu[1]` has 1, `mu[1,2]` has 2, etc.
-#'
-#' @noRd
-#' @param draws A draws object (any format supported by posterior).
-#' @return A list with a `parameters` element in the same format as
-#'   `model$variables()`.
-model_variables_from_draws <- function(draws) {
-  df_vars <- posterior::variables(posterior::as_draws_df(draws))
-  df_vars <- df_vars[!grepl("__$", df_vars)]
-  has_bracket <- grepl("\\[", df_vars)
-  scalars <- df_vars[!has_bracket]
-  # For containers, extract base name and count dimensions from the
-  # index pattern of the first occurrence (e.g. "mu[1,2]" -> 2 dims)
-  container_vars <- df_vars[has_bracket]
-  container_names <- sub("\\[.*", "", container_vars)
-  container_indices <- sub("^[^\\[]*\\[(.*)\\]$", "\\1", container_vars)
-  parameters <- list()
-  for (var_name in scalars) {
-    parameters[[var_name]] <- list(type = "real", dimensions = 0L)
-  }
-  for (var_name in unique(container_names)) {
-    idx <- match(var_name, container_names)
-    ndims <- length(strsplit(container_indices[idx], ",")[[1]])
-    parameters[[var_name]] <- list(type = "real", dimensions = ndims)
-  }
-  list(parameters = parameters)
-}
-
 #' Generic for processing inits
 #' @noRd
 process_init <- function(init, ...) {
@@ -1070,14 +1034,6 @@ process_init <- function(init, ...) {
 #' @export
 process_init.default <- function(init, ...) {
   return(init)
-}
-
-#' Drop the draw dimension from `draws_of()` of a single draw
-#' @noRd
-#' @param x The array `posterior::draws_of()` returns for one draw, whose
-#'   first dimension has length 1.
-.remove_leftmost_dim <- function(x) {
-  array(x, dim = dim(x)[-1])
 }
 
 #' Write initial values to files if provided as posterior `draws` object
@@ -1095,10 +1051,6 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
                                warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                ...) {
   draws <- posterior::as_draws_df(init)
-  if (is.null(model_variables)) {
-    model_variables <- model_variables_from_draws(draws)
-  }
-  variable_names <- names(model_variables$parameters)
   # Since all other process_init functions return `num_proc` inits
   # This will only happen if a raw draws object is passed
   if (nrow(draws) < num_procs) {
@@ -1108,41 +1060,27 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
     draws <- posterior::resample_draws(draws, ndraws = num_procs,
                                        method ="simple_no_replace")
   }
-  draws_rvar <- posterior::as_draws_rvars(draws)
-  variable_names <- variable_names[variable_names %in% names(draws_rvar)]
-  draws_rvar <- posterior::subset_draws(draws_rvar, variable = variable_names)
-  inits <- lapply(1:num_procs, function(draw_iter) {
-    init_i <- lapply(variable_names, function(var_name) {
-      x <- .remove_leftmost_dim(posterior::draws_of(
-        posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter)))
-      if (model_variables$parameters[[var_name]]$dimensions == 0) {
-        return(as.double(x))
-      } else {
-        return(x)
-      }
-    })
-    bad_names <- unlist(lapply(variable_names, function(var_name) {
-      x <- drop(posterior::draws_of(drop(
-        posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
-      if (any(is.infinite(x)) || anyNA(x)) {
-        return(var_name)
-      }
-      return("")
-    }))
-    any_na_or_inf <- bad_names != ""
-    if (any(any_na_or_inf)) {
-      err_msg <- paste0(paste(bad_names[any_na_or_inf], collapse = ", "), " contains NA or Inf values!")
-      if (length(any_na_or_inf) > 1) {
-        err_msg <- paste0("Variables: ", err_msg)
-      } else {
-        err_msg <- paste0("Variable: ", err_msg)
-      }
-      stop(err_msg)
+  variables <- posterior::variables(draws)
+  variables <- variables[!grepl("__$", variables)]
+  if (!is.null(model_variables)) {
+    variables <- matching_variables(names(model_variables$parameters),
+                                    variables)$matching
+  }
+  # a plain matrix, not a draws_matrix: converting the recycled rows above
+  # through posterior re-sorts them by their (duplicated) .draw index
+  draws <- as.matrix(as.data.frame(draws)[, variables, drop = FALSE])
+  inits <- lapply(seq_len(num_procs), function(i) {
+    values <- as.numeric(draws[i, ])
+    bad <- is.na(values) | is.infinite(values)
+    if (any(bad)) {
+      bad <- unique(sub("(\\[|:).*", "", variables[bad]))
+      stop(if (length(bad) > 1) "Variables: " else "Variable: ",
+           paste(bad, collapse = ", "), " contains NA or Inf values!",
+           call. = FALSE)
     }
-    names(init_i) <- variable_names
-    return(init_i)
+    unflatten_variables(values, variables, model_variables$parameters)
   })
-  return(process_init(inits, num_procs, model_variables, warn_partial))
+  process_init(inits, num_procs, model_variables, warn_partial)
 }
 
 #' Write initial values to files if provided as list of lists
@@ -1175,13 +1113,6 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
       is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
       if (!all(is_parameter_value_supplied)) {
         missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
-      }
-      for (par_name in parameter_names[is_parameter_value_supplied]) {
-        # Make sure that initial values for single-element containers don't get
-        # unboxed when writing to JSON
-        if (model_variables$parameters[[par_name]]$dimensions == 1 && length(init[[i]][[par_name]]) == 1) {
-          init[[i]][[par_name]] <- array(init[[i]][[par_name]], dim = 1)
-        }
       }
     }
     if (length(missing_parameter_values) > 0 && isTRUE(warn_partial)) {
@@ -1218,7 +1149,8 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
     )
   init_paths <- paste0(init_paths, "_", seq_along(init), ".json")
   for (i in seq_along(init)) {
-    write_stan_json(init[[i]], init_paths[i])
+    write_stan_json(init[[i]], init_paths[i],
+                    variables = model_variables$parameters)
   }
   init_paths
 }
@@ -1313,13 +1245,12 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
                                 ...) {
   validate_fit_init(init, model_variables)
   draws_df <- init$draws(format = "df")
-  if (is.null(model_variables)) {
-    model_variables <- model_variables_from_draws(draws_df)
+  init_variables <- posterior::variables(draws_df)
+  init_variables <- init_variables[!grepl("__$", init_variables)]
+  if (!is.null(model_variables)) {
+    init_variables <- matching_variables(names(model_variables$parameters),
+                                         init_variables)$matching
   }
-  init_variables <- matching_variables(
-    names(model_variables$parameters),
-    posterior::variables(draws_df)
-  )$matching
 
   # Assign each draw a candidate id, grouping draws with identical parameter
   # values (vec_group_id() stays efficient even with many parameter columns). We

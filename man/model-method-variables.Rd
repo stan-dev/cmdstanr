@@ -36,8 +36,10 @@ The standalone function \code{variables_stan_file()} returns the same list for a
 Stan program as it is now, without creating a model object or compiling.
 
 Each element in the returned object contains a list of variables, with each
-variable represented as a list with information on its scalar type (\code{real}
-or \code{int}) and number of dimensions.
+variable represented as a list with information on its scalar type (\code{real},
+\code{int} or \code{complex}) and number of dimensions. A tuple's \code{type} is instead
+a list with one such entry per tuple element, nested for nested tuples,
+and its \code{dimensions} count only the array dimensions around the tuple.
 
 The number of dimensions reported is the number of indexing dimensions in
 the declared Stan variable, equivalently the number of indices needed to

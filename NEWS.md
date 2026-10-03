@@ -168,6 +168,11 @@ with only `exe_file`. Previously the error was "'init' contains empty lists".
 (#1171)
 * Functions supplied as `init` are no longer called an extra time to validate
 them. Validation occurs in the same pass. (#1195)
+* Tuple and complex values can now be passed as data and initial values,
+a tuple as an unnamed list of its elements and a complex number as an R
+complex value, and `init = fit` now carries tuple parameters over.
+`write_stan_json()` gains a `variables` argument for the declarations it
+needs to tell a tuple from a list of arrays. (#925)
 
 ## Other new features
 
@@ -271,6 +276,11 @@ an error at the copy instead of later when the run or read can't find the file.
 * On Windows a model executable is now launched with the TBB it was built
 against. Previously the selected CmdStan installation's TBB was used, which was
 wrong once `set_cmdstan_path()` had selected a different one. (#1261)
+* Fits with tuple or complex variables now work throughout: `$metadata()`
+reports their names and sizes, a tuple's name selects all of its columns in
+`$draws()` and the other methods with a `variables` argument, and the model
+methods accept and return them. Previously reading such a fit warned about
+NAs in the variable sizes. (#925)
 * When using CmdStan through WSL, a data or init file on the WSL filesystem is
 now found when R spells its path with backslashes, as it does for temporary
 files when `TMPDIR` points at the `//wsl$` share. (#1113)
@@ -287,6 +297,9 @@ CmdStan version install an older CmdStanR release from GitHub. (#1144)
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `pathfinder()` now uses the `threads` argument (`num_threads` is deprecated),
 to be consistent with other methods.
+* `fit$variable_skeleton()` is removed. `fit$constrain_variables()` now
+returns the values already structured, so `utils::relist()` and the
+skeleton are no longer needed. (#925)
 * Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
 * `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a warning). (#1144)
 * Removed deprecated items (replacements in parentheses). (#1061)
