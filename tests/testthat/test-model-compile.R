@@ -8,7 +8,6 @@ stan_program <- repair_path(
   file.path(withr::local_tempdir(), "bernoulli.stan")
 )
 file.copy(cmdstan_example_file(), stan_program)
-local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
 mod <- cmdstan_model(stan_file = stan_program)
 
 test_that("object initialized correctly", {
