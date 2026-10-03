@@ -8,7 +8,7 @@ articles:
   posterior: posterior.html
   profiling: profiling.html
   r-markdown: r-markdown.html
-last_built: 2026-10-02T19:01Z
+last_built: 2026-10-03T18:18Z
 urls:
   reference: https://mc-stan.org/cmdstanr/pr/1287/reference
   article: https://mc-stan.org/cmdstanr/pr/1287/articles

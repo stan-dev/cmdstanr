@@ -167,7 +167,7 @@ mod$format(canonicalize = list("deprecations"))
 # overwrite the original file instead of just printing it, then create the
 # model object again to rebuild the executable from the formatted program
 mod$format(canonicalize = list("deprecations"), overwrite_file = TRUE)
-#> Old version of the model stored to /tmp/RtmpSoxKiz/model_757a40a9bc18f0e4dd1fe7eec4863b8e.stan.bak-20261002191024.
+#> Old version of the model stored to /tmp/RtmpCyrpRM/model_757a40a9bc18f0e4dd1fe7eec4863b8e.stan.bak-20261003182740.
 mod <- cmdstan_model(file)
 # }
 ```
