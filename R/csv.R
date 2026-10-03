@@ -89,7 +89,8 @@
 #' The CSV files do not contain all of the information available to the model
 #' fitting methods, the Stan source, the console output, or the paths to most
 #' input and auxiliary files, so the reconstructed object has a reduced set of
-#' methods.
+#' methods. For large MCMC fits, `lazy = TRUE` leaves posterior draws in the CSV
+#' files until requested by `$draws()`.
 #'
 #' Only the following methods are available for every reconstructed object:
 #' `$draws()`, `$lp()`, `$materialize()`, `$metadata()`, `$output_files()`,
@@ -125,6 +126,10 @@
 #' fit2 <- as_cmdstan_fit(csv_files)
 #' fit2$print("beta")
 #' str(fit2$draws())
+#'
+#' # For large MCMC fits, leave posterior draws on disk until requested
+#' fit3 <- as_cmdstan_fit(csv_files, lazy = TRUE)
+#' fit3$draws("beta")
 #'
 #'
 #' # Using read_cmdstan_csv()
@@ -513,13 +518,30 @@ read_cmdstan_csv <- function(files,
 #'   diagnostic checks be performed after reading in the files? The default is
 #'   `TRUE` but set to `FALSE` to avoid checking for problems with divergences
 #'   and treedepth.
+#' @param lazy (logical) For models fit using MCMC, should posterior draws stay
+#'   in the CSV files until requested? The default is `FALSE`. If `TRUE`,
+#'   `variables` must be `NULL`. Calls to `$draws()` then read only the requested
+#'   variables.
 #'
 as_cmdstan_fit <- function(files,
                            variables = NULL,
                            check_diagnostics = TRUE,
-                           format = getOption("cmdstanr_draws_format")) {
-  csv_contents <- read_cmdstan_csv(files, variables = variables, format = format)
+                           format = getOption("cmdstanr_draws_format"),
+                           lazy = FALSE) {
+  checkmate::assert_flag(lazy)
+  if (lazy && !is.null(variables)) {
+    stop("'variables' must be NULL when 'lazy = TRUE'.", call. = FALSE)
+  }
+  csv_contents <- read_cmdstan_csv(
+    files,
+    variables = if (lazy) "" else variables,
+    sampler_diagnostics = if (lazy && !check_diagnostics) "" else NULL,
+    format = format
+  )
   method <- csv_contents$metadata$method
+  if (lazy && method != "sample") {
+    stop("'lazy = TRUE' is only supported for MCMC output.", call. = FALSE)
+  }
   if (!is.null(variables)) {
     if (method == "sample") {
       variables <- posterior::variables(csv_contents$post_warmup_draws)
@@ -565,7 +587,8 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
       private$warmup_draws_ <- csv_contents$warmup_draws
       private$draws_ <- csv_contents$post_warmup_draws
-      if (check_diagnostics) {
+      if (check_diagnostics &&
+          !isTRUE(private$metadata_$algorithm == "fixed_param")) {
         invisible(self$diagnostic_summary())
       }
       invisible(self)
@@ -578,7 +601,7 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$time_
     },
     num_chains = function() {
-      posterior::nchains(self$draws())
+      length(private$output_files_)
     }
   ),
   private = list(
