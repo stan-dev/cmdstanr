@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 # A fresh copy of a resources/stan/ program (with its include file, for

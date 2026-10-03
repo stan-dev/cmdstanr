@@ -233,6 +233,12 @@ test_that("the validator names the field that fails", {
     rebuild(repeated_option), "`configuration.cpp_options`", fixed = TRUE
   )
 
+  odd_name <- base
+  odd_name$configuration$cpp_options <- list(`1THREADS` = "true")
+  expect_error(
+    rebuild(odd_name), "`configuration.cpp_options.1THREADS`", fixed = TRUE
+  )
+
   unknown_kind <- base
   unknown_kind$untracked_dependencies <- list(
     list(kind = "mystery", detected_in = "make/local")

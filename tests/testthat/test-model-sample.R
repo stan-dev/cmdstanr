@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -92,6 +94,17 @@ test_that("sample() method works with data files", {
 
   expect_sample_output(fit_json <- mod$sample(data = data_file_json, chains = 1), 1)
   expect_s3_class(fit_json, "CmdStanMCMC")
+})
+
+test_that("sample() finds a data file on the WSL filesystem", {
+  skip_if_not(os_is_wsl())
+  # R on Windows spells temp paths with backslashes, as in #1113
+  data_dir <- file.path(wsl_dir_prefix(), wsl_tempdir())
+  withr::defer(unlink(data_dir, recursive = TRUE))
+  data_file <- paste0(data_dir, "\\standata.json")
+  write_stan_json(data_list, data_file)
+  expect_sample_output(fit <- mod$sample(data = data_file, chains = 1), 1)
+  expect_s3_class(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method works with init file", {
@@ -291,7 +304,7 @@ test_that("seed works for multi chain sampling", {
   expect_false(all(chain_tdata_1 == chain_tdata_2))
 })
 
-test_that("Correct behavior if fixed_param not set when the model has no parameters", {
+test_that("A model with no parameters samples without fixed_param", {
   code <- "
   model {}
   generated quantities  {
@@ -300,21 +313,13 @@ test_that("Correct behavior if fixed_param not set when the model has no paramet
   "
   stan_file <- write_stan_file(code)
   m <- cmdstan_model(stan_file)
-  fake_cmdstan_version("2.35.0", m)
-  expect_error(
-    m$sample(),
-    "Model contains no parameters. Please use 'fixed_param = TRUE'."
+  expect_no_message(
+    utils::capture.output(
+      fit <- m$sample(iter_warmup = 10, iter_sampling = 10)
+    ),
+    message = "E-BFMI"
   )
-
-  reset_cmdstan_version(m)
-  if (cmdstan_version_compare(cmdstan_version(), "2.36.0") >= 0) {
-    # as of 2.36.0 we don't need fixed_param if no parameters
-    expect_no_error(
-      utils::capture.output(
-        fit <- m$sample(iter_warmup = 10, iter_sampling = 10, diagnostics = NULL)
-      )
-    )
-  }
+  expect_equal(fit$diagnostic_summary(quiet = TRUE)$ebfmi, rep(NA_real_, 4))
 })
 
 

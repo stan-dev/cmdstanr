@@ -6,12 +6,16 @@
 \title{Compile additional methods for accessing the model log-probability function
 and parameter constraining and unconstraining.}
 \usage{
-init_model_methods(seed = 1, verbose = FALSE)
+init_model_methods(seed = 1, verbose = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{seed}{(integer) The random seed to use when initializing the model.}
 
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
+
+\item{quiet}{(logical) Should the message announcing the compilation be
+suppressed? The default is \code{FALSE}. Compiler output is controlled by
+\code{verbose}.}
 }
 \value{
 \code{NULL}, invisibly.

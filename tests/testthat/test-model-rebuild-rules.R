@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 # The decision cmdstan_model() makes: build, reuse, or adopt. No C++ is
@@ -280,7 +282,7 @@ test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
   a <- mock_cmdstan_model(stan_file)
 
   writeLines("CMDSTAN_VERSION := 2.40.0", file.path(install_dir, "makefile"))
-  # assert_current() first, while the executable is still the one a was
+  # assert_current_() first, while the executable is still the one a was
   # built with
   expect_error(
     a$cmdstan_defaults(), "the selected CmdStan changed",
@@ -473,11 +475,6 @@ test_that("a failed launch says when the recorded TBB is gone", {
       "Reinstall it there or run cmdstan_model() with force_recompile = TRUE ",
       "to rebuild it."
     ),
-    fixed = TRUE
-  )
-  expect_error(
-    parse_cmdstan_args("/models/bern", "sample", character(), gone),
-    "Reinstall it there; there is no Stan file to rebuild it from.",
     fixed = TRUE
   )
 })

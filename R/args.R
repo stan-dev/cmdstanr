@@ -681,7 +681,6 @@ DiagnoseArgs <- R6::R6Class(
 #' @param self A `CmdStanArgs` object.
 #' @return `TRUE` invisibly unless an error is thrown.
 validate_cmdstan_args <- function(self) {
-  validate_exe_file(self$exe_file)
   assert_dir_exists(self$output_dir, access = "rw")
 
   # at least 1 run id (chain id)
@@ -841,10 +840,10 @@ validate_optimize_args <- function(self) {
     # check that arg is positive or NULL and that algorithm='lbfgs' or 'bfgs' is
     # explicitly specified (error if not or if 'newton')
     if (!is.null(self[[arg]]) && is.null(self$algorithm)) {
-      stop("Please specify 'algorithm' in order to use '", arg, "'.", call. = FALSE)
+      stop("Please specify `algorithm` in order to use `", arg, "`.", call. = FALSE)
     }
     if (!is.null(self[[arg]]) && isTRUE(self$algorithm == "newton")) {
-      stop("'", arg, "' can't be used when algorithm is 'newton'.", call. = FALSE)
+      stop("`", arg, "` can't be used when algorithm is `\"newton\"`.", call. = FALSE)
     }
     checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
   }
@@ -852,7 +851,7 @@ validate_optimize_args <- function(self) {
   # history_size only available for lbfgs
   if (!is.null(self$history_size)) {
     if (!isTRUE(self$algorithm == "lbfgs")) {
-      stop("'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'.", call. = FALSE)
+      stop("`history_size` is only allowed if `algorithm` is specified as `\"lbfgs\"`.", call. = FALSE)
     } else {
       checkmate::assert_integerish(self$history_size, lower = 1, len = 1, null.ok = FALSE)
       self$history_size <- as.integer(self$history_size)
@@ -875,7 +874,7 @@ validate_laplace_args <- function(self) {
   checkmate::assert_flag(self$jacobian, null.ok = FALSE)
   if (self$mode_object$metadata()$jacobian != self$jacobian) {
     stop(
-      "'jacobian' argument to optimize and laplace must match!\n",
+      "`jacobian` argument to optimize and laplace must match!\n",
       "laplace was called with jacobian=", self$jacobian, "\n",
       "optimize was run with jacobian=", as.logical(self$mode_object$metadata()$jacobian),
       call. = FALSE
@@ -1073,22 +1072,12 @@ process_init.default <- function(init, ...) {
   return(init)
 }
 
-#' Remove the leftmost dimension if equal to 1
+#' Drop the draw dimension from `draws_of()` of a single draw
 #' @noRd
-#' @param x An array like object
+#' @param x The array `posterior::draws_of()` returns for one draw, whose
+#'   first dimension has length 1.
 .remove_leftmost_dim <- function(x) {
-  dims <- dim(x)
-  if (length(dims) == 1) {
-    return(drop(x))
-  } else if (dims[1] == 1) {
-    new_dims <- dims[-1]
-    # Create a call to subset the array, maintaining all remaining dimensions
-    subset_expr <- as.call(c(as.name("["), list(x), 1, rep(TRUE, length(new_dims)), drop = FALSE))
-    new_x <- eval(subset_expr)
-    return(array(new_x, dim = new_dims))
-  } else {
-    return(x)
-  }
+  array(x, dim = dim(x)[-1])
 }
 
 #' Write initial values to files if provided as posterior `draws` object
@@ -1171,13 +1160,13 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
                               warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                               ...) {
   if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
-    stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
+    stop("If `init` is a list it must be a list of lists.", call. = FALSE)
   }
   if (length(init) != num_procs) {
-    stop("'init' has the wrong length. See documentation of 'init' argument.", call. = FALSE)
+    stop("`init` has the wrong length. See documentation of `init` argument.", call. = FALSE)
   }
   if (any(sapply(init, function(x) length(x) == 0))) {
-    stop("'init' contains empty lists.", call. = FALSE)
+    stop("`init` contains empty lists.", call. = FALSE)
   }
   if (!is.null(model_variables)) {
     missing_parameter_values <- list()
@@ -1215,9 +1204,9 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
   }
   if (any(grepl("\\[", names(unlist(init))))) {
     stop(
-      "'init' contains entries with parameter names that include square-brackets, which is not permitted. ",
+      "`init` contains entries with parameter names that include square-brackets, which is not permitted. ",
       "To supply inits for a vector, matrix or array of parameters, ",
-      "create a single entry with the parameter's name in the 'init' list ",
+      "create a single entry with the parameter's name in the `init` list ",
       "and specify initial values for the entire parameter container.",
       call. = FALSE)
   }
@@ -1249,8 +1238,8 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
   has_chain_id <- !is.null(args)
   if (has_chain_id) {
     if (!identical(names(args), "chain_id")) {
-      stop("If 'init' is a function it must have zero arguments ",
-           "or only argument 'chain_id'.", call. = FALSE)
+      stop("If `init` is a function it must have zero arguments ",
+           "or only argument `chain_id`.", call. = FALSE)
     }
   }
 
@@ -1258,7 +1247,7 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
   for (i in seq_len(num_procs)) {
     init_list[[i]] <- if (has_chain_id) init(i) else init()
     if (!is.list(init_list[[i]]) || is.data.frame(init_list[[i]])) {
-      stop("If 'init' is a function it must return a single list.", call. = FALSE)
+      stop("If `init` is a function it must return a single list.", call. = FALSE)
     }
   }
   process_init(init_list, num_procs, model_variables, warn_partial)
@@ -1344,21 +1333,19 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
 
   # resample_draws() needs num_procs distinct candidates
   if (num_procs > num_candidates) {
-    if (inherits(init, "CmdStanPathfinder")) {
-      algo_name <- " Pathfinder "
-      extra_msg <- " Try running Pathfinder with psis_resample=FALSE."
-    } else if (inherits(init, "CmdStanVB")) {
-      algo_name <- " VB "
-      extra_msg <- ""
-    } else if (inherits(init, "CmdStanLaplace")) {
-      algo_name <- " Laplace "
-      extra_msg <- ""
+    algo_name <- switch(
+      class(init)[1],
+      CmdStanPathfinder = "Pathfinder",
+      CmdStanVB = "VB",
+      CmdStanLaplace = "Laplace"
+    )
+    extra_msg <- if (inherits(init, "CmdStanPathfinder")) {
+      " Try running Pathfinder with psis_resample=FALSE."
     } else {
-      algo_name <- ""
-      extra_msg <- ""
+      ""
     }
-    stop(paste0("Not enough distinct draws (", num_procs, ") in", algo_name ,
-                "fit to create inits.", extra_msg))
+    stop(paste0("Not enough distinct draws (", num_procs, ") in ",
+                algo_name, " fit to create inits.", extra_msg))
   }
 
   # CmdStan PSIS-resamples Pathfinder draws only with multiple paths and lp weights
@@ -1493,20 +1480,6 @@ process_init.CmdStanMLE <- function(init, num_procs, model_variables = NULL,
 
 # Validation helpers ------------------------------------------------------
 
-#' Validate exe file exists
-#' @noRd
-#' @param exe_file Path to executable.
-#' @return Either throws an error or returns `invisible(TRUE)`
-validate_exe_file <- function(exe_file) {
-  if (!length(exe_file) ||
-      !nzchar(exe_file) ||
-      !file.exists(exe_file)) {
-    stop("There is no executable at '", exe_file, "'.", call. = FALSE)
-  }
-  invisible(TRUE)
-}
-
-
 #' Validate initial values
 #'
 #' For CmdStan `init` must be `NULL`, a single real number >= 0, or paths to
@@ -1521,14 +1494,14 @@ validate_init <- function(init, num_procs) {
     return(invisible(TRUE))
   }
   if (!is.numeric(init) && !is.character(init)) {
-    stop("Invalid 'init' specification. See documentation of 'init' argument.",
+    stop("Invalid `init` specification. See documentation of `init` argument.",
          call. = FALSE)
   } else if (is.numeric(init) && (length(init) > 1 || init < 0)) {
-    stop("If 'init' is numeric it must be a single real number >= 0.",
+    stop("If `init` is numeric it must be a single real number >= 0.",
          call. = FALSE)
   } else if (is.character(init)) {
     if (length(init) != 1 && length(init) != num_procs) {
-      stop("If 'init' is specified as a character vector, its length must be ",
+      stop("If `init` is specified as a character vector, its length must be ",
            "1 or equal to the number of chains or Pathfinder paths.",
            call. = FALSE)
     }
@@ -1567,7 +1540,7 @@ validate_seed <- function(seed, num_procs) {
   }
   checkmate::assert_integerish(seed, lower = 0)
   if (length(seed) > 1 && length(seed) != num_procs) {
-    stop("If 'seed' is specified it must be a single integer or one per chain.",
+    stop("If `seed` is specified it must be a single integer or one per chain.",
          call. = FALSE)
   }
   invisible(TRUE)

@@ -36,7 +36,7 @@
 #' versioned CmdStan installations, the installation with the largest version
 #' number is used.
 #' * If no environment variable is found when loaded but any directory in the
-#' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.35.0"`),
+#' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.37.0"`),
 #' exists in the user's home directory (*not* the current working directory),
 #' then the path to the CmdStan installation with the largest version number is
 #' used for the \R session. On Windows the home directory is determined from
@@ -99,7 +99,7 @@ cmdstan_path <- function() {
   path
 }
 
-#' The selected installation, checked right before a program runs out of it
+#' The selected installation, rechecked right before make or stanc runs from it
 #'
 #' `cmdstan_path()` returns the path cached when it was set, so an
 #' installation deleted since then would otherwise surface as a failure to
@@ -119,9 +119,10 @@ checked_cmdstan_path <- function() {
   path
 }
 
-#' The selected installation's version as its makefile says now, since the
-#' version `cmdstan_version()` caches goes stale when a checkout is rebuilt
-#' in place. A missing installation keeps the cached version.
+#' The selected installation's version, read from its makefile now
+#'
+#' `cmdstan_version()` caches the version, which goes stale when a checkout is
+#' rebuilt in place. A missing installation keeps the cached version.
 #' @noRd
 current_cmdstan_version <- function() {
   path <- cmdstan_path()
@@ -181,7 +182,7 @@ stop_no_path <- function() {
 }
 
 cmdstan_min_version <- function() {
-  "2.35.0"
+  "2.37.0"
 }
 
 # Normalize versions for comparison. This is intentionally looser than
@@ -195,15 +196,12 @@ cmdstan_version_for_comparison <- function(version) {
   sub("-rc[0-9]+$", "", version)
 }
 
-# Scalar comparison of versions numbers. Returns -1, 0, or 1.
-# Empty strings are used when no native or WSL install was found during path discovery.
+# Scalar comparison of version numbers. Returns -1, 0, or 1. Both
+# arguments must be versions, so a caller with a possibly missing one
+# checks that itself first.
 cmdstan_version_compare <- function(version, other) {
-  if (length(version) != 1 || is.na(version) || !nzchar(version)) {
-    return(-1L)
-  }
-  if (length(other) != 1 || is.na(other) || !nzchar(other)) {
-    return(1L)
-  }
+  checkmate::assert_string(version, min.chars = 1)
+  checkmate::assert_string(other, min.chars = 1)
   utils::compareVersion(
     cmdstan_version_for_comparison(version),
     cmdstan_version_for_comparison(other)
@@ -226,7 +224,7 @@ resolve_cmdstan_path_from_env <- function() {
   if (!dir.exists(path)) {
     warning(
       "CmdStan path not set. Can't find directory specified by environment ",
-      "variable 'CMDSTAN'.",
+      "variable `CMDSTAN`.",
       call. = FALSE
     )
     return(NA_character_)
@@ -240,7 +238,7 @@ resolve_cmdstan_path_from_env <- function() {
   if (is.null(path)) {
     warning(
       "CmdStan path not set. No CmdStan installation found in the path ",
-      "specified by the environment variable 'CMDSTAN'.",
+      "specified by the environment variable `CMDSTAN`.",
       call. = FALSE
     )
     return(NA_character_)
@@ -319,11 +317,14 @@ cmdstan_default_path <- function(dir = NULL) {
     if (!nzchar(latest_cmdstan) && !nzchar(latest_wsl_cmdstan)) {
       return(NULL)
     }
-    if (cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
-      return(file.path(wsl_installs_path, latest_wsl_cmdstan))
-    } else {
+    if (!nzchar(latest_wsl_cmdstan)) {
       return(file.path(installs_path, latest_cmdstan))
     }
+    if (!nzchar(latest_cmdstan) ||
+        cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
+      return(file.path(wsl_installs_path, latest_wsl_cmdstan))
+    }
+    return(file.path(installs_path, latest_cmdstan))
   }
   NULL
 }

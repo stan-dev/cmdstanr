@@ -32,7 +32,7 @@ See the vignette
 for an example.
 
 \strong{Note:} When running chunks interactively in RStudio (e.g. when using
-\href{https://bookdown.org/yihui/rmarkdown/notebook.html}{R Notebooks}), it has
+\href{https://pkg.yihui.org/rmarkdown-book/notebook}{R Notebooks}), it has
 been observed that the built-in, RStan-based engine is used for \code{stan}
 chunks even when CmdStanR's engine has been registered in the session. When
 the R Markdown document is knit/rendered, the correct engine is used. As a
@@ -45,8 +45,8 @@ specify \code{engine = "cmdstan"} in the chunk options after registering the
 }
 \references{
 \itemize{
-\item \href{https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html}{Register a custom language engine for knitr}
-\item \href{https://bookdown.org/yihui/rmarkdown/language-engines.html#stan}{knitr's built-in Stan language engine}
+\item \href{https://pkg.yihui.org/rmarkdown-cookbook/custom-engine}{Register a custom language engine for knitr}
+\item \href{https://pkg.yihui.org/rmarkdown-book/language-engines#stan}{knitr's built-in Stan language engine}
 }
 }
 \seealso{

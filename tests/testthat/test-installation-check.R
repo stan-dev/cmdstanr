@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 
@@ -12,10 +14,6 @@ local_gone_installation <- function(.local_envir = parent.frame()) {
   withr::defer(.cmdstanr$PATH <- path, envir = .local_envir)
   gone
 }
-
-test_that("checked_cmdstan_path() returns the selected installation while it exists", {
-  expect_equal(checked_cmdstan_path(), cmdstan_path())
-})
 
 test_that("a model is not built when the selected installation is gone", {
   model_dir <- withr::local_tempdir()

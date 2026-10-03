@@ -1,5 +1,4 @@
-# avoid parallel on Mac due to strange intermittent TBB errors on Github Actions
-CORES <- if (os_is_macos()) 1 else 2
+skip_on_cran()
 
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
 if (!nzchar(cmdstan_test_tarball_url)) {
@@ -7,10 +6,11 @@ if (!nzchar(cmdstan_test_tarball_url)) {
 }
 
 test_that("install_cmdstan() successfully installs cmdstan", {
-  dir <- tempdir(check = TRUE)
+  dir <- withr::local_tempdir()
+  withr::defer(set_cmdstan_path())
   expect_message(
     expect_output(
-      install_cmdstan(dir = dir, cores = CORES, quiet = FALSE, overwrite = TRUE,
+      install_cmdstan(dir = dir, cores = 2, quiet = FALSE, overwrite = TRUE,
                       release_url = cmdstan_test_tarball_url,
                       wsl = os_is_wsl()),
       "Compiling C++ code",
@@ -22,59 +22,67 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 })
 
 test_that("install_cmdstan() errors if installation already exists", {
-  install_dir <- cmdstan_default_install_path()
-  dir <- file.path(install_dir, "cmdstan-2.35.0")
-  if (!dir.exists(dir)) {
-    dir.create(dir, recursive = TRUE)
-  }
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "cmdstan-2.37.0"))
   expect_warning(
-    install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    version = "2.35.0", wsl = FALSE),
+    install_cmdstan(dir = dir, overwrite = FALSE, version = "2.37.0",
+                    wsl = FALSE),
     "An installation already exists",
     fixed = TRUE
   )
 })
 
-test_that("install_cmdstan() errors if it times out", {
-  skip_if(!is.null(cmdstan_test_tarball_url))
-
-  dir <- tempdir(check = TRUE)
+test_that("install_cmdstan() errors on timeout, quiet silences the download", {
+  dir <- withr::local_tempdir()
   ver <- latest_released_version()
-  dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
-  # with quiet=TRUE
+  ver_msg <- paste0("trying URL 'https://api.github.com/repos/stan-dev/",
+                    "cmdstan/releases/latest'")
+  download_msg <- paste0("trying URL 'https://github.com/stan-dev/cmdstan/",
+                         "releases/download/v", ver, "/cmdstan-", ver,
+                         ".tar.gz'")
+
+  # expect_message() does not see download.file()'s progress lines, so
+  # capture stderr and grep it
   expect_warning(
-    expect_message(
-      install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
-                      cores = CORES, wsl = os_is_wsl()),
-      if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
-      fixed = TRUE
+    quiet_log <- capture.output(
+      install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, cores = 2,
+                      wsl = os_is_wsl()),
+      type = "message"
     ),
-    "increasing the value of the 'timeout' argument and running again with 'quiet=FALSE'",
+    "increasing the value of the `timeout` argument and running again with `quiet = FALSE`",
     fixed = TRUE
   )
-  dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
-  # with quiet=FALSE
+  expect_true(any(grepl(paste0("* Installing CmdStan v", ver, " in"),
+                        quiet_log, fixed = TRUE)))
+  expect_false(any(grepl(ver_msg, quiet_log, fixed = TRUE)))
+  expect_false(any(grepl(download_msg, quiet_log, fixed = TRUE)))
+
   expect_warning(
-    expect_message(
-      install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
-                      cores = CORES, wsl = os_is_wsl()),
-      if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
-      fixed = TRUE
+    loud_log <- capture.output(
+      invisible(capture.output(
+        install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = TRUE,
+                        cores = 2, wsl = os_is_wsl())
+      )),
+      type = "message"
     ),
-    "Try increasing the value of the 'timeout' argument.",
+    "Try increasing the value of the `timeout` argument.",
     fixed = TRUE
   )
+  expect_true(any(grepl("* Removing the existing installation", loud_log,
+                        fixed = TRUE)))
+  expect_true(any(grepl(ver_msg, loud_log, fixed = TRUE)))
+  expect_true(any(grepl(download_msg, loud_log, fixed = TRUE)))
 })
 
 test_that("install_cmdstan() errors if invalid version or URL", {
   expect_error(
-    install_cmdstan(version = "2.35.5", wsl = os_is_wsl()),
-    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied version number is valid."
+    install_cmdstan(version = "2.37.5", wsl = os_is_wsl()),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz'\nPlease check if the supplied version number is valid."
   )
   expect_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz",
+    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz",
                     wsl = os_is_wsl()),
-    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied release URL is valid."
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz'\nPlease check if the supplied release URL is valid."
   )
   expect_error(
     install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
@@ -82,70 +90,80 @@ test_that("install_cmdstan() errors if invalid version or URL", {
   )
 })
 
-test_that("install_cmdstan() works with version and release_url", {
-  # this test is irrelevant if tests are using a release candidate tarball URL so skip
+test_that("install_cmdstan() installs from release_url", {
   skip_if(!is.null(cmdstan_test_tarball_url))
-
-  dir <- tempdir(check = TRUE)
-
-  expect_message(
-    expect_output(
-      install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
-                      wsl = os_is_wsl()),
-      "Compiling C++ code",
-      fixed = TRUE
-    ),
-    "Finished installing CmdStan",
-    fixed = TRUE
-  )
+  dir <- withr::local_tempdir()
+  url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/",
+                "v2.37.0/cmdstan-2.37.0.tar.gz")
   expect_warning(
     expect_message(
-      expect_output(
-        install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                        version = "2.37.0",
-                        # the URL is intentionally invalid to test that the version has higher priority
-                        release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
-                        wsl = os_is_wsl()),
-        "Compiling C++ code",
-        fixed = TRUE
-      ),
-      "Finished installing CmdStan",
+      install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, cores = 2,
+                      release_url = url, wsl = os_is_wsl()),
+      paste0("* Installing CmdStan from ", url),
+      fixed = TRUE
+    ),
+    "increasing the value of the `timeout` argument",
     fixed = TRUE
+  )
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
+})
+
+test_that("version takes priority over release_url, with a warning", {
+  expect_warning(
+    expect_error(
+      install_cmdstan(
+        version = "2.37.5",
+        release_url = paste0("https://github.com/stan-dev/cmdstan/releases/",
+                             "download/v2.27.3/cmdstan-2.27.3.tar.gz"),
+        wsl = os_is_wsl()
+      ),
+      "cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz'",
+      fixed = TRUE
     ),
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
-  set_cmdstan_path()
 })
 
-test_that("toolchain checks on Unix work", {
+test_that("check_cmdstan_toolchain() reports what is missing on Unix", {
   skip_if(os_is_windows())
-  withr::local_envvar(c("PATH" = ""))
+  make <- Sys.which("make")
   if (os_is_macos()) {
-    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
-    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_cpp <- paste0(
+      "A suitable C++ compiler was not found. Please install the command ",
+      "line tools for Mac with `xcode-select --install` or install Xcode ",
+      "from the app store. Then restart R and run ",
+      "cmdstanr::check_cmdstan_toolchain()."
+    )
+    err_msg_make <- paste0(
+      "The make tool was not found. Please install the command line tools ",
+      "for Mac with `xcode-select --install` or install Xcode from the app ",
+      "store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    )
   } else {
-    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
-    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_cpp <- paste0(
+      "A C++ compiler was not found. Please install the clang++ or g++ ",
+      "compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
+    )
+    err_msg_make <- paste0(
+      "The make tool was not found. Please install make, restart R, and ",
+      "then run cmdstanr::check_cmdstan_toolchain()."
+    )
   }
-  expect_error(
-    check_unix_cpp_compiler(),
-    err_msg_cpp,
-    fixed = TRUE
-  )
-  expect_error(
-    check_unix_make(),
-    err_msg_make,
-    fixed = TRUE
-  )
+  withr::local_envvar(c(PATH = ""))
+  expect_error(check_cmdstan_toolchain(), err_msg_make, fixed = TRUE)
+
+  # make is checked first, so a PATH with make alone reaches the compiler check
+  only_make <- withr::local_tempdir()
+  file.symlink(make, file.path(only_make, "make"))
+  withr::local_envvar(c(PATH = only_make))
+  expect_error(check_cmdstan_toolchain(), err_msg_cpp, fixed = TRUE)
 })
 
 test_that("clean and rebuild works", {
   set_cmdstan_path()
   expect_output(
-    rebuild_cmdstan(cores = CORES),
+    rebuild_cmdstan(cores = 2),
     paste0("CmdStan v", cmdstan_version(), " built"),
     fixed = TRUE
   )
@@ -190,37 +208,11 @@ test_that("extract_cmdstan_version_from_archive_name parses realistic inputs", {
   )
 })
 
-test_that("Downloads respect quiet argument", {
-  dir <- tempdir(check = TRUE)
-  version <- latest_released_version()
-
-  ver_msg <- "trying URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'"
-  download_msg <- paste0("trying URL 'https://github.com/stan-dev/cmdstan/releases/download/v",
-                         version, "/cmdstan-", version, ".tar.gz'")
-
-  # expect_message has trouble capturing the messages from download.file
-  # so handle manually
-  install_normal <- suppressWarnings(
-    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = FALSE, cores = CORES),
-                   type = "message")
-  )
-  install_quiet <- suppressWarnings(
-    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = TRUE, cores = CORES),
-                   type = "message")
-  )
-
-  expect_true(any(grepl(ver_msg, install_normal, fixed = TRUE)))
-  expect_true(any(grepl(download_msg, install_normal, fixed = TRUE)))
-
-  expect_false(any(grepl(ver_msg, install_quiet, fixed = TRUE)))
-  expect_false(any(grepl(download_msg, install_quiet, fixed = TRUE)))
-})
-
 test_that("Download failures return error message", {
   # GHA fails on Windows old-rel here, but cannot replicate locally
   skip_if(os_is_windows() && getRversion() < '4.2')
 
-  dir <- tempdir(check = TRUE)
+  dir <- withr::local_tempdir()
 
   expect_error({
     # Use an invalid proxy address to force a download failure
@@ -231,26 +223,139 @@ test_that("Download failures return error message", {
     "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
 })
 
-test_that("Install from release file works", {
-  dir <- tempdir(check = TRUE)
+test_that("try_download() captures the HTTP status warning", {
+  local_mocked_bindings(
+    download.file = function(...) {
+      warning("cannot open URL: HTTP status was '401 Unauthorized'")
+      stop("download failed")
+    },
+    .package = "utils"
+  )
 
-  destfile <- file.path(dir, "cmdstan-2.37.0.tar.gz")
+  result <- try_download("https://example.com/file", tempfile())
 
-  download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
-    destfile)
+  expect_s3_class(result, "try-error")
+  expect_match(attr(result, "http_status"), "401 Unauthorized", fixed = TRUE)
+})
 
-  expect_message(
-    expect_output(
-      install_cmdstan(dir = dir, cores = CORES, quiet = FALSE, overwrite = TRUE,
-                      release_file = destfile,
-                      wsl = os_is_wsl()),
-      "Compiling C++ code",
-      fixed = TRUE
+test_that("download_with_retries() keeps GITHUB_PAT after non-auth failure", {
+  withr::local_envvar(c(GITHUB_PAT = "valid-token"))
+  calls <- character()
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      if (length(calls) == 1L) {
+        return(download_error)
+      }
+      0L
+    }
+  )
+
+  expect_no_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    )
+  )
+
+  expect_identical(result, 0L)
+  expect_identical(calls, c("token valid-token", "token valid-token"))
+})
+
+test_that("download_with_retries() doesn't blame a token that isn't set", {
+  withr::local_envvar(c(GITHUB_PAT = NA))
+  calls <- character()
+  rate_limit_error <- try(stop("download failed"), silent = TRUE)
+  attr(rate_limit_error, "http_status") <- "HTTP status was '403 Forbidden'"
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      rate_limit_error
+    }
+  )
+
+  expect_no_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    )
+  )
+
+  expect_s3_class(result, "try-error")
+  expect_identical(calls, c("none", "none"))
+})
+
+test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
+  withr::local_envvar(c(GITHUB_PAT = "bad-token"))
+  calls <- character()
+  auth_error <- try(stop("download failed"), silent = TRUE)
+  attr(auth_error, "http_status") <- "HTTP status was '401 Unauthorized'"
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      switch(length(calls), auth_error, download_error, 0L)
+    }
+  )
+
+  expect_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
     ),
-    "CmdStan path set",
+    "Retrying without it.",
     fixed = TRUE
   )
+
+  expect_identical(result, 0L)
+  expect_identical(calls, c("token bad-token", "none", "none"))
+})
+
+test_that("install_cmdstan() installs from release_file", {
+  dir <- withr::local_tempdir()
+  destfile <- file.path(withr::local_tempdir(), "cmdstan-2.37.0.tar.gz")
+  download_with_retries(
+    paste0("https://github.com/stan-dev/cmdstan/releases/download/",
+           "v2.37.0/cmdstan-2.37.0.tar.gz"),
+    destfile
+  )
+  expect_warning(
+    expect_warning(
+      install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, cores = 2,
+                      release_file = destfile, version = "2.37.0",
+                      wsl = os_is_wsl()),
+      "release_file and release_url/version shouldn't both be specified",
+      fixed = TRUE
+    ),
+    "increasing the value of the `timeout` argument",
+    fixed = TRUE
+  )
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
 })
 
 test_that("install_cmdstan() errors for unsupported CmdStan versions", {
@@ -280,8 +385,8 @@ test_that("install_cmdstan() errors for unsupported CmdStan versions", {
 })
 
 test_that("unsupported release-candidate versions are rejected by the floor check", {
-  expect_false(is_supported_cmdstan_version("2.34.0-rc1"))
-  expect_true(is_supported_cmdstan_version("2.35.0-rc1"))
+  expect_false(is_supported_cmdstan_version("2.36.0-rc1"))
+  expect_true(is_supported_cmdstan_version("2.37.0-rc1"))
   expect_error(
     install_cmdstan(version = "2.34.0-rc1", check_toolchain = FALSE, wsl = os_is_wsl()),
     "Requested CmdStan version (2.34.0-rc1) is unsupported.",
@@ -515,7 +620,7 @@ test_that("install_cmdstan() asks about make/local before downloading", {
 
   expect_error(
     suppressMessages(
-      install_cmdstan(dir = withr::local_tempdir(), version = "2.36.0",
+      install_cmdstan(dir = withr::local_tempdir(), version = "2.37.0",
                       check_toolchain = FALSE)
     ),
     "Download of CmdStan failed"
@@ -1218,11 +1323,11 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
   })
 })
 
-test_that("check_rtools4x_windows_toolchain() stops when no toolchain found", {
+test_that("check_cmdstan_toolchain() stops with no Windows toolchain", {
   skip_if(!os_is_windows())
 
   local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
-  expect_snapshot(error = TRUE, check_rtools4x_windows_toolchain())
+  expect_snapshot(error = TRUE, check_cmdstan_toolchain())
 })
 
 test_that("is_ucrt_toolchain() returns correct values for R versions", {

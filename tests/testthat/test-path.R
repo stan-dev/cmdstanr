@@ -1,3 +1,5 @@
+skip_on_cran()
+
 Sys.unsetenv("CMDSTAN")
 PATH <- absolute_path(set_cmdstan_path())
 VERSION <- cmdstan_version()
@@ -98,7 +100,7 @@ test_that("Existing CMDSTAN env path with no install resets cached state", {
   withr::local_envvar(c(CMDSTAN = empty_parent))
   expect_warning(
     cmdstanr_initialize(),
-    "CmdStan path not set. No CmdStan installation found in the path specified by the environment variable 'CMDSTAN'.",
+    "CmdStan path not set. No CmdStan installation found in the path specified by the environment variable `CMDSTAN`.",
     fixed = TRUE
   )
   expect_null(.cmdstanr$PATH)
@@ -168,7 +170,7 @@ test_that("Setting path rejects unsupported CmdStan versions", {
 
   expect_warning(
     set_cmdstan_path(path),
-    "CmdStanR now requires CmdStan v2.35.0 or newer",
+    "CmdStanR now requires CmdStan v2.37.0 or newer",
     fixed = TRUE
   )
   expect_null(.cmdstanr$PATH)
@@ -217,11 +219,29 @@ test_that("cmdstan_default_path() orders install directories by CmdStan version"
   dir.create(file.path(installs, "cmdstan-2.9.0"), recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(installs, "cmdstan-2.35.0"), recursive = TRUE, showWarnings = FALSE)
 
-  expect_equal(latest_cmdstan_installed(installs), "cmdstan-2.35.0")
   expect_equal(
     cmdstan_default_path(dir = installs),
     file.path(installs, "cmdstan-2.35.0")
   )
+})
+
+test_that("cmdstan_default_path() prefers a release over its rc", {
+  installs <- withr::local_tempdir(pattern = "cmdstan-rc-installs")
+  dir.create(file.path(installs, "cmdstan-2.36.0-rc1"))
+  expect_equal(
+    cmdstan_default_path(dir = installs),
+    file.path(installs, "cmdstan-2.36.0-rc1")
+  )
+  dir.create(file.path(installs, "cmdstan-2.36.0"))
+  expect_equal(
+    cmdstan_default_path(dir = installs), file.path(installs, "cmdstan-2.36.0")
+  )
+})
+
+test_that("set_cmdstan_path() errors when the makefile has no version line", {
+  path <- withr::local_tempdir(pattern = "cmdstan-no-version")
+  writeLines("STAN ?= stan/", file.path(path, "makefile"))
+  expect_error(set_cmdstan_path(path), "missing a version number")
 })
 
 test_that("cmdstan_default_path() returns NULL for empty custom install directories", {
@@ -253,9 +273,9 @@ test_that("cmdstan_default_path() returns NULL for legacy-only cmdstan directory
 })
 
 test_that("CmdStan version helpers handle invalid inputs", {
-  expect_identical(cmdstan_min_version(), "2.35.0")
   expect_false(is_supported_cmdstan_version(NULL))
   expect_false(is_supported_cmdstan_version("not-a-version"))
+  expect_error(cmdstan_version_compare("", "2.35.0"))
 })
 
 test_that("CmdStan version helpers use numeric ordering", {

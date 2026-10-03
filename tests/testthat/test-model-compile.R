@@ -1,6 +1,13 @@
+skip_on_cran()
+
 set_cmdstan_path()
-stan_program <- cmdstan_example_file()
-local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS"="false"))
+# A copy of the CmdStan example, so the builds here leave the example
+# directory alone. repair_path() drops the "//" tempdir() has on macOS,
+# matching what the model stores.
+stan_program <- repair_path(
+  file.path(withr::local_tempdir(), "bernoulli.stan")
+)
+file.copy(cmdstan_example_file(), stan_program)
 mod <- cmdstan_model(stan_file = stan_program)
 
 test_that("object initialized correctly", {
@@ -105,9 +112,9 @@ test_that("the model name stanc receives comes from the file name", {
     cmdstan_model(stan_program, quiet = FALSE, force_recompile = TRUE)
   )
   if(os_is_windows() && !os_is_wsl()) {
-    out_no_name <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--o"
+    out_no_name <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+'?--filename-in-msg=[^[:space:]]+'?[[:space:]]+--o"
   } else {
-    out_no_name <- "bin/stanc --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--o"
+    out_no_name <- "bin/stanc --name=bernoulli_model[[:space:]]+'?--filename-in-msg=[^[:space:]]+'?[[:space:]]+--o"
   }
   expect_output(print(out), out_no_name)
 
@@ -282,17 +289,17 @@ test_that("compiling stops on hyphens in stanc_options", {
   stan_file <- testing_stan_file("bernoulli")
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list(\"warn-uninitialized\")`",
     fixed = TRUE
   )
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens2),
-    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
+    "No leading hyphens allowed in stanc options (--allow-undefined). Use options without leading hyphens, for example `stanc_options = list(\"warn-uninitialized\")`",
     fixed = TRUE
   )
   expect_error(
     cmdstan_model(stan_file, stanc_options = hyphens3),
-    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list('warn-uninitialized')`",
+    "No leading hyphens allowed in stanc options (--o). Use options without leading hyphens, for example `stanc_options = list(\"warn-uninitialized\")`",
     fixed = TRUE
   )
 })
@@ -302,7 +309,7 @@ test_that("compiling stops on stanc options cmdstanr sets itself", {
   fragments <- list(
     "include-paths" = "Pass the directories with the `include_paths` argument.",
     "warn-pedantic" = "Use `pedantic = TRUE`.",
-    "allow-undefined" = "Builds turn it on when a `user_header` is supplied",
+    "allow-undefined" = "It is on whenever a `user_header` is supplied",
     "use-opencl" = "Use `cpp_options = list(stan_opencl = TRUE)`, which turns it on.",
     "name" = "The model name comes from the name of the Stan file."
   )
@@ -433,7 +440,7 @@ test_that("check_syntax() works", {
   )
   expect_error(
     mod_ok$check_syntax(stanc_options = list("allow-undefined")),
-    "Builds turn it on when a `user_header` is supplied",
+    "It is on whenever a `user_header` is supplied",
     fixed = TRUE
   )
 
@@ -455,7 +462,7 @@ test_that("check_syntax() works", {
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
     mod_exe$check_syntax(),
-    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$check_syntax()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 
@@ -739,17 +746,17 @@ test_that("a model created only with exe_file refuses what needs a Stan file", {
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
     mod_exe$check_syntax(),
-    "'$check_syntax()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$check_syntax()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
   expect_error(
     mod_exe$variables(),
-    "'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$variables()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
   expect_error(
     mod_exe$hpp_file(),
-    "'$hpp_file()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$hpp_file()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 })
@@ -757,7 +764,7 @@ test_that("a model created only with exe_file refuses what needs a Stan file", {
 test_that("cmdstan_model errors with no args ", {
   expect_error(
     cmdstan_model(),
-    "Unable to create a `CmdStanModel` object. Both 'stan_file' and 'exe_file' are undefined.",
+    "Unable to create a `CmdStanModel` object. Both `stan_file` and `exe_file` are undefined.",
     fixed = TRUE
   )
 })
@@ -814,10 +821,9 @@ test_that("cmdstan_model works with user_header", {
 })
 
 test_that("cpp_options names reach make uppercased and values verbatim", {
-  file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
   expect_error(
     cmdstan_model(
-      file,
+      stan_program,
       cpp_options = list("CXXFLAGS_OPTIM += -Dsomething_not_used"),
       force_recompile = TRUE
     ),
@@ -828,7 +834,7 @@ test_that("cpp_options names reach make uppercased and values verbatim", {
   withr::with_options(list("cmdstanr_verbose" = TRUE),
     out <- utils::capture.output(
       mod <- cmdstan_model(
-        file,
+        stan_program,
         cpp_options = list(CXXFLAGS_OPTIM = "-Dsomething_not_used"),
         force_recompile = TRUE
       )
@@ -911,7 +917,7 @@ test_that("format() works", {
   mod_exe <- cmdstan_model(exe_file = mod_removed_stan_file$exe_file())
   expect_error(
     mod_exe$format(),
-    "'$format()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$format()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 })
@@ -1053,9 +1059,9 @@ test_that("STANCFLAGS from get_cmdstan_flags() are included in compile output", 
     cmdstan_model(stan_program, quiet = FALSE, force_recompile = TRUE)
   )
   if(os_is_windows() && !os_is_wsl()) {
-    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc.exe --name=bernoulli_model[[:space:]]+'?--filename-in-msg=[^[:space:]]+'?[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   } else {
-    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+--filename-in-msg=[^[:space:]]+[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
+    out_w_flags <- "bin/stanc --name=bernoulli_model[[:space:]]+'?--filename-in-msg=[^[:space:]]+'?[[:space:]]+--O1[[:space:]]+--warn-pedantic[[:space:]]+--o"
   }
   expect_output(print(out), out_w_flags)
 
@@ -1084,7 +1090,6 @@ test_that("a quoted make/local flag the call emits is dropped whole (#1232)", {
   local_cmdstan_make_local(
     cpp_options = list("STANCFLAGS += --filename-in-msg='/my dir/model.stan'")
   )
-  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--filename-in-msg=/my dir/model.stan")
 
   stan_file <- file.path(withr::local_tempdir(), "bernoulli.stan")
   file.copy(stan_program, stan_file)

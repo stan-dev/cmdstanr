@@ -32,7 +32,7 @@ to the input model file? The default is \code{FALSE}.}
 should 'canonicalize' the Stan model, removing things like deprecated syntax.
 Default is \code{FALSE}. If \code{TRUE}, all canonicalizations are run. You can also
 supply a list of strings which represent options. In that case the options
-are passed to \code{stanc}. See the
+are passed to stanc. See the
 \href{https://mc-stan.org/docs/stan-users-guide/stanc-pretty-printing.html#canonicalizing}{User's guide section}
 for available canonicalization options.}
 
@@ -118,6 +118,7 @@ Other CmdStanModel methods:
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},

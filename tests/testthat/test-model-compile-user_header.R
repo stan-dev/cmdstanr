@@ -1,3 +1,5 @@
+skip_on_cran()
+
 local_mocked_stanc <- function(.local_envir = parent.frame()) {
   local_mocked_bindings(
     get_cmdstan_flags = function(flag_name, ...) character(),
@@ -134,8 +136,6 @@ w_path <- function(f) {
   names(x) <- NULL
   x
 }
-
-local_cmdstan_make_local(cpp_options = list("PRECOMPILED_HEADERS" = "false"))
 
 hpp <- "
 #include <stan/math.hpp>

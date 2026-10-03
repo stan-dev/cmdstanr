@@ -209,13 +209,6 @@ build_executable <- function(stan_file,
 #'   not remove. The new executable and its record are installed in either case.
 #' @noRd
 install_executable <- function(from, to, record) {
-  if (dir.exists(to)) {
-    stop(
-      "Cannot install the compiled executable at '", to,
-      "' because that path is a directory. Nothing was modified.",
-      call. = FALSE
-    )
-  }
   # Normalize mixed Windows separators before converting the path for WSL.
   stage <- function(pattern) {
     repair_path(tempfile(pattern = pattern, tmpdir = dirname(to)))
@@ -253,7 +246,10 @@ install_executable <- function(from, to, record) {
         error_on_status = FALSE
       )
       if (is.na(chmod$status) || chmod$status != 0) {
-        stop("Could not make the compiled executable executable.", call. = FALSE)
+        stop(
+          "Could not set the execute bit on the compiled executable.",
+          call. = FALSE
+        )
       }
     }
     write_build_record(record, candidate)
@@ -355,7 +351,7 @@ inspect_executable <- function(exe_file) {
   features <- reported_features_from_exe(exe_file)
   if (is.null(features[["stan_version"]])) {
     stop(
-      "Running '", exe_file, "' with the argument 'info' did not report a ",
+      "Running '", exe_file, "' with the argument `info` did not report a ",
       "Stan version, so it is either not a CmdStan executable or cannot be ",
       "run.",
       call. = FALSE
@@ -377,7 +373,7 @@ facts_from_record <- function(record) {
 #' What is on disk for an executable built from a Stan program
 #'
 #' The `current` argument of `assess_build()`. `build_executable()` and
-#' `assert_current()` both come here, so they cannot assemble it differently.
+#' `assert_current_()` both come here, so they cannot assemble it differently.
 #' The sources are hashed only when the selected CmdStan is the one in the
 #' record, because the selected stanc resolves them and a different CmdStan
 #' already forces a rebuild. `info`, the `stanc --info` output they were
@@ -587,7 +583,7 @@ model_name_from_path <- function(path) {
 }
 
 
-# what build_executable() and assert_current() say --------------------------
+# what build_executable() and assert_current_() say --------------------------
 
 #' What `build_executable()` says before it builds or reuses
 #'
@@ -703,9 +699,9 @@ rebuild_reasons <- function(reasons, current) {
 #' @return Does not return.
 #' @noRd
 stop_stale_executable <- function(lines) {
-  rlang::abort(
+  stop(errorCondition(
     paste(lines, collapse = "\n"),
     class = "cmdstanr_stale_executable",
     call = NULL
-  )
+  ))
 }

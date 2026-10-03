@@ -50,6 +50,9 @@ with it. (#1258)
 Because the check reads the Stan file, a model created from one needs that file
 whenever it runs. To run an executable without its Stan file, create the model
 with `cmdstan_model(exe_file = )`. (#1255)
+* The new `$is_current()` method runs that same check and returns `TRUE` or
+`FALSE` instead of raising that error, so a package that keeps a `CmdStanModel`
+inside a saved fit can decide whether to rebuild before running it. (#1258)
 * A failed compilation leaves the previous executable in place. Previously a
 failure at the C++ stage could leave the old executable paired with model
 methods generated from the new program, and a failed installation could leave
@@ -73,12 +76,13 @@ the model is created, with `dir`. (#1253)
 executable, not the version at `cmdstan_path()`. (#1249)
 * `$cpp_options()` now returns exactly the options the model was created with,
 spelled as make variables: `list(stan_threads = TRUE)` comes back as
-`STAN_THREADS`. What the executable reports about its own build has moved to
-`stan_build_info()`. (#1019, #1258)
+`STAN_THREADS`, with the value `"TRUE"` (the string make received, so `FALSE`
+comes back as `""`). What the executable reports about its own build has moved
+to `stan_build_info()`. (#1019, #1258)
 * Every `cpp_options` entry must now be named, with a make variable name. An
 unnamed entry gets an error saying where it belongs: `list(NAME = value)` for a
 plain assignment, `cmdstan_make_local()` for `+=` and the other makefile
-operators. Previously unnamed entries reached `make` but nothing else saw them.
+operators. Previously unnamed entries reached make but nothing else saw them.
 (#1250)
 * `cpp_options = list(stan_threads = FALSE)` now turns threading off, even when
 `make/local` turns it on, and the same holds for `FALSE` on any option.
@@ -107,14 +111,15 @@ error that points at the right argument. (#1258)
 `STANCFLAGS`. (#1258)
 * Named `stanc_options` values such as `list(canonicalize = "deprecations")` and
 numeric ones such as `list("max-line-length" = 78)` now work. Previously the
-named values reached `stanc` shell-quoted, which it rejected, and the numeric
-ones were dropped. (#1227, #1233)
-* A `stanc` error now stops the build immediately and shows `stanc`'s message.
+named values reached stanc shell-quoted, which it rejected, and the numeric
+ones were dropped. A value holding a space, a quote or a `$` now also reaches
+stanc intact through make. (#1227, #1233, #1263)
+* A stanc error now stops the build immediately and shows stanc's message.
 Previously it surfaced several steps later. (#1227)
 * An include path that does not exist is now reported by its absolute path.
 (#1227)
 * `$include_paths()` now returns absolute paths, resolved when the model is
-created. Previously a relative include path was resolved on every `stanc` call,
+created. Previously a relative include path was resolved on every stanc call,
 so changing the working directory could point `#include` at the wrong directory.
 (#1229)
 * `#include` directories with spaces in their paths now work. (#820, #1230)
@@ -184,6 +189,9 @@ computation, which can be very slow. Set `r_eff = TRUE` for the previous
 behavior. (#1091)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization. (#1274)
+* `fit$init_model_methods()` and `$expose_functions()` gain a `quiet` argument
+that suppresses the messages printed while the methods or functions compile.
+(#914)
 * `install_cmdstan()` now offers to copy the `make/local` flags of the
 current installation into the new one before building it, so the new CmdStan is
 built with the same flags. In an interactive session it shows the previous
@@ -192,6 +200,8 @@ built with the same flags. In an interactive session it shows the previous
 * `cmdstan_make_local()` now skips flags that are already in `make/local`.
 Previously copying the flags of a previous installation after every upgrade
 added the same lines again each time. (#1266)
+* `install_cmdstan()` now retries a download without the token if GitHub rejects
+the one in `GITHUB_PAT`, and warns the token may not be valid. (#909)
 * Chain IDs in generated file names are now zero-padded to at least two digits, 
 for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
@@ -216,6 +226,9 @@ standalone generated quantities CSV files. (#1168)
 
 ## Bug fixes
 
+* `check_cmdstan_toolchain()` now waits longer for WSL to respond and says so
+when it doesn't, instead of reporting that no WSL distribution is installed.
+(#1297)
 * `pathfinder()` now respects `save_single_paths = TRUE` instead of always
 passing `0` to CmdStan.
 * The `save_latent_dynamics` argument is now limited to `$sample()`, 
@@ -226,7 +239,7 @@ not created and keeps saved metric files after the fitted model is
 garbage-collected. (#1021)
 * `cmdstan_model()` no longer fails when `MAKEFLAGS` turns on directory
 printing. (#1163)
-* Quoted values in `make/local`'s `STANCFLAGS` now reach `stanc` as one
+* Quoted values in `make/local`'s `STANCFLAGS` now reach stanc as one
 argument. Previously they were split on whitespace. (#1232)
 * `laplace()` no longer overwrites the internally generated optimizer CSV when
 `mode = NULL` and `output_basename` is supplied. The internally generated
@@ -240,7 +253,7 @@ was always 1. (#1187)
 * `$lp_approx()` and `$mle()` now return numeric vectors whatever the
 `cmdstanr_draws_format` option is set to. (#1190)
 * A Stan file name with several spaces, or quotes, now gives a valid model name
-for `stanc`. Previously only the first space was replaced and the quotes ended
+for stanc. Previously only the first space was replaced and the quotes ended
 up in the generated C++. (#1200)
 * `$draws()` on a pathfinder fit now orders the diagnostic columns the same way
 as the other methods. (#1205)
@@ -248,9 +261,22 @@ as the other methods. (#1205)
 or was built for another platform, now gives an error naming the executable
 and saying how to rebuild it. Previously the fitting methods and
 `$cmdstan_defaults()` surfaced a raw `processx` error. (#1246)
+* A model with no parameters no longer ends every `$sample()` call with a
+warning about a NaN E-BFMI.
+* `install_cmdstan()` now always downloads with R's libcurl method. Previously, 
+with the option set to `"curl"`, a bad `GITHUB_PAT` left a GitHub error page 
+in place of the download instead of triggering a retry without the token.
+* On WSL a failed copy of the executable or the output CSV files now gives
+an error at the copy instead of later when the run or read can't find the file.
 * On Windows a model executable is now launched with the TBB it was built
 against. Previously the selected CmdStan installation's TBB was used, which was
 wrong once `set_cmdstan_path()` had selected a different one. (#1261)
+* When using CmdStan through WSL, a data or init file on the WSL filesystem is
+now found when R spells its path with backslashes, as it does for temporary
+files when `TMPDIR` points at the `//wsl$` share. (#1113)
+* CmdStan processes are now killed when the R process that started them dies
+without running its cleanup, for example a future worker interrupted from the
+parent session. Previously they kept running as orphans. (#1086)
 * `$init_model_methods()` and `$expose_functions()` now work in a session that
 has loaded rstan or brms, by building against RcppParallel's TBB when
 RcppParallel is installed. (#1270)
@@ -258,7 +284,7 @@ RcppParallel is installed. (#1270)
 ## Removed and deprecated
 
 * Minimum R version increased to 4.0.0. (#1144)
-* CmdStan versions older than 2.35.0 are no longer supported. To use an older
+* CmdStan versions older than 2.37.0 are no longer supported. To use an older
 CmdStan version install an older CmdStanR release from GitHub. (#1144)
 * The `CMDSTANR_NO_VER_CHECK` R option and environment variable are deprecated 
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.

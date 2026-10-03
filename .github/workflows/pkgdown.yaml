@@ -4,6 +4,8 @@ on:
   # build dev site on merged pushes
   push:
     branches: [main, master]
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, closed]
   # build full site on releases
   release:
     types: [published]
@@ -13,10 +15,17 @@ name: pkgdown.yaml
 
 jobs:
   pkgdown:
+    # For PRs, only run when the PR has the build-website label.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (
+        github.event.action != 'closed' &&
+        contains(github.event.pull_request.labels.*.name, 'build-website') &&
+        (github.event.action != 'labeled' || github.event.label.name == 'build-website')
+      )
     runs-on: ubuntu-latest
-    # Only restrict concurrency for non-PR jobs
     concurrency:
-      group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+      group: pkgdown-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
       cancel-in-progress: true
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -38,19 +47,89 @@ jobs:
 
       - name: Install CmdStan
         run: Rscript -e "cmdstanr::install_cmdstan()"
-      
+
       - name: Build site
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          override <- list()
+
+          pr_number <- Sys.getenv("PR_NUMBER")
+          if (nzchar(pr_number)) {
+            pkg <- pkgdown::as_pkgdown(".")
+
+            if (pkg$development$mode == "devel") {
+              Sys.setenv(PKGDOWN_DEV_MODE = "unreleased")
+            }
+
+            override <- list(
+              url = paste0(pkg$meta$url, "/pr/", pr_number),
+              template = list(
+                params = list(noindex = TRUE)
+              )
+            )
+          }
+
           pkgdown::build_site_github_pages(
-            lazy = FALSE, # change to TRUE if runner times out.
+            lazy = FALSE,
             run_dont_run = TRUE,
-            new_process = TRUE
+            new_process = TRUE,
+            override = override
           )
         shell: Rscript {0}
 
-      - name: Deploy to GitHub pages 🚀
+      - name: Deploy PR preview
+        # Forks cannot deploy the site
+        if: >
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          clean: false
           branch: gh-pages
           folder: docs
+          target-folder: pr/${{ github.event.pull_request.number }}
+          clean: true
+          force: false
+
+      - name: Deploy site
+        if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs
+          clean: false
+          force: false
+  cleanup-preview:
+    if: >-
+      github.event_name == 'pull_request' && github.event.action == 'closed'
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: pkgdown-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+
+      - name: Remove PR preview
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git rm -r --ignore-unmatch "pr/$PR_NUMBER"
+
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+
+          git commit -m "Remove pkgdown preview for PR #$PR_NUMBER"
+          git pull --rebase origin gh-pages
+          git push origin HEAD:gh-pages

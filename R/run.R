@@ -43,8 +43,7 @@ CmdStanRun <- R6::R6Class(
         file.copy(from = args$exe_file,
                   to = file.path(wsl_dir_prefix(), wsl_tmpdir))
         args$exe_file <- file.path(wsl_tmpdir, basename(args$exe_file))
-        processx::run("wsl", args = c("chmod", "+x", args$exe_file),
-                      error_on_status = FALSE)
+        wsl_compatible_run(command = "chmod", args = c("+x", args$exe_file))
       }
       invisible(self)
     },
@@ -96,7 +95,7 @@ CmdStanRun <- R6::R6Class(
       if (!length(private$latent_dynamics_files_)) {
         stop(
           "No latent dynamics files found. ",
-          "Set 'save_latent_dynamics=TRUE' when fitting the model.",
+          "Set `save_latent_dynamics = TRUE` when fitting the model.",
           call. = FALSE
         )
       }
@@ -259,7 +258,7 @@ CmdStanRun <- R6::R6Class(
       current_files <- self$metric_files(include_failed = TRUE) # used so we get error if 0 files
       if (!length(current_files)) {
         stop(
-          "No metric files found. Make sure to set 'save_metric=TRUE' when fitting the model.",
+          "No metric files found. Make sure to set `save_metric = TRUE` when fitting the model.",
           call. = FALSE
         )
       }
@@ -465,18 +464,16 @@ check_target_exe <- function(exe) {
 
 #' Turn a failed launch of the model executable into a readable error
 #'
-#' Called when processx could not start the executable, which happens when
-#' the file has lost its execute bit, for example after being unzipped from
-#' R, or was built for another platform, and when the executable started
-#' but could not answer `help-all`, for example because a library it was
-#' linked against is gone. Nothing checks for either ahead of time, so the
-#' launch is where they first show up. processx's own error gives a
-#' relative path like `./bernoulli` and an errno. This one names the
-#' executable, keeps the system's reason (for example "Permission denied")
-#' or the executable's own output, and says how to rebuild it, or that
-#' there is no Stan file to rebuild it from. When the TBB the build linked
-#' against is no longer there it says so, since that's one likely cause
-#' and reinstalling it is the other way out.
+#' Called when processx could not start the executable (it lost its execute bit,
+#' for example after being unzipped from R, or was built for another platform)
+#' and when it started but could not answer `help-all` (a library it was linked
+#' against is gone). Nothing checks for either ahead of time, so the launch is
+#' where they first show up. processx's own error gives a relative path like
+#' `./bernoulli` and an errno. This one names the executable, keeps the system's
+#' reason (for example "Permission denied") or the executable's own output, and
+#' says how to rebuild it, or that there is no Stan file to rebuild it from.
+#' When the TBB the build linked against is no longer there it says so, since
+#' that's one likely cause and reinstalling it is the other way out.
 #'
 #' @param exe_file Path to the executable.
 #' @param stan_file The model's Stan file, empty for a model created from an
@@ -809,9 +806,6 @@ CmdStanProcs <- R6::R6Class(
     show_stdout_messages = function () {
       private$show_stdout_messages_
     },
-    show_stderr_messages = function () {
-      private$show_stderr_messages_
-    },
     num_procs = function() {
       private$num_procs_
     },
@@ -864,7 +858,10 @@ CmdStanProcs <- R6::R6Class(
             env = cmdstan_process_env(self$threads_per_proc()),
             stdout = "|",
             stderr = "|",
-            echo_cmd = is_verbose_mode()
+            echo_cmd = is_verbose_mode(),
+            # kill CmdStan when this R process dies without unwinding,
+            # for example a future worker torn down on interrupt (#1086)
+            supervise = TRUE
           ),
           error = function(e) {
             # Under MPI it is the launcher that did not start.
