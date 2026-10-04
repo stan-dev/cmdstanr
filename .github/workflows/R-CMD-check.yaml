@@ -45,7 +45,6 @@ jobs:
           - {os: ubuntu-latest, r: 'devel', opencl: false}
           - {os: ubuntu-latest, r: 'release', opencl: true}
           - {os: ubuntu-latest, r: 'oldrel', opencl: false}
-          - {os: windows-11-arm, r: 'release', opencl: false}
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

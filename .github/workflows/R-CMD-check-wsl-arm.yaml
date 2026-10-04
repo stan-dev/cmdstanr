@@ -1,0 +1,202 @@
+---
+# Github Actions workflow to check CmdStanR
+# yamllint disable rule:line-length
+
+# The two slowest platforms. They run on every push to master and on
+# PRs that carry the test-wsl-and-arm label (the label can be added
+# after the PR is open). Each job has its own concurrency group so a
+# skipped job doesn't cancel a running one.
+
+name: Unit tests - WSL and ARM
+
+'on':
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+      - v1.0
+    types: [opened, reopened, synchronize, labeled]
+  workflow_dispatch:
+    inputs:
+      tarball_url:
+        description: 'CmdStan tarball URL to test with.'
+        required: false
+        default: ''
+
+jobs:
+  WSL-R-CMD-check:
+    if: >-
+      ! contains(github.event.head_commit.message, '[ci skip]') &&
+      (
+        github.event_name != 'pull_request' ||
+        (
+          contains(github.event.pull_request.labels.*.name, 'test-wsl-and-arm') &&
+          (github.event.action != 'labeled' || github.event.label.name == 'test-wsl-and-arm')
+        )
+      )
+    runs-on: windows-latest
+    timeout-minutes: 240
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.job }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+
+    name: windows-latest-WSL2
+
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
+      CMDSTANR_OPENCL_TESTS: true
+      CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck, local::.
+
+      - uses: Vampire/setup-wsl@v7
+        with:
+            distribution: Ubuntu-22.04
+            wsl-version: 2
+            use-cache: 'true'
+            set-as-default: 'true'
+
+      - name: Install WSL Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libopenmpi-dev ocl-icd-opencl-dev pocl-opencl-icd
+          sudo chmod 755 /root
+        shell: wsl-bash {0}
+
+      - name: Install cmdstan
+        run: |
+          cmdstanr::check_cmdstan_toolchain()
+          tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+          if (nzchar(tarball_url)) {
+            cmdstanr::install_cmdstan(
+              cores = 2,
+              wsl = TRUE,
+              overwrite = TRUE,
+              release_url = tarball_url
+            )
+          } else {
+            cmdstanr::install_cmdstan(cores = 2, wsl = TRUE, overwrite = TRUE)
+          }
+          cat(
+            paste0("CMDSTAN=", cmdstanr::cmdstan_path(), "\n"),
+            file = Sys.getenv("GITHUB_ENV"),
+            append = TRUE
+          )
+        shell: Rscript {0}
+
+      - name: Session info
+        run: |
+          options(width = 100)
+          pkgs <- installed.packages()[, "Package"]
+          sessioninfo::session_info(pkgs, include_base = TRUE)
+        shell: Rscript {0}
+
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          _R_CHECK_CRAN_INCOMING_: false
+
+      - name: Show testthat output
+        if: always()
+        run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
+        shell: bash
+
+      - name: Upload check results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: wsl-backend-results
+          path: check
+
+  ARM-R-CMD-check:
+    if: >-
+      ! contains(github.event.head_commit.message, '[ci skip]') &&
+      (
+        github.event_name != 'pull_request' ||
+        (
+          contains(github.event.pull_request.labels.*.name, 'test-wsl-and-arm') &&
+          (github.event.action != 'labeled' || github.event.label.name == 'test-wsl-and-arm')
+        )
+      )
+    runs-on: windows-11-arm
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.job }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+
+    name: windows-11-arm (release)
+
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
+      CMDSTANR_OPENCL_TESTS: false
+      CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
+      PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
+
+    steps:
+      - name: cmdstan env vars
+        run: |
+          echo "CMDSTAN_PATH=${HOME}/.cmdstan" >> $GITHUB_ENV
+        shell: bash
+
+      - uses: actions/checkout@v7
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: "always"
+          extra-packages: any::rcmdcheck, local::.
+
+      - name: Install cmdstan
+        run: |
+          cmdstanr::check_cmdstan_toolchain()
+          tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
+          if (nzchar(tarball_url)) {
+            cmdstanr::install_cmdstan(
+              cores = 2,
+              overwrite = TRUE,
+              release_url = tarball_url
+            )
+          } else {
+            cmdstanr::install_cmdstan(cores = 2)
+          }
+        shell: Rscript {0}
+
+      - name: Session info
+        run: |
+          options(width = 100)
+          pkgs <- installed.packages()[, "Package"]
+          sessioninfo::session_info(pkgs, include_base = TRUE)
+        shell: Rscript {0}
+
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          _R_CHECK_CRAN_INCOMING_: false
+
+      - name: Show testthat output
+        if: always()
+        run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
+        shell: bash
+
+      - name: Upload check results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-11-arm-results
+          path: check
