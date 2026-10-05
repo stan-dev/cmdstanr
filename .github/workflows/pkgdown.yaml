@@ -36,8 +36,7 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: "true"
-      # Subfolder for a PR preview or a dispatched preview, empty for the
-      # main site.
+      # Subfolder for a PR preview or a dispatched preview, empty for the main site.
       PREVIEW: ${{ github.event.pull_request.number && format('pr/{0}', github.event.pull_request.number) || inputs.preview }}
     permissions:
       contents: write
