@@ -194,6 +194,8 @@ computation, which can be very slow. Set `r_eff = TRUE` for the previous
 behavior. (#1091)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization. (#1274)
+* Reading MCMC and generated quantities draws from CmdStan CSV files now uses
+less memory. (#1307)
 * `fit$init_model_methods()` and `$expose_functions()` gain a `quiet` argument
 that suppresses the messages printed while the methods or functions compile.
 (#914)

@@ -63,6 +63,14 @@ test_that("read_cmdstan_csv() fails for different number of samples in csv", {
                  fit_logistic_thin_1_with_warmup$output_files())
   expect_error(read_cmdstan_csv(csv_files),
                  "Supplied CSV files do not match in the number of output samples!")
+  # a chain that stopped early has the configured iterations in its header
+  # but fewer rows
+  csv_files <- file.path(withr::local_tempdir(), c("chain-1.csv", "chain-2.csv"))
+  file.copy(fit_logistic_thin_1$output_files(), csv_files)
+  truncated <- head(readLines(csv_files[2]), -500)
+  writeLines(truncated, csv_files[2])
+  expect_error(read_cmdstan_csv(csv_files),
+               "Supplied CSV files do not match in the number of output samples!")
 })
 
 test_that("read_cmdstan_csv() fails for different variables", {

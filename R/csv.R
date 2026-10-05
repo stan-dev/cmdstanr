@@ -303,9 +303,6 @@ read_cmdstan_csv <- function(files,
   }
   # the logical NA becomes integer or double on the first assignment
   chain_array <- function(n, columns) {
-    if (n == 0 || length(columns) == 0) {
-      return(list())
-    }
     array(
       NA, c(n, length(files), length(columns)),
       dimnames = list(NULL, NULL, columns)
@@ -333,21 +330,26 @@ read_cmdstan_csv <- function(files,
       warmup_draws <- chain_array(n_warmup, variables)
       draws <- chain_array(n_post, variables)
       warmup_sampler_diagnostics <- chain_array(n_warmup, sampler_diagnostics)
-      post_warmup_sampler_diagnostics <- chain_array(n_post, sampler_diagnostics)
+      post_warmup_sampler_diagnostics <-
+        chain_array(n_post, sampler_diagnostics)
+      warmup_rows <- seq_len(n_warmup)
+      post_rows <- n_warmup + seq_len(n_post)
     }
-    warmup_rows <- seq_len(n_warmup)
-    post_rows <- n_warmup + seq_len(n_post)
+    if (nrow(csv_data) != n_warmup + n_post) {
+      stop("Supplied CSV files do not match in the number of output samples!",
+           call. = FALSE)
+    }
     var_idx <- match(variables, names(csv_data))
     for (j in seq_along(var_idx)) {
       col <- csv_data[[var_idx[j]]]
-      if (n_warmup > 0) warmup_draws[, i, j] <- col[warmup_rows]
-      if (n_post > 0) draws[, i, j] <- col[post_rows]
+      warmup_draws[, i, j] <- col[warmup_rows]
+      draws[, i, j] <- col[post_rows]
     }
     sd_idx <- match(sampler_diagnostics, names(csv_data))
     for (j in seq_along(sd_idx)) {
       col <- csv_data[[sd_idx[j]]]
-      if (n_warmup > 0) warmup_sampler_diagnostics[, i, j] <- col[warmup_rows]
-      if (n_post > 0) post_warmup_sampler_diagnostics[, i, j] <- col[post_rows]
+      warmup_sampler_diagnostics[, i, j] <- col[warmup_rows]
+      post_warmup_sampler_diagnostics[, i, j] <- col[post_rows]
     }
   }
   csv_data <- NULL # free the last chain before converting the arrays
@@ -403,7 +405,8 @@ read_cmdstan_csv <- function(files,
       warmup_sampler_diagnostics <- NULL
     }
     if (length(post_warmup_sampler_diagnostics) > 0) {
-      post_warmup_sampler_diagnostics <- as_draws_format(post_warmup_sampler_diagnostics)
+      post_warmup_sampler_diagnostics <-
+        as_draws_format(post_warmup_sampler_diagnostics)
       if (posterior::niterations(post_warmup_sampler_diagnostics) == 0) {
         post_warmup_sampler_diagnostics <- NULL
       }
