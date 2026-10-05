@@ -10,6 +10,12 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      preview:
+        description: >-
+          Deploy to this subfolder of the site instead of the main site
+          (for example "rc" for a release candidate branch)
+        type: string
 
 name: pkgdown.yaml
 
@@ -30,6 +36,9 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: "true"
+      # Subfolder for a PR preview or a dispatched preview, empty for the
+      # main site.
+      PREVIEW: ${{ github.event.pull_request.number && format('pr/{0}', github.event.pull_request.number) || inputs.preview }}
     permissions:
       contents: write
     steps:
@@ -49,13 +58,11 @@ jobs:
         run: Rscript -e "cmdstanr::install_cmdstan()"
 
       - name: Build site
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           override <- list()
 
-          pr_number <- Sys.getenv("PR_NUMBER")
-          if (nzchar(pr_number)) {
+          preview <- Sys.getenv("PREVIEW")
+          if (nzchar(preview)) {
             pkg <- pkgdown::as_pkgdown(".")
 
             if (pkg$development$mode == "devel") {
@@ -63,7 +70,7 @@ jobs:
             }
 
             override <- list(
-              url = paste0(pkg$meta$url, "/pr/", pr_number),
+              url = paste0(pkg$meta$url, "/", preview),
               template = list(
                 params = list(noindex = TRUE)
               )
@@ -78,21 +85,24 @@ jobs:
           )
         shell: Rscript {0}
 
-      - name: Deploy PR preview
+      - name: Deploy preview
         # Forks cannot deploy the site
         if: >
-          github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name == github.repository
+          env.PREVIEW != '' &&
+          (
+            github.event_name != 'pull_request' ||
+            github.event.pull_request.head.repo.full_name == github.repository
+          )
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: docs
-          target-folder: pr/${{ github.event.pull_request.number }}
+          target-folder: ${{ env.PREVIEW }}
           clean: true
           force: false
 
       - name: Deploy site
-        if: github.event_name != 'pull_request'
+        if: env.PREVIEW == ''
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
