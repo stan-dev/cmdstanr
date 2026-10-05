@@ -846,6 +846,10 @@ compile <- function(quiet = TRUE,
   standalone_hpp_code <- get_standalone_hpp(temp_stan_file, stancflags_standalone)
   model_methods_env <- new.env()
   model_methods_env$hpp_code_ <- get_standalone_hpp(temp_stan_file, c(stanc_inc_paths, stancflags_direct))
+  # Make the external C++ header available when the model methods are compiled
+  # via Rcpp::sourceCpp() (see rcpp_source_stan()), mirroring the
+  # -include $(USER_HEADER) that CmdStan's makefile adds. (#1197)
+  model_methods_env$user_header_ <- user_header
 
   stancflags_val <- paste0("STANCFLAGS += ", stancflags_val, paste0(" ", stancflags_combined, collapse = " "))
 
@@ -930,6 +934,7 @@ compile <- function(quiet = TRUE,
     rm(list = ls(self$functions, all.names = TRUE), envir = self$functions)
     self$functions$compiled <- FALSE
     self$functions$hpp_code <- standalone_hpp_code
+    self$functions$user_header_ <- user_header
     self$functions$external <- using_user_header
     self$functions$existing_exe <- FALSE
     private$stan_code_ <- stan_code
