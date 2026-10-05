@@ -171,6 +171,8 @@ them. Validation occurs in the same pass. (#1195)
 
 ## Other new features
 
+* Reading MCMC and generated quantities draws from CmdStan CSV files now takes
+about half the peak memory it did. (#1307)
 * `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
 CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
 `.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)
@@ -192,8 +194,6 @@ computation, which can be very slow. Set `r_eff = TRUE` for the previous
 behavior. (#1091)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization. (#1274)
-* Reading MCMC and generated quantities draws from CmdStan CSV files now takes
-about half the peak memory it did. (#1041)
 * `fit$init_model_methods()` and `$expose_functions()` gain a `quiet` argument
 that suppresses the messages printed while the methods or functions compile.
 (#914)
