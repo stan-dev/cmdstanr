@@ -1,0 +1,61 @@
+# CmdStanDiagnose objects
+
+A `CmdStanDiagnose` object is the object returned by the
+[`$diagnose()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/model-method-diagnose.md)
+method of a
+[`CmdStanModel`](https://mc-stan.org/cmdstanr/rc-website-test/reference/CmdStanModel.md)
+object.
+
+## Methods
+
+`CmdStanDiagnose` objects have the following associated methods:
+
+|  |  |
+|----|----|
+| **Method** | **Description** |
+| [`$gradients()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/fit-method-gradients.md) | Return gradients from diagnostic mode. |
+| [`$lp()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/fit-method-lp.md) | Return the target log density (`lp__`) evaluated by Stan. |
+| [`$init()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/fit-method-init.md) | Return user-specified initial values. |
+| [`$metadata()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/fit-method-metadata.md) | Return a list of metadata gathered from the CmdStan CSV files. |
+| [`$output_files()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/fit-method-save_output_files.md) | Return paths to output CSV files. |
+| [`$save_output_files()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/fit-method-save_output_files.md) | Save output CSV files to a specified location. |
+| [`$data_file()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/fit-method-save_output_files.md) | Return the path to the JSON data file. |
+| [`$save_data_file()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/fit-method-save_output_files.md) | Save JSON data file to a specified location. |
+
+## See also
+
+The CmdStanR website
+([mc-stan.org/cmdstanr](https://mc-stan.org/cmdstanr/)) for online
+documentation and tutorials.
+
+The Stan and CmdStan documentation:
+
+- Stan documentation:
+  [mc-stan.org/users/documentation](https://mc-stan.org/users/documentation/)
+
+- CmdStan User’s Guide:
+  [mc-stan.org/docs/cmdstan-guide](https://mc-stan.org/docs/cmdstan-guide/)
+
+Other fitted model objects:
+[`CmdStanGQ`](https://mc-stan.org/cmdstanr/rc-website-test/reference/CmdStanGQ.md),
+[`CmdStanLaplace`](https://mc-stan.org/cmdstanr/rc-website-test/reference/CmdStanLaplace.md),
+[`CmdStanMCMC`](https://mc-stan.org/cmdstanr/rc-website-test/reference/CmdStanMCMC.md),
+[`CmdStanMLE`](https://mc-stan.org/cmdstanr/rc-website-test/reference/CmdStanMLE.md),
+[`CmdStanPathfinder`](https://mc-stan.org/cmdstanr/rc-website-test/reference/CmdStanPathfinder.md),
+[`CmdStanVB`](https://mc-stan.org/cmdstanr/rc-website-test/reference/CmdStanVB.md)
+
+## Examples
+
+``` r
+# \dontrun{
+test <- cmdstanr_example("logistic", method = "diagnose")
+
+# retrieve the gradients
+test$gradients()
+#>   param_idx     value     model finite_diff        error
+#> 1         0 -1.805980  39.42980    39.42980  1.18938e-08
+#> 2         1  1.310900 -26.80310   -26.80310  1.39047e-08
+#> 3         2 -0.831514   1.21605     1.21605 -1.98358e-09
+#> 4         3  0.779365   2.82837     2.82837  9.14719e-09
+# }
+```

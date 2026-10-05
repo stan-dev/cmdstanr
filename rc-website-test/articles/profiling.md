@@ -1,0 +1,254 @@
+# Profiling Stan programs with CmdStanR
+
+### Introduction
+
+This vignette demonstrates how to use Stan’s profiling functionality.
+
+Profiling identifies which parts of a Stan program are taking the
+longest time to run and is therefore a useful guide when working on
+optimizing the performance of a model.
+
+However, be aware that the statistical assumptions that go into a model
+are the most important factors in overall model performance. It is often
+not possible to make up for model problems with just brute force
+computation. For ideas on how to address performance of your model from
+a statistical perspective, see Gelman et al. (2020).
+
+``` r
+
+library(cmdstanr)
+check_cmdstan_toolchain(quiet = TRUE)
+```
+
+### Adding profiling statements to a Stan program
+
+Consider a simple logistic regression with parameters `alpha` and
+`beta`, covariates `X`, and outcome `y`.
+
+    data {
+      int<lower=1> k;
+      int<lower=0> n;
+      matrix[n, k] X;
+      array[n] int<lower=0, upper=1> y;
+    }
+    parameters {
+      vector[k] beta;
+      real alpha;
+    }
+    model {
+      beta ~ std_normal();
+      alpha ~ std_normal();
+
+      y ~ bernoulli_logit(X * beta + alpha);
+    }
+
+A simple question is how much time do the prior calculations take
+compared against the likelihood? To answer this we surround the prior
+and likelihood calculations with `profile` statements.
+
+    profile("priors") {
+      beta ~ std_normal();
+      alpha ~ std_normal();
+    }
+    profile("likelihood") {
+      y ~ bernoulli_logit(X * beta + alpha);
+    }
+
+In general we recommend using a separate `.stan` file, but for
+convenience in this vignette we’ll write the Stan program as a string
+and use
+[`write_stan_file()`](https://mc-stan.org/cmdstanr/rc-website-test/reference/write_stan_file.md)
+to write it to a temporary file.
+
+``` r
+
+profiling_bernoulli_logit <- write_stan_file('
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  array[n] int<lower=0, upper=1> y;
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  profile("priors") {
+    beta ~ std_normal();
+    alpha ~ std_normal();
+  }
+  profile("likelihood") {
+    y ~ bernoulli_logit(X * beta + alpha);
+  }
+}
+')
+```
+
+We can then run the model as usual and Stan will collect the profiling
+information for any sections with `profile` statements.
+
+``` r
+
+# Compile the model
+model <- cmdstan_model(profiling_bernoulli_logit)
+
+# Generate some fake data
+set.seed(123)
+
+n <- 1000
+k <- 20
+X <- matrix(rnorm(n * k), ncol = k)
+
+eta <- 3 * X[,1] - 2 * X[,2] + 1
+y <- rbinom(n, size = 1, prob = plogis(eta))
+stan_data <- list(k = ncol(X), n = nrow(X), y = y, X = X)
+
+# Run one chain of the model
+fit <- model$sample(data = stan_data, chains = 1)
+```
+
+### Accessing the profiling information from R
+
+The raw profiling information can then be accessed with the
+[`$profiles()`](https://mc-stan.org/cmdstanr/reference/fit-method-profiles.html)
+method, which returns a list containing one data frame per chain
+(profiles across multiple chains are not automatically aggregated).
+Details on the column names are available in the [CmdStan
+documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file).
+
+``` r
+
+fit$profiles()
+```
+
+    [[1]]
+            name       thread_id  total_time forward_time reverse_time chain_stack
+    1 likelihood 140653663672128 0.621301220  0.489281310  0.132019910       51261
+    2     priors 140653663672128 0.005373464  0.004151618  0.001221846       34174
+      no_chain_stack autodiff_calls no_autodiff_calls
+    1       34191087          17087                 1
+    2          34174          17087                 1
+
+The `total_time`, `forward_time`, and `reverse_time` columns are
+measured in seconds.
+
+The `total_time` column is the total time spent inside a given profile
+statement. It is clear that the vast majority of time is spent in the
+likelihood function.
+
+### Comparing to a faster version of the model
+
+Stan’s specialized GLM functions can be used to make models like this
+faster. In this case the likelihood can be replaced with
+
+    y ~ bernoulli_logit_glm(X, alpha, beta);
+
+We’ll keep the same [`profile()`](https://rdrr.io/r/stats/profile.html)
+statements so that the profiling information for the new model is
+collected automatically just like for the previous one.
+
+``` r
+
+profiling_bernoulli_logit_glm <- write_stan_file('
+data {
+  int<lower=1> k;
+  int<lower=0> n;
+  matrix[n, k] X;
+  array[n] int<lower=0, upper=1> y;
+}
+parameters {
+  vector[k] beta;
+  real alpha;
+}
+model {
+  profile("priors") {
+    beta ~ std_normal();
+    alpha ~ std_normal();
+  }
+  profile("likelihood") {
+    y ~ bernoulli_logit_glm(X, alpha, beta);
+  }
+}
+')
+```
+
+``` r
+
+model_glm <- cmdstan_model(profiling_bernoulli_logit_glm)
+fit_glm <- model_glm$sample(data = stan_data, chains = 1)
+```
+
+``` r
+
+fit_glm$profiles()
+```
+
+    [[1]]
+            name       thread_id total_time forward_time reverse_time chain_stack
+    1     priors 140594551351104  0.0050939  0.004196116  0.000897784       35712
+    2 likelihood 140594551351104  0.4037245  0.402725200  0.000999295       53568
+      no_chain_stack autodiff_calls no_autodiff_calls
+    1          35712          17856                 1
+    2          17856          17856                 1
+
+We can see from the `total_time` column that the likelihood computation
+is faster than in the previous model.
+
+### Per-gradient timings and autodiff variable counts
+
+The other columns of the profiling output are documented in the [CmdStan
+documentation](https://mc-stan.org/docs/cmdstan-guide/stan_csv_apdx.html#profiling-csv-output-file).
+
+The timing numbers are broken down by forward pass and reverse pass. The
+`chain_stack` and `no_chain_stack` columns report the numbers of objects
+allocated on the chaining and non-chaining autodiff stacks. These counts
+can serve as rough proxies for memory use, but they are not measurements
+in bytes.
+
+These numbers are all totals – times are the total times over the whole
+calculation, and `chain_stack` counts are similarly the total counts of
+autodiff variables used over the whole calculation. It is often
+convenient to have per-gradient calculations (which will be more stable
+across runs with different seeds). To compute these, use the
+`autodiff_calls` column.
+
+``` r
+
+profile_chain_1 <- fit$profiles()[[1]]
+per_gradient_timing <- profile_chain_1$total_time / profile_chain_1$autodiff_calls
+print(per_gradient_timing) # two elements for the two profile statements in the model
+```
+
+    [1] 3.636105e-05 3.144767e-07
+
+### Accessing and saving the profile files
+
+After sampling (or optimization or variational inference) finishes,
+CmdStan stores the profiling data in CSV files in a temporary location.
+The paths of the profiling CSV files can be retrieved using
+[`$profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html).
+
+``` r
+
+fit$profile_files()
+```
+
+    [1] "/tmp/Rtmp0Gduxb/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202610051932-01-8ee670.csv"
+
+These can be saved to a more permanent location with the
+[`$save_profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html)
+method.
+
+``` r
+
+# see ?save_profile_files for info on optional arguments
+fit$save_profile_files(dir = "path/to/directory")
+```
+
+## References
+
+Gelman, Andrew, Aki Vehtari, Daniel Simpson, Charles C. Margossian, Bob
+Carpenter, Yuling Yao, Lauren Kennedy, Jonah Gabry, Paul-Christian
+Bürkner, and Martin Modrák. 2020. “Bayesian Workflow.”
+<https://arxiv.org/abs/2011.01808>.
