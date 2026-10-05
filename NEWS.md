@@ -171,6 +171,9 @@ them. Validation occurs in the same pass. (#1195)
 
 ## Other new features
 
+* `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
+CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
+`.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)
 * The new `print_stan_file()` prints a Stan file, with syntax highlighting when
 used in a Quarto or R Markdown document. (#1166)
 * The new `$cmdstan_defaults()` method returns CmdStan's default argument
