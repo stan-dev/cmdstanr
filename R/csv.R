@@ -294,7 +294,6 @@ read_cmdstan_csv <- function(files,
     sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
   }
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
-  num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
   selected <- c(sampler_diagnostics, variables)
   repaired_variables <- repair_variable_names(variables)
   supports_multi_chain <-
@@ -327,7 +326,10 @@ read_cmdstan_csv <- function(files,
           dimnames = list(NULL, NULL, columns)
         )
       }
-      n_post <- if (n_warmup > 0) num_post_warmup_draws else nrow(csv_data)
+      # a chain that stopped early has fewer rows than its header says
+      n_rows <- nrow(csv_data)
+      n_warmup <- min(n_warmup, n_rows)
+      n_post <- n_rows - n_warmup
       warmup_draws <- chain_array(n_warmup, repaired_variables)
       draws <- chain_array(n_post, repaired_variables)
       warmup_sampler_diagnostics <- chain_array(n_warmup, sampler_diagnostics)
@@ -336,7 +338,7 @@ read_cmdstan_csv <- function(files,
       warmup_rows <- seq_len(n_warmup)
       post_rows <- n_warmup + seq_len(n_post)
     }
-    if (nrow(csv_data) != n_warmup + n_post) {
+    if (nrow(csv_data) != n_rows) {
       stop("Supplied CSV files do not match in the number of output samples!",
            call. = FALSE)
     }

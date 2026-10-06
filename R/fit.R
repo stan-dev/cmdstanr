@@ -224,11 +224,12 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   example `options(cmdstanr_draws_format = "draws_df")` will change the
 #'   default to a data frame.
 #'
-#'   **Note about efficiency**: `"draws_array"` is the format the draws are
-#'   read into, so it is the cheapest in time and memory. The other formats
-#'   are converted from it and need at least one more copy of the draws,
-#'   `"draws_list"` and `"draws_df"` the most. To save memory read only the
-#'   variables you need with the `variables` argument.
+#'   **Note about efficiency**: for sampling and generated quantities,
+#'   `"draws_array"` is the format the draws are read into, so it is the
+#'   cheapest in time and memory. The other formats are converted from it and
+#'   need at least one more copy of the draws, `"draws_list"` and `"draws_df"`
+#'   the most. To save memory read only the variables you need with the
+#'   `variables` argument.
 #'
 #' @return
 #' Depends on the value of `format`. The defaults are:
