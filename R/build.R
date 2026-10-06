@@ -87,7 +87,7 @@ build_executable <- function(stan_file,
     forced
   )
   rebuild <- length(reasons) > 0
-  if (!quiet || rlang::is_interactive()) {
+  if (!quiet || is_verbose_mode() || rlang::is_interactive()) {
     message(build_message(reasons, current))
   }
 
