@@ -31,9 +31,10 @@ matching_variables <- function(variable_filters, variables) {
   matched <- as.list(match(variable_filters, variables))
   # loop over filters not exactly matched
   for (id in which(is.na(matched))) {
-    # assign all variable names that match the filter as an array
-    matched[[id]] <-
-      which(startsWith(variables, paste0(variable_filters[id], "[")))
+    # a name selects its elements, name[...], and its tuple elements, name:...
+    prefix <- paste0(variable_filters[id], c("[", ":"))
+    matched[[id]] <- which(startsWith(variables, prefix[1]) |
+                             startsWith(variables, prefix[2]))
   }
   # collect all selected variables
   selected_variables <- variables[unlist(matched)]

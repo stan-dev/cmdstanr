@@ -4,7 +4,7 @@
 \alias{write_stan_json}
 \title{Write data to a JSON file readable by CmdStan}
 \usage{
-write_stan_json(data, file, always_decimal = FALSE)
+write_stan_json(data, file, always_decimal = FALSE, variables = NULL)
 }
 \arguments{
 \item{data}{(list) A named list of \R objects.}
@@ -12,9 +12,22 @@ write_stan_json(data, file, always_decimal = FALSE)
 \item{file}{(string) The path to where the data file should be written.}
 
 \item{always_decimal}{(logical) Force generate non-integers with decimal
-points to better distinguish between integers and floating point values.
-If \code{TRUE} all \R objects in \code{data} intended for integers must be of integer
+points to better distinguish between integers and floating point values. If
+\code{TRUE} all \R objects in \code{data} intended for integers must be of integer
 type.}
+
+\item{variables}{(list) Optionally, the Stan declarations of the variables
+in \code{data}, so that they are written the way the Stan program expects.
+Use \code{mod$variables()$data} (see \code{\link[=model-method-variables]{$variables()}})
+or \code{variables_stan_file(stan_file)$data}. Given the declarations, an
+unnamed list is written as a tuple when the variable is a tuple (see
+\strong{Tuples} below), a length-1 value is written as an array when the
+variable is declared with a dimension (see \strong{Scalar vs. length-1 vector}
+below), and a factor is only accepted for an \code{int} variable. The fitting
+methods of a model compiled from a Stan file pass the declarations
+themselves. Without them every unnamed list is converted to an array, a
+length-1 value is written as a scalar, and every factor is converted to
+its level indices.}
 }
 \value{
 \code{NULL}, invisibly.
@@ -31,6 +44,8 @@ file:
 \item \code{data.frame} -> \code{matrix} (via \code{\link[=data.matrix]{data.matrix()}}); every column must be
 numeric, integer, logical, or factor
 \item \code{list} -> \code{array}
+\item \code{complex} -> the pair \verb{[re, im]}; a complex vector or matrix -> an array
+of pairs
 \item \code{table} -> \code{vector}, \code{matrix}, or \code{array} (depending on dimensions of table)
 }
 \subsection{Factor conversion}{
@@ -39,10 +54,10 @@ Factors are written as their level indices, i.e., the position of each value
 in \code{levels(x)} rather than the value itself. The default levels are the
 sorted unique values, e.g., \code{factor(c(10, 9, 8))} has levels \code{8}, \code{9}, \code{10}
 and is written as \verb{[3, 2, 1]}. An unused level shifts the indices of the
-levels after it. The fitting methods of a model compiled from a Stan file
-will error if a factor is supplied for a variable that is not declared as
-\code{int}, but if \code{write_stan_json()} is called directly by the user it has no
-declarations to check and so it always does the conversion.
+levels after it. With \code{variables}, which the fitting methods of a model
+compiled from a Stan file always pass, a factor for a variable not declared
+as \code{int} is an error. Without them \code{write_stan_json()} has no declarations
+to check and always does the conversion.
 }
 
 \subsection{List to array conversion}{
@@ -66,6 +81,20 @@ dimensions \code{KxLxJ}. Nested lists are not supported: every element of the li
 must be a vector, matrix, or array.
 }
 
+\subsection{Tuples}{
+
+A tuple is an unnamed list with one element per tuple element, so
+\verb{tuple(int, vector[2]) t} is \code{list(3, c(1.5, 2.5))}, and a nested tuple is
+a nested list. An array of tuples is a list of such lists:
+\verb{array[2] tuple(real, real) ts} is \code{list(list(1, 2), list(3, 4))}. For an
+array with more than one dimension give the list a \code{dim} attribute, so
+\verb{array[2, 3] tuple(real, real)} is \code{array(cells, dim = c(2, 3))} with
+\code{cells} a list of the six tuples in the order \code{\link[=array]{array()}} fills them, the
+first index changing fastest. Since an unnamed list is otherwise converted
+to an array, a tuple is only written as one when \code{variables} declares it as
+a tuple. The fitting methods pass the declarations for you.
+}
+
 \subsection{Scalar vs. length-1 vector}{
 
 Because \R does not distinguish between a scalar and a vector of length 1, a
@@ -79,10 +108,10 @@ works regardless of length:
 \item \code{write_stan_json(list(x = array(c(42, 43))), file)} writes \verb{"x": [42, 43]}
 }
 
-This is only necessary when calling \code{write_stan_json()} directly. When
-passing a data list to the fitting methods of a model compiled from a Stan
-file (e.g., \verb{$sample()}), CmdStanR uses the model's variable declarations to
-make this correction automatically.
+This is only necessary when calling \code{write_stan_json()} directly without
+\code{variables}. With them, and in the fitting methods of a model compiled from
+a Stan file (e.g., \verb{$sample()}), CmdStanR makes this correction from the
+declarations.
 }
 }
 \examples{
@@ -106,6 +135,26 @@ data <- list(x = list(1:3, 4:6))
 file <- tempfile(fileext = ".json")
 write_stan_json(data, file)
 cat(readLines(file), sep = "\n")
+
+
+# complex numbers are written as [re, im] pairs
+data <- list(z = 1 + 2i, zv = c(1 + 2i, 3 + 4i))
+write_stan_json(data, file)
+cat(readLines(file), sep = "\n")
+
+
+# tuples need the declarations from the Stan program, see 'variables'
+\dontrun{
+stan_file <- write_stan_file("
+data {
+  tuple(int, vector[2]) t;
+  array[2] tuple(real, real) ts;
+}
+")
+data <- list(t = list(3, c(1.5, 2.5)), ts = list(list(1, 2), list(3, 4)))
+write_stan_json(data, file, variables = variables_stan_file(stan_file)$data)
+cat(readLines(file), sep = "\n")
+}
 
 }
 \seealso{
