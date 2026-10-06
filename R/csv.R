@@ -296,17 +296,12 @@ read_cmdstan_csv <- function(files,
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
   num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
   selected <- c(sampler_diagnostics, variables)
-  multi_chain <- metadata$method %in% c("sample", "generate_quantities")
+  repaired_variables <- repair_variable_names(variables)
+  supports_multi_chain <-
+    metadata$method %in% c("sample", "generate_quantities")
   n_warmup <- 0
   if (metadata$method == "sample" && metadata$save_warmup == 1) {
     n_warmup <- num_warmup_draws
-  }
-  # the logical NA becomes integer or double on the first assignment
-  chain_array <- function(n, columns) {
-    array(
-      NA, c(n, length(files), length(columns)),
-      dimnames = list(NULL, NULL, columns)
-    )
   }
   for (i in seq_along(files)) {
     if (length(selected) == 0) {
@@ -318,7 +313,7 @@ read_cmdstan_csv <- function(files,
       comment.char = "#",
       data.table = FALSE
     ))
-    if (!multi_chain) {
+    if (!supports_multi_chain) {
       if (length(variables) > 0) {
         draws[[i]] <- csv_data[, variables, drop = FALSE]
       }
@@ -326,9 +321,15 @@ read_cmdstan_csv <- function(files,
     }
     # fill each output array chain by chain, holding one data frame at a time
     if (i == 1) {
+      chain_array <- function(n, columns) {
+        array(
+          NA, c(n, length(files), length(columns)),
+          dimnames = list(NULL, NULL, columns)
+        )
+      }
       n_post <- if (n_warmup > 0) num_post_warmup_draws else nrow(csv_data)
-      warmup_draws <- chain_array(n_warmup, variables)
-      draws <- chain_array(n_post, variables)
+      warmup_draws <- chain_array(n_warmup, repaired_variables)
+      draws <- chain_array(n_post, repaired_variables)
       warmup_sampler_diagnostics <- chain_array(n_warmup, sampler_diagnostics)
       post_warmup_sampler_diagnostics <-
         chain_array(n_post, sampler_diagnostics)
@@ -355,7 +356,6 @@ read_cmdstan_csv <- function(files,
   csv_data <- NULL # free the last chain before converting the arrays
   metadata$inv_metric <- NULL
   metadata$variables <- repair_variable_names(metadata$variables)
-  repaired_variables <- repair_variable_names(variables)
   if (metadata$method == "variational") {
     metadata$variables <- metadata$variables[metadata$variables != "lp__"]
     metadata$variables <- gsub("log_p__", "lp__", metadata$variables)
@@ -378,50 +378,17 @@ read_cmdstan_csv <- function(files,
       format <- "draws_array"
     }
     as_draws_format <- as_draws_format_fun(format)
-    if (length(warmup_draws) > 0) {
-      warmup_draws <- as_draws_format(warmup_draws)
-      posterior::variables(warmup_draws) <- repaired_variables
-      if (posterior::niterations(warmup_draws) == 0) {
-        warmup_draws <- NULL
-      }
-    } else {
-      warmup_draws <- NULL
-    }
-    if (length(draws) > 0) {
-      draws <- as_draws_format(draws)
-      posterior::variables(draws) <- repaired_variables
-      if (posterior::niterations(draws) == 0) {
-        draws <- NULL
-      }
-    } else {
-      draws <- NULL
-    }
-    if (length(warmup_sampler_diagnostics) > 0) {
-      warmup_sampler_diagnostics <- as_draws_format(warmup_sampler_diagnostics)
-      if (posterior::niterations(warmup_sampler_diagnostics) == 0) {
-        warmup_sampler_diagnostics <- NULL
-      }
-    } else {
-      warmup_sampler_diagnostics <- NULL
-    }
-    if (length(post_warmup_sampler_diagnostics) > 0) {
-      post_warmup_sampler_diagnostics <-
-        as_draws_format(post_warmup_sampler_diagnostics)
-      if (posterior::niterations(post_warmup_sampler_diagnostics) == 0) {
-        post_warmup_sampler_diagnostics <- NULL
-      }
-    } else {
-      post_warmup_sampler_diagnostics <- NULL
-    }
+    as_draws_or_null <- function(x) if (length(x) > 0) as_draws_format(x)
     list(
       metadata = metadata,
       time = list(total = NA_integer_, chains = time),
       inv_metric = inv_metric,
       step_size = step_size,
-      warmup_draws = warmup_draws,
-      post_warmup_draws = draws,
-      warmup_sampler_diagnostics = warmup_sampler_diagnostics,
-      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics
+      warmup_draws = as_draws_or_null(warmup_draws),
+      post_warmup_draws = as_draws_or_null(draws),
+      warmup_sampler_diagnostics = as_draws_or_null(warmup_sampler_diagnostics),
+      post_warmup_sampler_diagnostics =
+        as_draws_or_null(post_warmup_sampler_diagnostics)
     )
   } else if (metadata$method == "variational") {
     if (is.null(format)) {
@@ -492,9 +459,10 @@ read_cmdstan_csv <- function(files,
       format <- "draws_array"
     }
     as_draws_format <- as_draws_format_fun(format)
-    draws <- as_draws_format(draws)
-    if (!is.null(draws)) {
-      posterior::variables(draws) <- repaired_variables
+    if (length(draws) > 0) {
+      draws <- as_draws_format(draws)
+    } else {
+      draws <- NULL
     }
     list(
       metadata = metadata,
