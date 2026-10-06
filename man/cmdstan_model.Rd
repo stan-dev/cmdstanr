@@ -46,7 +46,9 @@ cannot both be supplied.}
 \item{quiet}{(logical) Should the verbose output from CmdStan during
 compilation be suppressed? The default is \code{TRUE}, but if you encounter an
 error we recommend trying again with \code{quiet=FALSE} to see more of the
-output.}
+output. With \code{quiet = FALSE} the message saying whether the executable was
+reused or rebuilt, and why, is also printed in a non-interactive session,
+for example in the log of a batch job.}
 
 \item{dir}{(string) The path to the directory in which to store the CmdStan
 executable. The default is the same location as the Stan program.}

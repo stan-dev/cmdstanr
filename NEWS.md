@@ -24,9 +24,10 @@ To compile a Stan file without creating a model object use the new
 likewise work from a Stan file alone. (#1256)
 * `cmdstan_model()` recompiles whenever anything it tracks has changed: the Stan
 program and its `#include`s, the user header, `cpp_options`, `stanc_options`,
-`make/local` or the CmdStan installation, and its message says which. Changes it
-cannot see, such as a new C++ compiler, need `force_recompile = TRUE`. The
-vignette "How does CmdStanR work?" lists them. (#1255, #1237, #1019)
+`make/local` or the CmdStan installation, and a message says which, in an
+interactive session or when `quiet = FALSE`. Changes it cannot see, such as a
+new C++ compiler, need `force_recompile = TRUE`. The vignette "How does
+CmdStanR work?" lists them. (#1255, #1237, #1019)
 * Each executable now comes with a build record, a hidden JSON file beside it
 that says how it was built: `bernoulli` gets `.bernoulli.cmdstanr.json` and
 `bernoulli.exe` gets `.bernoulli.exe.cmdstanr.json`. Add `.*.cmdstanr.json` to

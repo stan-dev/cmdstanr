@@ -66,6 +66,18 @@ test_that("the same call again reuses the executable without launching it", {
   expect_equal(reused$exe_file(), mod$exe_file())
 })
 
+test_that("quiet = FALSE prints the decision in a non-interactive session", {
+  stan_file <- local_bernoulli()
+  mocked(expect_mock_compile(cmdstan_model(stan_file)))
+
+  rlang::with_interactive(value = FALSE, {
+    mocked(expect_no_mock_compile(expect_message(
+      cmdstan_model(stan_file, quiet = FALSE),
+      "Model executable is up to date!"
+    )))
+  })
+})
+
 test_that("a forced rebuild names whichever of the two asked for it", {
   stan_file <- local_bernoulli()
   mocked(expect_mock_compile(cmdstan_model(stan_file)))
