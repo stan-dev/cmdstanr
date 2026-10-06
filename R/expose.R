@@ -37,17 +37,20 @@ check_sundials_fpic <- function(verbose) {
 #' `TBB_INTERFACE_NEW`.
 #'
 #' @return A list with RcppParallel's `include` and `lib` directories,
-#'   or `NULL` when RcppParallel is not installed with its oneTBB.
+#'   or `NULL` when RcppParallel is not installed or is older than 6.2.0,
+#'   the first release whose oneTBB is complete on every platform.
 #' @noRd
 rcppparallel_tbb <- function() {
   arch <- .Platform$r_arch
   lib <- system.file(paste(c("lib", arch[nzchar(arch)]), collapse = "/"),
                      package = "RcppParallel")
   version_h <- system.file("include/tbb/version.h", package = "RcppParallel")
-  if (!nzchar(lib) || !nzchar(version_h)) {
+  # 6.0.0 to 6.1.1 shipped oneTBB's headers without a usable tbb.dll
+  if (!nzchar(lib) || !nzchar(version_h) ||
+      utils::packageVersion("RcppParallel") < "6.2.0") {
     return(NULL)
   }
-  # R CMD check's temporary library returns backslash paths on Windows
+  # The flags pass through sh, which eats Windows backslashes
   list(include = repair_path(dirname(dirname(version_h))),
        lib = repair_path(lib))
 }

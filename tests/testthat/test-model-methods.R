@@ -35,13 +35,14 @@ shapes_mod <- cmdstan_model(write_stan_file("
 test_that("RcppParallel's TBB works from a library path with a space", {
   skip_if_not_installed("RcppParallel")
   tbb <- rcppparallel_tbb()
-  skip_if(is.null(tbb), "RcppParallel is built against a system TBB")
-  installed <- find.package("RcppParallel")
+  skip_if(is.null(tbb), "RcppParallel is older than 6.2.0 or bundles no TBB")
+  installed <- repair_path(find.package("RcppParallel"))
   lib <- repair_path(withr::local_tempdir("R library"))
   file.copy(installed, lib, recursive = TRUE)
   copy <- lapply(tbb, function(dir) {
     sub(installed, file.path(lib, "RcppParallel"), dir, fixed = TRUE)
   })
+  expect_match(copy$lib, " ", fixed = TRUE)
   local_mocked_bindings(rcppparallel_tbb = function() copy)
   code <- paste(
     "#include <Rcpp.h>",
