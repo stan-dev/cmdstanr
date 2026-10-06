@@ -279,6 +279,16 @@ test_that("Functions handle complex types correctly", {
   expect_equal(mod$functions$rtn_nest_tuple_complex_matrix_array(nest_tuple_complex_matrix_array), nest_tuple_complex_matrix_array)
 })
 
+test_that("Returned tuples survive a garbage collection (#1001)", {
+  mod$expose_functions(quiet = TRUE)
+  tuple_dbl <- list(31.87, -19.09)
+  gctorture(TRUE)
+  withr::defer(gctorture(FALSE))
+  out <- mod$functions$rtn_tuple_real(tuple_dbl)
+  gctorture(FALSE)
+  expect_equal(out, tuple_dbl)
+})
+
 test_that("Functions can be exposed in fit object", {
   fit$expose_functions()
 
