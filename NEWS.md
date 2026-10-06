@@ -293,6 +293,9 @@ files when `TMPDIR` points at the `//wsl$` share. (#1113)
 * CmdStan processes are now killed when the R process that started them dies
 without running its cleanup, for example a future worker interrupted from the
 parent session. Previously they kept running as orphans. (#1086)
+* `$init_model_methods()` and `$expose_functions()` now work in the same R
+session as rstan or brms, whichever loads first, when RcppParallel 6.2.0 or
+later is installed. (#1270)
 
 ## Removed and deprecated
 
