@@ -32,7 +32,10 @@
 #' @param quiet (logical) Should the verbose output from CmdStan during
 #'   compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
-#'   output.
+#'   output. In an interactive session a message says whether the executable
+#'   was reused or rebuilt, and why. With `quiet = FALSE` it is printed in
+#'   every session, so a batch job's log shows whether the model was
+#'   recompiled.
 #' @param dir (string) The path to the directory in which to store the CmdStan
 #'   executable. The default is the same location as the Stan program.
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
