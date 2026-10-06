@@ -63,6 +63,35 @@ test_that("read_cmdstan_csv() fails for different number of samples in csv", {
                  fit_logistic_thin_1_with_warmup$output_files())
   expect_error(read_cmdstan_csv(csv_files),
                  "Supplied CSV files do not match in the number of output samples!")
+  # a chain that stopped early has the configured iterations in its header
+  # but fewer rows
+  csv_files <- file.path(
+    withr::local_tempdir(), c("chain-1.csv", "chain-2.csv")
+  )
+  file.copy(fit_logistic_thin_1$output_files(), csv_files)
+  truncated <- head(readLines(csv_files[2]), -500)
+  writeLines(truncated, csv_files[2])
+  expect_error(
+    read_cmdstan_csv(csv_files),
+    "Supplied CSV files do not match in the number of output samples!"
+  )
+})
+
+test_that("read_cmdstan_csv() reads the draws of a chain that stopped early", {
+  lines <- readLines(test_path("resources", "csv", "model1-1-warmup.csv"))
+  rows <- which(!startsWith(lines, "#")) # the header, 100 warmup, 100 sampling
+  csv_file <- file.path(withr::local_tempdir(), "chain-1.csv")
+
+  writeLines(head(lines, rows[196]), csv_file)
+  csv_output <- read_cmdstan_csv(csv_file)
+  expect_equal(posterior::niterations(csv_output$warmup_draws), 100)
+  expect_equal(posterior::niterations(csv_output$post_warmup_draws), 95)
+  expect_false(anyNA(csv_output$post_warmup_draws))
+
+  writeLines(head(lines, rows[51]), csv_file)
+  csv_output <- read_cmdstan_csv(csv_file)
+  expect_equal(posterior::niterations(csv_output$warmup_draws), 50)
+  expect_null(csv_output$post_warmup_draws)
 })
 
 test_that("read_cmdstan_csv() fails for different variables", {

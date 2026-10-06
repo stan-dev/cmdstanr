@@ -171,6 +171,8 @@ them. Validation occurs in the same pass. (#1195)
 
 ## Other new features
 
+* Reading MCMC and generated quantities draws from CmdStan CSV files now uses
+less memory. (#1041, #1307)
 * `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
 CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
 `.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)
