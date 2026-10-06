@@ -33,7 +33,6 @@ shapes_mod <- cmdstan_model(write_stan_file("
 "), force_recompile = TRUE)
 
 test_that("RcppParallel's TBB works from a library path with a space", {
-  skip_if_not_installed("RcppParallel")
   tbb <- rcppparallel_tbb()
   skip_if(is.null(tbb), "RcppParallel is older than 6.2.0 or bundles no TBB")
   installed <- repair_path(find.package("RcppParallel"))
@@ -54,11 +53,11 @@ test_that("RcppParallel's TBB works from a library path with a space", {
   expect_no_error(rcpp_source_stan(code, new.env()))
 })
 
-test_that("model methods load with RcppParallel's TBB in the session", {
-  skip_if_not_installed("RcppParallel")
+# Every build below has to coexist with RcppParallel's TBB in the session,
+# and the build above ran before it was loaded
+if (!is.null(rcppparallel_tbb())) {
   loadNamespace("RcppParallel")
-  expect_no_error(fit$init_model_methods())
-})
+}
 
 test_that("Model methods automatically initialise when needed", {
   expect_no_error(fit$log_prob(unconstrained_variables=c(0.1)))
