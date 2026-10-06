@@ -86,13 +86,16 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
     }
     tbb_dir <- tbb$lib
   }
-  cxxflags <- get_cmdstan_flags("CXXFLAGS", make_args)
-  cppflags <- get_cmdstan_flags("CPPFLAGS", make_args)
+  flags <- get_cmdstan_flags(
+    c("CXXFLAGS", "CPPFLAGS", "LDLIBS", "LIBSUNDIALS", "TBB_TARGETS",
+      "LDFLAGS_TBB", "SUNDIALS_TARGETS"),
+    make_args
+  )
+  cxxflags <- flags[1]
+  cppflags <- flags[2]
+  libs <- paste(flags[-(1:2)], collapse = " ")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
-  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
-  libs <- paste(sapply(libs, get_cmdstan_flags, make_args = make_args),
-                collapse = " ")
   if (!is.null(tbb)) {
     cxxflags <- paste0(cxxflags, " -I", shQuote(tbb$include))
     # make's print rule drops the quotes, so quote the path here

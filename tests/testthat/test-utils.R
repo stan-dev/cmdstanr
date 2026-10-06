@@ -383,6 +383,25 @@ test_that("get_cmdstan_flags() ignores unrelated output around STANCFLAGS", {
   )
 })
 
+test_that("get_cmdstan_flags() reads several flags from one make call", {
+  calls <- list()
+  with_mocked_bindings(
+    {
+      expect_equal(
+        get_cmdstan_flags(c("CPPFLAGS", "LDLIBS", "CXXFLAGS")),
+        c("-DBOOST_DISABLE_ASSERTS", "-ltbb", "-O3")
+      )
+    },
+    wsl_compatible_run = function(command, args, ...) {
+      calls[[length(calls) + 1]] <<- args
+      list(stdout = paste0("CPPFLAGS = -DBOOST_DISABLE_ASSERTS\n",
+                           "LDLIBS = -ltbb\nCXXFLAGS = -O3\n"))
+    }
+  )
+  expect_equal(calls, list(c("-s", "print-CPPFLAGS", "print-LDLIBS",
+                             "print-CXXFLAGS")))
+})
+
 test_that("get_cmdstan_flags() preserves empty non-STANCFLAGS values", {
   with_mocked_bindings(
     {
