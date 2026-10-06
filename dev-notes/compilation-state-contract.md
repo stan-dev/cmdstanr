@@ -385,7 +385,7 @@ compiles and never mutates state.** Callers differ:
 
 | Caller | On a trigger |
 |---|---|
-| `cmdstan_model()` | **rebuilds**, printing every reason (§6) |
+| `cmdstan_model()` | **rebuilds**, printing every reason whenever make's output is shown and in an interactive session (§6) |
 | any operation that runs or derives state from the binary | **errors** |
 | `$is_current()` | **returns `FALSE`**, also when the Stan file it would resolve is gone, and `TRUE` when nothing fired |
 

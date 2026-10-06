@@ -32,7 +32,10 @@
 #' @param quiet (logical) Should the verbose output from CmdStan during
 #'   compilation be suppressed? The default is `TRUE`, but if you encounter an
 #'   error we recommend trying again with `quiet=FALSE` to see more of the
-#'   output.
+#'   output. In an interactive session a message says whether the executable
+#'   was reused or rebuilt, and why. With `quiet = FALSE` it is printed in
+#'   every session, so a batch job's log shows whether the model was
+#'   recompiled.
 #' @param dir (string) The path to the directory in which to store the CmdStan
 #'   executable. The default is the same location as the Stan program.
 #' @param pedantic (logical) Should pedantic mode be turned on? The default is
@@ -638,8 +641,10 @@ NULL
 #'   Stan program as it is now, without creating a model object or compiling.
 #'
 #'   Each element in the returned object contains a list of variables, with each
-#'   variable represented as a list with information on its scalar type (`real`
-#'   or `int`) and number of dimensions.
+#'   variable represented as a list with information on its scalar type (`real`,
+#'   `int` or `complex`) and number of dimensions. A tuple's `type` is instead
+#'   a list with one such entry per tuple element, nested for nested tuples,
+#'   and its `dimensions` count only the array dimensions around the tuple.
 #'
 #'   The number of dimensions reported is the number of indexing dimensions in
 #'   the declared Stan variable, equivalently the number of indices needed to

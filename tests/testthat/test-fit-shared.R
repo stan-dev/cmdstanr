@@ -42,9 +42,7 @@ test_that("saving csv output files works", {
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
 
-    should_match <- paste0("testing-output-",
-                           base::format(Sys.time(), "%Y%m%d%H%M"),
-                           "-",
+    should_match <- paste0("testing-output-\\d{12}-",
                            sprintf("%02d", seq_len(fit$num_procs())))
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])

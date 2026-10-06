@@ -24,9 +24,10 @@ To compile a Stan file without creating a model object use the new
 likewise work from a Stan file alone. (#1256)
 * `cmdstan_model()` recompiles whenever anything it tracks has changed: the Stan
 program and its `#include`s, the user header, `cpp_options`, `stanc_options`,
-`make/local` or the CmdStan installation, and its message says which. Changes it
-cannot see, such as a new C++ compiler, need `force_recompile = TRUE`. The
-vignette "How does CmdStanR work?" lists them. (#1255, #1237, #1019)
+`make/local` or the CmdStan installation. In an interactive session, or with
+`quiet = FALSE`, a message says which. Changes it cannot see, such as a new C++
+compiler, need `force_recompile = TRUE`. The vignette "How does CmdStanR work?"
+lists them. (#1255, #1237, #1019, #1308)
 * Each executable now comes with a build record, a hidden JSON file beside it
 that says how it was built: `bernoulli` gets `.bernoulli.cmdstanr.json` and
 `bernoulli.exe` gets `.bernoulli.exe.cmdstanr.json`. Add `.*.cmdstanr.json` to
@@ -168,9 +169,19 @@ with only `exe_file`. Previously the error was "'init' contains empty lists".
 (#1171)
 * Functions supplied as `init` are no longer called an extra time to validate
 them. Validation occurs in the same pass. (#1195)
+* Tuple and complex values can now be passed as data and initial values,
+a tuple as an unnamed list of its elements and a complex number as an R
+complex value, and `init = fit` now carries tuple parameters over.
+`write_stan_json()` gains a `variables` argument for the declarations it
+needs to tell a tuple from a list of arrays. (#925)
 
 ## Other new features
 
+* Reading MCMC and generated quantities draws from CmdStan CSV files now uses
+less memory. (#1041, #1307)
+* `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
+CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
+`.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)
 * The new `print_stan_file()` prints a Stan file, with syntax highlighting when
 used in a Quarto or R Markdown document. (#1166)
 * The new `$cmdstan_defaults()` method returns CmdStan's default argument
@@ -271,6 +282,11 @@ an error at the copy instead of later when the run or read can't find the file.
 * On Windows a model executable is now launched with the TBB it was built
 against. Previously the selected CmdStan installation's TBB was used, which was
 wrong once `set_cmdstan_path()` had selected a different one. (#1261)
+* Fits with tuple or complex variables now work throughout: `$metadata()`
+reports their names and sizes, a tuple's name selects all of its columns in
+`$draws()` and the other methods with a `variables` argument, and the model
+methods accept and return them. Previously reading such a fit warned about
+NAs in the variable sizes. (#925)
 * When using CmdStan through WSL, a data or init file on the WSL filesystem is
 now found when R spells its path with backslashes, as it does for temporary
 files when `TMPDIR` points at the `//wsl$` share. (#1113)
@@ -290,6 +306,9 @@ CmdStan version install an older CmdStanR release from GitHub. (#1144)
 as of CmdStanR 1.0.0; use the lowercase `cmdstanr_no_ver_check` forms instead.
 * `pathfinder()` now uses the `threads` argument (`num_threads` is deprecated),
 to be consistent with other methods.
+* `fit$variable_skeleton()` is removed. `fit$constrain_variables()` now
+returns the values already structured, so `utils::relist()` and the
+skeleton are no longer needed. (#925)
 * Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
 * `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a warning). (#1144)
 * Removed deprecated items (replacements in parentheses). (#1061)
