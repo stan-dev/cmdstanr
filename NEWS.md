@@ -200,6 +200,8 @@ computation, which can be very slow. Set `r_eff = TRUE` for the previous
 behavior. (#1091)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization. (#1274)
+* `$init_model_methods()` takes less time to set up, and later fits of the
+same model reuse the compiled methods instead of compiling them again. (#1309)
 * `fit$init_model_methods()` and `$expose_functions()` gain a `quiet` argument
 that suppresses the messages printed while the methods or functions compile.
 (#914)
