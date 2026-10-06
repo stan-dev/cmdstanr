@@ -72,8 +72,11 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   make_args <- character()
   tbb_dir <- tbb_path()
   if (!is.null(tbb)) {
-    make_args <- c(paste0("TBB_INC=", tbb$include),
-                   paste0("TBB_LIB=", tbb$lib), "TBB_INTERFACE_NEW=1")
+    # The include flag is added below: get_cmdstan_flags() splits make's
+    # output at spaces and, before CmdStan 2.40, prefixed every -I path
+    # with the CmdStan directory
+    make_args <- c(paste0("TBB_LIB=", tbb$lib), "TBB_INTERFACE_NEW=1",
+                   "CXXFLAGS_TBB=")
     if (.Platform$OS.type == "windows") {
       # Rtools' linkers reject the ELF-only flag make adds for a system TBB
       make_args <- c(make_args, "LDFLAGS_TBB_DTAGS=")
@@ -88,8 +91,8 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   libs <- paste(sapply(libs, get_cmdstan_flags, make_args = make_args),
                 collapse = " ")
   if (!is.null(tbb)) {
-    # make's print rule drops the quotes, so quote the paths here
-    cxxflags <- gsub(tbb$include, shQuote(tbb$include), cxxflags, fixed = TRUE)
+    cxxflags <- paste0(cxxflags, " -I", shQuote(tbb$include))
+    # make's print rule drops the quotes, so quote the path here
     libs <- gsub(tbb$lib, shQuote(tbb$lib), libs, fixed = TRUE)
   }
   if (.Platform$OS.type == "windows") {
