@@ -71,7 +71,7 @@ test_that("generate_quantities() rejects fitted_params it cannot read", {
     mod_gq$generate_quantities(
       fitted_params = readRDS(temp_file), data = data_list
     ),
-    "Unable to obtain draws from the fit object."
+    "The fit's CSV files are gone"
   )
 })
 
