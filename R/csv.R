@@ -750,10 +750,10 @@ compress_csv <- function(files, compress) {
   ext <- switch(compress, gzip = ".gz", bzip2 = ".bz2")
   withr::local_path(toolchain_PATH_env_var())
   existing <- file.exists(files)
-  for (file in files[existing]) {
+  if (any(existing)) {
     wsl_compatible_run(
       command = compress,
-      args = c("-f", wsl_safe_path(path.expand(file)))
+      args = c("-f", wsl_safe_path(path.expand(files[existing])))
     )
   }
   files[existing] <- paste0(files[existing], ext)
