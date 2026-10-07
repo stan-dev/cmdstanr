@@ -1,5 +1,8 @@
 # cmdstanr (development version)
 
+* `as_cmdstan_fit()` now reads draws from the CSV files when they're first
+requested (like fits from `$sample()` do). Reading a large fit to look at a few
+variables takes much less memory. (#1294)
 * Chain IDs in generated filenames are now zero-padded to at least two digits, 
 for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 

@@ -976,45 +976,31 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
   )
 })
 
-test_that("as_cmdstan_fit can lazily load MCMC draws", {
-  fit <- as_cmdstan_fit(
-    fit_logistic_thin_1$output_files(),
-    lazy = TRUE,
-    check_diagnostics = FALSE
-  )
-  private <- fit$.__enclos_env__$private
+test_that("as_cmdstan_fit loads MCMC draws on request", {
+  files <- fit_logistic_thin_1$output_files()
+  fit <- as_cmdstan_fit(files)
+  expected <- read_cmdstan_csv(files)$post_warmup_draws
 
-  expect_null(private$draws_)
-  expect_equal(fit$num_chains(), 2)
-  expect_null(private$draws_)
-  expect_equal(fit$metadata()$model_name, "logistic_model")
-  expect_null(private$draws_)
-
-  draws <- fit$draws("beta")
-  expect_equal(
-    posterior::variables(draws),
-    c("beta[1]", "beta[2]", "beta[3]")
-  )
-  expect_equal(
-    posterior::variables(private$draws_),
-    c("beta[1]", "beta[2]", "beta[3]")
-  )
+  expect_equal(fit$draws("beta"), posterior::subset_draws(expected, variable = "beta"))
+  expect_equal(fit$draws("alpha"), posterior::subset_draws(expected, variable = "alpha"))
+  expect_equal(fit$draws(), expected)
 })
 
-test_that("as_cmdstan_fit validates lazy reconstruction", {
-  expect_error(
-    as_cmdstan_fit(
-      fit_logistic_thin_1$output_files(),
-      variables = "beta",
-      lazy = TRUE
-    ),
-    "'variables' must be NULL when 'lazy = TRUE'",
-    fixed = TRUE
-  )
-  expect_error(
-    as_cmdstan_fit(fit_logistic_optimize$output_files(), lazy = TRUE),
-    "'lazy = TRUE' is only supported for MCMC output",
-    fixed = TRUE
+test_that("as_cmdstan_fit loads MCMC warmup draws on request", {
+  files <- fit_logistic_thin_1_with_warmup$output_files()
+  fit <- as_cmdstan_fit(files)
+  expected <- read_cmdstan_csv(files)
+
+  expect_equal(
+    fit$draws("beta", inc_warmup = TRUE),
+    posterior::subset_draws(
+      posterior::bind_draws(
+        expected$warmup_draws,
+        expected$post_warmup_draws,
+        along = "iteration"
+      ),
+      variable = "beta"
+    )
   )
 })
 

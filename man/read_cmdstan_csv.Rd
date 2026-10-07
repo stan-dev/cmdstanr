@@ -16,8 +16,7 @@ as_cmdstan_fit(
   files,
   variables = NULL,
   check_diagnostics = TRUE,
-  format = getOption("cmdstanr_draws_format"),
-  lazy = FALSE
+  format = getOption("cmdstanr_draws_format")
 )
 }
 \arguments{
@@ -49,11 +48,6 @@ and memory for models with many parameters.}
 diagnostic checks be performed after reading in the files? The default is
 \code{TRUE} but set to \code{FALSE} to avoid checking for problems with divergences
 and treedepth.}
-
-\item{lazy}{(logical) For models fit using MCMC, should posterior draws stay
-in the CSV files until requested? The default is \code{FALSE}. If \code{TRUE},
-\code{variables} must be \code{NULL}. Calls to \verb{$draws()} then read only the requested
-variables.}
 }
 \value{
 \code{as_cmdstan_fit()} returns a fitted model object (\link{CmdStanMCMC}, \link{CmdStanVB},
@@ -133,8 +127,7 @@ CmdStan CSV files using the \code{as_cmdstan_fit()} function.
 The CSV files do not contain all of the information available to the model
 fitting methods, the Stan source, the console output, or the paths to most
 input and auxiliary files, so the reconstructed object has a reduced set of
-methods. For large MCMC fits, \code{lazy = TRUE} leaves posterior draws in the CSV
-files until requested by \verb{$draws()}.
+methods.
 
 Only the following methods are available for every reconstructed object:
 \verb{$draws()}, \verb{$lp()}, \verb{$materialize()}, \verb{$metadata()}, \verb{$output_files()},
@@ -168,10 +161,6 @@ print(csv_files)
 fit2 <- as_cmdstan_fit(csv_files)
 fit2$print("beta")
 str(fit2$draws())
-
-# For large MCMC fits, leave posterior draws on disk until requested
-fit3 <- as_cmdstan_fit(csv_files, lazy = TRUE)
-fit3$draws("beta")
 
 
 # Using read_cmdstan_csv()
