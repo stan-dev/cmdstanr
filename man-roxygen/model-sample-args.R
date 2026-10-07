@@ -77,21 +77,12 @@
 #'   when, for example, trying to generate pseudo-data using the generated
 #'   quantities block. For CmdStan versions before 2.36, `fixed_param = TRUE`
 #'   is mandatory if the parameters block is empty.
-#' @param show_progress_bar (logical) **Experimental.** Should CmdStanR signal
-#'   sampling progress through \pkg{progressr}? The default is
-#'   `getOption("cmdstanr_progress_bar", FALSE)`. CmdStanR signals one combined
-#'   progression across all chains. \pkg{progressr} controls whether and how it
-#'   is displayed. CmdStanR does not install or modify progression handlers;
-#'   configure those at user or session startup. `refresh` must be greater than
-#'   0; if the argument is not set explicitly, the progress bar is disabled
-#'   when `refresh = 0`. The progress bar itself adds negligible overhead, but
-#'   very small `refresh` values (e.g. `refresh = 1`) make CmdStanR process
-#'   every iteration line, which is slow for fast models and gives a smooth bar
-#'   for slow ones. To request progress only for
-#'   interactive use, set `options(cmdstanr_progress_bar = interactive())`.
-#'   For example, `progressr::handlers(global = TRUE)` enables progress bars
-#'   for the session, and `progressr::handlers("cli")` selects the cli
-#'   handler.
+#' @param show_progress_bar (logical) **Experimental.** When `TRUE`, show a
+#'   progress bar through \pkg{progressr}. The default is `FALSE` but can be
+#'   set to `TRUE` for an entire \R session by
+#'   `options(cmdstanr_progress_bar = TRUE)`. Nothing is shown until a
+#'   \pkg{progressr} handler is registered, for example with
+#'   `progressr::handlers(global = TRUE)` once per session.
 #' @param suppress_iteration_messages (logical) Should CmdStan iteration
 #'   messages be suppressed? The default is `show_progress_bar`.
 #' @param diagnostics (character vector) The diagnostics to automatically check

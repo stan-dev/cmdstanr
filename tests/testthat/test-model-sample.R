@@ -86,19 +86,11 @@ test_that("sample() method works with data list", {
   expect_s3_class(fit, "CmdStanMCMC")
 })
 
-test_that("CmdStan iteration output is parsed", {
-  expect_equal(
-    parse_cmdstan_iteration("Iteration:  170 / 170 [100%]  (Sampling)"),
-    c(current = 170L, total = 170L)
-  )
-  expect_null(parse_cmdstan_iteration("Elapsed Time: 0.1 seconds"))
-})
-
 test_that("sample progress follows CmdStan's cumulative iteration count", {
   skip_if_not_installed("progressr")
 
   total <- NULL
-  amounts <- integer()
+  amounts <- numeric()
   handler <- progressr::make_progression_handler(
     "cmdstanr-test",
     reporter = list(
@@ -120,8 +112,8 @@ test_that("sample progress follows CmdStan's cumulative iteration count", {
   fit <- progressr::with_progress(
     mod$sample(
       data = data_list,
-      chains = 1,
-      parallel_chains = 1,
+      chains = 2,
+      parallel_chains = 2,
       iter_warmup = 100,
       iter_sampling = 70,
       refresh = 50,
@@ -133,36 +125,8 @@ test_that("sample progress follows CmdStan's cumulative iteration count", {
   )
 
   expect_s3_class(fit, "CmdStanMCMC")
-  expect_equal(total, 170)
-  expect_equal(amounts, c(1, 49, 50, 1, 49, 20))
-})
-
-test_that("finish_progress finishes the progressor once", {
-  skip_if_not_installed("progressr")
-  procs <- CmdStanMCMCProcs$new(num_procs = 1, show_progress_bar = TRUE)
-  calls <- 0L
-  procs$.__enclos_env__$private$progressor_ <- function(...) calls <<- calls + 1L
-  procs$finish_progress()
-  procs$finish_progress()
-  expect_equal(calls, 1L)
-})
-
-test_that("sample progress requires iteration output", {
-  expect_error(
-    mod$sample(
-      data = data_list,
-      chains = 1,
-      refresh = 0,
-      show_progress_bar = TRUE
-    ),
-    "requires 'refresh > 0'"
-  )
-
-  withr::local_options(list(cmdstanr_progress_bar = TRUE))
-  expect_s3_class(
-    mod$sample(data = data_list, chains = 1, refresh = 0, show_messages = FALSE),
-    "CmdStanMCMC"
-  )
+  expect_equal(total, 340)
+  expect_equal(sum(amounts), 340)
 })
 
 test_that("sample can suppress CmdStan iteration messages", {
@@ -170,9 +134,9 @@ test_that("sample can suppress CmdStan iteration messages", {
     mod$sample(
       data = data_list,
       chains = 1,
-      iter_warmup = 1,
-      iter_sampling = 1,
-      refresh = 1,
+      iter_warmup = 10,
+      iter_sampling = 10,
+      refresh = 5,
       suppress_iteration_messages = TRUE
     )
   )

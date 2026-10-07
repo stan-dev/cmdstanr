@@ -1,5 +1,7 @@
 # cmdstanr (development version)
 
+* `$sample()` can show a progress bar through the `progressr` package with
+`show_progress_bar = TRUE` or `options(cmdstanr_progress_bar = TRUE)`. (#1138)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization because they avoid repeated stale-binding checks. (#1274)
 * `install_cmdstan()` now offers to copy the `make/local` flags of the

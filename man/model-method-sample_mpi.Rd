@@ -264,21 +264,12 @@ numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
 
-\item{show_progress_bar}{(logical) \strong{Experimental.} Should CmdStanR signal
-sampling progress through \pkg{progressr}? The default is
-\code{getOption("cmdstanr_progress_bar", FALSE)}. CmdStanR signals one combined
-progression across all chains. \pkg{progressr} controls whether and how it
-is displayed. CmdStanR does not install or modify progression handlers;
-configure those at user or session startup. \code{refresh} must be greater than
-0; if the argument is not set explicitly, the progress bar is disabled
-when \code{refresh = 0}. The progress bar itself adds negligible overhead, but
-very small \code{refresh} values (e.g. \code{refresh = 1}) make CmdStanR process
-every iteration line, which is slow for fast models and gives a smooth bar
-for slow ones. To request progress only for
-interactive use, set \code{options(cmdstanr_progress_bar = interactive())}.
-For example, \code{progressr::handlers(global = TRUE)} enables progress bars
-for the session, and \code{progressr::handlers("cli")} selects the cli
-handler.}
+\item{show_progress_bar}{(logical) \strong{Experimental.} When \code{TRUE}, show a
+progress bar through \pkg{progressr}. The default is \code{FALSE} but can be
+set to \code{TRUE} for an entire \R session by
+\code{options(cmdstanr_progress_bar = TRUE)}. Nothing is shown until a
+\pkg{progressr} handler is registered, for example with
+\code{progressr::handlers(global = TRUE)} once per session.}
 
 \item{suppress_iteration_messages}{(logical) Should CmdStan iteration
 messages be suppressed? The default is \code{show_progress_bar}.}

@@ -1337,6 +1337,14 @@ CmdStanModel$set("public", name = "format", value = format)
 #' @template model-save-latent-dynamics-arg
 #' @template model-sample-args
 #'
+#' @section Progress bar:
+#' With `show_progress_bar = TRUE`, `$sample()` signals one progression across
+#' all chains through \pkg{progressr} and hides CmdStan's iteration lines. With
+#' `refresh = 0` CmdStan prints no iteration lines, so no bar is shown. Small
+#' `refresh` values slow fast models because CmdStanR reads every output line,
+#' with or without the bar. For notebooks, use
+#' `options(cmdstanr_progress_bar = interactive())`.
+#'
 #' @return A [`CmdStanMCMC`] object.
 #'
 #' @references
@@ -1400,12 +1408,6 @@ sample <- function(data = NULL,
   }
   if (fixed_param) {
     save_warmup <- FALSE
-  }
-  if (isTRUE(show_progress_bar) && isTRUE(refresh == 0)) {
-    if (!missing(show_progress_bar)) {
-      stop("'show_progress_bar = TRUE' requires 'refresh > 0'.", call. = FALSE)
-    }
-    show_progress_bar <- FALSE
   }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
@@ -1573,12 +1575,6 @@ sample_mpi <- function(data = NULL,
   if (fixed_param) {
     chains <- 1
     save_warmup <- FALSE
-  }
-  if (isTRUE(show_progress_bar) && isTRUE(refresh == 0)) {
-    if (!missing(show_progress_bar)) {
-      stop("'show_progress_bar = TRUE' requires 'refresh > 0'.", call. = FALSE)
-    }
-    show_progress_bar <- FALSE
   }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),

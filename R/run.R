@@ -983,23 +983,6 @@ CmdStanProcs <- R6::R6Class(
   )
 )
 
-parse_cmdstan_iteration <- function(line) {
-  match <- regmatches(
-    line,
-    regexec(
-      "Iteration:[[:space:]]*([0-9]+)[[:space:]]*/[[:space:]]*([0-9]+)",
-      line
-    )
-  )[[1L]]
-  if (length(match) == 0L) {
-    return(NULL)
-  }
-  c(
-    current = as.integer(match[[2L]]),
-    total = as.integer(match[[3L]])
-  )
-}
-
 # Process R6 class that overrides the default
 # function for processing the output
 CmdStanMCMCProcs <- R6::R6Class(
@@ -1007,12 +990,17 @@ CmdStanMCMCProcs <- R6::R6Class(
   inherit = CmdStanProcs,
   public = list(
     initialize = function(...,
-                          show_progress_bar = FALSE,
-                          suppress_iteration_messages = show_progress_bar) {
+                          show_progress_bar,
+                          suppress_iteration_messages) {
       checkmate::assert_flag(show_progress_bar)
       checkmate::assert_flag(suppress_iteration_messages)
-      if (show_progress_bar) {
-        require_suggested_package("progressr")
+      if (show_progress_bar && !requireNamespace("progressr", quietly = TRUE)) {
+        stop(
+          "`show_progress_bar` (or `options(cmdstanr_progress_bar)`) ",
+          "requires the `progressr` package. ",
+          "Install it with `install.packages(\"progressr\")`.",
+          call. = FALSE
+        )
       }
       super$initialize(...)
       private$show_progress_bar_ <- show_progress_bar
@@ -1026,6 +1014,7 @@ CmdStanMCMCProcs <- R6::R6Class(
       if (length(out) == 0) {
         return(invisible(NULL))
       }
+      progress_amount <- 0L
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
@@ -1089,12 +1078,16 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          if (iteration_line && private$show_progress_bar_) {
-            private$update_progress_(id, line)
+          if (iteration_line && private$suppress_iteration_messages_) {
+            ignore_line <- TRUE
           }
-          if (((state > 1.5 && state < 5 && !ignore_line && private$show_stdout_messages_) ||
-               is_verbose_mode()) &&
-              !(iteration_line && private$suppress_iteration_messages_)) {
+          if (iteration_line && private$show_progress_bar_) {
+            progress_amount <- progress_amount +
+              private$update_progress_(id, line)
+          }
+          if ((state > 1.5 && state < 5 && !ignore_line &&
+               private$show_stdout_messages_) ||
+              is_verbose_mode()) {
             if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
@@ -1116,6 +1109,9 @@ CmdStanMCMCProcs <- R6::R6Class(
             private$proc_state_[[id]] <- 3
           }
         }
+      }
+      if (progress_amount > 0L) {
+        private$progressor_(amount = progress_amount)
       }
       invisible(self)
     },
@@ -1182,23 +1178,24 @@ CmdStanMCMCProcs <- R6::R6Class(
     progressor_ = NULL,
     last_iteration_ = integer(),
     update_progress_ = function(id, line) {
-      iteration <- parse_cmdstan_iteration(line)
-      if (is.null(iteration)) {
-        return(invisible(NULL))
+      match <- regmatches(
+        line,
+        regexec("Iteration:\\s*([0-9]+)\\s*/\\s*([0-9]+)", line)
+      )[[1L]]
+      if (length(match) == 0L) {
+        return(0L)
       }
+      current <- as.integer(match[[2L]])
       if (is.null(private$progressor_)) {
         private$progressor_ <- progressr::progressor(
-          steps = iteration[["total"]] * self$num_procs(),
+          steps = as.integer(match[[3L]]) * self$num_procs(),
           auto_finish = FALSE,
           on_exit = FALSE
         )
       }
-      amount <- iteration[["current"]] - private$last_iteration_[[id]]
-      if (amount > 0L) {
-        private$last_iteration_[[id]] <- iteration[["current"]]
-        private$progressor_(amount = amount)
-      }
-      invisible(NULL)
+      amount <- current - private$last_iteration_[[id]]
+      private$last_iteration_[[id]] <- current
+      amount
     }
   )
 )
