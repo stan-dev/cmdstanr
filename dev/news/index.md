@@ -2,6 +2,25 @@
 
 ## cmdstanr (development version)
 
+- `$sample()` reads each chain’s CSV file once instead of twice. The
+  columns of `$sampler_diagnostics()` are now in the order of the CSV
+  file. ([\#1312](https://github.com/stan-dev/cmdstanr/issues/1312))
+
+- [`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+  now reads draws from the CSV files when they’re first requested (like
+  fits from `$sample()` do). Reading a large fit to look at a few
+  variables takes much less memory.
+  ([\#1294](https://github.com/stan-dev/cmdstanr/issues/1294))
+
+- [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+  and
+  [`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/dev/reference/read_cmdstan_csv.md)
+  can now read gzip-compressed CmdStan CSV files ending in `.csv.gz` and
+  bzip2-compressed files ending in `.csv.bz2`. CmdStanR now requires
+  data.table 1.18.0 or later.
+  ([\#1027](https://github.com/stan-dev/cmdstanr/issues/1027),
+  [\#1217](https://github.com/stan-dev/cmdstanr/issues/1217))
+
 - [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/dev/reference/install_cmdstan.md)
   now waits longer for WSL to respond and says so when it doesn’t,
   instead of reporting that no WSL distribution is installed.

@@ -179,9 +179,9 @@ fit$summary(variables = "theta", dim, colMeans)
 For this reason users may have unexpected results if they use
 [`stats::var()`](https://rdrr.io/r/stats/cor.html) directly, as it will
 return a covariance matrix. An alternative is the
-[`distributional::variance()`](https://pkg.mitchelloharawild.com/distributional/reference/variance.html)
+[`distributional::variance()`](https://rdrr.io/pkg/distributional/man/variance.html)
 function, which can also be accessed via
-[`posterior::variance()`](https://pkg.mitchelloharawild.com/distributional/reference/variance.html).
+[`posterior::variance()`](https://rdrr.io/pkg/distributional/man/variance.html).
 
 ``` r
 
