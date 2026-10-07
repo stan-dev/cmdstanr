@@ -22,7 +22,7 @@ test_that("threads_per_chain on an executable without threading errors", {
 })
 
 test_that("threading works with sample()", {
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
 
   expect_output(
     f <- mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
@@ -70,7 +70,7 @@ test_that("WSLENV keeps the entries the session already exports", {
 })
 
 test_that("threading works with optimize()", {
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
 
   expect_output(
     f <- mod$optimize(data = data_file_json, threads = 1, seed = 123),
@@ -95,7 +95,7 @@ test_that("threading works with optimize()", {
 })
 
 test_that("threading works with variational()", {
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
 
   expect_output(
     f <- mod$variational(data = data_file_json, threads = 1, seed = 123),
@@ -120,8 +120,7 @@ test_that("threading works with variational()", {
 })
 
 test_that("threading works with pathfinder()", {
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE),
-                       force_recompile = TRUE)
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
   pathfinder_args <- list(
     data = data_file_json,
     seed = 123,
@@ -154,8 +153,11 @@ test_that("threading works with pathfinder()", {
 })
 
 test_that("threading works with generate_quantities()", {
-  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
-  mod_gq <- cmdstan_model(stan_gq_program, cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
+  mod_gq <- cmdstan_model(
+    stan_gq_program,
+    cpp_options = list(stan_threads = TRUE)
+  )
   expect_output(
     f <- mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
     "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
@@ -184,11 +186,7 @@ test_that("threading works with generate_quantities()", {
 })
 
 test_that("stan_threads = FALSE builds an executable without threading", {
-  mod <- cmdstan_model(
-    stan_program,
-    cpp_options = list(stan_threads = FALSE),
-    force_recompile = TRUE
-  )
+  mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = FALSE))
   # FALSE reaches make as an empty assignment, and is reported that way
   expect_equal(mod$cpp_options()$STAN_THREADS, "")
   expect_output(
