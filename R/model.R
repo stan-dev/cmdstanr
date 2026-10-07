@@ -1033,7 +1033,8 @@ sample <- function(data = NULL,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    save_metric = getOption("cmdstanr_save_metric", FALSE),
-                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                   compress = c("none", "gzip", "bzip2")) {
 
   private$assert_current_()
   if (fixed_param) {
@@ -1085,6 +1086,7 @@ sample <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1196,7 +1198,8 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                       compress = c("none", "gzip", "bzip2")) {
   private$assert_current_()
 
   if (fixed_param) {
@@ -1245,6 +1248,7 @@ sample_mpi <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
@@ -1343,7 +1347,8 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                     compress = c("none", "gzip", "bzip2")) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1381,6 +1386,7 @@ optimize <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1483,7 +1489,8 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                    compress = c("none", "gzip", "bzip2")) {
   private$assert_current_()
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both `opt_args` and `mode` arguments.", call. = FALSE)
@@ -1535,7 +1542,8 @@ laplace <- function(data = NULL,
   laplace_args <- LaplaceArgs$new(
     mode = cmdstan_mode,
     draws = draws,
-    jacobian = jacobian
+    jacobian = jacobian,
+    temp_dir = withr::local_tempdir()
   )
   args <- CmdStanArgs$new(
     method_args = laplace_args,
@@ -1554,6 +1562,7 @@ laplace <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1649,7 +1658,8 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                        compress = c("none", "gzip", "bzip2")) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1687,6 +1697,7 @@ variational <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1817,7 +1828,8 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                       compress = c("none", "gzip", "bzip2")) {
   private$assert_current_()
   if (!is.null(num_threads)) {
     if (!is.null(threads)) {
@@ -1870,6 +1882,7 @@ pathfinder <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1977,9 +1990,10 @@ generate_quantities <- function(fitted_params,
                                 threads_per_chain = NULL,
                                 opencl_ids = NULL,
                                 show_messages = TRUE,
-                                show_exceptions = TRUE) {
+                                show_exceptions = TRUE,
+                                compress = c("none", "gzip", "bzip2")) {
   private$assert_current_()
-  fitted_params_files <- process_fitted_params(fitted_params)
+  fitted_params_files <- process_fitted_params(fitted_params, withr::local_tempdir())
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
@@ -2005,6 +2019,7 @@ generate_quantities <- function(fitted_params,
     seed = seed,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables

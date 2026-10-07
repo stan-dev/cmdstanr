@@ -179,13 +179,7 @@ read_cmdstan_csv <- function(files,
   withr::local_path(toolchain_PATH_env_var())
   # If the CSV files are stored in the WSL filesystem then it is significantly
   # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
-  if (os_is_wsl() && any(grepl("^//wsl", files))) {
-    wsl_files <- sapply(files, wsl_safe_path)
-    wsl_compatible_run(
-      command = "cp", args = c(wsl_files, wsl_safe_path(temp_dir))
-    )
-    files <- file.path(temp_dir, basename(files))
-  }
+  files <- stage_wsl_csv_files(files, temp_dir)
   format <- assert_valid_draws_format(format)
   assert_file_exists(
     files,
@@ -193,9 +187,7 @@ read_cmdstan_csv <- function(files,
     extension = c("csv", "csv.gz", "csv.bz2")
   )
   files <- wsl_safe_path(files, revert = TRUE)
-  for (i in grep("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)) {
-    files[i] <- decompress_csv(files[i], temp_dir)
-  }
+  files <- decompress_csv_files(files, temp_dir)
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -712,6 +704,7 @@ parse_generated_quantities_time <- function(line) {
 decompress_csv <- function(file, dir) {
   out <- tempfile(tmpdir = dir, fileext = ".csv")
   tool <- if (endsWith(tolower(file), ".gz")) "gzip" else "bzip2"
+  withr::local_path(toolchain_PATH_env_var())
   status <- processx::run(
     tool,
     c("-dc", path.expand(file)),
@@ -725,6 +718,46 @@ decompress_csv <- function(file, dir) {
     )
   }
   invisible(out)
+}
+
+decompress_csv_files <- function(files, dir) {
+  compressed <- grepl("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)
+  files[compressed] <- vapply(
+    stage_wsl_csv_files(files[compressed], dir),
+    decompress_csv,
+    character(1),
+    dir = dir,
+    USE.NAMES = FALSE
+  )
+  files
+}
+
+stage_wsl_csv_files <- function(files, dir) {
+  if (os_is_wsl() && any(grepl("^//wsl", files))) {
+    wsl_compatible_run(
+      command = "cp",
+      args = c(wsl_safe_path(files), wsl_safe_path(dir))
+    )
+    files <- file.path(dir, basename(files))
+  }
+  files
+}
+
+compress_csv <- function(files, compress) {
+  if (compress == "none") {
+    return(files)
+  }
+  ext <- switch(compress, gzip = ".gz", bzip2 = ".bz2")
+  withr::local_path(toolchain_PATH_env_var())
+  existing <- file.exists(files)
+  for (file in files[existing]) {
+    wsl_compatible_run(
+      command = compress,
+      args = c("-f", wsl_safe_path(path.expand(file)))
+    )
+  }
+  files[existing] <- paste0(files[existing], ext)
+  files
 }
 
 #' Reads the sampling arguments and the diagonal of the

@@ -1145,16 +1145,10 @@ test_that("as_cmdstan_fit filters variables across methods", {
   expect_equal(pathfinder$metadata()$variables, pathfinder_vars)
 })
 
-compress_csv <- function(src, ext) {
-  dest <- tempfile(fileext = paste0(".", ext))
-  con <- if (identical(ext, "csv.gz")) {
-    gzfile(dest, "wt")
-  } else {
-    bzfile(dest, "wt")
-  }
-  writeLines(readLines(src), con)
-  close(con)
-  dest
+compressed_copy <- function(src, compress) {
+  dest <- tempfile(fileext = ".csv")
+  file.copy(src, dest)
+  compress_csv(dest, compress)
 }
 
 truncate_file <- function(file) {
@@ -1170,8 +1164,8 @@ test_that("read_cmdstan_csv() reads compressed CSV files", {
     test_path("resources", "csv", "model1-2-warmup.csv")
   )
   expected <- read_cmdstan_csv(csv_files)
-  gz_files <- vapply(csv_files, compress_csv, ext = "csv.gz", character(1))
-  bz2_files <- vapply(csv_files, compress_csv, ext = "csv.bz2", character(1))
+  gz_files <- vapply(csv_files, compressed_copy, compress = "gzip", character(1))
+  bz2_files <- vapply(csv_files, compressed_copy, compress = "bzip2", character(1))
   withr::defer(unlink(c(gz_files, bz2_files)))
 
   expect_equal(read_cmdstan_csv(gz_files), expected)
@@ -1196,8 +1190,8 @@ test_that("read_cmdstan_csv() reads compressed CSV files", {
   expect_equal(fit$draws(), as_cmdstan_fit(csv_files)$draws())
 
   diagnose_csv <- test_path("resources", "csv", "logistic-diagnose.csv")
-  diagnose_gz <- compress_csv(diagnose_csv, "csv.gz")
-  diagnose_bz2 <- compress_csv(diagnose_csv, "csv.bz2")
+  diagnose_gz <- compressed_copy(diagnose_csv, "gzip")
+  diagnose_bz2 <- compressed_copy(diagnose_csv, "bzip2")
   withr::defer(unlink(c(diagnose_gz, diagnose_bz2)))
 
   expected_diagnose <- read_cmdstan_csv(diagnose_csv)
@@ -1211,7 +1205,7 @@ test_that("read_cmdstan_csv() reads WSL mount paths", {
     test_path("resources", "csv", "model1-1-warmup.csv"),
     test_path("resources", "csv", "model1-2-warmup.csv")
   ), winslash = "/")
-  gz_file <- compress_csv(csv_files[2], "csv.gz")
+  gz_file <- compressed_copy(csv_files[2], "gzip")
   withr::defer(unlink(gz_file))
   mnt_files <- wsl_safe_path(c(csv_files[1], gz_file))
   expect_match(mnt_files, "^/mnt/")
@@ -1233,11 +1227,54 @@ test_that("read_cmdstan_csv() leaves inputs outside WSL in place", {
 
 test_that("read_cmdstan_csv() errors for a truncated compressed CSV file", {
   csv_file <- test_path("resources", "csv", "model1-1-warmup.csv")
-  gz_file <- compress_csv(csv_file, "csv.gz")
-  bz2_file <- compress_csv(csv_file, "csv.bz2")
+  gz_file <- compressed_copy(csv_file, "gzip")
+  bz2_file <- compressed_copy(csv_file, "bzip2")
   truncated <- c(truncate_file(gz_file), truncate_file(bz2_file))
   withr::defer(unlink(c(gz_file, bz2_file, truncated)))
 
   expect_error(read_cmdstan_csv(truncated[1]), "truncated or corrupt")
   expect_error(read_cmdstan_csv(truncated[2]), "truncated or corrupt")
+})
+
+test_that("compress_csv() compresses files in place", {
+  csv_files <- file.path(withr::local_tempdir(), c("a.csv", "b.csv"))
+  file.copy(test_path("resources", "csv", "model1-1-warmup.csv"), csv_files[1])
+  file.copy(test_path("resources", "csv", "model1-2-warmup.csv"), csv_files[2])
+  expected <- read_cmdstan_csv(csv_files)
+
+  gz_files <- compress_csv(csv_files, "gzip")
+  expect_equal(basename(gz_files), c("a.csv.gz", "b.csv.gz"))
+  expect_false(any(file.exists(csv_files)))
+  expect_equal(read_cmdstan_csv(gz_files), expected)
+})
+
+test_that("compress_csv() supports bzip2 and skips missing files", {
+  csv_file <- file.path(withr::local_tempdir(), "a.csv")
+  file.copy(test_path("resources", "csv", "model1-1-warmup.csv"), csv_file)
+  expected <- read_cmdstan_csv(csv_file)
+  missing_file <- file.path(dirname(csv_file), "missing.csv")
+
+  files <- compress_csv(c(csv_file, missing_file), "bzip2")
+  expect_equal(basename(files), c("a.csv.bz2", "missing.csv"))
+  expect_equal(read_cmdstan_csv(files[1]), expected)
+})
+
+test_that("compress_csv() with 'none' returns the files untouched", {
+  csv_file <- file.path(withr::local_tempdir(), "a.csv")
+  file.copy(test_path("resources", "csv", "model1-1-warmup.csv"), csv_file)
+  expect_equal(compress_csv(csv_file, "none"), csv_file)
+  expect_true(file.exists(csv_file))
+})
+
+test_that("decompress_csv_files() leaves plain files alone and decompresses the rest", {
+  csv_file <- test_path("resources", "csv", "model1-1-warmup.csv")
+  gz_file <- compressed_copy(csv_file, "gzip")
+  withr::defer(unlink(gz_file))
+  dir <- withr::local_tempdir()
+
+  files <- decompress_csv_files(c(csv_file, gz_file), dir)
+  expect_equal(files[1], csv_file)
+  expect_equal(normalizePath(dirname(files[2])), normalizePath(dir))
+  expect_equal(readLines(files[2]), readLines(csv_file))
+  expect_equal(decompress_csv_files(character(), dir), character())
 })

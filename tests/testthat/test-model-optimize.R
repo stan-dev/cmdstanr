@@ -139,3 +139,11 @@ test_that("optimize() recognizes new jacobian argument", {
   expect_equal(fit$metadata()$jacobian, 0)
   expect_equal(fit2$metadata()$jacobian, 1)
 })
+
+test_that("optimize() writes compressed output files", {
+  plain <- mod$optimize(data = data_list, seed = 123, refresh = 0)
+  fit <- mod$optimize(data = data_list, seed = 123, refresh = 0, compress = "gzip")
+  checkmate::expect_file_exists(fit$output_files(), extension = "csv.gz")
+  expect_equal(fit$mle(), plain$mle())
+  expect_equal(fit$draws(), plain$draws())
+})

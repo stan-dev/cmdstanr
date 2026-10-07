@@ -133,10 +133,12 @@ CmdStanRun <- R6::R6Class(
     save_output_files = function(dir = ".",
                                  basename = NULL,
                                  timestamp = TRUE,
-                                 random = TRUE) {
+                                 random = TRUE,
+                                 compress = c("none", "gzip", "bzip2")) {
+      compress <- match.arg(compress)
       current_files <- self$output_files(include_failed = TRUE)
       new_paths <- copy_temp_files(
-        current_paths = current_files,
+        current_paths = decompress_csv_files(current_files, withr::local_tempdir()),
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = self$procs$proc_ids(),
@@ -144,6 +146,7 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
+      new_paths <- compress_csv(new_paths, compress)
       file.remove(current_files[!current_files %in% new_paths])
       private$output_files_ <- new_paths
       message(
@@ -158,10 +161,12 @@ CmdStanRun <- R6::R6Class(
     save_latent_dynamics_files = function(dir = ".",
                                           basename = NULL,
                                           timestamp = TRUE,
-                                          random = TRUE) {
+                                          random = TRUE,
+                                          compress = c("none", "gzip", "bzip2")) {
+      compress <- match.arg(compress)
       current_files <- self$latent_dynamics_files(include_failed = TRUE) # used so we get error if 0 files
       new_paths <- copy_temp_files(
-        current_paths = current_files,
+        current_paths = decompress_csv_files(current_files, withr::local_tempdir()),
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
         ids = self$proc_ids(),
@@ -169,6 +174,7 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
+      new_paths <- compress_csv(new_paths, compress)
       file.remove(current_files[!current_files %in% new_paths])
       private$latent_dynamics_files_ <- new_paths
       message(
@@ -302,10 +308,12 @@ CmdStanRun <- R6::R6Class(
     run_cmdstan = function() {
       run_method <- paste0("run_", self$method(), "_")
       private[[run_method]]()
+      private$compress_output_files_()
     },
 
     run_cmdstan_mpi = function(mpi_cmd, mpi_args) {
       private$run_sample_(mpi_cmd, mpi_args)
+      private$compress_output_files_()
     },
 
     #' Run `bin/stansummary` or `bin/diagnose`
@@ -329,6 +337,10 @@ CmdStanRun <- R6::R6Class(
       }
       target_exe <- file.path("bin", cmdstan_ext(tool))
       check_target_exe(target_exe)
+      output_files <- decompress_csv_files(
+        self$output_files(include_failed = FALSE),
+        withr::local_tempdir()
+      )
       withr::with_path(
         c(
           toolchain_PATH_env_var(),
@@ -337,8 +349,7 @@ CmdStanRun <- R6::R6Class(
         run_log <- wsl_compatible_run(
           command = target_exe,
           args = c(
-            sapply(self$output_files(include_failed = FALSE),
-                   wsl_safe_path),
+            sapply(output_files, wsl_safe_path),
             flags),
           wd = checked_cmdstan_path(),
           echo = TRUE,
@@ -383,6 +394,15 @@ CmdStanRun <- R6::R6Class(
     config_files_saved_ = FALSE,
     metric_files_saved_ = FALSE,
     command_args_ = list(),
+
+    compress_output_files_ = function() {
+      private$output_files_ <- compress_csv(private$output_files_, self$args$compress)
+      if (self$args$save_latent_dynamics) {
+        private$latent_dynamics_files_ <- compress_csv(
+          private$latent_dynamics_files_, self$args$compress
+        )
+      }
+    },
 
     finalize = function() {
       if (self$args$using_tempdir) {

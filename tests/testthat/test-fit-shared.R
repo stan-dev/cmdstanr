@@ -627,3 +627,38 @@ test_that("code() warns if model not created with Stan file", {
     fixed = TRUE
   )
 })
+
+test_that("save_output_files() can change the compression of the output files", {
+  for (method in setdiff(all_methods, "generate_quantities")) {
+    fit <- fits[[method]]
+    expected <- as_cmdstan_fit(fit$output_files())$draws()
+    save_dir <- withr::local_tempdir()
+    for (compress in c("gzip", "bzip2", "none")) {
+      ext <- switch(compress, gzip = "csv.gz", bzip2 = "csv.bz2", none = "csv")
+      paths <- suppressMessages(
+        fit$save_output_files(save_dir, compress = compress)
+      )
+      checkmate::expect_file_exists(paths, extension = ext)
+      expect_equal(fit$output_files(), paths)
+      expect_equal(as_cmdstan_fit(paths)$draws(), expected)
+    }
+  }
+})
+
+test_that("save_output_files() errors for an invalid compress value", {
+  expect_error(
+    fits[["sample"]]$save_output_files(tempdir(), compress = "zip"),
+    "'arg' should be one of"
+  )
+})
+
+test_that("save_latent_dynamics_files() can compress the latent dynamics files", {
+  for (method in c("sample", "variational")) {
+    fit <- fits[[method]]
+    paths <- suppressMessages(
+      fit$save_latent_dynamics_files(withr::local_tempdir(), compress = "gzip")
+    )
+    checkmate::expect_file_exists(paths, extension = "csv.gz")
+    expect_equal(fit$latent_dynamics_files(), paths)
+  }
+})
