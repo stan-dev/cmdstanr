@@ -353,9 +353,9 @@ Once deferred compilation is gone it has no unique public purpose, and
 Nothing replaces it internally either: the assessment never rebuilds (§5), and
 constructor compilation uses the current request.
 
-Nothing structural blocks removal. Fits do not hold model references
-(`R/fit.R:20-26` copies the model-methods environment rather than pointing at the
-object).
+Nothing structural blocks removal. Fits do not use the model object: a fit's
+run holds the model-methods environment, which reaches the model only through
+its parent frame, and nothing reads it that way.
 
 ### What this costs, stated accurately
 
@@ -1623,8 +1623,9 @@ data (`R/model.R:1409-1412`).
 **The model's generated C++ is part of the snapshot, for the same reason.** <!-- /contract --> The build
 runs stanc a second time, without make, to produce it (`R/model.R:848`), and that
 text is what `fit$init_model_methods()` compiles the model methods from and what
-`$hpp_file()` points at. Neither consumer can validate: a fit copies the text at its
-own construction and has no engine, and the file is a path. Today neither exists on
+`$hpp_file()` points at. Neither consumer can validate: a fit reads the text
+from the environment its run took from the model and has no engine, and the
+file is a path. Today neither exists on
 the reuse path. `fit$init_model_methods()` errors "cannot be used with a pre-compiled
 Stan executable", asserted by `test-model-methods.R:108`, `$hpp_file()` errors
 "Please (re)compile", and the roxygen for both names `force_recompile = TRUE` as the
@@ -3287,9 +3288,9 @@ that has been wrong since before 0.9.0.
 `R/model.R:551` tells the caller to use `fit$init_model_methods()` instead when the
 model will be saved, and `:557` says `$expose_functions()` does the same job after
 compilation. <!-- /contract --> Both are public and both are tested. `fit$init_model_methods()`
-compiles from the model C++ the fit copied at construction, which §5 puts in the
-snapshot on both paths; today that text is absent on reuse and the method errors
-there, one more consumer of the defect fixed below. `$expose_functions()` runs when
+compiles from the model C++ in the environment its run took from the model,
+which §5 puts in the snapshot on both paths; today that text is absent on reuse
+and the method errors there, one more consumer of the defect fixed below. `$expose_functions()` runs when
 it is called, and needs the fix below.
 
 <!-- contract -->

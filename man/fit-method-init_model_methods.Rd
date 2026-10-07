@@ -25,7 +25,8 @@ The \verb{$init_model_methods()} method compiles and initializes the
 \code{log_prob}, \code{grad_log_prob}, \code{hessian}, \code{constrain_variables},
 \code{unconstrain_variables} and \code{unconstrain_draws} functions. These are then
 available as methods of the fitted model object. This requires the
-additional \pkg{Rcpp} package.
+additional \pkg{Rcpp} package. The methods compile once per model
+object, so later fits of the same model reuse them.
 
 If a model or fit object was saved with \code{\link[base:saveRDS]{base::saveRDS()}} and later
 reloaded, any previously compiled model-method bindings will be rebuilt in

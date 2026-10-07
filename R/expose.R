@@ -2,11 +2,10 @@
 # $init_model_methods() and the standalone functions behind
 # $expose_functions().
 
-check_sundials_fpic <- function(verbose) {
+check_sundials_fpic <- function(sundials_flags, verbose) {
   if (!os_is_linux()){
     return(invisible(NULL))
   }
-  sundials_flags <- get_cmdstan_flags("CPPFLAGS_SUNDIALS")
   local_flags <- cmdstan_make_local()
   if (any(grepl("-fPIC", c(sundials_flags, local_flags), fixed = TRUE))) {
     return(invisible(NULL))
@@ -70,7 +69,6 @@ rcppparallel_tbb <- function() {
 #' @return `NULL`, invisibly.
 #' @noRd
 rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
-  check_sundials_fpic(verbose)
   tbb <- rcppparallel_tbb()
   make_args <- character()
   tbb_dir <- tbb_path()
@@ -86,13 +84,17 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
     }
     tbb_dir <- tbb$lib
   }
-  cxxflags <- get_cmdstan_flags("CXXFLAGS", make_args)
-  cppflags <- get_cmdstan_flags("CPPFLAGS", make_args)
+  flags <- get_cmdstan_flags(
+    c("CXXFLAGS", "CPPFLAGS", "LDLIBS", "LIBSUNDIALS", "TBB_TARGETS",
+      "LDFLAGS_TBB", "SUNDIALS_TARGETS", "CPPFLAGS_SUNDIALS"),
+    make_args
+  )
+  check_sundials_fpic(flags[8], verbose)
+  cxxflags <- flags[1]
+  cppflags <- flags[2]
+  libs <- paste(flags[3:7], collapse = " ")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
-  libs <- c("LDLIBS", "LIBSUNDIALS", "TBB_TARGETS", "LDFLAGS_TBB", "SUNDIALS_TARGETS")
-  libs <- paste(sapply(libs, get_cmdstan_flags, make_args = make_args),
-                collapse = " ")
   if (!is.null(tbb)) {
     cxxflags <- paste0(cxxflags, " -I", shQuote(tbb$include))
     # make's print rule drops the quotes, so quote the path here

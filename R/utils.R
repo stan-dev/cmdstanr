@@ -769,22 +769,45 @@ make_shell_quote <- function(x) {
   gsub("$", "$$", x, fixed = TRUE)
 }
 
-get_cmdstan_flags <- function(flag_name, make_args = character()) {
+#' Read make variables from the CmdStan makefiles
+#'
+#' Ask for every variable you need in one call. Starting make is what
+#' takes the time, printing one more variable costs nothing.
+#'
+#' @param flag_names (character) Make variable names, or `"STANCFLAGS"` on
+#'   its own.
+#' @param make_args (character) `NAME=value` overrides for the make call.
+#' @return A character vector with one element per name, paths quoted and
+#'   made absolute. `"STANCFLAGS"` returns one element per argument.
+#' @noRd
+get_cmdstan_flags <- function(flag_names, make_args = character()) {
   cmdstan_path <- checked_cmdstan_path()
-  if (flag_name == "STANCFLAGS") {
-    # stanc flags are returned as a character vector, one element per argument
+  if (identical(flag_names, "STANCFLAGS")) {
     return(stancflags_from_make(cmdstan_path, make_args))
   }
   withr::with_envvar(
     c("HOME" = short_path(Sys.getenv("HOME"))),
     flags_stdout <- wsl_compatible_run(
       command = "make",
-      args = c("-s", make_args, paste0("print-", flag_name)),
+      args = c("-s", make_args, paste0("print-", flag_names)),
       wd = cmdstan_path
     )$stdout
   )
-  flags <- parse_make_print_flag(flag_name, flags_stdout)
+  vapply(flag_names, function(flag_name) {
+    flags <- parse_make_print_flag(flag_name, flags_stdout)
+    quote_cmdstan_flag_paths(flag_name, flags, cmdstan_path)
+  }, character(1), USE.NAMES = FALSE)
+}
 
+#' Quote the paths in one make variable's value and make them absolute
+#'
+#' @param flag_name (string) The make variable's name.
+#' @param flags (string) Its value as make printed it.
+#' @param cmdstan_path (string) The CmdStan directory the paths are
+#'   relative to.
+#' @return The value with every path absolute and shell-quoted.
+#' @noRd
+quote_cmdstan_flag_paths <- function(flag_name, flags, cmdstan_path) {
   if (!nzchar(flags)) {
     return(flags)
   }

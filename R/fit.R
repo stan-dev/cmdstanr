@@ -18,22 +18,12 @@ CmdStanFit <- R6::R6Class(
       private$return_codes_ <- self$runset$procs$return_codes()
 
       private$model_methods_env_ <- new.env()
-      if (!is.null(runset$model_methods_env())) {
-        for (n in ls(runset$model_methods_env(), all.names = TRUE)) {
-          assign(n, get(n, runset$model_methods_env()), private$model_methods_env_)
-        }
-      }
-      drop_stale_model_methods(private$model_methods_env_)
 
       self$functions <- new.env()
       if (!is.null(runset$standalone_env())) {
         for (n in ls(runset$standalone_env(), all.names = TRUE)) {
           assign(n, get(n, runset$standalone_env()), self$functions)
         }
-      }
-
-      if (!is.null(private$model_methods_env_$model_ptr)) {
-        initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
       }
       invisible(self)
     },
@@ -362,7 +352,8 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   `log_prob`, `grad_log_prob`, `hessian`, `constrain_variables`,
 #'   `unconstrain_variables` and `unconstrain_draws` functions. These are then
 #'   available as methods of the fitted model object. This requires the
-#'   additional \pkg{Rcpp} package.
+#'   additional \pkg{Rcpp} package. The methods compile once per model
+#'   object, so later fits of the same model reuse them.
 #'
 #'   If a model or fit object was saved with [base::saveRDS()] and later
 #'   reloaded, any previously compiled model-method bindings will be rebuilt in
@@ -396,19 +387,24 @@ init_model_methods <- function(seed = 1, verbose = FALSE, quiet = FALSE) {
           "WSL CmdStan and will not be compiled",
           call. = FALSE)
   }
-  drop_stale_model_methods(private$model_methods_env_)
-  if (length(private$model_methods_env_$hpp_code_) == 0) {
+  # The methods compile once into the model's environment, which every fit
+  # of the model shares. Each fit copies the bindings and makes its own
+  # model pointer.
+  model_env <- self$runset$model_methods_env()
+  if (length(model_env$hpp_code_) == 0) {
     stop("Model methods cannot be used with a model created from an ",
          "executable alone. There is no Stan program to compile them from.",
          call. = FALSE)
   }
-  if (is.null(private$model_methods_env_$model_ptr)) {
+  drop_stale_model_methods(model_env)
+  if (is.null(model_env$model_ptr)) {
     require_suggested_package("Rcpp")
-    expose_model_methods(private$model_methods_env_, verbose, quiet)
+    expose_model_methods(model_env, verbose, quiet)
   }
-  if (!model_methods_are_live(private$model_methods_env_)) {
-    initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
+  for (n in ls(model_env, all.names = TRUE)) {
+    assign(n, get(n, model_env), private$model_methods_env_)
   }
+  initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
   invisible(NULL)
 }
 CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods)

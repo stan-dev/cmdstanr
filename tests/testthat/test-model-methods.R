@@ -63,6 +63,18 @@ test_that("Model methods automatically initialise when needed", {
   expect_no_error(fit$log_prob(unconstrained_variables=c(0.1)))
 })
 
+test_that("a later fit of the same model reuses the compiled methods", {
+  fit$init_model_methods()
+  utils::capture.output(
+    fit2 <- mod$sample(data = data_list, chains = 1, refresh = 0, seed = 2)
+  )
+  local_mocked_bindings(expose_model_methods = function(...) {
+    stop("compiled a second time")
+  })
+  expect_equal(fit2$log_prob(unconstrained_variables = 0.1),
+               fit$log_prob(unconstrained_variables = 0.1))
+})
+
 test_that("Methods return correct values", {
   lp <- fit$log_prob(unconstrained_variables=c(0.1))
   expect_equal(lp, -8.6327599208828509347)
@@ -164,6 +176,9 @@ test_that("Reloaded models recompile model methods lazily after saveRDS/readRDS"
     testing_stan_file("bernoulli_log_lik"),
     force_recompile = TRUE
   )
+  # Compile the methods so the saved model carries bindings that are stale
+  # once reloaded
+  utils::capture.output(mod$optimize(data = data_list)$init_model_methods())
   temp_rds_file <- tempfile(fileext = ".RDS")
   saveRDS(mod, temp_rds_file)
   mod2 <- readRDS(temp_rds_file)
