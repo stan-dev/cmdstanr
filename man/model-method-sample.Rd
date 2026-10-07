@@ -36,11 +36,11 @@ sample(
   fixed_param = FALSE,
   show_messages = TRUE,
   show_exceptions = TRUE,
+  show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+  suppress_iteration_messages = show_progress_bar,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = getOption("cmdstanr_save_metric", FALSE),
-  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-  show_progress_bar = FALSE,
-  suppress_iteration_messages = NULL
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
 )
 }
 \arguments{
@@ -278,6 +278,25 @@ numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
 
+\item{show_progress_bar}{(logical) \strong{Experimental.} Should CmdStanR signal
+sampling progress through \pkg{progressr}? The default is
+\code{getOption("cmdstanr_progress_bar", FALSE)}. CmdStanR signals one combined
+progression across all chains. \pkg{progressr} controls whether and how it
+is displayed. CmdStanR does not install or modify progression handlers;
+configure those at user or session startup. \code{refresh} must be greater than
+0; if the argument is not set explicitly, the progress bar is disabled
+when \code{refresh = 0}. The progress bar itself adds negligible overhead, but
+very small \code{refresh} values (e.g. \code{refresh = 1}) make CmdStanR process
+every iteration line, which is slow for fast models and gives a smooth bar
+for slow ones. To request progress only for
+interactive use, set \code{options(cmdstanr_progress_bar = interactive())}.
+For example, \code{progressr::handlers(global = TRUE)} enables progress bars
+for the session, and \code{progressr::handlers("cli")} selects the cli
+handler.}
+
+\item{suppress_iteration_messages}{(logical) Should CmdStan iteration
+messages be suppressed? The default is \code{show_progress_bar}.}
+
 \item{diagnostics}{(character vector) The diagnostics to automatically check
 and warn about after sampling. Setting this to an empty string \code{""} or
 \code{NULL} can be used to prevent CmdStanR from automatically reading in the
@@ -307,16 +326,6 @@ entire \R session by \code{options(cmdstanr_save_metric = TRUE)}.}
 tree and extra information (equivalent to the output CSV file header). The
 default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
 \code{options(cmdstanr_save_config = TRUE)}.}
-
-\item{show_progress_bar}{(logical). When \code{TRUE}, registers a progress bar to
-display sampling progress via the \code{progressr} framework. The user is
-responsible for registering a handler to display the progress bar. A
-default handler, using the \code{cli} package, can be registered via
-\code{\link[=register_default_progress_handler]{register_default_progress_handler()}}. The default is \code{FALSE}.}
-
-\item{suppress_iteration_messages}{(logical) When \code{TRUE}, suppresses CmdStan
-output lines reporting iterations, intended for use with the
-\code{show_progress_bar} argument. Defaults to the value of \code{show_progress_bar}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

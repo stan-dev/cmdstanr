@@ -86,6 +86,99 @@ test_that("sample() method works with data list", {
   expect_s3_class(fit, "CmdStanMCMC")
 })
 
+test_that("CmdStan iteration output is parsed", {
+  expect_equal(
+    parse_cmdstan_iteration("Iteration:  170 / 170 [100%]  (Sampling)"),
+    c(current = 170L, total = 170L)
+  )
+  expect_null(parse_cmdstan_iteration("Elapsed Time: 0.1 seconds"))
+})
+
+test_that("sample progress follows CmdStan's cumulative iteration count", {
+  skip_if_not_installed("progressr")
+
+  total <- NULL
+  amounts <- integer()
+  handler <- progressr::make_progression_handler(
+    "cmdstanr-test",
+    reporter = list(
+      initiate = function(config, ...) {
+        total <<- config$max_steps
+      },
+      update = function(config, state, progression, ...) {
+        if (progression$amount > 0) {
+          amounts <<- c(amounts, progression$amount)
+        }
+      }
+    ),
+    interval = 0,
+    intrusiveness = 0,
+    target = "terminal",
+    enable = TRUE
+  )
+
+  fit <- progressr::with_progress(
+    mod$sample(
+      data = data_list,
+      chains = 1,
+      parallel_chains = 1,
+      iter_warmup = 100,
+      iter_sampling = 70,
+      refresh = 50,
+      show_messages = FALSE,
+      show_progress_bar = TRUE
+    ),
+    handlers = handler,
+    enable = TRUE
+  )
+
+  expect_s3_class(fit, "CmdStanMCMC")
+  expect_equal(total, 170)
+  expect_equal(amounts, c(1, 49, 50, 1, 49, 20))
+})
+
+test_that("finish_progress finishes the progressor once", {
+  skip_if_not_installed("progressr")
+  procs <- CmdStanMCMCProcs$new(num_procs = 1, show_progress_bar = TRUE)
+  calls <- 0L
+  procs$.__enclos_env__$private$progressor_ <- function(...) calls <<- calls + 1L
+  procs$finish_progress()
+  procs$finish_progress()
+  expect_equal(calls, 1L)
+})
+
+test_that("sample progress requires iteration output", {
+  expect_error(
+    mod$sample(
+      data = data_list,
+      chains = 1,
+      refresh = 0,
+      show_progress_bar = TRUE
+    ),
+    "requires 'refresh > 0'"
+  )
+
+  withr::local_options(list(cmdstanr_progress_bar = TRUE))
+  expect_s3_class(
+    mod$sample(data = data_list, chains = 1, refresh = 0, show_messages = FALSE),
+    "CmdStanMCMC"
+  )
+})
+
+test_that("sample can suppress CmdStan iteration messages", {
+  output <- capture.output(
+    mod$sample(
+      data = data_list,
+      chains = 1,
+      iter_warmup = 1,
+      iter_sampling = 1,
+      refresh = 1,
+      suppress_iteration_messages = TRUE
+    )
+  )
+  expect_false(any(grepl("Iteration:", output, fixed = TRUE)))
+})
+
 test_that("sample() method works with data files", {
   expect_sample_output(fit_r <- mod$sample(data = data_file_r, chains = 1), 1)
   expect_s3_class(fit_r, "CmdStanMCMC")

@@ -1336,14 +1336,6 @@ CmdStanModel$set("public", name = "format", value = format)
 #' @template model-common-args
 #' @template model-save-latent-dynamics-arg
 #' @template model-sample-args
-#' @param show_progress_bar (logical). When `TRUE`, registers a progress bar to
-#'   display sampling progress via the `progressr` framework. The user is
-#'   responsible for registering a handler to display the progress bar. A
-#'   default handler, using the `cli` package, can be registered via
-#'   [register_default_progress_handler()]. The default is `FALSE`.
-#' @param suppress_iteration_messages (logical) When `TRUE`, suppresses CmdStan
-#'   output lines reporting iterations, intended for use with the
-#'   `show_progress_bar` argument. Defaults to the value of `show_progress_bar`.
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
@@ -1392,11 +1384,11 @@ sample <- function(data = NULL,
                    fixed_param = FALSE,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
+                   show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+                   suppress_iteration_messages = show_progress_bar,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    save_metric = getOption("cmdstanr_save_metric", FALSE),
-                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                   show_progress_bar = FALSE,
-                   suppress_iteration_messages = NULL) {
+                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
   if (cmdstan_version_compare(self$cmdstan_version(), "2.36.0") < 0 &&
       !fixed_param) {
@@ -1409,35 +1401,20 @@ sample <- function(data = NULL,
   if (fixed_param) {
     save_warmup <- FALSE
   }
-
-  progress_bar <- NULL
-  if (show_progress_bar) {
-    if (!requireNamespace("progressr", quietly = TRUE)) {
-      stop("Please install the 'progressr' package to enable a progress bar. ",
-           call. = FALSE)
+  if (isTRUE(show_progress_bar) && isTRUE(refresh == 0)) {
+    if (!missing(show_progress_bar)) {
+      stop("'show_progress_bar = TRUE' requires 'refresh > 0'.", call. = FALSE)
     }
-    # - progressr only supports single-line progress bars at time of writing,
-    #   so all chains must be combined into a single process bar.
-    # - The total number of steps for progress is the total number of iterations
-    #   (including warmup) across all chains.
-    # - We will update the progress bar by 'refresh' steps each time.
-    # - As 'iter_sampling' and 'iter_warmup' can be NULL, we need to reproduce the
-    #   defaults here manually.
-    chains <- checkmate::assert_integerish(chains, lower = 1, len = 1)
-    n_steps <- chains * (iter_sampling %||% 1000 + iter_warmup %||% 1000)
-    progress_bar <- progressr::progressor(steps=n_steps, auto_finish=TRUE)
+    show_progress_bar <- FALSE
   }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
-    iter_warmup = checkmate::assert_integerish(iter_warmup, lower = 0, len = 1, null.ok = TRUE),
-    iter_sampling = checkmate::assert_integerish(iter_sampling, lower = 0, len = 1, null.ok = TRUE),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
     threads_per_proc = assert_valid_threads(threads_per_chain, self$cpp_options(), multiple_chains = TRUE),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
-    progress_bar = progress_bar,
-    suppress_iteration_messages = suppress_iteration_messages,
-    refresh = refresh
+    show_progress_bar = show_progress_bar,
+    suppress_iteration_messages = suppress_iteration_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
@@ -1588,6 +1565,8 @@ sample_mpi <- function(data = NULL,
                        sig_figs = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
+                       show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+                       suppress_iteration_messages = show_progress_bar,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
 
@@ -1595,11 +1574,19 @@ sample_mpi <- function(data = NULL,
     chains <- 1
     save_warmup <- FALSE
   }
+  if (isTRUE(show_progress_bar) && isTRUE(refresh == 0)) {
+    if (!missing(show_progress_bar)) {
+      stop("'show_progress_bar = TRUE' requires 'refresh > 0'.", call. = FALSE)
+    }
+    show_progress_bar <- FALSE
+  }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
     parallel_procs = 1,
     show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages
+    show_stdout_messages = show_messages,
+    show_progress_bar = show_progress_bar,
+    suppress_iteration_messages = suppress_iteration_messages
   )
   model_variables <- NULL
   if (is_variables_method_supported(self)) {
