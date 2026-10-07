@@ -36,7 +36,8 @@ sample_mpi(
   show_messages = TRUE,
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = c("none", "gzip", "bzip2")
 )
 }
 \arguments{
@@ -286,6 +287,11 @@ using the \code{\link[=fit-method-summary]{$summary()}} method.}
 tree and extra information (equivalent to the output CSV file header). The
 default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
 \code{options(cmdstanr_save_config = TRUE)}.}
+
+\item{compress}{(string) Compression to apply to the output CSV files after
+CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
+(the default), \code{"gzip"}, or \code{"bzip2"}. Compressed files can still be read
+by CmdStanR, but \code{gzip} or \code{bzip2} must be available on \code{PATH}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

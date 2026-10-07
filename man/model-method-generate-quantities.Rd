@@ -16,7 +16,8 @@ generate_quantities(
   threads_per_chain = NULL,
   opencl_ids = NULL,
   show_messages = TRUE,
-  show_exceptions = TRUE
+  show_exceptions = TRUE,
+  compress = c("none", "gzip", "bzip2")
 )
 }
 \arguments{
@@ -127,6 +128,11 @@ recommended unless you are very confident that the model is correct up to
 numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
+
+\item{compress}{(string) Compression to apply to the output CSV files after
+CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
+(the default), \code{"gzip"}, or \code{"bzip2"}. Compressed files can still be read
+by CmdStanR, but \code{gzip} or \code{bzip2} must be available on \code{PATH}.}
 }
 \value{
 A \code{\link{CmdStanGQ}} object.
