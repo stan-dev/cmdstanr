@@ -514,11 +514,10 @@ as_cmdstan_fit <- function(files,
                            variables = NULL,
                            check_diagnostics = TRUE,
                            format = getOption("cmdstanr_draws_format")) {
-  lazy <- is.null(variables) && read_csv_metadata(files[1])$method == "sample"
   csv_contents <- read_cmdstan_csv(
     files,
-    variables = if (lazy) "" else variables,
-    sampler_diagnostics = if (lazy && !check_diagnostics) "" else NULL,
+    variables = if (is.null(variables)) "" else variables,
+    sampler_diagnostics = if (check_diagnostics) NULL else "",
     format = format
   )
   method <- csv_contents$metadata$method
