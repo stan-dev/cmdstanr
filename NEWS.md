@@ -2,8 +2,21 @@
 
 * `$sample()` can show a progress bar through the `progressr` package with
 `show_progress_bar = TRUE` or `options(cmdstanr_progress_bar = TRUE)`. (#1138)
+* `$sample()` reads each chain's CSV file once instead of twice. The columns
+of `$sampler_diagnostics()` are now in the order of the CSV file. (#1312)
+* `as_cmdstan_fit()` now reads draws from the CSV files when they're first
+requested (like fits from `$sample()` do). Reading a large fit to look at a few
+variables takes much less memory. (#1294)
+* `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
+CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
+`.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)
+* `check_cmdstan_toolchain()` now waits longer for WSL to respond and
+says so when it doesn't, instead of reporting that no WSL distribution
+is installed. (#1297)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization because they avoid repeated stale-binding checks. (#1274)
+* `install_cmdstan()` now retries a download without the token if GitHub
+rejects the one in `GITHUB_PAT`, and warns the token may not be valid. (#909)
 * `install_cmdstan()` now offers to copy the `make/local` flags of the
 current installation into the new one before building it, so the new CmdStan is
 built with the same flags. In an interactive session it shows the previous

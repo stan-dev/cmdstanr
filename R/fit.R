@@ -1474,7 +1474,7 @@ CmdStanMCMC <- R6::R6Class(
           diagnostics <- self$runset$args$method_args$diagnostics
           private$read_csv_(
             variables = "",
-            sampler_diagnostics = convert_hmc_diagnostic_names(diagnostics)
+            sampler_diagnostics = if (is.null(diagnostics)) "" else NULL
           )
           invisible(self$diagnostic_summary(diagnostics, quiet = FALSE))
         }
