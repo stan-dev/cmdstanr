@@ -741,15 +741,6 @@ decompress_csv <- function(file, dir) {
 #'
 read_csv_metadata <- function(csv_file) {
   assert_file_exists(csv_file, access = "r", extension = "csv")
-  info <- file.info(csv_file)
-  key <- paste(normalizePath(csv_file), info$size, info$mtime)
-  get0(key, csv_metadata_cache) %||%
-    assign(key, parse_csv_metadata(csv_file), csv_metadata_cache)
-}
-
-csv_metadata_cache <- new.env(parent = emptyenv())
-
-parse_csv_metadata <- function(csv_file) {
   inv_metric_next <- FALSE
   csv_file_info <- list()
   csv_file_info$inv_metric <- NULL
