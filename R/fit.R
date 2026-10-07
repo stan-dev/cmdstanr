@@ -1472,9 +1472,11 @@ CmdStanMCMC <- R6::R6Class(
           private$read_csv_(variables = "", sampler_diagnostics = "")
         } else {
           diagnostics <- self$runset$args$method_args$diagnostics
+          # Read every diagnostic column now, diagnostic_summary() would
+          # otherwise read the files again for the ones not requested.
           private$read_csv_(
             variables = "",
-            sampler_diagnostics = convert_hmc_diagnostic_names(diagnostics)
+            sampler_diagnostics = if (is.null(diagnostics)) "" else NULL
           )
           invisible(self$diagnostic_summary(diagnostics, quiet = FALSE))
         }

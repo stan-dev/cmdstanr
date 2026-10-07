@@ -50,7 +50,11 @@ test_that("draws() works when gradually adding variables", {
   expect_equal(posterior::variables(draws_lp__), c("lp__"))
   expect_type(sampler_diagnostics, "double")
   expect_s3_class(sampler_diagnostics, "draws_array")
-  expect_equal(posterior::variables(sampler_diagnostics), c(c("treedepth__", "divergent__", "energy__", "accept_stat__", "stepsize__", "n_leapfrog__")))
+  expect_equal(
+    posterior::variables(sampler_diagnostics),
+    c("accept_stat__", "stepsize__", "treedepth__", "n_leapfrog__",
+      "divergent__", "energy__")
+  )
   draws_alpha <- fit$draws(variables = c("alpha"), inc_warmup = TRUE)
   expect_type(draws_alpha, "double")
   expect_s3_class(draws_alpha, "draws_array")
