@@ -179,6 +179,9 @@ needs to tell a tuple from a list of arrays. (#925)
 
 * Reading MCMC and generated quantities draws from CmdStan CSV files now uses
 less memory. (#1041, #1307)
+* `as_cmdstan_fit()` now reads draws from the CSV files when they're first
+requested (like fits from `$sample()` do). Reading a large fit to look at a few
+variables takes much less memory. (#1294)
 * `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
 CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
 `.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)
@@ -200,6 +203,8 @@ computation, which can be very slow. Set `r_eff = TRUE` for the previous
 behavior. (#1091)
 * `$log_prob()`, `$grad_log_prob()`, and other model methods are now faster
 after initialization. (#1274)
+* `$init_model_methods()` takes less time to set up, and later fits of the
+same model reuse the compiled methods instead of compiling them again. (#1309)
 * `fit$init_model_methods()` and `$expose_functions()` gain a `quiet` argument
 that suppresses the messages printed while the methods or functions compile.
 (#914)
@@ -293,6 +298,11 @@ files when `TMPDIR` points at the `//wsl$` share. (#1113)
 * CmdStan processes are now killed when the R process that started them dies
 without running its cleanup, for example a future worker interrupted from the
 parent session. Previously they kept running as orphans. (#1086)
+* `$init_model_methods()` and `$expose_functions()` now work in the same R
+session as rstan or brms, whichever loads first, when RcppParallel 6.2.0 or
+later is installed. (#1270)
+* A function exposed with `$expose_functions()` that returns a tuple no longer
+occasionally crashes R or returns a list with wrong elements. (#1001)
 
 ## Removed and deprecated
 

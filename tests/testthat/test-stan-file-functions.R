@@ -26,6 +26,9 @@ test_that("check_syntax_stan_file() checks a program", {
 })
 
 test_that("check_syntax_stan_file() and variables_stan_file() leave nothing behind", {
+  # Run pending finalizers first, an unreferenced fit from an earlier
+  # file would otherwise delete its CSV files between the two snapshots.
+  gc()
   before <- list.files(tempdir())
   check_syntax_stan_file(testing_stan_file("bernoulli"), quiet = TRUE)
   variables_stan_file(testing_stan_file("bernoulli"))
