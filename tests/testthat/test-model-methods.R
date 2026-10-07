@@ -3,7 +3,7 @@ skip_on_cran()
 skip_if(os_is_wsl())
 
 set_cmdstan_path()
-mod <- cmdstan_model(testing_stan_file("bernoulli_log_lik"), force_recompile = TRUE)
+mod <- testing_model("bernoulli_log_lik")
 data_list <- testing_data("bernoulli")
 utils::capture.output(
   fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
@@ -172,10 +172,7 @@ test_that("Methods work with a model built from a reused executable", {
 test_that("Reloaded models recompile model methods lazily after saveRDS/readRDS", {
   # Also tests that fitted model objects are returned without error after
   # saveRDS/readRDS when model methods are compiled: https://github.com/stan-dev/cmdstanr/issues/1157
-  mod <- cmdstan_model(
-    testing_stan_file("bernoulli_log_lik"),
-    force_recompile = TRUE
-  )
+  mod <- testing_model("bernoulli_log_lik")
   # Compile the methods so the saved model carries bindings that are stale
   # once reloaded
   utils::capture.output(mod$optimize(data = data_list)$init_model_methods())
@@ -193,10 +190,7 @@ test_that("Reloaded models recompile model methods lazily after saveRDS/readRDS"
 })
 
 test_that("stale model-method bindings are detected and dropped", {
-  mod <- cmdstan_model(
-    testing_stan_file("bernoulli_log_lik"),
-    force_recompile = TRUE
-  )
+  mod <- testing_model("bernoulli_log_lik")
   utils::capture.output(fit <- mod$optimize(data = data_list))
   fit$init_model_methods()
   temp_rds_file <- tempfile(fileext = ".RDS")
