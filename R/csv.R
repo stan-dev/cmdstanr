@@ -514,7 +514,12 @@ as_cmdstan_fit <- function(files,
                            variables = NULL,
                            check_diagnostics = TRUE,
                            format = getOption("cmdstanr_draws_format")) {
-  csv_contents <- read_cmdstan_csv(files, variables = variables, format = format)
+  csv_contents <- read_cmdstan_csv(
+    files,
+    variables = if (is.null(variables)) "" else variables,
+    sampler_diagnostics = if (check_diagnostics) NULL else "",
+    format = format
+  )
   method <- csv_contents$metadata$method
   if (!is.null(variables)) {
     if (method == "sample") {
@@ -561,7 +566,8 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
       private$warmup_draws_ <- csv_contents$warmup_draws
       private$draws_ <- csv_contents$post_warmup_draws
-      if (check_diagnostics) {
+      if (check_diagnostics &&
+          !isTRUE(private$metadata_$algorithm == "fixed_param")) {
         invisible(self$diagnostic_summary())
       }
       invisible(self)
@@ -574,7 +580,7 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$time_
     },
     num_chains = function() {
-      posterior::nchains(self$draws())
+      length(private$output_files_)
     }
   ),
   private = list(
