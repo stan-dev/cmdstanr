@@ -1,5 +1,7 @@
 # cmdstanr (development version)
 
+* `$sample()` reads each chain's CSV file once instead of twice. The columns
+of `$sampler_diagnostics()` are now in the order of the CSV file. (#1312)
 * `as_cmdstan_fit()` now reads draws from the CSV files when they're first
 requested (like fits from `$sample()` do). Reading a large fit to look at a few
 variables takes much less memory. (#1294)
