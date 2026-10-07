@@ -988,6 +988,34 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
   )
 })
 
+test_that("as_cmdstan_fit loads MCMC draws on request", {
+  files <- fit_logistic_thin_1$output_files()
+  fit <- as_cmdstan_fit(files)
+  expected <- read_cmdstan_csv(files)$post_warmup_draws
+
+  expect_equal(fit$draws("beta"), posterior::subset_draws(expected, variable = "beta"))
+  expect_equal(fit$draws("alpha"), posterior::subset_draws(expected, variable = "alpha"))
+  expect_equal(fit$draws(), expected)
+})
+
+test_that("as_cmdstan_fit loads MCMC warmup draws on request", {
+  files <- fit_logistic_thin_1_with_warmup$output_files()
+  fit <- as_cmdstan_fit(files)
+  expected <- read_cmdstan_csv(files)
+
+  expect_equal(
+    fit$draws("beta", inc_warmup = TRUE),
+    posterior::subset_draws(
+      posterior::bind_draws(
+        expected$warmup_draws,
+        expected$post_warmup_draws,
+        along = "iteration"
+      ),
+      variable = "beta"
+    )
+  )
+})
+
 test_that("as_cmdstan_fit can check MCMC diagnostics", {
   fit_schools <- suppressMessages(
     testing_fit("schools", chains = 2,

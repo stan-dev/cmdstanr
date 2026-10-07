@@ -2,6 +2,9 @@
 
 * `$sample()` reads each chain's CSV file once instead of twice. The columns
 of `$sampler_diagnostics()` are now in the order of the CSV file. (#1312)
+* `as_cmdstan_fit()` now reads draws from the CSV files when they're first
+requested (like fits from `$sample()` do). Reading a large fit to look at a few
+variables takes much less memory. (#1294)
 * `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
 CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
 `.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)

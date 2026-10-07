@@ -466,3 +466,9 @@ test_that("sampler_diagnostics() throws informative error when fixed_param=TRUE"
     "There are no sampler diagnostics when fixed_param = TRUE"
   )
 })
+
+test_that("as_cmdstan_fit handles fixed_param output", {
+  fit <- as_cmdstan_fit(fit_mcmc_fixed_param$output_files())
+  expect_s3_class(fit, "CmdStanMCMC")
+  expect_identical(fit$metadata()$algorithm, "fixed_param")
+})
