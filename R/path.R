@@ -116,7 +116,7 @@ cmdstan_version <- function(error_on_NA = TRUE) {
 # internal ----------------------------------------------------------------
 
 # initialize internal environment to store path to cmdstan, cmdstan version
-# number, and path to temp dir
+# number, path to temp dir, etc.
 .cmdstanr <- new.env(parent = emptyenv())
 .cmdstanr$PATH <- NULL
 .cmdstanr$VERSION <- NULL
@@ -124,18 +124,25 @@ cmdstan_version <- function(error_on_NA = TRUE) {
 .cmdstanr$WSL <- FALSE
 .cmdstanr$TOOLCHAIN_PATH <- NULL
 
+# Create a private null pointer for detecting when the model pointer used by
+# compiled model methods loses its native address during serialization. The
+# round trip avoids using methods::new("externalptr")'s shared prototype.
+new_null_external_pointer <- function() {
+  unserialize(serialize(methods::new("externalptr"), NULL))
+}
+.cmdstanr$NULL_EXTERNAL_POINTER <- new_null_external_pointer()
+
+
 unset_cmdstan_path <- function() {
   .cmdstanr$PATH <- NULL
   .cmdstanr$VERSION <- NULL
   .cmdstanr$WSL <- FALSE
 }
 
-# path to temp directory
 cmdstan_tempdir <- function() {
   .cmdstanr$TEMP_DIR
 }
 
-# error message to throw if no path has been set
 stop_no_path <- function() {
   stop("CmdStan path has not been set yet. See ?set_cmdstan_path.",
        call. = FALSE)

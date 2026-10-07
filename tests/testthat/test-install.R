@@ -231,6 +231,119 @@ test_that("Download failures return error message", {
     "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
 })
 
+test_that("try_download() captures the HTTP status warning", {
+  local_mocked_bindings(
+    download.file = function(...) {
+      warning("cannot open URL: HTTP status was '401 Unauthorized'")
+      stop("download failed")
+    },
+    .package = "utils"
+  )
+
+  result <- try_download("https://example.com/file", tempfile())
+
+  expect_s3_class(result, "try-error")
+  expect_match(attr(result, "http_status"), "401 Unauthorized", fixed = TRUE)
+})
+
+test_that("download_with_retries() keeps GITHUB_PAT after non-auth failure", {
+  withr::local_envvar(c(GITHUB_PAT = "valid-token"))
+  calls <- character()
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      if (length(calls) == 1L) {
+        return(download_error)
+      }
+      0L
+    }
+  )
+
+  expect_no_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    )
+  )
+
+  expect_identical(result, 0L)
+  expect_identical(calls, c("token valid-token", "token valid-token"))
+})
+
+test_that("download_with_retries() doesn't blame a token that isn't set", {
+  withr::local_envvar(c(GITHUB_PAT = NA))
+  calls <- character()
+  rate_limit_error <- try(stop("download failed"), silent = TRUE)
+  attr(rate_limit_error, "http_status") <- "HTTP status was '403 Forbidden'"
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      rate_limit_error
+    }
+  )
+
+  expect_no_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    )
+  )
+
+  expect_s3_class(result, "try-error")
+  expect_identical(calls, c("none", "none"))
+})
+
+test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
+  withr::local_envvar(c(GITHUB_PAT = "bad-token"))
+  calls <- character()
+  auth_error <- try(stop("download failed"), silent = TRUE)
+  attr(auth_error, "http_status") <- "HTTP status was '401 Unauthorized'"
+  download_error <- try(stop("download failed"), silent = TRUE)
+
+  local_mocked_bindings(
+    try_download = function(
+      download_url,
+      destination_file,
+      quiet = TRUE,
+      headers = github_auth_token()
+    ) {
+      calls <<- c(calls, if (is.null(headers)) "none" else unname(headers))
+      switch(length(calls), auth_error, download_error, 0L)
+    }
+  )
+
+  expect_warning(
+    result <- download_with_retries(
+      "https://example.com/file",
+      tempfile(),
+      retries = 1,
+      pause_sec = 0
+    ),
+    "Retrying without it.",
+    fixed = TRUE
+  )
+
+  expect_identical(result, 0L)
+  expect_identical(calls, c("token bad-token", "none", "none"))
+})
+
 test_that("Install from release file works", {
   dir <- tempdir(check = TRUE)
 
@@ -310,14 +423,235 @@ test_that("check_cmdstan_toolchain(fix = TRUE) is deprecated", {
   )
 })
 
+# Reusing the previous installation's make/local -----------------------------
+
+# A directory that looks enough like a CmdStan installation for
+# cmdstan_make_local() to write into it.
+fake_cmdstan_dir <- function(contents = NULL, envir = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = envir)
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  if (!is.null(contents)) {
+    writeLines(contents, file.path(dir, "make", "local"))
+  }
+  dir
+}
+
+test_that("maybe_copy_make_local() copies the previous flags when asked to", {
+  new_dir <- fake_cmdstan_dir()
+  previous <- c("CXXFLAGS += -march=native", "STAN_THREADS=true")
+
+  expect_message(
+    expect_true(
+      maybe_copy_make_local(new_dir, previous, "/old/cmdstan", copy_make_local = TRUE)
+    ),
+    "Copied make/local from /old/cmdstan",
+    fixed = TRUE
+  )
+  expect_equal(cmdstan_make_local(dir = new_dir), previous)
+})
+
+test_that("maybe_copy_make_local() does nothing when told not to copy", {
+  new_dir <- fake_cmdstan_dir()
+
+  expect_false(
+    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan",
+                          copy_make_local = FALSE)
+  )
+  expect_false(file.exists(file.path(new_dir, "make", "local")))
+})
+
+test_that("maybe_copy_make_local() never asks anything", {
+  # The question is asked by resolve_copy_make_local() before the download.
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt after the download")
+  )
+
+  new_dir <- fake_cmdstan_dir()
+  expect_false(
+    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan", NULL)
+  )
+  expect_false(file.exists(file.path(new_dir, "make", "local")))
+})
+
+test_that("maybe_copy_make_local() ignores a missing or empty make/local", {
+  # cmdstan_make_local() returns NULL when there is no file and "" when the
+  # file is empty.
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), NULL, "/old/cmdstan", TRUE))
+  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), "", "/old/cmdstan", TRUE))
+  expect_false(
+    maybe_copy_make_local(fake_cmdstan_dir(), character(0), "/old/cmdstan", TRUE)
+  )
+})
+
+test_that("resolve_copy_make_local() takes an explicit answer without asking", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt when told what to do")
+  )
+
+  expect_true(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", TRUE))
+  expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", FALSE))
+})
+
+test_that("resolve_copy_make_local() does not prompt in a non-interactive session", {
+  rlang::local_interactive(FALSE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt when not interactive")
+  )
+
+  expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+})
+
+test_that("resolve_copy_make_local() follows the answer to the prompt", {
+  rlang::local_interactive(TRUE)
+
+  local({
+    local_mocked_bindings(prompt_copy_make_local = function(...) TRUE)
+    expect_true(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+  })
+  local({
+    local_mocked_bindings(prompt_copy_make_local = function(...) FALSE)
+    expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+  })
+})
+
+test_that("resolve_copy_make_local() does not ask when there is nothing to copy", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(
+    prompt_copy_make_local = function(...) stop("must not prompt without flags to copy")
+  )
+
+  # Nothing was requested, so a make/local with no flags is a non-event
+  expect_no_message(expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", NULL)))
+  expect_no_message(expect_false(resolve_copy_make_local("", "/old/cmdstan", NULL)))
+  expect_no_message(
+    expect_false(resolve_copy_make_local(character(0), "/old/cmdstan", NULL))
+  )
+  expect_no_message(expect_false(resolve_copy_make_local("", "/old/cmdstan", FALSE)))
+})
+
+test_that("resolve_copy_make_local() reports an explicit TRUE it cannot honour", {
+  # Otherwise the flags silently fail to arrive and the user finds out weeks
+  # later, from a model that compiles differently.
+
+  # An installation is in use, but it has no flags to copy: name it, because
+  # that is what reveals a cmdstan_path() pointing somewhere unexpected.
+  expect_message(
+    expect_false(resolve_copy_make_local("", "/old/cmdstan", TRUE)),
+    "/old/cmdstan has an empty or missing make/local",
+    fixed = TRUE
+  )
+  expect_message(
+    expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", TRUE)),
+    "nothing to copy",
+    fixed = TRUE
+  )
+
+  # No installation in use at all: there is no path to name
+  expect_message(
+    expect_false(resolve_copy_make_local(NULL, NULL, TRUE)),
+    "no CmdStan installation is currently in use",
+    fixed = TRUE
+  )
+})
+
+test_that("report_uncopied_make_local() only reports an unanswered question", {
+  msg <- "cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"/old\"))"
+
+  # Non-interactive with copy_make_local = NULL: nobody was ever asked
+  expect_true(report_uncopied_make_local(msg, FALSE, "/old", "/new"))
+
+  # Answered, by argument or by prompt: saying it again would suggest a
+  # rebuild the user has already declined
+  expect_false(report_uncopied_make_local(msg, TRUE, "/old", "/new"))
+
+  # Previous installation had no flags
+  expect_false(report_uncopied_make_local(NULL, FALSE, "/old", "/new"))
+
+  # Reinstall over the same path: the file the message points at is gone
+  expect_false(report_uncopied_make_local(msg, FALSE, "/old", "/old"))
+})
+
+test_that("copied flags are written before cpp_options, which win", {
+  # Order matters: an inherited assignment must not override what the user
+  # asked install_cmdstan() for, and make takes the last assignment.
+  new_dir <- fake_cmdstan_dir()
+  suppressMessages(
+    maybe_copy_make_local(new_dir, "STANCFLAGS=--O1", "/old/cmdstan",
+                          copy_make_local = TRUE)
+  )
+  cmdstan_make_local(
+    dir = new_dir,
+    cpp_options = list(STANCFLAGS = "--Oexperimental"),
+    append = TRUE
+  )
+
+  expect_equal(
+    cmdstan_make_local(dir = new_dir),
+    c("STANCFLAGS=--O1", "STANCFLAGS=--Oexperimental")
+  )
+})
+
+test_that("prompt_copy_make_local() shows the flags and reads the answer", {
+  local_mocked_bindings(read_line = function(...) "y")
+  expect_message(
+    expect_true(prompt_copy_make_local("STAN_THREADS=true", "/old/cmdstan")),
+    "STAN_THREADS=true",
+    fixed = TRUE
+  )
+
+  local_mocked_bindings(read_line = function(...) "")
+  expect_message(
+    expect_false(prompt_copy_make_local("STAN_THREADS=true", "/old/cmdstan")),
+    "/old/cmdstan",
+    fixed = TRUE
+  )
+})
+
+test_that("install_cmdstan() asks about make/local before downloading", {
+  rlang::local_interactive(TRUE)
+  events <- character()
+  local_mocked_bindings(
+    cmdstan_version = function(...) "2.36.0",
+    cmdstan_make_local = function(...) "STAN_THREADS=true",
+    cmdstan_path = function(...) "/old/cmdstan",
+    prompt_copy_make_local = function(...) {
+      events <<- c(events, "prompt")
+      FALSE
+    },
+    download_with_retries = function(...) {
+      events <<- c(events, "download")
+      try(stop("no downloads in tests"), silent = TRUE)
+    }
+  )
+
+  expect_error(
+    suppressMessages(
+      install_cmdstan(dir = withr::local_tempdir(), version = "2.36.0",
+                      check_toolchain = FALSE)
+    ),
+    "Download of CmdStan failed"
+  )
+  expect_equal(events, c("prompt", "download"))
+})
+
+test_that("install_cmdstan() rejects a non-logical copy_make_local", {
+  expect_error(
+    install_cmdstan(copy_make_local = "yes", check_toolchain = FALSE),
+    "copy_make_local"
+  )
+})
+
 # Windows toolchain discovery tests ----------------------------------------
 
 test_that("toolchain_PATH_env_var() returns NULL on non-Windows", {
+  skip_if(os_is_windows())
+
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
-  local_mocked_bindings(os_is_windows = function() FALSE)
   expect_null(toolchain_PATH_env_var())
 })
 
@@ -357,7 +691,6 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.1.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -383,7 +716,6 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.1.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -404,6 +736,8 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
 })
 
 test_that("toolchain_PATH_env_var() compares R versions numerically", {
+  skip_if(!os_is_windows())
+
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
@@ -411,7 +745,6 @@ test_that("toolchain_PATH_env_var() compares R versions numerically", {
   rcmd_calls <- 0L
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local_mocked_bindings(
-    os_is_windows = function() TRUE,
     current_r_version = function() numeric_version("4.10.0"),
     .cmdstanr_rcmd = function(...) {
       rcmd_calls <<- rcmd_calls + 1L
@@ -445,7 +778,6 @@ test_that("toolchain_PATH_env_var() uses configured R_TOOLS_SOFT", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
@@ -486,7 +818,6 @@ test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -523,7 +854,6 @@ test_that("toolchain_PATH_env_var() searches PATH when R_TOOLS_SOFT is empty", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) "",
       short_path = function(path) path,
@@ -560,7 +890,6 @@ test_that("toolchain_PATH_env_var() returns NULL when both approaches fail", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -587,7 +916,6 @@ test_that("toolchain_PATH_env_var() returns NULL when only one tool in PATH", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -620,7 +948,6 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       short_path = function(path) path,
       repair_path = function(path) path
@@ -656,7 +983,6 @@ test_that("toolchain_PATH_env_var() preserves configured compiler", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
@@ -701,7 +1027,6 @@ test_that("toolchain_PATH_env_var() preserves configured make", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
@@ -747,7 +1072,6 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0"),
       .cmdstanr_rcmd = function(..., stdout = FALSE) fake_soft,
       short_path = function(path) path,
@@ -774,34 +1098,26 @@ test_that("is_ucrt_toolchain() returns correct values for R versions", {
   # is_ucrt_toolchain() is TRUE for R 4.2.x – 4.x.x on Windows
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.2.0")
     )
     expect_true(is_ucrt_toolchain())
   })
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.4.0")
     )
     expect_true(is_ucrt_toolchain())
   })
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("4.1.0")
     )
     expect_false(is_ucrt_toolchain())
   })
   local({
     local_mocked_bindings(
-      os_is_windows = function() TRUE,
       current_r_version = function() numeric_version("5.0.0")
     )
-    expect_false(is_ucrt_toolchain())
-  })
-  local({
-    local_mocked_bindings(os_is_windows = function() FALSE)
     expect_false(is_ucrt_toolchain())
   })
 })

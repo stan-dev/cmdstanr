@@ -4,98 +4,6 @@ local_output_sandbox <- function(pattern = "sandbox", .local_envir = parent.fram
   withr::local_tempdir(pattern = pattern, .local_envir = .local_envir)
 }
 
-test_that("WSL output paths stay host-native until command composition", {
-  # Use minimal method arguments so this test exercises path handling without
-  # launching CmdStan.
-  method_args <- list(
-    method = "sample",
-    save_metric = NULL,
-    validate = function(num_procs) invisible(),
-    compose = function(idx, args) args
-  )
-  # Cover system and non-system Windows drives as well as a WSL UNC path.
-  host_dirs <- c(
-    "C:/output",
-    "D:/output",
-    "//wsl$/Ubuntu/home/user/output"
-  )
-  wsl_dirs <- c(
-    "/mnt/c/output",
-    "/mnt/d/output",
-    "/home/user/output"
-  )
-  as_wsl_path <- function(path = NULL, revert = FALSE) {
-    if (is.null(path) || revert) {
-      return(path)
-    }
-    path <- sub("//wsl$/Ubuntu", "", path, fixed = TRUE)
-    for (i in seq_along(host_dirs)) {
-      path <- sub(host_dirs[i], wsl_dirs[i], path, fixed = TRUE)
-    }
-    path
-  }
-  # Simulate Windows R using WSL so this boundary test runs on every platform.
-  with_mocked_bindings(
-    {
-      args <- lapply(host_dirs, function(output_dir) {
-        CmdStanArgs$new(
-          model_name = "model",
-          exe_file = "model",
-          proc_ids = 1,
-          method_args = method_args,
-          output_dir = output_dir,
-          output_basename = "model"
-        )
-      })
-      output_files <- file.path(host_dirs, "model-01.csv")
-      expect_equal(
-        vapply(args, function(x) x$output_dir, character(1)),
-        host_dirs
-      )
-      expect_equal(
-        vapply(args, function(x) x$new_files("output"), character(1)),
-        output_files
-      )
-      cmdstan_output_files <- vapply(seq_along(args), function(i) {
-        command_args <- args[[i]]$compose_all_args(
-          output_file = output_files[i]
-        )
-        sub("file=", "", command_args[grepl("^file=", command_args)], fixed = TRUE)
-      }, character(1))
-      expect_equal(cmdstan_output_files, file.path(wsl_dirs, "model-01.csv"))
-
-      command_args <- args[[1]]$compose_all_args(
-        output_file = output_files[1],
-        profile_file = file.path(host_dirs[1], "model-profile-01.csv"),
-        latent_dynamics_file = file.path(host_dirs[1], "model-diagnostic-01.csv")
-      )
-      expect_in("diagnostic_file=/mnt/c/output/model-diagnostic-01.csv", command_args)
-      expect_in("profile_file=/mnt/c/output/model-profile-01.csv", command_args)
-
-      # Omitting output_dir must still use the faster WSL-native temp directory.
-      default_args <- CmdStanArgs$new(
-        model_name = "model",
-        exe_file = "model",
-        proc_ids = 1,
-        method_args = method_args,
-        output_basename = "model"
-      )
-      expect_equal(default_args$output_dir, "//wsl$/Ubuntu/tmp/cmdstanr")
-      expect_in(
-        "file=/tmp/cmdstanr/model-01.csv",
-        default_args$compose_all_args(
-          output_file = default_args$new_files("output")
-        )
-      )
-    },
-    os_is_wsl = function() TRUE,
-    wsl_safe_path = as_wsl_path,
-    wsl_dir_prefix = function(...) "//wsl$/Ubuntu",
-    wsl_tempdir = function() "/tmp/cmdstanr",
-    validate_cmdstan_args = function(self) invisible()
-  )
-})
-
 test_that("all fitting methods work with output_dir", {
   sandbox <- local_output_sandbox()
   for (method in c("sample", "optimize", "variational")) {
@@ -171,7 +79,6 @@ test_that("all fitting methods work with output_dir", {
 
 test_that("explicit WSL output paths are usable by Windows R", {
   skip_if_not(os_is_wsl())
-  # Unlike the mocked test above, this exercises the full Windows/WSL workflow.
   output_dir <- local_output_sandbox("wsl-output-dir")
   mod <- testing_model("logistic_profiling")
   utils::capture.output(

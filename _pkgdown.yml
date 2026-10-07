@@ -1,40 +1,10 @@
 url: https://mc-stan.org/cmdstanr
 
-destination: "."
-
 development:
   mode: auto
 
 template:
   package: pkgdownconfig
-
-navbar:
-  title: "cmdstanr"
-
-  structure:
-    left: [home, vignettes, functions, news, pkgs, stan]
-    right: [search, bluesky, forum, github, lightswitch]
-
-  components:
-    pkgs:
-      text: Other Packages
-      menu:
-        - text: bayesplot
-          href: https://mc-stan.org/bayesplot
-        - text: "loo"
-          href: https://mc-stan.org/loo
-        - text: posterior
-          href: https://mc-stan.org/posterior
-        - text: projpred
-          href: https://mc-stan.org/projpred
-        - text: rstan
-          href: https://mc-stan.org/rstan
-        - text: rstanarm
-          href: https://mc-stan.org/rstanarm
-        - text: rstantools
-          href: https://mc-stan.org/rstantools
-        - text: shinystan
-          href: https://mc-stan.org/shinystan
 
 toc:
   depth: 4
