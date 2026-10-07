@@ -2,11 +2,10 @@
 # $init_model_methods() and the standalone functions behind
 # $expose_functions().
 
-check_sundials_fpic <- function(verbose) {
+check_sundials_fpic <- function(sundials_flags, verbose) {
   if (!os_is_linux()){
     return(invisible(NULL))
   }
-  sundials_flags <- get_cmdstan_flags("CPPFLAGS_SUNDIALS")
   local_flags <- cmdstan_make_local()
   if (any(grepl("-fPIC", c(sundials_flags, local_flags), fixed = TRUE))) {
     return(invisible(NULL))
@@ -70,7 +69,6 @@ rcppparallel_tbb <- function() {
 #' @return `NULL`, invisibly.
 #' @noRd
 rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
-  check_sundials_fpic(verbose)
   tbb <- rcppparallel_tbb()
   make_args <- character()
   tbb_dir <- tbb_path()
@@ -88,12 +86,13 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   }
   flags <- get_cmdstan_flags(
     c("CXXFLAGS", "CPPFLAGS", "LDLIBS", "LIBSUNDIALS", "TBB_TARGETS",
-      "LDFLAGS_TBB", "SUNDIALS_TARGETS"),
+      "LDFLAGS_TBB", "SUNDIALS_TARGETS", "CPPFLAGS_SUNDIALS"),
     make_args
   )
+  check_sundials_fpic(flags[8], verbose)
   cxxflags <- flags[1]
   cppflags <- flags[2]
-  libs <- paste(flags[-(1:2)], collapse = " ")
+  libs <- paste(flags[3:7], collapse = " ")
   cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
   cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
   if (!is.null(tbb)) {
