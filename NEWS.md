@@ -2,16 +2,16 @@
 
 This is a major release with enough noteworthy items that we've broken the
 release notes into sections. The **Building models** section covers the
-compilation redesign. In particular, `cmdstan_model()` now compiles the model,
+compilation redesign. In particular, `cmdstan_model()` now compiles the model
 or reuses an up-to-date executable, before it returns, and the separate
 `$compile()` method is gone (code that calls `$compile()` or passes
-`compile = FALSE` will need to change). The other sections are independent of
-it: **Data and initial values** covers improvements to how data and initial
-values are handled, **Other new features** and **Bug fixes** cover what their
-titles suggest, and **Removed and deprecated** lists everything else that could
-break existing code beyond the compilation redesign.
+`compile = FALSE` will need to change). **Data and initial values** covers
+improvements to how data and initial values are handled, **Other new features**
+and **Bug fixes** cover what their titles suggest, and **Removed and
+deprecated** lists everything else that could break existing code beyond the
+compilation redesign.
 
-Each entry says what changed and what it replaced, so you or your coding agent
+Each entry says what changed and what it replaced, so you (or your coding) agent
 can update existing code from them.
 
 ## Building models
