@@ -298,6 +298,8 @@ parent session. Previously they kept running as orphans. (#1086)
 * `$init_model_methods()` and `$expose_functions()` now work in the same R
 session as rstan or brms, whichever loads first, when RcppParallel 6.2.0 or
 later is installed. (#1270)
+* A function exposed with `$expose_functions()` that returns a tuple no longer
+occasionally crashes R or returns a list with wrong elements. (#1001)
 
 ## Removed and deprecated
 

@@ -36,3 +36,12 @@
 "_PACKAGE"
 
 utils::globalVariables(c("self", "private", "super"))
+
+# R checks the version floors in DESCRIPTION only for packages the NAMESPACE
+# imports, so import one function from each dependency with a floor.
+#' @importFrom data.table fread
+#' @importFrom jsonlite fromJSON
+#' @importFrom processx run
+#' @importFrom withr defer
+#' @importFrom rlang is_interactive
+NULL

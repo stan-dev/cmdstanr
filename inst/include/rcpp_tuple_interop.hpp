@@ -1,7 +1,7 @@
 #ifndef CMDSTANR_RCPP_TUPLE_INTEROP_HPP
 #define CMDSTANR_RCPP_TUPLE_INTEROP_HPP
 
-#include <stan/math/prim/functor/apply.hpp>
+#include <stan/math/prim/functor/for_each.hpp>
 #include <Rcpp.h>
 
 namespace Rcpp {
@@ -36,9 +36,13 @@ namespace Rcpp {
   */
   template <typename... T>
   SEXP wrap(const std::tuple<T...>& x) {
-    return stan::math::apply([](const auto&... args) {
-      return Rcpp::List::create(Rcpp::wrap(args)...);
-    }, x);
+    // Filled one element at a time so each wrapped value is stored in the
+    // protected list before the next one allocates (#1001).
+    Rcpp::List out(sizeof...(T));
+    std::size_t i = 0;
+    stan::math::for_each(
+      [&](const auto& arg) { out[i++] = Rcpp::wrap(arg); }, x);
+    return out;
   }
 }
 
