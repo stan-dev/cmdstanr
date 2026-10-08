@@ -153,8 +153,8 @@ using the Stan functions \code{reduce_sum()} or \code{map_rect()}).}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
 the OpenCL device to use for fitting. The model must be compiled with
-\code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
-effect.}
+\code{cpp_options = list(stan_opencl = TRUE)}, otherwise setting this argument
+is an error.}
 
 \item{algorithm}{(string) The optimization algorithm. One of \code{"lbfgs"},
 \code{"bfgs"}, or \code{"newton"}. The control parameters below are only available

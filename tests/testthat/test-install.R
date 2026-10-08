@@ -655,14 +655,14 @@ test_that("cmdstan_make_local() works", {
                  "CXX=clang++",
                  "CXXFLAGS+= -march=native",
                  "TEST1=true",
-                 "TEST2=false"
+                 "TEST2="
                  ))
   expect_equal(cmdstan_make_local(cpp_options = list("TEST3" = TRUE)),
                c(
                  "CXX=clang++",
                  "CXXFLAGS+= -march=native",
                  "TEST1=true",
-                 "TEST2=false",
+                 "TEST2=",
                  "TEST3=true"
                ))
   expect_equal(cmdstan_make_local(cpp_options = list("TEST4" = TRUE), append = FALSE),
@@ -691,7 +691,7 @@ test_that("cmdstan_make_local() reads back written make flags", {
   )
   expect_equal(
     cmdstan_make_local(dir = dir, cpp_options = list("PRECOMPILED_HEADERS" = FALSE)),
-    c("CXX=clang++", "STAN_THREADS=true", "PRECOMPILED_HEADERS=false")
+    c("CXX=clang++", "STAN_THREADS=true", "PRECOMPILED_HEADERS=")
   )
   expect_equal(
     cmdstan_make_local(dir = dir, cpp_options = list("CXX" = "g++"), append = FALSE),
@@ -746,18 +746,18 @@ test_that("cmdstan_make_local() appends a flag that a later line has overridden"
   )
   expect_equal(
     cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = FALSE)),
-    c("STAN_THREADS=true", "STAN_THREADS=false")
+    c("STAN_THREADS=true", "STAN_THREADS=")
   )
   # make applies the last assignment, so threading is off at this point and
   # turning it back on is a real change rather than a duplicate
   expect_equal(
     cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
-    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
+    c("STAN_THREADS=true", "STAN_THREADS=", "STAN_THREADS=true")
   )
   # ... and now it is the last assignment again
   expect_equal(
     cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
-    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
+    c("STAN_THREADS=true", "STAN_THREADS=", "STAN_THREADS=true")
   )
 })
 
@@ -793,7 +793,7 @@ test_that("cmdstan_make_local() appends a += flag that a later assignment has wi
 test_that("cmdstan_make_local() checks flags in one call against each other", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  writeLines("STAN_THREADS=false", file.path(dir, "make", "local"))
+  writeLines("STAN_THREADS=", file.path(dir, "make", "local"))
 
   # The second flag is a duplicate of the file but not of what the file will
   # contain once the first flag is written, so both are needed to end up
@@ -803,7 +803,7 @@ test_that("cmdstan_make_local() checks flags in one call against each other", {
       dir = dir,
       cpp_options = list(STAN_THREADS = TRUE, STAN_THREADS = FALSE)
     ),
-    c("STAN_THREADS=false", "STAN_THREADS=true", "STAN_THREADS=false")
+    c("STAN_THREADS=", "STAN_THREADS=true", "STAN_THREADS=")
   )
 })
 

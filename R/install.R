@@ -67,8 +67,12 @@
 #'   For example: `release_file="./cmdstan-2.37.0.tar.gz"`. If `release_file` is
 #'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
-#'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
-#'   the use of clang for compilation.
+#'   the `make/local` file. For `install_cmdstan()` they are written before
+#'   CmdStan is built, so no rebuild is needed. A named entry is written as an
+#'   assignment, so `list(CXX = "clang++")` builds with clang, `TRUE` turns a
+#'   switch on (`list(stan_threads = TRUE)` gives `STAN_THREADS=true`) and
+#'   `FALSE` turns it off (`STAN_THREADS=`). An unnamed string is written as
+#'   is, which is how a line like `"CXXFLAGS += -march=native"` goes in.
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
 #'   that the required toolchain is installed and properly configured? The
 #'   default is `TRUE`.
@@ -373,7 +377,9 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
       if (isTRUE(as.logical(cpp_options[[i]]))) {
         built_flags <- c(built_flags, paste0(toupper(option_name), "=true"))
       } else if (isFALSE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(toupper(option_name), "=false"))
+        # An empty value turns a switch off: CmdStan tests these with ifdef,
+        # so NAME=false would turn it on.
+        built_flags <- c(built_flags, paste0(toupper(option_name), "="))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
           built_flags <- c(built_flags, paste0(cpp_options[[i]]))
@@ -542,7 +548,7 @@ read_line <- function(prompt) {
 #'
 #' Lines are compared as text, following the two rules of make that matter
 #' here. A plain assignment only counts while it is the last one for that
-#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
+#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=`
 #' further down is a real change, not a duplicate. `+=` accumulates, so a
 #' second identical `+=` line adds nothing, unless a plain assignment in
 #' between has reset the variable and dropped what the first one added.

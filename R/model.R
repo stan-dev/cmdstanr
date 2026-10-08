@@ -54,30 +54,37 @@
 #'   directory is used.
 #' @param user_header (string) The path to a C++ file (with a `.hpp` extension)
 #'   to compile with the Stan model.
-#' @param cpp_options (list) Any makefile options to be used when compiling the
-#'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.), written as
-#'   `list(NAME = value)`. Each entry is an assignment you could make in the
-#'   `make/local` file, so `list(CXXFLAGS = "-O3")` rather than `"-O3"`.
-#'   Every entry must be named with a make variable name, in any casing.
-#'   Setting an option to `FALSE` or `NULL` passes an empty assignment such as
-#'   `STAN_THREADS=`. That empties the variable for this build, which turns a
-#'   switch off, and overrides whatever `make/local` sets. See
-#'   [stan_build_info()] for an example of setting options and checking what
-#'   the executable was built with, and the Stan case study [Reduce Sum: A
-#'   Minimal
+#' @param cpp_options (list) Options for building the model's executable,
+#'   written as `list(NAME = value)`, for example `list(stan_threads = TRUE)`
+#'   to build with threading or `list(stan_no_range_checks = TRUE)` to skip
+#'   the range checks on indexing. The names are CmdStan's makefile variables
+#'   (`stan_threads`, `stan_opencl`, `stan_no_range_checks`,
+#'   `stan_cpp_optims`, `stan_mpi`, `CXXFLAGS`, etc.), in any casing. `TRUE`
+#'   turns an option on and `FALSE` or `NULL` turns it off, even when
+#'   `make/local` turns it on. The options apply to this model only, and each
+#'   one replaces the same variable's setting in `make/local`, so, e.g.,
+#'   `list(CXXFLAGS = "-Wall")` drops any flags that `make/local` adds to
+#'   `CXXFLAGS`. Settings meant for every model belong in `make/local`
+#'   instead, see [cmdstan_make_local()]. See [stan_build_info()] for an
+#'   example of setting options and checking what the executable was built
+#'   with, and the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html)
 #'   for using threading.
-#' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
-#'   when compiling the model. A flag is given by name without the leading
-#'   hyphens, as `list("O1")` or `list(O1 = TRUE)`, and an option that takes a
-#'   value as `list(option = "value")`. See [stan_build_info()] for an example
-#'   and the [stanc chapter of the CmdStan User's
-#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for the
-#'   available options. Options that CmdStanR sets from its own arguments
-#'   cannot be passed here: `include-paths` (use `include_paths`),
-#'   `warn-pedantic` (`pedantic`), `allow-undefined` (`user_header`),
-#'   `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`) and `name` (taken
-#'   from the name of the Stan file).
+#' @param stanc_options (list) Options for stanc, the Stan compiler, when it
+#'   turns the program into C++. Write a flag by name without the leading
+#'   hyphens, as `list("O1")` or `list(O1 = TRUE)` to turn on stanc's
+#'   optimizations, and an option that takes a value as
+#'   `list(option = "value")`. The [Using the Stan Compiler chapter of the
+#'   Stan User's
+#'   Guide](https://mc-stan.org/docs/stan-users-guide/using-stanc.html#stanc-args)
+#'   lists the options. They apply to this model only, and each one overrides
+#'   the same flag in `make/local`'s `STANCFLAGS`. Five flags that CmdStanR
+#'   sets from its own arguments can't be given here: `include-paths` (use
+#'   `include_paths`), `warn-pedantic` (`pedantic`), `allow-undefined`
+#'   (`user_header`), `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`)
+#'   and `name` (taken from the name of the Stan file). See
+#'   [stan_build_info()] for an example of checking what the executable was
+#'   built with.
 #' @param force_recompile (logical) Should the model be recompiled even if the
 #'   executable was built from this program with these options? The default,
 #'   `NULL`, defers to the `cmdstanr_force_recompile` global option, and to

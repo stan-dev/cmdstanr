@@ -317,6 +317,10 @@ occasionally crashes R or returns a list with wrong elements. (#1001)
 `$functions` field of the model or fit. Previously it left that field empty
 while marking the functions as compiled, so a later `$expose_functions()` call
 exposed nothing. (#1317)
+* `cmdstan_make_local(cpp_options = list(stan_threads = FALSE))`, and the same
+argument of `install_cmdstan()`, now turn the option off by writing
+`STAN_THREADS=` to `make/local`. Previously they wrote `STAN_THREADS=false`,
+which CmdStan reads as on. (#605)
 
 ## Removed and deprecated
 

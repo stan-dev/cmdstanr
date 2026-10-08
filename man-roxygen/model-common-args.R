@@ -110,8 +110,8 @@
 #'
 #' @param opencl_ids (integer vector of length 2) The platform and device IDs of
 #'   the OpenCL device to use for fitting. The model must be compiled with
-#'   `cpp_options = list(stan_opencl = TRUE)` for this argument to have an
-#'   effect.
+#'   `cpp_options = list(stan_opencl = TRUE)`, otherwise setting this argument
+#'   is an error.
 #'
 #' @param show_messages (logical) When `TRUE` (the default), prints all output
 #'   during the execution process, such as iteration numbers and elapsed times.

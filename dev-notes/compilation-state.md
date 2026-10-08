@@ -367,10 +367,12 @@ options will each rebuild to evict the other.
 
 <!-- /contract -->
 
-**This does not fail loudly**, except for threading: `assert_valid_threads()` warns
-when `threads_per_chain` is set on an unthreaded model, but nothing warns about
-changed optimisation flags, range checks, or a different user header. Most
-configuration changes have no runtime check at all.
+**This does not fail loudly.** The only runtime checks compare a request against
+the features the executable reports: `assert_valid_threads()` errors when
+`threads` or `threads_per_chain` asks an unthreaded model for more than one
+thread, and `assert_valid_opencl()` when `opencl_ids` is set on a model built
+without OpenCL. Nothing checks changed optimisation flags, range checks, or a
+different user header.
 
 Single-configuration caching is an acceptable simplification for v1, but it needs a
 guard rather than a hope. §5 gives the assessment what it needs to detect that
