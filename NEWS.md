@@ -65,7 +65,7 @@ the model with no executable at all. (#1235)
 * The `compile_standalone` and `compile_model_methods` arguments are gone.
 Previously both did nothing when the executable was already up to date. Call
 `$expose_functions()` and `fit$init_model_methods()` instead, which work whether
-the executable was just compiled or reused. (#1256, #1245, #870)
+the executable was just compiled or reused. (#1256, #1245)
 * `cmdstan_model(exe_file = )` with no `stan_file` now rejects `cpp_options`,
 `stanc_options`, `include_paths`, `user_header`, `force_recompile` and
 `pedantic`: with no Stan file there is nothing to compile, so the executable is
@@ -232,6 +232,9 @@ and falls back to `PATH`, improving support for alternate R distributions and
 future Rtools releases. (#1211)
 * Exposing functions using names that are reserved keywords now throws an 
 informative error message. (#1154)
+* Compiled Stan functions and model methods can be kept across R sessions by
+setting the `rcpp.cache.dir` option, as the `$expose_functions()` documentation
+now explains. (#870)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be
 set to `TRUE` for an entire R session via new global options. (#1159)
 * The compilation spinner can now be disabled for an entire R session by setting
