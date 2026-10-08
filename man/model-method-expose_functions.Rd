@@ -9,9 +9,9 @@
 expose_functions(global = FALSE, verbose = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{global}{(logical) Should the functions be added to the Global
-Environment? The default is \code{FALSE}, in which case the functions are
-available via the \code{functions} field of the R6 object.}
+\item{global}{(logical) Should the functions also be added to the global
+environment? The default is \code{FALSE}. Either way they are available via
+the \code{functions} field of the R6 object.}
 
 \item{verbose}{(logical) Should detailed information about generated code be
 printed to the console? Defaults to \code{FALSE}.}

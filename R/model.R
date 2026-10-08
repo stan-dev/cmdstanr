@@ -2104,9 +2104,9 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
 #'
-#' @param global (logical) Should the functions be added to the Global
-#'   Environment? The default is `FALSE`, in which case the functions are
-#'   available via the `functions` field of the R6 object.
+#' @param global (logical) Should the functions also be added to the global
+#'   environment? The default is `FALSE`. Either way they are available via
+#'   the `functions` field of the R6 object.
 #' @param verbose (logical) Should detailed information about generated code be
 #'   printed to the console? Defaults to `FALSE`.
 #' @param quiet (logical) Should the messages saying the functions are being
