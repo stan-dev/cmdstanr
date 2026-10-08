@@ -242,6 +242,9 @@ standalone generated quantities CSV files. (#1168)
 
 ## Bug fixes
 
+* A fit whose CSV files were written to the temporary directory and are gone
+(a cached Quarto chunk, a fit saved with `saveRDS()`) now says so and how to
+avoid it, instead of failing with "File does not exist". (#1012)
 * `check_cmdstan_toolchain()` now waits longer for WSL to respond and says so
 when it doesn't, instead of reporting that no WSL distribution is installed.
 (#1297)

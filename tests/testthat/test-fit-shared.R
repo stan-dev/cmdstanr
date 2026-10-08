@@ -235,6 +235,21 @@ test_that("save_object() method works with profiles", {
   expect_identical(fit$profiles(), s)
 })
 
+test_that("reading draws says when the temp CSV files are gone", {
+  fit <- testing_fit("logistic", method = "sample", seed = 123, chains = 1)
+  files <- file.path(withr::local_tempdir(), basename(fit$output_files()))
+  file.copy(fit$output_files(), files)
+  fit_csv <- as_cmdstan_fit(files)
+  unlink(c(fit$output_files(), files))
+  expect_error(
+    fit$draws(),
+    "The fit's CSV files are gone",
+    fixed = TRUE
+  )
+  # the user's own files, so the plain message
+  expect_error(fit_csv$draws(), "File does not exist", fixed = TRUE)
+})
+
 test_that("metadata() returns list", {
   for (method in all_methods) {
     fit <- fits[[method]]

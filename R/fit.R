@@ -78,7 +78,27 @@ CmdStanFit <- R6::R6Class(
     init_ = NULL,
     profiles_ = NULL,
     model_methods_env_ = NULL,
-    return_codes_ = NULL
+    return_codes_ = NULL,
+
+    # The CSV files to read, with a better error when the ones CmdStan wrote
+    # to the temp directory are gone
+    csv_files_ = function() {
+      files <- self$output_files(include_failed = FALSE)
+      output_dir <- self$runset$args$output_dir
+      if (!all(file.exists(files)) &&
+          isTRUE(self$runset$args$using_tempdir) &&
+          all(repair_path(dirname(files)) == output_dir)) {
+        stop(
+          "The fit's CSV files are gone. They were in a temporary ",
+          "directory ('", output_dir, "'), which doesn't survive the ",
+          "session, so a fit restored later (e.g., from a cached Quarto ",
+          "chunk) can't read them. To avoid this, pass `output_dir` when ",
+          "fitting or save the fit with `$save_object()`.",
+          call. = FALSE
+        )
+      }
+      files
+    }
   )
 )
 
@@ -1493,8 +1513,9 @@ CmdStanMCMC <- R6::R6Class(
         stop("No chains finished successfully. There is no output to read.",
              call. = FALSE)
       }
+      files <- private$csv_files_()
       csv_contents <- read_cmdstan_csv(
-        files = self$output_files(include_failed = FALSE),
+        files = files,
         variables = variables,
         sampler_diagnostics = sampler_diagnostics,
         format = format
@@ -2006,7 +2027,8 @@ CmdStanMLE <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Optimization failed. There is no output to read.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2140,7 +2162,8 @@ CmdStanLaplace <- R6::R6Class(
         stop("Laplace inference failed. There is no output to read.",
              call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2257,7 +2280,8 @@ CmdStanVB <- R6::R6Class(
         stop("Variational inference failed. There is no output to read.",
              call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2351,7 +2375,8 @@ CmdStanPathfinder <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Pathfinder failed. There is no output to read.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2482,8 +2507,9 @@ CmdStanGQ <- R6::R6Class(
         stop("Generating quantities for all MCMC chains failed. ",
              "There is no output to read.", call. = FALSE)
       }
+      files <- private$csv_files_()
       csv_contents <- read_cmdstan_csv(
-        files = self$output_files(include_failed = FALSE),
+        files = files,
         variables = variables,
         sampler_diagnostics = "",
         format = format
