@@ -92,11 +92,12 @@ for using threading.}
 turns the program into C++. Write a flag by name without the leading
 hyphens, as \code{list("O1")} or \code{list(O1 = TRUE)} to turn on stanc's
 optimizations, and an option that takes a value as
-\code{list(option = "value")}. The \href{https://mc-stan.org/docs/stan-users-guide/using-stanc.html#stanc-args}{Using the Stan Compiler chapter of the Stan User's Guide}
-lists the options. They apply to this model only, and each one overrides
-the same flag in \code{make/local}'s \code{STANCFLAGS}. Five flags that CmdStanR
-sets from its own arguments can't be given here: \code{include-paths} (use
-\code{include_paths}), \code{warn-pedantic} (\code{pedantic}), \code{allow-undefined}
+\code{list(option = "value")}. \code{list(O1 = FALSE)} leaves the flag out, the
+same as not mentioning it. The \href{https://mc-stan.org/docs/stan-users-guide/using-stanc.html#stanc-args}{Using the Stan Compiler chapter of the Stan User's Guide}
+lists the options. They apply to this model only, and a flag set here
+replaces the same flag in \code{make/local}'s \code{STANCFLAGS}. Five flags that
+CmdStanR sets from its own arguments can't be given here: \code{include-paths}
+(use \code{include_paths}), \code{warn-pedantic} (\code{pedantic}), \code{allow-undefined}
 (\code{user_header}), \code{use-opencl} (\code{cpp_options = list(stan_opencl = TRUE)})
 and \code{name} (taken from the name of the Stan file). See
 \code{\link[=stan_build_info]{stan_build_info()}} for an example of checking what the executable was

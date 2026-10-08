@@ -74,13 +74,14 @@
 #'   turns the program into C++. Write a flag by name without the leading
 #'   hyphens, as `list("O1")` or `list(O1 = TRUE)` to turn on stanc's
 #'   optimizations, and an option that takes a value as
-#'   `list(option = "value")`. The [Using the Stan Compiler chapter of the
+#'   `list(option = "value")`. `list(O1 = FALSE)` leaves the flag out, the
+#'   same as not mentioning it. The [Using the Stan Compiler chapter of the
 #'   Stan User's
 #'   Guide](https://mc-stan.org/docs/stan-users-guide/using-stanc.html#stanc-args)
-#'   lists the options. They apply to this model only, and each one overrides
-#'   the same flag in `make/local`'s `STANCFLAGS`. Five flags that CmdStanR
-#'   sets from its own arguments can't be given here: `include-paths` (use
-#'   `include_paths`), `warn-pedantic` (`pedantic`), `allow-undefined`
+#'   lists the options. They apply to this model only, and a flag set here
+#'   replaces the same flag in `make/local`'s `STANCFLAGS`. Five flags that
+#'   CmdStanR sets from its own arguments can't be given here: `include-paths`
+#'   (use `include_paths`), `warn-pedantic` (`pedantic`), `allow-undefined`
 #'   (`user_header`), `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`)
 #'   and `name` (taken from the name of the Stan file). See
 #'   [stan_build_info()] for an example of checking what the executable was
@@ -735,9 +736,8 @@ variables_stan_file <- function(stan_file, include_paths = NULL) {
 #'   program. The method uses the model's own include paths when none are
 #'   given. `check_syntax_stan_file()` uses the program's own directory when
 #'   none are given and the program contains `#include` directives.
-#' @param stanc_options (list) Any other Stan-to-C++ transpiler options to be
-#'   used when compiling the model. See the documentation for
-#'   [cmdstan_model()] for details.
+#' @param stanc_options (list) Any other options for stanc, the Stan
+#'   compiler. See the documentation for [cmdstan_model()] for details.
 #' @param quiet (logical) Should informational messages be suppressed? The
 #'   default is `FALSE`, which will print a message if the Stan program is valid
 #'   or the compiler error message if there are syntax errors. If `TRUE`, only
