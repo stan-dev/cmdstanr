@@ -415,7 +415,7 @@ test_that("compressed output saved to disk can be saved again and reloaded", {
     fit$save_output_files(save_dir, basename = "bern", compress = "bzip2")
   )
   checkmate::expect_file_exists(saved, extension = "csv.bz2")
-  expect_false(any(file.exists(list.files(output_dir, full.names = TRUE))))
+  expect_length(list.files(output_dir), 0)
 
   reloaded <- as_cmdstan_fit(saved)
   expect_s3_class(reloaded, "CmdStanMCMC")

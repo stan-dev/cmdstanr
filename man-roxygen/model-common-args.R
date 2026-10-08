@@ -103,8 +103,9 @@
 #'
 #' @param compress (string) Compression to apply to the output CSV files after
 #'   CmdStan finishes (including latent dynamics files, if saved): `"none"`
-#'   (the default), `"gzip"`, or `"bzip2"`. Compressed files can still be read
-#'   by CmdStanR, but `gzip` or `bzip2` must be available on `PATH`.
+#'   (the default), `"gzip"`, or `"bzip2"`. The fit reads compressed
+#'   files by decompressing them to a temporary copy first, which 
+#'   makes each read slower in exchange for using less disk space. 
 #'
 #' @param sig_figs (positive integer) The number of significant figures (up to a
 #'   maximum of 18) to use when storing the output values. If `NULL` (the
