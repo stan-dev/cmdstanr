@@ -87,7 +87,7 @@ CmdStanFit <- R6::R6Class(
       output_dir <- self$runset$args$output_dir
       if (!all(file.exists(files)) &&
           isTRUE(self$runset$args$using_tempdir) &&
-          all(dirname(files) == output_dir)) {
+          all(repair_path(dirname(files)) == output_dir)) {
         stop(
           "The fit's CSV files are gone. They were in a temporary ",
           "directory ('", output_dir, "'), which doesn't survive the ",
