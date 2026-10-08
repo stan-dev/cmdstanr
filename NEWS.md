@@ -65,7 +65,7 @@ the model with no executable at all. (#1235)
 * The `compile_standalone` and `compile_model_methods` arguments are gone.
 Previously both did nothing when the executable was already up to date. Call
 `$expose_functions()` and `fit$init_model_methods()` instead, which work whether
-the executable was just compiled or reused. (#1256, #1245)
+the executable was just compiled or reused. (#1256, #1245, #870)
 * `cmdstan_model(exe_file = )` with no `stan_file` now rejects `cpp_options`,
 `stanc_options`, `include_paths`, `user_header`, `force_recompile` and
 `pedantic`: with no Stan file there is nothing to compile, so the executable is

@@ -373,7 +373,9 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   `unconstrain_variables` and `unconstrain_draws` functions. These are then
 #'   available as methods of the fitted model object. This requires the
 #'   additional \pkg{Rcpp} package. The methods compile once per model
-#'   object, so later fits of the same model reuse them.
+#'   object, so later fits of the same model reuse them. To avoid compiling
+#'   them again in every new R session, set the `rcpp.cache.dir` option as
+#'   described for [`$expose_functions()`][model-method-expose_functions].
 #'
 #'   If a model or fit object was saved with [base::saveRDS()] and later
 #'   reloaded, any previously compiled model-method bindings will be rebuilt in

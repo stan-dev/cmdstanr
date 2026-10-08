@@ -31,6 +31,17 @@ expose them for use in \R.
 This method is also available for all fitted model objects. See
 \strong{Examples}.
 
+Compiling the functions takes a while, and by default the compiled
+code is kept in R's temporary directory, so every new R session
+compiles them again. To avoid that, set the \code{rcpp.cache.dir} option
+to a directory that persists across sessions, for example
+\code{options(rcpp.cache.dir = "~/.cache/stan-functions")}, before
+calling this method. Later sessions then load the functions from
+there, as long as the Stan program hasn't changed and is still at the
+same file path. If you use \code{\link[=write_stan_file]{write_stan_file()}}, also set the
+\code{cmdstanr_write_stan_file_dir} option to a fixed directory so the
+path stays the same.
+
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.
 }

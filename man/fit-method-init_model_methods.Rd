@@ -26,7 +26,9 @@ The \verb{$init_model_methods()} method compiles and initializes the
 \code{unconstrain_variables} and \code{unconstrain_draws} functions. These are then
 available as methods of the fitted model object. This requires the
 additional \pkg{Rcpp} package. The methods compile once per model
-object, so later fits of the same model reuse them.
+object, so later fits of the same model reuse them. To avoid compiling
+them again in every new R session, set the \code{rcpp.cache.dir} option as
+described for \code{\link[=model-method-expose_functions]{$expose_functions()}}.
 
 If a model or fit object was saved with \code{\link[base:saveRDS]{base::saveRDS()}} and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
