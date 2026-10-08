@@ -307,6 +307,14 @@ test_that("Functions can be exposed again on a fit reloaded with readRDS()", {
   expect_equal(fit2$functions$rtn_vec(c(1, 2, 3, 4)), c(1, 2, 3, 4))
 })
 
+test_that("Functions exposed globally first stay in the functions field", {
+  mod <- cmdstan_model(model)
+  mod$expose_functions(global = TRUE)
+  withr::defer(rm(list = mod$functions$fun_names, envir = globalenv()))
+  expect_identical(globalenv()$rtn_vec, mod$functions$rtn_vec)
+  expect_equal(mod$functions$rtn_vec(c(1, 2, 3, 4)), c(1, 2, 3, 4))
+})
+
 test_that("Compiled functions can be copied to global environment", {
   expect_message(
     fit$expose_functions(global = TRUE),
