@@ -1297,6 +1297,9 @@ CmdStanFit$set("public", name = "return_codes", value = return_codes)
 #' \dontrun{
 #' fit <- cmdstanr_example("logistic", method = "sample")
 #' fit$command()
+#'
+#' # one line per chain
+#' cat(fit$command(), sep = "\n")
 #' }
 #'
 command <- function() {

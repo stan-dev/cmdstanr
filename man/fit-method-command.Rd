@@ -37,6 +37,9 @@ paths are already spelled for it.
 \dontrun{
 fit <- cmdstanr_example("logistic", method = "sample")
 fit$command()
+
+# one line per chain
+cat(fit$command(), sep = "\n")
 }
 
 }
