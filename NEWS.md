@@ -81,7 +81,7 @@ the model is created, with `dir`. (#1253)
 executable, not the version at `cmdstan_path()`. (#1249)
 * `$cpp_options()` now returns exactly the options the model was created with,
 spelled as make variables: `list(stan_threads = TRUE)` comes back as
-`STAN_THREADS`, with the value `"TRUE"` (the string make received, so `FALSE`
+`STAN_THREADS`, with the value `"true"` (the string make received, so `FALSE`
 comes back as `""`). What the executable reports about its own build has moved
 to `stan_build_info()`. (#1019, #1258)
 * Every `cpp_options` entry must now be named, with a make variable name. An

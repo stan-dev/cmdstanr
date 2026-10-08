@@ -124,7 +124,7 @@ test_that("compile_stan_file() builds or reuses the executable", {
     )
     # the record is beside it, so a model can adopt it without a launch
     mod <- cmdstan_model(exe_file = exe)
-    expect_equal(mod$cpp_options(), list(STAN_THREADS = "TRUE"))
+    expect_equal(mod$cpp_options(), list(STAN_THREADS = "true"))
 
     exe_dir <- withr::local_tempdir()
     expect_mock_compile(exe_in_dir <- compile_stan_file(stan_file, dir = exe_dir))

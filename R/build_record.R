@@ -676,7 +676,7 @@ assess_build <- function(expected, current) {
 #' * `configuration`: A list of the options the model was created with.
 #'   * `cpp_options`: the list of options in their make spelling, as
 #'   `$cpp_options()` reports them. For example, `list(stan_threads = TRUE)`
-#'   comes back as `list(STAN_THREADS = "TRUE")`.
+#'   comes back as `list(STAN_THREADS = "true")`.
 #'   * `stanc_options`: the flags as given to stanc, in order.
 #'   For example, `list(O1 = TRUE)` and `list("O1")` both come back as
 #'   `list("--O1")`.

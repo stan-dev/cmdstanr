@@ -19,7 +19,7 @@ parsed_cpp_options <- function(cpp_options) {
 }
 
 # convert to compile flags --------------------
-# from list(FLAG1 = TRUE, FLAG2 = FALSE) to c("FLAG1=TRUE", "FLAG2=")
+# from list(FLAG1 = TRUE, FLAG2 = FALSE) to c("FLAG1=true", "FLAG2=")
 cpp_options_to_compile_flags <- function(cpp_options) {
   if (length(cpp_options) == 0) {
     return(NULL)
@@ -28,9 +28,10 @@ cpp_options_to_compile_flags <- function(cpp_options) {
   for (i in seq_along(cpp_options)) {
     value <- cpp_options[[i]]
     # FALSE asks for the option off, which make spells as an empty assignment.
+    # TRUE is spelled in lowercase because CmdStan compares some variables
+    # (PRECOMPILED_HEADERS) against the literal "true".
     if (is.logical(value)) {
-      value <- as.character(value)
-      value[value %in% "FALSE"] <- ""
+      value <- ifelse(value %in% TRUE, "true", "")
     }
     cpp_built_options <- c(
       cpp_built_options,
