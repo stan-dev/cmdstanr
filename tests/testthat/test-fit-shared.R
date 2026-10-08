@@ -287,8 +287,9 @@ test_that("command() returns one line per CmdStan run", {
     cmd <- fit$command()
     expect_length(cmd, fit$num_procs())
     expect_match(cmd, shQuote(paste0("method=", method)), fixed = TRUE)
-    expect_true(all(mapply(grepl, basename(fit$output_files()), cmd,
-                           fixed = TRUE)))
+    expect_match(cmd, shQuote(paste0("seed=", fit$metadata()$seed)),
+                 fixed = TRUE)
+    expect_equal(anyDuplicated(cmd), 0)
   }
 })
 
