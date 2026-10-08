@@ -408,11 +408,9 @@ CmdStanModel <- R6::R6Class(
       }
       invisible(self)
     },
-    # The C++ for the standalone functions, generated from the Stan file the
-    # first time it's needed, after assert_current_() checks the file is the one
-    # the executable was built from. Generating it in the constructor would run
-    # stanc for a feature most models never use. Empty for a model without a
-    # Stan file.
+    # The C++ for any standalone functions, generated the first time a fit
+    # method or $expose_functions() runs. A fit copies it at creation, so a fit
+    # restored with readRDS() can expose its functions without the Stan file.
     standalone_functions_ = function() {
       if (self$has_stan_file() && is.null(self$functions$hpp_code)) {
         configuration <- private$record_$configuration
