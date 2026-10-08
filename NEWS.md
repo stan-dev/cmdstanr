@@ -11,8 +11,12 @@ and **Bug fixes** cover what their titles suggest, and **Removed and
 deprecated** lists everything else that could break existing code beyond the
 compilation redesign.
 
-Each entry says what changed and what it replaced, so you (or your coding) agent
+Each entry says what changed and what it replaced, so you (or your coding agent)
 can update existing code from them.
+
+A massive thank you to everyone who contributed code and reviews to this
+release and to everyone who filed the bug reports and feature requests that
+went into it.
 
 ## Building models
 
