@@ -50,6 +50,7 @@ all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-time]{$time()}} \tab Report total and process-specific run times. \cr
    \code{\link[=fit-method-output]{$output()}} \tab Return the stdout and stderr of all chains or pretty print the output for a single chain. \cr
    \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
+   \code{\link[=fit-method-command]{$command()}} \tab Return the commands that ran CmdStan. \cr
 }
 
 }

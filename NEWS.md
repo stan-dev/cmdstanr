@@ -196,6 +196,8 @@ values for a method, `"sample"` by default, under the corresponding CmdStanR
 argument names. (#1167)
 * The new `$materialize()` method reads a fit's draws, sampler diagnostics,
 initial values and profiles from the CSV files into R in one call. (#1181)
+* The new `$command()` method returns the command line CmdStanR ran for each
+CmdStan run. (#900)
 * `$save_object()` gains `format = "qs2"`, which saves with the qs2 package
 instead of `saveRDS()` and is faster and uses less memory. (#1125)
 * `as_cmdstan_fit()` gains a `variables` argument to read only some of the

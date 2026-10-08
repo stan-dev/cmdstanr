@@ -281,6 +281,17 @@ test_that("return_codes method works properly", {
   expect_gt(non_zero$return_codes(), 0)
 })
 
+test_that("command() returns one line per CmdStan run", {
+  for (method in all_methods) {
+    fit <- fits[[method]]
+    cmd <- fit$command()
+    expect_length(cmd, fit$num_procs())
+    expect_match(cmd, shQuote(paste0("method=", method)), fixed = TRUE)
+    expect_true(all(mapply(grepl, basename(fit$output_files()), cmd,
+                           fixed = TRUE)))
+  }
+})
+
 test_that("output and latent dynamics files are cleaned up correctly", {
   for (method in c("sample", "variational")) {
     fit <- testing_fit("logistic", method = method, seed = 123, save_latent_dynamics = TRUE)

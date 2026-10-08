@@ -1267,6 +1267,46 @@ return_codes <- function() {
 }
 CmdStanFit$set("public", name = "return_codes", value = return_codes)
 
+#' Return the command that ran CmdStan
+#'
+#' @name fit-method-command
+#' @aliases command
+#' @description The `$command()` method returns the command line
+#'   CmdStanR ran for each CmdStan run. A few things to know before
+#'   running one again:
+#'
+#'   * The paths are the ones R used. Input files CmdStanR wrote for
+#'   the run (data passed as a list, inits, an inverse metric, the CSV
+#'   files `$laplace()` and `$generate_quantities()` read) are in a
+#'   temporary directory, even when `output_dir` is set, and don't
+#'   outlive the R session.
+#'   * The output paths are this fit's CSV files, so running the line
+#'   again overwrites them unless you change the paths after `output`.
+#'   * `threads_per_chain` (or `threads`) reaches CmdStan as the
+#'   `STAN_NUM_THREADS` environment variable, not an argument, so set
+#'   it first.
+#'   * `$sample_mpi()` runs the line through the MPI launcher, which the
+#'   line doesn't include.
+#'   * On Windows CmdStanR puts the TBB library on `PATH` for the run,
+#'   so the terminal needs it there too.
+#'   * On WSL the command runs inside the Linux distribution, where the
+#'   paths are already spelled for it.
+#' @return A character vector with one command per CmdStan run.
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic", method = "sample")
+#' fit$command()
+#' }
+#'
+command <- function() {
+  exe <- wsl_safe_path(self$runset$exe_file())
+  vapply(self$runset$command_args(), function(args) {
+    paste(shQuote(c(exe, args)), collapse = " ")
+  }, character(1))
+}
+CmdStanFit$set("public", name = "command", value = command)
+
 #' Return profiling data
 #'
 #' @name fit-method-profiles
@@ -1420,6 +1460,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  [`$output()`][fit-method-output]  |  Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2003,6 +2044,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$time()`][fit-method-time]      |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2138,6 +2180,7 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$time()`][fit-method-time]  |  Report the run time of the Laplace sampling step. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2255,6 +2298,7 @@ CmdStanLaplace$set("public", name = "mode", value = mode)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2351,6 +2395,7 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2440,6 +2485,7 @@ CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$time()`][fit-method-time] | Report total and process-specific run times. |
 #'  [`$output()`][fit-method-output] | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
