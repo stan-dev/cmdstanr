@@ -313,7 +313,7 @@ occasionally crashes R or returns a list with wrong elements. (#1001)
 * `$expose_functions(global = TRUE)` now also keeps the functions in the
 `$functions` field of the model or fit. Previously it left that field empty
 while marking the functions as compiled, so a later `$expose_functions()` call
-exposed nothing. (#PRNUM)
+exposed nothing. (#1317)
 
 ## Removed and deprecated
 
