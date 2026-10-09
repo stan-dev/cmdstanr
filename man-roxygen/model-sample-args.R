@@ -86,8 +86,9 @@
 #'   `options(cmdstanr_progress_bar = TRUE)`. Nothing is shown until a
 #'   \pkg{progressr} handler is registered, for example with
 #'   `progressr::handlers(global = TRUE)` once per session.
-#' @param suppress_iteration_messages (logical) Should CmdStan iteration
-#'   messages be suppressed? The default is `show_progress_bar`.
+#' @param show_iteration_messages (logical) Whether to print CmdStan's
+#'   iteration lines. The default is `!show_progress_bar`, so the progress bar
+#'   replaces them.
 #' @param diagnostics (character vector) The diagnostics to automatically check
 #'   and warn about after sampling. Setting this to an empty string `""` or
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the

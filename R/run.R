@@ -1073,15 +1073,15 @@ CmdStanMCMCProcs <- R6::R6Class(
   public = list(
     initialize = function(...,
                           show_progress_bar,
-                          suppress_iteration_messages) {
+                          show_iteration_messages) {
       checkmate::assert_flag(show_progress_bar)
-      checkmate::assert_flag(suppress_iteration_messages)
+      checkmate::assert_flag(show_iteration_messages)
       if (show_progress_bar) {
         require_suggested_package("progressr")
       }
       super$initialize(...)
       private$show_progress_bar_ <- show_progress_bar
-      private$suppress_iteration_messages_ <- suppress_iteration_messages
+      private$show_iteration_messages_ <- show_iteration_messages
       private$last_iteration_ <- integer(self$num_procs())
       invisible(self)
     },
@@ -1155,7 +1155,7 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          if (iteration_line && private$suppress_iteration_messages_) {
+          if (iteration_line && !private$show_iteration_messages_) {
             ignore_line <- TRUE
           }
           if (iteration_line && private$show_progress_bar_) {
@@ -1251,7 +1251,7 @@ CmdStanMCMCProcs <- R6::R6Class(
   ),
   private = list(
     show_progress_bar_ = FALSE,
-    suppress_iteration_messages_ = FALSE,
+    show_iteration_messages_ = TRUE,
     progressor_ = NULL,
     last_iteration_ = integer(),
     update_progress_ = function(id, line) {

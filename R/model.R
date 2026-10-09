@@ -1052,7 +1052,7 @@ sample <- function(data = NULL,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
                    show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
-                   suppress_iteration_messages = show_progress_bar,
+                   show_iteration_messages = !show_progress_bar,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    save_metric = getOption("cmdstanr_save_metric", FALSE),
                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
@@ -1070,7 +1070,7 @@ sample <- function(data = NULL,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
     show_progress_bar = show_progress_bar,
-    suppress_iteration_messages = suppress_iteration_messages
+    show_iteration_messages = show_iteration_messages
   )
   model_variables <- private$variables_
   sample_args <- SampleArgs$new(
@@ -1220,7 +1220,7 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
-                       suppress_iteration_messages = show_progress_bar,
+                       show_iteration_messages = !show_progress_bar,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
   private$assert_current_()
@@ -1235,7 +1235,7 @@ sample_mpi <- function(data = NULL,
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
     show_progress_bar = show_progress_bar,
-    suppress_iteration_messages = suppress_iteration_messages
+    show_iteration_messages = show_iteration_messages
   )
   model_variables <- private$variables_
   sample_args <- SampleArgs$new(

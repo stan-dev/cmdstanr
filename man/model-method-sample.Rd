@@ -37,7 +37,7 @@ sample(
   show_messages = TRUE,
   show_exceptions = TRUE,
   show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
-  suppress_iteration_messages = show_progress_bar,
+  show_iteration_messages = !show_progress_bar,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = getOption("cmdstanr_save_metric", FALSE),
   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
@@ -290,8 +290,9 @@ set to \code{TRUE} for an entire \R session by
 \pkg{progressr} handler is registered, for example with
 \code{progressr::handlers(global = TRUE)} once per session.}
 
-\item{suppress_iteration_messages}{(logical) Should CmdStan iteration
-messages be suppressed? The default is \code{show_progress_bar}.}
+\item{show_iteration_messages}{(logical) Whether to print CmdStan's
+iteration lines. The default is \code{!show_progress_bar}, so the progress bar
+replaces them.}
 
 \item{diagnostics}{(character vector) The diagnostics to automatically check
 and warn about after sampling. Setting this to an empty string \code{""} or

@@ -131,7 +131,7 @@ test_that("sample progress follows CmdStan's cumulative iteration count", {
   expect_equal(sum(amounts), 340)
 })
 
-test_that("sample can suppress CmdStan iteration messages", {
+test_that("show_iteration_messages = FALSE hides the iteration lines", {
   output <- capture.output(
     fit <- mod$sample(
       data = data_list,
@@ -139,7 +139,7 @@ test_that("sample can suppress CmdStan iteration messages", {
       iter_warmup = 10,
       iter_sampling = 10,
       refresh = 5,
-      suppress_iteration_messages = TRUE
+      show_iteration_messages = FALSE
     )
   )
   expect_false(any(grepl("Iteration:", output, fixed = TRUE)))
