@@ -249,7 +249,7 @@ test_that("wsl_compatible_run() preserves arguments containing spaces", {
 test_that("require_suggested_package() works", {
   expect_error(
     require_suggested_package("not_a_real_package"),
-    "Please install the 'not_a_real_package' package to use this function."
+    "Please install the 'not_a_real_package' package to use this feature."
   )
 })
 

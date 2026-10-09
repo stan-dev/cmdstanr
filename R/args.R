@@ -1243,6 +1243,7 @@ process_init.CmdStanMCMC <- function(init, num_procs, model_variables = NULL,
 process_init_approx <- function(init, num_procs, model_variables = NULL,
                                 warn_partial = getOption("cmdstanr_warn_inits", TRUE),
                                 ...) {
+  require_suggested_package("vctrs")
   validate_fit_init(init, model_variables)
   draws_df <- init$draws(format = "df")
   init_variables <- posterior::variables(draws_df)

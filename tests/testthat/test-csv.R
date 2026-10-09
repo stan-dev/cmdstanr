@@ -1039,7 +1039,8 @@ test_that("read_cmdstan_csv() works with tilde expansion", {
   skip_if(os_is_windows())
   full_path <- test_path("resources", "csv", "model1-1-warmup.csv")
   expect_no_error(read_cmdstan_csv(full_path))
-  tildified_path <- file.path("~", fs::path_rel(full_path, "~"))
+  tildified_path <- sub(path.expand("~"), "~", normalizePath(full_path),
+                        fixed = TRUE)
   expect_no_error(read_cmdstan_csv(tildified_path))
 })
 

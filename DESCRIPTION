@@ -56,20 +56,19 @@ Imports:
     posterior (>= 1.5.0),
     processx (>= 3.5.0),
     R6 (>= 2.4.0),
-    vctrs,
-    withr (>= 2.5.0),
-    rlang (>= 1.0.0)
+    rlang (>= 1.0.0),
+    withr (>= 2.5.0)
 Suggests:
     bayesplot,
-    fs,
     ggplot2,
     knitr (>= 1.37),
     loo (>= 2.0.0),
     qs2,
+    Rcpp,
+    RcppParallel,
     rmarkdown,
     testthat (>= 3.3.0),
-    Rcpp,
-    RcppParallel
+    vctrs
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0
