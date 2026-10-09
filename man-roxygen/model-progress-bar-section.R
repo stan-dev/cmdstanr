@@ -14,6 +14,8 @@
 #' noticeable. For a slow model it is small next to the sampling time, and
 #' `refresh = 1` gives the smoothest bar.
 #'
-#' In a Quarto or R Markdown document,
-#' `options(cmdstanr_progress_bar = interactive())` shows the bar while you run
-#' chunks by hand and leaves it out when the document renders.
+#' In a Quarto or R Markdown document, write
+#' `if (interactive()) progressr::handlers(global = TRUE)` in the setup chunk,
+#' because the call fails while the document renders. Add
+#' `options(cmdstanr_progress_bar = interactive())` to keep CmdStan's iteration
+#' lines in the rendered output.
