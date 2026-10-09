@@ -1058,8 +1058,8 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
   # Since all other process_init functions return `num_proc` inits
   # This will only happen if a raw draws object is passed
   if (nrow(draws) < num_procs) {
-    idx <- rep(1:nrow(draws), ceiling(num_procs / nrow(draws)))[1:num_procs]
-    draws <- draws[idx,]
+    idx <- rep_len(seq_len(nrow(draws)), num_procs)
+    draws <- draws[idx, ]
   } else if (nrow(draws) > num_procs) {
     draws <- posterior::resample_draws(draws, ndraws = num_procs,
                                        method ="simple_no_replace")
