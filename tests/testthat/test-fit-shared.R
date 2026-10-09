@@ -692,6 +692,30 @@ test_that("save_output_files() keeps the compression of the files by default", {
   checkmate::expect_file_exists(kept, extension = "csv.gz")
 })
 
+test_that("save_output_files() can save the files onto their current names", {
+  fit <- fits[["sample"]]
+  expected <- as_cmdstan_fit(fit$output_files())$draws()
+  save_same <- function(dir = tempdir(), compress = NULL) {
+    suppressMessages(fit$save_output_files(
+      dir, basename = "same", timestamp = FALSE, random = FALSE,
+      compress = compress
+    ))
+  }
+  paths <- save_same(compress = "none")
+  expect_no_warning(expect_equal(save_same(), paths))
+  # the same directory spelled differently
+  expect_no_warning(again <- save_same(dir = file.path(tempdir(), ".")))
+  expect_true(all(same_path(again, paths)))
+  expect_true(all(file.size(paths) > 0))
+  expect_equal(as_cmdstan_fit(paths)$draws(), expected)
+  expect_no_warning(gz <- save_same(compress = "gzip"))
+  checkmate::expect_file_exists(gz, extension = "csv.gz")
+  expect_equal(as_cmdstan_fit(gz)$draws(), expected)
+  expect_no_warning(plain <- save_same(compress = "none"))
+  expect_equal(plain, paths)
+  expect_equal(as_cmdstan_fit(plain)$draws(), expected)
+})
+
 test_that("save_output_files() errors for an invalid compress value", {
   expect_error(
     fits[["sample"]]$save_output_files(tempdir(), compress = "zip"),

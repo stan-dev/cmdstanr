@@ -193,16 +193,14 @@ resolve_path <- function(path) {
   repair_path(absolute_path(path))
 }
 
-# Compare canonical paths without requiring them to exist. mustWork = FALSE
-# also avoids normalizePath() warnings under warn = 2.
+# Compare canonical paths elementwise without requiring them to exist.
+# mustWork = FALSE also avoids normalizePath() warnings under warn = 2.
 same_path <- function(x, y) {
   if (length(x) == 0 || length(y) == 0) {
     return(length(x) == length(y))
   }
-  identical(
-    normalizePath(x, winslash = "/", mustWork = FALSE),
+  normalizePath(x, winslash = "/", mustWork = FALSE) ==
     normalizePath(y, winslash = "/", mustWork = FALSE)
-  )
 }
 
 # read, write, and copy files --------------------------------------------
@@ -211,7 +209,8 @@ same_path <- function(x, y) {
 #'
 #' Copies to specified directory using specified basename,
 #' appending suffix `-id.ext` to each. If files with the specified
-#' names already exist they are overwritten.
+#' names already exist they are overwritten. A file that is already at its
+#' destination is left in place.
 #'
 #' @noRd
 #' @param current_paths Paths to current temporary files.
@@ -241,9 +240,10 @@ copy_temp_files <-
       destinations <- file.path(new_dir, destinations)
     }
 
+    moving <- !same_path(current_paths, destinations)
     copied <- file.copy(
-      from = current_paths,
-      to = destinations,
+      from = current_paths[moving],
+      to = destinations[moving],
       overwrite = TRUE
     )
     if (!all(copied)) {

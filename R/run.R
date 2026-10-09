@@ -145,7 +145,9 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
-      file.remove(current_files[!current_files %in% new_paths])
+      unlink(
+        current_files[!same_path(current_files, new_paths)], expand = FALSE
+      )
       private$output_files_ <- new_paths
       message(
         "Moved ",
@@ -171,7 +173,9 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
-      file.remove(current_files[!current_files %in% new_paths])
+      unlink(
+        current_files[!same_path(current_files, new_paths)], expand = FALSE
+      )
       private$latent_dynamics_files_ <- new_paths
       message(
         "Moved ",
@@ -196,7 +200,9 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
-      file.remove(current_files[!current_files %in% new_paths])
+      unlink(
+        current_files[!same_path(current_files, new_paths)], expand = FALSE
+      )
       private$profile_files_ <- new_paths
       message(
         "Moved ",
@@ -220,7 +226,7 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
-      if (new_path != self$data_file()) {
+      if (!same_path(new_path, self$data_file())) {
         file.remove(self$data_file())
       }
       self$args$data_file <- new_path
@@ -242,7 +248,9 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
-      file.remove(current_files[!current_files %in% new_paths])
+      unlink(
+        current_files[!same_path(current_files, new_paths)], expand = FALSE
+      )
       private$config_files_ <- new_paths
       message(
         "Moved ",
@@ -273,7 +281,9 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
-      file.remove(current_files[!current_files %in% new_paths])
+      unlink(
+        current_files[!same_path(current_files, new_paths)], expand = FALSE
+      )
       private$metric_files_ <- new_paths
       message(
         "Moved ",
