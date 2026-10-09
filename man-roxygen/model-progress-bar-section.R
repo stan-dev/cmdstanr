@@ -1,19 +1,31 @@
 #' @section Progress bar:
-#' With `show_progress_bar = TRUE`, the method signals one progression across
-#' all chains through \pkg{progressr} and, by default, hides CmdStan's
-#' iteration lines. \pkg{progressr} shows nothing until you turn its reporting
-#' on, once per session, with `progressr::handlers(global = TRUE)`. To pick
-#' which bar it draws, call for example `progressr::handlers("cli")` (see
-#' [progressr::handlers()]). There is one bar for all chains because RStudio's
-#' terminal only supports single-line bars.
+#' ### Setup
+#' The bar needs two things: `show_progress_bar = TRUE`, and \pkg{progressr}'s
+#' reporting turned on once per session with
+#' `progressr::handlers(global = TRUE)`.
 #'
-#' The bar advances once every `refresh` iterations, and with `refresh = 0`
-#' CmdStan prints no iteration lines, so no bar is shown. A small `refresh`
-#' adds overhead, because CmdStanR reads every line CmdStan prints, with or
-#' without the bar. For a model that samples quickly the overhead is
-#' noticeable. For a slow model it is small next to the sampling time, and
-#' `refresh = 1` gives the smoothest bar.
+#' CmdStanR shows one bar for all chains rather than one per chain, because
+#' RStudio's console only supports single-line bars. The default is to show the
+#' progress bar instead of CmdStan's iteration lines, but those can be kept with
+#' `show_iteration_messages = TRUE`. The per-chain timing lines print once the
+#' bar is done.
 #'
+#' ### Choosing a bar
+#' The default progress bar is very simple. To customize it, select one of the
+#' many available handlers, for example `progressr::handlers("cli")`. The
+#' \pkg{progressr} vignette on
+#' [handlers](https://progressr.futureverse.org/articles/progressr-11-handlers.html)
+#' lists the bars it ships and their options.
+#'
+#' ### Overhead and the `refresh` argument
+#' The bar advances with CmdStan's iteration lines, one every `refresh`
+#' iterations (CmdStan's default is 100). With `refresh = 0` CmdStan prints
+#' none, so no bar is shown. A small `refresh` adds overhead, because CmdStanR
+#' reads every line CmdStan prints, with or without the bar. For a model that
+#' samples quickly the overhead can be noticeable. For a slow model it is small
+#' next to the sampling time, and `refresh = 1` gives the smoothest bar.
+#'
+#' ### Quarto and R Markdown
 #' In a Quarto or R Markdown document, write
 #' `if (interactive()) progressr::handlers(global = TRUE)` in the setup chunk,
 #' because the call fails while the document renders. Add

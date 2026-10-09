@@ -1195,10 +1195,11 @@ CmdStanMCMCProcs <- R6::R6Class(
         private$progressor_(type = "finish")
         private$progressor_ <- NULL
       }
-      for (id in private$unreported_) {
+      held <- private$unreported_
+      private$unreported_ <- integer()
+      for (id in held) {
         self$report_time(id)
       }
-      private$unreported_ <- integer()
       invisible(self)
     },
     report_time = function(id = NULL) {

@@ -36,9 +36,9 @@
 #' in a temporary directory, so set this option (or pass `output_dir`) when
 #' caching chunks that fit models.
 #'
-#' * `cmdstanr_progress_bar`: Should `$sample()` show a progress bar? The
-#' default is `FALSE`. See the `show_progress_bar` argument of
-#' [`$sample()`][model-method-sample].
+#' * `cmdstanr_progress_bar`: Should `$sample()` and `$sample_mpi()` show a
+#' progress bar? The default is `FALSE`. See the `show_progress_bar` argument
+#' of [`$sample()`][model-method-sample].
 #'
 #' * `cmdstanr_spinner`: Should a spinner be shown while CmdStan compiles a
 #' model, checks syntax, or is installed or rebuilt? The default is `TRUE`. The
