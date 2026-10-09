@@ -266,11 +266,11 @@ numerical error. If the messages are silenced then the
 used to display the silenced messages.}
 
 \item{show_progress_bar}{(logical) \strong{Experimental and may change in a later
-release.} When \code{TRUE}, show a progress bar through \pkg{progressr}. The
-default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
-\code{options(cmdstanr_progress_bar = TRUE)}. Nothing is shown until a
-\pkg{progressr} handler is registered, for example with
-\code{progressr::handlers(global = TRUE)} once per session.}
+release.} When \code{TRUE}, show a progress bar through \pkg{progressr} in
+place of CmdStan's iteration lines. The default is \code{FALSE}, or the
+\code{cmdstanr_progress_bar} option if set. The bar needs a \pkg{progressr}
+handler set up once per session. See the \strong{Progress bar} section below
+for details.}
 
 \item{show_iteration_messages}{(logical) Whether to print CmdStan's
 iteration lines. The default is \code{!show_progress_bar}, so the progress bar
@@ -337,6 +337,28 @@ other MPI launch arguments (\code{mpi_args}). In most cases, it is enough to
 only define the number of processes. To use \code{n_procs} processes specify
 \code{mpi_args = list("n" = n_procs)}.
 }
+\section{Progress bar}{
+
+With \code{show_progress_bar = TRUE}, the method signals one progression across
+all chains through \pkg{progressr} and, by default, hides CmdStan's
+iteration lines. \pkg{progressr} shows nothing until you turn its reporting
+on, once per session, with \code{progressr::handlers(global = TRUE)}. To pick
+which bar it draws, call for example \code{progressr::handlers("cli")} (see
+\code{\link[progressr:handlers]{progressr::handlers()}}). There is one bar for all chains because RStudio's
+terminal only supports single-line bars.
+
+The bar advances once every \code{refresh} iterations, and with \code{refresh = 0}
+CmdStan prints no iteration lines, so no bar is shown. A small \code{refresh}
+adds overhead, because CmdStanR reads every line CmdStan prints, with or
+without the bar. For a model that samples quickly the overhead is
+noticeable. For a slow model it is small next to the sampling time, and
+\code{refresh = 1} gives the smoothest bar.
+
+In a Quarto or R Markdown document,
+\code{options(cmdstanr_progress_bar = interactive())} shows the bar while you run
+chunks by hand and leaves it out when the document renders.
+}
+
 \examples{
 \dontrun{
 # mpi_options <- list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")

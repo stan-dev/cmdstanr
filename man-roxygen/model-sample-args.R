@@ -81,11 +81,11 @@
 #'   when, for example, trying to generate pseudo-data using the generated
 #'   quantities block.
 #' @param show_progress_bar (logical) **Experimental and may change in a later
-#'   release.** When `TRUE`, show a progress bar through \pkg{progressr}. The
-#'   default is `FALSE` but can be set to `TRUE` for an entire \R session by
-#'   `options(cmdstanr_progress_bar = TRUE)`. Nothing is shown until a
-#'   \pkg{progressr} handler is registered, for example with
-#'   `progressr::handlers(global = TRUE)` once per session.
+#'   release.** When `TRUE`, show a progress bar through \pkg{progressr} in
+#'   place of CmdStan's iteration lines. The default is `FALSE`, or the
+#'   `cmdstanr_progress_bar` option if set. The bar needs a \pkg{progressr}
+#'   handler set up once per session. See the **Progress bar** section below
+#'   for details.
 #' @param show_iteration_messages (logical) Whether to print CmdStan's
 #'   iteration lines. The default is `!show_progress_bar`, so the progress bar
 #'   replaces them.

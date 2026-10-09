@@ -989,20 +989,7 @@ format_stan_file <- function(stan_file,
 #' @template model-save-latent-dynamics-arg
 #' @template model-sample-args
 #'
-#' @section Progress bar:
-#' With `show_progress_bar = TRUE`, `$sample()` signals one progression across
-#' all chains through \pkg{progressr} and hides CmdStan's iteration lines. There
-#' is one bar for all chains because RStudio's terminal only supports
-#' single-line bars, so \pkg{progressr} does not draw one per chain. To pick a
-#' handler, call for example `progressr::handlers("cli")` before sampling (see
-#' [progressr::handlers()]).
-#'
-#' With `refresh = 0` CmdStan prints no iteration lines, so no bar is shown.
-#' Small `refresh` values slow fast models because CmdStanR reads every output
-#' line, with or without the bar. For slow models the added cost is small
-#' relative to sampling time, and `refresh = 1` gives the smoothest bar.
-#'
-#' For notebooks, use `options(cmdstanr_progress_bar = interactive())`.
+#' @template model-progress-bar-section
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
@@ -1163,6 +1150,8 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   processes. For example, `mpi_args = list("n" = 4)` launches the executable
 #'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
 #'   model executable.
+#'
+#' @template model-progress-bar-section
 #'
 #' @return A [`CmdStanMCMC`] object.
 #'
