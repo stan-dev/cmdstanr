@@ -545,7 +545,8 @@ stop_cannot_run <- function(exe_file, stan_file, reason, tbb_dir = NULL) {
 
 .run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
   procs <- self$procs
-  on.exit(procs$cleanup(), add = TRUE)
+  withr::defer(procs$finish_progress())
+  withr::defer(procs$cleanup())
   if (!is.null(mpi_cmd)) {
     if (is.null(mpi_args)) {
       mpi_args <- list()
@@ -621,6 +622,7 @@ stop_cannot_run <- function(exe_file, stan_file, reason, tbb_dir = NULL) {
     }
     procs$check_finished()
   }
+  procs$finish_progress() # clear the bar before the timing lines
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
   procs$report_time()
 }
@@ -1098,17 +1100,32 @@ CmdStanMCMCProcs <- R6::R6Class(
   classname = "CmdStanMCMCProcs",
   inherit = CmdStanProcs,
   public = list(
+    initialize = function(...,
+                          show_progress_bar,
+                          show_iteration_messages) {
+      checkmate::assert_flag(show_progress_bar)
+      checkmate::assert_flag(show_iteration_messages)
+      if (show_progress_bar) {
+        require_suggested_package("progressr")
+      }
+      super$initialize(...)
+      private$show_progress_bar_ <- show_progress_bar
+      private$show_iteration_messages_ <- show_iteration_messages
+      private$last_iteration_ <- integer(self$num_procs())
+    },
     process_output = function(id) {
       out <- self$get_proc(id)$read_output_lines()
       if (length(out) == 0) {
         return(invisible(NULL))
       }
+      progress_amount <- 0L
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
           ignore_line <- FALSE
           last_section_start_time <- private$proc_section_time_[id, "last_section_start"]
           state <- private$proc_state_[[id]]
+          iteration_line <- grepl("Iteration:", line, fixed = TRUE)
           # State machine for reading stdout.
           # 0 - chain has not started yet
           # 1 - chain is initializing (before iterations) and no output is printed
@@ -1128,7 +1145,7 @@ CmdStanMCMCProcs <- R6::R6Class(
             state <- 2
             next_state <- 2
           }
-          if (state < 3 && grepl("Iteration:", line, perl = TRUE)) {
+          if (state < 3 && iteration_line) {
             state <- 3 # 3 =  warmup
             next_state <- 3
           }
@@ -1165,7 +1182,16 @@ CmdStanMCMCProcs <- R6::R6Class(
               || grepl("stancflags", line, fixed = TRUE)) {
             ignore_line <- TRUE
           }
-          if ((state > 1.5 && state < 5 && !ignore_line && private$show_stdout_messages_) || is_verbose_mode()) {
+          if (iteration_line && !private$show_iteration_messages_) {
+            ignore_line <- TRUE
+          }
+          if (iteration_line && private$show_progress_bar_) {
+            progress_amount <- progress_amount +
+              private$update_progress_(id, line)
+          }
+          if ((state > 1.5 && state < 5 && !ignore_line &&
+               private$show_stdout_messages_) ||
+              is_verbose_mode()) {
             if (state == 2) {
               message("Chain ", id, " ", line)
             } else {
@@ -1188,6 +1214,21 @@ CmdStanMCMCProcs <- R6::R6Class(
           }
         }
       }
+      if (progress_amount > 0L) {
+        private$progressor_(amount = progress_amount)
+      }
+      invisible(self)
+    },
+    finish_progress = function() {
+      if (!is.null(private$progressor_)) {
+        private$progressor_(type = "finish")
+        private$progressor_ <- NULL
+      }
+      held <- private$unreported_
+      private$unreported_ <- integer()
+      for (id in held) {
+        self$report_time(id)
+      }
       invisible(self)
     },
     report_time = function(id = NULL) {
@@ -1195,6 +1236,12 @@ CmdStanMCMCProcs <- R6::R6Class(
         return(invisible(NULL))
       }
       if (!is.null(id)) {
+        # while the bar is on screen, hold this chain's "finished in" line.
+        # finish_progress() prints the held lines once the bar is done.
+        if (!is.null(private$progressor_)) {
+          private$unreported_ <- c(private$unreported_, id)
+          return(invisible(NULL))
+        }
         if (self$proc_state(id) == 7) {
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
         } else {
@@ -1238,6 +1285,34 @@ CmdStanMCMCProcs <- R6::R6Class(
         }
         return(invisible(NULL))
       }
+    }
+  ),
+  private = list(
+    show_progress_bar_ = FALSE,
+    show_iteration_messages_ = TRUE,
+    progressor_ = NULL,
+    last_iteration_ = integer(),
+    unreported_ = integer(),
+    update_progress_ = function(id, line) {
+      iteration_re <- paste0(
+        "Iteration: +([0-9]+) / ([0-9]+) \\[ *[0-9]+%\\] +",
+        "\\((Warmup|Sampling)\\)"
+      )
+      match <- regmatches(line, regexec(iteration_re, line))[[1L]]
+      if (length(match) == 0L) {
+        return(0L)
+      }
+      current <- as.integer(match[[2L]])
+      if (is.null(private$progressor_)) {
+        private$progressor_ <- progressr::progressor(
+          steps = as.integer(match[[3L]]) * self$num_procs(),
+          auto_finish = FALSE,
+          on_exit = FALSE
+        )
+      }
+      amount <- current - private$last_iteration_[[id]]
+      private$last_iteration_[[id]] <- current
+      amount
     }
   )
 )

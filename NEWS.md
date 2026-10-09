@@ -181,6 +181,8 @@ needs to tell a tuple from a list of arrays. (#925)
 
 ## Other new features
 
+* `$sample()` can show a progress bar through the progressr package with
+`show_progress_bar = TRUE` or `options(cmdstanr_progress_bar = TRUE)`. (#1138)
 * Reading MCMC and generated quantities draws from CmdStan CSV files now uses
 less memory. (#1041, #1307)
 * `as_cmdstan_fit()` now reads draws from the CSV files when they're first

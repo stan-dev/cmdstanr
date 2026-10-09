@@ -36,6 +36,8 @@ sample(
   fixed_param = FALSE,
   show_messages = TRUE,
   show_exceptions = TRUE,
+  show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+  show_iteration_messages = !show_progress_bar,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = getOption("cmdstanr_save_metric", FALSE),
   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
@@ -282,6 +284,16 @@ numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
 
+\item{show_progress_bar}{(logical) \strong{Experimental} and may change in a later
+release. When \code{TRUE}, show a progress bar through \pkg{progressr} in
+place of CmdStan's iteration lines. The default is \code{FALSE}, or the
+\code{cmdstanr_progress_bar} option if set. \pkg{progressr} shows the bar only
+once you turn its reporting on, see the \strong{Progress bar} section below.}
+
+\item{show_iteration_messages}{(logical) Whether to print CmdStan's
+iteration lines. The default is \code{!show_progress_bar}, so the progress bar
+replaces them.}
+
 \item{diagnostics}{(character vector) The diagnostics to automatically check
 and warn about after sampling. Setting this to an empty string \code{""} or
 \code{NULL} can be used to prevent CmdStanR from automatically reading in the
@@ -334,6 +346,52 @@ installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-gui
 default arguments. These values are also available via the
 \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
+\section{Progress bar}{
+
+\subsection{Setup}{
+
+The bar needs two things: \code{show_progress_bar = TRUE}, and \pkg{progressr}'s
+reporting turned on once per session with
+\code{progressr::handlers(global = TRUE)}. The bar is opt-in on CmdStanR's side
+as well, so even with \pkg{progressr} reporting on for other packages,
+CmdStanR only prints CmdStan's iteration lines until you request the bar.
+
+CmdStanR shows one bar for all chains rather than one per chain, because
+older versions of RStudio's console only support single-line bars. The
+default is to show the progress bar instead of CmdStan's iteration lines,
+but those can be kept with \code{show_iteration_messages = TRUE}. The per-chain
+timing lines print once the bar is done.
+}
+
+\subsection{Choosing a bar}{
+
+The default progress bar is very simple. To customize it, select one of the
+many available handlers, for example \code{progressr::handlers("cli")}. The
+\pkg{progressr} vignette on
+\href{https://progressr.futureverse.org/articles/progressr-11-handlers.html}{handlers}
+lists the bars it ships and their options.
+}
+
+\subsection{Overhead and the \code{refresh} argument}{
+
+The bar advances with CmdStan's iteration lines, one every \code{refresh}
+iterations (CmdStan's default is 100). With \code{refresh = 0} CmdStan prints
+none, so no bar is shown. A small \code{refresh} adds overhead, because CmdStanR
+reads every line CmdStan prints, with or without the bar. For a model that
+samples quickly the overhead can be noticeable. For a slow model it is small
+next to the sampling time, and \code{refresh = 1} gives the smoothest bar.
+}
+
+\subsection{Quarto and R Markdown}{
+
+In a Quarto or R Markdown document, write
+\code{if (interactive()) progressr::handlers(global = TRUE)} in the setup chunk,
+because the call fails while the document renders. Add
+\code{options(cmdstanr_progress_bar = interactive())} to keep CmdStan's iteration
+lines in the rendered output.
+}
+}
+
 \examples{
 \dontrun{
 library(cmdstanr)

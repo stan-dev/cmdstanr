@@ -23,7 +23,8 @@ Authors@R:
       person(given = "Ven", family = "Popov", role = "ctb"),
       person("Visruth", "Srimath Kandali", role = "ctb"),
       person("Aki", "Vehtari", role = "ctb"),
-      person("Katrina", "Brock", role = "ctb")
+      person("Katrina", "Brock", role = "ctb"),
+      person("Joss", "Wright", role = "ctb")
       )
 Description: An interface to 'Stan' <https://mc-stan.org>. 'CmdStanR' compiles
     'Stan' programs and runs its algorithms by calling 'CmdStan', the command
@@ -63,6 +64,7 @@ Suggests:
     ggplot2,
     knitr (>= 1.37),
     loo (>= 2.0.0),
+    progressr,
     qs2,
     Rcpp,
     RcppParallel,
