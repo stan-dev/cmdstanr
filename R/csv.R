@@ -179,13 +179,7 @@ read_cmdstan_csv <- function(files,
   withr::local_path(toolchain_PATH_env_var())
   # If the CSV files are stored in the WSL filesystem then it is significantly
   # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
-  if (os_is_wsl() && any(grepl("^//wsl", files))) {
-    wsl_files <- sapply(files, wsl_safe_path)
-    wsl_compatible_run(
-      command = "cp", args = c(wsl_files, wsl_safe_path(temp_dir))
-    )
-    files <- file.path(temp_dir, basename(files))
-  }
+  files <- stage_wsl_csv_files(files, temp_dir)
   format <- assert_valid_draws_format(format)
   assert_file_exists(
     files,
@@ -193,9 +187,7 @@ read_cmdstan_csv <- function(files,
     extension = c("csv", "csv.gz", "csv.bz2")
   )
   files <- wsl_safe_path(files, revert = TRUE)
-  for (i in grep("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)) {
-    files[i] <- decompress_csv(files[i], temp_dir)
-  }
+  files <- decompress_csv_files(files, temp_dir)
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -719,6 +711,7 @@ parse_generated_quantities_time <- function(line) {
 decompress_csv <- function(file, dir) {
   out <- tempfile(tmpdir = dir, fileext = ".csv")
   tool <- if (endsWith(tolower(file), ".gz")) "gzip" else "bzip2"
+  withr::local_path(toolchain_PATH_env_var())
   status <- processx::run(
     tool,
     c("-dc", path.expand(file)),
@@ -732,6 +725,92 @@ decompress_csv <- function(file, dir) {
     )
   }
   invisible(out)
+}
+
+#' Decompress the compressed CSV files in a vector of paths
+#'
+#' @noRd
+#' @param files Paths to CSV files, compressed or not.
+#' @param dir Directory for the decompressed copies.
+#' @return `files` with each compressed path replaced by its decompressed copy.
+decompress_csv_files <- function(files, dir) {
+  compressed <- grepl("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)
+  files[compressed] <- vapply(
+    stage_wsl_csv_files(files[compressed], dir),
+    decompress_csv,
+    character(1),
+    dir = dir,
+    USE.NAMES = FALSE
+  )
+  files
+}
+
+#' Copy CSV files stored in the WSL filesystem into a Windows directory
+#'
+#' @noRd
+#' @param files Paths to CSV files.
+#' @param dir Directory to copy into.
+#' @return Paths to the copies if `files` are in WSL, otherwise `files`.
+stage_wsl_csv_files <- function(files, dir) {
+  if (os_is_wsl() && any(grepl("^//wsl", files))) {
+    wsl_compatible_run(
+      command = "cp",
+      args = c(wsl_safe_path(files), wsl_safe_path(dir))
+    )
+    files <- file.path(dir, basename(files))
+  }
+  files
+}
+
+#' Compress existing CSV files in place
+#'
+#' @noRd
+#' @param files Paths to CSV files.
+#' @param compress One of `"none"`, `"gzip"` or `"bzip2"`.
+#' @return `files` with the compressed files' extensions added.
+compress_csv <- function(files, compress) {
+  existing <- file.exists(files)
+  if (compress == "none" || !any(existing)) {
+    return(files)
+  }
+  withr::local_path(toolchain_PATH_env_var())
+  wsl_compatible_run(
+    command = compress,
+    args = c("-f", wsl_safe_path(path.expand(files[existing])))
+  )
+  files[existing] <- paste0(
+    files[existing], switch(compress, gzip = ".gz", bzip2 = ".bz2")
+  )
+  files
+}
+
+#' Check `compress` and that the program it needs is available
+#'
+#' @noRd
+#' @param compress One of `"none"`, `"gzip"` or `"bzip2"`.
+#' @return `compress`.
+assert_compress <- function(compress) {
+  compress <- match.arg(compress, c("none", "gzip", "bzip2"))
+  if (compress == "none") {
+    return(compress)
+  }
+  withr::local_path(toolchain_PATH_env_var())
+  found <- nzchar(Sys.which(compress))
+  where <- "on the PATH"
+  if (found && os_is_wsl()) {
+    found <- processx::run(
+      "wsl", c("which", compress), error_on_status = FALSE
+    )$status == 0
+    where <- "inside the WSL distribution"
+  }
+  if (!found) {
+    stop(
+      "`compress = \"", compress, "\"` needs the ", compress,
+      " program, which was not found ", where, ".",
+      call. = FALSE
+    )
+  }
+  compress
 }
 
 #' Reads the sampling arguments and the diagonal of the

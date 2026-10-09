@@ -38,7 +38,8 @@ sample(
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = getOption("cmdstanr_save_metric", FALSE),
-  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
 )
 }
 \arguments{
@@ -310,6 +311,13 @@ entire \R session by \code{options(cmdstanr_save_metric = TRUE)}.}
 tree and extra information (equivalent to the output CSV file header). The
 default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
 \code{options(cmdstanr_save_config = TRUE)}.}
+
+\item{compress}{(string) Compression to apply to the output CSV files after
+CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
+(the default), \code{"gzip"}, or \code{"bzip2"}. The fit reads compressed files by
+decompressing them to a temporary copy first, which makes each read
+slower in exchange for using less disk space. The \code{cmdstanr_compress}
+option sets the default for every fitting method.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.

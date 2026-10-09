@@ -651,3 +651,87 @@ test_that("code() warns if model not created with Stan file", {
     fixed = TRUE
   )
 })
+
+test_that("compress writes compressed output files that read like plain ones", {
+  for (method in all_methods) {
+    fit <- if (method == "generate_quantities") {
+      testing_fit(
+        "bernoulli_ppc", method = method, fitted_params = fit_bern,
+        seed = 123, compress = "gzip"
+      )
+    } else {
+      testing_fit("logistic", method = method, seed = 123, compress = "gzip")
+    }
+    checkmate::expect_file_exists(fit$output_files(), extension = "csv.gz")
+    expect_equal(fit$draws(), fits[[method]]$draws())
+  }
+})
+
+test_that("save_output_files() can change the compression", {
+  for (method in setdiff(all_methods, "generate_quantities")) {
+    fit <- fits[[method]]
+    expected <- as_cmdstan_fit(fit$output_files())$draws()
+    for (compress in c("gzip", "bzip2", "none")) {
+      ext <- switch(compress, gzip = "csv.gz", bzip2 = "csv.bz2", none = "csv")
+      previous <- fit$output_files()
+      paths <- suppressMessages(
+        fit$save_output_files(tempdir(), compress = compress)
+      )
+      checkmate::expect_file_exists(paths, extension = ext)
+      expect_false(any(file.exists(previous)))
+      expect_equal(fit$output_files(), paths)
+      expect_equal(as_cmdstan_fit(paths)$draws(), expected)
+    }
+  }
+})
+
+test_that("save_output_files() keeps the compression of the files by default", {
+  fit <- fits[["sample"]]
+  suppressMessages(
+    fit$save_output_files(tempdir(), basename = "keep", compress = "gzip")
+  )
+  kept <- suppressMessages(fit$save_output_files(tempdir(), basename = "keep"))
+  checkmate::expect_file_exists(kept, extension = "csv.gz")
+})
+
+test_that("save_output_files() can save the files onto their current names", {
+  fit <- fits[["sample"]]
+  expected <- as_cmdstan_fit(fit$output_files())$draws()
+  save_same <- function(dir = tempdir(), compress = NULL) {
+    suppressMessages(fit$save_output_files(
+      dir, basename = "same", timestamp = FALSE, random = FALSE,
+      compress = compress
+    ))
+  }
+  paths <- save_same(compress = "none")
+  expect_no_warning(expect_equal(save_same(), paths))
+  # the same directory spelled differently
+  expect_no_warning(again <- save_same(dir = file.path(tempdir(), ".")))
+  expect_true(all(same_path(again, paths)))
+  expect_true(all(file.size(paths) > 0))
+  expect_equal(as_cmdstan_fit(paths)$draws(), expected)
+  expect_no_warning(gz <- save_same(compress = "gzip"))
+  checkmate::expect_file_exists(gz, extension = "csv.gz")
+  expect_equal(as_cmdstan_fit(gz)$draws(), expected)
+  expect_no_warning(plain <- save_same(compress = "none"))
+  expect_equal(plain, paths)
+  expect_equal(as_cmdstan_fit(plain)$draws(), expected)
+})
+
+test_that("save_output_files() errors for an invalid compress value", {
+  expect_error(
+    fits[["sample"]]$save_output_files(tempdir(), compress = "zip"),
+    "'arg' should be one of"
+  )
+})
+
+test_that("save_latent_dynamics_files() can compress the files", {
+  for (method in c("sample", "variational")) {
+    fit <- fits[[method]]
+    paths <- suppressMessages(
+      fit$save_latent_dynamics_files(tempdir(), compress = "gzip")
+    )
+    checkmate::expect_file_exists(paths, extension = "csv.gz")
+    expect_equal(fit$latent_dynamics_files(), paths)
+  }
+})

@@ -549,5 +549,5 @@ process_fitted_params <- function(fitted_params) {
       "CmdStanPathfinder object, ",
       "a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)
   }
-  paths
+  decompress_csv_files(paths, tempdir())
 }

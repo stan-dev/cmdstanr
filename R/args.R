@@ -41,6 +41,7 @@ CmdStanArgs <- R6::R6Class(
                           refresh = NULL,
                           output_dir = NULL,
                           output_basename = NULL,
+                          compress = "none",
                           sig_figs = NULL,
                           opencl_ids = NULL,
                           model_variables = NULL,
@@ -73,6 +74,7 @@ CmdStanArgs <- R6::R6Class(
       }
       self$output_dir <- repair_path(self$output_dir)
       self$output_basename <- output_basename
+      self$compress <- assert_compress(compress)
       if (inherits(self$method_args, "PathfinderArgs")) {
         num_inits <- self$method_args$num_paths
       } else {
@@ -465,7 +467,9 @@ LaplaceArgs <- R6::R6Class(
       # mode <- file path to pass to CmdStan
       # This needs to be a path that can be accessed within WSL
       # since the files are used by CmdStan, not R
-      self$mode <- wsl_safe_path(self$mode_object$output_files())
+      self$mode <- wsl_safe_path(
+        decompress_csv_files(self$mode_object$output_files(), tempdir())
+      )
       self$jacobian <- jacobian
       self$draws <- draws
       invisible(self)

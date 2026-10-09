@@ -21,10 +21,12 @@ vignette: >
 This vignette is intended to be read after the [_Getting started with CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
 vignette. Please read that first for important background. In this document we
 provide additional details about compiling models, passing in data, and how
-CmdStan output is saved and read back into R.
+CmdStan output is saved and read back into R. We will only use the `$sample()`
+method in examples, but all model fitting methods work in a similar way under
+the hood.
 
-We will only use the `$sample()` method in examples, but all model fitting
-methods work in a similar way under the hood.
+If you are developing a package that uses CmdStanR, see the recommendations in
+the **Developing using CmdStanR** section.
 
 ```{r setup, message=FALSE}
 library(cmdstanr)
@@ -63,7 +65,7 @@ mod <- cmdstan_model(stan_file)
 
 `cmdstan_model()` builds the executable before it returns, or reuses one that
 is already up to date. The arguments that configure the build are passed to
-`cmdstan_model()` directly, including `include_paths`, `cpp_options`, and 
+`cmdstan_model()` directly, including `include_paths`, `cpp_options`, and
 various other arguments. See `?cmdstan_model` for details.
 
 ```{r compile-options, eval=FALSE}
@@ -96,7 +98,7 @@ The `unlink()` call above deleted the executable that `mod` was created with,
 and `compile_stan_file()` built a new one in its place. A `CmdStanModel` object
 only runs the executable it was created with, so `mod` would now refuse to run
 and, since the rest of this vignette uses `mod`, we recreate it here. Since the
-executable is up to date, it does not compile again. 
+executable is up to date, it does not compile again.
 
 ```{r recreate}
 mod <- cmdstan_model(stan_file)
@@ -410,6 +412,21 @@ fit <- mod$sample(
   data = data_list,
   output_dir = "path/to/directory"
 )
+```
+
+
+### Compressed files
+
+Set `compress = "gzip"` or `compress = "bzip2"` to have CmdStanR compress the
+CSV files after CmdStan finishes writing them, which uses less disk space.
+CmdStanR still reads them, but each read first decompresses a temporary copy, so
+it is slower than reading plain files. `fit$save_output_files()` keeps the
+current compression unless you set `compress`. The `cmdstanr_compress` option
+can be used to set the compression for an entire R session.
+
+```{r compress, eval = FALSE}
+fit <- mod$sample(data = data_list, compress = "gzip")
+fit$output_files()
 ```
 
 

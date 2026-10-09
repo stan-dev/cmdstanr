@@ -1038,7 +1038,8 @@ sample <- function(data = NULL,
                    show_exceptions = TRUE,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    save_metric = getOption("cmdstanr_save_metric", FALSE),
-                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                   compress = getOption("cmdstanr_compress", "none")) {
 
   private$assert_current_()
   if (fixed_param) {
@@ -1090,6 +1091,7 @@ sample <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1201,7 +1203,8 @@ sample_mpi <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                       compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
 
   if (fixed_param) {
@@ -1250,6 +1253,7 @@ sample_mpi <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     model_variables = model_variables,
     save_cmdstan_config = save_cmdstan_config
@@ -1348,7 +1352,8 @@ optimize <- function(data = NULL,
                      history_size = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
-                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                     compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1386,6 +1391,7 @@ optimize <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1424,7 +1430,8 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' @param mode (multiple options) The mode to center the approximation at. One
 #'   of the following:
 #'   * A [`CmdStanMLE`] object from a previous run of [`$optimize()`][model-method-optimize].
-#'   * The path to a CmdStan CSV file from running optimization.
+#'   * The path to a CmdStan CSV file (`.csv`, `.csv.gz` or `.csv.bz2`) from
+#'   running optimization.
 #'   * `NULL`, in which case [$optimize()][model-method-optimize] will be run
 #'   with `jacobian=jacobian` (see the `jacobian` argument below).
 #'
@@ -1488,7 +1495,8 @@ laplace <- function(data = NULL,
                     draws = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
-                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                    compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both `opt_args` and `mode` arguments.", call. = FALSE)
@@ -1526,7 +1534,8 @@ laplace <- function(data = NULL,
       sig_figs = sig_figs,
       threads = threads,
       opencl_ids = opencl_ids,
-      jacobian = jacobian
+      jacobian = jacobian,
+      compress = compress
     )
     cmdstan_mode <- do.call(self$optimize, append(args, opt_args))
     if (cmdstan_mode$return_codes() != 0) {
@@ -1559,6 +1568,7 @@ laplace <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1654,7 +1664,8 @@ variational <- function(data = NULL,
                         draws = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
-                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                        compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1692,6 +1703,7 @@ variational <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1822,7 +1834,8 @@ pathfinder <- function(data = NULL,
                        calculate_lp = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
-                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)) {
+                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+                       compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   if (!is.null(num_threads)) {
     if (!is.null(threads)) {
@@ -1875,6 +1888,7 @@ pathfinder <- function(data = NULL,
     refresh = refresh,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables,
@@ -1910,7 +1924,8 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #'  [CmdStanPathfinder] fitted model object.
 #'  * A [posterior::draws_array] or [posterior::draws_matrix] object returned by
 #'  CmdStanR's [`$draws()`][fit-method-draws] method.
-#'  * A character vector of paths to CmdStan CSV output files.
+#'  * A character vector of paths to CmdStan CSV output files (`.csv`,
+#'  `.csv.gz` or `.csv.bz2`).
 #'
 #' For a [CmdStanMLE] object, optimization supplies one point estimate, so
 #' generated quantities that use RNG functions produce only one simulation.
@@ -1982,7 +1997,8 @@ generate_quantities <- function(fitted_params,
                                 threads_per_chain = NULL,
                                 opencl_ids = NULL,
                                 show_messages = TRUE,
-                                show_exceptions = TRUE) {
+                                show_exceptions = TRUE,
+                                compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   fitted_params_files <- process_fitted_params(fitted_params)
   procs <- CmdStanGQProcs$new(
@@ -2010,6 +2026,7 @@ generate_quantities <- function(fitted_params,
     seed = seed,
     output_dir = output_dir,
     output_basename = output_basename,
+    compress = compress,
     sig_figs = sig_figs,
     opencl_ids = assert_valid_opencl(opencl_ids, private$reported_features_),
     model_variables = model_variables

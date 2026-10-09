@@ -354,6 +354,21 @@ test_that("Errors are suppressed with show_exceptions", {
     ))
 })
 
+test_that("compressed fits support latent dynamics files and CmdStan tools", {
+  fit <- mod$sample(
+    data = data_list,
+    chains = 2,
+    refresh = 0,
+    compress = "gzip",
+    save_latent_dynamics = TRUE
+  )
+  checkmate::expect_file_exists(
+    fit$latent_dynamics_files(), extension = "csv.gz"
+  )
+  expect_output(fit$cmdstan_summary(), "Inference for Stan model")
+  expect_output(fit$cmdstan_diagnose(), "Processing complete")
+})
+
 test_that("All output can be suppressed by show_messages", {
   mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
