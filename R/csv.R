@@ -656,6 +656,7 @@ unavailable_methods_CmdStanFit_CSV <- c(
   "init",
   "output",
   "return_codes",
+  "command",
   "num_procs",
   "time", # available for MCMC, not other methods
   "expose_functions",

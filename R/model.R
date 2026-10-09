@@ -54,30 +54,38 @@
 #'   directory is used.
 #' @param user_header (string) The path to a C++ file (with a `.hpp` extension)
 #'   to compile with the Stan model.
-#' @param cpp_options (list) Any makefile options to be used when compiling the
-#'   model (`stan_threads`, `stan_mpi`, `stan_opencl`, etc.), written as
-#'   `list(NAME = value)`. Each entry is an assignment you could make in the
-#'   `make/local` file, so `list(CXXFLAGS = "-O3")` rather than `"-O3"`.
-#'   Every entry must be named with a make variable name, in any casing.
-#'   Setting an option to `FALSE` or `NULL` passes an empty assignment such as
-#'   `STAN_THREADS=`. That empties the variable for this build, which turns a
-#'   switch off, and overrides whatever `make/local` sets. See
-#'   [stan_build_info()] for an example of setting options and checking what
-#'   the executable was built with, and the Stan case study [Reduce Sum: A
-#'   Minimal
+#' @param cpp_options (list) Options for building the model's executable,
+#'   written as `list(NAME = value)`, for example `list(stan_threads = TRUE)`
+#'   to build with threading or `list(stan_no_range_checks = TRUE)` to skip
+#'   the range checks on indexing. The names are CmdStan's makefile variables
+#'   (`stan_threads`, `stan_opencl`, `stan_no_range_checks`,
+#'   `stan_cpp_optims`, `stan_mpi`, `CXXFLAGS`, etc.), in any casing. `TRUE`
+#'   turns an option on and `FALSE` or `NULL` turns it off, even when
+#'   `make/local` turns it on. The options apply to this model only, and each
+#'   one replaces the same variable's setting in `make/local`, so, e.g.,
+#'   `list(CXXFLAGS = "-Wall")` drops any flags that `make/local` adds to
+#'   `CXXFLAGS`. Settings meant for every model belong in `make/local`
+#'   instead, see [cmdstan_make_local()]. See [stan_build_info()] for an
+#'   example of setting options and checking what the executable was built
+#'   with, and the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html)
 #'   for using threading.
-#' @param stanc_options (list) Any Stan-to-C++ transpiler options to be used
-#'   when compiling the model. A flag is given by name without the leading
-#'   hyphens, as `list("O1")` or `list(O1 = TRUE)`, and an option that takes a
-#'   value as `list(option = "value")`. See [stan_build_info()] for an example
-#'   and the [stanc chapter of the CmdStan User's
-#'   Guide](https://mc-stan.org/docs/cmdstan-guide/stanc.html) for the
-#'   available options. Options that CmdStanR sets from its own arguments
-#'   cannot be passed here: `include-paths` (use `include_paths`),
-#'   `warn-pedantic` (`pedantic`), `allow-undefined` (`user_header`),
-#'   `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`) and `name` (taken
-#'   from the name of the Stan file).
+#' @param stanc_options (list) Options for stanc, the Stan compiler, when it
+#'   turns the program into C++. Write a flag by name without the leading
+#'   hyphens, as `list("O1")` or `list(O1 = TRUE)` to turn on stanc's
+#'   optimizations, and an option that takes a value as
+#'   `list(option = "value")`. `list(O1 = FALSE)` leaves the flag out, the
+#'   same as not mentioning it. The [Using the Stan Compiler chapter of the
+#'   Stan User's
+#'   Guide](https://mc-stan.org/docs/stan-users-guide/using-stanc.html#stanc-args)
+#'   lists the options. They apply to this model only, and a flag set here
+#'   replaces the same flag in `make/local`'s `STANCFLAGS`. Five flags that
+#'   CmdStanR sets from its own arguments can't be given here: `include-paths`
+#'   (use `include_paths`), `warn-pedantic` (`pedantic`), `allow-undefined`
+#'   (`user_header`), `use-opencl` (`cpp_options = list(stan_opencl = TRUE)`)
+#'   and `name` (taken from the name of the Stan file). See
+#'   [stan_build_info()] for an example of checking what the executable was
+#'   built with.
 #' @param force_recompile (logical) Should the model be recompiled even if the
 #'   executable was built from this program with these options? The default,
 #'   `NULL`, defers to the `cmdstanr_force_recompile` global option, and to
@@ -408,11 +416,9 @@ CmdStanModel <- R6::R6Class(
       }
       invisible(self)
     },
-    # The C++ for the standalone functions, generated from the Stan file the
-    # first time it's needed, after assert_current_() checks the file is the one
-    # the executable was built from. Generating it in the constructor would run
-    # stanc for a feature most models never use. Empty for a model without a
-    # Stan file.
+    # The C++ for any standalone functions, generated the first time a fit
+    # method or $expose_functions() runs. A fit copies it at creation, so a fit
+    # restored with readRDS() can expose its functions without the Stan file.
     standalone_functions_ = function() {
       if (self$has_stan_file() && is.null(self$functions$hpp_code)) {
         configuration <- private$record_$configuration
@@ -608,7 +614,7 @@ CmdStanModel <- R6::R6Class(
 #'   executable, as a string.
 #' * `$cpp_options()` returns a named list of C++ options, with names in their
 #'   make spelling and values as the strings make received: `TRUE` comes back
-#'   as `"TRUE"` and `FALSE` as `""`. To ask whether the executable was built
+#'   as `"true"` and `FALSE` as `""`. To ask whether the executable was built
 #'   with a feature, use `$build_info()`, which reports logicals.
 #' * `$user_header()` returns the absolute path to the user header as a string,
 #'   or `NULL` if the model has no user header.
@@ -730,9 +736,8 @@ variables_stan_file <- function(stan_file, include_paths = NULL) {
 #'   program. The method uses the model's own include paths when none are
 #'   given. `check_syntax_stan_file()` uses the program's own directory when
 #'   none are given and the program contains `#include` directives.
-#' @param stanc_options (list) Any other Stan-to-C++ transpiler options to be
-#'   used when compiling the model. See the documentation for
-#'   [cmdstan_model()] for details.
+#' @param stanc_options (list) Any other options for stanc, the Stan
+#'   compiler. See the documentation for [cmdstan_model()] for details.
 #' @param quiet (logical) Should informational messages be suppressed? The
 #'   default is `FALSE`, which will print a message if the Stan program is valid
 #'   or the compiler error message if there are syntax errors. If `TRUE`, only
@@ -2117,12 +2122,23 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #'   This method is also available for all fitted model objects. See
 #'   **Examples**.
 #'
+#'   Compiling the functions takes a while, and by default the compiled
+#'   code is kept in R's temporary directory, so every new R session
+#'   compiles them again. To avoid that, set the `rcpp.cache.dir` option
+#'   to a directory that persists across sessions, for example
+#'   `options(rcpp.cache.dir = "~/.cache/stan-functions")`, before
+#'   calling this method. Later sessions then load the functions from
+#'   there, as long as the Stan program hasn't changed and is still at the
+#'   same file path. If you use [write_stan_file()], also set the
+#'   `cmdstanr_write_stan_file_dir` option to a fixed directory so the
+#'   path stays the same.
+#'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
 #'
-#' @param global (logical) Should the functions be added to the Global
-#'   Environment? The default is `FALSE`, in which case the functions are
-#'   available via the `functions` field of the R6 object.
+#' @param global (logical) Should the functions also be added to the global
+#'   environment? The default is `FALSE`. Either way they are available via
+#'   the `functions` field of the R6 object.
 #' @param verbose (logical) Should detailed information about generated code be
 #'   printed to the console? Defaults to `FALSE`.
 #' @param quiet (logical) Should the messages saying the functions are being

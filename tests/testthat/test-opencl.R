@@ -4,8 +4,7 @@ set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
 
 test_that("all methods error when opencl_ids is used with non OpenCL model", {
-  stan_file <- testing_stan_file("bernoulli")
-  mod <- cmdstan_model(stan_file = stan_file, force_recompile = TRUE)
+  mod <- testing_model("bernoulli")
   expect_error(
     mod$sample(data = testing_data("bernoulli"), opencl_ids = c(0, 0), chains = 1),
     "`opencl_ids` is set but the executable does not report OpenCL as enabled.",
@@ -21,8 +20,7 @@ test_that("all methods error when opencl_ids is used with non OpenCL model", {
     "`opencl_ids` is set but the executable does not report OpenCL as enabled.",
     fixed = TRUE
   )
-  stan_file_gq <- testing_stan_file("bernoulli_ppc")
-  mod_gq <- cmdstan_model(stan_file = stan_file_gq, force_recompile = TRUE)
+  mod_gq <- testing_model("bernoulli_ppc")
   expect_error(
     mod_gq$generate_quantities(fitted_params = fit, data = testing_data("bernoulli"), opencl_ids = c(0, 0)),
     "`opencl_ids` is set but the executable does not report OpenCL as enabled.",
@@ -35,7 +33,6 @@ test_that("all methods error on invalid opencl_ids", {
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(
     stan_file = stan_file,
-    force_recompile = TRUE,
     cpp_options = list(stan_opencl = TRUE)
   )
   utils::capture.output(
@@ -62,7 +59,6 @@ test_that("all methods error on invalid opencl_ids", {
   stan_file_gq <- testing_stan_file("bernoulli_ppc")
   mod_gq <- cmdstan_model(
     stan_file = stan_file_gq,
-    force_recompile = TRUE,
     cpp_options = list(stan_opencl = TRUE)
   )
   utils::capture.output(
@@ -79,7 +75,6 @@ test_that("all methods run with valid opencl_ids", {
   stan_file <- testing_stan_file("bernoulli")
   mod <- cmdstan_model(
     stan_file = stan_file,
-    force_recompile = TRUE,
     cpp_options = list(stan_opencl = TRUE)
   )
   expect_sample_output(
@@ -93,7 +88,6 @@ test_that("all methods run with valid opencl_ids", {
   stan_file_gq <- testing_stan_file("bernoulli_ppc")
   mod_gq <- cmdstan_model(
     stan_file = stan_file_gq,
-    force_recompile = TRUE,
     cpp_options = list(stan_opencl = TRUE)
   )
   expect_gq_output(

@@ -527,12 +527,7 @@ process_fitted_params <- function(fitted_params) {
              all(file.exists(fitted_params$output_files()))) {
       paths <- absolute_path(fitted_params$output_files())
   } else if (checkmate::test_r6(fitted_params, "CmdStanMCMC")) {
-    draws <- tryCatch(
-      fitted_params$draws(),
-      error = function(cond) {
-        stop("Unable to obtain draws from the fit object.", call. = FALSE)
-      }
-    )
+    draws <- fitted_params$draws()
     sampler_diagnostics <- tryCatch(
       fitted_params$sampler_diagnostics()
     )
@@ -541,12 +536,7 @@ process_fitted_params <- function(fitted_params) {
              checkmate::test_r6(fitted_params, "CmdStanLaplace") ||
              checkmate::test_r6(fitted_params, "CmdStanVB") ||
              checkmate::test_r6(fitted_params, "CmdStanPathfinder")) {
-    draws <- tryCatch(
-      fitted_params$draws(),
-      error = function(cond) {
-        stop("Unable to obtain draws from the fit object.", call. = FALSE)
-      }
-    )
+    draws <- fitted_params$draws()
     paths <- draws_to_csv(posterior::as_draws_array(draws))
   } else if (any(class(fitted_params) == "draws_array")) {
     paths <- draws_to_csv(fitted_params)

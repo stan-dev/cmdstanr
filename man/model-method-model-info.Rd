@@ -27,7 +27,7 @@ executable path is set.
 executable, as a string.
 \item \verb{$cpp_options()} returns a named list of C++ options, with names in their
 make spelling and values as the strings make received: \code{TRUE} comes back
-as \code{"TRUE"} and \code{FALSE} as \code{""}. To ask whether the executable was built
+as \code{"true"} and \code{FALSE} as \code{""}. To ask whether the executable was built
 with a feature, use \verb{$build_info()}, which reports logicals.
 \item \verb{$user_header()} returns the absolute path to the user header as a string,
 or \code{NULL} if the model has no user header.

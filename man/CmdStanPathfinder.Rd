@@ -59,6 +59,7 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
    \code{\link[=fit-method-output]{$output()}} \tab Pretty print the output that was printed to the console. \cr
    \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
+   \code{\link[=fit-method-command]{$command()}} \tab Return the commands that ran CmdStan. \cr
 }
 
 }

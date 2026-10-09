@@ -32,6 +32,9 @@
 #' CSV files when fitting models. The default is a temporary directory. Files in
 #' a temporary directory are removed as part of \R garbage collection, while
 #' files in an explicitly defined directory are not automatically deleted.
+#' A cached Quarto or R Markdown render keeps the fit object but not the files
+#' in a temporary directory, so set this option (or pass `output_dir`) when
+#' caching chunks that fit models.
 #'
 #' * `cmdstanr_compress`: Compression for the output CSV files when fitting
 #' models: `"none"`, `"gzip"`, or `"bzip2"`. The default is `"none"`.

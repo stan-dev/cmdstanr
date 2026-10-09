@@ -160,8 +160,8 @@ as well as \code{reduce_sum}).}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
 the OpenCL device to use for fitting. The model must be compiled with
-\code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
-effect.}
+\code{cpp_options = list(stan_opencl = TRUE)}, otherwise setting this argument
+is an error.}
 
 \item{num_threads}{Deprecated and will be removed in a future release. Use
 \code{threads} instead.}

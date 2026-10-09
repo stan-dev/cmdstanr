@@ -78,7 +78,27 @@ CmdStanFit <- R6::R6Class(
     init_ = NULL,
     profiles_ = NULL,
     model_methods_env_ = NULL,
-    return_codes_ = NULL
+    return_codes_ = NULL,
+
+    # The CSV files to read, with a better error when the ones CmdStan wrote
+    # to the temp directory are gone
+    csv_files_ = function() {
+      files <- self$output_files(include_failed = FALSE)
+      output_dir <- self$runset$args$output_dir
+      if (!all(file.exists(files)) &&
+          isTRUE(self$runset$args$using_tempdir) &&
+          all(repair_path(dirname(files)) == output_dir)) {
+        stop(
+          "The fit's CSV files are gone. They were in a temporary ",
+          "directory ('", output_dir, "'), which doesn't survive the ",
+          "session, so a fit restored later (e.g., from a cached Quarto ",
+          "chunk) can't read them. To avoid this, pass `output_dir` when ",
+          "fitting or save the fit with `$save_object()`.",
+          call. = FALSE
+        )
+      }
+      files
+    }
   )
 )
 
@@ -353,7 +373,9 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   `unconstrain_variables` and `unconstrain_draws` functions. These are then
 #'   available as methods of the fitted model object. This requires the
 #'   additional \pkg{Rcpp} package. The methods compile once per model
-#'   object, so later fits of the same model reuse them.
+#'   object, so later fits of the same model reuse them. To avoid compiling
+#'   them again in every new R session, set the `rcpp.cache.dir` option as
+#'   described for [`$expose_functions()`][model-method-expose_functions].
 #'
 #'   If a model or fit object was saved with [base::saveRDS()] and later
 #'   reloaded, any previously compiled model-method bindings will be rebuilt in
@@ -1255,6 +1277,49 @@ return_codes <- function() {
 }
 CmdStanFit$set("public", name = "return_codes", value = return_codes)
 
+#' Return the command that ran CmdStan
+#'
+#' @name fit-method-command
+#' @aliases command
+#' @description The `$command()` method returns the command line
+#'   CmdStanR ran for each CmdStan run. A few things to know before
+#'   running one again:
+#'
+#'   * The paths are the ones R used. Input files CmdStanR wrote for
+#'   the run (data passed as a list, inits, an inverse metric, the CSV
+#'   files `$laplace()` and `$generate_quantities()` read) are in a
+#'   temporary directory, even when `output_dir` is set, and don't
+#'   outlive the R session.
+#'   * The output paths are this fit's CSV files, so running the line
+#'   again overwrites them unless you change the paths after `output`.
+#'   * `threads_per_chain` (or `threads`) reaches CmdStan as the
+#'   `STAN_NUM_THREADS` environment variable, not an argument, so set
+#'   it first.
+#'   * `$sample_mpi()` runs the line through the MPI launcher, which the
+#'   line doesn't include.
+#'   * On Windows CmdStanR puts the TBB library on `PATH` for the run,
+#'   so the terminal needs it there too.
+#'   * On WSL the command runs inside the Linux distribution, where the
+#'   paths are already spelled for it.
+#' @return A character vector with one command per CmdStan run.
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic", method = "sample")
+#' fit$command()
+#'
+#' # one line per chain
+#' cat(fit$command(), sep = "\n")
+#' }
+#'
+command <- function() {
+  exe <- wsl_safe_path(self$runset$exe_file())
+  vapply(self$runset$command_args(), function(args) {
+    paste(shQuote(c(exe, args)), collapse = " ")
+  }, character(1))
+}
+CmdStanFit$set("public", name = "command", value = command)
+
 #' Return profiling data
 #'
 #' @name fit-method-profiles
@@ -1408,6 +1473,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  [`$output()`][fit-method-output]  |  Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -1501,8 +1567,9 @@ CmdStanMCMC <- R6::R6Class(
         stop("No chains finished successfully. There is no output to read.",
              call. = FALSE)
       }
+      files <- private$csv_files_()
       csv_contents <- read_cmdstan_csv(
-        files = self$output_files(include_failed = FALSE),
+        files = files,
         variables = variables,
         sampler_diagnostics = sampler_diagnostics,
         format = format
@@ -1990,6 +2057,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$time()`][fit-method-time]      |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2014,7 +2082,8 @@ CmdStanMLE <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Optimization failed. There is no output to read.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2124,6 +2193,7 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$time()`][fit-method-time]  |  Report the run time of the Laplace sampling step. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2148,7 +2218,8 @@ CmdStanLaplace <- R6::R6Class(
         stop("Laplace inference failed. There is no output to read.",
              call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2240,6 +2311,7 @@ CmdStanLaplace$set("public", name = "mode", value = mode)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2265,7 +2337,8 @@ CmdStanVB <- R6::R6Class(
         stop("Variational inference failed. There is no output to read.",
              call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2335,6 +2408,7 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2359,7 +2433,8 @@ CmdStanPathfinder <- R6::R6Class(
       if (!length(self$output_files(include_failed = FALSE))) {
         stop("Pathfinder failed. There is no output to read.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2423,6 +2498,7 @@ CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$time()`][fit-method-time] | Report total and process-specific run times. |
 #'  [`$output()`][fit-method-output] | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2490,8 +2566,9 @@ CmdStanGQ <- R6::R6Class(
         stop("Generating quantities for all MCMC chains failed. ",
              "There is no output to read.", call. = FALSE)
       }
+      files <- private$csv_files_()
       csv_contents <- read_cmdstan_csv(
-        files = self$output_files(include_failed = FALSE),
+        files = files,
         variables = variables,
         sampler_diagnostics = "",
         format = format

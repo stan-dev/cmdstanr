@@ -31,6 +31,9 @@ a temporary directory are removed as part of \R garbage collection, while
 files in an explicitly defined directory are not automatically deleted.
 \item \code{cmdstanr_compress}: Compression for the output CSV files when fitting
 models: \code{"none"}, \code{"gzip"}, or \code{"bzip2"}. The default is \code{"none"}.
+A cached Quarto or R Markdown render keeps the fit object but not the files
+in a temporary directory, so set this option (or pass \code{output_dir}) when
+caching chunks that fit models.
 \item \code{cmdstanr_spinner}: Should a spinner be shown while CmdStan compiles a
 model, checks syntax, or is installed or rebuilt? The default is \code{TRUE}. The
 spinner is only ever shown in interactive sessions, so setting this to

@@ -228,7 +228,7 @@ expect_describes_new_program <- function(model) {
   )
   expect_equal(model$variables()$parameters$beta$dimensions, 0)
   expect_match(paste(readLines(model$hpp_file()), collapse = "\n"), "beta")
-  expect_equal(model$cpp_options()$STAN_THREADS, "TRUE")
+  expect_equal(model$cpp_options()$STAN_THREADS, "true")
   expect_match(readLines(model$exe_file()), "^mock executable ")
 }
 
@@ -578,12 +578,12 @@ test_that("cpp_options_to_compile_flags() works", {
   options = list(
     STAN_THREADS = TRUE
   )
-  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=TRUE")
+  expect_equal(cpp_options_to_compile_flags(options), "STAN_THREADS=true")
   options = list(
     STAN_THREADS = TRUE,
     STANC2 = TRUE
   )
-  expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=TRUE", "STANC2=TRUE"))
+  expect_equal(cpp_options_to_compile_flags(options), c("STAN_THREADS=true", "STANC2=true"))
   options = list()
   expect_equal(cpp_options_to_compile_flags(options), NULL)
 
@@ -603,8 +603,25 @@ test_that("cpp_options_to_compile_flags() works", {
   )
   expect_equal(
     cpp_options_to_compile_flags(list(STAN_THREADS = c(TRUE, FALSE))),
-    c("STAN_THREADS=TRUE", "STAN_THREADS=")
+    c("STAN_THREADS=true", "STAN_THREADS=")
   )
+})
+
+test_that("the spelling of TRUE turns on a variable CmdStan compares as text", {
+  # The STAN_* switches are tested with `ifdef`, so any value turns them on.
+  # PRECOMPILED_HEADERS, KEEP_OBJECT and the platform variables are compared
+  # against the literal `true`, so only that spelling turns them on. A dry run
+  # of make shows what one of them resolves to.
+  resolved <- function(value) {
+    get_cmdstan_flags(
+      "PRECOMPILED_MODEL_HEADER",
+      make_args = cpp_options_to_compile_flags(
+        list(PRECOMPILED_HEADERS = value)
+      )
+    )
+  }
+  expect_match(resolved(TRUE), "model_header")
+  expect_equal(resolved(FALSE), "")
 })
 
 test_that("cpp_options() reports the options that were supplied", {
@@ -615,7 +632,7 @@ test_that("cpp_options() reports the options that were supplied", {
   threaded <- mock_cmdstan_model(
     stan_file, cpp_options = list(stan_threads = TRUE)
   )
-  expect_equal(threaded$cpp_options(), list(STAN_THREADS = "TRUE"))
+  expect_equal(threaded$cpp_options(), list(STAN_THREADS = "true"))
 })
 
 test_that("cmdstan_version() reports the version that built an adopted executable", {

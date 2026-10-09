@@ -88,7 +88,7 @@ test_that("cpp_options holds what the user passed", {
   )
 
   record <- read_build_record(mod$exe_file())$record
-  expect_equal(record$configuration$cpp_options, list(STAN_THREADS = "TRUE"))
+  expect_equal(record$configuration$cpp_options, list(STAN_THREADS = "true"))
   expect_false("USER_HEADER" %in% names(record$configuration$cpp_options))
   expect_equal(
     record$dependencies$user_header,

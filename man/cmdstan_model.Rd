@@ -72,28 +72,36 @@ directory is used.}
 \item{user_header}{(string) The path to a C++ file (with a \code{.hpp} extension)
 to compile with the Stan model.}
 
-\item{cpp_options}{(list) Any makefile options to be used when compiling the
-model (\code{stan_threads}, \code{stan_mpi}, \code{stan_opencl}, etc.), written as
-\code{list(NAME = value)}. Each entry is an assignment you could make in the
-\code{make/local} file, so \code{list(CXXFLAGS = "-O3")} rather than \code{"-O3"}.
-Every entry must be named with a make variable name, in any casing.
-Setting an option to \code{FALSE} or \code{NULL} passes an empty assignment such as
-\verb{STAN_THREADS=}. That empties the variable for this build, which turns a
-switch off, and overrides whatever \code{make/local} sets. See
-\code{\link[=stan_build_info]{stan_build_info()}} for an example of setting options and checking what
-the executable was built with, and the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}
+\item{cpp_options}{(list) Options for building the model's executable,
+written as \code{list(NAME = value)}, for example \code{list(stan_threads = TRUE)}
+to build with threading or \code{list(stan_no_range_checks = TRUE)} to skip
+the range checks on indexing. The names are CmdStan's makefile variables
+(\code{stan_threads}, \code{stan_opencl}, \code{stan_no_range_checks},
+\code{stan_cpp_optims}, \code{stan_mpi}, \code{CXXFLAGS}, etc.), in any casing. \code{TRUE}
+turns an option on and \code{FALSE} or \code{NULL} turns it off, even when
+\code{make/local} turns it on. The options apply to this model only, and each
+one replaces the same variable's setting in \code{make/local}, so, e.g.,
+\code{list(CXXFLAGS = "-Wall")} drops any flags that \code{make/local} adds to
+\code{CXXFLAGS}. Settings meant for every model belong in \code{make/local}
+instead, see \code{\link[=cmdstan_make_local]{cmdstan_make_local()}}. See \code{\link[=stan_build_info]{stan_build_info()}} for an
+example of setting options and checking what the executable was built
+with, and the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}
 for using threading.}
 
-\item{stanc_options}{(list) Any Stan-to-C++ transpiler options to be used
-when compiling the model. A flag is given by name without the leading
-hyphens, as \code{list("O1")} or \code{list(O1 = TRUE)}, and an option that takes a
-value as \code{list(option = "value")}. See \code{\link[=stan_build_info]{stan_build_info()}} for an example
-and the \href{https://mc-stan.org/docs/cmdstan-guide/stanc.html}{stanc chapter of the CmdStan User's Guide} for the
-available options. Options that CmdStanR sets from its own arguments
-cannot be passed here: \code{include-paths} (use \code{include_paths}),
-\code{warn-pedantic} (\code{pedantic}), \code{allow-undefined} (\code{user_header}),
-\code{use-opencl} (\code{cpp_options = list(stan_opencl = TRUE)}) and \code{name} (taken
-from the name of the Stan file).}
+\item{stanc_options}{(list) Options for stanc, the Stan compiler, when it
+turns the program into C++. Write a flag by name without the leading
+hyphens, as \code{list("O1")} or \code{list(O1 = TRUE)} to turn on stanc's
+optimizations, and an option that takes a value as
+\code{list(option = "value")}. \code{list(O1 = FALSE)} leaves the flag out, the
+same as not mentioning it. The \href{https://mc-stan.org/docs/stan-users-guide/using-stanc.html#stanc-args}{Using the Stan Compiler chapter of the Stan User's Guide}
+lists the options. They apply to this model only, and a flag set here
+replaces the same flag in \code{make/local}'s \code{STANCFLAGS}. Five flags that
+CmdStanR sets from its own arguments can't be given here: \code{include-paths}
+(use \code{include_paths}), \code{warn-pedantic} (\code{pedantic}), \code{allow-undefined}
+(\code{user_header}), \code{use-opencl} (\code{cpp_options = list(stan_opencl = TRUE)})
+and \code{name} (taken from the name of the Stan file). See
+\code{\link[=stan_build_info]{stan_build_info()}} for an example of checking what the executable was
+built with.}
 
 \item{force_recompile}{(logical) Should the model be recompiled even if the
 executable was built from this program with these options? The default,

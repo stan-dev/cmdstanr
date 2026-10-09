@@ -77,8 +77,12 @@ For example: \code{release_file="./cmdstan-2.37.0.tar.gz"}. If \code{release_fil
 specified then both \code{release_url} and \code{version} will be ignored.}
 
 \item{cpp_options}{(list) Any makefile flags/variables to be written to
-the \code{make/local} file. For example, \code{list("CXX" = "clang++")} will force
-the use of clang for compilation.}
+the \code{make/local} file. For \code{install_cmdstan()} they are written before
+CmdStan is built, so no rebuild is needed. A named entry is written as an
+assignment, so \code{list(CXX = "clang++")} builds with clang, \code{TRUE} turns a
+switch on (\code{list(stan_threads = TRUE)} gives \code{STAN_THREADS=true}) and
+\code{FALSE} turns it off (\verb{STAN_THREADS=}). An unnamed string is written as
+is, which is how a line like \code{"CXXFLAGS += -march=native"} goes in.}
 
 \item{check_toolchain}{(logical) Should \code{install_cmdstan()} attempt to check
 that the required toolchain is installed and properly configured? The

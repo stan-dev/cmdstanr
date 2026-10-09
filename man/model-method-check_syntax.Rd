@@ -33,9 +33,8 @@ program. The method uses the model's own include paths when none are
 given. \code{check_syntax_stan_file()} uses the program's own directory when
 none are given and the program contains \verb{#include} directives.}
 
-\item{stanc_options}{(list) Any other Stan-to-C++ transpiler options to be
-used when compiling the model. See the documentation for
-\code{\link[=cmdstan_model]{cmdstan_model()}} for details.}
+\item{stanc_options}{(list) Any other options for stanc, the Stan
+compiler. See the documentation for \code{\link[=cmdstan_model]{cmdstan_model()}} for details.}
 
 \item{quiet}{(logical) Should informational messages be suppressed? The
 default is \code{FALSE}, which will print a message if the Stan program is valid

@@ -236,7 +236,7 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   gsub(pattern = ",\\s*)", replacement = ")", fun_body)
 }
 
-compile_functions <- function(env, verbose = FALSE, global = FALSE) {
+compile_functions <- function(env, verbose = FALSE) {
   funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
   funs <- c(funs, length(env$hpp_code))
 
@@ -292,11 +292,7 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
     "#include <stan_rng.hpp>",
     stan_funs),
   collapse = "\n")
-  if (global) {
-    rcpp_source_stan(mod_stan_funs, globalenv(), verbose)
-  } else {
-    rcpp_source_stan(mod_stan_funs, env, verbose)
-  }
+  rcpp_source_stan(mod_stan_funs, env, verbose)
 
   # If an RNG function is exposed, initialise a Boost RNG object stored in the
   # environment
@@ -309,19 +305,14 @@ compile_functions <- function(env, verbose = FALSE, global = FALSE) {
 
   # For all RNG functions, pass the initialised Boost RNG by default
   for (fun in rng_funs) {
-    if (global) {
-      fun_env <- globalenv()
-    } else {
-      fun_env <- env
-    }
-    fundef <- get(fun, envir = fun_env)
+    fundef <- get(fun, envir = env)
     funargs <- formals(fundef)
     funargs$base_rng_ptr <- env$rng_ptr
     # To allow for exported RNG functions to respect the R 'set.seed()' call,
     # we need to derive a seed deterministically from the current RNG state
     funargs$seed <- quote(sample.int(.Machine$integer.max, 1))
     formals(fundef) <- funargs
-    assign(fun, fundef, envir = fun_env)
+    assign(fun, fundef, envir = env)
   }
 
   env$compiled <- TRUE
@@ -346,27 +337,24 @@ expose_stan_functions <- function(function_env, global = FALSE,
   }
   require_suggested_package("Rcpp")
   drop_stale_standalone_functions(function_env)
-  if (function_env$compiled) {
-    if (!global) {
-      if (!quiet) {
-        message("Functions already compiled, nothing to do!")
-      }
-    } else {
-      if (!quiet) {
-        message("Functions already compiled, copying to global environment")
-      }
-      # Create reference to global environment, avoids NOTE about assigning to global
-      pos <- 1
-      envir <- as.environment(pos)
-      lapply(function_env$fun_names, function(fun_name) {
-        assign(fun_name, get(fun_name, function_env), envir)
-      })
-    }
-  } else {
+  if (!function_env$compiled) {
     if (!quiet && rlang::is_interactive()) {
       message("Compiling standalone functions...")
     }
-    compile_functions(function_env, verbose, global)
+    compile_functions(function_env, verbose)
+  } else if (!quiet) {
+    message(
+      "Functions already compiled, ",
+      if (global) "copying to global environment" else "nothing to do!"
+    )
+  }
+  if (global) {
+    # Reference to the global environment, avoids a NOTE about assigning to it
+    pos <- 1
+    envir <- as.environment(pos)
+    for (fun_name in function_env$fun_names) {
+      assign(fun_name, get(fun_name, function_env), envir)
+    }
   }
   invisible(NULL)
 }

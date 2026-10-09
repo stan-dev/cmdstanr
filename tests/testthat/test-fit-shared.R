@@ -184,10 +184,7 @@ test_that("save_object() method works", {
 
 test_that("reloaded fits rebuild model methods lazily after save_object()", {
   skip_if(os_is_wsl())
-  mod <- cmdstan_model(
-    testing_stan_file("bernoulli_log_lik"),
-    force_recompile = TRUE
-  )
+  mod <- testing_model("bernoulli_log_lik")
   utils::capture.output(
     fit <- mod$optimize(data = testing_data("bernoulli"))
   )
@@ -238,6 +235,21 @@ test_that("save_object() method works with profiles", {
   expect_identical(fit$profiles(), s)
 })
 
+test_that("reading draws says when the temp CSV files are gone", {
+  fit <- testing_fit("logistic", method = "sample", seed = 123, chains = 1)
+  files <- file.path(withr::local_tempdir(), basename(fit$output_files()))
+  file.copy(fit$output_files(), files)
+  fit_csv <- as_cmdstan_fit(files)
+  unlink(c(fit$output_files(), files))
+  expect_error(
+    fit$draws(),
+    "The fit's CSV files are gone",
+    fixed = TRUE
+  )
+  # the user's own files, so the plain message
+  expect_error(fit_csv$draws(), "File does not exist", fixed = TRUE)
+})
+
 test_that("metadata() returns list", {
   for (method in all_methods) {
     fit <- fits[[method]]
@@ -267,6 +279,18 @@ test_that("return_codes method works properly", {
     "Fitting finished unexpectedly"
   )
   expect_gt(non_zero$return_codes(), 0)
+})
+
+test_that("command() returns one line per CmdStan run", {
+  for (method in all_methods) {
+    fit <- fits[[method]]
+    cmd <- fit$command()
+    expect_length(cmd, fit$num_procs())
+    expect_match(cmd, shQuote(paste0("method=", method)), fixed = TRUE)
+    expect_match(cmd, shQuote(paste0("seed=", fit$metadata()$seed)),
+                 fixed = TRUE)
+    expect_equal(anyDuplicated(cmd), 0)
+  }
 })
 
 test_that("output and latent dynamics files are cleaned up correctly", {

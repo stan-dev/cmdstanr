@@ -2,17 +2,21 @@
 
 This is a major release with enough noteworthy items that we've broken the
 release notes into sections. The **Building models** section covers the
-compilation redesign. In particular, `cmdstan_model()` now compiles the model,
+compilation redesign. In particular, `cmdstan_model()` now compiles the model
 or reuses an up-to-date executable, before it returns, and the separate
 `$compile()` method is gone (code that calls `$compile()` or passes
-`compile = FALSE` will need to change). The other sections are independent of
-it: **Data and initial values** covers improvements to how data and initial
-values are handled, **Other new features** and **Bug fixes** cover what their
-titles suggest, and **Removed and deprecated** lists everything else that could
-break existing code beyond the compilation redesign.
+`compile = FALSE` will need to change). **Data and initial values** covers
+improvements to how data and initial values are handled, **Other new features**
+and **Bug fixes** cover what their titles suggest, and **Removed and
+deprecated** lists everything else that could break existing code beyond the
+compilation redesign.
 
-Each entry says what changed and what it replaced, so you or your coding agent
+Each entry says what changed and what it replaced, so you (or your coding agent)
 can update existing code from them.
+
+A massive thank you to everyone who contributed code and reviews to this
+release and to everyone who filed the bug reports and feature requests that
+went into it.
 
 ## Building models
 
@@ -77,7 +81,7 @@ the model is created, with `dir`. (#1253)
 executable, not the version at `cmdstan_path()`. (#1249)
 * `$cpp_options()` now returns exactly the options the model was created with,
 spelled as make variables: `list(stan_threads = TRUE)` comes back as
-`STAN_THREADS`, with the value `"TRUE"` (the string make received, so `FALSE`
+`STAN_THREADS`, with the value `"true"` (the string make received, so `FALSE`
 comes back as `""`). What the executable reports about its own build has moved
 to `stan_build_info()`. (#1019, #1258)
 * Every `cpp_options` entry must now be named, with a make variable name. An
@@ -196,6 +200,8 @@ values for a method, `"sample"` by default, under the corresponding CmdStanR
 argument names. (#1167)
 * The new `$materialize()` method reads a fit's draws, sampler diagnostics,
 initial values and profiles from the CSV files into R in one call. (#1181)
+* The new `$command()` method returns the command line CmdStanR ran for each
+CmdStan run. (#900)
 * `$save_object()` gains `format = "qs2"`, which saves with the qs2 package
 instead of `saveRDS()` and is faster and uses less memory. (#1125)
 * `as_cmdstan_fit()` gains a `variables` argument to read only some of the
@@ -232,6 +238,9 @@ and falls back to `PATH`, improving support for alternate R distributions and
 future Rtools releases. (#1211)
 * Exposing functions using names that are reserved keywords now throws an 
 informative error message. (#1154)
+* Compiled Stan functions and model methods can be kept across R sessions by
+setting the `rcpp.cache.dir` option, as the `$expose_functions()` documentation
+now explains. (#870)
 * `save_cmdstan_config` and `save_metric` default to `FALSE` but can be
 set to `TRUE` for an entire R session via new global options. (#1159)
 * The compilation spinner can now be disabled for an entire R session by setting
@@ -246,6 +255,9 @@ standalone generated quantities CSV files. (#1168)
 
 ## Bug fixes
 
+* A fit whose CSV files were written to the temporary directory and are gone
+(a cached Quarto chunk, a fit saved with `saveRDS()`) now says so and how to
+avoid it, instead of failing with "File does not exist". (#1012)
 * `check_cmdstan_toolchain()` now waits longer for WSL to respond and says so
 when it doesn't, instead of reporting that no WSL distribution is installed.
 (#1297)
@@ -307,6 +319,14 @@ session as rstan or brms, whichever loads first, when RcppParallel 6.2.0 or
 later is installed. (#1270)
 * A function exposed with `$expose_functions()` that returns a tuple no longer
 occasionally crashes R or returns a list with wrong elements. (#1001)
+* `$expose_functions(global = TRUE)` now also keeps the functions in the
+`$functions` field of the model or fit. Previously it left that field empty
+while marking the functions as compiled, so a later `$expose_functions()` call
+exposed nothing. (#1317)
+* `cmdstan_make_local(cpp_options = list(stan_threads = FALSE))`, and the same
+argument of `install_cmdstan()`, now turn the option off by writing
+`STAN_THREADS=` to `make/local`. Previously they wrote `STAN_THREADS=false`,
+which CmdStan reads as on. (#605)
 
 ## Removed and deprecated
 

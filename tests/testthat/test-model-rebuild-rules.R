@@ -102,9 +102,9 @@ test_that("cpp_options rebuild when they change, not when they are respelled", {
 
   # The record holds the assignment make received, so these are one request.
   mocked(expect_no_mock_compile(
-    mod <- cmdstan_model(stan_file, cpp_options = list(STAN_THREADS = "TRUE"))
+    mod <- cmdstan_model(stan_file, cpp_options = list(STAN_THREADS = "true"))
   ))
-  expect_equal(mod$cpp_options(), list(STAN_THREADS = "TRUE"))
+  expect_equal(mod$cpp_options(), list(STAN_THREADS = "true"))
 
   mocked(expect_mock_compile(expect_interactive_message(
     cmdstan_model(stan_file, cpp_options = list(stan_cpp_optims = TRUE)),
@@ -358,7 +358,7 @@ test_that("an executable with a usable record is adopted from the record", {
 
   adopted <- cmdstan_model(exe_file = mod$exe_file())
   expect_equal(launches$n, 0L)
-  expect_equal(adopted$cpp_options(), list(STAN_THREADS = "TRUE"))
+  expect_equal(adopted$cpp_options(), list(STAN_THREADS = "true"))
   expect_equal(adopted$cmdstan_version(), cmdstan_version())
 })
 

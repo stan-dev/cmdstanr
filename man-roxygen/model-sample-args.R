@@ -14,7 +14,11 @@
 #'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
 #'   contrast with `parallel_chains`, which specifies the number of chains to
 #'   run in parallel. The actual number of CPU cores used is
-#'   `parallel_chains*threads_per_chain`. For an example of using threading see
+#'   `parallel_chains*threads_per_chain`. If not set, CmdStan uses one
+#'   thread, or the value of the `STAN_NUM_THREADS` environment variable if
+#'   that is set. A model built with threading pays a small, constant cost
+#'   even when it runs on one thread, so build with threading only the models
+#'   that use it. For an example of using threading see
 #'   the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #'
