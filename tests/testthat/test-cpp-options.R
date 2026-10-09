@@ -23,7 +23,10 @@ test_that("assert_valid_cpp_options rejects a user header", {
       fixed = TRUE
     )
     expect_error(
-      assert_valid_cpp_options(setNames(list(c("a.hpp", "b.hpp")), option_name)),
+      assert_valid_cpp_options(setNames(
+        list(c("a.hpp", "b.hpp")),
+        option_name
+      )),
       paste0(
         "The user header cannot be set through `cpp_options`. ",
         "Pass it with the `user_header` argument."
@@ -124,9 +127,13 @@ test_that("assert_valid_cpp_options sends makefile syntax to make/local", {
     expect_error(
       assert_valid_cpp_options(list(entry)),
       paste0(
-        "`\"", entry, "\"` is makefile syntax and cannot be passed through ",
+        "`\"",
+        entry,
+        "\"` is makefile syntax and cannot be passed through ",
         "`cpp_options`. To set it in `make/local` use ",
-        "`cmdstan_make_local(cpp_options = list(\"", entry, "\"))`."
+        "`cmdstan_make_local(cpp_options = list(\"",
+        entry,
+        "\"))`."
       ),
       fixed = TRUE
     )
@@ -162,7 +169,8 @@ test_that("assert_valid_cpp_options rejects -B and --always-make", {
     expect_error(
       assert_valid_cpp_options(list(entry)),
       paste0(
-        "`cpp_options` cannot pass flags to make. `", entry,
+        "`cpp_options` cannot pass flags to make. `",
+        entry,
         "` rebuilds everything; pass `force_recompile = TRUE` instead."
       ),
       fixed = TRUE
@@ -171,7 +179,12 @@ test_that("assert_valid_cpp_options rejects -B and --always-make", {
 })
 
 test_that("assert_valid_cpp_options sends -f entries to make/local's include", {
-  for (entry in c("-f other.mk", "-fother.mk", "--file=other.mk", "--makefile=other.mk")) {
+  for (entry in c(
+    "-f other.mk",
+    "-fother.mk",
+    "--file=other.mk",
+    "--makefile=other.mk"
+  )) {
     expect_error(
       assert_valid_cpp_options(list(entry)),
       paste0(
@@ -200,7 +213,8 @@ test_that("assert_valid_cpp_options requires make variable names", {
       paste0(
         "`cpp_options` names must be make variable names, made of letters, ",
         "digits and underscores and not starting with a digit. `",
-        names(options), "` is not one."
+        names(options),
+        "` is not one."
       ),
       fixed = TRUE
     )
@@ -222,23 +236,17 @@ test_that("assert_valid_cpp_options rejects a named STANCFLAGS", {
 
 test_that("cpp option lookup is exact and case-insensitive", {
   cpp_options <- list(STAN_THREADS = TRUE)
-  expect_identical(cpp_option_value(cpp_options, "stan_threads"), TRUE)
+  expect_true(cpp_option_value(cpp_options, "stan_threads"))
   expect_named(cpp_options, "STAN_THREADS")
 
-  expect_identical(
-    cpp_option_value(
+  expect_true(cpp_option_value(
       list(stan_threads = FALSE, STAN_THREADS = TRUE),
       "stan_threads"
-    ),
-    TRUE
-  )
-  expect_identical(
-    cpp_option_value(
+    ))
+  expect_false(cpp_option_value(
       list(STAN_THREADS = TRUE, stan_threads = FALSE),
       "stan_threads"
-    ),
-    FALSE
-  )
+    ))
   expect_null(
     cpp_option_value(
       list(STAN_OPENCL = TRUE, stan_opencl = NULL),
@@ -256,15 +264,18 @@ test_that("a thread request needs threading reported on", {
   expect_identical(assert_valid_threads(2L, on), 2L)
   expect_error(
     assert_valid_threads(2L, off),
-    "does not report threading as enabled", fixed = TRUE
+    "does not report threading as enabled",
+    fixed = TRUE
   )
   expect_error(
     assert_valid_threads(2L, unknown),
-    "does not report threading as enabled", fixed = TRUE
+    "does not report threading as enabled",
+    fixed = TRUE
   )
   expect_error(
     assert_valid_threads(2L, off, multiple_chains = TRUE),
-    "`threads_per_chain`", fixed = TRUE
+    "`threads_per_chain`",
+    fixed = TRUE
   )
 
   for (features in list(on, off, unknown)) {
@@ -280,11 +291,13 @@ test_that("an OpenCL device request needs OpenCL reported on", {
   )
   expect_error(
     assert_valid_opencl(c(0L, 0L), list(stan_opencl = FALSE)),
-    "does not report OpenCL as enabled", fixed = TRUE
+    "does not report OpenCL as enabled",
+    fixed = TRUE
   )
   expect_error(
     assert_valid_opencl(c(0L, 0L), list()),
-    "does not report OpenCL as enabled", fixed = TRUE
+    "does not report OpenCL as enabled",
+    fixed = TRUE
   )
   expect_null(assert_valid_opencl(NULL, list()))
 })
@@ -292,11 +305,13 @@ test_that("an OpenCL device request needs OpenCL reported on", {
 test_that("feature lookups do not use partial matching", {
   expect_error(
     assert_valid_opencl(c(0L, 0L), list(stan_opencl_x = TRUE)),
-    "does not report OpenCL as enabled", fixed = TRUE
+    "does not report OpenCL as enabled",
+    fixed = TRUE
   )
   expect_error(
     assert_valid_threads(2L, list(stan_threads_x = TRUE)),
-    "does not report threading as enabled", fixed = TRUE
+    "does not report threading as enabled",
+    fixed = TRUE
   )
 })
 
@@ -319,13 +334,15 @@ test_that("a feature inherited from make/local is reported, not requested", {
       mod <- cmdstan_model(stan_file, force_recompile = TRUE)
       expect_true(features(mod)$stan_threads)
       expect_identical(
-        assert_valid_threads(4, features(mod), multiple_chains = TRUE), 4
+        assert_valid_threads(4, features(mod), multiple_chains = TRUE),
+        4
       )
 
       mod2 <- cmdstan_model(stan_file)
       expect_true(features(mod2)$stan_threads)
       expect_identical(
-        assert_valid_threads(4, features(mod2), multiple_chains = TRUE), 4
+        assert_valid_threads(4, features(mod2), multiple_chains = TRUE),
+        4
       )
     }
   )
@@ -347,7 +364,8 @@ test_that("an executable reporting no threading flag is unknown, not off", {
   expect_null(features(adopted)$stan_threads)
   expect_error(
     adopted$sample(data = data_file, threads_per_chain = 2),
-    "does not report threading as enabled", fixed = TRUE
+    "does not report threading as enabled",
+    fixed = TRUE
   )
 })
 
@@ -368,6 +386,7 @@ test_that("an executable adopted from live info reports threading as unknown", {
   expect_null(features(adopted)$stan_threads)
   expect_error(
     adopted$sample(data = data_file, threads_per_chain = 2),
-    "does not report threading as enabled", fixed = TRUE
+    "does not report threading as enabled",
+    fixed = TRUE
   )
 })

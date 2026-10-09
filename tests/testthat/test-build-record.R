@@ -29,7 +29,7 @@ test_that("a written record reads back unchanged", {
   expect_equal(result$record, record)
 
   text <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  expect_false(grepl("null", text, fixed = TRUE))
+  expect_no_match(text, "null", fixed = TRUE)
   expect_match(text, '"included_files"\\s*:\\s*\\[')
 })
 
@@ -75,8 +75,11 @@ test_that("a record with a field of the wrong type is unreadable", {
   record <- example_record(exe)
   record$cmdstan$version <- 42
   jsonlite::write_json(
-    record, build_record_path(exe),
-    auto_unbox = TRUE, pretty = TRUE, digits = NA
+    record,
+    build_record_path(exe),
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    digits = NA
   )
 
   result <- read_build_record(exe)
@@ -104,8 +107,11 @@ test_that("a dependency missing its hash is unreadable", {
   record <- example_record(exe)
   record$dependencies$stan_file$hash <- NULL
   jsonlite::write_json(
-    record, build_record_path(exe),
-    auto_unbox = TRUE, pretty = TRUE, digits = NA
+    record,
+    build_record_path(exe),
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    digits = NA
   )
 
   result <- read_build_record(exe)
@@ -119,8 +125,11 @@ test_that("a feature written as null is unreadable", {
   record <- example_record(exe)
   record$reported_features$stan_threads <- NA
   jsonlite::write_json(
-    record, build_record_path(exe),
-    auto_unbox = TRUE, pretty = TRUE, digits = NA
+    record,
+    build_record_path(exe),
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    digits = NA
   )
 
   result <- read_build_record(exe)
@@ -135,8 +144,11 @@ test_that("a record in a format we do not read is checked on its version alone",
   record$format_version <- 99L
   record$cmdstan <- "garbage"
   jsonlite::write_json(
-    record, build_record_path(exe),
-    auto_unbox = TRUE, pretty = TRUE, digits = NA
+    record,
+    build_record_path(exe),
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    digits = NA
   )
 
   result <- read_build_record(exe)
@@ -150,8 +162,11 @@ test_that("a record whose format_version is not an integer is unreadable", {
   record <- example_record(exe)
   record$format_version <- 1.000000001
   jsonlite::write_json(
-    record, build_record_path(exe),
-    auto_unbox = TRUE, pretty = TRUE, digits = NA
+    record,
+    build_record_path(exe),
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    digits = NA
   )
 
   result <- read_build_record(exe)
@@ -184,10 +199,12 @@ test_that("reported features keep enabled, disabled and unknown apart", {
   silent_exe <- local_fake_exe("threads_unreported")
 
   on <- write_features(
-    on_exe, list(stan_threads = TRUE, stan_version = "2.39.0")
+    on_exe,
+    list(stan_threads = TRUE, stan_version = "2.39.0")
   )
   off <- write_features(
-    off_exe, list(stan_threads = FALSE, stan_version = "2.39.0")
+    off_exe,
+    list(stan_threads = FALSE, stan_version = "2.39.0")
   )
   silent <- write_features(silent_exe, list(stan_version = "2.39.0"))
 
@@ -226,17 +243,23 @@ test_that("the validator names the field that fails", {
   )
 
   repeated_option <- base
+  # jarl-ignore duplicated_arguments: intentional duplication
   repeated_option$configuration$cpp_options <- list(
-    STAN_THREADS = "false", STAN_THREADS = "true"
+    STAN_THREADS = "false",
+    STAN_THREADS = "true"
   )
   expect_error(
-    rebuild(repeated_option), "`configuration.cpp_options`", fixed = TRUE
+    rebuild(repeated_option),
+    "`configuration.cpp_options`",
+    fixed = TRUE
   )
 
   odd_name <- base
   odd_name$configuration$cpp_options <- list(`1THREADS` = "true")
   expect_error(
-    rebuild(odd_name), "`configuration.cpp_options.1THREADS`", fixed = TRUE
+    rebuild(odd_name),
+    "`configuration.cpp_options.1THREADS`",
+    fixed = TRUE
   )
 
   unknown_kind <- base
@@ -252,7 +275,9 @@ test_that("the validator names the field that fails", {
   odd_feature <- base
   odd_feature$reported_features$stan_threads <- "yes"
   expect_error(
-    rebuild(odd_feature), "`reported_features.stan_threads`", fixed = TRUE
+    rebuild(odd_feature),
+    "`reported_features.stan_threads`",
+    fixed = TRUE
   )
 
   no_source <- base
@@ -266,7 +291,11 @@ test_that("a record missing a required field is unreadable whole", {
   edited <- jsonlite::fromJSON(path, simplifyVector = FALSE)
   edited$tbb_dir <- NULL
   jsonlite::write_json(
-    edited, path, auto_unbox = TRUE, pretty = TRUE, digits = NA
+    edited,
+    path,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    digits = NA
   )
 
   result <- read_build_record(exe)
@@ -281,7 +310,11 @@ test_that("a record carrying a member the schema does not name still reads", {
   edited <- jsonlite::fromJSON(path, simplifyVector = FALSE)
   edited$extra <- "written by a later cmdstanr"
   jsonlite::write_json(
-    edited, path, auto_unbox = TRUE, pretty = TRUE, digits = NA
+    edited,
+    path,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    digits = NA
   )
 
   expect_equal(read_build_record(exe)$status, "available")
@@ -385,7 +418,10 @@ test_that("a user_header present on only one side differs as user_header", {
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  current$dependencies$user_header <- list(hash = "cccc", built_from = "header.hpp")
+  current$dependencies$user_header <- list(
+    hash = "cccc",
+    built_from = "header.hpp"
+  )
   expect_equal(compare_build_records(recorded, current), "user_header")
 })
 
@@ -393,8 +429,14 @@ test_that("a user_header with the same hash but a different built_from differs a
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  recorded$dependencies$user_header <- list(hash = "cccc", built_from = "header.hpp")
-  current$dependencies$user_header <- list(hash = "cccc", built_from = "other/header.hpp")
+  recorded$dependencies$user_header <- list(
+    hash = "cccc",
+    built_from = "header.hpp"
+  )
+  current$dependencies$user_header <- list(
+    hash = "cccc",
+    built_from = "other/header.hpp"
+  )
   expect_equal(compare_build_records(recorded, current), "user_header")
 })
 
@@ -402,8 +444,14 @@ test_that("a changed user_header hash at the same built_from differs as user_hea
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  recorded$dependencies$user_header <- list(hash = "cccc", built_from = "header.hpp")
-  current$dependencies$user_header <- list(hash = "dddd", built_from = "header.hpp")
+  recorded$dependencies$user_header <- list(
+    hash = "cccc",
+    built_from = "header.hpp"
+  )
+  current$dependencies$user_header <- list(
+    hash = "dddd",
+    built_from = "header.hpp"
+  )
   expect_equal(compare_build_records(recorded, current), "user_header")
 })
 
@@ -453,7 +501,10 @@ test_that("two differences are both reported, in table order", {
   current <- example_record(exe)
   current$dependencies$stan_file$hash <- "ffff"
   current$cmdstan$version <- "2.40.0"
-  expect_equal(compare_build_records(recorded, current), c("stan_file", "cmdstan"))
+  expect_equal(
+    compare_build_records(recorded, current),
+    c("stan_file", "cmdstan")
+  )
 })
 
 test_that("the same cpp options in a different assignment order do not differ", {
@@ -461,10 +512,12 @@ test_that("the same cpp options in a different assignment order do not differ", 
   recorded <- example_record(exe)
   current <- example_record(exe)
   recorded$configuration$cpp_options <- list(
-    STAN_THREADS = "true", STAN_NO_RANGE_CHECKS = "true"
+    STAN_THREADS = "true",
+    STAN_NO_RANGE_CHECKS = "true"
   )
   current$configuration$cpp_options <- list(
-    STAN_NO_RANGE_CHECKS = "true", STAN_THREADS = "true"
+    STAN_NO_RANGE_CHECKS = "true",
+    STAN_THREADS = "true"
   )
   expect_equal(compare_build_records(recorded, current), character(0))
 })
@@ -486,8 +539,14 @@ test_that("a make_local with the same hash and a different built_from does not d
   exe <- local_fake_exe()
   recorded <- example_record(exe)
   current <- example_record(exe)
-  recorded$dependencies$make_local <- list(hash = "4b5a", built_from = "make/local")
-  current$dependencies$make_local <- list(hash = "4b5a", built_from = "other/make/local")
+  recorded$dependencies$make_local <- list(
+    hash = "4b5a",
+    built_from = "make/local"
+  )
+  current$dependencies$make_local <- list(
+    hash = "4b5a",
+    built_from = "other/make/local"
+  )
   expect_equal(compare_build_records(recorded, current), character(0))
 })
 
@@ -521,8 +580,14 @@ test_that("an absent optional dependency is not read from a longer name", {
   recorded <- example_record(exe)
   recorded$dependencies$make_local <- NULL
   current <- recorded
-  recorded$dependencies$user_header_note <- list(hash = "cccc", built_from = "note.hpp")
-  recorded$dependencies$make_local_note <- list(hash = "ffff", built_from = "note")
+  recorded$dependencies$user_header_note <- list(
+    hash = "cccc",
+    built_from = "note.hpp"
+  )
+  recorded$dependencies$make_local_note <- list(
+    hash = "ffff",
+    built_from = "note"
+  )
   expect_equal(compare_build_records(recorded, current), character(0))
 })
 
@@ -592,7 +657,8 @@ test_that("reported features the record cannot hold are left unknown", {
 
 test_that("parse_exe_info_string works", {
   expect_equal_ignore_order(
-    parse_exe_info_string("
+    parse_exe_info_string(
+      "
       stan_version_major = 2
       stan_version_minor = 38
       stan_version_patch = 0
@@ -601,7 +667,8 @@ test_that("parse_exe_info_string works", {
       STAN_OPENCL=true
       STAN_NO_RANGE_CHECKS=false
       STAN_CPP_OPTIMS=false
-    "),
+    "
+    ),
     list(
       stan_version = "2.38.0",
       stan_threads = FALSE,

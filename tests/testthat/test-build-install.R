@@ -2,8 +2,10 @@
 # record in place as a pair. No C++ is compiled, we just use text files to stand
 # in for the executables.
 
-local_exe_fixture <- function(destination_exists = TRUE,
-                              .local_envir = parent.frame()) {
+local_exe_fixture <- function(
+  destination_exists = TRUE,
+  .local_envir = parent.frame()
+) {
   dir <- withr::local_tempdir(.local_envir = .local_envir)
   fixture <- list(
     dir = dir,
@@ -46,16 +48,20 @@ exe_path_transform <- function(fixture) {
 }
 
 # Make the n-th file.rename() call fail, optionally warning first, as base does.
-local_failing_file_rename <- function(fail_on,
-                                      warn = FALSE,
-                                      .local_envir = parent.frame()) {
+local_failing_file_rename <- function(
+  fail_on,
+  warn = FALSE,
+  .local_envir = parent.frame()
+) {
   real_file_rename <- base::file.rename
   calls <- 0
   local_mocked_bindings(
     file.rename = function(from, to) {
       calls <<- calls + 1
       if (calls %in% fail_on) {
-        if (warn) warning("cannot rename file")
+        if (warn) {
+          warning("cannot rename file")
+        }
         return(FALSE)
       }
       real_file_rename(from, to)
@@ -70,7 +76,10 @@ test_that("install_executable() installs when there is no existing executable", 
 
   expect_null(install_executable(fixture$from, fixture$to, fixture$record))
   expect_installed_executable(fixture$to)
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+  expect_setequal(
+    list.files(fixture$dir),
+    basename(c(fixture$from, fixture$to))
+  )
 })
 
 test_that("install_executable() replaces an executable and removes the backup", {
@@ -78,7 +87,10 @@ test_that("install_executable() replaces an executable and removes the backup", 
 
   expect_null(install_executable(fixture$from, fixture$to, fixture$record))
   expect_installed_executable(fixture$to)
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+  expect_setequal(
+    list.files(fixture$dir),
+    basename(c(fixture$from, fixture$to))
+  )
 })
 
 test_that("install_executable() leaves the destination alone if staging fails", {
@@ -92,7 +104,10 @@ test_that("install_executable() leaves the destination alone if staging fails", 
   )
   expect_identical(readLines(fixture$to), "old executable")
   expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+  expect_setequal(
+    list.files(fixture$dir),
+    basename(c(fixture$from, fixture$to))
+  )
 })
 
 test_that("install_executable() leaves the destination alone if the backup fails", {
@@ -107,7 +122,10 @@ test_that("install_executable() leaves the destination alone if the backup fails
   )
   expect_identical(readLines(fixture$to), "old executable")
   expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+  expect_setequal(
+    list.files(fixture$dir),
+    basename(c(fixture$from, fixture$to))
+  )
 })
 
 test_that("install_executable() restores the backup if the install fails", {
@@ -123,7 +141,10 @@ test_that("install_executable() restores the backup if the install fails", {
   )
   expect_identical(readLines(fixture$to), "old executable")
   expect_equal(read_build_record(fixture$to)$record, example_record(fixture$to))
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
+  expect_setequal(
+    list.files(fixture$dir),
+    basename(c(fixture$from, fixture$to))
+  )
 })
 
 test_that("install_executable() keeps the backup if it cannot be restored", {
@@ -140,7 +161,10 @@ test_that("install_executable() keeps the backup if it cannot be restored", {
   expect_false(file.exists(fixture$to))
   leftover <- setdiff(list.files(fixture$dir), basename(fixture$from))
   expect_match(leftover, "^exe-old-")
-  expect_identical(readLines(file.path(fixture$dir, leftover)), "old executable")
+  expect_identical(
+    readLines(file.path(fixture$dir, leftover)),
+    "old executable"
+  )
 })
 
 test_that("install_executable() rolls back when warnings are errors", {

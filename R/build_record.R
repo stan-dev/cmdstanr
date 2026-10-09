@@ -42,7 +42,9 @@ hash_file <- function(path) {
 # object is a named list with no name repeated, an array is an unnamed list, and
 # a scalar is an atomic vector of length one that is not NA.
 is_json_object <- function(x) {
-  is.list(x) && !is.null(names(x)) && all(nzchar(names(x))) &&
+  is.list(x) &&
+    !is.null(names(x)) &&
+    all(nzchar(names(x))) &&
     !anyDuplicated(names(x))
 }
 
@@ -52,10 +54,12 @@ is_json_array <- function(x) {
 
 record_shapes <- list(
   string = list(
-    test = checkmate::test_string, requirement = "must be a string"
+    test = checkmate::test_string,
+    requirement = "must be a string"
   ),
   flag = list(
-    test = checkmate::test_flag, requirement = "must be true or false"
+    test = checkmate::test_flag,
+    requirement = "must be true or false"
   ),
   object = list(test = is_json_object, requirement = "must be a JSON object"),
   array = list(test = is_json_array, requirement = "must be a JSON array")
@@ -120,7 +124,10 @@ assert_record_dependency_entry <- function(value, field) {
   assert_record_shape(value, "object", field)
   assert_record_member(value, "hash", "string", paste0(field, ".hash"))
   assert_record_member(
-    value, "built_from", "string", paste0(field, ".built_from")
+    value,
+    "built_from",
+    "string",
+    paste0(field, ".built_from")
   )
   invisible(value)
 }
@@ -144,7 +151,10 @@ validate_build_record <- function(record) {
 
   configuration <- assert_record_member(record, "configuration", "object")
   cpp_options <- assert_record_member(
-    configuration, "cpp_options", "object", "configuration.cpp_options"
+    configuration,
+    "cpp_options",
+    "object",
+    "configuration.cpp_options"
   )
   for (i in seq_along(cpp_options)) {
     option_name <- names(cpp_options)[[i]]
@@ -155,34 +165,47 @@ validate_build_record <- function(record) {
     assert_record_shape(cpp_options[[i]], "string", field)
   }
   assert_record_string_array(
-    configuration, "stanc_options", "configuration.stanc_options"
+    configuration,
+    "stanc_options",
+    "configuration.stanc_options"
   )
   assert_record_string_array(
-    configuration, "stanc_options_added",
+    configuration,
+    "stanc_options_added",
     "configuration.stanc_options_added"
   )
   assert_record_string_array(
-    configuration, "stanc_options_from_make",
+    configuration,
+    "stanc_options_from_make",
     "configuration.stanc_options_from_make"
   )
   stanc_name <- assert_record_member(
-    configuration, "stanc_name", "string", "configuration.stanc_name"
+    configuration,
+    "stanc_name",
+    "string",
+    "configuration.stanc_name"
   )
   if (!nzchar(stanc_name)) {
     stop_build_record_field("configuration.stanc_name", "must not be empty")
   }
   assert_record_string_array(
-    configuration, "include_paths", "configuration.include_paths"
+    configuration,
+    "include_paths",
+    "configuration.include_paths"
   )
 
   reported_features <- assert_record_member(
-    record, "reported_features", "object"
+    record,
+    "reported_features",
+    "object"
   )
   for (i in seq_along(reported_features)) {
     feature_name <- names(reported_features)[[i]]
     shape <- if (feature_name == "stan_version") "string" else "flag"
     assert_record_shape(
-      reported_features[[i]], shape, paste0("reported_features.", feature_name)
+      reported_features[[i]],
+      shape,
+      paste0("reported_features.", feature_name)
     )
   }
 
@@ -191,15 +214,20 @@ validate_build_record <- function(record) {
   optional <- intersect(c("user_header", "make_local"), names(dependencies))
   for (name in c("stan_file", optional)) {
     assert_record_dependency_entry(
-      dependencies[[name]], paste0("dependencies.", name)
+      dependencies[[name]],
+      paste0("dependencies.", name)
     )
   }
   included_files <- assert_record_member(
-    dependencies, "included_files", "array", "dependencies.included_files"
+    dependencies,
+    "included_files",
+    "array",
+    "dependencies.included_files"
   )
   for (i in seq_along(included_files)) {
     assert_record_dependency_entry(
-      included_files[[i]], paste0("dependencies.included_files[[", i, "]]")
+      included_files[[i]],
+      paste0("dependencies.included_files[[", i, "]]")
     )
   }
 
@@ -208,12 +236,16 @@ validate_build_record <- function(record) {
   cmdstan <- assert_record_member(record, "cmdstan", "object")
   assert_record_member(cmdstan, "path", "string", "cmdstan.path")
   version <- assert_record_member(
-    cmdstan, "version", "string", "cmdstan.version"
+    cmdstan,
+    "version",
+    "string",
+    "cmdstan.version"
   )
   # A string that is not a CmdStan version is the wrong shape, not an odd value.
   if (!grepl(cmdstan_version_pattern, version)) {
     stop_build_record_field(
-      "cmdstan.version", "must be a CmdStan version such as \"2.39.0\""
+      "cmdstan.version",
+      "must be a CmdStan version such as \"2.39.0\""
     )
   }
 
@@ -224,7 +256,10 @@ validate_build_record <- function(record) {
     field <- paste0("untracked_dependencies[[", i, "]]")
     entry <- assert_record_shape(untracked[[i]], "object", field)
     kind <- assert_record_member(
-      entry, "kind", "string", paste0(field, ".kind")
+      entry,
+      "kind",
+      "string",
+      paste0(field, ".kind")
     )
     if (!kind %in% c("make_local_include", "user_header_include")) {
       stop_build_record_field(
@@ -233,7 +268,10 @@ validate_build_record <- function(record) {
       )
     }
     assert_record_member(
-      entry, "detected_in", "string", paste0(field, ".detected_in")
+      entry,
+      "detected_in",
+      "string",
+      paste0(field, ".detected_in")
     )
   }
 
@@ -258,9 +296,15 @@ validate_build_record <- function(record) {
 #' @param untracked_dependencies What `untracked_dependencies()` returned.
 #' @return The record, validated.
 #' @noRd
-new_build_record <- function(configuration, reported_features, dependencies,
-                             executable_hash, cmdstan, tbb_dir,
-                             untracked_dependencies = list()) {
+new_build_record <- function(
+  configuration,
+  reported_features,
+  dependencies,
+  executable_hash,
+  cmdstan,
+  tbb_dir,
+  untracked_dependencies = list()
+) {
   record <- list(
     format_version = build_record_format_version,
     configuration = configuration,
@@ -319,7 +363,8 @@ parse_exe_info_string <- function(ret_stdout) {
     info[["stan_version_major"]],
     ".",
     info[["stan_version_minor"]],
-    ".", info[["stan_version_patch"]]
+    ".",
+    info[["stan_version_patch"]]
   )
   info[["stan_version_major"]] <- NULL
   info[["stan_version_minor"]] <- NULL
@@ -342,20 +387,22 @@ parse_exe_info_string <- function(ret_stdout) {
 #' @noRd
 reported_features_from_exe <- function(exe_file, tbb_dir = NULL) {
   unknown <- structure(list(), names = character())
-  tryCatch({
-    result <- run_exe_info(exe_file, tbb_dir)
-    if (result$status != 0) {
-      unknown
-    } else {
-      info <- parse_exe_info_string(result$stdout)
-      version <- grepl("^[0-9]+\\.[0-9]+\\.[0-9]+$", info[["stan_version"]])
-      keep <- nzchar(names(info)) & (
-        vapply(info, checkmate::test_flag, logical(1)) |
-          (names(info) == "stan_version" & version)
-      )
-      info[keep]
-    }
-  }, error = function(e) unknown)
+  tryCatch(
+    {
+      result <- run_exe_info(exe_file, tbb_dir)
+      if (result$status != 0) {
+        unknown
+      } else {
+        info <- parse_exe_info_string(result$stdout)
+        version <- grepl("^[0-9]+\\.[0-9]+\\.[0-9]+$", info[["stan_version"]])
+        keep <- nzchar(names(info)) &
+          (vapply(info, checkmate::test_flag, logical(1)) |
+            (names(info) == "stan_version" & version))
+        info[keep]
+      }
+    },
+    error = function(e) unknown
+  )
 }
 
 #' Where the record says the TBB is
@@ -382,7 +429,9 @@ reported_features_from_exe <- function(exe_file, tbb_dir = NULL) {
 tbb_dir_from_options <- function(cpp_options) {
   assigned <- parsed_cpp_options(cpp_options)
   candidates <- c(
-    assigned[["TBB_LIB"]], assigned[["TBB_BIN"]], "stan/lib/stan_math/lib/tbb"
+    assigned[["TBB_LIB"]],
+    assigned[["TBB_BIN"]],
+    "stan/lib/stan_math/lib/tbb"
   )
   tbb <- candidates[nzchar(candidates)][1]
   if (!grepl("^(/|[A-Za-z]:)", tbb)) {
@@ -406,10 +455,12 @@ tbb_dir_from_options <- function(cpp_options) {
 untracked_dependencies <- function(make_local = NULL, user_header = NULL) {
   detectors <- list(
     make_local_include = list(
-      path = make_local, pattern = "^\\s*(?:-?include|sinclude)\\b"
+      path = make_local,
+      pattern = "^\\s*(?:-?include|sinclude)\\b"
     ),
     user_header_include = list(
-      path = user_header, pattern = "^\\s*#\\s*include\\s*\""
+      path = user_header,
+      pattern = "^\\s*#\\s*include\\s*\""
     )
   )
   detected <- list()
@@ -466,7 +517,11 @@ write_build_record <- function(record, exe_file) {
   staged <- tempfile(pattern = basename(path), tmpdir = dirname(path))
   withr::defer(unlink(staged, expand = FALSE))
   jsonlite::write_json(
-    record, staged, auto_unbox = TRUE, pretty = TRUE, digits = NA
+    record,
+    staged,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    digits = NA
   )
   if (!isTRUE(suppressWarnings(file.rename(staged, path)))) {
     stop("Could not write the build record to ", path, ".", call. = FALSE)
@@ -516,10 +571,13 @@ read_build_record <- function(exe_file) {
     ))
   }
 
-  accepted <- tryCatch({
-    validate_build_record(record)
-    TRUE
-  }, error = function(e) FALSE)
+  accepted <- tryCatch(
+    {
+      validate_build_record(record)
+      TRUE
+    },
+    error = function(e) FALSE
+  )
   if (!accepted) {
     return(unreadable)
   }
@@ -543,8 +601,11 @@ verify_build_record <- function(exe_file) {
   result <- read_build_record(exe_file)
   if (result$status != "available") {
     stop(
-      "The build record beside '", exe_file, "' does not describe it (",
-      result$reason, ").",
+      "The build record beside '",
+      exe_file,
+      "' does not describe it (",
+      result$reason,
+      ").",
       call. = FALSE
     )
   }
@@ -581,8 +642,11 @@ build_record_comparisons <- list(
 #' @param rows Which of `build_record_comparisons` to apply.
 #' @return The names in `rows` whose values differ, in that order.
 #' @noRd
-compare_build_records <- function(recorded, current,
-                                  rows = names(build_record_comparisons)) {
+compare_build_records <- function(
+  recorded,
+  current,
+  rows = names(build_record_comparisons)
+) {
   differs <- vapply(
     build_record_comparisons[rows],
     function(value) !identical(value(recorded), value(current)),
@@ -625,7 +689,8 @@ assess_build <- function(expected, current) {
   rows <- names(build_record_comparisons)
   if (is.null(current$dependencies)) {
     rows <- setdiff(
-      rows, c("stan_file", "included_files", "user_header", "make_local")
+      rows,
+      c("stan_file", "included_files", "user_header", "make_local")
     )
   }
   compare_build_records(recorded, now, rows)
@@ -766,7 +831,10 @@ stan_build_info <- function(exe_file) {
 
 # The four flags `<exe> info` prints, in its order.
 reported_feature_flags <- c(
-  "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks"
+  "stan_threads",
+  "stan_mpi",
+  "stan_opencl",
+  "stan_no_range_checks"
 )
 
 #' The reported features with every name present
@@ -834,7 +902,14 @@ print.stan_build_info <- function(x, ...) {
   cat("Reported features:\n")
   for (name in names(x$reported_features)) {
     value <- x$reported_features[[name]]
-    cat("  ", name, ": ", if (is.na(value)) "unknown" else value, "\n", sep = "")
+    cat(
+      "  ",
+      name,
+      ": ",
+      if (is.na(value)) "unknown" else value,
+      "\n",
+      sep = ""
+    )
   }
   if (x$record$status != "available") {
     return(invisible(x))
@@ -842,18 +917,49 @@ print.stan_build_info <- function(x, ...) {
 
   cat("Configuration:\n")
   cpp_options <- x$configuration$cpp_options
-  cat("  cpp_options: ", if (length(cpp_options) == 0) "none" else
-    paste(names(cpp_options), unlist(cpp_options), sep = "=", collapse = " "),
-    "\n", sep = "")
+  cat(
+    "  cpp_options: ",
+    if (length(cpp_options) == 0) {
+      "none"
+    } else {
+      paste(names(cpp_options), unlist(cpp_options), sep = "=", collapse = " ")
+    },
+    "\n",
+    sep = ""
+  )
   stanc_options <- unlist(x$configuration$stanc_options)
-  cat("  stanc_options: ", if (length(stanc_options) == 0) "none" else
-    paste(stanc_options, collapse = " "), "\n", sep = "")
+  cat(
+    "  stanc_options: ",
+    if (length(stanc_options) == 0) {
+      "none"
+    } else {
+      paste(stanc_options, collapse = " ")
+    },
+    "\n",
+    sep = ""
+  )
   from_make <- unlist(x$configuration$stanc_options_from_make)
-  cat("  stanc_options_from_make: ", if (length(from_make) == 0) "none" else
-    paste(from_make, collapse = " "), "\n", sep = "")
+  cat(
+    "  stanc_options_from_make: ",
+    if (length(from_make) == 0) {
+      "none"
+    } else {
+      paste(from_make, collapse = " ")
+    },
+    "\n",
+    sep = ""
+  )
   include_paths <- x$configuration$include_paths
-  cat("  include_paths: ", if (length(include_paths) == 0) "none" else
-    paste(include_paths, collapse = ", "), "\n", sep = "")
+  cat(
+    "  include_paths: ",
+    if (length(include_paths) == 0) {
+      "none"
+    } else {
+      paste(include_paths, collapse = ", ")
+    },
+    "\n",
+    sep = ""
+  )
 
   cat("Dependencies:\n")
   path_line <- function(label, entry) {
@@ -871,14 +977,27 @@ print.stan_build_info <- function(x, ...) {
   path_line("make_local", x$dependencies$make_local)
 
   cmdstan <- x$cmdstan
-  cat("CmdStan ", cmdstan$version, " at ", cmdstan$path,
-    if (cmdstan$exists) "" else " (no longer exists)", "\n", sep = "")
+  cat(
+    "CmdStan ",
+    cmdstan$version,
+    " at ",
+    cmdstan$path,
+    if (cmdstan$exists) "" else " (no longer exists)",
+    "\n",
+    sep = ""
+  )
 
   if (length(x$untracked_dependencies) > 0) {
     cat("Dependencies CmdStanR does not track:\n")
     for (entry in x$untracked_dependencies) {
-      cat("  ", untracked_dependency_descriptions[[entry$kind]], " (",
-        entry$detected_in, ")\n", sep = "")
+      cat(
+        "  ",
+        untracked_dependency_descriptions[[entry$kind]],
+        " (",
+        entry$detected_in,
+        ")\n",
+        sep = ""
+      )
     }
   }
   invisible(x)
@@ -893,7 +1012,8 @@ build_record_status_line <- function(x) {
   if (x$record$status == "available") {
     return("Build record: available")
   }
-  switch(x$record$reason,
+  switch(
+    x$record$reason,
     missing = paste0(
       "Build record: not found. Only what the executable says about itself ",
       "is known."
@@ -902,16 +1022,19 @@ build_record_status_line <- function(x) {
       "Build record: could not be read. Rebuilding the executable writes a ",
       "new one."
     ),
-    executable_mismatch =
-      "Build record: does not match. Executable changed after the build.",
+    executable_mismatch = "Build record: does not match. Executable changed after the build.",
     unsupported_format = if (x$format_version > build_record_format_version) {
       paste0(
-        "Build record: format ", x$format_version, " (newer CmdStanR). ",
+        "Build record: format ",
+        x$format_version,
+        " (newer CmdStanR). ",
         "Upgrade CmdStanR to read it."
       )
     } else {
       paste0(
-        "Build record: format ", x$format_version, " (older CmdStanR). ",
+        "Build record: format ",
+        x$format_version,
+        " (older CmdStanR). ",
         "Rebuild the executable to replace it."
       )
     }

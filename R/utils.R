@@ -2,8 +2,12 @@
 
 require_suggested_package <- function(pkg) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
-    stop("Please install the '", pkg, "' package to use this feature.",
-         call. = FALSE)
+    stop(
+      "Please install the '",
+      pkg,
+      "' package to use this feature.",
+      call. = FALSE
+    )
   }
 }
 
@@ -33,13 +37,15 @@ matching_variables <- function(variable_filters, variables) {
   for (id in which(is.na(matched))) {
     # a name selects its elements, name[...], and its tuple elements, name:...
     prefix <- paste0(variable_filters[id], c("[", ":"))
-    matched[[id]] <- which(startsWith(variables, prefix[1]) |
-                             startsWith(variables, prefix[2]))
+    matched[[id]] <- which(
+      startsWith(variables, prefix[1]) |
+        startsWith(variables, prefix[2])
+    )
   }
   # collect all selected variables
   selected_variables <- variables[unlist(matched)]
   # collect all filters not found
-  not_found <- variable_filters[vapply(matched, length, 0L) == 0]
+  not_found <- variable_filters[lengths(matched) == 0]
   list(
     matching = selected_variables,
     not_found = not_found
@@ -57,7 +63,8 @@ os_is_windows <- function() {
 }
 
 os_is_wsl <- function() {
-  os_is_windows() && (isTRUE(.cmdstanr$WSL) || Sys.getenv("CMDSTANR_USE_WSL") == 1)
+  os_is_windows() &&
+    (isTRUE(.cmdstanr$WSL) || Sys.getenv("CMDSTANR_USE_WSL") == 1)
 }
 
 os_is_macos <- function() {
@@ -82,9 +89,11 @@ is_ucrt_toolchain <- function() {
 is_rosetta2 <- function() {
   rosetta2 <- FALSE
   if (os_is_macos()) {
-    rosetta2_check <- processx::run("/usr/sbin/sysctl",
-                                    args = c("-n", "sysctl.proc_translated"),
-                                    error_on_status = FALSE)
+    rosetta2_check <- processx::run(
+      "/usr/sbin/sysctl",
+      args = c("-n", "sysctl.proc_translated"),
+      error_on_status = FALSE
+    )
     rosetta2 <- rosetta2_check$stdout == "1\n"
   }
   rosetta2
@@ -112,7 +121,9 @@ warn_if_ignored_msys_toolchain_env <- function() {
   }
   warning(
     "Environment variable `CMDSTANR_USE_MSYS_TOOLCHAIN` is deprecated and ignored. ",
-    "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer.\n",
+    "CmdStanR now requires CmdStan v",
+    cmdstan_min_version(),
+    " or newer.\n",
     "If you need legacy MSYS toolchain support, use an older CmdStanR release.",
     call. = FALSE
   )
@@ -143,7 +154,7 @@ repair_path <- function(path) {
   # https://github.com/stan-dev/cmdstanr/issues/1026
   path <- gsub("(?<!^)//", "/", path, perl = TRUE)
   # remove trailing "/"
-  path <- gsub("/$","", path)
+  path <- gsub("/$", "", path)
   path
 }
 
@@ -222,13 +233,15 @@ same_path <- function(x, y) {
 #' @param ext Extension to use for all saved files (default is `ext=".csv"`).
 #' @return The paths to the new files. Errors if any file cannot be copied.
 copy_temp_files <-
-  function(current_paths,
-           new_dir,
-           new_basename,
-           ids = NULL,
-           timestamp = TRUE,
-           random = TRUE,
-           ext = ".csv") {
+  function(
+    current_paths,
+    new_dir,
+    new_basename,
+    ids = NULL,
+    timestamp = TRUE,
+    random = TRUE,
+    ext = ".csv"
+  ) {
     assert_dir_exists(new_dir, access = "w")
     destinations <- generate_file_names(
       basename = new_basename,
@@ -259,11 +272,13 @@ copy_temp_files <-
 # generate new file names
 # see doc above for copy_temp_files
 generate_file_names <-
-  function(basename,
-           ext = ".csv",
-           ids = NULL,
-           timestamp = TRUE,
-           random = TRUE) {
+  function(
+    basename,
+    ext = ".csv",
+    ids = NULL,
+    timestamp = TRUE,
+    random = TRUE
+  ) {
     new_names <- basename
     if (timestamp) {
       stamp <- base::format(Sys.time(), "%Y%m%d%H%M")
@@ -274,7 +289,8 @@ generate_file_names <-
       new_names <- paste0(new_names, "-", sprintf("%0*d", width, ids))
     }
     if (random) {
-      rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) + Sys.getpid()
+      rand_num_pid <- as.integer(stats::runif(1, min = 0, max = 1E7)) +
+        Sys.getpid()
       rand <- base::format(as.hexmode(rand_num_pid), width = 6)
       new_names <- paste0(new_names, "-", rand)
     }
@@ -291,15 +307,23 @@ generate_file_names <-
 check_divergences <- function(post_warmup_sampler_diagnostics) {
   num_divergences_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
-    divergences <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "divergent__")
+    divergences <- posterior::extract_variable_matrix(
+      post_warmup_sampler_diagnostics,
+      "divergent__"
+    )
     num_divergences_per_chain <- colSums(divergences)
     num_divergences <- sum(num_divergences_per_chain)
     num_draws <- length(divergences)
     if (!is.na(num_divergences) && num_divergences > 0) {
       percentage_divergences <- 100 * num_divergences / num_draws
       message(
-        "Warning: ", num_divergences, " of ", num_draws,
-        " (", (base::format(round(percentage_divergences, 0), nsmall = 1)), "%)",
+        "Warning: ",
+        num_divergences,
+        " of ",
+        num_draws,
+        " (",
+        (base::format(round(percentage_divergences, 0), nsmall = 1)),
+        "%)",
         " transitions ended with a divergence.\n",
         "See https://mc-stan.org/misc/warnings for details.\n"
       )
@@ -311,15 +335,28 @@ check_divergences <- function(post_warmup_sampler_diagnostics) {
 check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
   num_max_treedepths_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
-    treedepths <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "treedepth__")
-    num_max_treedepths_per_chain <- apply(treedepths, 2, function(x) sum(x >= metadata$max_treedepth))
+    treedepths <- posterior::extract_variable_matrix(
+      post_warmup_sampler_diagnostics,
+      "treedepth__"
+    )
+    num_max_treedepths_per_chain <- apply(treedepths, 2, function(x) {
+      sum(x >= metadata$max_treedepth)
+    })
     num_max_treedepths <- sum(num_max_treedepths_per_chain)
     num_draws <- length(treedepths)
     if (!is.na(num_max_treedepths) && num_max_treedepths > 0) {
       percentage_max_treedepths <- 100 * num_max_treedepths / num_draws
       message(
-        "Warning: ", num_max_treedepths, " of ", num_draws, " (", (base::format(round(percentage_max_treedepths, 0), nsmall = 1)), "%)",
-        " transitions hit the maximum treedepth limit of ", metadata$max_treedepth,".\n",
+        "Warning: ",
+        num_max_treedepths,
+        " of ",
+        num_draws,
+        " (",
+        (base::format(round(percentage_max_treedepths, 0), nsmall = 1)),
+        "%)",
+        " transitions hit the maximum treedepth limit of ",
+        metadata$max_treedepth,
+        ".\n",
         "See https://mc-stan.org/misc/warnings for details.\n"
       )
     }
@@ -330,14 +367,28 @@ check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
 ebfmi <- function(post_warmup_sampler_diagnostics) {
   efbmi_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
-    if (!("energy__" %in% posterior::variables(post_warmup_sampler_diagnostics))) {
-      warning("E-BFMI not computed because the 'energy__' diagnostic could not be located.", call. = FALSE)
+    if (
+      !("energy__" %in% posterior::variables(post_warmup_sampler_diagnostics))
+    ) {
+      warning(
+        "E-BFMI not computed because the 'energy__' diagnostic could not be located.",
+        call. = FALSE
+      )
     } else if (posterior::niterations(post_warmup_sampler_diagnostics) < 3) {
-      warning("E-BFMI not computed because it is undefined for posterior chains of length less than 3.", call. = FALSE)
+      warning(
+        "E-BFMI not computed because it is undefined for posterior chains of length less than 3.",
+        call. = FALSE
+      )
     } else {
-      energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
+      energy <- posterior::extract_variable_matrix(
+        post_warmup_sampler_diagnostics,
+        "energy__"
+      )
       if (anyNA(energy)) {
-        warning("E-BFMI not computed because 'energy__' contains NAs.", call. = FALSE)
+        warning(
+          "E-BFMI not computed because 'energy__' contains NAs.",
+          call. = FALSE
+        )
       } else {
         efbmi_per_chain <- apply(energy, 2, function(x) {
           # constant energy (a model with no parameters) has no E-BFMI
@@ -355,8 +406,13 @@ check_ebfmi <- function(post_warmup_sampler_diagnostics, threshold = 0.3) {
   efbmi_below_threshold <- sum(efbmi_per_chain < threshold, na.rm = TRUE)
   if (efbmi_below_threshold > 0) {
     message(
-      "Warning: ", efbmi_below_threshold, " of ", length(efbmi_per_chain),
-      " chains had an E-BFMI less than ", threshold, ".\n",
+      "Warning: ",
+      efbmi_below_threshold,
+      " of ",
+      length(efbmi_per_chain),
+      " chains had an E-BFMI less than ",
+      threshold,
+      ".\n",
       "See https://mc-stan.org/misc/warnings for details.\n"
     )
   }
@@ -404,9 +460,19 @@ assert_valid_draws_format <- function(format) {
 }
 
 valid_draws_formats <- function() {
-  c("draws_array", "array", "draws_matrix", "matrix",
-    "draws_list", "list", "draws_df", "df", "data.frame",
-    "draws_rvars", "rvars")
+  c(
+    "draws_array",
+    "array",
+    "draws_matrix",
+    "matrix",
+    "draws_list",
+    "list",
+    "draws_df",
+    "df",
+    "data.frame",
+    "draws_rvars",
+    "rvars"
+  )
 }
 
 maybe_convert_draws_format <- function(draws, format, ...) {
@@ -461,8 +527,10 @@ create_draws_format <- function(format, ...) {
 #'
 as_mcmc.list <- function(x) {
   if (!inherits(x, "CmdStanMCMC")) {
-    stop("Currently only CmdStanMCMC objects can be converted to mcmc.list.",
-         call. = FALSE)
+    stop(
+      "Currently only CmdStanMCMC objects can be converted to mcmc.list.",
+      call. = FALSE
+    )
   }
   sample_array <- x$draws(format = "array")
   n_chain <- posterior::nchains(sample_array)
@@ -470,8 +538,10 @@ as_mcmc.list <- function(x) {
   class(sample_array) <- 'array'
   mcmc_list <- lapply(seq_len(n_chain), function(chain) {
     x <- sample_array[, chain, ]
-    dimnames(x) <- list(iteration = dimnames(sample_array)$iteration,
-                        variable  = dimnames(sample_array)$variable)
+    dimnames(x) <- list(
+      iteration = dimnames(sample_array)$iteration,
+      variable = dimnames(sample_array)$variable
+    )
     attr(x, 'mcpar') <- c(1, n_iteration, 1)
     class(x) <- 'mcmc'
     x
@@ -503,9 +573,11 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
     if (grepl("^/mnt/", path)) {
       strip_mnt <- gsub("^/mnt/", "", path)
       drive_letter <- strtrim(strip_mnt, 1)
-      path <- gsub(paste0("^/mnt/", drive_letter),
-                    paste0(toupper(drive_letter), ":"),
-                    path)
+      path <- gsub(
+        paste0("^/mnt/", drive_letter),
+        paste0(toupper(drive_letter), ":"),
+        path
+      )
     } else if (grepl("^/[^/]", path)) {
       # A file on the distribution's own filesystem, which Windows reaches
       # through the //wsl$ share. Host paths already carry a drive or a share.
@@ -521,10 +593,12 @@ wsl_safe_path <- function(path = NULL, revert = FALSE) {
       path <- dirname(path)
       abs_path <- repair_path(utils::shortPathName(path))
       drive_letter <- tolower(strtrim(abs_path, 1))
-      path <- gsub(paste0(drive_letter, ":"),
-                  paste0("/mnt/", drive_letter),
-                  abs_path,
-                  ignore.case = TRUE)
+      path <- gsub(
+        paste0(drive_letter, ":"),
+        paste0("/mnt/", drive_letter),
+        abs_path,
+        ignore.case = TRUE
+      )
       path <- paste0(path, "/", base_file)
     }
   }
@@ -603,8 +677,8 @@ wsl_distro_name <- function() {
 
 wsl_home_dir <- function() {
   dir <- processx::run(
-        command = "wsl",
-        args = c("echo", "$HOME")
+    command = "wsl",
+    args = c("echo", "$HOME")
   )$stdout
   gsub("\n", "", dir, fixed = TRUE)
 }
@@ -618,8 +692,7 @@ wsl_dir_prefix <- function(wsl = FALSE) {
 }
 
 wsl_tempdir <- function() {
-  dir <- processx::run(command = "wsl",
-                        args = c("mktemp", "-d"))$stdout
+  dir <- processx::run(command = "wsl", args = c("mktemp", "-d"))$stdout
   gsub("\n", "", dir, fixed = TRUE)
 }
 
@@ -668,14 +741,15 @@ check_file_exists <- function(files, access = "", ...) {
 
   if (path_check$status != 0) {
     path <- gsub("^./", "", path)
-    err <- ifelse(is_dir,
-                  paste0("Directory '", path, "' does not exist"),
-                  paste0("File does not exist: '", path, "'"))
+    err <- ifelse(
+      is_dir,
+      paste0("Directory '", path, "' does not exist"),
+      paste0("File does not exist: '", path, "'")
+    )
     return(err)
   }
 
-  path_metadata <- strsplit(path_check$stdout, split = "\n",
-                            fixed = TRUE)[[1]]
+  path_metadata <- strsplit(path_check$stdout, split = "\n", fixed = TRUE)[[1]]
 
   wsl_user <- processx::run(
     command = "wsl",
@@ -690,8 +764,14 @@ check_file_exists <- function(files, access = "", ...) {
     path_permissions <- strsplit(path_metadata, " ", fixed = TRUE)[[1]][1]
     if (!any(grepl(access, path_permissions))) {
       name <- ifelse(is_dir, "directory", "file")
-      return(paste0("Specified ", name, ": ", path,
-                    " does not have access permission ", access))
+      return(paste0(
+        "Specified ",
+        name,
+        ": ",
+        path,
+        " does not have access permission ",
+        access
+      ))
     }
   }
   TRUE
@@ -711,15 +791,25 @@ parse_make_print_flag <- function(flag_name, stdout) {
 
   if (length(matches) == 0) {
     stop(
-      "Failed to parse `", flag_name, "` from `make print-", flag_name, "` output.\n",
-      "Output was:\n", stdout,
+      "Failed to parse `",
+      flag_name,
+      "` from `make print-",
+      flag_name,
+      "` output.\n",
+      "Output was:\n",
+      stdout,
       call. = FALSE
     )
   }
   if (length(matches) > 1) {
     stop(
-      "Found multiple `", flag_name, "` lines in `make print-", flag_name, "` output.\n",
-      "Output was:\n", stdout,
+      "Found multiple `",
+      flag_name,
+      "` lines in `make print-",
+      flag_name,
+      "` output.\n",
+      "Output was:\n",
+      stdout,
       call. = FALSE
     )
   }
@@ -742,7 +832,11 @@ make_shell_quote <- function(x) {
   # shQuote() switches the whole vector to double quotes if any element holds
   # a single quote, so quote one element at a time
   x[needs_quote] <- vapply(
-    x[needs_quote], shQuote, character(1), type = "sh", USE.NAMES = FALSE
+    x[needs_quote],
+    shQuote,
+    character(1),
+    type = "sh",
+    USE.NAMES = FALSE
   )
   gsub("$", "$$", x, fixed = TRUE)
 }
@@ -771,10 +865,15 @@ get_cmdstan_flags <- function(flag_names, make_args = character()) {
       wd = cmdstan_path
     )$stdout
   )
-  vapply(flag_names, function(flag_name) {
-    flags <- parse_make_print_flag(flag_name, flags_stdout)
-    quote_cmdstan_flag_paths(flag_name, flags, cmdstan_path)
-  }, character(1), USE.NAMES = FALSE)
+  vapply(
+    flag_names,
+    function(flag_name) {
+      flags <- parse_make_print_flag(flag_name, flags_stdout)
+      quote_cmdstan_flag_paths(flag_name, flags, cmdstan_path)
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
 }
 
 #' Quote the paths in one make variable's value and make them absolute
@@ -798,9 +897,14 @@ quote_cmdstan_flag_paths <- function(flag_name, flags, cmdstan_path) {
       flags <- gsub("(-L|-rpath),/([a-zA-Z])/", "\\1,\\2:/", flags, perl = TRUE)
     }
     flags <- gsub(cmdstan_path, "", flags, ignore.case = TRUE)
-    flags <- gsub("(-L,|-rpath,)/stan/lib/stan_math/lib/tbb",
-                  paste0("\\1", shQuote(paste0(cmdstan_path, "/stan/lib/stan_math/lib/tbb"))),
-                  flags)
+    flags <- gsub(
+      "(-L,|-rpath,)/stan/lib/stan_math/lib/tbb",
+      paste0(
+        "\\1",
+        shQuote(paste0(cmdstan_path, "/stan/lib/stan_math/lib/tbb"))
+      ),
+      flags
+    )
     return(flags)
   }
 
@@ -815,6 +919,10 @@ quote_cmdstan_flag_paths <- function(flag_name, flags, cmdstan_path) {
   # shQuote Remaining " stan/" paths
   flags <- strsplit(flags, split = " ", fixed = TRUE)[[1]]
   oth_stan_flags <- grep("^stan/", flags)
-  flags[oth_stan_flags] <- shQuote(paste0(cmdstan_path, "/", flags[oth_stan_flags]))
+  flags[oth_stan_flags] <- shQuote(paste0(
+    cmdstan_path,
+    "/",
+    flags[oth_stan_flags]
+  ))
   paste(flags, collapse = " ")
 }

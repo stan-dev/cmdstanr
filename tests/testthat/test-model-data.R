@@ -19,14 +19,16 @@ test_that("error if data contains NA elements", {
 })
 
 test_that("empty data list doesn't error if no data block", {
-  mod <- cmdstan_model(write_stan_file("
+  mod <- cmdstan_model(write_stan_file(
+    "
   parameters {
     real x;
   }
   model {
     x ~ normal(0, 1);
   }
-  "))
+  "
+  ))
 
   expect_sample_output(
     fit <- mod$sample(data = list(), chains = 1)

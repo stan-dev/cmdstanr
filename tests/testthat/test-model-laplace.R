@@ -42,7 +42,10 @@ test_that("laplace() method errors for any invalid argument before calling cmdst
   }
   args <- ok_arg_values
   args$opt_args <- list(iter = "NOT_A_NUMBER")
-  expect_error(do.call(mod$laplace, args), regexp = "Must be of type 'integerish'")
+  expect_error(
+    do.call(mod$laplace, args),
+    regexp = "Must be of type 'integerish'"
+  )
 })
 
 test_that("laplace() runs when all arguments specified validly", {
@@ -54,10 +57,20 @@ test_that("laplace() runs when all arguments specified validly", {
   expect_equal(fit1$metadata()$refresh, ok_arg_values$refresh)
   expect_equal(fit1$metadata()$jacobian, as.integer(ok_arg_values$jacobian))
   expect_equal(fit1$metadata()$draws, as.integer(ok_arg_values$draws))
-  expect_equal(fit1$mode()$metadata()$jacobian, as.integer(ok_arg_values$jacobian))
-  expect_equal(fit1$mode()$metadata()$init_alpha, ok_arg_values$opt_args$init_alpha)
+  expect_equal(
+    fit1$mode()$metadata()$jacobian,
+    as.integer(ok_arg_values$jacobian)
+  )
+  expect_equal(
+    fit1$mode()$metadata()$init_alpha,
+    ok_arg_values$opt_args$init_alpha
+  )
 
-  expect_equal(fit1$mode()$metadata()$tol_obj, ok_arg_values$opt_args$tol_obj, tolerance = 0)
+  expect_equal(
+    fit1$mode()$metadata()$tol_obj,
+    ok_arg_values$opt_args$tol_obj,
+    tolerance = 0
+  )
 
   # leaving all at default (except 'data')
   expect_laplace_output(fit2 <- mod$laplace(data = data_list, seed = 123))
@@ -79,7 +92,10 @@ test_that("laplace() avoids output_basename conflict with internal optimize()", 
   )
 
   expect_equal(basename(fit$output_files()), "custom-laplace-01.csv")
-  expect_equal(basename(fit$mode()$output_files()), "custom-laplace-mode-01.csv")
+  expect_equal(
+    basename(fit$mode()$output_files()),
+    "custom-laplace-mode-01.csv"
+  )
   expect_setequal(
     list.files(output_dir, pattern = "\\.csv$"),
     c("custom-laplace-01.csv", "custom-laplace-mode-01.csv")
@@ -88,9 +104,19 @@ test_that("laplace() avoids output_basename conflict with internal optimize()", 
 
 test_that("laplace() all valid 'mode' inputs give same results", {
   utils::capture.output({
-    mode <- mod$optimize(data = data_list, jacobian = TRUE, seed = 100, refresh = 0)
+    mode <- mod$optimize(
+      data = data_list,
+      jacobian = TRUE,
+      seed = 100,
+      refresh = 0
+    )
     fit1 <- mod$laplace(data = data_list, mode = mode, seed = 100, refresh = 0)
-    fit2 <- mod$laplace(data = data_list, mode = mode$output_files(), seed = 100, refresh = 0)
+    fit2 <- mod$laplace(
+      data = data_list,
+      mode = mode$output_files(),
+      seed = 100,
+      refresh = 0
+    )
     fit3 <- mod$laplace(data = data_list, mode = NULL, seed = 100, refresh = 0)
   })
 
@@ -163,5 +189,6 @@ test_that("laplace() errors if optimize() fails", {
         "Fitting finished unexpectedly"
       ),
       "Optimization failed"
-    ))
+    )
+  )
 })

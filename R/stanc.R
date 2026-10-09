@@ -31,10 +31,14 @@ assert_valid_stanc_options <- function(stanc_options) {
       name <- s
     }
     if (startsWith(name, "--")) {
-      stop("No leading hyphens allowed in stanc options (", name, "). ",
-           "Use options without leading hyphens, for example ",
-           "`stanc_options = list(\"warn-uninitialized\")`",
-           call. = FALSE)
+      stop(
+        "No leading hyphens allowed in stanc options (",
+        name,
+        "). ",
+        "Use options without leading hyphens, for example ",
+        "`stanc_options = list(\"warn-uninitialized\")`",
+        call. = FALSE
+      )
     }
     # The flag is the part before the first `=`, wherever the name occurs.
     flag <- sub("=.*$", "", name)
@@ -50,7 +54,9 @@ assert_valid_stanc_options <- function(stanc_options) {
             "Write the value after the name: `list(\"%s\" = \"%s\")` ",
             "instead of `list(\"%s\" = ...)`."
           ),
-          flag, sub("^[^=]*=", "", name), name
+          flag,
+          sub("^[^=]*=", "", name),
+          name
         ),
         call. = FALSE
       )
@@ -176,9 +182,11 @@ drop_overridden_stancflags <- function(local_flags, call_args) {
   while (i <= length(local_flags)) {
     if (sub("=.*$", "", local_flags[i]) %in% call_flags) {
       keep[i] <- FALSE
-      if (!grepl("=", local_flags[i], fixed = TRUE) &&
+      if (
+        !grepl("=", local_flags[i], fixed = TRUE) &&
           i < length(local_flags) &&
-          !startsWith(local_flags[i + 1], "-")) {
+          !startsWith(local_flags[i + 1], "-")
+      ) {
         keep[i + 1] <- FALSE
         i <- i + 1
       }
@@ -204,7 +212,10 @@ drop_overridden_stancflags <- function(local_flags, call_args) {
 #' @return `NULL` if `include_paths` is `NULL`; otherwise, a single
 #'   `--include-paths=` argument for make or two arguments for a direct call.
 #' @noRd
-include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE) {
+include_paths_stanc3_args <- function(
+  include_paths = NULL,
+  direct_call = FALSE
+) {
   stancflags <- NULL
   if (!is.null(include_paths)) {
     assert_dir_exists(include_paths, access = "r")
@@ -244,7 +255,10 @@ include_paths_stanc3_args <- function(include_paths = NULL, direct_call = FALSE)
 #'   variable is empty. An empty argument (`''`) is dropped.
 #' @noRd
 stancflags_from_make <- function(cmdstan_path, make_args = character()) {
-  rule_file <- withr::local_tempfile(pattern = "cmdstanr-stancflags-", fileext = ".mk")
+  rule_file <- withr::local_tempfile(
+    pattern = "cmdstanr-stancflags-",
+    fileext = ".mk"
+  )
   # Binary mode keeps the line endings LF; under WSL a Linux make reads a file
   # written on Windows.
   con <- file(rule_file, open = "wb")
@@ -266,7 +280,12 @@ stancflags_from_make <- function(cmdstan_path, make_args = character()) {
       stdout <- wsl_compatible_run(
         command = "make",
         args = c(
-          "-s", make_args, "-f", "makefile", "-f", wsl_safe_path(rule_file),
+          "-s",
+          make_args,
+          "-f",
+          "makefile",
+          "-f",
+          wsl_safe_path(rule_file),
           "cmdstanr-print-stancflags"
         ),
         wd = cmdstan_path
@@ -309,8 +328,10 @@ run_stanc <- function(stan_file, args, spinner = FALSE) {
     )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
-    stop("Syntax error found! See the message above for more information.",
-         call. = FALSE)
+    stop(
+      "Syntax error found! See the message above for more information.",
+      call. = FALSE
+    )
   }
   run_log$stdout
 }
@@ -330,13 +351,15 @@ stanc_info <- function(stan_file, include_paths = NULL) {
   withr::defer(unlink(out_file))
   run_log <- wsl_compatible_run(
     command = stanc_cmd(),
-    args = c(wsl_safe_path(stan_file),
-              "--info",
-              include_paths_stanc3_args(
-                include_paths,
-                direct_call = TRUE
-              ),
-              "--allow-undefined"),
+    args = c(
+      wsl_safe_path(stan_file),
+      "--info",
+      include_paths_stanc3_args(
+        include_paths,
+        direct_call = TRUE
+      ),
+      "--allow-undefined"
+    ),
     wd = checked_cmdstan_path(),
     echo = FALSE,
     echo_cmd = FALSE,
@@ -381,27 +404,35 @@ get_standalone_hpp <- function(stan_file, stancflags, show_warnings = FALSE) {
   withr::defer(unlink(hpp_path))
 
   status <- withr::with_path(
-      c(
-        toolchain_PATH_env_var(),
-        tbb_path()
+    c(
+      toolchain_PATH_env_var(),
+      tbb_path()
+    ),
+    wsl_compatible_run(
+      command = stanc_cmd(),
+      args = c(
+        paste0("--o=", wsl_safe_path(hpp_path)),
+        stancflags,
+        wsl_safe_path(stan_file)
       ),
-      wsl_compatible_run(
-        command = stanc_cmd(),
-        args = c(paste0("--o=", wsl_safe_path(hpp_path)), stancflags, wsl_safe_path(stan_file)),
-        wd = checked_cmdstan_path(),
-        error_on_status = FALSE
-      )
+      wd = checked_cmdstan_path(),
+      error_on_status = FALSE
     )
+  )
   if (is.na(status$status) || status$status != 0) {
     if (length(status$stderr) > 0 && nzchar(status$stderr)) {
       message(status$stderr)
     }
     err_msg <- paste0(
       "An error occurred during compilation! See the message above for more ",
-      "information. (stanc exited with status ", status$status, ")"
+      "information. (stanc exited with status ",
+      status$status,
+      ")"
     )
-    if (length(status$stderr) > 0 &&
-        grepl("auto-format flag to stanc", status$stderr)) {
+    if (
+      length(status$stderr) > 0 &&
+        grepl("auto-format flag to stanc", status$stderr)
+    ) {
       err_msg <- paste0(
         err_msg,
         "\nTo fix deprecated or removed syntax please see ",

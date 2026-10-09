@@ -2,7 +2,10 @@ skip_on_cran()
 
 set_cmdstan_path()
 
-local_output_sandbox <- function(pattern = "sandbox", .local_envir = parent.frame()) {
+local_output_sandbox <- function(
+  pattern = "sandbox",
+  .local_envir = parent.frame()
+) {
   withr::local_tempdir(pattern = pattern, .local_envir = .local_envir)
 }
 
@@ -20,7 +23,7 @@ test_that("all fitting methods work with output_dir", {
       files <- list.files(method_dir)
     }
     # specifying output_dir
-    call_args  <- list(
+    call_args <- list(
       "bernoulli",
       method = method,
       seed = 123,
@@ -32,37 +35,54 @@ test_that("all fitting methods work with output_dir", {
     }
     fit <- do.call(testing_fit, call_args)
     # Normalize to account for platform-specific path representations.
-    expect_equal(normalizePath(fit$runset$args$output_dir),
-                 normalizePath(method_dir))
+    expect_equal(
+      normalizePath(fit$runset$args$output_dir),
+      normalizePath(method_dir)
+    )
     files <- normalizePath(list.files(method_dir, full.names = TRUE))
-    expect_equal(files[grepl("\\.csv$", files)],
-                 normalizePath(fit$output_files()))
+    expect_equal(
+      files[grepl("\\.csv$", files)],
+      normalizePath(fit$output_files())
+    )
     if (method == "sample") {
       mult <- 3
-      expect_equal(files[grepl("metric", files)],
-                   normalizePath(fit$metric_files()))
-      expect_equal(files[grepl("config", files)],
-                   normalizePath(fit$config_files()))
+      expect_equal(
+        files[grepl("metric", files)],
+        normalizePath(fit$metric_files())
+      )
+      expect_equal(
+        files[grepl("config", files)],
+        normalizePath(fit$config_files())
+      )
     } else {
       mult <- 2
-      expect_equal(files[grepl("config", files)],
-                   normalizePath(fit$config_files()))
+      expect_equal(
+        files[grepl("config", files)],
+        normalizePath(fit$config_files())
+      )
     }
-    expect_equal(length(list.files(method_dir)), mult * fit$num_procs())
-
+    expect_length(list.files(method_dir), mult * fit$num_procs())
 
     # specifying output_dir
-    fit <- testing_fit("bernoulli", method = method, seed = 123,
-                       output_basename = "custom")
+    fit <- testing_fit(
+      "bernoulli",
+      method = method,
+      seed = 123,
+      output_basename = "custom"
+    )
     n_files <- length(fit$output_files())
     files <- sprintf("custom-%02d.csv", seq_len(n_files))
     expect_equal(basename(fit$output_files()), files)
   }
 
   # specifying output_dir and save_latent_dynamics
-  fit <- testing_fit("bernoulli", method = "sample", seed = 123,
-                     output_dir = file.path(sandbox, "sample"),
-                     save_latent_dynamics = TRUE)
+  fit <- testing_fit(
+    "bernoulli",
+    method = "sample",
+    seed = 123,
+    output_dir = file.path(sandbox, "sample"),
+    save_latent_dynamics = TRUE
+  )
 
   files <- list.files(file.path(sandbox, "sample"))
   expect_equal(
@@ -141,7 +161,7 @@ test_that("explicit WSL UNC output_dir remains supported", {
     output_dir = output_dir
   )
 
-  expect_equal(file.exists(fit$output_files()), TRUE)
+  expect_true(file.exists(fit$output_files()))
   expect_equal(
     normalizePath(dirname(fit$output_files())),
     normalizePath(output_dir)
@@ -164,8 +184,10 @@ test_that("error if output_dir is invalid", {
     # FIXME: how do I create an unreadable file on windows?
     not_readable <- file.path(sandbox, "locked")
     dir.create(not_readable, mode = "220")
-    skip_if(file.access(not_readable, 4) == 0,
-            "temp filesystem does not support unreadable test directories")
+    skip_if(
+      file.access(not_readable, 4) == 0,
+      "temp filesystem does not support unreadable test directories"
+    )
     expect_error(
       testing_fit("bernoulli", output_dir = not_readable),
       "not readable"
@@ -179,9 +201,11 @@ test_that("output_dir works with trailing /", {
     "bernoulli",
     method = "sample",
     seed = 123,
-    output_dir = paste0(test_dir,"/")
+    output_dir = paste0(test_dir, "/")
   )
-  expect_equal(normalizePath(fit$runset$args$output_dir),
-               normalizePath(test_dir))
-  expect_equal(length(list.files(test_dir)), fit$num_procs())
+  expect_equal(
+    normalizePath(fit$runset$args$output_dir),
+    normalizePath(test_dir)
+  )
+  expect_length(list.files(test_dir), fit$num_procs())
 })

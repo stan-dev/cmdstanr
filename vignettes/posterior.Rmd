@@ -72,7 +72,7 @@ fit$summary(
 
 Arguments to all summary functions can also be specified with `.args`. 
 ```{r}
-fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, .05, .95, .975)))
+fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, 0.05, 0.95, 0.975)))
 ```
 
 Each summary function is applied separately to each variable and receives a

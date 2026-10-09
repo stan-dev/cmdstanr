@@ -29,7 +29,10 @@ test_that("an unusable record is the only reason", {
   current <- example_current(record)
   expected$configuration$stanc_name <- "other_model"
   reasons <- c(
-    "missing", "unreadable", "unsupported_format", "executable_mismatch"
+    "missing",
+    "unreadable",
+    "unsupported_format",
+    "executable_mismatch"
   )
   for (reason in reasons) {
     current$record <- list(status = "unavailable", reason = reason)

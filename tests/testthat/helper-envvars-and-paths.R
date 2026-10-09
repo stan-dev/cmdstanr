@@ -1,27 +1,11 @@
-on_codecov <- function() {
-  identical(Sys.getenv("R_COVR"), "true")
-}
-
-on_ci <- function() {
-  isTRUE(as.logical(Sys.getenv("CI")))
-}
-
 mpi_toolchain_present <- function() {
   tryCatch(
     wsl_compatible_run(command = "mpicxx", args = "--version")$status == 0 &&
-    wsl_compatible_run(command = "mpiexec", args = "--version")$status == 0,
-    error=function(cond) {
+      wsl_compatible_run(command = "mpiexec", args = "--version")$status == 0,
+    error = function(cond) {
       FALSE
     }
   )
-}
-
-delete_extensions <- function() {
-  if (os_is_windows()) {
-    c(".exe", ".o", ".hpp")
-  } else {
-    c("", ".o",".hpp")
-  }
 }
 
 # Tracks whether an outer local_make_local_backup() is holding the on-disk
@@ -60,7 +44,11 @@ restore_cmdstan_make_local <- function() {
     restored <- !file.exists(make_local_path)
   } else {
     tryCatch(
-      suppressWarnings(file.copy(backup_path, make_local_path, overwrite = TRUE)),
+      suppressWarnings(file.copy(
+        backup_path,
+        make_local_path,
+        overwrite = TRUE
+      )),
       error = function(e) FALSE
     )
     restored <- identical(
@@ -71,7 +59,9 @@ restore_cmdstan_make_local <- function() {
   if (!isTRUE(restored)) {
     stop(
       "Could not restore CmdStan's 'make/local'. The recovery backup has ",
-      "been retained at '", backup_path, "'.",
+      "been retained at '",
+      backup_path,
+      "'.",
       call. = FALSE
     )
   }
@@ -79,7 +69,9 @@ restore_cmdstan_make_local <- function() {
   if (file.exists(backup_path)) {
     stop(
       "CmdStan's 'make/local' was restored, but the recovery backup could ",
-      "not be removed from '", backup_path, "'.",
+      "not be removed from '",
+      backup_path,
+      "'.",
       call. = FALSE
     )
   }
@@ -120,7 +112,9 @@ local_make_local_backup <- function(envir = parent.frame()) {
       suppressWarnings(unlink(backup_path))
       stop(
         "Could not create a verified recovery backup of CmdStan's ",
-        "'make/local' at '", backup_path, "'. 'make/local' was not modified.",
+        "'make/local' at '",
+        backup_path,
+        "'. 'make/local' was not modified.",
         call. = FALSE
       )
     }
@@ -130,7 +124,9 @@ local_make_local_backup <- function(envir = parent.frame()) {
     if (!is.null(make_local_orig) && !is.raw(make_local_orig)) {
       stop(
         "Could not snapshot CmdStan's 'make/local' for nested restoration. ",
-        "The recovery backup is at '", make_local_backup_path(), "'.",
+        "The recovery backup is at '",
+        make_local_backup_path(),
+        "'.",
         call. = FALSE
       )
     }
@@ -152,14 +148,17 @@ local_make_local_backup <- function(envir = parent.frame()) {
           },
           error = function(e) FALSE
         )
-        if (!identical(
-          read_make_local_contents(make_local_path),
-          make_local_orig
-        )) {
+        if (
+          !identical(
+            read_make_local_contents(make_local_path),
+            make_local_orig
+          )
+        ) {
           stop(
             "Could not restore nested CmdStan 'make/local' state. The ",
             "recovery backup has been retained at '",
-            make_local_backup_path(), "'.",
+            make_local_backup_path(),
+            "'.",
             call. = FALSE
           )
         }
@@ -173,8 +172,11 @@ local_make_local_backup <- function(envir = parent.frame()) {
 # Write cpp_options to the make/local of the current CmdStan installation and
 # restore its original contents (or absence) when `envir` exits. Called at the
 # top level of a test file, the restore runs after all tests in that file.
-local_cmdstan_make_local <- function(cpp_options, envir = parent.frame(),
-                                     append = TRUE) {
+local_cmdstan_make_local <- function(
+  cpp_options,
+  envir = parent.frame(),
+  append = TRUE
+) {
   local_make_local_backup(envir = envir)
   cmdstan_make_local(cpp_options = cpp_options, append = append)
 }

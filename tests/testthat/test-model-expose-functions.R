@@ -91,10 +91,11 @@ functions {
     return x + class;
   }
 }"
-stan_prog <- paste(function_decl,
-                  paste(readLines(testing_stan_file("bernoulli")),
-                        collapse = "\n"),
-                  collapse = "\n")
+stan_prog <- paste(
+  function_decl,
+  paste(readLines(testing_stan_file("bernoulli")), collapse = "\n"),
+  collapse = "\n"
+)
 model <- write_stan_file(stan_prog)
 data_list <- testing_data("bernoulli")
 mod <- cmdstan_model(model, force_recompile = TRUE)
@@ -116,7 +117,7 @@ test_that("Functions handle types correctly", {
 
   ### Container
 
-  vec <- c(1.2,234,0.3,-0.4)
+  vec <- c(1.2, 234, 0.3, -0.4)
   rowvec <- t(vec)
   matrix <- matrix(c(2.11, -6.35, 4.87, -0.9871), nrow = 2, ncol = 2)
 
@@ -153,7 +154,10 @@ test_that("Functions handle types correctly", {
   expect_equal(mod$functions$rtn_tuple_vec(tuple_vec), tuple_vec)
   expect_equal(mod$functions$rtn_tuple_rowvec(tuple_rowvec), tuple_rowvec)
   expect_equal(mod$functions$rtn_tuple_matrix(tuple_matrix), tuple_matrix)
-  expect_equal(mod$functions$rtn_tuple_int_array(tuple_int_array), tuple_int_array)
+  expect_equal(
+    mod$functions$rtn_tuple_int_array(tuple_int_array),
+    tuple_int_array
+  )
   expect_equal(mod$functions$rtn_tuple_real_array(tuple_vec), tuple_vec)
 
   ### Tuple of Container Arrays
@@ -162,16 +166,28 @@ test_that("Functions handle types correctly", {
   tuple_rowvec_array <- list(rowvec_array, rowvec_array)
   tuple_matrix_array <- list(matrix_array, matrix_array)
 
-  expect_equal(mod$functions$rtn_tuple_vec_array(tuple_vec_array), tuple_vec_array)
-  expect_equal(mod$functions$rtn_tuple_rowvec_array(tuple_rowvec_array), tuple_rowvec_array)
-  expect_equal(mod$functions$rtn_tuple_matrix_array(tuple_matrix_array), tuple_matrix_array)
+  expect_equal(
+    mod$functions$rtn_tuple_vec_array(tuple_vec_array),
+    tuple_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_rowvec_array(tuple_rowvec_array),
+    tuple_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_matrix_array(tuple_matrix_array),
+    tuple_matrix_array
+  )
 
   ### Nested Tuple of Scalar
 
   nest_tuple_int <- list(10, tuple_int)
   nest_tuple_dbl <- list(31, tuple_dbl)
   expect_equal(mod$functions$rtn_nest_tuple_int(nest_tuple_int), nest_tuple_int)
-  expect_equal(mod$functions$rtn_nest_tuple_real(nest_tuple_dbl), nest_tuple_dbl)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_real(nest_tuple_dbl),
+    nest_tuple_dbl
+  )
 
   ### Nested Tuple of Container
 
@@ -181,10 +197,22 @@ test_that("Functions handle types correctly", {
   nest_tuple_int_array <- list(21, tuple_int_array)
 
   expect_equal(mod$functions$rtn_nest_tuple_vec(nest_tuple_vec), nest_tuple_vec)
-  expect_equal(mod$functions$rtn_nest_tuple_rowvec(nest_tuple_rowvec), nest_tuple_rowvec)
-  expect_equal(mod$functions$rtn_nest_tuple_matrix(nest_tuple_matrix), nest_tuple_matrix)
-  expect_equal(mod$functions$rtn_nest_tuple_int_array(nest_tuple_int_array), nest_tuple_int_array)
-  expect_equal(mod$functions$rtn_nest_tuple_real_array(nest_tuple_vec), nest_tuple_vec)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_rowvec(nest_tuple_rowvec),
+    nest_tuple_rowvec
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_matrix(nest_tuple_matrix),
+    nest_tuple_matrix
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_int_array(nest_tuple_int_array),
+    nest_tuple_int_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_real_array(nest_tuple_vec),
+    nest_tuple_vec
+  )
 
   ### Nested Tuple of Container Arrays
 
@@ -192,9 +220,18 @@ test_that("Functions handle types correctly", {
   nest_tuple_rowvec_array <- list(1000, tuple_rowvec_array)
   nest_tuple_matrix_array <- list(0, tuple_matrix_array)
 
-  expect_equal(mod$functions$rtn_nest_tuple_vec_array(nest_tuple_vec_array), nest_tuple_vec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_rowvec_array(nest_tuple_rowvec_array), nest_tuple_rowvec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_matrix_array(nest_tuple_matrix_array), nest_tuple_matrix_array)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_vec_array(nest_tuple_vec_array),
+    nest_tuple_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_rowvec_array(nest_tuple_rowvec_array),
+    nest_tuple_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_matrix_array(nest_tuple_matrix_array),
+    nest_tuple_matrix_array
+  )
 })
 
 test_that("Functions handle complex types correctly", {
@@ -206,9 +243,12 @@ test_that("Functions handle complex types correctly", {
 
   ### Container
 
-  complex_vec <- complex(real = c(2,1.5,0.11, 1.2), imaginary = c(11.2,21.5,6.1,3.2))
+  complex_vec <- complex(
+    real = c(2, 1.5, 0.11, 1.2),
+    imaginary = c(11.2, 21.5, 6.1, 3.2)
+  )
   complex_rowvec <- t(complex_vec)
-  complex_matrix <- matrix(complex_vec, nrow=2, ncol=2)
+  complex_matrix <- matrix(complex_vec, nrow = 2, ncol = 2)
 
   expect_equal(mod$functions$rtn_complex_vec(complex_vec), complex_vec)
   expect_equal(mod$functions$rtn_complex_rowvec(complex_rowvec), complex_rowvec)
@@ -218,12 +258,29 @@ test_that("Functions handle complex types correctly", {
   ### Array of Container
 
   complex_vec_array <- list(complex_vec, complex_vec * 2, complex_vec + 0.1)
-  complex_rowvec_array <- list(complex_rowvec, complex_rowvec * 2, complex_rowvec + 0.1)
-  complex_matrix_array <- list(complex_matrix, complex_matrix * 2, complex_matrix + 0.1)
+  complex_rowvec_array <- list(
+    complex_rowvec,
+    complex_rowvec * 2,
+    complex_rowvec + 0.1
+  )
+  complex_matrix_array <- list(
+    complex_matrix,
+    complex_matrix * 2,
+    complex_matrix + 0.1
+  )
 
-  expect_equal(mod$functions$rtn_complex_vec_array(complex_vec_array), complex_vec_array)
-  expect_equal(mod$functions$rtn_complex_rowvec_array(complex_rowvec_array), complex_rowvec_array)
-  expect_equal(mod$functions$rtn_complex_matrix_array(complex_matrix_array), complex_matrix_array)
+  expect_equal(
+    mod$functions$rtn_complex_vec_array(complex_vec_array),
+    complex_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_complex_rowvec_array(complex_rowvec_array),
+    complex_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_complex_matrix_array(complex_matrix_array),
+    complex_matrix_array
+  )
 
   ### Tuple of Scalar
 
@@ -236,10 +293,22 @@ test_that("Functions handle complex types correctly", {
   tuple_complex_rowvec <- list(complex_rowvec, complex_rowvec * 0.5)
   tuple_complex_matrix <- list(complex_matrix, complex_matrix * 10.2)
 
-  expect_equal(mod$functions$rtn_tuple_complex_array(tuple_complex_vec), tuple_complex_vec)
-  expect_equal(mod$functions$rtn_tuple_complex_vec(tuple_complex_vec), tuple_complex_vec)
-  expect_equal(mod$functions$rtn_tuple_complex_rowvec(tuple_complex_rowvec), tuple_complex_rowvec)
-  expect_equal(mod$functions$rtn_tuple_complex_matrix(tuple_complex_matrix), tuple_complex_matrix)
+  expect_equal(
+    mod$functions$rtn_tuple_complex_array(tuple_complex_vec),
+    tuple_complex_vec
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_vec(tuple_complex_vec),
+    tuple_complex_vec
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_rowvec(tuple_complex_rowvec),
+    tuple_complex_rowvec
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_matrix(tuple_complex_matrix),
+    tuple_complex_matrix
+  )
 
   ### Tuple of Container Arrays
 
@@ -247,14 +316,26 @@ test_that("Functions handle complex types correctly", {
   tuple_complex_rowvec_array <- list(complex_rowvec_array, complex_rowvec_array)
   tuple_complex_matrix_array <- list(complex_matrix_array, complex_matrix_array)
 
-  expect_equal(mod$functions$rtn_tuple_complex_vec_array(tuple_complex_vec_array), tuple_complex_vec_array)
-  expect_equal(mod$functions$rtn_tuple_complex_rowvec_array(tuple_complex_rowvec_array), tuple_complex_rowvec_array)
-  expect_equal(mod$functions$rtn_tuple_complex_matrix_array(tuple_complex_matrix_array), tuple_complex_matrix_array)
+  expect_equal(
+    mod$functions$rtn_tuple_complex_vec_array(tuple_complex_vec_array),
+    tuple_complex_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_rowvec_array(tuple_complex_rowvec_array),
+    tuple_complex_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_matrix_array(tuple_complex_matrix_array),
+    tuple_complex_matrix_array
+  )
 
   ### Nested Tuple of Scalar
 
   nest_tuple_complex <- list(31, tuple_complex)
-  expect_equal(mod$functions$rtn_nest_tuple_complex(nest_tuple_complex), nest_tuple_complex)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex(nest_tuple_complex),
+    nest_tuple_complex
+  )
 
   ### Nested Tuple of Container
 
@@ -263,10 +344,22 @@ test_that("Functions handle complex types correctly", {
   nest_tuple_complex_matrix <- list(-23, tuple_complex_matrix)
   nest_tuple_complex_array <- list(21, tuple_complex_vec)
 
-  expect_equal(mod$functions$rtn_nest_tuple_complex_array(nest_tuple_complex_vec), nest_tuple_complex_vec)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_vec(nest_tuple_complex_vec), nest_tuple_complex_vec)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_rowvec(nest_tuple_complex_rowvec), nest_tuple_complex_rowvec)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_matrix(nest_tuple_complex_matrix), nest_tuple_complex_matrix)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_array(nest_tuple_complex_vec),
+    nest_tuple_complex_vec
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_vec(nest_tuple_complex_vec),
+    nest_tuple_complex_vec
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_rowvec(nest_tuple_complex_rowvec),
+    nest_tuple_complex_rowvec
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_matrix(nest_tuple_complex_matrix),
+    nest_tuple_complex_matrix
+  )
 
   ### Nested Tuple of Container Arrays
 
@@ -274,9 +367,24 @@ test_that("Functions handle complex types correctly", {
   nest_tuple_complex_rowvec_array <- list(1000, tuple_complex_rowvec_array)
   nest_tuple_complex_matrix_array <- list(0, tuple_complex_matrix_array)
 
-  expect_equal(mod$functions$rtn_nest_tuple_complex_vec_array(nest_tuple_complex_vec_array), nest_tuple_complex_vec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_rowvec_array(nest_tuple_complex_rowvec_array), nest_tuple_complex_rowvec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_matrix_array(nest_tuple_complex_matrix_array), nest_tuple_complex_matrix_array)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_vec_array(
+      nest_tuple_complex_vec_array
+    ),
+    nest_tuple_complex_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_rowvec_array(
+      nest_tuple_complex_rowvec_array
+    ),
+    nest_tuple_complex_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_matrix_array(
+      nest_tuple_complex_matrix_array
+    ),
+    nest_tuple_complex_matrix_array
+  )
 })
 
 test_that("Returned tuples survive a garbage collection (#1001)", {
@@ -293,8 +401,8 @@ test_that("Functions can be exposed in fit object", {
   fit$expose_functions()
 
   expect_equal(
-    fit$functions$rtn_vec(c(1,2,3,4)),
-    c(1,2,3,4)
+    fit$functions$rtn_vec(c(1, 2, 3, 4)),
+    c(1, 2, 3, 4)
   )
 })
 
@@ -323,8 +431,8 @@ test_that("Compiled functions can be copied to global environment", {
   )
 
   expect_equal(
-    rtn_vec(c(1,2,3,4)),
-    c(1,2,3,4)
+    rtn_vec(c(1, 2, 3, 4)),
+    c(1, 2, 3, 4)
   )
 })
 
@@ -343,8 +451,8 @@ test_that("Functions can be compiled with model", {
   )
 
   expect_equal(
-    fit$functions$rtn_vec(c(1,2,3,4)),
-    c(1,2,3,4)
+    fit$functions$rtn_vec(c(1, 2, 3, 4)),
+    c(1, 2, 3, 4)
   )
 
   expect_message(
@@ -354,20 +462,22 @@ test_that("Functions can be compiled with model", {
   )
 
   expect_equal(
-    rtn_vec(c(1,2,3,4)),
-    c(1,2,3,4)
+    rtn_vec(c(1, 2, 3, 4)),
+    c(1, 2, 3, 4)
   )
 })
 
 test_that("$expose_functions() warns but doesn't error if no functions", {
-  stan_no_funs_block <- write_stan_file("
+  stan_no_funs_block <- write_stan_file(
+    "
     parameters {
       real x;
     }
     model {
       x ~ std_normal();
     }
-  ")
+  "
+  )
   mod1 <- mock_cmdstan_model(stan_no_funs_block)
   expect_warning(
     mod1$expose_functions(),
@@ -375,10 +485,12 @@ test_that("$expose_functions() warns but doesn't error if no functions", {
   )
   checkmate::expect_r6(mod1, "CmdStanModel")
 
-  stan_empty_funs_block <- write_stan_file("
+  stan_empty_funs_block <- write_stan_file(
+    "
    functions {
    }
-  ")
+  "
+  )
   mod2 <- mock_cmdstan_model(stan_empty_funs_block)
   expect_warning(
     mod2$expose_functions(),
@@ -411,8 +523,10 @@ test_that("Overloaded functions give meaningful errors", {
   "
 
   funmod <- mock_cmdstan_model(write_stan_file(funcode))
-  expect_error(funmod$expose_functions(),
-               "Overloaded functions are currently not able to be exposed to R! The following overloaded functions were found: fun1, fun3")
+  expect_error(
+    funmod$expose_functions(),
+    "Overloaded functions are currently not able to be exposed to R! The following overloaded functions were found: fun1, fun3"
+  )
 })
 
 reserved_names_msg <- function(names) {
@@ -496,7 +610,9 @@ test_that("Exposing functions works on a model built from a reused executable", 
 test_that("functions cannot be exposed from an executable alone", {
   adopted <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
-    adopted$expose_functions(), "created from an executable alone", fixed = TRUE
+    adopted$expose_functions(),
+    "created from an executable alone",
+    fixed = TRUE
   )
 })
 

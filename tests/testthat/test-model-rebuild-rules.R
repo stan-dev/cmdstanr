@@ -5,8 +5,11 @@ set_cmdstan_path()
 # The decision cmdstan_model() makes: build, reuse, or adopt. No C++ is
 # compiled here. make is mocked and a text file stands in for the executable,
 # while stanc, make/local and the build record are real.
-mocked <- function(code, compile_ret = list(status = 0),
-                   info_ret = default_info_ret) {
+mocked <- function(
+  code,
+  compile_ret = list(status = 0),
+  info_ret = default_info_ret
+) {
   with_mocked_cli(code = code, compile_ret = compile_ret, info_ret = info_ret)
 }
 
@@ -14,7 +17,8 @@ mocked <- function(code, compile_ret = list(status = 0),
 # text file where the other test files expect a real executable.
 local_bernoulli <- function(.local_envir = parent.frame()) {
   stan_file <- file.path(
-    withr::local_tempdir(.local_envir = .local_envir), "bernoulli.stan"
+    withr::local_tempdir(.local_envir = .local_envir),
+    "bernoulli.stan"
   )
   file.copy(testing_stan_file("bernoulli"), stan_file)
   stan_file
@@ -40,7 +44,8 @@ test_that("a program with no executable is built", {
 
   mocked(expect_mock_compile(
     mod <- expect_interactive_message(
-      cmdstan_model(stan_file), "Compiling Stan program..."
+      cmdstan_model(stan_file),
+      "Compiling Stan program..."
     )
   ))
   expect_true(file.exists(mod$exe_file()))
@@ -59,7 +64,8 @@ test_that("the same call again reuses the executable without launching it", {
   launches$n <- 0L
   mocked(expect_no_mock_compile(
     reused <- expect_interactive_message(
-      cmdstan_model(stan_file), "Model executable is up to date!"
+      cmdstan_model(stan_file),
+      "Model executable is up to date!"
     )
   ))
   expect_equal(launches$n, 0L)
@@ -155,10 +161,13 @@ test_that("include_paths rebuild when they resolve a different file", {
     mod <- cmdstan_model(stan_file, include_paths = dir_b),
     "included files changed \\(.*/b/params\\.stan\\)"
   )))
-  expect_equal(names(mod$variables()$parameters), "beta")
+  expect_named(mod$variables()$parameters, "beta")
 
   # A second directive changes the set, not just an included file.
-  writeLines("generated quantities { real g = 1; }", file.path(dir_b, "more.stan"))
+  writeLines(
+    "generated quantities { real g = 1; }",
+    file.path(dir_b, "more.stan")
+  )
   writeLines(
     c("#include params.stan", "model { target += 0; }", "#include more.stan"),
     stan_file
@@ -273,7 +282,10 @@ test_that("a record naming another installation rebuilds", {
 })
 
 test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
-  skip_if(os_is_wsl(), "a Windows directory cannot stand in for a WSL installation")
+  skip_if(
+    os_is_wsl(),
+    "a Windows directory cannot stand in for a WSL installation"
+  )
   old_path <- cmdstan_path()
   withr::defer(set_cmdstan_path(old_path))
 
@@ -287,7 +299,8 @@ test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
   writeLines("CMDSTAN_VERSION := 2.39.0", file.path(install_dir, "makefile"))
   set_cmdstan_path(install_dir)
   local_mocked_bindings(
-    get_cmdstan_flags = function(...) character(), .package = "cmdstanr"
+    get_cmdstan_flags = function(...) character(),
+    .package = "cmdstanr"
   )
 
   stan_file <- local_bernoulli()
@@ -297,12 +310,16 @@ test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
   # assert_current_() first, while the executable is still the one a was
   # built with
   expect_error(
-    a$cmdstan_defaults(), "the selected CmdStan changed",
+    a$cmdstan_defaults(),
+    "the selected CmdStan changed",
     class = "cmdstanr_stale_executable"
   )
-  expect_mock_compile(b <- expect_interactive_message(
-    mock_cmdstan_model(stan_file), "Recompiling:\n  - the selected CmdStan changed"
-  ))
+  expect_mock_compile(
+    b <- expect_interactive_message(
+      mock_cmdstan_model(stan_file),
+      "Recompiling:\n  - the selected CmdStan changed"
+    )
+  )
   expect_equal(b$cmdstan_version(), "2.40.0")
   # cmdstan_version() still reports the version cached when the path was set.
   expect_equal(cmdstan_version(), "2.39.0")
@@ -314,7 +331,8 @@ test_that("dir puts the executable there and a second call reuses it", {
 
   mocked(expect_mock_compile(mod <- cmdstan_model(stan_file, dir = exe_dir)))
   expect_true(same_path(
-    mod$exe_file(), cmdstan_ext(file.path(exe_dir, "bernoulli"))
+    mod$exe_file(),
+    cmdstan_ext(file.path(exe_dir, "bernoulli"))
   ))
   expect_false(file.exists(cmdstan_ext(strip_ext(stan_file))))
 
@@ -331,7 +349,8 @@ test_that("a failed build leaves no executable and no record", {
   mocked(
     compile_ret = list(status = 1),
     code = expect_error(
-      cmdstan_model(stan_file), "An error occurred during compilation"
+      cmdstan_model(stan_file),
+      "An error occurred during compilation"
     )
   )
   expect_false(file.exists(exe))
@@ -436,7 +455,8 @@ test_that("an executable that will not start is an error at every launch", {
   data <- testing_data("bernoulli")
   expect_cannot_run <- function(object, remedy) {
     err <- expect_error(
-      object, paste0("The executable at '", exe, "' could not be run: "),
+      object,
+      paste0("The executable at '", exe, "' could not be run: "),
       fixed = TRUE
     )
     expect_true(endsWith(conditionMessage(err), paste0("\n", remedy)))
@@ -458,13 +478,17 @@ test_that("an executable that will not start is an error at every launch", {
 test_that("an executable that starts but cannot answer help-all is an error", {
   local_mocked_bindings(wsl_compatible_run = function(...) {
     list(
-      status = 127L, stdout = "",
+      status = 127L,
+      stdout = "",
       stderr = "error while loading shared libraries: libtbb.so: not found\n"
     )
   })
   expect_error(
     parse_cmdstan_args(
-      "/models/bern", "sample", "/models/bern.stan", tbb_dir = NULL
+      "/models/bern",
+      "sample",
+      "/models/bern.stan",
+      tbb_dir = NULL
     ),
     paste0(
       "^The executable at '/models/bern' could not be run: ",
@@ -483,7 +507,9 @@ test_that("a failed launch says when the recorded TBB is gone", {
     parse_cmdstan_args("/models/bern", "sample", "/models/bern.stan", gone),
     paste0(
       "could not be run: exit status 127\n",
-      "The TBB it was built against at '", gone, "' no longer exists.\n",
+      "The TBB it was built against at '",
+      gone,
+      "' no longer exists.\n",
       "Reinstall it there or run cmdstan_model() with force_recompile = TRUE ",
       "to rebuild it."
     ),
@@ -497,7 +523,8 @@ test_that("a record member with a longer name is not read as the user header", {
 
   record <- read_build_record(a$exe_file())$record
   record$dependencies$user_header_note <- list(
-    hash = "h", built_from = "wrong.hpp"
+    hash = "h",
+    built_from = "wrong.hpp"
   )
   write_build_record(record, a$exe_file())
 
@@ -508,7 +535,8 @@ test_that("a record member with a longer name is not read as the user header", {
 test_that("filename-in-msg supplied unnamed is not added again", {
   stan_file <- local_bernoulli()
   mod <- mock_cmdstan_model(
-    stan_file, stanc_options = list("filename-in-msg=published.stan")
+    stan_file,
+    stanc_options = list("filename-in-msg=published.stan")
   )
 
   record <- read_build_record(mod$exe_file())$record
@@ -517,7 +545,8 @@ test_that("filename-in-msg supplied unnamed is not added again", {
       unlist(record$configuration$stanc_options)
   )
   expect_false(any(grepl(
-    "filename-in-msg", unlist(record$configuration$stanc_options_added)
+    "filename-in-msg",
+    unlist(record$configuration$stanc_options_added)
   )))
   hpp <- paste(readLines(mod$hpp_file()), collapse = "\n")
   expect_match(hpp, "published.stan", fixed = TRUE)

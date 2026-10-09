@@ -74,7 +74,11 @@ expect_cmdstan_defaults <- function(method, expected) {
   expect_setequal(names(args), names(expected))
 
   for (name in names(expected)) {
-    expect_identical(args[[name]], expected[[name]], info = paste0(method, "$", name))
+    expect_identical(
+      args[[name]],
+      expected[[name]],
+      info = paste0(method, "$", name)
+    )
   }
 }
 

@@ -2,10 +2,25 @@ skip_on_cran()
 
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
-fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
-PARAM_NAMES <- c("y_rep[1]", "y_rep[2]", "y_rep[3]", "y_rep[4]", "y_rep[5]",
-                 "y_rep[6]", "y_rep[7]", "y_rep[8]", "y_rep[9]", "y_rep[10]",
-                 "sum_y")
+fit_gq <- testing_fit(
+  "bernoulli_ppc",
+  method = "generate_quantities",
+  seed = 123,
+  fitted_params = fit
+)
+PARAM_NAMES <- c(
+  "y_rep[1]",
+  "y_rep[2]",
+  "y_rep[3]",
+  "y_rep[4]",
+  "y_rep[5]",
+  "y_rep[6]",
+  "y_rep[7]",
+  "y_rep[8]",
+  "y_rep[9]",
+  "y_rep[10]",
+  "sum_y"
+)
 
 test_that("draws() stops for unknown variables", {
   expect_error(
@@ -51,7 +66,10 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_equal(dim(draws_all_after), c(1000, 4, 11))
 
   # check the order of the draws
-  expect_equal(posterior::variables(draws_sum_y), c("sum_y", PARAM_NAMES[1:(length(PARAM_NAMES)-1)]))
+  expect_equal(
+    posterior::variables(draws_sum_y),
+    c("sum_y", PARAM_NAMES[1:(length(PARAM_NAMES) - 1)])
+  )
   expect_equal(posterior::variables(draws_y_sum), PARAM_NAMES)
 })
 

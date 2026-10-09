@@ -18,7 +18,8 @@ test_that("cmdstanr_example works", {
   expect_equal(fit_mcmc$num_chains(), 2)
 
   expect_sample_output(
-    cmdstanr_example("logistic", chains = 2, quiet = FALSE), 2
+    cmdstanr_example("logistic", chains = 2, quiet = FALSE),
+    2
   )
 
   fit_mle <- cmdstanr_example("logistic", method = "optimize")
@@ -26,8 +27,16 @@ test_that("cmdstanr_example works", {
 
   fit_vb <- cmdstanr_example("logistic", method = "variational")
   checkmate::expect_r6(fit_vb, "CmdStanVB")
-  expect_output(print_example_program("schools"), "vector[J] theta", fixed=TRUE)
-  expect_output(print_example_program("schools_ncp"), "vector[J] theta_raw", fixed=TRUE)
+  expect_output(
+    print_example_program("schools"),
+    "vector[J] theta",
+    fixed = TRUE
+  )
+  expect_output(
+    print_example_program("schools_ncp"),
+    "vector[J] theta_raw",
+    fixed = TRUE
+  )
 })
 
 test_that("write_stan_file writes Stan file correctly", {
@@ -46,19 +55,31 @@ test_that("write_stan_file writes Stan file correctly", {
 test_that("write_stan_file writes to specified directory and filename", {
   dir <- withr::local_tempdir()
   explicit_dir <- withr::local_tempdir()
-  expect_equal(dirname(f1 <- write_stan_file(stan_program, dir = dir, basename = "pasta")),
-               absolute_path(dir))
-  expect_equal(f2 <- write_stan_file(stan_program, dir = dir, basename = "fruit.stan"),
-               absolute_path(file.path(dir, "fruit.stan")))
-  expect_equal(f3 <- write_stan_file(stan_program, dir = dir, basename = "vegetable"),
-               absolute_path(file.path(dir, "vegetable.stan"))) # should add .stan extension if missing
-  expect_equal(f4 <- write_stan_file(stan_program, dir = explicit_dir, basename = "test"),
-               absolute_path(file.path(explicit_dir, "test.stan")))
+  expect_equal(
+    dirname(f1 <- write_stan_file(stan_program, dir = dir, basename = "pasta")),
+    absolute_path(dir)
+  )
+  expect_equal(
+    f2 <- write_stan_file(stan_program, dir = dir, basename = "fruit.stan"),
+    absolute_path(file.path(dir, "fruit.stan"))
+  )
+  expect_equal(
+    f3 <- write_stan_file(stan_program, dir = dir, basename = "vegetable"),
+    absolute_path(file.path(dir, "vegetable.stan"))
+  ) # should add .stan extension if missing
+  expect_equal(
+    f4 <- write_stan_file(stan_program, dir = explicit_dir, basename = "test"),
+    absolute_path(file.path(explicit_dir, "test.stan"))
+  )
 })
 
 test_that("write_stan_file creates dir if necessary", {
   expect_match(
-    write_stan_file(stan_program, file.path(tempdir(), "foo"), basename = "bar"),
+    write_stan_file(
+      stan_program,
+      file.path(tempdir(), "foo"),
+      basename = "bar"
+    ),
     "/foo/bar.stan"
   )
 })

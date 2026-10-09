@@ -26,7 +26,8 @@ test_that("a user header in cpp_options is rejected", {
   expected <- paste0(
     "The user header cannot be set through `cpp_options`. ",
     "Pass it with the `user_header` argument: `user_header = ",
-    encodeString(user_header, quote = '"'), "`."
+    encodeString(user_header, quote = '"'),
+    "`."
   )
 
   for (option_name in c("USER_HEADER", "user_header", "User_Header")) {
@@ -173,10 +174,12 @@ test_that("wsl path conversion is done as expected", {
   make_args <- NULL
   local_mocked_bindings(
     wsl_compatible_run = function(command, args, ...) {
-      if (!is.null(command)
-          && command == make_cmd()
-          && !is.null(args)
-          && startsWith(basename(args[1]), "model-")) {
+      if (
+        !is.null(command) &&
+          command == make_cmd() &&
+          !is.null(args) &&
+          startsWith(basename(args[1]), "model-")
+      ) {
         make_args <<- args
         mock_exe <- wsl_safe_path(args[1], revert = TRUE)
         writeLines("mock executable", mock_exe)

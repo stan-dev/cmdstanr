@@ -71,8 +71,12 @@ set_cmdstan_path <- function(path = NULL) {
     version <- read_cmdstan_version(path)
     if (!is.null(version) && !is_supported_cmdstan_version(version)) {
       warning(
-        "CmdStan path not set. CmdStan v", version, " is no longer supported. ",
-        "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer.",
+        "CmdStan path not set. CmdStan v",
+        version,
+        " is no longer supported. ",
+        "CmdStanR now requires CmdStan v",
+        cmdstan_min_version(),
+        " or newer.",
         call. = FALSE
       )
       unset_cmdstan_path()
@@ -110,7 +114,9 @@ checked_cmdstan_path <- function() {
   path <- cmdstan_path()
   if (!dir.exists(path)) {
     stop(
-      "The CmdStan installation at '", path, "' no longer exists. ",
+      "The CmdStan installation at '",
+      path,
+      "' no longer exists. ",
       "Use set_cmdstan_path() to select another installation or ",
       "install_cmdstan() to reinstall it.",
       call. = FALSE
@@ -177,8 +183,10 @@ cmdstan_tempdir <- function() {
 }
 
 stop_no_path <- function() {
-  stop("CmdStan path has not been set yet. See ?set_cmdstan_path.",
-       call. = FALSE)
+  stop(
+    "CmdStan path has not been set yet. See ?set_cmdstan_path.",
+    call. = FALSE
+  )
 }
 
 cmdstan_min_version <- function() {
@@ -304,24 +312,36 @@ cmdstan_default_path <- function(dir = NULL) {
       wsl_path_exists <- FALSE
     } else {
       wsl_installs_path <- cmdstan_default_install_path(wsl = TRUE)
-      wsl_path_linux <- gsub(wsl_dir_prefix(wsl = TRUE), "", wsl_installs_path,
-                            fixed=TRUE)
+      wsl_path_linux <- gsub(
+        wsl_dir_prefix(wsl = TRUE),
+        "",
+        wsl_installs_path,
+        fixed = TRUE
+      )
       wsl_path_exists <- isTRUE(.wsl_check_exists(wsl_path_linux))
     }
   }
   if (dir.exists(installs_path) || wsl_path_exists) {
-    latest_cmdstan <- ifelse(dir.exists(installs_path),
-                             latest_cmdstan_installed(installs_path), "")
-    latest_wsl_cmdstan <- ifelse(wsl_path_exists,
-                                 latest_cmdstan_installed(wsl_installs_path), "")
+    latest_cmdstan <- ifelse(
+      dir.exists(installs_path),
+      latest_cmdstan_installed(installs_path),
+      ""
+    )
+    latest_wsl_cmdstan <- ifelse(
+      wsl_path_exists,
+      latest_cmdstan_installed(wsl_installs_path),
+      ""
+    )
     if (!nzchar(latest_cmdstan) && !nzchar(latest_wsl_cmdstan)) {
       return(NULL)
     }
     if (!nzchar(latest_wsl_cmdstan)) {
       return(file.path(installs_path, latest_cmdstan))
     }
-    if (!nzchar(latest_cmdstan) ||
-        cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
+    if (
+      !nzchar(latest_cmdstan) ||
+        cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0
+    ) {
       return(file.path(wsl_installs_path, latest_wsl_cmdstan))
     }
     return(file.path(installs_path, latest_cmdstan))
@@ -331,7 +351,11 @@ cmdstan_default_path <- function(dir = NULL) {
 
 # Return the newest CmdStan install directory name under an install root
 latest_cmdstan_installed <- function(installs_path) {
-  cmdstan_installs <- list.dirs(path = installs_path, recursive = FALSE, full.names = FALSE)
+  cmdstan_installs <- list.dirs(
+    path = installs_path,
+    recursive = FALSE,
+    full.names = FALSE
+  )
   latest_cmdstan <- ""
   if (length(cmdstan_installs) > 0) {
     cmdstan_installs <- grep(
