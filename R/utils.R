@@ -193,16 +193,14 @@ resolve_path <- function(path) {
   repair_path(absolute_path(path))
 }
 
-# Compare canonical paths without requiring them to exist. mustWork = FALSE
-# also avoids normalizePath() warnings under warn = 2.
+# Compare canonical paths elementwise without requiring them to exist.
+# mustWork = FALSE also avoids normalizePath() warnings under warn = 2.
 same_path <- function(x, y) {
   if (length(x) == 0 || length(y) == 0) {
     return(length(x) == length(y))
   }
-  identical(
-    normalizePath(x, winslash = "/", mustWork = FALSE),
+  normalizePath(x, winslash = "/", mustWork = FALSE) ==
     normalizePath(y, winslash = "/", mustWork = FALSE)
-  )
 }
 
 # read, write, and copy files --------------------------------------------
@@ -211,7 +209,8 @@ same_path <- function(x, y) {
 #'
 #' Copies to specified directory using specified basename,
 #' appending suffix `-id.ext` to each. If files with the specified
-#' names already exist they are overwritten.
+#' names already exist they are overwritten. A file that is already at its
+#' destination is left in place.
 #'
 #' @noRd
 #' @param current_paths Paths to current temporary files.
@@ -241,9 +240,10 @@ copy_temp_files <-
       destinations <- file.path(new_dir, destinations)
     }
 
+    moving <- !same_path(current_paths, destinations)
     copied <- file.copy(
-      from = current_paths,
-      to = destinations,
+      from = current_paths[moving],
+      to = destinations[moving],
       overwrite = TRUE
     )
     if (!all(copied)) {
@@ -255,6 +255,34 @@ copy_temp_files <-
     }
     absolute_path(destinations)
   }
+
+#' Copy CSV files, optionally changing their compression
+#'
+#' @noRd
+#' @param current_paths Paths to CSV files, compressed or not.
+#' @param compress One of `"none"`, `"gzip"`, `"bzip2"`, or `NULL` to keep the
+#'   compression the files already have.
+#' @param ... Arguments passed to `copy_temp_files()`.
+#' @return Paths to the copies.
+copy_csv_files <- function(current_paths, compress = NULL, ...) {
+  current <- switch(
+    tools::file_ext(current_paths[1]),
+    gz = "gzip",
+    bz2 = "bzip2",
+    "none"
+  )
+  compress <- if (is.null(compress)) current else assert_compress(compress)
+  if (compress == current) {
+    ext <- sub(".*(\\.csv.*)$", "\\1", current_paths[1])
+    return(copy_temp_files(current_paths, ..., ext = ext))
+  }
+  temp_dir <- withr::local_tempdir()
+  copies <- copy_temp_files(
+    decompress_csv_files(current_paths, temp_dir),
+    ...
+  )
+  compress_csv(copies, compress)
+}
 
 # generate new file names
 # see doc above for copy_temp_files

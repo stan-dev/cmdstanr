@@ -165,3 +165,25 @@ test_that("laplace() errors if optimize() fails", {
       "Optimization failed"
     ))
 })
+
+test_that("laplace() accepts a compressed optimization fit as the mode", {
+  mle <- mod$optimize(data = data_list, seed = 123, refresh = 0)
+  mle_gz <- mod$optimize(
+    data = data_list, seed = 123, refresh = 0, compress = "gzip"
+  )
+  checkmate::expect_file_exists(mle_gz$output_files(), extension = "csv.gz")
+
+  plain <- mod$laplace(
+    mode = mle, data = data_list, seed = 123, refresh = 0, jacobian = FALSE
+  )
+  fit <- mod$laplace(
+    mode = mle_gz,
+    data = data_list,
+    seed = 123,
+    refresh = 0,
+    jacobian = FALSE,
+    compress = "gzip"
+  )
+  checkmate::expect_file_exists(fit$output_files(), extension = "csv.gz")
+  expect_equal(fit$draws(), plain$draws())
+})
