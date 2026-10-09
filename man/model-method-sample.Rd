@@ -352,7 +352,9 @@ default arguments. These values are also available via the
 
 The bar needs two things: \code{show_progress_bar = TRUE}, and \pkg{progressr}'s
 reporting turned on once per session with
-\code{progressr::handlers(global = TRUE)}.
+\code{progressr::handlers(global = TRUE)}. The bar is opt-in on CmdStanR's side
+as well, so even with \pkg{progressr} reporting on for other packages,
+CmdStanR only prints CmdStan's iteration lines until you request the bar.
 
 CmdStanR shows one bar for all chains rather than one per chain, because
 older versions of RStudio's console only support single-line bars. The
