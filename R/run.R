@@ -516,8 +516,8 @@ stop_cannot_run <- function(exe_file, stan_file, reason, tbb_dir = NULL) {
 
 .run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
   procs <- self$procs
-  on.exit(procs$cleanup(), add = TRUE)
-  on.exit(procs$finish_progress(), add = TRUE)
+  withr::defer(procs$finish_progress())
+  withr::defer(procs$cleanup())
   if (!is.null(mpi_cmd)) {
     if (is.null(mpi_args)) {
       mpi_args <- list()
@@ -1076,13 +1076,8 @@ CmdStanMCMCProcs <- R6::R6Class(
                           suppress_iteration_messages) {
       checkmate::assert_flag(show_progress_bar)
       checkmate::assert_flag(suppress_iteration_messages)
-      if (show_progress_bar && !requireNamespace("progressr", quietly = TRUE)) {
-        stop(
-          "`show_progress_bar` (or `options(cmdstanr_progress_bar)`) ",
-          "requires the `progressr` package. ",
-          "Install it with `install.packages(\"progressr\")`.",
-          call. = FALSE
-        )
+      if (show_progress_bar) {
+        require_suggested_package("progressr")
       }
       super$initialize(...)
       private$show_progress_bar_ <- show_progress_bar
