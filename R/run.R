@@ -1253,10 +1253,11 @@ CmdStanMCMCProcs <- R6::R6Class(
     progressor_ = NULL,
     last_iteration_ = integer(),
     update_progress_ = function(id, line) {
-      match <- regmatches(
-        line,
-        regexec("Iteration:\\s*([0-9]+)\\s*/\\s*([0-9]+)", line)
-      )[[1L]]
+      iteration_re <- paste0(
+        "Iteration: +([0-9]+) / ([0-9]+) \\[ *[0-9]+%\\] +",
+        "\\((Warmup|Sampling)\\)"
+      )
+      match <- regmatches(line, regexec(iteration_re, line))[[1L]]
       if (length(match) == 0L) {
         return(0L)
       }

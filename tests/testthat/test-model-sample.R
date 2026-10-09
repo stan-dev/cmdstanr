@@ -105,9 +105,7 @@ test_that("sample progress follows CmdStan's cumulative iteration count", {
         }
       }
     ),
-    interval = 0,
     intrusiveness = 0,
-    target = "terminal",
     enable = TRUE
   )
 
