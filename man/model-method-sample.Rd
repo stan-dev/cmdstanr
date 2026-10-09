@@ -355,10 +355,10 @@ reporting turned on once per session with
 \code{progressr::handlers(global = TRUE)}.
 
 CmdStanR shows one bar for all chains rather than one per chain, because
-RStudio's console only supports single-line bars. The default is to show the
-progress bar instead of CmdStan's iteration lines, but those can be kept with
-\code{show_iteration_messages = TRUE}. The per-chain timing lines print once the
-bar is done.
+older versions of RStudio's console only support single-line bars. The
+default is to show the progress bar instead of CmdStan's iteration lines,
+but those can be kept with \code{show_iteration_messages = TRUE}. The per-chain
+timing lines print once the bar is done.
 }
 
 \subsection{Choosing a bar}{
