@@ -306,6 +306,7 @@ test_that("write_stan_json() errors if data frame has columns of invalid type", 
 
 test_that("write_stan_json() errors if bad names", {
   expect_error(
+    # jarl-ignore duplicated_arguments: intentional duplication
     write_stan_json(list(x = 1, y = 2, x = 3), file = tempfile()),
     "Duplicate names not allowed in `data`"
   )

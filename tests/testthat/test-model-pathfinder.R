@@ -36,6 +36,7 @@ ok_arg_values <- list(
 )
 
 # using any one of these should cause pathfinder() to error
+# jarl-ignore duplicated_arguments: intentional duplication
 bad_arg_values <- list(
   data = "NOT_A_FILE",
   output_dir = "NOT_A_DIRECTORY",
@@ -125,6 +126,7 @@ test_that("pathfinder() method works with data files", {
 
 test_that("pathfinder() method works with init file", {
   init_list <- list(theta = 0.5)
+  # jarl-ignore internal_function: intentional internal function use in test
   init_file <- tempfile(
     tmpdir = cmdstanr:::cmdstan_tempdir(),
     pattern = "testing-inits-",

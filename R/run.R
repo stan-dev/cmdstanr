@@ -804,7 +804,7 @@ CmdStanRun$set(
     }
   } else if (self$method() == "pathfinder") {
     if (
-      procs$proc_state(id = id) > 3 | procs$get_proc(id)$get_exit_status() == 0
+      procs$proc_state(id = id) > 3 || procs$get_proc(id)$get_exit_status() == 0
     ) {
       successful_fit <- TRUE
     }

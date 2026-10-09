@@ -141,6 +141,7 @@ test_that("the model name stanc receives comes from the file name", {
 test_that("multiple cpp_options work", {
   stan_file <- testing_stan_file("bernoulli")
   mod_options <- expect_compilation(
+    # jarl-ignore duplicated_arguments: intentional duplication
     cmdstan_model(
       stan_file,
       cpp_options = list(

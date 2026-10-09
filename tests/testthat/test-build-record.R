@@ -243,6 +243,7 @@ test_that("the validator names the field that fails", {
   )
 
   repeated_option <- base
+  # jarl-ignore duplicated_arguments: intentional duplication
   repeated_option$configuration$cpp_options <- list(
     STAN_THREADS = "false",
     STAN_THREADS = "true"

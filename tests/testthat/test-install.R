@@ -956,6 +956,7 @@ test_that("cmdstan_make_local() checks flags in one call against each other", {
   # contain once the first flag is written, so both are needed to end up
   # with threading off
   expect_equal(
+    # jarl-ignore duplicated_arguments: intentional duplication
     cmdstan_make_local(
       dir = dir,
       cpp_options = list(STAN_THREADS = TRUE, STAN_THREADS = FALSE)

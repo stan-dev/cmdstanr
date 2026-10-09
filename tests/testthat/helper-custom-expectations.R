@@ -114,8 +114,6 @@ expect_equal_ignore_order <- function(object, expected, ...) {
   expect_equal(object, expected, ...)
 }
 
-expect_not_true <- function(...) expect_false(isTRUE(...))
-
 # strips numeric values (which may change slightly with different hardware or compilers)
 # allowing us to still verify names, ordering, column headers, row counts, etc.
 transform_print_snapshot <- function(x) {

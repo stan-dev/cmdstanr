@@ -800,7 +800,8 @@ try_download <- function(
         destfile = destination_file,
         method = "libcurl",
         quiet = quiet,
-        headers = headers
+        headers = headers,
+        mode = 'wb'
       ),
       warning = function(w) {
         download_warning <<- conditionMessage(w)

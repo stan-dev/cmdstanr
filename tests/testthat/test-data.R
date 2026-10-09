@@ -157,7 +157,7 @@ test_that("process_data() correctly casts integers and floating point numbers", 
         c(18, 18, 16, 13, 9, 6, 4, 4, 4),
         nrow = 3,
         ncol = 3,
-        byrow = T
+        byrow = TRUE
       )
     ),
     model_variables = mod$variables()
