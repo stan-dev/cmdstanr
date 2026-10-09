@@ -1195,6 +1195,10 @@ CmdStanMCMCProcs <- R6::R6Class(
         private$progressor_(type = "finish")
         private$progressor_ <- NULL
       }
+      for (id in private$unreported_) {
+        self$report_time(id)
+      }
+      private$unreported_ <- integer()
       invisible(self)
     },
     report_time = function(id = NULL) {
@@ -1202,6 +1206,12 @@ CmdStanMCMCProcs <- R6::R6Class(
         return(invisible(NULL))
       }
       if (!is.null(id)) {
+        # while the bar is on screen, hold this chain's "finished in" line.
+        # finish_progress() prints the held lines once the bar is done.
+        if (!is.null(private$progressor_)) {
+          private$unreported_ <- c(private$unreported_, id)
+          return(invisible(NULL))
+        }
         if (self$proc_state(id) == 7) {
           warning("Chain ", id, " finished unexpectedly!\n", immediate. = TRUE, call. = FALSE)
         } else {
@@ -1252,6 +1262,7 @@ CmdStanMCMCProcs <- R6::R6Class(
     show_iteration_messages_ = TRUE,
     progressor_ = NULL,
     last_iteration_ = integer(),
+    unreported_ = integer(),
     update_progress_ = function(id, line) {
       iteration_re <- paste0(
         "Iteration: +([0-9]+) / ([0-9]+) \\[ *[0-9]+%\\] +",
