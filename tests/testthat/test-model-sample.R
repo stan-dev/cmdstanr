@@ -131,7 +131,7 @@ test_that("sample progress follows CmdStan's cumulative iteration count", {
 
 test_that("sample can suppress CmdStan iteration messages", {
   output <- capture.output(
-    mod$sample(
+    fit <- mod$sample(
       data = data_list,
       chains = 1,
       iter_warmup = 10,

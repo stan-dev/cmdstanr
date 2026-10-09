@@ -336,11 +336,17 @@ default arguments. These values are also available via the
 \section{Progress bar}{
 
 With \code{show_progress_bar = TRUE}, \verb{$sample()} signals one progression across
-all chains through \pkg{progressr} and hides CmdStan's iteration lines. With
-\code{refresh = 0} CmdStan prints no iteration lines, so no bar is shown. Small
-\code{refresh} values slow fast models because CmdStanR reads every output line,
-with or without the bar. For notebooks, use
-\code{options(cmdstanr_progress_bar = interactive())}.
+all chains through \pkg{progressr} and hides CmdStan's iteration lines. There
+is one bar for all chains because RStudio's terminal only supports
+single-line bars, so \pkg{progressr} does not draw one per chain. To choose a
+handler, see \code{\link[progressr:handlers]{progressr::handlers()}}.
+
+With \code{refresh = 0} CmdStan prints no iteration lines, so no bar is shown.
+Small \code{refresh} values slow fast models because CmdStanR reads every output
+line, with or without the bar. For slow models the added cost is small
+relative to sampling time, and \code{refresh = 1} gives the smoothest bar.
+
+For notebooks, use \code{options(cmdstanr_progress_bar = interactive())}.
 }
 
 \examples{
