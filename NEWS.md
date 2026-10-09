@@ -1,4 +1,4 @@
-# CmdStanR (development version)
+# CmdStanR 1.0.0
 
 This is a major release with enough noteworthy items that we've broken the
 release notes into sections. The **Building models** section covers the
