@@ -50,11 +50,12 @@ the name (in quotes) of a valid format from the posterior package. For
 example \code{options(cmdstanr_draws_format = "draws_df")} will change the
 default to a data frame.
 
-\strong{Note about efficiency}: For models with a large number of parameters
-(20k+) we recommend using the \code{"draws_list"} format, which is the most
-efficient and RAM friendly when combining draws from multiple chains. If
-speed or memory is not a constraint we recommend selecting the format that
-most suits the coding style of the post processing phase.}
+\strong{Note about efficiency}: for sampling and generated quantities,
+\code{"draws_array"} is the format the draws are read into, so it is the
+cheapest in time and memory. The other formats are converted from it and
+need at least one more copy of the draws, \code{"draws_list"} and \code{"draws_df"}
+the most. To save memory read only the variables you need with the
+\code{variables} argument.}
 }
 \value{
 Depends on the value of \code{format}. The defaults are:

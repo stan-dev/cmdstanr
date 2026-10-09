@@ -6,15 +6,19 @@
 \alias{fit-method-expose_functions}
 \title{Expose Stan functions to R}
 \usage{
-expose_functions(global = FALSE, verbose = FALSE)
+expose_functions(global = FALSE, verbose = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{global}{(logical) Should the functions be added to the Global
-Environment? The default is \code{FALSE}, in which case the functions are
-available via the \code{functions} field of the R6 object.}
+\item{global}{(logical) Should the functions also be added to the global
+environment? The default is \code{FALSE}. Either way they are available via
+the \code{functions} field of the R6 object.}
 
 \item{verbose}{(logical) Should detailed information about generated code be
 printed to the console? Defaults to \code{FALSE}.}
+
+\item{quiet}{(logical) Should the messages saying the functions are being
+compiled, or are already compiled, be suppressed? The default is \code{FALSE}.
+Compiler output is controlled by \code{verbose}.}
 }
 \value{
 \code{NULL}, invisibly.
@@ -22,12 +26,21 @@ printed to the console? Defaults to \code{FALSE}.}
 \description{
 The \verb{$expose_functions()} method of a \code{\link{CmdStanModel}} object
 will compile the functions in the Stan program's \code{functions} block and
-expose them for use in \R. This can also be specified via the
-\code{compile_standalone} argument to the \code{\link[=model-method-compile]{$compile()}}
-method.
+expose them for use in \R.
 
 This method is also available for all fitted model objects. See
 \strong{Examples}.
+
+Compiling the functions takes a while, and by default the compiled
+code is kept in R's temporary directory, so every new R session
+compiles them again. To avoid that, set the \code{rcpp.cache.dir} option
+to a directory that persists across sessions, for example
+\code{options(rcpp.cache.dir = "~/.cache/stan-functions")}, before
+calling this method. Later sessions then load the functions from
+there, as long as the Stan program hasn't changed and is still at the
+same file path. If you use \code{\link[=write_stan_file]{write_stan_file()}}, also set the
+\code{cmdstanr_write_stan_file_dir} option to a fixed directory so the
+path stays the same.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.
@@ -72,12 +85,13 @@ The Stan and CmdStan documentation:
 }
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},

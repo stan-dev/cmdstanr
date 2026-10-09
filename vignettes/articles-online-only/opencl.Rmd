@@ -118,8 +118,7 @@ To build the model with OpenCL support, add
 ```{r compile-opencl, message=FALSE, results='hide'}
 # Compile the model with stan_opencl = TRUE
 mod_cl <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan",
-                        cpp_options = list(stan_opencl = TRUE),
-                        force_recompile = TRUE)
+                        cpp_options = list(stan_opencl = TRUE))
 ```
 
 For an integrated GPU, also set `integrated_opencl = TRUE` in `cpp_options`.
@@ -156,7 +155,7 @@ We'll also run a version without OpenCL and compare the run times.
 
 ```{r fit-cpu, message=FALSE}
 # no OpenCL version
-mod <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan", force_recompile = TRUE)
+mod <- cmdstan_model("opencl-files/bernoulli_logit_glm.stan")
 fit_cpu <- mod$sample(data = mdata, seed = 123, chains = 4,
                       parallel_chains = 4, refresh = 0)
 ```

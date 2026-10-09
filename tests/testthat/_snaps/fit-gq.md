@@ -15,7 +15,7 @@
       y_rep[9]
       y_rep[10]
       
-      # showing 10 of 11 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 10 of 11 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -25,7 +25,7 @@
       variable mean median sd mad q5 q95
       y_rep[1]
       
-      # showing 1 of 11 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 1 of 11 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -44,7 +44,7 @@
       y_rep[9]
       y_rep[10]
       
-      # showing 10 of 11 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 10 of 11 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -55,7 +55,7 @@
       y_rep[1]
       y_rep[2]
       
-      # showing 2 of 11 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 2 of 11 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 
@@ -84,7 +84,7 @@
       y_rep[1]
       y_rep[2]
       
-      # showing 2 of 10 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 2 of 10 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
 ---
 

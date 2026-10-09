@@ -150,7 +150,7 @@ cache directory.
 ## Running interactively
 
 When running chunks interactively in RStudio (e.g. when using
-[R Notebooks](https://bookdown.org/yihui/rmarkdown/notebook.html)), it has been
+[R Notebooks](https://pkg.yihui.org/rmarkdown-book/notebook)), it has been
 observed that the built-in, RStan-based engine is used for `stan` chunks even
 when CmdStanR's engine has been registered in the session as the engine for
 `stan`. As a workaround, when running chunks *interactively*, it is recommended

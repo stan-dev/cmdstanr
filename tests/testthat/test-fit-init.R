@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 data_list_schools <- testing_data("schools")
@@ -247,6 +249,36 @@ test_that("draws inits are recycled in order when too few are supplied", {
   )
 })
 
+test_that("draws inits are placed by index whatever the column order", {
+  draws <- posterior::as_draws_df(
+    data.frame("x[2]" = 20, "x[1]" = 10, "x[3]" = 30, check.names = FALSE)
+  )
+  model_variables <- list(
+    parameters = list(x = list(type = "real", dimensions = 1L))
+  )
+  local_mocked_bindings(process_init = function(init, ...) init)
+
+  inits <- process_init.draws(draws, num_procs = 1,
+                             model_variables = model_variables)
+
+  expect_equal(inits[[1]]$x, array(c(10, 20, 30), 3))
+})
+
+test_that("draws inits keep tuple elements the model doesn't declare", {
+  draws <- posterior::as_draws_df(
+    data.frame("t:1" = 10, "t:2" = 20, "t:3" = 30, check.names = FALSE)
+  )
+  real <- list(type = "real", dimensions = 0L)
+  model_variables <- list(
+    parameters = list(t = list(type = list(real, real), dimensions = 0L))
+  )
+  expect_error(
+    process_init.draws(draws, num_procs = 1,
+                       model_variables = model_variables),
+    "'t' is a tuple with 2 elements, but 3 were supplied"
+  )
+})
+
 test_that("Variational method works as init", {
   mod_logistic <- testing_model("logistic")
   utils::capture.output(fit_vb_init <- mod_logistic$variational(
@@ -280,4 +312,25 @@ test_that("Draws Object with NA or Inf throws error", {
   draws_df[1, 4] = NA
   expect_error(mod_logistic$sample(
     data = data_list_logistic, seed = 1234, refresh=0, init = draws_df[1:4, ]), "alpha, beta contains NA or Inf values!")
+
+  mod_bern <- testing_model("bernoulli")
+  fit_bern <- testing_fit("bernoulli", method = "laplace", refresh = 0)
+  draws_bern <- fit_bern$draws()
+  draws_bern[1, "theta"] <- NA
+  expect_error(
+    mod_bern$sample(data = testing_data("bernoulli"), chains = 1,
+                    refresh = 0, init = draws_bern[1, ]),
+    "Variable: theta contains NA or Inf values!"
+  )
+})
+
+test_that("a fit used as init must share parameters with the model", {
+  fit_logistic <- testing_fit("logistic", method = "sample", refresh = 0)
+  expect_error(
+    testing_model("bernoulli")$sample(
+      data = testing_data("bernoulli"), chains = 1, refresh = 0,
+      init = fit_logistic
+    ),
+    "None of the names of the parameters"
+  )
 })

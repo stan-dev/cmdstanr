@@ -1,0 +1,360 @@
+# Exposing a model's C++ to R through Rcpp: the model methods behind
+# $init_model_methods() and the standalone functions behind
+# $expose_functions().
+
+check_sundials_fpic <- function(sundials_flags, verbose) {
+  if (!os_is_linux()){
+    return(invisible(NULL))
+  }
+  local_flags <- cmdstan_make_local()
+  if (any(grepl("-fPIC", c(sundials_flags, local_flags), fixed = TRUE))) {
+    return(invisible(NULL))
+  }
+  if (interactive()) {
+    message(
+      "SUNDIALS needs to be compiled with -fPIC when exposing functions or ",
+      "model methods on Linux.\n",
+      "Updating your make/local file to include -fPIC and rebuilding CmdStan now..."
+    )
+  }
+  cmdstan_make_local(cpp_options = list("CPPFLAGS_SUNDIALS += -fPIC"), append = TRUE)
+  rebuild_cmdstan(quiet = !verbose)
+  if (interactive()) {
+    message("CmdStan has been rebuilt, continuing with model compilation...")
+  }
+}
+
+#' RcppParallel's TBB, to build R-loaded code against
+#'
+#' CmdStan bundles TBB 2020.3 and RcppParallel ships oneTBB under the
+#' same library name (`libtbb.dylib`, `tbb.dll`, `libtbb.so.2`). Once
+#' one copy is in the process, code linked against the other fails to
+#' load: model methods built after rstan or brms loaded RcppParallel's,
+#' or RcppParallel itself after the methods loaded CmdStan's. Building
+#' the methods against RcppParallel's copy whenever it is installed
+#' avoids both orders. Stan Math supports oneTBB through
+#' `TBB_INTERFACE_NEW`.
+#'
+#' @return A list with RcppParallel's `include` and `lib` directories,
+#'   or `NULL` when RcppParallel is not installed or is older than 6.2.0,
+#'   the first release whose oneTBB is complete on every platform.
+#' @noRd
+rcppparallel_tbb <- function() {
+  arch <- .Platform$r_arch
+  lib <- system.file(paste(c("lib", arch[nzchar(arch)]), collapse = "/"),
+                     package = "RcppParallel")
+  version_h <- system.file("include/tbb/version.h", package = "RcppParallel")
+  # 6.0.0 to 6.1.1 shipped oneTBB's headers without a usable tbb.dll
+  if (!nzchar(lib) || !nzchar(version_h) ||
+      utils::packageVersion("RcppParallel") < "6.2.0") {
+    return(NULL)
+  }
+  # The flags pass through sh, which eats Windows backslashes
+  list(include = repair_path(dirname(dirname(version_h))),
+       lib = repair_path(lib))
+}
+
+#' Compile C++ that uses the Stan Math library and load it into R
+#'
+#' Wraps `Rcpp::sourceCpp()` with the include paths, defines and link
+#' flags the selected CmdStan installation's make would use for a model,
+#' with RcppParallel's TBB substituted when it is installed, see
+#' `rcppparallel_tbb()`.
+#'
+#' @param code Character string with the C++ source.
+#' @param env Environment the compiled functions are assigned into.
+#' @param verbose Logical. Print compiler output and, on Linux, the
+#'   SUNDIALS rebuild output?
+#' @param ... Passed to `Rcpp::sourceCpp()`.
+#' @return `NULL`, invisibly.
+#' @noRd
+rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
+  tbb <- rcppparallel_tbb()
+  make_args <- character()
+  tbb_dir <- tbb_path()
+  if (!is.null(tbb)) {
+    # The include flag is added below: get_cmdstan_flags() splits make's
+    # output at spaces and, before CmdStan 2.40, prefixed every -I path
+    # with the CmdStan directory
+    make_args <- c(paste0("TBB_LIB=", tbb$lib), "TBB_INTERFACE_NEW=1",
+                   "CXXFLAGS_TBB=")
+    if (.Platform$OS.type == "windows") {
+      # Rtools' linkers reject the ELF-only flag make adds for a system TBB
+      make_args <- c(make_args, "LDFLAGS_TBB_DTAGS=")
+    }
+    tbb_dir <- tbb$lib
+  }
+  flags <- get_cmdstan_flags(
+    c("CXXFLAGS", "CPPFLAGS", "LDLIBS", "LIBSUNDIALS", "TBB_TARGETS",
+      "LDFLAGS_TBB", "SUNDIALS_TARGETS", "CPPFLAGS_SUNDIALS"),
+    make_args
+  )
+  check_sundials_fpic(flags[8], verbose)
+  cxxflags <- flags[1]
+  cppflags <- flags[2]
+  libs <- paste(flags[3:7], collapse = " ")
+  cmdstanr_includes <- system.file("include", package = "cmdstanr", mustWork = TRUE)
+  cmdstanr_includes <- paste0(" -I\"", cmdstanr_includes,"\"")
+  if (!is.null(tbb)) {
+    cxxflags <- paste0(cxxflags, " -I", shQuote(tbb$include))
+    # make's print rule drops the quotes, so quote the path here
+    libs <- gsub(tbb$lib, shQuote(tbb$lib), libs, fixed = TRUE)
+  }
+  if (.Platform$OS.type == "windows") {
+    libs <- paste(libs, "-fopenmp")
+  }
+  withr::with_path(tbb_dir,
+    withr::with_makevars(
+      c(
+        USE_CXX14 = 1,
+        PKG_CPPFLAGS = cppflags,
+        PKG_CXXFLAGS = paste0(cxxflags, cmdstanr_includes, collapse = " "),
+        PKG_LIBS = libs
+      ),
+      Rcpp::sourceCpp(code = code, env = env, verbose = verbose, ...)
+    )
+  )
+  invisible(NULL)
+}
+
+# Can the compiled model-method bindings in `env` be called in this session?
+model_methods_are_live <- function(env) {
+  model_ptr <- env$model_ptr_
+  typeof(model_ptr) == "externalptr" &&
+    is.null(attributes(model_ptr)) &&
+    !identical(model_ptr, .cmdstanr$NULL_EXTERNAL_POINTER)
+}
+
+# Detect serialized sourceCpp wrappers whose native symbol was lost after reload.
+source_cpp_native_symbol_is_null <- function(fun) {
+  if (!is.function(fun)) {
+    return(FALSE)
+  }
+  fun_body <- body(fun)
+  if (!rlang::is_call(fun_body, ".Call") || length(fun_body) < 2) {
+    return(FALSE)
+  }
+  # Rcpp::sourceCpp() wrappers call into a NativeSymbol via `.Call(...)`.
+  # After reloading a serialized object that symbol can degrade to `<pointer: 0x0>`.
+  symbol <- fun_body[[2]]
+  if (!inherits(symbol, "NativeSymbol")) {
+    return(FALSE)
+  }
+  identical(symbol, unserialize(serialize(symbol, NULL)))
+}
+
+# Drop stale compiled bindings but keep the generated C++ so model methods
+# can be rebuilt lazily in the current session if they are later requested.
+# This avoids an error when a CmdStanModel object with compiled bindings is
+# loaded from an older session: https://github.com/stan-dev/cmdstanr/issues/1157
+drop_stale_model_methods <- function(env) {
+  if (is.null(env$model_ptr) || !source_cpp_native_symbol_is_null(env$model_ptr)) {
+    return(invisible(FALSE))
+  }
+  rm(list = setdiff(ls(env, all.names = TRUE), "hpp_code_"), envir = env)
+  invisible(TRUE)
+}
+
+#' Drop standalone-function bindings that no longer point at compiled code
+#'
+#' After `readRDS()` the compiled wrappers point at nothing, so drop them and
+#' let `expose_functions()` compile again.
+#'
+#' @param env The model's `functions` environment.
+#' @return Whether anything was dropped, invisibly.
+#' @noRd
+drop_stale_standalone_functions <- function(env) {
+  if (!isTRUE(env$compiled) ||
+      !source_cpp_native_symbol_is_null(env[[env$fun_names[1]]])) {
+    return(invisible(FALSE))
+  }
+  rm(list = setdiff(ls(env, all.names = TRUE), "hpp_code"), envir = env)
+  env$compiled <- FALSE
+  invisible(TRUE)
+}
+
+expose_model_methods <- function(env, verbose = FALSE, quiet = FALSE) {
+  if (!quiet && rlang::is_interactive()) {
+    message("Compiling additional model methods...")
+  }
+  code <- c(env$hpp_code_,
+            readLines(system.file("include", "model_methods.cpp",
+                                  package = "cmdstanr", mustWork = TRUE)))
+
+  code <- paste(code, collapse = "\n")
+  rcpp_source_stan(code, env, verbose)
+  invisible(NULL)
+}
+
+initialize_model_pointer <- function(env, datafile_path, seed = 0) {
+  ptr_and_rng <- env$model_ptr(ifelse(is.null(datafile_path), "", datafile_path), seed)
+  env$model_ptr_ <- ptr_and_rng$model_ptr
+  env$model_rng_ <- ptr_and_rng$base_rng
+  env$num_upars_ <- env$get_num_upars(env$model_ptr_)
+  invisible(NULL)
+}
+
+get_function_name <- function(fun_start, fun_end, model_lines) {
+  fun_string <- paste(model_lines[(fun_start+1):fun_end], collapse = " ")
+  types <- c(
+    "auto",
+    "int",
+    "double",
+    "Eigen::Matrix<(.*)>",
+    "std::vector<(.*)>",
+    "std::tuple<(.*)>",
+    "std::complex<(.*)>"
+  )
+  pattern <- paste0(
+    # Only match if the type occurs at start of string
+    "^(\\s*)?(",
+    paste0(types, collapse="|"),
+    # Only match if type followed by a function name and opening bracket
+    ")\\s*(?=\\w*\\()")
+  fun_name <- gsub(pattern, "", fun_string, perl = TRUE)
+  sub("\\(.*", "", fun_name, perl = TRUE)
+}
+
+# Prepare the c++ code for a standalone function so that it can be exported to R:
+# - Replace the auto return type with the plain type
+# - Add Rcpp::export attribute
+# - Remove the pstream__ argument and pass Rcpp::Rcout by default
+# - Replace the boost::ecuyer1988& base_rng__ argument with an integer seed argument
+#     that instantiates an RNG
+prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
+  fun_body <- paste(model_lines[fun_start:fun_end], collapse = " ")
+  fun_body <- gsub("// [[stan::function]]", "// [[Rcpp::export]]\n", fun_body, fixed = TRUE)
+  fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
+  if (grepl("stan::rng_t", fun_body)) {
+    fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
+    rng_seed <- "Rcpp::XPtr<stan::rng_t> base_rng(base_rng_ptr);base_rng->seed(Rcpp::as<int>(seed));"
+    fun_body <- gsub("return", paste(rng_seed, "return"), fun_body)
+    fun_body <- gsub("base_rng__,", "*(base_rng.get()),", fun_body, fixed = TRUE)
+  }
+  fun_body <- gsub("pstream__", "&Rcpp::Rcout", fun_body, fixed = TRUE)
+  fun_body <- paste(fun_body, collapse = "\n")
+  gsub(pattern = ",\\s*)", replacement = ")", fun_body)
+}
+
+compile_functions <- function(env, verbose = FALSE) {
+  funs <- grep("// [[stan::function]]", env$hpp_code, fixed = TRUE)
+  funs <- c(funs, length(env$hpp_code))
+
+  stan_funs <- sapply(seq_len(length(funs) - 1), function(ind) {
+    fun_end <- funs[ind + 1]
+    fun_end <- ifelse(env$hpp_code[fun_end] == "}", fun_end, fun_end - 1)
+    prep_fun_cpp(funs[ind], fun_end, env$hpp_code)
+  })
+
+  reserved_names <- unique(
+    unlist(
+      lapply(stan_funs, function(stan_fun) {
+        regmatches(
+          stan_fun,
+          gregexpr("(?<=_stan_)[[:alnum:]_]+", stan_fun, perl = TRUE)
+        )[[1]]
+      }),
+      use.names = FALSE
+    )
+  )
+
+  if (length(reserved_names) > 0) {
+    stop(
+      paste0(
+        "expose_functions() can't expose this Stan function because the function ",
+        "name and/or one or more argument names use a reserved keyword ",
+        "(typically in the C++ toolchain used to compile Stan). Please rename ",
+        "the function/arguments in your Stan functions block and try again. ",
+        "Conflicting names: ",
+        paste(reserved_names, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
+  env$fun_names <- sapply(seq_len(length(funs) - 1), function(ind) {
+    get_function_name(funs[ind], funs[ind + 1], env$hpp_code)
+  })
+
+  dups <- env$fun_names[duplicated(env$fun_names)]
+
+  if (length(dups) > 0) {
+    stop("Overloaded functions are currently not able to be exposed to R!",
+          " The following overloaded functions were found: ",
+          paste(dups, collapse=", "),
+          call. = FALSE)
+  }
+
+  mod_stan_funs <- paste(c(
+    env$hpp_code[1:(funs[1] - 1)],
+    "#include <rcpp_tuple_interop.hpp>",
+    "#include <rcpp_eigen_interop.hpp>",
+    "#include <stan_rng.hpp>",
+    stan_funs),
+  collapse = "\n")
+  rcpp_source_stan(mod_stan_funs, env, verbose)
+
+  # If an RNG function is exposed, initialise a Boost RNG object stored in the
+  # environment
+  rng_funs <- grep("rng\\b", env$fun_names, value = TRUE)
+  if (length(rng_funs) > 0) {
+    rng_cpp <- system.file("include", "base_rng.cpp", package = "cmdstanr", mustWork = TRUE)
+    rcpp_source_stan(paste0(readLines(rng_cpp), collapse="\n"), env, verbose)
+    env$rng_ptr <- env$base_rng(seed=1)
+  }
+
+  # For all RNG functions, pass the initialised Boost RNG by default
+  for (fun in rng_funs) {
+    fundef <- get(fun, envir = env)
+    funargs <- formals(fundef)
+    funargs$base_rng_ptr <- env$rng_ptr
+    # To allow for exported RNG functions to respect the R 'set.seed()' call,
+    # we need to derive a seed deterministically from the current RNG state
+    funargs$seed <- quote(sample.int(.Machine$integer.max, 1))
+    formals(fundef) <- funargs
+    assign(fun, fundef, envir = env)
+  }
+
+  env$compiled <- TRUE
+  invisible(NULL)
+}
+
+expose_stan_functions <- function(function_env, global = FALSE,
+                                   verbose = FALSE, quiet = FALSE) {
+  if (os_is_wsl()) {
+    stop("Standalone functions are not currently available with ",
+          "WSL CmdStan and will not be compiled",
+          call. = FALSE)
+  }
+  if (is.null(function_env$hpp_code)) {
+    stop("Standalone functions cannot be exposed for a model created from ",
+         "an executable alone. There is no Stan program to take them from.",
+         call. = FALSE)
+  }
+  if (!any(grepl("[[stan::function]]", function_env$hpp_code, fixed = TRUE))) {
+    warning("No standalone functions found to compile and expose to R!", call. = FALSE)
+    return(invisible(NULL))
+  }
+  require_suggested_package("Rcpp")
+  drop_stale_standalone_functions(function_env)
+  if (!function_env$compiled) {
+    if (!quiet && rlang::is_interactive()) {
+      message("Compiling standalone functions...")
+    }
+    compile_functions(function_env, verbose)
+  } else if (!quiet) {
+    message(
+      "Functions already compiled, ",
+      if (global) "copying to global environment" else "nothing to do!"
+    )
+  }
+  if (global) {
+    # Reference to the global environment, avoids a NOTE about assigning to it
+    pos <- 1
+    envir <- as.environment(pos)
+    for (fun_name in function_env$fun_names) {
+      assign(fun_name, get(fun_name, function_env), envir)
+    }
+  }
+  invisible(NULL)
+}

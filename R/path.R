@@ -36,7 +36,7 @@
 #' versioned CmdStan installations, the installation with the largest version
 #' number is used.
 #' * If no environment variable is found when loaded but any directory in the
-#' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.35.0"`),
+#' form `".cmdstan/cmdstan-[version]"` (e.g., `".cmdstan/cmdstan-2.37.0"`),
 #' exists in the user's home directory (*not* the current working directory),
 #' then the path to the CmdStan installation with the largest version number is
 #' used for the \R session. On Windows the home directory is determined from
@@ -72,7 +72,7 @@ set_cmdstan_path <- function(path = NULL) {
     if (!is.null(version) && !is_supported_cmdstan_version(version)) {
       warning(
         "CmdStan path not set. CmdStan v", version, " is no longer supported. ",
-        "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer.",
+        "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer.",
         call. = FALSE
       )
       unset_cmdstan_path()
@@ -97,6 +97,39 @@ cmdstan_path <- function() {
     .cmdstanr$VERSION <- read_cmdstan_version(path)
   }
   path
+}
+
+#' The selected installation, rechecked right before make or stanc runs from it
+#'
+#' `cmdstan_path()` returns the path cached when it was set, so an
+#' installation deleted since then would otherwise surface as a failure to
+#' start make or stanc.
+#'
+#' @noRd
+checked_cmdstan_path <- function() {
+  path <- cmdstan_path()
+  if (!dir.exists(path)) {
+    stop(
+      "The CmdStan installation at '", path, "' no longer exists. ",
+      "Use set_cmdstan_path() to select another installation or ",
+      "install_cmdstan() to reinstall it.",
+      call. = FALSE
+    )
+  }
+  path
+}
+
+#' The selected installation's version, read from its makefile now
+#'
+#' `cmdstan_version()` caches the version, which goes stale when a checkout is
+#' rebuilt in place. A missing installation keeps the cached version.
+#' @noRd
+current_cmdstan_version <- function() {
+  path <- cmdstan_path()
+  if (!dir.exists(path)) {
+    return(cmdstan_version())
+  }
+  read_cmdstan_version(path)
 }
 
 #' @rdname set_cmdstan_path
@@ -149,7 +182,7 @@ stop_no_path <- function() {
 }
 
 cmdstan_min_version <- function() {
-  "2.35.0"
+  "2.37.0"
 }
 
 # Normalize versions for comparison. This is intentionally looser than
@@ -163,15 +196,12 @@ cmdstan_version_for_comparison <- function(version) {
   sub("-rc[0-9]+$", "", version)
 }
 
-# Scalar comparison of versions numbers. Returns -1, 0, or 1.
-# Empty strings are used when no native or WSL install was found during path discovery.
+# Scalar comparison of version numbers. Returns -1, 0, or 1. Both
+# arguments must be versions, so a caller with a possibly missing one
+# checks that itself first.
 cmdstan_version_compare <- function(version, other) {
-  if (length(version) != 1 || is.na(version) || !nzchar(version)) {
-    return(-1L)
-  }
-  if (length(other) != 1 || is.na(other) || !nzchar(other)) {
-    return(1L)
-  }
+  checkmate::assert_string(version, min.chars = 1)
+  checkmate::assert_string(other, min.chars = 1)
   utils::compareVersion(
     cmdstan_version_for_comparison(version),
     cmdstan_version_for_comparison(other)
@@ -194,7 +224,7 @@ resolve_cmdstan_path_from_env <- function() {
   if (!dir.exists(path)) {
     warning(
       "CmdStan path not set. Can't find directory specified by environment ",
-      "variable 'CMDSTAN'.",
+      "variable `CMDSTAN`.",
       call. = FALSE
     )
     return(NA_character_)
@@ -208,7 +238,7 @@ resolve_cmdstan_path_from_env <- function() {
   if (is.null(path)) {
     warning(
       "CmdStan path not set. No CmdStan installation found in the path ",
-      "specified by the environment variable 'CMDSTAN'.",
+      "specified by the environment variable `CMDSTAN`.",
       call. = FALSE
     )
     return(NA_character_)
@@ -287,11 +317,14 @@ cmdstan_default_path <- function(dir = NULL) {
     if (!nzchar(latest_cmdstan) && !nzchar(latest_wsl_cmdstan)) {
       return(NULL)
     }
-    if (cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
-      return(file.path(wsl_installs_path, latest_wsl_cmdstan))
-    } else {
+    if (!nzchar(latest_wsl_cmdstan)) {
       return(file.path(installs_path, latest_cmdstan))
     }
+    if (!nzchar(latest_cmdstan) ||
+        cmdstan_version_compare(latest_wsl_cmdstan, latest_cmdstan) >= 0) {
+      return(file.path(wsl_installs_path, latest_wsl_cmdstan))
+    }
+    return(file.path(installs_path, latest_cmdstan))
   }
   NULL
 }
@@ -399,19 +432,38 @@ is_release_candidate <- function(path) {
   grepl(pattern = "-rc[0-9]*$", x = path)
 }
 
-
-# fake a cmdstan version (only used in tests)
-fake_cmdstan_version <- function(version, mod = NULL) {
-  .cmdstanr$VERSION <- version
-  if (!is.null(mod)) {
-    if (!is.null(mod$.__enclos_env__$private$exe_info_)) {
-      mod$.__enclos_env__$private$exe_info_$stan_version <- version
+tbb_path <- function(dir = NULL) {
+  path_to_TBB <- NULL
+  if (os_is_windows()) {
+    if (is.null(dir)) {
+      dir <- cmdstan_path()
     }
-    if (!is.null(mod$.__enclos_env__$private$cmdstan_version_)) {
-      mod$.__enclos_env__$private$cmdstan_version_ <- version
-    }
+    path_to_TBB <- file.path(dir, "stan", "lib", "stan_math", "lib", "tbb")
   }
+  path_to_TBB
 }
-reset_cmdstan_version <- function(mod = NULL) {
-  fake_cmdstan_version(read_cmdstan_version(cmdstan_path()), mod = mod)
+
+#' The TBB directory to put on PATH when launching a model executable
+#'
+#' On Windows there's no rpath, so the executable looks for tbb.dll on PATH and
+#' we need to put a TBB directory there. We use the one from the build record,
+#' i.e., the TBB the model was actually built against, even if the user has
+#' selected a different CmdStan installation since then. If that directory no
+#' longer exists we don't add anything, in which case the executable either uses
+#' whatever TBB is already on PATH or fails to load if there isn't one. If
+#' there's no usable build record we fall back to the selected installation's
+#' TBB, which is what we always did before.
+#'
+#' @param tbb_dir The record's `tbb_dir`, or `NULL` when there is no usable
+#'   record.
+#' @return The directory, or `NULL` when nothing should go on PATH.
+#' @noRd
+tbb_launch_path <- function(tbb_dir) {
+  if (!os_is_windows()) {
+    return(NULL)
+  }
+  if (is.null(tbb_dir)) {
+    return(tbb_path())
+  }
+  if (dir.exists(tbb_dir)) tbb_dir else NULL
 }

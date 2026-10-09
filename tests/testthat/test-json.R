@@ -113,7 +113,7 @@ test_that("write_stan_json errors if NULL variables", {
 test_that("write_stan_json() errors if data is not a list", {
   expect_error(
     write_stan_json(1:10),
-    "'data' must be a list"
+    "`data` must be a list"
   )
 })
 
@@ -170,6 +170,11 @@ test_that("a list contributes one leading dimension", {
     write_stan_json(list(v = list(list(1:4, 5:8), list(9:12, 13:16))), tempfile()),
     "All elements in list 'v' must be numeric or logical!"
   )
+
+  # an empty list is dropped rather than written as an empty array
+  temp_file_empty <- tempfile()
+  write_stan_json(list(v = list()), temp_file_empty)
+  expect_identical(readLines(temp_file_empty), "{}")
 })
 
 test_that("logical elements of a list are converted to integers", {
@@ -266,17 +271,17 @@ test_that("write_stan_json() errors if data frame has columns of invalid type", 
 test_that("write_stan_json() errors if bad names", {
   expect_error(
     write_stan_json(list(x = 1, y = 2, x = 3), file = tempfile()),
-    "Duplicate names not allowed in 'data'"
+    "Duplicate names not allowed in `data`"
   )
 
   expect_error(
     write_stan_json(list(1, 2), tempfile()),
-    "All elements in 'data' list must have names"
+    "All elements in `data` list must have names"
   )
 
   expect_error(
     write_stan_json(list(a = 1, 2), tempfile()),
-    "All elements in 'data' list must have names"
+    "All elements in `data` list must have names"
   )
 })
 

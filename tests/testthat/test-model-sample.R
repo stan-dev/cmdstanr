@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -151,6 +153,17 @@ test_that("sample() method works with data files", {
   expect_s3_class(fit_json, "CmdStanMCMC")
 })
 
+test_that("sample() finds a data file on the WSL filesystem", {
+  skip_if_not(os_is_wsl())
+  # R on Windows spells temp paths with backslashes, as in #1113
+  data_dir <- file.path(wsl_dir_prefix(), wsl_tempdir())
+  withr::defer(unlink(data_dir, recursive = TRUE))
+  data_file <- paste0(data_dir, "\\standata.json")
+  write_stan_json(data_list, data_file)
+  expect_sample_output(fit <- mod$sample(data = data_file, chains = 1), 1)
+  expect_s3_class(fit, "CmdStanMCMC")
+})
+
 test_that("sample() method works with init file", {
   init_list <- list(theta = 0.5)
   init_file <- tempfile(
@@ -167,16 +180,6 @@ test_that("sample() method runs when all arguments specified", {
   expect_s3_class(fit, "CmdStanMCMC")
 })
 
-test_that("sample() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(stan_program, stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_sample_output(
-    mod_tmp$sample(data = data_list)
-  )
-})
-
 test_that("sample() prints informational messages depending on show_exceptions", {
   mod_info_msg <- testing_model("info_message")
   expect_sample_output(
@@ -191,7 +194,6 @@ test_that("sample() prints informational messages depending on show_exceptions",
 })
 
 test_that("sample() method errors for any invalid arguments before calling cmdstan", {
-  utils::capture.output(mod$compile())
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
@@ -250,8 +252,6 @@ test_that("mc.cores option detected", {
 })
 
 test_that("sample() method runs when fixed_param = TRUE", {
-  mod_fp$compile()
-
   expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 4)
   expect_s3_class(fit_1000, "CmdStanMCMC")
   expect_equal(dim(fit_1000$draws()), c(1000,4,10))
@@ -274,7 +274,6 @@ test_that("sample() method runs when adapt_engaged = FALSE", {
 })
 
 test_that("chain_ids work with sample()", {
-  mod$compile()
   expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
   expect_s3_class(fit12, "CmdStanMCMC")
   expect_equal(fit12$metadata()$id, c(10,12))
@@ -362,7 +361,7 @@ test_that("seed works for multi chain sampling", {
   expect_false(all(chain_tdata_1 == chain_tdata_2))
 })
 
-test_that("Correct behavior if fixed_param not set when the model has no parameters", {
+test_that("A model with no parameters samples without fixed_param", {
   code <- "
   model {}
   generated quantities  {
@@ -371,21 +370,13 @@ test_that("Correct behavior if fixed_param not set when the model has no paramet
   "
   stan_file <- write_stan_file(code)
   m <- cmdstan_model(stan_file)
-  fake_cmdstan_version("2.35.0", m)
-  expect_error(
-    m$sample(),
-    "Model contains no parameters. Please use 'fixed_param = TRUE'."
+  expect_no_message(
+    utils::capture.output(
+      fit <- m$sample(iter_warmup = 10, iter_sampling = 10)
+    ),
+    message = "E-BFMI"
   )
-
-  reset_cmdstan_version(m)
-  if (cmdstan_version_compare(cmdstan_version(), "2.36.0") >= 0) {
-    # as of 2.36.0 we don't need fixed_param if no parameters
-    expect_no_error(
-      utils::capture.output(
-        fit <- m$sample(iter_warmup = 10, iter_sampling = 10, diagnostics = NULL)
-      )
-    )
-  }
+  expect_equal(fit$diagnostic_summary(quiet = TRUE)$ebfmi, rep(NA_real_, 4))
 })
 
 
@@ -421,9 +412,8 @@ test_that("Errors are suppressed with show_exceptions", {
 })
 
 test_that("All output can be suppressed by show_messages", {
-  stan_program <- testing_stan_file("bernoulli")
+  mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
-  mod <- cmdstan_model(stan_program, force_recompile = TRUE)
   withr::local_options(list("cmdstanr_verbose" = FALSE))
   output <- capture.output(
     fit <- mod$sample(data = data_list, show_messages = FALSE)

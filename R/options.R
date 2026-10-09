@@ -13,7 +13,9 @@
 #'
 #' * `cmdstanr_force_recompile`: Should the default be to recompile models
 #' even if there were no Stan code changes since last compiled?  See
-#' [compile][model-method-compile] for more details. The default is `FALSE`.
+#' [cmdstan_model()] for more details. The default is `FALSE`.
+#' The option has no effect on a model created from an executable alone,
+#' which is never recompiled.
 #'
 #' * `cmdstanr_max_rows`: The maximum number of rows of output to print when
 #' using the [`$print()`][fit-method-summary] method. The default is 10.
@@ -30,6 +32,9 @@
 #' CSV files when fitting models. The default is a temporary directory. Files in
 #' a temporary directory are removed as part of \R garbage collection, while
 #' files in an explicitly defined directory are not automatically deleted.
+#' A cached Quarto or R Markdown render keeps the fit object but not the files
+#' in a temporary directory, so set this option (or pass `output_dir`) when
+#' caching chunks that fit models.
 #'
 #' * `cmdstanr_spinner`: Should a spinner be shown while CmdStan compiles a
 #' model, checks syntax, or is installed or rebuilt? The default is `TRUE`. The

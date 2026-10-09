@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit_bernoulli_optimize <- testing_fit("bernoulli", method = "optimize", seed = 1234)
 fit_bernoulli_variational <- testing_fit("bernoulli", method = "variational", seed = 123)
@@ -61,6 +63,35 @@ test_that("read_cmdstan_csv() fails for different number of samples in csv", {
                  fit_logistic_thin_1_with_warmup$output_files())
   expect_error(read_cmdstan_csv(csv_files),
                  "Supplied CSV files do not match in the number of output samples!")
+  # a chain that stopped early has the configured iterations in its header
+  # but fewer rows
+  csv_files <- file.path(
+    withr::local_tempdir(), c("chain-1.csv", "chain-2.csv")
+  )
+  file.copy(fit_logistic_thin_1$output_files(), csv_files)
+  truncated <- head(readLines(csv_files[2]), -500)
+  writeLines(truncated, csv_files[2])
+  expect_error(
+    read_cmdstan_csv(csv_files),
+    "Supplied CSV files do not match in the number of output samples!"
+  )
+})
+
+test_that("read_cmdstan_csv() reads the draws of a chain that stopped early", {
+  lines <- readLines(test_path("resources", "csv", "model1-1-warmup.csv"))
+  rows <- which(!startsWith(lines, "#")) # the header, 100 warmup, 100 sampling
+  csv_file <- file.path(withr::local_tempdir(), "chain-1.csv")
+
+  writeLines(head(lines, rows[196]), csv_file)
+  csv_output <- read_cmdstan_csv(csv_file)
+  expect_equal(posterior::niterations(csv_output$warmup_draws), 100)
+  expect_equal(posterior::niterations(csv_output$post_warmup_draws), 95)
+  expect_false(anyNA(csv_output$post_warmup_draws))
+
+  writeLines(head(lines, rows[51]), csv_file)
+  csv_output <- read_cmdstan_csv(csv_file)
+  expect_equal(posterior::niterations(csv_output$warmup_draws), 50)
+  expect_null(csv_output$post_warmup_draws)
 })
 
 test_that("read_cmdstan_csv() fails for different variables", {
@@ -889,6 +920,16 @@ test_that("read_cmdstan_csv works with diagnose results", {
   expect_equal(diagnose_results$gradients$error, c(9.919e-09, 3.13568e-08, -5.31186e-09, 5.87693e-09))
 })
 
+test_that("repair_variable_names() handles tuple and complex names", {
+  raw <- c("b_tuple:2.1.1", "arr_pair.1:1", "z.real", "zv.1.imag",
+           "nested:2:2.real")
+  repaired <- c("b_tuple:2[1,1]", "arr_pair[1]:1", "z[real]", "zv[1,imag]",
+                "nested:2:2[real]")
+  expect_equal(repair_variable_names(raw), repaired)
+  expect_equal(unrepair_variable_names(repaired), raw)
+  expect_equal(unrepair_variable_names(repair_variable_names(raw)), raw)
+})
+
 test_that("variable_dims() works", {
   expect_null(variable_dims(NULL))
 
@@ -912,6 +953,71 @@ test_that("variable_dims() works", {
   vars <- c("c[1,1]", "c[1,2]", "c[1,3]", "c[2,3]", "c[2,2]", "c[2,1]", "b[4]", "b[2]", "b[3]", "b[1]")
   vars_dims <- list(c = c(2,1), b = 1)
   expect_equal(variable_dims(vars), vars_dims)
+
+  # complex parts and tuple elements
+  vars <- c("z[real]", "z[imag]", "zv[1,real]", "zv[1,imag]", "zv[2,real]",
+           "zv[2,imag]", "b_tuple:1:1[1]", "b_tuple:1:1[2]", "b_tuple:2[1,1]",
+           "b_tuple:2[2,1]", "arr_pair[1]:1", "arr_pair[1]:2",
+           "arr_pair[2]:1", "arr_pair[2]:2")
+  expect_equal(variable_dims(vars),
+              list(z = 2, zv = c(2, 2), b_tuple = 1, arr_pair = 2))
+})
+
+# the columns of one draw, in the order CmdStan writes them: a scalar, a
+# matrix, complex values, tuples, and arrays of tuples
+draw_names <- c("a", "b.1.1", "b.2.1", "b.1.2", "b.2.2", "z.real", "z.imag",
+                "zv.1.real", "zv.1.imag", "zv.2.real", "zv.2.imag", "t:1",
+                "t:2.1", "t:2.2", "at.1:1", "at.1:2", "at.2:1", "at.2:2",
+                "m.1.1:1", "m.1.1:2", "m.2.1:1", "m.2.1:2", "m.1.2:1",
+                "m.1.2:2", "m.2.2:1", "m.2.2:2", "zm.1.1.real", "zm.1.1.imag",
+                "zm.2.1.real", "zm.2.1.imag", "zm.1.2.real", "zm.1.2.imag",
+                "zm.2.2.real", "zm.2.2.imag")
+draw_values <- seq_along(draw_names)
+draw_expected <- list(
+  a = 1,
+  b = array(2:5, c(2, 2)),
+  z = 6 + 7i,
+  zv = array(c(8 + 9i, 10 + 11i), 2),
+  t = list(12, array(13:14, 2)),
+  at = list(list(15, 16), list(17, 18)),
+  m = array(list(list(19, 20), list(21, 22), list(23, 24), list(25, 26)),
+           c(2, 2)),
+  zm = array(c(27 + 28i, 29 + 30i, 31 + 32i, 33 + 34i), c(2, 2))
+)
+
+test_that("unflatten_variables() and flatten_variables() invert each other", {
+  result <- unflatten_variables(draw_values, draw_names)
+  expect_equal(result, draw_expected)
+
+  repaired <- repair_variable_names(draw_names)
+  expect_equal(unflatten_variables(draw_values, repaired), draw_expected)
+
+  expect_equal(flatten_variables(result), draw_values)
+})
+
+test_that("unflatten_variables() places columns by index", {
+  set.seed(1)
+  ord <- base::sample(length(draw_names))
+  result <- unflatten_variables(draw_values[ord], draw_names[ord])
+  # the variables come back in the shuffled order they arrived in
+  expect_equal(result[names(draw_expected)], draw_expected)
+
+  expect_error(unflatten_variables(20, "x.2"), "'x' is missing elements")
+  expect_error(unflatten_variables(10, "z.real"), "'z' is missing elements")
+  expect_error(
+    unflatten_variables(c(10, 20, 30), c("z.1.real", "z.2.real", "z.2.imag")),
+    "'z' is missing elements"
+  )
+  expect_error(unflatten_variables(c(10, 20), c("z.1.real", "z.2.imag")),
+               "'z' is missing elements")
+  expect_equal(unflatten_variables(9, "t:2"), list(t = list(numeric(0), 9)))
+  real <- list(type = "real", dimensions = 0L)
+  declaration <- list(t = list(type = list(real, real), dimensions = 0L))
+  expect_equal(unflatten_variables(9, "t:1", declaration),
+               list(t = list(9, numeric(0))))
+  expect_equal(unflatten_variables(c(10, 20, 30), c("t:1", "t:2", "t:3"),
+                                   declaration),
+               list(t = list(10, 20, 30)))
 })
 
 test_that("read_cmdstan_csv works if no variables are specified", {
@@ -933,7 +1039,8 @@ test_that("read_cmdstan_csv() works with tilde expansion", {
   skip_if(os_is_windows())
   full_path <- test_path("resources", "csv", "model1-1-warmup.csv")
   expect_no_error(read_cmdstan_csv(full_path))
-  tildified_path <- file.path("~", fs::path_rel(full_path, "~"))
+  tildified_path <- sub(path.expand("~"), "~", normalizePath(full_path),
+                        fixed = TRUE)
   expect_no_error(read_cmdstan_csv(tildified_path))
 })
 
@@ -986,6 +1093,8 @@ test_that("as_cmdstan_fit creates fitted model objects from csv", {
     error = TRUE,
     fits$laplace$mode()
   )
+
+  expect_length(fits$mcmc$inv_metric(), fit_logistic_thin_1$num_chains())
 })
 
 test_that("as_cmdstan_fit loads MCMC draws on request", {

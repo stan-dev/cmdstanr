@@ -43,8 +43,7 @@ CmdStanRun <- R6::R6Class(
         file.copy(from = args$exe_file,
                   to = file.path(wsl_dir_prefix(), wsl_tmpdir))
         args$exe_file <- file.path(wsl_tmpdir, basename(args$exe_file))
-        processx::run("wsl", args = c("chmod", "+x", args$exe_file),
-                      error_on_status = FALSE)
+        wsl_compatible_run(command = "chmod", args = c("+x", args$exe_file))
       }
       invisible(self)
     },
@@ -96,7 +95,7 @@ CmdStanRun <- R6::R6Class(
       if (!length(private$latent_dynamics_files_)) {
         stop(
           "No latent dynamics files found. ",
-          "Set 'save_latent_dynamics=TRUE' when fitting the model.",
+          "Set `save_latent_dynamics = TRUE` when fitting the model.",
           call. = FALSE
         )
       }
@@ -259,7 +258,7 @@ CmdStanRun <- R6::R6Class(
       current_files <- self$metric_files(include_failed = TRUE) # used so we get error if 0 files
       if (!length(current_files)) {
         stop(
-          "No metric files found. Make sure to set 'save_metric=TRUE' when fitting the model.",
+          "No metric files found. Make sure to set `save_metric = TRUE` when fitting the model.",
           call. = FALSE
         )
       }
@@ -341,7 +340,7 @@ CmdStanRun <- R6::R6Class(
             sapply(self$output_files(include_failed = FALSE),
                    wsl_safe_path),
             flags),
-          wd = cmdstan_path(),
+          wd = checked_cmdstan_path(),
           echo = TRUE,
           echo_cmd = is_verbose_mode(),
           error_on_status = TRUE
@@ -411,8 +410,37 @@ CmdStanRun <- R6::R6Class(
 
 
 # run helpers -------------------------------------------------
+
+#' The environment a CmdStan process runs with
+#'
+#' CmdStan reads its default thread count from `STAN_NUM_THREADS`. It is set
+#' for the child process only, through processx's `env` argument, so the
+#' session's environment is untouched. Under WSL it also has to be listed in
+#' `WSLENV` to reach Linux.
+#'
+#' @param threads The thread count, or `NULL` for none.
+#' @return The `env` argument for `processx::run()`, or `NULL`.
+#' @noRd
+cmdstan_process_env <- function(threads) {
+  if (is.null(threads)) {
+    return(NULL)
+  }
+  env <- c("current", STAN_NUM_THREADS = as.character(as.integer(threads)))
+  if (os_is_wsl()) {
+    # Keep the entries the session already exports to Linux, such as the
+    # OpenMPI ones sample_mpi() needs.
+    entries <- strsplit(Sys.getenv("WSLENV"), ":", fixed = TRUE)[[1]]
+    entries <- entries[sub("/.*$", "", entries) != "STAN_NUM_THREADS"]
+    env <- c(
+      env, WSLENV = paste(c(entries, "STAN_NUM_THREADS/u"), collapse = ":")
+    )
+  }
+  env
+}
+
 check_target_exe <- function(exe) {
-  exe_path <- file.path(cmdstan_path(), exe)
+  path <- checked_cmdstan_path()
+  exe_path <- file.path(path, exe)
   if (!file.exists(exe_path)) {
     withr::with_envvar(
       c("HOME" = short_path(Sys.getenv("HOME"))),
@@ -424,7 +452,7 @@ check_target_exe <- function(exe) {
         run_log <- wsl_compatible_run(
           command = make_cmd(),
           args = exe,
-          wd = cmdstan_path(),
+          wd = path,
           echo_cmd = TRUE,
           echo = TRUE,
           error_on_status = TRUE
@@ -432,6 +460,58 @@ check_target_exe <- function(exe) {
       )
     )
   }
+}
+
+#' Turn a failed launch of the model executable into a readable error
+#'
+#' Called when processx could not start the executable (it lost its execute bit,
+#' for example after being unzipped from R, or was built for another platform)
+#' and when it started but could not answer `help-all` (a library it was linked
+#' against is gone). Nothing checks for either ahead of time, so the launch is
+#' where they first show up. processx's own error gives a relative path like
+#' `./bernoulli` and an errno. This one names the executable, keeps the system's
+#' reason (for example "Permission denied") or the executable's own output, and
+#' says how to rebuild it, or that there is no Stan file to rebuild it from.
+#' When the TBB the build linked against is no longer there it says so, since
+#' that's one likely cause and reinstalling it is the other way out.
+#'
+#' @param exe_file Path to the executable.
+#' @param stan_file The model's Stan file, empty for a model created from an
+#'   executable alone.
+#' @param reason processx's error message, or what the executable printed.
+#' @param tbb_dir The record's `tbb_dir`, or `NULL` without a usable record.
+#' @noRd
+stop_cannot_run <- function(exe_file, stan_file, reason, tbb_dir = NULL) {
+  system_error <- regmatches(
+    reason, regexec("\\(system error [0-9]+, ([^)]*)\\)", reason)
+  )[[1]]
+  if (length(system_error) == 2) {
+    reason <- system_error[[2]]
+  }
+  tbb_gone <- !is.null(tbb_dir) && !dir.exists(tbb_dir)
+  if (tbb_gone) {
+    reason <- paste0(
+      reason, "\nThe TBB it was built against at '", tbb_dir,
+      "' no longer exists."
+    )
+  }
+  remedy <- if (length(stan_file) > 0 && tbb_gone) {
+    paste(
+      "Reinstall it there or run cmdstan_model() with force_recompile = TRUE",
+      "to rebuild it."
+    )
+  } else if (length(stan_file) > 0) {
+    "Run cmdstan_model() with force_recompile = TRUE to rebuild it."
+  } else if (tbb_gone) {
+    "Reinstall it there; there is no Stan file to rebuild it from."
+  } else {
+    "There is no Stan file to rebuild it from."
+  }
+  stop(
+    "The executable at '", exe_file, "' could not be run: ", reason, "\n",
+    remedy,
+    call. = FALSE
+  )
 }
 
 .run_sample <- function(mpi_cmd = NULL, mpi_args = NULL) {
@@ -476,11 +556,6 @@ check_target_exe <- function(exe) {
     if (procs$show_stdout_messages()) {
       cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
     }
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -492,7 +567,9 @@ check_target_exe <- function(exe) {
         id = chain_id,
         command = self$command(),
         args = self$command_args()[[chain_id]],
-        wd = dirname(self$exe_file()),
+        exe_file = self$exe_file(),
+        stan_file = self$args$stan_file,
+        tbb_dir = self$args$tbb_dir,
         mpi_cmd = mpi_cmd,
         mpi_args = mpi_args
       )
@@ -544,11 +621,6 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
     if (procs$show_stdout_messages()) {
       cat(paste0(start_msg, ", with ", procs$threads_per_proc(), " thread(s) per chain...\n\n"))
     }
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
   }
   start_time <- Sys.time()
   chains <- procs$proc_ids()
@@ -560,7 +632,9 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
         id = chain_id,
         command = self$command(),
         args = self$command_args()[[chain_id]],
-        wd = dirname(self$exe_file())
+        exe_file = self$exe_file(),
+        stan_file = self$args$stan_file,
+        tbb_dir = self$args$tbb_dir
       )
       procs$mark_proc_start(chain_id)
       procs$set_active_procs(procs$active_procs() + 1)
@@ -589,20 +663,15 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
 
 .run_other <- function() {
   procs <- self$procs
-  if (!is.null(procs$threads_per_proc())) {
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
-  }
   start_time <- Sys.time()
   id <- 1
   procs$new_proc(
     id = id,
     command = self$command(),
     args = self$command_args()[[id]],
-    wd = dirname(self$exe_file())
+    exe_file = self$exe_file(),
+    stan_file = self$args$stan_file,
+    tbb_dir = self$args$tbb_dir
   )
   procs$set_active_procs(1)
   procs$mark_proc_start(id)
@@ -646,28 +715,30 @@ CmdStanRun$set("private", name = "run_pathfinder_", value = .run_other)
 
 .run_diagnose <- function() {
   procs <- self$procs
-  if (!is.null(procs$threads_per_proc())) {
-    Sys.setenv("STAN_NUM_THREADS" = as.integer(procs$threads_per_proc()))
-    # Windows environment variables have to be explicitly exported to WSL
-    if (os_is_wsl()) {
-      Sys.setenv("WSLENV"="STAN_NUM_THREADS/u")
-    }
-  }
   stdout_file <- tempfile()
   stderr_file <- tempfile()
 
   withr::with_path(
     c(
       toolchain_PATH_env_var(),
-      tbb_path()
+      tbb_launch_path(self$args$tbb_dir)
     ),
-    ret <- wsl_compatible_run(
-      command = self$command(),
-      args = self$command_args()[[1]],
-      wd = dirname(self$exe_file()),
-      stderr = stderr_file,
-      stdout = stdout_file,
-      error_on_status = FALSE
+    ret <- tryCatch(
+      wsl_compatible_run(
+        command = self$command(),
+        args = self$command_args()[[1]],
+        wd = dirname(self$exe_file()),
+        env = cmdstan_process_env(procs$threads_per_proc()),
+        stderr = stderr_file,
+        stdout = stdout_file,
+        error_on_status = FALSE
+      ),
+      error = function(e) {
+        stop_cannot_run(
+          self$exe_file(), self$args$stan_file, conditionMessage(e),
+          self$args$tbb_dir
+        )
+      }
     )
   )
   if (is.na(ret$status) || ret$status != 0) {
@@ -737,9 +808,6 @@ CmdStanProcs <- R6::R6Class(
     show_stdout_messages = function () {
       private$show_stdout_messages_
     },
-    show_stderr_messages = function () {
-      private$show_stderr_messages_
-    },
     num_procs = function() {
       private$num_procs_
     },
@@ -767,7 +835,8 @@ CmdStanProcs <- R6::R6Class(
     get_proc = function(id) {
       private$processes_[[id]]
     },
-    new_proc = function(id, command, args, wd, mpi_cmd = NULL, mpi_args = NULL) {
+    new_proc = function(id, command, args, exe_file, stan_file, tbb_dir,
+                        mpi_cmd = NULL, mpi_args = NULL) {
       if (!is.null(mpi_cmd)) {
         exe_name <- mpi_args[["exe"]]
         mpi_args[["exe"]] <- NULL
@@ -781,15 +850,28 @@ CmdStanProcs <- R6::R6Class(
       withr::with_path(
         c(
           toolchain_PATH_env_var(),
-          tbb_path()
+          tbb_launch_path(tbb_dir)
         ),
-        private$processes_[[id]] <- wsl_compatible_process_new(
-          command = command,
-          args = args,
-          wd = wd,
-          stdout = "|",
-          stderr = "|",
-          echo_cmd = is_verbose_mode()
+        private$processes_[[id]] <- tryCatch(
+          wsl_compatible_process_new(
+            command = command,
+            args = args,
+            wd = dirname(exe_file),
+            env = cmdstan_process_env(self$threads_per_proc()),
+            stdout = "|",
+            stderr = "|",
+            echo_cmd = is_verbose_mode(),
+            # kill CmdStan when this R process dies without unwinding,
+            # for example a future worker torn down on interrupt (#1086)
+            supervise = TRUE
+          ),
+          error = function(e) {
+            # Under MPI it is the launcher that did not start.
+            if (!is.null(mpi_cmd)) {
+              stop(e)
+            }
+            stop_cannot_run(exe_file, stan_file, conditionMessage(e), tbb_dir)
+          }
         )
       )
       invisible(self)
@@ -1303,14 +1385,3 @@ CmdStanGQProcs <- R6::R6Class(
     }
   )
 )
-
-tbb_path <- function(dir = NULL) {
-  path_to_TBB <- NULL
-  if (os_is_windows()) {
-    if (is.null(dir)) {
-      dir <- cmdstan_path()
-    }
-    path_to_TBB <- file.path(dir, "stan", "lib", "stan_math", "lib", "tbb")
-  }
-  path_to_TBB
-}

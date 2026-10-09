@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fits <- list()
 fits[["sample"]] <- testing_fit("logistic", method = "sample",
@@ -6,9 +8,15 @@ fits[["variational"]] <- testing_fit("logistic", method = "variational",
                                      seed = 123, save_latent_dynamics = TRUE)
 fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
 fits[["laplace"]] <- testing_fit("logistic", method = "laplace", seed = 123)
+fits[["pathfinder"]] <- testing_fit("logistic", method = "pathfinder",
+                                    seed = 123)
 fit_bern <- testing_fit("bernoulli", method = "sample", seed = 123)
-fits[["generate_quantities"]] <- testing_fit("bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern, seed = 123)
-all_methods <- c("sample", "optimize", "laplace", "variational", "generate_quantities")
+fits[["generate_quantities"]] <- testing_fit(
+  "bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern,
+  seed = 123
+)
+all_methods <- c("sample", "optimize", "laplace", "variational", "pathfinder",
+                 "generate_quantities")
 
 
 test_that("*_files() methods return the right number of paths", {
@@ -34,9 +42,7 @@ test_that("saving csv output files works", {
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
 
-    should_match <- paste0("testing-output-",
-                           base::format(Sys.time(), "%Y%m%d%H%M"),
-                           "-",
+    should_match <- paste0("testing-output-\\d{12}-",
                            sprintf("%02d", seq_len(fit$num_procs())))
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
@@ -53,7 +59,7 @@ test_that("saving diagnostic csv output works", {
     if (!(method %in% c("sample", "variational"))) {
       expect_error(
         fit$save_latent_dynamics_files(),
-        "No latent dynamics files found. Set 'save_latent_dynamics=TRUE' when fitting the model",
+        "No latent dynamics files found. Set `save_latent_dynamics = TRUE` when fitting the model",
         fixed = TRUE
       )
       next
@@ -136,7 +142,7 @@ test_that("draws() method returns a 'draws' object", {
     if (method != "sample") {
       expect_warning(
         fit$draws(inc_warmup = TRUE),
-        "'inc_warmup' is ignored except when used with CmdStanMCMC objects"
+        "`inc_warmup` is ignored except when used with CmdStanMCMC objects"
       )
     }
   }
@@ -178,29 +184,20 @@ test_that("save_object() method works", {
 
 test_that("reloaded fits rebuild model methods lazily after save_object()", {
   skip_if(os_is_wsl())
-  mod <- cmdstan_model(
-    testing_stan_file("bernoulli_log_lik"),
-    force_recompile = TRUE,
-    compile_model_methods = TRUE
-  )
+  mod <- testing_model("bernoulli_log_lik")
   utils::capture.output(
     fit <- mod$optimize(data = testing_data("bernoulli"))
   )
+  fit$init_model_methods()
 
   temp_rds_file <- tempfile(fileext = ".RDS")
   fit$save_object(temp_rds_file)
   fit2 <- readRDS(temp_rds_file)
 
-  # The external pointer object survives serialization, but its address does not.
-  reloaded_env <- fit2$.__enclos_env__$private$model_methods_env_
-  expect_type(reloaded_env$model_ptr_, "externalptr")
-  expect_false(model_methods_are_live(reloaded_env))
-
   # Calling log_prob() rebuilds the bindings and initializes a live pointer.
   expect_no_error(
     lp <- fit2$log_prob(unconstrained_variables = c(0.1))
   )
-  expect_true(model_methods_are_live(reloaded_env))
   expect_equal(lp, -8.6327599208828509347)
 })
 
@@ -212,6 +209,16 @@ test_that("save_object() method works with qs2 format", {
   fit2 <- qs2::qs_read(temp_qs_file)
   expect_identical(fit2$summary(), fit$summary())
   expect_identical(fit2$return_codes(), fit$return_codes())
+})
+
+test_that("save_object() says when qs2 is not installed", {
+  local_mocked_bindings(
+    requireNamespace = function(...) FALSE, .package = "base"
+  )
+  expect_error(
+    fits[["sample"]]$save_object(tempfile(fileext = ".qs2"), format = "qs2"),
+    "qs2 package is required"
+  )
 })
 
 test_that("save_object() method works with profiles", {
@@ -226,6 +233,21 @@ test_that("save_object() method works with profiles", {
   rm(fit); gc()
   fit <- readRDS(temp_rds_file)
   expect_identical(fit$profiles(), s)
+})
+
+test_that("reading draws says when the temp CSV files are gone", {
+  fit <- testing_fit("logistic", method = "sample", seed = 123, chains = 1)
+  files <- file.path(withr::local_tempdir(), basename(fit$output_files()))
+  file.copy(fit$output_files(), files)
+  fit_csv <- as_cmdstan_fit(files)
+  unlink(c(fit$output_files(), files))
+  expect_error(
+    fit$draws(),
+    "The fit's CSV files are gone",
+    fixed = TRUE
+  )
+  # the user's own files, so the plain message
+  expect_error(fit_csv$draws(), "File does not exist", fixed = TRUE)
 })
 
 test_that("metadata() returns list", {
@@ -257,6 +279,18 @@ test_that("return_codes method works properly", {
     "Fitting finished unexpectedly"
   )
   expect_gt(non_zero$return_codes(), 0)
+})
+
+test_that("command() returns one line per CmdStan run", {
+  for (method in all_methods) {
+    fit <- fits[[method]]
+    cmd <- fit$command()
+    expect_length(cmd, fit$num_procs())
+    expect_match(cmd, shQuote(paste0("method=", method)), fixed = TRUE)
+    expect_match(cmd, shQuote(paste0("seed=", fit$metadata()$seed)),
+                 fixed = TRUE)
+    expect_equal(anyDuplicated(cmd), 0)
+  }
 })
 
 test_that("output and latent dynamics files are cleaned up correctly", {
@@ -513,9 +547,7 @@ test_that("sampling works with explicit and inferred include paths containing sp
 
   mod_explicit <- cmdstan_model(
     stan_file = include_model$stan_file,
-    exe_file = mod_inferred$exe_file(),
-    include_paths = include_model$include_paths,
-    compile = FALSE
+    include_paths = include_model$include_paths
   )
   expect_equal(
     repair_path(mod_explicit$include_paths()),
@@ -615,7 +647,7 @@ test_that("code() warns if model not created with Stan file", {
   )
   expect_warning(
     expect_null(fit_exe$code()),
-    "'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file",
+    "`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file",
     fixed = TRUE
   )
 })

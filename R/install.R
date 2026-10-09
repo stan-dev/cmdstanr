@@ -27,7 +27,7 @@
 #'   C++ toolchain. It is called internally by `install_cmdstan()` but can also
 #'   be called directly by the user.
 #'
-#'   **CmdStan versions older than 2.35.0 are no longer supported.** If you need
+#'   **CmdStan versions older than 2.37.0 are no longer supported.** If you need
 #'   to work with an older CmdStan version we recommend installing an older
 #'   CmdStanR release from GitHub.
 #'
@@ -60,15 +60,19 @@
 #' @param release_url (string) The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
 #'   The URL should point to the tarball (`.tar.gz` file) itself, e.g.,
-#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
+#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param release_file (string) A file path to a CmdStan release tar.gz file
 #'   downloaded from the releases page: <https://github.com/stan-dev/cmdstan/releases>.
-#'   For example: `release_file="./cmdstan-2.35.0.tar.gz"`. If `release_file` is
+#'   For example: `release_file="./cmdstan-2.37.0.tar.gz"`. If `release_file` is
 #'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
-#'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
-#'   the use of clang for compilation.
+#'   the `make/local` file. For `install_cmdstan()` they are written before
+#'   CmdStan is built, so no rebuild is needed. A named entry is written as an
+#'   assignment, so `list(CXX = "clang++")` builds with clang, `TRUE` turns a
+#'   switch on (`list(stan_threads = TRUE)` gives `STAN_THREADS=true`) and
+#'   `FALSE` turns it off (`STAN_THREADS=`). An unnamed string is written as
+#'   is, which is how a line like `"CXXFLAGS += -march=native"` goes in.
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
 #'   that the required toolchain is installed and properly configured? The
 #'   default is `TRUE`.
@@ -202,7 +206,7 @@ install_cmdstan <- function(dir = NULL,
     }
     if (!endsWith(release_url, ".tar.gz")) {
       stop(release_url, " is not a .tar.gz archive!",
-           "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
+           "CmdStanR supports installing from .tar.gz archives only.", call. = FALSE)
     }
     message("* Installing CmdStan from ", release_url)
     download_url <- release_url
@@ -373,7 +377,9 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
       if (isTRUE(as.logical(cpp_options[[i]]))) {
         built_flags <- c(built_flags, paste0(toupper(option_name), "=true"))
       } else if (isFALSE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(toupper(option_name), "=false"))
+        # An empty value turns a switch off: CmdStan tests these with ifdef,
+        # so NAME=false would turn it on.
+        built_flags <- c(built_flags, paste0(toupper(option_name), "="))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
           built_flags <- c(built_flags, paste0(cpp_options[[i]]))
@@ -413,7 +419,7 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (isTRUE(fix)) {
     warning(
-      "The 'fix' argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
+      "The `fix` argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
       call. = FALSE
     )
   }
@@ -542,7 +548,7 @@ read_line <- function(prompt) {
 #'
 #' Lines are compared as text, following the two rules of make that matter
 #' here. A plain assignment only counts while it is the last one for that
-#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
+#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=`
 #' further down is a real change, not a duplicate. `+=` accumulates, so a
 #' second identical `+=` line adds nothing, unless a plain assignment in
 #' between has reset the variable and dropped what the first one added.
@@ -667,6 +673,7 @@ try_download <- function(
       utils::download.file(
         url = download_url,
         destfile = destination_file,
+        method = "libcurl",
         quiet = quiet,
         headers = headers
       ),
@@ -682,7 +689,6 @@ try_download <- function(
   download_status
 }
 
-# download with retries and pauses
 download_with_retries <- function(
   download_url,
   destination_file,
@@ -690,6 +696,8 @@ download_with_retries <- function(
   pause_sec = 5,
   quiet = TRUE
 ) {
+  # R's default of 60 seconds may be too short for the CmdStan tarball
+  withr::local_options(timeout = max(300, getOption("timeout")))
   headers <- github_auth_token()
   num_retries <- 0
 
@@ -811,14 +819,16 @@ build_example <- function(dir, cores, quiet, timeout) {
 build_status_ok <- function(process_log, quiet = FALSE) {
   if (process_log$timeout) {
     if (quiet) {
-      end_warning <-
-        " and running again with 'quiet=FALSE' to see full installation output."
+      end_warning <- paste0(
+        " and running again with `quiet = FALSE` to see full ",
+        "installation output."
+      )
     } else {
       end_warning <- "."
     }
     warning(
       "The build process timed out. ",
-      "Try increasing the value of the 'timeout' argument",
+      "Try increasing the value of the `timeout` argument",
       end_warning,
       call. = FALSE
     )
@@ -827,8 +837,10 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 
   if (is.na(process_log$status) || process_log$status != 0) {
     if (quiet) {
-      end_warning <-
-        " and/or try again with 'quiet=FALSE' to see full installation output."
+      end_warning <- paste0(
+        " and/or try again with `quiet = FALSE` to see full ",
+        "installation output."
+      )
     } else {
       end_warning <- "."
     }
@@ -905,16 +917,16 @@ check_unix_make <- function() {
   if (!nzchar(make_path)) {
     if (os_is_macos()) {
       stop(
-        "The 'make' tool was not found. ",
-        "Please install the command line tools for Mac with 'xcode-select --install' ",
+        "The make tool was not found. ",
+        "Please install the command line tools for Mac with `xcode-select --install` ",
         "or install Xcode from the app store. ",
         "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     } else {
       stop(
-        "The 'make' tool was not found. ",
-        "Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain().",
+        "The make tool was not found. ",
+        "Please install make, restart R, and then run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     }
@@ -929,7 +941,7 @@ check_unix_cpp_compiler <- function() {
     if (os_is_macos()) {
       stop(
         "A suitable C++ compiler was not found. ",
-        "Please install the command line tools for Mac with 'xcode-select --install' ",
+        "Please install the command line tools for Mac with `xcode-select --install` ",
         "or install Xcode from the app store. ",
         "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
@@ -937,7 +949,7 @@ check_unix_cpp_compiler <- function() {
     } else {
       stop(
         "A C++ compiler was not found. ",
-        "Please install the 'clang++' or 'g++' compiler, restart R, ",
+        "Please install the clang++ or g++ compiler, restart R, ",
         "and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
@@ -1050,8 +1062,8 @@ assert_supported_requested_cmdstan_version <- function(version, source = "versio
   }
   stop(
     "Requested CmdStan ", source, " (", version, ") is unsupported. ",
-    "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer. ",
-    "If you need an older CmdStan release, install an older cmdstanr version from GitHub.",
+    "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer. ",
+    "If you need an older CmdStan release, install an older CmdStanR version from GitHub.",
     call. = FALSE
   )
 }

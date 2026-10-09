@@ -14,7 +14,9 @@ draws? The default depends on the model fitting method. See
 \link[=fit-method-draws]{draws} for more details.
 \item \code{cmdstanr_force_recompile}: Should the default be to recompile models
 even if there were no Stan code changes since last compiled?  See
-\link[=model-method-compile]{compile} for more details. The default is \code{FALSE}.
+\code{\link[=cmdstan_model]{cmdstan_model()}} for more details. The default is \code{FALSE}.
+The option has no effect on a model created from an executable alone,
+which is never recompiled.
 \item \code{cmdstanr_max_rows}: The maximum number of rows of output to print when
 using the \code{\link[=fit-method-summary]{$print()}} method. The default is 10.
 \item \code{cmdstanr_print_line_numbers}: Should line numbers be included when
@@ -27,6 +29,9 @@ Configure the option or environment variable before attaching the package.
 CSV files when fitting models. The default is a temporary directory. Files in
 a temporary directory are removed as part of \R garbage collection, while
 files in an explicitly defined directory are not automatically deleted.
+A cached Quarto or R Markdown render keeps the fit object but not the files
+in a temporary directory, so set this option (or pass \code{output_dir}) when
+caching chunks that fit models.
 \item \code{cmdstanr_spinner}: Should a spinner be shown while CmdStan compiles a
 model, checks syntax, or is installed or rebuilt? The default is \code{TRUE}. The
 spinner is only ever shown in interactive sessions, so setting this to

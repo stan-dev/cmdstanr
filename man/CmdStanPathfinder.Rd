@@ -59,6 +59,7 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-time]{$time()}} \tab Report the total run time. \cr
    \code{\link[=fit-method-output]{$output()}} \tab Pretty print the output that was printed to the console. \cr
    \code{\link[=fit-method-return_codes]{$return_codes()}} \tab Return the return codes from the CmdStan runs. \cr
+   \code{\link[=fit-method-command]{$command()}} \tab Return the commands that ran CmdStan. \cr
 }
 
 }
@@ -73,7 +74,6 @@ methods, all of which have their own (linked) documentation pages.
    \code{\link[=fit-method-constrain_variables]{$constrain_variables()}} \tab Transform a set of unconstrained parameter values to the constrained scale. \cr
    \code{\link[=fit-method-unconstrain_variables]{$unconstrain_variables()}} \tab Transform a set of parameter values to the unconstrained scale. \cr
    \code{\link[=fit-method-unconstrain_draws]{$unconstrain_draws()}} \tab Transform all parameter draws to the unconstrained scale. \cr
-   \code{\link[=fit-method-variable_skeleton]{$variable_skeleton()}} \tab Helper function to re-structure a vector of constrained parameter values. \cr
 }
 
 }

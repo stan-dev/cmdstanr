@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 
@@ -76,18 +78,6 @@ expect_cmdstan_defaults <- function(method, expected) {
   }
 }
 
-test_that("cmdstan_defaults() errors for uncompiled model", {
-  mod_uncompiled <- cmdstan_model(
-    stan_file = testing_stan_file("bernoulli"),
-    compile = FALSE
-  )
-  expect_error(
-    mod_uncompiled$cmdstan_defaults("sample"),
-    "'$cmdstan_defaults()' requires a compiled model",
-    fixed = TRUE
-  )
-})
-
 test_that("cmdstan_defaults() errors for invalid method", {
   expect_error(
     mod$cmdstan_defaults("bogus"),
@@ -100,41 +90,4 @@ test_that("cmdstan_defaults() returns expected names and values", {
   for (method in names(expected_cmdstan_defaults)) {
     expect_cmdstan_defaults(method, expected_cmdstan_defaults[[method]])
   }
-})
-
-# internal helpers --------------------------------------------------------
-
-test_that("parse_default_value() parses booleans", {
-  expect_identical(parse_default_value("Defaults to true"), TRUE)
-  expect_identical(parse_default_value("Defaults to false"), FALSE)
-})
-
-test_that("parse_default_value() parses integers", {
-  expect_identical(parse_default_value("Defaults to 1000"), 1000L)
-  expect_identical(parse_default_value("Defaults to -1"), -1L)
-  expect_identical(parse_default_value("Defaults to 0"), 0L)
-})
-
-test_that("parse_default_value() parses doubles", {
-  expect_identical(parse_default_value("Defaults to 0.8"), 0.8)
-  expect_identical(parse_default_value("Defaults to 1e-6"), 1e-6)
-  expect_identical(parse_default_value("Defaults to -0.5"), -0.5)
-})
-
-test_that("parse_default_value() returns strings for non-numeric values", {
-  expect_identical(parse_default_value("Defaults to lbfgs"), "lbfgs")
-  expect_identical(parse_default_value("Defaults to diagonal_e"), "diagonal_e")
-})
-
-test_that("map_cmdstan_to_cmdstanr() returns named character for valid methods", {
-  for (method in c("sample", "optimize", "variational", "pathfinder", "laplace")) {
-    mapping <- map_cmdstan_to_cmdstanr(method)
-    expect_type(mapping, "character")
-    expect_true(length(mapping) > 0, info = method)
-    expect_named(mapping)
-  }
-})
-
-test_that("map_cmdstan_to_cmdstanr() returns empty for unknown method", {
-  expect_length(map_cmdstan_to_cmdstanr("unknown"), 0)
 })

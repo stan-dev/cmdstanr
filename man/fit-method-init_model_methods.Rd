@@ -6,12 +6,16 @@
 \title{Compile additional methods for accessing the model log-probability function
 and parameter constraining and unconstraining.}
 \usage{
-init_model_methods(seed = 1, verbose = FALSE)
+init_model_methods(seed = 1, verbose = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{seed}{(integer) The random seed to use when initializing the model.}
 
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
+
+\item{quiet}{(logical) Should the message announcing the compilation be
+suppressed? The default is \code{FALSE}. Compiler output is controlled by
+\code{verbose}.}
 }
 \value{
 \code{NULL}, invisibly.
@@ -21,7 +25,10 @@ The \verb{$init_model_methods()} method compiles and initializes the
 \code{log_prob}, \code{grad_log_prob}, \code{hessian}, \code{constrain_variables},
 \code{unconstrain_variables} and \code{unconstrain_draws} functions. These are then
 available as methods of the fitted model object. This requires the
-additional \pkg{Rcpp} package.
+additional \pkg{Rcpp} package. The methods compile once per model
+object, so later fits of the same model reuse them. To avoid compiling
+them again in every new R session, set the \code{rcpp.cache.dir} option as
+described for \code{\link[=model-method-expose_functions]{$expose_functions()}}.
 
 If a model or fit object was saved with \code{\link[base:saveRDS]{base::saveRDS()}} and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
@@ -38,6 +45,5 @@ fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TR
 }
 \seealso{
 \code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
-\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}},
-\code{\link[=hessian]{hessian()}}
+\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=hessian]{hessian()}}
 }

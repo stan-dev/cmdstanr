@@ -82,7 +82,9 @@ MCMC the list should contain a sublist for each chain, and for Pathfinder it
 should contain a sublist for each path. For other model fitting methods
 there should be just one sublist. The sublists should have named elements
 corresponding to the parameters for which you are specifying initial
-values. See \strong{Examples}.
+values. See \strong{Examples}. A tuple parameter is given as an unnamed list
+of its elements and a complex parameter as an R complex value, see
+\code{\link[=write_stan_json]{write_stan_json()}}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC and Pathfinder,
@@ -151,14 +153,14 @@ default. Increasing this value will result in larger output CSV files and
 thus an increased usage of disk space.}
 
 \item{threads}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
+compiled with threading support, the number of
 threads to use in parallelized sections (e.g., for multi-path pathfinder
 as well as \code{reduce_sum}).}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
 the OpenCL device to use for fitting. The model must be compiled with
-\code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
-effect.}
+\code{cpp_options = list(stan_opencl = TRUE)}, otherwise setting this argument
+is an error.}
 
 \item{num_threads}{Deprecated and will be removed in a future release. Use
 \code{threads} instead.}
@@ -188,7 +190,7 @@ Pareto smoothed importance sampling (PSIS). This should be smaller than
 
 \item{num_paths}{(positive integer) Number of single pathfinders to run. The
 default is \code{4}. The paths are run sequentially unless the model was
-\link[=model-method-compile]{compiled} with \code{cpp_options = list(stan_threads = TRUE)} and \code{threads} is set, so running multiple paths in parallel requires
+compiled with \code{cpp_options = list(stan_threads = TRUE)} and \code{threads} is set, so running multiple paths in parallel requires
 both.}
 
 \item{max_lbfgs_iters}{(positive integer) The maximum number of iterations
@@ -207,7 +209,7 @@ if \code{output_dir = NULL}. They are not included in the paths returned by the
 fitted object's \verb{$output_files()} method. See the \href{https://mc-stan.org/docs/cmdstan-guide/pathfinder_config.html#single-path-pathfinder-outputs}{CmdStan User's Guide}
 for details.}
 
-\item{psis_resample}{(logical) Whether to perform pareto smoothed importance sampling.
+\item{psis_resample}{(logical) Whether to perform Pareto smoothed importance sampling.
 If \code{TRUE}, the number of draws returned will be equal to \code{draws}.
 If \code{FALSE}, the number of draws returned will be equal to \code{single_path_draws * num_paths}.}
 
@@ -215,7 +217,7 @@ If \code{FALSE}, the number of draws returned will be equal to \code{single_path
 If \code{TRUE}, the log probability will be calculated and given in the output.
 If \code{FALSE}, the log probability will only be returned for draws used to determine the
 ELBO in the pathfinder steps. All other draws will have a log probability of \code{NA}.
-A value of \code{FALSE} will also turn off pareto smoothed importance sampling as the
+A value of \code{FALSE} will also turn off Pareto smoothed importance sampling as the
 lp calculation is needed for PSIS.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
@@ -253,11 +255,11 @@ lowest estimated Kullback-Leibler (KL) divergence to the true
 posterior. Finally Pathfinder draws from that normal
 approximation and returns the draws transformed to the
 constrained scale. See the
-\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide}
+\href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide}
 for more details.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide} for more details on the
 default arguments. These values are also available via the
 \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
@@ -395,13 +397,14 @@ https://mc-stan.org/docs/cmdstan-guide/
 }
 \seealso{
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},
