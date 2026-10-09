@@ -80,9 +80,9 @@
 #'   Markov chain; only generated quantities may change. This can be useful
 #'   when, for example, trying to generate pseudo-data using the generated
 #'   quantities block.
-#' @param show_progress_bar (logical) **Experimental.** When `TRUE`, show a
-#'   progress bar through \pkg{progressr}. The default is `FALSE` but can be
-#'   set to `TRUE` for an entire \R session by
+#' @param show_progress_bar (logical) **Experimental and may change in a later
+#'   release.** When `TRUE`, show a progress bar through \pkg{progressr}. The
+#'   default is `FALSE` but can be set to `TRUE` for an entire \R session by
 #'   `options(cmdstanr_progress_bar = TRUE)`. Nothing is shown until a
 #'   \pkg{progressr} handler is registered, for example with
 #'   `progressr::handlers(global = TRUE)` once per session.

@@ -32,6 +32,9 @@ files in an explicitly defined directory are not automatically deleted.
 A cached Quarto or R Markdown render keeps the fit object but not the files
 in a temporary directory, so set this option (or pass \code{output_dir}) when
 caching chunks that fit models.
+\item \code{cmdstanr_progress_bar}: Should \verb{$sample()} show a progress bar? The
+default is \code{FALSE}. See the \code{show_progress_bar} argument of
+\code{\link[=model-method-sample]{$sample()}}.
 \item \code{cmdstanr_spinner}: Should a spinner be shown while CmdStan compiles a
 model, checks syntax, or is installed or rebuilt? The default is \code{TRUE}. The
 spinner is only ever shown in interactive sessions, so setting this to

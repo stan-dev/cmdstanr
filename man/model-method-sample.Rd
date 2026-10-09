@@ -283,9 +283,9 @@ numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
 
-\item{show_progress_bar}{(logical) \strong{Experimental.} When \code{TRUE}, show a
-progress bar through \pkg{progressr}. The default is \code{FALSE} but can be
-set to \code{TRUE} for an entire \R session by
+\item{show_progress_bar}{(logical) \strong{Experimental and may change in a later
+release.} When \code{TRUE}, show a progress bar through \pkg{progressr}. The
+default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
 \code{options(cmdstanr_progress_bar = TRUE)}. Nothing is shown until a
 \pkg{progressr} handler is registered, for example with
 \code{progressr::handlers(global = TRUE)} once per session.}

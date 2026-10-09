@@ -593,7 +593,7 @@ stop_cannot_run <- function(exe_file, stan_file, reason, tbb_dir = NULL) {
     }
     procs$check_finished()
   }
-  procs$finish_progress()
+  procs$finish_progress() # clear the bar before the timing lines
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
   procs$report_time()
 }
@@ -1083,9 +1083,7 @@ CmdStanMCMCProcs <- R6::R6Class(
       private$show_progress_bar_ <- show_progress_bar
       private$show_iteration_messages_ <- show_iteration_messages
       private$last_iteration_ <- integer(self$num_procs())
-      invisible(self)
     },
-
     process_output = function(id) {
       out <- self$get_proc(id)$read_output_lines()
       if (length(out) == 0) {
