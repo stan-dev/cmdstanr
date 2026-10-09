@@ -44,7 +44,6 @@ bad_arg_values <- list(
   seed = -80,
   threads = "NOT_THREADS",
   init_alpha = "cat.jpeg",
-  init_alpha = -3,
   tol_obj = -1,
   tol_rel_obj = -4,
   tol_grad = -5,
@@ -152,6 +151,16 @@ test_that("pathfinder() method passes one init to each path", {
 test_that("pathfinder() method runs when all arguments specified", {
   expect_pathfinder_output(fit <- do.call(mod$pathfinder, ok_arg_values))
   expect_s3_class(fit, "CmdStanPathfinder")
+})
+
+test_that("pathfinder() method errors for any invalid arguments before calling cmdstan", {
+  for (bad in list(bad_arg_values, bad_arg_values_2, bad_arg_values_3)) {
+    for (nm in names(bad)) {
+      args <- ok_arg_values
+      args[[nm]] <- bad[[nm]]
+      expect_error(do.call(mod$pathfinder, args), regexp = nm)
+    }
+  }
 })
 
 test_that("pathfinder() saves single path outputs", {
