@@ -993,8 +993,9 @@ format_stan_file <- function(stan_file,
 #' With `show_progress_bar = TRUE`, `$sample()` signals one progression across
 #' all chains through \pkg{progressr} and hides CmdStan's iteration lines. There
 #' is one bar for all chains because RStudio's terminal only supports
-#' single-line bars, so \pkg{progressr} does not draw one per chain. To choose a
-#' handler, see [progressr::handlers()].
+#' single-line bars, so \pkg{progressr} does not draw one per chain. To pick a
+#' handler, call for example `progressr::handlers("cli")` before sampling (see
+#' [progressr::handlers()]).
 #'
 #' With `refresh = 0` CmdStan prints no iteration lines, so no bar is shown.
 #' Small `refresh` values slow fast models because CmdStanR reads every output

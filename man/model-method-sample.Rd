@@ -343,8 +343,9 @@ default arguments. These values are also available via the
 With \code{show_progress_bar = TRUE}, \verb{$sample()} signals one progression across
 all chains through \pkg{progressr} and hides CmdStan's iteration lines. There
 is one bar for all chains because RStudio's terminal only supports
-single-line bars, so \pkg{progressr} does not draw one per chain. To choose a
-handler, see \code{\link[progressr:handlers]{progressr::handlers()}}.
+single-line bars, so \pkg{progressr} does not draw one per chain. To pick a
+handler, call for example \code{progressr::handlers("cli")} before sampling (see
+\code{\link[progressr:handlers]{progressr::handlers()}}).
 
 With \code{refresh = 0} CmdStan prints no iteration lines, so no bar is shown.
 Small \code{refresh} values slow fast models because CmdStanR reads every output
