@@ -791,11 +791,22 @@ compress_csv <- function(files, compress) {
 #' @return `compress`.
 assert_compress <- function(compress) {
   compress <- match.arg(compress, c("none", "gzip", "bzip2"))
+  if (compress == "none") {
+    return(compress)
+  }
   withr::local_path(toolchain_PATH_env_var())
-  if (compress != "none" && !nzchar(Sys.which(compress))) {
+  found <- nzchar(Sys.which(compress))
+  where <- "on the PATH"
+  if (found && os_is_wsl()) {
+    found <- processx::run(
+      "wsl", c("which", compress), error_on_status = FALSE
+    )$status == 0
+    where <- "inside the WSL distribution"
+  }
+  if (!found) {
     stop(
       "`compress = \"", compress, "\"` needs the ", compress,
-      " program, which was not found on the PATH.",
+      " program, which was not found ", where, ".",
       call. = FALSE
     )
   }

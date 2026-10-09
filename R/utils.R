@@ -271,12 +271,11 @@ copy_csv_files <- function(current_paths, compress = NULL, ...) {
     bz2 = "bzip2",
     "none"
   )
-  compress <- compress %||% current
+  compress <- if (is.null(compress)) current else assert_compress(compress)
   if (compress == current) {
     ext <- sub(".*(\\.csv.*)$", "\\1", current_paths[1])
     return(copy_temp_files(current_paths, ..., ext = ext))
   }
-  assert_compress(compress)
   temp_dir <- withr::local_tempdir()
   copies <- copy_temp_files(
     decompress_csv_files(current_paths, temp_dir),

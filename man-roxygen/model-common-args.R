@@ -105,8 +105,8 @@
 #'   CmdStan finishes (including latent dynamics files, if saved): `"none"`
 #'   (the default), `"gzip"`, or `"bzip2"`. The fit reads compressed files by
 #'   decompressing them to a temporary copy first, which makes each read
-#'   slower in exchange for using less disk space. The default can be set with
-#'   `options(cmdstanr_compress)`.
+#'   slower in exchange for using less disk space. The `cmdstanr_compress`
+#'   option sets the default for every fitting method.
 #'
 #' @param sig_figs (positive integer) The number of significant figures (up to a
 #'   maximum of 18) to use when storing the output values. If `NULL` (the

@@ -1195,8 +1195,12 @@ test_that("read_cmdstan_csv() reads compressed CSV files", {
     test_path("resources", "csv", "model1-2-warmup.csv")
   )
   expected <- read_cmdstan_csv(csv_files)
-  gz_files <- vapply(csv_files, compressed_copy, compress = "gzip", character(1))
-  bz2_files <- vapply(csv_files, compressed_copy, compress = "bzip2", character(1))
+  gz_files <- vapply(
+    csv_files, compressed_copy, compress = "gzip", character(1)
+  )
+  bz2_files <- vapply(
+    csv_files, compressed_copy, compress = "bzip2", character(1)
+  )
   withr::defer(unlink(c(gz_files, bz2_files)))
 
   expect_equal(read_cmdstan_csv(gz_files), expected)

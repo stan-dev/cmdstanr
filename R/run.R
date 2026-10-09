@@ -403,7 +403,9 @@ CmdStanRun <- R6::R6Class(
     command_args_ = list(),
 
     compress_output_files_ = function() {
-      private$output_files_ <- compress_csv(private$output_files_, self$args$compress)
+      private$output_files_ <- compress_csv(
+        private$output_files_, self$args$compress
+      )
       if (self$args$save_latent_dynamics) {
         private$latent_dynamics_files_ <- compress_csv(
           private$latent_dynamics_files_, self$args$compress

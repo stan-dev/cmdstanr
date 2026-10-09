@@ -362,39 +362,11 @@ test_that("compressed fits support latent dynamics files and CmdStan tools", {
     compress = "gzip",
     save_latent_dynamics = TRUE
   )
-  checkmate::expect_file_exists(fit$latent_dynamics_files(), extension = "csv.gz")
+  checkmate::expect_file_exists(
+    fit$latent_dynamics_files(), extension = "csv.gz"
+  )
   expect_output(fit$cmdstan_summary(), "Inference for Stan model")
   expect_output(fit$cmdstan_diagnose(), "Processing complete")
-})
-
-test_that("compressed output saved to disk can be saved again and reloaded", {
-  output_dir <- withr::local_tempdir()
-  save_dir <- withr::local_tempdir()
-  fit <- mod$sample(
-    data = data_list,
-    seed = 123,
-    chains = 2,
-    refresh = 0,
-    output_dir = output_dir,
-    compress = "gzip"
-  )
-  checkmate::expect_file_exists(
-    list.files(output_dir, pattern = "\\.csv\\.gz$", full.names = TRUE),
-    extension = "csv.gz"
-  )
-  draws <- as_cmdstan_fit(fit$output_files())$draws()
-  expect_equal(draws, fit$draws())
-
-  saved <- suppressMessages(
-    fit$save_output_files(save_dir, basename = "bern", compress = "bzip2")
-  )
-  checkmate::expect_file_exists(saved, extension = "csv.bz2")
-  expect_length(list.files(output_dir), 0)
-
-  reloaded <- as_cmdstan_fit(saved)
-  expect_s3_class(reloaded, "CmdStanMCMC")
-  expect_equal(reloaded$draws(), draws)
-  expect_equal(reloaded$summary(), fit$summary())
 })
 
 test_that("All output can be suppressed by show_messages", {

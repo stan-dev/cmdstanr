@@ -667,16 +667,18 @@ test_that("compress writes compressed output files that read like plain ones", {
   }
 })
 
-test_that("save_output_files() can change the compression of the output files", {
+test_that("save_output_files() can change the compression", {
   for (method in setdiff(all_methods, "generate_quantities")) {
     fit <- fits[[method]]
     expected <- as_cmdstan_fit(fit$output_files())$draws()
     for (compress in c("gzip", "bzip2", "none")) {
       ext <- switch(compress, gzip = "csv.gz", bzip2 = "csv.bz2", none = "csv")
+      previous <- fit$output_files()
       paths <- suppressMessages(
         fit$save_output_files(tempdir(), compress = compress)
       )
       checkmate::expect_file_exists(paths, extension = ext)
+      expect_false(any(file.exists(previous)))
       expect_equal(fit$output_files(), paths)
       expect_equal(as_cmdstan_fit(paths)$draws(), expected)
     }
@@ -723,7 +725,7 @@ test_that("save_output_files() errors for an invalid compress value", {
   )
 })
 
-test_that("save_latent_dynamics_files() can compress the latent dynamics files", {
+test_that("save_latent_dynamics_files() can compress the files", {
   for (method in c("sample", "variational")) {
     fit <- fits[[method]]
     paths <- suppressMessages(
@@ -732,13 +734,4 @@ test_that("save_latent_dynamics_files() can compress the latent dynamics files",
     checkmate::expect_file_exists(paths, extension = "csv.gz")
     expect_equal(fit$latent_dynamics_files(), paths)
   }
-})
-
-test_that("compressed fitted_params are decompressed to files that persist", {
-  fit_gz <- testing_fit("bernoulli", method = "sample", seed = 123, compress = "gzip")
-  mod_gq <- testing_model("bernoulli_ppc")
-  gq_gz <- mod_gq$generate_quantities(
-    fitted_params = fit_gz, data = testing_data("bernoulli"), seed = 123
-  )
-  expect_true(all(file.exists(gq_gz$fitted_params_files())))
 })

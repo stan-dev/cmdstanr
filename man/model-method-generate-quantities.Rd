@@ -138,8 +138,8 @@ used to display the silenced messages.}
 CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
 (the default), \code{"gzip"}, or \code{"bzip2"}. The fit reads compressed files by
 decompressing them to a temporary copy first, which makes each read
-slower in exchange for using less disk space. The default can be set with
-\code{options(cmdstanr_compress)}.}
+slower in exchange for using less disk space. The \code{cmdstanr_compress}
+option sets the default for every fitting method.}
 }
 \value{
 A \code{\link{CmdStanGQ}} object.

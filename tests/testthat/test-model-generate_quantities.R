@@ -229,7 +229,7 @@ test_that("no output with show_messages = FALSE", {
   expect_equal(length(output), 0)
 })
 
-test_that("generate_quantities() works with compressed fitted_params and output", {
+test_that("generate_quantities() works with compressed files", {
   plain <- mod_gq$generate_quantities(
     fitted_params = fit, data = data_list, seed = 123
   )
@@ -243,6 +243,7 @@ test_that("generate_quantities() works with compressed fitted_params and output"
   )
   checkmate::expect_file_exists(from_fit$output_files(), extension = "csv.bz2")
   expect_equal(from_fit$draws(), plain$draws())
+  expect_true(all(file.exists(from_fit$fitted_params_files())))
 
   from_files <- mod_gq$generate_quantities(
     fitted_params = fit_gz$output_files(), data = data_list, seed = 123
