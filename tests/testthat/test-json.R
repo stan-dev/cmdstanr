@@ -18,7 +18,7 @@ test_that("JSON output for boolean is correct", {
 
 test_that("JSON output for factors is correct", {
   temp_file <- tempfile()
-  N <- factor(c(0,1,2,2,1,0), labels = c("c1", "c2", "c3"))
+  N <- factor(c(0, 1, 2, 2, 1, 0), labels = c("c1", "c2", "c3"))
   write_stan_json(list(N = N), file = temp_file)
   expect_json_snapshot(temp_file, "json-factor.json")
 })
@@ -48,7 +48,7 @@ test_that("JSON output for data frame and matrix is correct", {
 
 test_that("JSON output for list of vectors is correct", {
   temp_file <- tempfile()
-  N <- list(c(1,2,3), c(4,5,6))
+  N <- list(c(1, 2, 3), c(4, 5, 6))
 
   write_stan_json(list(N = N), file = temp_file)
   expect_json_snapshot(temp_file, "json-vector-lists.json")
@@ -98,7 +98,10 @@ test_that("write_stan_json errors if NAs", {
     "Variable 'x' has NA values"
   )
   expect_error(
-    write_stan_json(list(x = list(matrix(c(1, NA, 3, 4), 2), matrix(1:4, 2))), tempfile()),
+    write_stan_json(
+      list(x = list(matrix(c(1, NA, 3, 4), 2), matrix(1:4, 2))),
+      tempfile()
+    ),
     "Variable 'x' has NA values"
   )
 })
@@ -121,7 +124,7 @@ test_that("write_stan_json() errors if bad filename", {
   temp_file <- tempfile()
 
   expect_error(
-    write_stan_json(list(N = 10), file = c(1,2)),
+    write_stan_json(list(N = 10), file = c(1, 2)),
     "The supplied filename is invalid!"
   )
   expect_error(
@@ -144,18 +147,26 @@ test_that("write_stan_json() errors if vectors/matrices in same list are differe
     "All matrices/vectors in list 'N' must be the same size!"
   )
   expect_error(
-    write_stan_json(list(N = list(c(26, 26, 26), matrix(c(26, 26, 26), ncol = 1))), file = "abc.txt"),
+    write_stan_json(
+      list(N = list(c(26, 26, 26), matrix(c(26, 26, 26), ncol = 1))),
+      file = "abc.txt"
+    ),
     "All matrices/vectors in list 'N' must be the same size!"
   )
   expect_error(
-    write_stan_json(list(N = list(matrix(1:8, ncol = 2), matrix(1:9, ncol = 3))), file = "abc.txt"),
+    write_stan_json(
+      list(N = list(matrix(1:8, ncol = 2), matrix(1:9, ncol = 3))),
+      file = "abc.txt"
+    ),
     "All matrices/vectors in list 'N' must be the same size!"
   )
 })
 
 test_that("a list contributes one leading dimension", {
   # e.g. `array[K,L] vector[J] v` as a list of K matrices with dimensions LxJ
-  K <- 2; L <- 3; J <- 4
+  K <- 2
+  L <- 3
+  J <- 4
   arr <- array(1:(K * L * J), dim = c(K, L, J))
   lst <- lapply(seq_len(K), function(k) arr[k, , ])
 
@@ -167,7 +178,10 @@ test_that("a list contributes one leading dimension", {
 
   # nested lists are not supported
   expect_error(
-    write_stan_json(list(v = list(list(1:4, 5:8), list(9:12, 13:16))), tempfile()),
+    write_stan_json(
+      list(v = list(list(1:4, 5:8), list(9:12, 13:16))),
+      tempfile()
+    ),
     "All elements in list 'v' must be numeric or logical!"
   )
 
@@ -210,11 +224,17 @@ test_that("factors are written as level indices", {
   write_stan_json(list(x = factor(c("foo", "bar"))), temp_file)
   expect_equal(read_x(temp_file), c(2L, 1L))
 
-  write_stan_json(list(x = factor(c("foo", "bar"), levels = c("foo", "bar"))), temp_file)
+  write_stan_json(
+    list(x = factor(c("foo", "bar"), levels = c("foo", "bar"))),
+    temp_file
+  )
   expect_equal(read_x(temp_file), c(1L, 2L))
 
   # an unused level shifts the indices of the levels after it
-  write_stan_json(list(x = factor(c("b", "c"), levels = c("a", "b", "c"))), temp_file)
+  write_stan_json(
+    list(x = factor(c("b", "c"), levels = c("a", "b", "c"))),
+    temp_file
+  )
   expect_equal(read_x(temp_file), c(2L, 3L))
 
   # factor columns of a data frame are converted the same way
@@ -241,11 +261,17 @@ test_that("write_stan_json() errors if data frame has columns of invalid type", 
     "Variable 'N' has columns of invalid type: b."
   )
   expect_error(
-    write_stan_json(list(N = data.frame(a = as.Date(c("2020-01-01", "2020-01-02")))), tempfile()),
+    write_stan_json(
+      list(N = data.frame(a = as.Date(c("2020-01-01", "2020-01-02")))),
+      tempfile()
+    ),
     "Variable 'N' has columns of invalid type: a."
   )
   expect_error(
-    write_stan_json(list(N = data.frame(a = as.POSIXct("2020-01-01", tz = "UTC"))), tempfile()),
+    write_stan_json(
+      list(N = data.frame(a = as.POSIXct("2020-01-01", tz = "UTC"))),
+      tempfile()
+    ),
     "Variable 'N' has columns of invalid type: a."
   )
   expect_error(
@@ -255,14 +281,24 @@ test_that("write_stan_json() errors if data frame has columns of invalid type", 
 
   # all invalid columns are reported, not just the first
   expect_error(
-    write_stan_json(list(N = data.frame(a = 1:2, b = c("x", "y"), c = c("v", "w"))), tempfile()),
+    write_stan_json(
+      list(N = data.frame(a = 1:2, b = c("x", "y"), c = c("v", "w"))),
+      tempfile()
+    ),
     "Variable 'N' has columns of invalid type: b, c."
   )
 
   # numeric, integer, logical and factor columns are still allowed
   expect_no_error(
     write_stan_json(
-      list(N = data.frame(a = c(1.5, 2.5), b = 1:2, c = c(TRUE, FALSE), d = factor(c("x", "y")))),
+      list(
+        N = data.frame(
+          a = c(1.5, 2.5),
+          b = 1:2,
+          c = c(TRUE, FALSE),
+          d = factor(c("x", "y"))
+        )
+      ),
       tempfile()
     )
   )

@@ -171,10 +171,12 @@
 #' )
 #' }
 #'
-read_cmdstan_csv <- function(files,
-                             variables = NULL,
-                             sampler_diagnostics = NULL,
-                             format = getOption("cmdstanr_draws_format", NULL)) {
+read_cmdstan_csv <- function(
+  files,
+  variables = NULL,
+  sampler_diagnostics = NULL,
+  format = getOption("cmdstanr_draws_format", NULL)
+) {
   temp_dir <- withr::local_tempdir()
   withr::local_path(toolchain_PATH_env_var())
   # If the CSV files are stored in the WSL filesystem then it is significantly
@@ -182,7 +184,8 @@ read_cmdstan_csv <- function(files,
   if (os_is_wsl() && any(grepl("^//wsl", files))) {
     wsl_files <- sapply(files, wsl_safe_path)
     wsl_compatible_run(
-      command = "cp", args = c(wsl_files, wsl_safe_path(temp_dir))
+      command = "cp",
+      args = c(wsl_files, wsl_safe_path(temp_dir))
     )
     files <- file.path(temp_dir, basename(files))
   }
@@ -230,9 +233,18 @@ read_cmdstan_csv <- function(files,
       csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id)
       csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
       csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init)
-      csv_metadata[[1]]$step_size <- c(csv_metadata[[1]]$step_size, file_metadata$step_size)
-      csv_metadata[[1]]$step_size_adaptation <- c(csv_metadata[[1]]$step_size_adaptation, file_metadata$step_size_adaptation)
-      csv_metadata[[1]]$fitted_params <- c(csv_metadata[[1]]$fitted_params, file_metadata$fitted_params)
+      csv_metadata[[1]]$step_size <- c(
+        csv_metadata[[1]]$step_size,
+        file_metadata$step_size
+      )
+      csv_metadata[[1]]$step_size_adaptation <- c(
+        csv_metadata[[1]]$step_size_adaptation,
+        file_metadata$step_size_adaptation
+      )
+      csv_metadata[[1]]$fitted_params <- c(
+        csv_metadata[[1]]$fitted_params,
+        file_metadata$fitted_params
+      )
       if (!is.null(file_metadata$inv_metric)) {
         inv_metric[[as.character(id)]] <- file_metadata$inv_metric
       }
@@ -271,35 +283,49 @@ read_cmdstan_csv <- function(files,
       setdiff(metadata$variables, pathfinder_variables)
     )
   }
-  if (is.null(variables)) { # variables = NULL returns all
+  if (is.null(variables)) {
+    # variables = NULL returns all
     variables <- metadata$variables
-  } else if (!any(nzchar(variables))) { # if variables = "" returns none
+  } else if (!any(nzchar(variables))) {
+    # if variables = "" returns none
     variables <- NULL
-  } else { # filter using variables
-    res <- matching_variables(variables, repair_variable_names(metadata$variables))
+  } else {
+    # filter using variables
+    res <- matching_variables(
+      variables,
+      repair_variable_names(metadata$variables)
+    )
     if (length(res$not_found)) {
-      stop("Can't find the following variable(s) in the output: ",
-            paste(res$not_found, collapse = ", "), call. = FALSE)
+      stop(
+        "Can't find the following variable(s) in the output: ",
+        paste(res$not_found, collapse = ", "),
+        call. = FALSE
+      )
     }
     variables <- unrepair_variable_names(res$matching)
   }
   if (is.null(sampler_diagnostics)) {
     sampler_diagnostics <- metadata$sampler_diagnostics
-  } else if (!any(nzchar(sampler_diagnostics))) { # if sampler_diagnostics = "" returns none
+  } else if (!any(nzchar(sampler_diagnostics))) {
+    # if sampler_diagnostics = "" returns none
     sampler_diagnostics <- NULL
   } else {
     selected_sampler_diag <- rep(FALSE, length(metadata$sampler_diagnostics))
     not_found <- NULL
     for (p in sampler_diagnostics) {
-      matches <- metadata$sampler_diagnostics == p | startsWith(metadata$sampler_diagnostics, paste0(p, "."))
+      matches <- metadata$sampler_diagnostics == p |
+        startsWith(metadata$sampler_diagnostics, paste0(p, "."))
       if (!any(matches)) {
         not_found <- c(not_found, p)
       }
       selected_sampler_diag <- selected_sampler_diag | matches
     }
     if (length(not_found)) {
-      stop("Can't find the following sampler diagnostic(s) in the output: ",
-            paste(not_found, collapse = ", "), call. = FALSE)
+      stop(
+        "Can't find the following sampler diagnostic(s) in the output: ",
+        paste(not_found, collapse = ", "),
+        call. = FALSE
+      )
     }
     sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
   }
@@ -332,7 +358,8 @@ read_cmdstan_csv <- function(files,
     if (i == 1) {
       chain_array <- function(n, columns) {
         array(
-          NA, c(n, length(files), length(columns)),
+          NA,
+          c(n, length(files), length(columns)),
           dimnames = list(NULL, NULL, columns)
         )
       }
@@ -349,8 +376,10 @@ read_cmdstan_csv <- function(files,
       post_rows <- n_warmup + seq_len(n_post)
     }
     if (nrow(csv_data) != n_rows) {
-      stop("Supplied CSV files do not match in the number of output samples!",
-           call. = FALSE)
+      stop(
+        "Supplied CSV files do not match in the number of output samples!",
+        call. = FALSE
+      )
     }
     var_idx <- match(variables, names(csv_data))
     for (j in seq_along(var_idx)) {
@@ -399,8 +428,9 @@ read_cmdstan_csv <- function(files,
       warmup_draws = as_draws_or_null(warmup_draws),
       post_warmup_draws = as_draws_or_null(draws),
       warmup_sampler_diagnostics = as_draws_or_null(warmup_sampler_diagnostics),
-      post_warmup_sampler_diagnostics =
-        as_draws_or_null(post_warmup_sampler_diagnostics)
+      post_warmup_sampler_diagnostics = as_draws_or_null(
+        post_warmup_sampler_diagnostics
+      )
     )
   } else if (metadata$method == "variational") {
     if (is.null(format)) {
@@ -410,14 +440,23 @@ read_cmdstan_csv <- function(files,
     if (length(draws) == 0) {
       variational_draws <- NULL
     } else {
-      variational_draws <- do.call(as_draws_format, list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop = FALSE]))
+      variational_draws <- do.call(
+        as_draws_format,
+        list(draws[[1]][-1, colnames(draws[[1]]) != "lp__", drop = FALSE])
+      )
     }
     if (!is.null(variational_draws)) {
       if ("log_p__" %in% posterior::variables(variational_draws)) {
-        variational_draws <- posterior::rename_variables(variational_draws, lp__ = "log_p__")
+        variational_draws <- posterior::rename_variables(
+          variational_draws,
+          lp__ = "log_p__"
+        )
       }
       if ("log_g__" %in% posterior::variables(variational_draws)) {
-        variational_draws <- posterior::rename_variables(variational_draws, lp_approx__ = "log_g__")
+        variational_draws <- posterior::rename_variables(
+          variational_draws,
+          lp_approx__ = "log_g__"
+        )
       }
       posterior::variables(variational_draws) <- repaired_variables
     }
@@ -437,10 +476,16 @@ read_cmdstan_csv <- function(files,
     }
     if (!is.null(laplace_draws)) {
       if ("log_p__" %in% posterior::variables(laplace_draws)) {
-        laplace_draws <- posterior::rename_variables(laplace_draws, lp__ = "log_p__")
+        laplace_draws <- posterior::rename_variables(
+          laplace_draws,
+          lp__ = "log_p__"
+        )
       }
       if ("log_q__" %in% posterior::variables(laplace_draws)) {
-        laplace_draws <- posterior::rename_variables(laplace_draws, lp_approx__ = "log_q__")
+        laplace_draws <- posterior::rename_variables(
+          laplace_draws,
+          lp_approx__ = "log_q__"
+        )
       }
       posterior::variables(laplace_draws) <- repaired_variables
     }
@@ -456,8 +501,14 @@ read_cmdstan_csv <- function(files,
     if (length(draws) == 0) {
       point_estimates <- NULL
     } else {
-      point_estimates <- do.call(as_draws_format, list(draws[[1]][1, , drop = FALSE]))
-      point_estimates <- posterior::subset_draws(point_estimates, variable = variables)
+      point_estimates <- do.call(
+        as_draws_format,
+        list(draws[[1]][1, , drop = FALSE])
+      )
+      point_estimates <- posterior::subset_draws(
+        point_estimates,
+        variable = variables
+      )
     }
     if (!is.null(point_estimates)) {
       posterior::variables(point_estimates) <- repaired_variables
@@ -489,7 +540,10 @@ read_cmdstan_csv <- function(files,
     if (length(draws) == 0) {
       pathfinder_draws <- NULL
     } else {
-      pathfinder_draws <- do.call(as_draws_format, list(draws[[1]][, colnames(draws[[1]]), drop = FALSE]))
+      pathfinder_draws <- do.call(
+        as_draws_format,
+        list(draws[[1]][, colnames(draws[[1]]), drop = FALSE])
+      )
       posterior::variables(pathfinder_draws) <- repaired_variables
     }
     list(
@@ -507,10 +561,12 @@ read_cmdstan_csv <- function(files,
 #'   `TRUE` but set to `FALSE` to avoid checking for problems with divergences
 #'   and treedepth.
 #'
-as_cmdstan_fit <- function(files,
-                           variables = NULL,
-                           check_diagnostics = TRUE,
-                           format = getOption("cmdstanr_draws_format")) {
+as_cmdstan_fit <- function(
+  files,
+  variables = NULL,
+  check_diagnostics = TRUE,
+  format = getOption("cmdstanr_draws_format")
+) {
   csv_contents <- read_cmdstan_csv(
     files,
     variables = if (is.null(variables)) "" else variables,
@@ -523,7 +579,8 @@ as_cmdstan_fit <- function(files,
       variables <- posterior::variables(csv_contents$post_warmup_draws)
     } else if (method == "optimize") {
       variables <- posterior::variables(csv_contents$point_estimates)
-    } else { # variational, laplace, pathfinder
+    } else {
+      # variational, laplace, pathfinder
       variables <- posterior::variables(csv_contents$draws)
     }
     csv_contents$metadata$variables <- variables
@@ -563,8 +620,10 @@ CmdStanMCMC_CSV <- R6::R6Class(
       private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
       private$warmup_draws_ <- csv_contents$warmup_draws
       private$draws_ <- csv_contents$post_warmup_draws
-      if (check_diagnostics &&
-          !isTRUE(private$metadata_$algorithm == "fixed_param")) {
+      if (
+        check_diagnostics &&
+          !isTRUE(private$metadata_$algorithm == "fixed_param")
+      ) {
         invisible(self$diagnostic_summary())
       }
       invisible(self)
@@ -653,13 +712,20 @@ CmdStanPathfinder_CSV <- R6::R6Class(
 
 # these methods are unavailable because there's no CmdStanRun object
 unavailable_methods_CmdStanFit_CSV <- c(
-  "cmdstan_diagnose", "cmdstan_summary",
+  "cmdstan_diagnose",
+  "cmdstan_summary",
   "code",
-  "save_data_file", "data_file",
-  "save_latent_dynamics_files", "latent_dynamics_files",
-  "save_profile_files", "profile_files", "profiles",
-  "save_config_files", "config_files",
-  "save_metric_files", "metric_files",
+  "save_data_file",
+  "data_file",
+  "save_latent_dynamics_files",
+  "latent_dynamics_files",
+  "save_profile_files",
+  "profile_files",
+  "profiles",
+  "save_config_files",
+  "config_files",
+  "save_metric_files",
+  "metric_files",
   "save_output_files",
   "init",
   "output",
@@ -669,23 +735,53 @@ unavailable_methods_CmdStanFit_CSV <- c(
   "time", # available for MCMC, not other methods
   "expose_functions",
   "init_model_methods",
-  "log_prob", "grad_log_prob", "hessian",
-  "constrain_variables", "unconstrain_variables", "unconstrain_draws"
+  "log_prob",
+  "grad_log_prob",
+  "hessian",
+  "constrain_variables",
+  "unconstrain_variables",
+  "unconstrain_draws"
 )
 error_unavailable_CmdStanFit_CSV <- function(...) {
-  stop("This method is not available for objects created using as_cmdstan_fit().",
-       call. = FALSE)
+  stop(
+    "This method is not available for objects created using as_cmdstan_fit().",
+    call. = FALSE
+  )
 }
 for (method in unavailable_methods_CmdStanFit_CSV) {
   if (method != "time") {
-    CmdStanMCMC_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
+    CmdStanMCMC_CSV$set(
+      "public",
+      name = method,
+      value = error_unavailable_CmdStanFit_CSV
+    )
   }
-  CmdStanMLE_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
-  CmdStanVB_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
-  CmdStanLaplace_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
-  CmdStanPathfinder_CSV$set("public", name = method, value = error_unavailable_CmdStanFit_CSV)
+  CmdStanMLE_CSV$set(
+    "public",
+    name = method,
+    value = error_unavailable_CmdStanFit_CSV
+  )
+  CmdStanVB_CSV$set(
+    "public",
+    name = method,
+    value = error_unavailable_CmdStanFit_CSV
+  )
+  CmdStanLaplace_CSV$set(
+    "public",
+    name = method,
+    value = error_unavailable_CmdStanFit_CSV
+  )
+  CmdStanPathfinder_CSV$set(
+    "public",
+    name = method,
+    value = error_unavailable_CmdStanFit_CSV
+  )
 }
-CmdStanLaplace_CSV$set("public", name = "mode", value = error_unavailable_CmdStanFit_CSV)
+CmdStanLaplace_CSV$set(
+  "public",
+  name = "mode",
+  value = error_unavailable_CmdStanFit_CSV
+)
 
 
 # csv reading internals ---------------------------------------------------
@@ -727,7 +823,9 @@ decompress_csv <- function(file, dir) {
   )$status
   if (is.na(status) || status != 0) {
     stop(
-      "Compressed CSV '", basename(file), "' is truncated or corrupt.",
+      "Compressed CSV '",
+      basename(file),
+      "' is truncated or corrupt.",
       call. = FALSE
     )
   }
@@ -772,34 +870,57 @@ read_csv_metadata <- function(csv_file) {
       if (all(csv_file_info$algorithm != "fixed_param")) {
         non_sampler_diagnostics <- c("lp__", "log_p__", "log_g__", "log_q__")
         if (csv_file_info$method == "pathfinder") {
-          non_sampler_diagnostics <- c(non_sampler_diagnostics, "lp_approx__", "path__")
+          non_sampler_diagnostics <- c(
+            non_sampler_diagnostics,
+            "lp_approx__",
+            "path__"
+          )
         }
-        csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
-        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% non_sampler_diagnostics)]
-        csv_file_info[["variables"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
+        csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(
+          all_names,
+          "__"
+        )]
+        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[[
+          "sampler_diagnostics"
+        ]][
+          !(csv_file_info[["sampler_diagnostics"]] %in% non_sampler_diagnostics)
+        ]
+        csv_file_info[["variables"]] <- all_names[
+          !(all_names %in% csv_file_info[["sampler_diagnostics"]])
+        ]
       } else {
         csv_file_info[["variables"]] <- all_names[!endsWith(all_names, "__")]
       }
     } else {
       parse_key_val <- TRUE
-      if (grepl("# Diagonal elements of inverse mass matrix:", line, perl = TRUE)) {
+      if (
+        grepl("# Diagonal elements of inverse mass matrix:", line, perl = TRUE)
+      ) {
         inv_metric_next <- TRUE
         parse_key_val <- FALSE
         inv_metric_rows <- 1
         inv_metric_rows_to_read <- 1
         dense_inv_metric <- FALSE
-      } else if (grepl("# Elements of inverse mass matrix:", line, perl = TRUE)) {
+      } else if (
+        grepl("# Elements of inverse mass matrix:", line, perl = TRUE)
+      ) {
         inv_metric_next <- TRUE
         parse_key_val <- FALSE
         dense_inv_metric <- TRUE
       } else if (inv_metric_next) {
         inv_metric_split <- strsplit(gsub("# ", "", line), ",")
-        numeric_inv_metric_split <- suppressWarnings(rapply(inv_metric_split, as.numeric))
+        numeric_inv_metric_split <- suppressWarnings(rapply(
+          inv_metric_split,
+          as.numeric
+        ))
         if (inv_metric_rows == -1 && dense_inv_metric) {
           inv_metric_rows <- length(inv_metric_split[[1]])
           inv_metric_rows_to_read <- inv_metric_rows
         }
-        csv_file_info$inv_metric <- c(csv_file_info$inv_metric, numeric_inv_metric_split)
+        csv_file_info$inv_metric <- c(
+          csv_file_info$inv_metric,
+          numeric_inv_metric_split
+        )
         inv_metric_rows_to_read <- inv_metric_rows_to_read - 1
         if (inv_metric_rows_to_read == 0) {
           inv_metric_next <- FALSE
@@ -814,7 +935,13 @@ read_csv_metadata <- function(csv_file) {
             tmp <- as.numeric(tmp[nzchar(tmp)])
             gradients <- rbind(gradients, tmp)
             if (dim(gradients)[1] == 1) {
-              colnames(gradients) <- c("param_idx", "value", "model", "finite_diff", "error")
+              colnames(gradients) <- c(
+                "param_idx",
+                "value",
+                "model",
+                "finite_diff",
+                "error"
+              )
             }
           }
         }
@@ -857,19 +984,26 @@ read_csv_metadata <- function(csv_file) {
             total_time <- generated_quantities_time
           }
         }
-        if (!is.null(csv_file_info$method) &&
+        if (
+          !is.null(csv_file_info$method) &&
             csv_file_info$method == "diagnose" &&
-            any(key_val[1] == "lp")) {
+            any(key_val[1] == "lp")
+        ) {
           diagnose_gradients <- TRUE
         }
       }
     }
   }
-  if (csv_file_info$method != "diagnose" &&
+  if (
+    csv_file_info$method != "diagnose" &&
       !isTRUE(csv_file_info$algorithm == "fixed_param") &&
       length(csv_file_info$sampler_diagnostics) == 0 &&
-      length(csv_file_info$variables) == 0) {
-    stop("Supplied CSV file does not contain any variable names or data!", call. = FALSE)
+      length(csv_file_info$variables) == 0
+  ) {
+    stop(
+      "Supplied CSV file does not contain any variable names or data!",
+      call. = FALSE
+    )
   }
   if (inv_metric_rows > 0 && csv_file_info$metric == "dense_e") {
     rows <- inv_metric_rows
@@ -885,7 +1019,10 @@ read_csv_metadata <- function(csv_file) {
   csv_file_info$step_size <- csv_file_info$stepsize
   csv_file_info$iter_warmup <- csv_file_info$num_warmup
   csv_file_info$iter_sampling <- csv_file_info$num_samples
-  if (csv_file_info$method %in% c("variational", "optimize", "laplace", "pathfinder")) {
+  if (
+    csv_file_info$method %in%
+      c("variational", "optimize", "laplace", "pathfinder")
+  ) {
     csv_file_info$threads <- csv_file_info$num_threads
   } else {
     csv_file_info$threads_per_chain <- csv_file_info$num_threads
@@ -917,9 +1054,11 @@ read_csv_metadata <- function(csv_file) {
 
   # cmdstan records multi-path Pathfinder inits as one comma-separated value,
   # so we split it so metadata and fit$init() have one file per path
-  if (identical(csv_file_info$method, "pathfinder") &&
+  if (
+    identical(csv_file_info$method, "pathfinder") &&
       is.character(csv_file_info$init) &&
-      isTRUE(csv_file_info$num_paths > 1)) {
+      isTRUE(csv_file_info$num_paths > 1)
+  ) {
     csv_file_info$init <- strsplit(csv_file_info$init, ",", fixed = TRUE)[[1]]
   }
   if (length(gradients) > 0) {
@@ -929,10 +1068,14 @@ read_csv_metadata <- function(csv_file) {
   # revert any WSL-updated paths before returning the metadata
   if (os_is_wsl()) {
     csv_file_info$init <- wsl_safe_path(csv_file_info$init, revert = TRUE)
-    csv_file_info$profile_file <- wsl_safe_path(csv_file_info$profile_file,
-                                                revert = TRUE)
-    csv_file_info$fitted_params <- wsl_safe_path(csv_file_info$fitted_params,
-                                                  revert = TRUE)
+    csv_file_info$profile_file <- wsl_safe_path(
+      csv_file_info$profile_file,
+      revert = TRUE
+    )
+    csv_file_info$fitted_params <- wsl_safe_path(
+      csv_file_info$fitted_params,
+      revert = TRUE
+    )
   }
   csv_file_info <- lapply(csv_file_info, function(item) {
     if (is.character(item) && length(item) == 1) {
@@ -955,16 +1098,28 @@ read_csv_metadata <- function(csv_file) {
 check_csv_metadata_matches <- function(csv_metadata) {
   model_name <- sapply(csv_metadata, function(x) x$model_name)
   if (!all(model_name == model_name[1])) {
-    stop("Supplied CSV files were not generated with the same model!", call. = FALSE)
+    stop(
+      "Supplied CSV files were not generated with the same model!",
+      call. = FALSE
+    )
   }
   method <- sapply(csv_metadata, function(x) x$method)
   if (!all(method == method[1])) {
-    stop("Supplied CSV files were produced by different methods and need to be read in separately!", call. = FALSE)
+    stop(
+      "Supplied CSV files were produced by different methods and need to be read in separately!",
+      call. = FALSE
+    )
   }
   for (i in 2:length(csv_metadata)) {
-    if (length(csv_metadata[[1]]$variables) != length(csv_metadata[[i]]$variables) ||
-      !all(csv_metadata[[1]]$variables == csv_metadata[[i]]$variables)) {
-      stop("Supplied CSV files have samples for different variables!", call. = FALSE)
+    if (
+      length(csv_metadata[[1]]$variables) !=
+        length(csv_metadata[[i]]$variables) ||
+        !all(csv_metadata[[1]]$variables == csv_metadata[[i]]$variables)
+    ) {
+      stop(
+        "Supplied CSV files have samples for different variables!",
+        call. = FALSE
+      )
     }
   }
   if (method[1] == "sample") {
@@ -972,21 +1127,45 @@ check_csv_metadata_matches <- function(csv_metadata) {
     thin <- sapply(csv_metadata, function(x) x$thin)
     save_warmup <- sapply(csv_metadata, function(x) x$save_warmup)
     iter_warmup <- sapply(csv_metadata, function(x) x$iter_warmup)
-    if (!all(iter_sampling == iter_sampling[1]) ||
+    if (
+      !all(iter_sampling == iter_sampling[1]) ||
         !all(thin == thin[1]) ||
         !all(save_warmup == save_warmup[1]) ||
-        (save_warmup[1] == 1 && !all(iter_warmup == iter_warmup[1]))) {
-      stop("Supplied CSV files do not match in the number of output samples!", call. = FALSE)
+        (save_warmup[1] == 1 && !all(iter_warmup == iter_warmup[1]))
+    ) {
+      stop(
+        "Supplied CSV files do not match in the number of output samples!",
+        call. = FALSE
+      )
     }
   } else if (method[1] == "variational") {
     output_samples <- sapply(csv_metadata, function(x) x$output_samples)
     if (!all(output_samples == output_samples[1])) {
-      stop("Supplied CSV files do not match in the number of output samples!", call. = FALSE)
+      stop(
+        "Supplied CSV files do not match in the number of output samples!",
+        call. = FALSE
+      )
     }
   }
-  match_list <- c("stan_version_major", "stan_version_minor", "stan_version_patch", "gamma", "kappa",
-                  "t0", "init_buffer", "term_buffer", "window", "algorithm", "engine", "max_treedepth",
-                  "metric", "stepsize_jitter", "adapt_engaged", "adapt_delta", "iter_warmup")
+  match_list <- c(
+    "stan_version_major",
+    "stan_version_minor",
+    "stan_version_patch",
+    "gamma",
+    "kappa",
+    "t0",
+    "init_buffer",
+    "term_buffer",
+    "window",
+    "algorithm",
+    "engine",
+    "max_treedepth",
+    "metric",
+    "stepsize_jitter",
+    "adapt_engaged",
+    "adapt_delta",
+    "iter_warmup"
+  )
   not_matching <- c()
   for (name in names(csv_metadata[[1]])) {
     if (name %in% match_list) {
@@ -1002,8 +1181,11 @@ check_csv_metadata_matches <- function(csv_metadata) {
   }
   if (length(not_matching) > 0) {
     not_matching_list <- paste(unique(not_matching), collapse = ", ")
-    warning("Supplied CSV files do not match in the following arguments: ",
-            paste(not_matching_list, collapse = ", "), call. = FALSE)
+    warning(
+      "Supplied CSV files do not match in the following arguments: ",
+      paste(not_matching_list, collapse = ", "),
+      call. = FALSE
+    )
   }
   NULL
 }
@@ -1050,8 +1232,10 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     # loop over requests not exactly matched
     for (id in which(is.na(matched))) {
       prefix <- paste0(requested[id], c("[", ":"))
-      matched[[id]] <- which(startsWith(all_remaining, prefix[1]) |
-                               startsWith(all_remaining, prefix[2]))
+      matched[[id]] <- which(
+        startsWith(all_remaining, prefix[1]) |
+          startsWith(all_remaining, prefix[2])
+      )
     }
     # collect all unread variables
     unread <- all_remaining[unlist(matched)]
@@ -1122,8 +1306,10 @@ unflatten_variables <- function(values, names, declarations = NULL) {
   names <- unrepair_variable_names(names)
   variables <- sub("(\\.|:).*", "", names)
   suffixes <- substring(names, nchar(variables) + 1)
-  groups <- split(seq_along(values),
-                  factor(variables, levels = unique(variables)))
+  groups <- split(
+    seq_along(values),
+    factor(variables, levels = unique(variables))
+  )
   result <- lapply(names(groups), function(var) {
     unflatten_leaves(values[groups[[var]]], suffixes[groups[[var]]], var)
   })
@@ -1146,15 +1332,19 @@ unflatten_leaves <- function(values, suffixes, name) {
     if (!identical(sort(suffixes), c(".imag", ".real"))) {
       stop("Variable '", name, "' is missing elements.", call. = FALSE)
     }
-    return(complex(real = values[suffixes == ".real"],
-                   imaginary = values[suffixes == ".imag"]))
+    return(complex(
+      real = values[suffixes == ".real"],
+      imaginary = values[suffixes == ".imag"]
+    ))
   }
   if (startsWith(suffixes[1], ":")) {
     elements <- as.integer(sub("^:([0-9]+).*", "\\1", suffixes))
     rest <- sub("^:[0-9]+", "", suffixes)
     # an element with no columns is empty
-    groups <- split(seq_along(values),
-                    factor(elements, levels = seq_len(max(elements))))
+    groups <- split(
+      seq_along(values),
+      factor(elements, levels = seq_len(max(elements)))
+    )
     return(unname(lapply(groups, function(i) {
       if (length(i) == 0) {
         numeric(0)
@@ -1167,13 +1357,18 @@ unflatten_leaves <- function(values, suffixes, name) {
   # nothing
   indices <- sub("^((\\.[0-9]+)+).*", "\\1", suffixes)
   rest <- substring(suffixes, nchar(indices) + 1)
-  index <- lapply(strsplit(indices, ".", fixed = TRUE),
-                  function(i) as.integer(i[-1]))
+  index <- lapply(strsplit(indices, ".", fixed = TRUE), function(i) {
+    as.integer(i[-1])
+  })
   dims <- do.call(pmax, index)
   # column-major position of each column, whatever order they came in
-  position <- vapply(index, function(i) {
-    sum((i - 1) * cumprod(c(1, dims[-length(dims)]))) + 1
-  }, numeric(1))
+  position <- vapply(
+    index,
+    function(i) {
+      sum((i - 1) * cumprod(c(1, dims[-length(dims)]))) + 1
+    },
+    numeric(1)
+  )
   if (length(unique(position)) != prod(dims)) {
     stop("Variable '", name, "' is missing elements.", call. = FALSE)
   }
@@ -1221,8 +1416,7 @@ flatten_variables <- function(variables) {
     return(unlist(lapply(variables, flatten_variables), use.names = FALSE))
   }
   if (is.complex(variables)) {
-    return(as.vector(rbind(as.vector(Re(variables)),
-                           as.vector(Im(variables)))))
+    return(as.vector(rbind(as.vector(Re(variables)), as.vector(Im(variables)))))
   }
   as.vector(variables)
 }

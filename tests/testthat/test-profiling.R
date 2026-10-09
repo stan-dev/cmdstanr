@@ -8,11 +8,11 @@ test_that("profiling works if profiling data is present", {
   utils::capture.output(
     fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
   )
-  expect_equal(length(fit$profile_files()), 4)
+  expect_length(fit$profile_files(), 4)
   profiles <- fit$profiles()
-  expect_equal(length(profiles), 4)
-  expect_equal(dim(profiles[[1]]), c(3,9))
-  for (name in profiles[[1]][,"name"]) {
+  expect_length(profiles, 4)
+  expect_equal(dim(profiles[[1]]), c(3, 9))
+  for (name in profiles[[1]][, "name"]) {
     expect_true(name %in% c("udf", "priors", "glm"))
   }
 
@@ -24,9 +24,9 @@ test_that("profiling works if profiling data is present", {
   )
 
   profiles_no_csv <- fit$profiles()
-  expect_equal(length(profiles_no_csv), 4)
-  expect_equal(dim(profiles_no_csv[[1]]), c(3,9))
-  for (name in profiles_no_csv[[1]][,"name"]) {
+  expect_length(profiles_no_csv, 4)
+  expect_equal(dim(profiles_no_csv[[1]]), c(3, 9))
+  for (name in profiles_no_csv[[1]][, "name"]) {
     expect_true(name %in% c("udf", "priors", "glm"))
   }
 })
@@ -35,7 +35,11 @@ test_that("profiling errors if no profiling files are present", {
   mod <- testing_model("logistic")
   suppressWarnings(
     utils::capture.output(
-      fit <- mod$sample(data = testing_data("logistic"), refresh = 0, seed = 123)
+      fit <- mod$sample(
+        data = testing_data("logistic"),
+        refresh = 0,
+        seed = 123
+      )
     )
   )
   expect_error(
@@ -43,10 +47,14 @@ test_that("profiling errors if no profiling files are present", {
     "No profile files found. The model that produced the fit did not use any profiling.",
     fixed = TRUE
   )
-  expect_error(fit$profiles(),
-               "No profile files found. The model that produced the fit did not use any profiling.")
-  expect_error(fit$save_profile_files(),
-               "No profile files found. The model that produced the fit did not use any profiling.")
+  expect_error(
+    fit$profiles(),
+    "No profile files found. The model that produced the fit did not use any profiling."
+  )
+  expect_error(
+    fit$save_profile_files(),
+    "No profile files found. The model that produced the fit did not use any profiling."
+  )
 })
 
 test_that("saving profile csv output works", {

@@ -15,15 +15,21 @@ test_that("stanc options without a dedicated argument are left alone", {
 
 test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
   # Unnamed options are already flag names and are never quoted
-  expect_equal(stanc_options_to_args(list("allow-undefined")), "--allow-undefined")
+  expect_equal(
+    stanc_options_to_args(list("allow-undefined")),
+    "--allow-undefined"
+  )
   expect_equal(
     stanc_options_to_args(list("allow-undefined"), quote_values = TRUE),
     "--allow-undefined"
   )
 
   # Logical values mark boolean flags
-  expect_equal(stanc_options_to_args(list("warn-pedantic" = TRUE)), "--warn-pedantic")
-  expect_equal(stanc_options_to_args(list("warn-pedantic" = FALSE)), NULL)
+  expect_equal(
+    stanc_options_to_args(list("warn-pedantic" = TRUE)),
+    "--warn-pedantic"
+  )
+  expect_null(stanc_options_to_args(list("warn-pedantic" = FALSE)))
   expect_equal(
     stanc_options_to_args(list("O1")),
     stanc_options_to_args(list(O1 = TRUE))
@@ -37,14 +43,18 @@ test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
   # make_shell_quote() quotes only arguments holding characters outside its
   # safe set, so a plain value comes back unquoted
   expect_equal(
-    stanc_options_to_args(list(canonicalize = "deprecations"), quote_values = TRUE),
+    stanc_options_to_args(
+      list(canonicalize = "deprecations"),
+      quote_values = TRUE
+    ),
     "--canonicalize=deprecations"
   )
 
   # A value outside the safe set comes back as shQuote() writes it
   expect_equal(
     stanc_options_to_args(
-      list("filename-in-msg" = "O'Brien's model.stan"), quote_values = TRUE
+      list("filename-in-msg" = "O'Brien's model.stan"),
+      quote_values = TRUE
     ),
     shQuote("--filename-in-msg=O'Brien's model.stan", type = "sh")
   )
@@ -66,8 +76,8 @@ test_that("stanc_options_to_args() builds direct and Make-quoted arguments", {
     "--max-line-length=78"
   )
 
-  expect_equal(stanc_options_to_args(list()), NULL)
-  expect_equal(stanc_options_to_args(NULL), NULL)
+  expect_null(stanc_options_to_args(list()))
+  expect_null(stanc_options_to_args(NULL))
 })
 
 test_that("a flag the call emits drops the make/local copy", {
@@ -79,7 +89,10 @@ test_that("a flag the call emits drops the make/local copy", {
 
   # One hyphen, not two: the next word is a flag of its own
   expect_equal(
-    drop_overridden_stancflags(c("--warn-pedantic", "-fno-soa"), c("--warn-pedantic")),
+    drop_overridden_stancflags(
+      c("--warn-pedantic", "-fno-soa"),
+      c("--warn-pedantic")
+    ),
     "-fno-soa"
   )
 
@@ -100,7 +113,10 @@ test_that("a flag the call emits drops the make/local copy", {
   )
 
   expect_equal(
-    drop_overridden_stancflags(c("--O1", "--warn-pedantic"), c("--name=bernoulli_model")),
+    drop_overridden_stancflags(
+      c("--O1", "--warn-pedantic"),
+      c("--name=bernoulli_model")
+    ),
     c("--O1", "--warn-pedantic")
   )
   expect_equal(
@@ -110,7 +126,7 @@ test_that("a flag the call emits drops the make/local copy", {
 })
 
 test_that("include_paths_stanc3_args() works", {
-  expect_equal(include_paths_stanc3_args(), NULL)
+  expect_null(include_paths_stanc3_args())
   path_1 <- file.path(tempdir(), "folder1")
   if (!dir.exists(path_1)) {
     dir.create(path_1)
@@ -122,7 +138,8 @@ test_that("include_paths_stanc3_args() works", {
   path_1_make <- make_shell_quote(path_1_compare)
   expect_equal(
     include_paths_stanc3_args(path_1),
-    paste0("--include-paths=", path_1_make))
+    paste0("--include-paths=", path_1_make)
+  )
   path_2 <- file.path(tempdir(), "folder 2")
   if (!dir.exists(path_2)) {
     dir.create(path_2)
@@ -173,8 +190,13 @@ test_that("include_paths_stanc3_args() works", {
       include_paths_stanc3_args(c(path_3, path_4)),
       paste0(
         "--include-paths=",
-        "\"", path_3, "\"", ",",
-        "'", sub("$5", "$$5", path_4, fixed = TRUE), "'"
+        "\"",
+        path_3,
+        "\"",
+        ",",
+        "'",
+        sub("$5", "$$5", path_4, fixed = TRUE),
+        "'"
       )
     )
     expect_equal(

@@ -42,8 +42,6 @@ test_that("diagnose() method runs when all arguments specified validly", {
 })
 
 test_that("diagnose() method runs when arguments are specified in scientific notation", {
-
-
   # specifying all arguments validly
   fit1 <- do.call(mod$diagnose, ok_arg_sci_nota_values)
   expect_s3_class(fit1, "CmdStanDiagnose")
@@ -80,21 +78,20 @@ test_that("diagnose() works with specified args", {
     epsilon = 1e-6,
     error = 1e-6
   )
-  expect_true(is.data.frame(fit$gradients()))
+  expect_s3_class(fit$gradients(), "data.frame")
   expect_equal(dim(fit$gradients()), c(1, 5))
   expect_true(is.numeric(fit$lp()))
 })
 
 test_that("diagnose() works for examples", {
   fit_logistic <- cmdstanr_example(example = "logistic", method = "diagnose")
-  expect_true(is.data.frame(fit_logistic$gradients()))
+  expect_s3_class(fit_logistic$gradients(), "data.frame")
   expect_equal(dim(fit_logistic$gradients()), c(4, 5))
   expect_true(is.numeric(fit_logistic$lp()))
   fit_schools <- cmdstanr_example(example = "schools", method = "diagnose")
-  expect_true(is.data.frame(fit_schools$gradients()))
+  expect_s3_class(fit_schools$gradients(), "data.frame")
   expect_equal(dim(fit_schools$gradients()), c(10, 5))
   expect_true(is.numeric(fit_schools$lp()))
-  expect_true(is.list(fit_schools$metadata()))
+  expect_type(fit_schools$metadata(), "list")
   expect_equal(fit_schools$metadata()$test, "gradient")
 })
-

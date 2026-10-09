@@ -56,7 +56,8 @@ test_that("variational() method runs when all arguments specified validly", {
 test_that("variational() errors if threads specified but not enabled", {
   expect_error(
     mod$variational(data = data_list, threads = 2, seed = 123),
-    "does not report threading as enabled", fixed = TRUE
+    "does not report threading as enabled",
+    fixed = TRUE
   )
 })
 

@@ -19,3 +19,5 @@
 ^AGENTS\.md$
 ^CLAUDE\.md$
 ^\.claude$
+^[.]?air[.]toml$
+^jarl\.toml$

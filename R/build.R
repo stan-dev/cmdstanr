@@ -21,15 +21,17 @@
 #' @return A list: `exe_file`, `record`, `include_paths` (the effective ones),
 #'   `info` (what `stanc --info` reported) and `hpp_code` (the model's C++).
 #' @noRd
-build_executable <- function(stan_file,
-                             dir = NULL,
-                             include_paths = NULL,
-                             user_header = NULL,
-                             cpp_options = NULL,
-                             stanc_options = NULL,
-                             pedantic = FALSE,
-                             force_recompile = NULL,
-                             quiet = TRUE) {
+build_executable <- function(
+  stan_file,
+  dir = NULL,
+  include_paths = NULL,
+  user_header = NULL,
+  cpp_options = NULL,
+  stanc_options = NULL,
+  pedantic = FALSE,
+  force_recompile = NULL,
+  quiet = TRUE
+) {
   cpp_options <- assert_valid_cpp_options(cpp_options)
   stanc_options <- assert_valid_stanc_options(stanc_options) %||% list()
   checkmate::assert_string(user_header, null.ok = TRUE)
@@ -42,7 +44,10 @@ build_executable <- function(stan_file,
     user_header <- resolve_path(user_header)
     if (!file.exists(user_header)) {
       stop(
-        "User header file '", user_header, "' does not exist.", call. = FALSE
+        "User header file '",
+        user_header,
+        "' does not exist.",
+        call. = FALSE
       )
     }
   }
@@ -75,14 +80,17 @@ build_executable <- function(stan_file,
   forced <- NULL
   if (isTRUE(force_recompile)) {
     forced <- "force_recompile"
-  } else if (is.null(force_recompile) &&
-             isTRUE(getOption("cmdstanr_force_recompile"))) {
+  } else if (
+    is.null(force_recompile) &&
+      isTRUE(getOption("cmdstanr_force_recompile"))
+  ) {
     forced <- "force_recompile_option"
   }
   current <- read_current_build(stan_file, include_paths, user_header, exe)
   reasons <- c(
     assess_build(
-      list(configuration = configuration, executable_hash = NULL), current
+      list(configuration = configuration, executable_hash = NULL),
+      current
     ),
     forced
   )
@@ -98,13 +106,15 @@ build_executable <- function(stan_file,
   make_vars <- cpp_options_to_compile_flags(cpp_options)
   if (!is.null(user_header)) {
     make_vars <- c(
-      make_vars, paste0("USER_HEADER=", wsl_safe_path(user_header))
+      make_vars,
+      paste0("USER_HEADER=", wsl_safe_path(user_header))
     )
   }
   if (rebuild) {
     if (is.null(current$info)) {
       current <- c(
-        current, resolve_dependencies(stan_file, include_paths, user_header)
+        current,
+        resolve_dependencies(stan_file, include_paths, user_header)
       )
     }
     from_make <- stancflags_added_by_make(make_vars)
@@ -115,7 +125,8 @@ build_executable <- function(stan_file,
   from_make <- drop_overridden_stancflags(from_make, stancflags_call)
   stancflags_direct <- c(stancflags_call, from_make)
   stanc_inc_paths <- include_paths_stanc3_args(
-    include_paths, direct_call = TRUE
+    include_paths,
+    direct_call = TRUE
   )
 
   # On a rebuild make compiles a copy of the Stan file, and the C++ below is
@@ -126,15 +137,19 @@ build_executable <- function(stan_file,
   source <- stan_file
   if (rebuild) {
     source <- tempfile(
-      pattern = "model-", fileext = paste0(".", tools::file_ext(stan_file))
+      pattern = "model-",
+      fileext = paste0(".", tools::file_ext(stan_file))
     )
     file.copy(stan_file, source, overwrite = TRUE)
     withr::defer(unlink(c(
-      source, paste0(strip_ext(source), ".hpp"), cmdstan_ext(strip_ext(source))
+      source,
+      paste0(strip_ext(source), ".hpp"),
+      cmdstan_ext(strip_ext(source))
     )))
   }
   hpp_code <- get_standalone_hpp(
-    source, c(stanc_inc_paths, stancflags_direct),
+    source,
+    c(stanc_inc_paths, stancflags_direct),
     show_warnings = !rebuild && pedantic
   )
 
@@ -148,21 +163,27 @@ build_executable <- function(stan_file,
     # get_cmdstan_flags() split the flags from make into words. Requote them
     # for the STANCFLAGS value handed back to make.
     stancflags_quoted <- stanc_options_to_args(
-      c(stanc_options, added), quote_values = TRUE
+      c(stanc_options, added),
+      quote_values = TRUE
     )
     stancflags_make <- paste0(
-      "STANCFLAGS += ", include_paths_stanc3_args(include_paths),
+      "STANCFLAGS += ",
+      include_paths_stanc3_args(include_paths),
       paste0(
-        " ", c(stancflags_quoted, make_shell_quote(from_make)), collapse = ""
+        " ",
+        c(stancflags_quoted, make_shell_quote(from_make)),
+        collapse = ""
       )
     )
     run_make(
-      c(wsl_safe_path(repair_path(tmp_exe)), make_vars, stancflags_make), quiet
+      c(wsl_safe_path(repair_path(tmp_exe)), make_vars, stancflags_make),
+      quiet
     )
     tbb_dir <- tbb_dir_from_options(cpp_options)
     record <- new_build_record(
       configuration = append(
-        configuration, list(stanc_options_from_make = as.list(from_make)),
+        configuration,
+        list(stanc_options_from_make = as.list(from_make)),
         after = 3
       ),
       reported_features = reported_features_from_exe(tmp_exe, tbb_dir),
@@ -171,7 +192,8 @@ build_executable <- function(stan_file,
       cmdstan = current$cmdstan,
       tbb_dir = tbb_dir,
       untracked_dependencies = untracked_dependencies(
-        current$dependencies$make_local$built_from, user_header
+        current$dependencies$make_local$built_from,
+        user_header
       )
     )
     leftover_backup <- install_executable(tmp_exe, exe, record)
@@ -182,7 +204,8 @@ build_executable <- function(stan_file,
     if (!is.null(leftover_backup)) {
       warning(
         "Files left over from the previous build could not be removed: '",
-        paste(leftover_backup, collapse = "', '"), "'.",
+        paste(leftover_backup, collapse = "', '"),
+        "'.",
         call. = FALSE
       )
     }
@@ -232,33 +255,40 @@ install_executable <- function(from, to, record) {
   # Nothing at the destination changes until both files are staged beside it.
   candidate <- stage("exe-new-")
   staged_record <- build_record_path(candidate)
-  staging <- tryCatch({
-    if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
-      stop(
-        "Could not stage the compiled executable at '", candidate, "'.",
-        call. = FALSE
-      )
-    }
-    if (os_is_wsl()) {
-      chmod <- processx::run(
-        command = "wsl",
-        args = c("chmod", "+x", wsl_safe_path(candidate)),
-        error_on_status = FALSE
-      )
-      if (is.na(chmod$status) || chmod$status != 0) {
+  staging <- tryCatch(
+    {
+      if (!isTRUE(suppressWarnings(file.copy(from, candidate)))) {
         stop(
-          "Could not set the execute bit on the compiled executable.",
+          "Could not stage the compiled executable at '",
+          candidate,
+          "'.",
           call. = FALSE
         )
       }
-    }
-    write_build_record(record, candidate)
-    NULL
-  }, error = function(e) e)
+      if (os_is_wsl()) {
+        chmod <- processx::run(
+          command = "wsl",
+          args = c("chmod", "+x", wsl_safe_path(candidate)),
+          error_on_status = FALSE
+        )
+        if (is.na(chmod$status) || chmod$status != 0) {
+          stop(
+            "Could not set the execute bit on the compiled executable.",
+            call. = FALSE
+          )
+        }
+      }
+      write_build_record(record, candidate)
+      NULL
+    },
+    error = function(e) e
+  )
   if (!is.null(staging)) {
     stop(
       conditionMessage(staging),
-      " The model executable at '", to, "' was not modified.",
+      " The model executable at '",
+      to,
+      "' was not modified.",
       left_behind(remove(c(candidate, staged_record))),
       call. = FALSE
     )
@@ -277,16 +307,26 @@ install_executable <- function(from, to, record) {
   )
   moves <- moves[lengths(moves) == 2]
   done <- list()
-  failure <- tryCatch({
-    for (move in moves) {
-      if (!rename(move[1], move[2])) {
-        stop("Could not move '", move[1], "' to '", move[2], "'.", call. = FALSE)
+  failure <- tryCatch(
+    {
+      for (move in moves) {
+        if (!rename(move[1], move[2])) {
+          stop(
+            "Could not move '",
+            move[1],
+            "' to '",
+            move[2],
+            "'.",
+            call. = FALSE
+          )
+        }
+        done <- c(done, list(move))
       }
-      done <- c(done, list(move))
-    }
-    verify_build_record(to)
-    NULL
-  }, error = function(e) e)
+      verify_build_record(to)
+      NULL
+    },
+    error = function(e) e
+  )
   if (!is.null(failure)) {
     # A later undo can put the old file back over one that would not move.
     stuck <- character()
@@ -298,7 +338,9 @@ install_executable <- function(from, to, record) {
       }
     }
     stop(
-      "Could not install the compiled executable at '", to, "': ",
+      "Could not install the compiled executable at '",
+      to,
+      "': ",
       conditionMessage(failure),
       if (length(stuck) == 0) {
         " The executable and build record there are as they were."
@@ -351,7 +393,9 @@ inspect_executable <- function(exe_file) {
   features <- reported_features_from_exe(exe_file)
   if (is.null(features[["stan_version"]])) {
     stop(
-      "Running '", exe_file, "' with the argument `info` did not report a ",
+      "Running '",
+      exe_file,
+      "' with the argument `info` did not report a ",
       "Stan version, so it is either not a CmdStan executable or cannot be ",
       "run.",
       call. = FALSE
@@ -388,8 +432,12 @@ facts_from_record <- function(record) {
 #'   `path` and `version`; and, when the sources were hashed, `info` and
 #'   `dependencies` from `resolve_dependencies()`.
 #' @noRd
-read_current_build <- function(stan_file, include_paths, user_header,
-                               exe_file) {
+read_current_build <- function(
+  stan_file,
+  include_paths,
+  user_header,
+  exe_file
+) {
   current <- list(
     exe_file = exe_file,
     record = list(status = "unavailable", reason = "no_executable"),
@@ -405,7 +453,8 @@ read_current_build <- function(stan_file, include_paths, user_header,
   }
   if (current$record$status == "available" && same_cmdstan()) {
     current <- c(
-      current, resolve_dependencies(stan_file, include_paths, user_header)
+      current,
+      resolve_dependencies(stan_file, include_paths, user_header)
     )
   }
   current
@@ -429,7 +478,8 @@ resolve_dependencies <- function(stan_file, include_paths, user_header) {
   dependencies <- list(
     stan_file = dependency(stan_file),
     included_files = lapply(
-      wsl_safe_path(unlist(info$included_files), revert = TRUE), dependency
+      wsl_safe_path(unlist(info$included_files), revert = TRUE),
+      dependency
     )
   )
   if (!is.null(user_header)) {
@@ -492,10 +542,16 @@ run_make <- function(args, quiet) {
         echo_cmd = is_verbose_mode(),
         spinner = quiet && use_spinner(),
         stderr_callback = function(x, p) {
-          if (!startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))) {
+          if (
+            !startsWith(x, paste0(make_cmd(), ": *** No rule to make target"))
+          ) {
             message(x)
           }
-          if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
+          if (
+            grepl("PCH file", x) ||
+              grepl("precompiled header", x) ||
+              grepl(".hpp.gch", x)
+          ) {
             warning(
               "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
               "If your model failed to compile please run rebuild_cmdstan().\n",
@@ -503,7 +559,10 @@ run_make <- function(args, quiet) {
               call. = FALSE
             )
           }
-          if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
+          if (
+            grepl("No space left on device", x) ||
+              grepl("error in backend: IO failure on output stream", x)
+          ) {
             warning(
               "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
               "See the above error for more details.",
@@ -511,8 +570,13 @@ run_make <- function(args, quiet) {
             )
           }
           if (os_is_macos()) {
-            if (R.version$arch == "aarch64"
-                && grepl("but the current translation unit is being compiled for target", x)) {
+            if (
+              R.version$arch == "aarch64" &&
+                grepl(
+                  "but the current translation unit is being compiled for target",
+                  x
+                )
+            ) {
               warning(
                 "The C++ compiler has errored due to incompatibility between the x86 and ",
                 "Apple Silicon architectures.\n",
@@ -528,8 +592,10 @@ run_make <- function(args, quiet) {
     )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
-    stop("An error occurred during compilation! See the message above for more information.",
-         call. = FALSE)
+    stop(
+      "An error occurred during compilation! See the message above for more information.",
+      call. = FALSE
+    )
   }
   invisible(run_log)
 }
@@ -637,14 +703,17 @@ rebuild_reasons <- function(reasons, current) {
         "cannot be verified"
       ),
       if (written > build_record_format_version) "a newer" else "an older",
-      written, build_record_format_version
+      written,
+      build_record_format_version
     )
   }
   line <- function(reason) {
     switch(
       reason,
       no_executable = paste0(
-        "there is no executable at '", current$exe_file, "'"
+        "there is no executable at '",
+        current$exe_file,
+        "'"
       ),
       missing = paste0(
         "the executable has no build record, so what it was built with ",
@@ -680,8 +749,10 @@ rebuild_reasons <- function(reasons, current) {
           "the selected CmdStan changed (built with %s at '%s'; ",
           "%s at '%s' is selected now)"
         ),
-        recorded$cmdstan$version, recorded$cmdstan$path,
-        current$cmdstan$version, current$cmdstan$path
+        recorded$cmdstan$version,
+        recorded$cmdstan$path,
+        current$cmdstan$version,
+        current$cmdstan$path
       ),
       force_recompile = "`force_recompile = TRUE` was supplied",
       force_recompile_option = "the `cmdstanr_force_recompile` option is set"

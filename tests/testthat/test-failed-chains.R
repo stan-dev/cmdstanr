@@ -9,8 +9,7 @@ mod_init_warnings <- cmdstan_model(stan_file = stan_program_init_warnings)
 
 make_all_fail <- function(x) {
   utils::capture.output(
-    all_fail <- x$sample(data = list(pr_fail = 1),
-                         save_latent_dynamics = TRUE)
+    all_fail <- x$sample(data = list(pr_fail = 1), save_latent_dynamics = TRUE)
   )
   all_fail
 }
@@ -54,9 +53,12 @@ test_that("correct warnings are thrown when all chains fail", {
 test_that("correct warnings are thrown when some chains fail", {
   fit_tmp <- suppressWarnings(make_some_fail(mod, seed = 2022))
   expect_warning(
-     make_some_fail(mod, seed = 2022),
-     paste(4 - length(fit_tmp$output_files(include_failed = FALSE)), "chain(s) finished unexpectedly"),
-     fixed = TRUE
+    make_some_fail(mod, seed = 2022),
+    paste(
+      4 - length(fit_tmp$output_files(include_failed = FALSE)),
+      "chain(s) finished unexpectedly"
+    ),
+    fixed = TRUE
   )
 
   failed <- !fit_some_fail$runset$procs$is_finished()
@@ -66,38 +68,14 @@ test_that("correct warnings are thrown when some chains fail", {
 })
 
 test_that("$output_files() and latent_dynamic_files() returns path to all files regardless of chain failure", {
-  expect_equal(
-    length(fit_all_fail$output_files(include_failed = TRUE)),
-    4
-  )
-  expect_equal(
-    length(fit_all_fail$output_files(include_failed = FALSE)),
-    0
-  )
-  expect_equal(
-    length(fit_some_fail$output_files(include_failed = TRUE)),
-    4
-  )
-  expect_equal(
-    length(fit_all_fail$latent_dynamics_files(include_failed = TRUE)),
-    4
-  )
-  expect_equal(
-    length(fit_all_fail$latent_dynamics_files(include_failed = FALSE)),
-    0
-  )
-  expect_equal(
-    length(fit_some_fail$latent_dynamics_files(include_failed = TRUE)),
-    4
-  )
-  expect_equal(
-    length(fit_all_fail$output_files()),
-    0
-  )
-  expect_equal(
-    length(fit_all_fail$latent_dynamics_files()),
-    0
-  )
+  expect_length(fit_all_fail$output_files(include_failed = TRUE), 4)
+  expect_length(fit_all_fail$output_files(include_failed = FALSE), 0)
+  expect_length(fit_some_fail$output_files(include_failed = TRUE), 4)
+  expect_length(fit_all_fail$latent_dynamics_files(include_failed = TRUE), 4)
+  expect_length(fit_all_fail$latent_dynamics_files(include_failed = FALSE), 0)
+  expect_length(fit_some_fail$latent_dynamics_files(include_failed = TRUE), 4)
+  expect_length(fit_all_fail$output_files(), 0)
+  expect_length(fit_all_fail$latent_dynamics_files(), 0)
 })
 
 test_that("$save_* methods save all files regardless of chain failure", {
@@ -134,8 +112,12 @@ test_that("errors when using draws after all chains fail", {
 
 test_that("a fit whose chains all failed cannot be used as init", {
   expect_error(
-    mod$sample(data = list(pr_fail = 0), chains = 1, refresh = 0,
-               init = fit_all_fail),
+    mod$sample(
+      data = list(pr_fail = 0),
+      chains = 1,
+      refresh = 0,
+      init = fit_all_fail
+    ),
     "unable to create initial values from a model with no samples"
   )
 })
@@ -162,7 +144,7 @@ test_that("init warnings are shown", {
 test_that("optimize error on bad data", {
   mod <- testing_model("bernoulli")
   expect_error(
-    mod$optimize(data = list(a = c(1,2,3)), seed = 123),
+    mod$optimize(data = list(a = c(1, 2, 3)), seed = 123),
     "Missing input data for the following data variables: N, y."
   )
 })
@@ -183,14 +165,27 @@ test_that("errors when using draws after variational fais", {
 })
 
 test_that("gq chains error on wrong input CSV", {
-  fit_bernoulli <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 2)
-  fit_logistic <- testing_fit("logistic", method = "sample", seed = 123, chains = 4)
+  fit_bernoulli <- testing_fit(
+    "bernoulli",
+    method = "sample",
+    seed = 123,
+    chains = 2
+  )
+  fit_logistic <- testing_fit(
+    "logistic",
+    method = "sample",
+    seed = 123,
+    chains = 4
+  )
   mod <- testing_model("bernoulli_ppc")
   data_list <- testing_data("bernoulli_ppc")
   suppressWarnings(
     expect_output(
       expect_message(
-        mod$generate_quantities(data = data_list, fitted_params = fit_logistic$output_files()),
+        mod$generate_quantities(
+          data = data_list,
+          fitted_params = fit_logistic$output_files()
+        ),
         "Mismatch between model and fitted_parameters csv"
       ),
       "Running standalone generated quantities"
@@ -198,7 +193,10 @@ test_that("gq chains error on wrong input CSV", {
   )
   expect_warning(
     utils::capture.output(
-      fit <- mod$generate_quantities(data = data_list, fitted_params = test_path("resources", "csv", "bernoulli-fail.csv"))
+      fit <- mod$generate_quantities(
+        data = data_list,
+        fitted_params = test_path("resources", "csv", "bernoulli-fail.csv")
+      )
     ),
     "Chain 1 finished unexpectedly"
   )
@@ -217,7 +215,13 @@ test_that("gq chains error on wrong input CSV", {
   )
   expect_warning(
     utils::capture.output(
-      fit <- mod$generate_quantities(data = data_list, fitted_params = c(fit_bernoulli$output_files(), fit_logistic$output_files()))
+      fit <- mod$generate_quantities(
+        data = data_list,
+        fitted_params = c(
+          fit_bernoulli$output_files(),
+          fit_logistic$output_files()
+        )
+      )
     ),
     "4 chain(s) finished unexpectedly",
     fixed = TRUE

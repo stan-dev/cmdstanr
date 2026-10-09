@@ -8,19 +8,36 @@ set_cmdstan_path()
 # executable and its record as they are now, on purpose, and "verdict" runs
 # the check and returns the answer instead of erroring.
 member_class <- c(
-  sample = "checked", sample_mpi = "checked", optimize = "checked",
-  laplace = "checked", variational = "checked", pathfinder = "checked",
-  generate_quantities = "checked", diagnose = "checked",
-  cmdstan_defaults = "checked", expose_functions = "checked",
-  code = "stored", variables = "stored", print = "stored",
-  hpp_file = "stored", save_hpp_file = "stored", functions = "stored",
-  stan_file = "accessor", has_stan_file = "accessor", model_name = "accessor",
-  exe_file = "accessor", include_paths = "accessor",
-  cmdstan_version = "accessor", cpp_options = "accessor",
+  sample = "checked",
+  sample_mpi = "checked",
+  optimize = "checked",
+  laplace = "checked",
+  variational = "checked",
+  pathfinder = "checked",
+  generate_quantities = "checked",
+  diagnose = "checked",
+  cmdstan_defaults = "checked",
+  expose_functions = "checked",
+  code = "stored",
+  variables = "stored",
+  print = "stored",
+  hpp_file = "stored",
+  save_hpp_file = "stored",
+  functions = "stored",
+  stan_file = "accessor",
+  has_stan_file = "accessor",
+  model_name = "accessor",
+  exe_file = "accessor",
+  include_paths = "accessor",
+  cmdstan_version = "accessor",
+  cpp_options = "accessor",
   user_header = "accessor",
-  check_syntax = "source", format = "source",
-  build_info = "disk", is_current = "verdict",
-  initialize = "plumbing", clone = "plumbing"
+  check_syntax = "source",
+  format = "source",
+  build_info = "disk",
+  is_current = "verdict",
+  initialize = "plumbing",
+  clone = "plumbing"
 )
 
 is_stale_error <- function(x) inherits(x, "cmdstanr_stale_executable")
@@ -53,7 +70,7 @@ test_that("every public member is classified, and only those", {
     length(gone) == 0,
     info = paste("no longer exists:", paste(gone, collapse = ", "))
   )
-  expect_equal(names(CmdStanModel$public_fields), "functions")
+  expect_named(CmdStanModel$public_fields, "functions")
   expect_false("compile" %in% methods)
   expect_false("compile" %in% names(member_class))
 })
@@ -63,7 +80,9 @@ test_that("every checked method raises the staleness error, bare", {
   checked <- names(member_class)[member_class == "checked"]
   for (name in checked) {
     expect_error(
-      mod[[name]](), class = "cmdstanr_stale_executable", info = name
+      mod[[name]](),
+      class = "cmdstanr_stale_executable",
+      info = name
     )
   }
 })
@@ -79,7 +98,7 @@ test_that("every method that is not checked works on a stale build", {
   }
   capture.output(expect_true(not_stale(mod$print())))
   expect_no_error(mod$clone())
-  expect_true(is.environment(mod$functions))
+  expect_type(mod$functions, "environment")
 })
 
 test_that("assert_current_() says what is stale and where to go", {
@@ -112,13 +131,17 @@ test_that("assert_current_() names an altered or missing executable", {
   mod <- mock_cmdstan_model(stan_file)
   writeLines("altered", mod$exe_file())
   expect_error(
-    mod$sample(), "the executable does not match its build record",
-    fixed = TRUE, class = "cmdstanr_stale_executable"
+    mod$sample(),
+    "the executable does not match its build record",
+    fixed = TRUE,
+    class = "cmdstanr_stale_executable"
   )
   file.remove(mod$exe_file())
   expect_error(
-    mod$sample(), paste0("there is no executable at '", mod$exe_file(), "'"),
-    fixed = TRUE, class = "cmdstanr_stale_executable"
+    mod$sample(),
+    paste0("there is no executable at '", mod$exe_file(), "'"),
+    fixed = TRUE,
+    class = "cmdstanr_stale_executable"
   )
 })
 
@@ -139,8 +162,10 @@ test_that("$is_current() says whether a checked method would run", {
   file.remove(stan_file)
   expect_false(mod$is_current())
   expect_error(
-    mod$sample(), "this model was created from no longer exists",
-    fixed = TRUE, class = "cmdstanr_stale_executable"
+    mod$sample(),
+    "this model was created from no longer exists",
+    fixed = TRUE,
+    class = "cmdstanr_stale_executable"
   )
   writeLines(code, stan_file)
   file.remove(mod$exe_file())
