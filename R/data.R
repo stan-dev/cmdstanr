@@ -518,10 +518,9 @@ draws_to_csv <- function(draws,
 #' @param fitted_params Paths to CSV files produced by CmdStan sampling,
 #'  a CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, or CmdStanPathfinder
 #'  object, a draws_array or draws_matrix.
-#' @param temp_dir Directory for decompressed copies of compressed CSV files.
 #' @return Paths to CSV files containing parameter values.
 #'
-process_fitted_params <- function(fitted_params, temp_dir) {
+process_fitted_params <- function(fitted_params) {
   if (is.character(fitted_params)) {
     paths <- absolute_path(fitted_params)
   } else if (checkmate::test_r6(fitted_params, "CmdStanMCMC") &&
@@ -560,5 +559,5 @@ process_fitted_params <- function(fitted_params, temp_dir) {
       "CmdStanPathfinder object, ",
       "a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)
   }
-  decompress_csv_files(paths, temp_dir)
+  decompress_csv_files(paths, tempdir())
 }

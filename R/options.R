@@ -33,6 +33,9 @@
 #' a temporary directory are removed as part of \R garbage collection, while
 #' files in an explicitly defined directory are not automatically deleted.
 #'
+#' * `cmdstanr_compress`: Compression for the output CSV files when fitting
+#' models: `"none"`, `"gzip"`, or `"bzip2"`. The default is `"none"`.
+#'
 #' * `cmdstanr_spinner`: Should a spinner be shown while CmdStan compiles a
 #' model, checks syntax, or is installed or rebuilt? The default is `TRUE`. The
 #' spinner is only ever shown in interactive sessions, so setting this to

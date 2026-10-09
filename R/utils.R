@@ -256,6 +256,35 @@ copy_temp_files <-
     absolute_path(destinations)
   }
 
+#' Copy CSV files, optionally changing their compression
+#'
+#' @noRd
+#' @param current_paths Paths to CSV files, compressed or not.
+#' @param compress One of `"none"`, `"gzip"`, `"bzip2"`, or `NULL` to keep the
+#'   compression the files already have.
+#' @param ... Arguments passed to `copy_temp_files()`.
+#' @return Paths to the copies.
+copy_csv_files <- function(current_paths, compress = NULL, ...) {
+  current <- switch(
+    tools::file_ext(current_paths[1]),
+    gz = "gzip",
+    bz2 = "bzip2",
+    "none"
+  )
+  compress <- compress %||% current
+  if (compress == current) {
+    ext <- sub(".*(\\.csv.*)$", "\\1", current_paths[1])
+    return(copy_temp_files(current_paths, ..., ext = ext))
+  }
+  assert_compress(compress)
+  temp_dir <- withr::local_tempdir()
+  copies <- copy_temp_files(
+    decompress_csv_files(current_paths, temp_dir),
+    ...
+  )
+  compress_csv(copies, compress)
+}
+
 # generate new file names
 # see doc above for copy_temp_files
 generate_file_names <-

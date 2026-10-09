@@ -185,6 +185,10 @@ variables takes much less memory. (#1294)
 * `read_cmdstan_csv()` and `as_cmdstan_fit()` can now read gzip-compressed
 CmdStan CSV files ending in `.csv.gz` and bzip2-compressed files ending in
 `.csv.bz2`. CmdStanR now requires data.table 1.18.0 or later. (#1027, #1217)
+* All fitting methods plus `$save_output_files()` and
+`$save_latent_dynamics_files()` gain a `compress` argument that writes the CSV
+files gzip- or bzip2-compressed. The default can be set with
+`options(cmdstanr_compress)`. (#1276, #1311)
 * The new `print_stan_file()` prints a Stan file, with syntax highlighting when
 used in a Quarto or R Markdown document. (#1166)
 * The new `$cmdstan_defaults()` method returns CmdStan's default argument

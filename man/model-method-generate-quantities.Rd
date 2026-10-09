@@ -17,7 +17,7 @@ generate_quantities(
   opencl_ids = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
-  compress = c("none", "gzip", "bzip2")
+  compress = getOption("cmdstanr_compress", "none")
 )
 }
 \arguments{
@@ -28,7 +28,8 @@ the following:
 \link{CmdStanPathfinder} fitted model object.
 \item A \link[posterior:draws_array]{posterior::draws_array} or \link[posterior:draws_matrix]{posterior::draws_matrix} object returned by
 CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
-\item A character vector of paths to CmdStan CSV output files.
+\item A character vector of paths to CmdStan CSV output files (\code{.csv},
+\code{.csv.gz} or \code{.csv.bz2}).
 }
 
 For a \link{CmdStanMLE} object, optimization supplies one point estimate, so
@@ -131,8 +132,10 @@ used to display the silenced messages.}
 
 \item{compress}{(string) Compression to apply to the output CSV files after
 CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
-(the default), \code{"gzip"}, or \code{"bzip2"}. Compressed files can still be read
-by CmdStanR, but \code{gzip} or \code{bzip2} must be available on \code{PATH}.}
+(the default), \code{"gzip"}, or \code{"bzip2"}. The fit reads compressed files by
+decompressing them to a temporary copy first, which makes each read
+slower in exchange for using less disk space. The default can be set with
+\code{options(cmdstanr_compress)}.}
 }
 \value{
 A \code{\link{CmdStanGQ}} object.

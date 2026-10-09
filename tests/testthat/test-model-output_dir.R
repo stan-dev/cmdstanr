@@ -93,7 +93,8 @@ test_that("explicit WSL output paths are usable by Windows R", {
       output_dir = output_dir,
       save_latent_dynamics = TRUE,
       save_cmdstan_config = TRUE,
-      save_metric = TRUE
+      save_metric = TRUE,
+      compress = "gzip"
     )
   )
   paths <- c(

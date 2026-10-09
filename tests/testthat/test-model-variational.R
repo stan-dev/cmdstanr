@@ -67,12 +67,3 @@ test_that("variational() method errors for any invalid argument before calling c
     expect_error(do.call(mod$variational, args), regexp = nm)
   }
 })
-
-test_that("variational() writes compressed output files", {
-  plain <- mod$variational(data = data_list, seed = 123, refresh = 0)
-  fit <- mod$variational(
-    data = data_list, seed = 123, refresh = 0, compress = "bzip2"
-  )
-  checkmate::expect_file_exists(fit$output_files(), extension = "csv.bz2")
-  expect_equal(fit$draws(), plain$draws())
-})

@@ -957,13 +957,14 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'   Defaults to `TRUE`. See **Details**.
 #' @param random (logical) Should a six-character random hexadecimal suffix be
 #'   added to the file name(s)? Defaults to `TRUE`. See **Details**.
-#' @param compress (string) Compression for the saved CSV files: `"none"` (the
-#'   default), `"gzip"`, or `"bzip2"`. Only applies to `$save_output_files()`
+#' @param compress (string) Compression for the saved CSV files: `"none"`,
+#'   `"gzip"`, or `"bzip2"`. If `NULL` (the default), the files keep their
+#'   current compression. Only applies to `$save_output_files()`
 #'   and `$save_latent_dynamics_files()`.
 #'
 #' @section Details:
 #' For `$save_output_files()` the files moved to `dir` will have names of
-#' the form `basename-timestamp-id-random.csv` (with `.gz` or `.bz2` added if
+#' the form `basename-timestamp-id-random.csv` (`.csv.gz` or `.csv.bz2` if
 #' compressed), where
 #' * `basename` is the user's provided `basename` argument or, if `NULL`, the
 #'   model name;
@@ -973,7 +974,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' * `random` contains six random hexadecimal characters.
 #'
 #' `$save_latent_dynamics_files()` uses the pattern
-#' `basename-diagnostic-timestamp-id-random.csv`. The
+#' `basename-diagnostic-timestamp-id-random.csv` (`.csv.gz` or `.csv.bz2` if
+#' compressed). The
 #' `$latent_dynamics_files()` and
 #' `$save_latent_dynamics_files()` methods apply only to [`CmdStanMCMC`] and
 #' [`CmdStanVB`] objects created with `save_latent_dynamics = TRUE`.
@@ -1020,7 +1022,7 @@ save_output_files <- function(dir = ".",
                               basename = NULL,
                               timestamp = TRUE,
                               random = TRUE,
-                              compress = c("none", "gzip", "bzip2")) {
+                              compress = NULL) {
   self$runset$save_output_files(dir, basename, timestamp, random, compress)
 }
 CmdStanFit$set("public", name = "save_output_files", value = save_output_files)
@@ -1030,7 +1032,7 @@ save_latent_dynamics_files <- function(dir = ".",
                                        basename = NULL,
                                        timestamp = TRUE,
                                        random = TRUE,
-                                       compress = c("none", "gzip", "bzip2")) {
+                                       compress = NULL) {
   self$runset$save_latent_dynamics_files(dir, basename, timestamp, random, compress)
 }
 CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)

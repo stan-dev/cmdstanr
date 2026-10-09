@@ -192,12 +192,3 @@ test_that("no output with show_messages = FALSE", {
   )
   expect_equal(length(output), 0)
 })
-
-test_that("pathfinder() writes compressed output files", {
-  plain <- mod$pathfinder(data = data_list, seed = 123, refresh = 0)
-  fit <- mod$pathfinder(
-    data = data_list, seed = 123, refresh = 0, compress = "gzip"
-  )
-  checkmate::expect_file_exists(fit$output_files(), extension = "csv.gz")
-  expect_equal(fit$draws(), plain$draws())
-})

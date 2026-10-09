@@ -354,32 +354,6 @@ test_that("Errors are suppressed with show_exceptions", {
     ))
 })
 
-test_that("sample() writes compressed output files that read like plain ones", {
-  plain <- mod$sample(data = data_list, seed = 123, chains = 2, refresh = 0)
-  for (compress in c("gzip", "bzip2")) {
-    ext <- if (compress == "gzip") "csv.gz" else "csv.bz2"
-    fit <- mod$sample(
-      data = data_list, seed = 123, chains = 2, refresh = 0, compress = compress
-    )
-    checkmate::expect_file_exists(fit$output_files(), extension = ext)
-    expect_equal(fit$draws(), plain$draws())
-    expect_equal(fit$sampler_diagnostics(), plain$sampler_diagnostics())
-    expect_equal(fit$summary(), plain$summary())
-  }
-})
-
-test_that("sample() leaves output files uncompressed by default", {
-  fit <- mod$sample(data = data_list, chains = 1, refresh = 0)
-  checkmate::expect_file_exists(fit$output_files(), extension = "csv")
-})
-
-test_that("sample() errors for an invalid compress value before calling cmdstan", {
-  expect_error(
-    mod$sample(data = data_list, compress = "zip"),
-    "'arg' should be one of"
-  )
-})
-
 test_that("compressed fits support latent dynamics files and CmdStan tools", {
   fit <- mod$sample(
     data = data_list,
@@ -405,7 +379,7 @@ test_that("compressed output saved to disk can be saved again and reloaded", {
     compress = "gzip"
   )
   checkmate::expect_file_exists(
-    list.files(output_dir, pattern = "csv.gz$", full.names = TRUE),
+    list.files(output_dir, pattern = "\\.csv\\.gz$", full.names = TRUE),
     extension = "csv.gz"
   )
   draws <- as_cmdstan_fit(fit$output_files())$draws()

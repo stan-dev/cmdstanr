@@ -1034,7 +1034,7 @@ sample <- function(data = NULL,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    save_metric = getOption("cmdstanr_save_metric", FALSE),
                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                   compress = c("none", "gzip", "bzip2")) {
+                   compress = getOption("cmdstanr_compress", "none")) {
 
   private$assert_current_()
   if (fixed_param) {
@@ -1199,7 +1199,7 @@ sample_mpi <- function(data = NULL,
                        show_exceptions = TRUE,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                       compress = c("none", "gzip", "bzip2")) {
+                       compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
 
   if (fixed_param) {
@@ -1348,7 +1348,7 @@ optimize <- function(data = NULL,
                      show_messages = TRUE,
                      show_exceptions = TRUE,
                      save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                     compress = c("none", "gzip", "bzip2")) {
+                     compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1425,7 +1425,8 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #' @param mode (multiple options) The mode to center the approximation at. One
 #'   of the following:
 #'   * A [`CmdStanMLE`] object from a previous run of [`$optimize()`][model-method-optimize].
-#'   * The path to a CmdStan CSV file from running optimization.
+#'   * The path to a CmdStan CSV file (`.csv`, `.csv.gz` or `.csv.bz2`) from
+#'   running optimization.
 #'   * `NULL`, in which case [$optimize()][model-method-optimize] will be run
 #'   with `jacobian=jacobian` (see the `jacobian` argument below).
 #'
@@ -1490,7 +1491,7 @@ laplace <- function(data = NULL,
                     show_messages = TRUE,
                     show_exceptions = TRUE,
                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                    compress = c("none", "gzip", "bzip2")) {
+                    compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both `opt_args` and `mode` arguments.", call. = FALSE)
@@ -1542,8 +1543,7 @@ laplace <- function(data = NULL,
   laplace_args <- LaplaceArgs$new(
     mode = cmdstan_mode,
     draws = draws,
-    jacobian = jacobian,
-    temp_dir = withr::local_tempdir()
+    jacobian = jacobian
   )
   args <- CmdStanArgs$new(
     method_args = laplace_args,
@@ -1659,7 +1659,7 @@ variational <- function(data = NULL,
                         show_messages = TRUE,
                         show_exceptions = TRUE,
                         save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                        compress = c("none", "gzip", "bzip2")) {
+                        compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1829,7 +1829,7 @@ pathfinder <- function(data = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                       compress = c("none", "gzip", "bzip2")) {
+                       compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
   if (!is.null(num_threads)) {
     if (!is.null(threads)) {
@@ -1918,7 +1918,8 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #'  [CmdStanPathfinder] fitted model object.
 #'  * A [posterior::draws_array] or [posterior::draws_matrix] object returned by
 #'  CmdStanR's [`$draws()`][fit-method-draws] method.
-#'  * A character vector of paths to CmdStan CSV output files.
+#'  * A character vector of paths to CmdStan CSV output files (`.csv`,
+#'  `.csv.gz` or `.csv.bz2`).
 #'
 #' For a [CmdStanMLE] object, optimization supplies one point estimate, so
 #' generated quantities that use RNG functions produce only one simulation.
@@ -1991,9 +1992,9 @@ generate_quantities <- function(fitted_params,
                                 opencl_ids = NULL,
                                 show_messages = TRUE,
                                 show_exceptions = TRUE,
-                                compress = c("none", "gzip", "bzip2")) {
+                                compress = getOption("cmdstanr_compress", "none")) {
   private$assert_current_()
-  fitted_params_files <- process_fitted_params(fitted_params, withr::local_tempdir())
+  fitted_params_files <- process_fitted_params(fitted_params)
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
     parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),

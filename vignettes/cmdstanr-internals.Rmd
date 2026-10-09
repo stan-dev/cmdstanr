@@ -413,6 +413,20 @@ fit <- mod$sample(
 ```
 
 
+### Compressed files
+
+Set `compress = "gzip"` or `compress = "bzip2"` to have CmdStanR compress the
+CSV files after CmdStan finishes writing them, which uses less disk space.
+CmdStanR still reads them, but each read first decompresses a temporary copy, so
+it is slower than reading plain files. `fit$save_output_files()` keeps the
+current compression unless you set `compress`. Set the default with
+`options(cmdstanr_compress)`.
+
+```{r compress, eval = FALSE}
+fit <- mod$sample(data = data_list, compress = "gzip")
+fit$output_files()
+```
+
 ## Reading CmdStan output into R
 
 ### Lazy CSV reading

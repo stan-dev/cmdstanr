@@ -134,19 +134,17 @@ CmdStanRun <- R6::R6Class(
                                  basename = NULL,
                                  timestamp = TRUE,
                                  random = TRUE,
-                                 compress = c("none", "gzip", "bzip2")) {
-      compress <- match.arg(compress)
+                                 compress = NULL) {
       current_files <- self$output_files(include_failed = TRUE)
-      new_paths <- copy_temp_files(
-        current_paths = decompress_csv_files(current_files, withr::local_tempdir()),
+      new_paths <- copy_csv_files(
+        current_paths = current_files,
+        compress = compress,
         new_dir = dir,
         new_basename = basename %||% self$model_name(),
         ids = self$procs$proc_ids(),
-        ext = ".csv",
         timestamp = timestamp,
         random = random
       )
-      new_paths <- compress_csv(new_paths, compress)
       file.remove(current_files[!current_files %in% new_paths])
       private$output_files_ <- new_paths
       message(
@@ -162,19 +160,17 @@ CmdStanRun <- R6::R6Class(
                                           basename = NULL,
                                           timestamp = TRUE,
                                           random = TRUE,
-                                          compress = c("none", "gzip", "bzip2")) {
-      compress <- match.arg(compress)
+                                          compress = NULL) {
       current_files <- self$latent_dynamics_files(include_failed = TRUE) # used so we get error if 0 files
-      new_paths <- copy_temp_files(
-        current_paths = decompress_csv_files(current_files, withr::local_tempdir()),
+      new_paths <- copy_csv_files(
+        current_paths = current_files,
+        compress = compress,
         new_dir = dir,
         new_basename = paste0(basename %||% self$model_name(), "-diagnostic"),
         ids = self$proc_ids(),
-        ext = ".csv",
         timestamp = timestamp,
         random = random
       )
-      new_paths <- compress_csv(new_paths, compress)
       file.remove(current_files[!current_files %in% new_paths])
       private$latent_dynamics_files_ <- new_paths
       message(
@@ -337,9 +333,10 @@ CmdStanRun <- R6::R6Class(
       }
       target_exe <- file.path("bin", cmdstan_ext(tool))
       check_target_exe(target_exe)
+      temp_dir <- withr::local_tempdir()
       output_files <- decompress_csv_files(
         self$output_files(include_failed = FALSE),
-        withr::local_tempdir()
+        temp_dir
       )
       withr::with_path(
         c(

@@ -37,7 +37,7 @@ sample_mpi(
   show_exceptions = TRUE,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-  compress = c("none", "gzip", "bzip2")
+  compress = getOption("cmdstanr_compress", "none")
 )
 }
 \arguments{
@@ -290,8 +290,10 @@ default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session b
 
 \item{compress}{(string) Compression to apply to the output CSV files after
 CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
-(the default), \code{"gzip"}, or \code{"bzip2"}. Compressed files can still be read
-by CmdStanR, but \code{gzip} or \code{bzip2} must be available on \code{PATH}.}
+(the default), \code{"gzip"}, or \code{"bzip2"}. The fit reads compressed files by
+decompressing them to a temporary copy first, which makes each read
+slower in exchange for using less disk space. The default can be set with
+\code{options(cmdstanr_compress)}.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
