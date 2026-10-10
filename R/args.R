@@ -1201,9 +1201,19 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
 #' @noRd
 validate_fit_init <- function(init, model_variables) {
   if (all(init$return_codes() == 1)) {
-    stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
-  } else if (!is.null(model_variables) &&!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
-    stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
+    stop("We are unable to create initial values from a model ",
+         "with no samples. ",
+         "Please check the results of the model used for inits ",
+         "before continuing.", call. = FALSE)
+  }
+  if (is.null(model_variables)) {
+    return(invisible(NULL))
+  }
+  init_names <- init$metadata()$stan_variables
+  if (!any(names(model_variables$parameters) %in% init_names)) {
+    stop("None of the names of the parameters for the model used for ",
+         "initial values match the names of parameters from the model ",
+         "currently running.", call. = FALSE)
   }
 }
 
@@ -1537,7 +1547,7 @@ validate_metric_file <- function(metric_file, num_procs) {
   if (length(metric_file) != 1 && length(metric_file) != num_procs) {
     stop(length(metric_file), " metric(s) provided. Must provide ",
          if (num_procs > 1) "1 or ", num_procs, " metric(s) for ",
-         num_procs, " chain(s).")
+         num_procs, " chain(s).", call. = FALSE)
   }
 
   invisible(TRUE)
