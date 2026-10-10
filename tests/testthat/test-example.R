@@ -50,8 +50,9 @@ test_that("write_stan_file writes to specified directory and filename", {
                absolute_path(dir))
   expect_equal(f2 <- write_stan_file(stan_program, dir = dir, basename = "fruit.stan"),
                absolute_path(file.path(dir, "fruit.stan")))
+  # should add .stan extension if missing
   expect_equal(f3 <- write_stan_file(stan_program, dir = dir, basename = "vegetable"),
-               absolute_path(file.path(dir, "vegetable.stan"))) # should add .stan extension if missing
+               absolute_path(file.path(dir, "vegetable.stan")))
   expect_equal(f4 <- write_stan_file(stan_program, dir = explicit_dir, basename = "test"),
                absolute_path(file.path(explicit_dir, "test.stan")))
 })

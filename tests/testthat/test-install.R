@@ -916,7 +916,8 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
-  fake_home <- utils::shortPathName(withr::local_tempdir(pattern = "rtools40-home-"))
+  fake_home <- withr::local_tempdir(pattern = "rtools40-home-")
+  fake_home <- utils::shortPathName(fake_home)
   fake_cpp_dir <- file.path(fake_home, "mingw64", "bin")
   fake_bin_dir <- file.path(fake_home, "usr", "bin")
 

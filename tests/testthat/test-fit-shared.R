@@ -401,69 +401,50 @@ test_that("sig_figs works with all methods", {
     real p9 = 0.123456789;
   }"
   mod <- cmdstan_model(write_stan_file(m))
+  first_draw <- function(fit) {
+    as.numeric(posterior::subset_draws(
+      fit$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    ))
+  }
   utils::capture.output(
     sample <- mod$sample(sig_figs = 2, refresh = 0, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12, 0.12)
-  )
+  expect_equal(first_draw(sample), c(0.12, 0.12, 0.12))
   utils::capture.output(
     sample <- mod$sample(sig_figs = 5, refresh = 0, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12345, 0.12346)
-  )
+  expect_equal(first_draw(sample), c(0.12, 0.12345, 0.12346))
   utils::capture.output(
     sample <- mod$sample(sig_figs = 10, refresh = 0, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12345, 0.123456789)
-  )
+  expect_equal(first_draw(sample), c(0.12, 0.12345, 0.123456789))
   utils::capture.output(
     variational <- mod$variational(sig_figs = 2, refresh = 0, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12, 0.12)
-  )
+  expect_equal(first_draw(variational), c(0.12, 0.12, 0.12))
   utils::capture.output(
     variational <- mod$variational(sig_figs = 5, refresh = 0, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12345, 0.12346)
-  )
+  expect_equal(first_draw(variational), c(0.12, 0.12345, 0.12346))
   utils::capture.output(
     variational <- mod$variational(sig_figs = 10, refresh = 0, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12345, 0.123456789)
-  )
+  expect_equal(first_draw(variational), c(0.12, 0.12345, 0.123456789))
   utils::capture.output(
     gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 2, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12, 0.12)
-  )
+  expect_equal(first_draw(gq), c(0.12, 0.12, 0.12))
   utils::capture.output(
     gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 5, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12345, 0.12346)
-  )
+  expect_equal(first_draw(gq), c(0.12, 0.12345, 0.12346))
   utils::capture.output(
     gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 10, data = testing_data("logistic"))
   )
-  expect_equal(
-    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
-    c(0.12, 0.12345, 0.123456789)
-  )
+  expect_equal(first_draw(gq), c(0.12, 0.12345, 0.123456789))
   utils::capture.output(
     opt <- mod$optimize(sig_figs = 2, refresh = 0, data = testing_data("logistic"), seed = 123)
   )

@@ -260,12 +260,13 @@ test_that("write_stan_json() errors if data frame has columns of invalid type", 
   )
 
   # numeric, integer, logical and factor columns are still allowed
-  expect_no_error(
-    write_stan_json(
-      list(N = data.frame(a = c(1.5, 2.5), b = 1:2, c = c(TRUE, FALSE), d = factor(c("x", "y")))),
-      tempfile()
-    )
+  df <- data.frame(
+    a = c(1.5, 2.5),
+    b = 1:2,
+    c = c(TRUE, FALSE),
+    d = factor(c("x", "y"))
   )
+  expect_no_error(write_stan_json(list(N = df), tempfile()))
 })
 
 test_that("write_stan_json() errors if bad names", {
