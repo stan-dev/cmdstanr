@@ -92,3 +92,14 @@ test_that("print(line_numbers = TRUE) numbers the lines", {
     paste(base::format(seq_along(lines)), lines, sep = ": ")
   )
 })
+
+test_that("print(line_numbers = TRUE) pads the numbers of a long program", {
+  lines <- c("parameters {", "  real y;", "}", "model {", "  y ~ std_normal();",
+             rep("  // padding", 94), "}")
+  mod_long <- mock_cmdstan_model(write_stan_file(lines))
+  out <- capture.output(mod_long$print(line_numbers = TRUE))
+  expect_length(out, 100)
+  expect_identical(out[1], "  1: parameters {")
+  expect_identical(out[10], " 10:   // padding")
+  expect_identical(out[100], "100: }")
+})
