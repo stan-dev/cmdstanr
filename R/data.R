@@ -228,7 +228,8 @@ list_to_array <- function(x, name = NULL) {
   if (list_length == 0) {
     return(NULL)
   }
-  all_dims <- lapply(x, function(z) dim(z) %||% length(z)) # dim is null if vector
+  # dim is null if vector
+  all_dims <- lapply(x, function(z) dim(z) %||% length(z))
   all_equal_dim <- all(sapply(all_dims, function(d) {
     isTRUE(all.equal(d, all_dims[[1]]))
   }))
@@ -446,17 +447,15 @@ draws_to_csv <- function(draws,
   n <- posterior::niterations(draws)
   n_chains <- posterior::nchains(draws)
   draws_variables <- posterior::variables(draws)
-  sampler_diagnostics_variables <- posterior::variables(sampler_diagnostics)
 
   # create dummy sampler diagnostics due to CmdStan requirement for all columns in GQ if needed
-  zeros <- rep(0, n * n_chains) # filler for creating dummy sampler diagnostics and lp__ if necessary
-  if (is.null(sampler_diagnostics)) {
-    missing_sampler_diagnostics <- sampler_diagnostics_names[!(sampler_diagnostics_names %in% draws_variables)]
-
-  } else {
-    missing_sampler_diagnostics <- sampler_diagnostics_names[!(sampler_diagnostics_names %in% draws_variables)]
-    missing_sampler_diagnostics <- missing_sampler_diagnostics[!(missing_sampler_diagnostics %in% sampler_diagnostics_variables)]
+  # filler for creating dummy sampler diagnostics and lp__ if necessary
+  zeros <- rep(0, n * n_chains)
+  present <- draws_variables
+  if (!is.null(sampler_diagnostics)) {
+    present <- c(present, posterior::variables(sampler_diagnostics))
   }
+  missing_sampler_diagnostics <- setdiff(sampler_diagnostics_names, present)
   if (length(missing_sampler_diagnostics) > 0) {
     additional_sampler_diagnostics <- list()
     for (name in missing_sampler_diagnostics) {
@@ -474,10 +473,11 @@ draws_to_csv <- function(draws,
   } else { # create a dummy lp__ if it does not exist
     lp__ <- posterior::draws_array(lp__ = zeros, .nchains = n_chains)
   }
+  skipped <- c("lp__", "lp_approx__", sampler_diagnostics_names)
   all_variables <- c(
     "lp__",
     sampler_diagnostics_names,
-    draws_variables[!(draws_variables %in% c("lp__", "lp_approx__", sampler_diagnostics_names))]
+    draws_variables[!(draws_variables %in% skipped)]
   )
   draws <- posterior::subset_draws(
     posterior::bind_draws(draws, sampler_diagnostics, lp__, along = "variable"),
@@ -488,13 +488,12 @@ draws_to_csv <- function(draws,
   paths <- generate_file_names(basename = basename, ids = chains)
   paths <- file.path(dir, paths)
   chain <- 1
+  columns <- paste0(unrepair_variable_names(all_variables), collapse = ",")
+  header <- paste0("# num_samples = ", n, "\n", columns)
   for (path in paths) {
-    write(
-      paste0("# num_samples = ", n, "\n", paste0(unrepair_variable_names(all_variables), collapse = ",")),
-      file = path,
-      append = FALSE
-    )
-    data <- posterior::as_draws_df(posterior::subset_draws(draws, chain = chain))
+    write(header, file = path, append = FALSE)
+    chain_draws <- posterior::subset_draws(draws, chain = chain)
+    data <- posterior::as_draws_df(chain_draws)
     class(data) <- "data.frame"
     data$.chain <- NULL
     data$.iteration <- NULL

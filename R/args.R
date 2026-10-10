@@ -24,7 +24,8 @@ CmdStanArgs <- R6::R6Class(
   "CmdStanArgs",
   lock_objects = FALSE,
   public = list(
-    method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
+    # this will be a SampleArgs object (or OptimizeArgs, etc.)
+    method_args = NULL,
     initialize = function(model_name,
                           stan_file = NULL,
                           stan_code = NULL,
@@ -463,7 +464,8 @@ LaplaceArgs <- R6::R6Class(
                           draws = NULL,
                           jacobian = TRUE) {
       checkmate::assert_r6(mode, classes = "CmdStanMLE")
-      self$mode_object <- mode  # keep the CmdStanMLE for later use (can be returned by CmdStanLaplace$mode())
+      # kept so that CmdStanLaplace$mode() can return it
+      self$mode_object <- mode
       # mode <- file path to pass to CmdStan
       # This needs to be a path that can be accessed within WSL
       # since the files are used by CmdStan, not R
@@ -864,7 +866,8 @@ validate_optimize_args <- function(self) {
   # history_size only available for lbfgs
   if (!is.null(self$history_size)) {
     if (!isTRUE(self$algorithm == "lbfgs")) {
-      stop("`history_size` is only allowed if `algorithm` is specified as `\"lbfgs\"`.", call. = FALSE)
+      stop("`history_size` is only allowed ",
+           "if `algorithm` is specified as `\"lbfgs\"`.", call. = FALSE)
     } else {
       checkmate::assert_integerish(self$history_size, lower = 1, len = 1, null.ok = FALSE)
       self$history_size <- as.integer(self$history_size)
@@ -1122,14 +1125,15 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
     missing_parameter_values <- list()
     parameter_names <- names(model_variables$parameters)
     for (i in seq_along(init)) {
-      is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
-      if (!all(is_parameter_value_supplied)) {
-        missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
+      missing <- setdiff(parameter_names, names(init[[i]]))
+      if (length(missing) > 0) {
+        missing_parameter_values[[i]] <- missing
       }
     }
     if (length(missing_parameter_values) > 0 && isTRUE(warn_partial)) {
       warning_message <- c(
-        "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
+        "Init values were only set for a subset of parameters. \n",
+        "Missing init values for the following parameters:\n"
       )
       for (i in seq_along(missing_parameter_values)) {
         if (length(init) > 1) {
@@ -1138,7 +1142,9 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
           line_text <- ""
         }
         if (length(missing_parameter_values[[i]]) > 0) {
-          warning_message <- c(warning_message, paste0(line_text, paste0(missing_parameter_values[[i]], collapse = ", "), "\n"))
+          names_text <- paste0(missing_parameter_values[[i]], collapse = ", ")
+          line <- paste0(line_text, names_text, "\n")
+          warning_message <- c(warning_message, line)
         }
       }
       warning_message <- c(warning_message, "\nTo disable this message use options(cmdstanr_warn_inits = FALSE).\n")
@@ -1147,7 +1153,8 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
   }
   if (any(grepl("\\[", names(unlist(init))))) {
     stop(
-      "`init` contains entries with parameter names that include square-brackets, which is not permitted. ",
+      "`init` contains entries with parameter names that include ",
+      "square-brackets, which is not permitted. ",
       "To supply inits for a vector, matrix or array of parameters, ",
       "create a single entry with the parameter's name in the `init` list ",
       "and specify initial values for the entire parameter container.",
@@ -1215,6 +1222,7 @@ validate_fit_init <- function(init, model_variables) {
          "initial values match the names of parameters from the model ",
          "currently running.", call. = FALSE)
   }
+  invisible(NULL)
 }
 
 #' Write initial values to files if provided as a `CmdStanMCMC` class
@@ -1311,7 +1319,8 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
       metadata$calculate_lp
   }
   log_weights <- draws_df$lp__ - draws_df$lp_approx__
-  log_weights[!is.finite(log_weights)] <- -Inf   # non-finite -> zero selection weight
+  # non-finite -> zero selection weight
+  log_weights[!is.finite(log_weights)] <- -Inf
   num_unique_log_weights <- length(unique(log_weights))
 
   # Selection weights for resampling.
@@ -1471,8 +1480,7 @@ validate_init <- function(init, num_procs) {
 #' @param num_procs Number of CmdStan processes.
 #' @return `init`, unless numeric and length 1, in which case `rep(init, num_procs)`.
 maybe_recycle_init <- function(init, num_procs) {
-  if (is.null(init) ||
-      length(init) == num_procs) {
+  if (is.null(init) || length(init) == num_procs) {
     return(init)
   }
   rep(init, num_procs)
@@ -1560,8 +1568,7 @@ validate_metric_file <- function(metric_file, num_procs) {
 #' @return `rep(metric_file, num_procs)` if metric_file is a single path, otherwise
 #'    return `metric_file`.
 maybe_recycle_metric_file <- function(metric_file, num_procs) {
-  if (is.null(metric_file) ||
-      length(metric_file) == num_procs) {
+  if (is.null(metric_file) || length(metric_file) == num_procs) {
     return(metric_file)
   }
   rep(metric_file, num_procs)
