@@ -1,5 +1,4 @@
-# avoid parallel on Mac due to strange intermittent TBB errors on Github Actions
-CORES <- if (os_is_macos()) 1 else 2
+skip_on_cran()
 
 cmdstan_test_tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
 if (!nzchar(cmdstan_test_tarball_url)) {
@@ -7,12 +6,18 @@ if (!nzchar(cmdstan_test_tarball_url)) {
 }
 
 test_that("install_cmdstan() successfully installs cmdstan", {
-  dir <- tempdir(check = TRUE)
+  dir <- withr::local_tempdir()
+  withr::defer(set_cmdstan_path())
   expect_message(
     expect_output(
-      install_cmdstan(dir = dir, cores = CORES, quiet = FALSE, overwrite = TRUE,
-                      release_url = cmdstan_test_tarball_url,
-                      wsl = os_is_wsl()),
+      install_cmdstan(
+        dir = dir,
+        cores = 2,
+        quiet = FALSE,
+        overwrite = TRUE,
+        release_url = cmdstan_test_tarball_url,
+        wsl = os_is_wsl()
+      ),
       "Compiling C++ code",
       fixed = TRUE
     ),
@@ -22,130 +27,191 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 })
 
 test_that("install_cmdstan() errors if installation already exists", {
-  install_dir <- cmdstan_default_install_path()
-  dir <- file.path(install_dir, "cmdstan-2.35.0")
-  if (!dir.exists(dir)) {
-    dir.create(dir, recursive = TRUE)
-  }
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "cmdstan-2.37.0"))
   expect_warning(
-    install_cmdstan(dir = install_dir, overwrite = FALSE,
-                    version = "2.35.0", wsl = FALSE),
+    install_cmdstan(
+      dir = dir,
+      overwrite = FALSE,
+      version = "2.37.0",
+      wsl = FALSE
+    ),
     "An installation already exists",
     fixed = TRUE
   )
 })
 
-test_that("install_cmdstan() errors if it times out", {
-  skip_if(!is.null(cmdstan_test_tarball_url))
-
-  dir <- tempdir(check = TRUE)
+test_that("install_cmdstan() errors on timeout, quiet silences the download", {
+  dir <- withr::local_tempdir()
   ver <- latest_released_version()
-  dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
-  # with quiet=TRUE
+  ver_msg <- paste0(
+    "trying URL 'https://api.github.com/repos/stan-dev/",
+    "cmdstan/releases/latest'"
+  )
+  download_msg <- paste0(
+    "trying URL 'https://github.com/stan-dev/cmdstan/",
+    "releases/download/v",
+    ver,
+    "/cmdstan-",
+    ver,
+    ".tar.gz'"
+  )
+
+  # expect_message() does not see download.file()'s progress lines, so
+  # capture stderr and grep it
   expect_warning(
-    expect_message(
-      install_cmdstan(dir = dir, timeout = 1, quiet = TRUE, overwrite = dir_exists,
-                      cores = CORES, wsl = os_is_wsl()),
-      if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
-      fixed = TRUE
+    quiet_log <- capture.output(
+      install_cmdstan(
+        dir = dir,
+        timeout = 1,
+        quiet = TRUE,
+        cores = 2,
+        wsl = os_is_wsl()
+      ),
+      type = "message"
     ),
-    "increasing the value of the 'timeout' argument and running again with 'quiet=FALSE'",
+    "increasing the value of the `timeout` argument and running again with `quiet = FALSE`",
     fixed = TRUE
   )
-  dir_exists <- dir.exists(file.path(dir, paste0("cmdstan-",ver)))
-  # with quiet=FALSE
+  expect_true(any(grepl(
+    paste0("* Installing CmdStan v", ver, " in"),
+    quiet_log,
+    fixed = TRUE
+  )))
+  expect_false(any(grepl(ver_msg, quiet_log, fixed = TRUE)))
+  expect_false(any(grepl(download_msg, quiet_log, fixed = TRUE)))
+
   expect_warning(
-    expect_message(
-      install_cmdstan(dir = dir, timeout = 1, quiet = FALSE, overwrite = dir_exists,
-                      cores = CORES, wsl = os_is_wsl()),
-      if (dir_exists) "* Removing the existing installation" else "* * Installing CmdStan from https://github.com",
-      fixed = TRUE
+    loud_log <- capture.output(
+      invisible(capture.output(
+        install_cmdstan(
+          dir = dir,
+          timeout = 1,
+          quiet = FALSE,
+          overwrite = TRUE,
+          cores = 2,
+          wsl = os_is_wsl()
+        )
+      )),
+      type = "message"
     ),
-    "Try increasing the value of the 'timeout' argument.",
+    "Try increasing the value of the `timeout` argument.",
     fixed = TRUE
   )
+  expect_true(any(grepl(
+    "* Removing the existing installation",
+    loud_log,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl(ver_msg, loud_log, fixed = TRUE)))
+  expect_true(any(grepl(download_msg, loud_log, fixed = TRUE)))
 })
 
 test_that("install_cmdstan() errors if invalid version or URL", {
   expect_error(
-    install_cmdstan(version = "2.35.5", wsl = os_is_wsl()),
-    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied version number is valid."
+    install_cmdstan(version = "2.37.5", wsl = os_is_wsl()),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz'\nPlease check if the supplied version number is valid."
   )
   expect_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz",
-                    wsl = os_is_wsl()),
-    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.35.5/cmdstan-2.35.5.tar.gz'\nPlease check if the supplied release URL is valid."
+    install_cmdstan(
+      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz",
+      wsl = os_is_wsl()
+    ),
+    "Download of CmdStan failed with error: cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz'\nPlease check if the supplied release URL is valid."
   )
   expect_error(
-    install_cmdstan(release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0", wsl = os_is_wsl()),
-    "cmdstanr supports installing from .tar.gz archives only"
+    install_cmdstan(
+      release_url = "https://github.com/stan-dev/cmdstan/releases/tag/v2.24.0",
+      wsl = os_is_wsl()
+    ),
+    "CmdStanR supports installing from .tar.gz archives only"
   )
 })
 
-test_that("install_cmdstan() works with version and release_url", {
-  # this test is irrelevant if tests are using a release candidate tarball URL so skip
+test_that("install_cmdstan() installs from release_url", {
   skip_if(!is.null(cmdstan_test_tarball_url))
-
-  dir <- tempdir(check = TRUE)
-
-  expect_message(
-    expect_output(
-      install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                      release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
-                      wsl = os_is_wsl()),
-      "Compiling C++ code",
-      fixed = TRUE
-    ),
-    "Finished installing CmdStan",
-    fixed = TRUE
+  dir <- withr::local_tempdir()
+  url <- paste0(
+    "https://github.com/stan-dev/cmdstan/releases/download/",
+    "v2.37.0/cmdstan-2.37.0.tar.gz"
   )
   expect_warning(
     expect_message(
-      expect_output(
-        install_cmdstan(dir = dir, overwrite = TRUE, cores = CORES,
-                        version = "2.37.0",
-                        # the URL is intentionally invalid to test that the version has higher priority
-                        release_url = "https://github.com/stan-dev/cmdstan/releases/download/v2.27.3/cmdstan-2.27.3.tar.gz",
-                        wsl = os_is_wsl()),
-        "Compiling C++ code",
-        fixed = TRUE
+      install_cmdstan(
+        dir = dir,
+        timeout = 1,
+        quiet = TRUE,
+        cores = 2,
+        release_url = url,
+        wsl = os_is_wsl()
       ),
-      "Finished installing CmdStan",
+      paste0("* Installing CmdStan from ", url),
+      fixed = TRUE
+    ),
+    "increasing the value of the `timeout` argument",
     fixed = TRUE
+  )
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
+})
+
+test_that("version takes priority over release_url, with a warning", {
+  expect_warning(
+    expect_error(
+      install_cmdstan(
+        version = "2.37.5",
+        release_url = paste0(
+          "https://github.com/stan-dev/cmdstan/releases/",
+          "download/v2.27.3/cmdstan-2.27.3.tar.gz"
+        ),
+        wsl = os_is_wsl()
+      ),
+      "cannot open URL 'https://github.com/stan-dev/cmdstan/releases/download/v2.37.5/cmdstan-2.37.5.tar.gz'",
+      fixed = TRUE
     ),
     "version and release_url shouldn't both be specified",
     fixed = TRUE
   )
-  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
-  set_cmdstan_path()
 })
 
-test_that("toolchain checks on Unix work", {
+test_that("check_cmdstan_toolchain() reports what is missing on Unix", {
   skip_if(os_is_windows())
-  withr::local_envvar(c("PATH" = ""))
+  make <- Sys.which("make")
   if (os_is_macos()) {
-    err_msg_cpp <- "A suitable C++ compiler was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
-    err_msg_make <- "The 'make' tool was not found. Please install the command line tools for Mac with 'xcode-select --install' or install Xcode from the app store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_cpp <- paste0(
+      "A suitable C++ compiler was not found. Please install the command ",
+      "line tools for Mac with `xcode-select --install` or install Xcode ",
+      "from the app store. Then restart R and run ",
+      "cmdstanr::check_cmdstan_toolchain()."
+    )
+    err_msg_make <- paste0(
+      "The make tool was not found. Please install the command line tools ",
+      "for Mac with `xcode-select --install` or install Xcode from the app ",
+      "store. Then restart R and run cmdstanr::check_cmdstan_toolchain()."
+    )
   } else {
-    err_msg_cpp <- "A C++ compiler was not found. Please install the 'clang++' or 'g++' compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
-    err_msg_make <- "The 'make' tool was not found. Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain()."
+    err_msg_cpp <- paste0(
+      "A C++ compiler was not found. Please install the clang++ or g++ ",
+      "compiler, restart R, and run cmdstanr::check_cmdstan_toolchain()."
+    )
+    err_msg_make <- paste0(
+      "The make tool was not found. Please install make, restart R, and ",
+      "then run cmdstanr::check_cmdstan_toolchain()."
+    )
   }
-  expect_error(
-    check_unix_cpp_compiler(),
-    err_msg_cpp,
-    fixed = TRUE
-  )
-  expect_error(
-    check_unix_make(),
-    err_msg_make,
-    fixed = TRUE
-  )
+  withr::local_envvar(c(PATH = ""))
+  expect_error(check_cmdstan_toolchain(), err_msg_make, fixed = TRUE)
+
+  # make is checked first, so a PATH with make alone reaches the compiler check
+  only_make <- withr::local_tempdir()
+  file.symlink(make, file.path(only_make, "make"))
+  withr::local_envvar(c(PATH = only_make))
+  expect_error(check_cmdstan_toolchain(), err_msg_cpp, fixed = TRUE)
 })
 
 test_that("clean and rebuild works", {
   set_cmdstan_path()
   expect_output(
-    rebuild_cmdstan(cores = CORES),
+    rebuild_cmdstan(cores = 2),
     paste0("CmdStan v", cmdstan_version(), " built"),
     fixed = TRUE
   )
@@ -190,45 +256,22 @@ test_that("extract_cmdstan_version_from_archive_name parses realistic inputs", {
   )
 })
 
-test_that("Downloads respect quiet argument", {
-  dir <- tempdir(check = TRUE)
-  version <- latest_released_version()
-
-  ver_msg <- "trying URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'"
-  download_msg <- paste0("trying URL 'https://github.com/stan-dev/cmdstan/releases/download/v",
-                         version, "/cmdstan-", version, ".tar.gz'")
-
-  # expect_message has trouble capturing the messages from download.file
-  # so handle manually
-  install_normal <- suppressWarnings(
-    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = FALSE, cores = CORES),
-                   type = "message")
-  )
-  install_quiet <- suppressWarnings(
-    capture.output(install_cmdstan(dir = dir, overwrite = TRUE, quiet = TRUE, cores = CORES),
-                   type = "message")
-  )
-
-  expect_true(any(grepl(ver_msg, install_normal, fixed = TRUE)))
-  expect_true(any(grepl(download_msg, install_normal, fixed = TRUE)))
-
-  expect_false(any(grepl(ver_msg, install_quiet, fixed = TRUE)))
-  expect_false(any(grepl(download_msg, install_quiet, fixed = TRUE)))
-})
-
 test_that("Download failures return error message", {
   # GHA fails on Windows old-rel here, but cannot replicate locally
   skip_if(os_is_windows() && getRversion() < '4.2')
 
-  dir <- tempdir(check = TRUE)
+  dir <- withr::local_tempdir()
 
-  expect_error({
-    # Use an invalid proxy address to force a download failure
-    withr::with_envvar(
-      c("http_proxy"="invalid","https_proxy"="invalid"),
-      install_cmdstan(dir = dir, overwrite = TRUE)
-    )},
-    "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'")
+  expect_error(
+    {
+      # Use an invalid proxy address to force a download failure
+      withr::with_envvar(
+        c("http_proxy" = "invalid", "https_proxy" = "invalid"),
+        install_cmdstan(dir = dir, overwrite = TRUE)
+      )
+    },
+    "GitHub download of release list failed with error: cannot open URL 'https://api.github.com/repos/stan-dev/cmdstan/releases/latest'"
+  )
 })
 
 test_that("try_download() captures the HTTP status warning", {
@@ -344,31 +387,43 @@ test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
   expect_identical(calls, c("token bad-token", "none", "none"))
 })
 
-test_that("Install from release file works", {
-  dir <- tempdir(check = TRUE)
-
-  destfile <- file.path(dir, "cmdstan-2.37.0.tar.gz")
-
+test_that("install_cmdstan() installs from release_file", {
+  dir <- withr::local_tempdir()
+  destfile <- file.path(withr::local_tempdir(), "cmdstan-2.37.0.tar.gz")
   download_with_retries(
-    "https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz",
-    destfile)
-
-  expect_message(
-    expect_output(
-      install_cmdstan(dir = dir, cores = CORES, quiet = FALSE, overwrite = TRUE,
-                      release_file = destfile,
-                      wsl = os_is_wsl()),
-      "Compiling C++ code",
+    paste0(
+      "https://github.com/stan-dev/cmdstan/releases/download/",
+      "v2.37.0/cmdstan-2.37.0.tar.gz"
+    ),
+    destfile
+  )
+  expect_warning(
+    expect_warning(
+      install_cmdstan(
+        dir = dir,
+        timeout = 1,
+        quiet = TRUE,
+        cores = 2,
+        release_file = destfile,
+        version = "2.37.0",
+        wsl = os_is_wsl()
+      ),
+      "release_file and release_url/version shouldn't both be specified",
       fixed = TRUE
     ),
-    "CmdStan path set",
+    "increasing the value of the `timeout` argument",
     fixed = TRUE
   )
+  expect_true(dir.exists(file.path(dir, "cmdstan-2.37.0")))
 })
 
 test_that("install_cmdstan() errors for unsupported CmdStan versions", {
   expect_error(
-    install_cmdstan(version = "2.34.0", check_toolchain = FALSE, wsl = os_is_wsl()),
+    install_cmdstan(
+      version = "2.34.0",
+      check_toolchain = FALSE,
+      wsl = os_is_wsl()
+    ),
     "Requested CmdStan version (2.34.0) is unsupported.",
     fixed = TRUE
   )
@@ -393,10 +448,14 @@ test_that("install_cmdstan() errors for unsupported CmdStan versions", {
 })
 
 test_that("unsupported release-candidate versions are rejected by the floor check", {
-  expect_false(is_supported_cmdstan_version("2.34.0-rc1"))
-  expect_true(is_supported_cmdstan_version("2.35.0-rc1"))
+  expect_false(is_supported_cmdstan_version("2.36.0-rc1"))
+  expect_true(is_supported_cmdstan_version("2.37.0-rc1"))
   expect_error(
-    install_cmdstan(version = "2.34.0-rc1", check_toolchain = FALSE, wsl = os_is_wsl()),
+    install_cmdstan(
+      version = "2.34.0-rc1",
+      check_toolchain = FALSE,
+      wsl = os_is_wsl()
+    ),
     "Requested CmdStan version (2.34.0-rc1) is unsupported.",
     fixed = TRUE
   )
@@ -442,7 +501,12 @@ test_that("maybe_copy_make_local() copies the previous flags when asked to", {
 
   expect_message(
     expect_true(
-      maybe_copy_make_local(new_dir, previous, "/old/cmdstan", copy_make_local = TRUE)
+      maybe_copy_make_local(
+        new_dir,
+        previous,
+        "/old/cmdstan",
+        copy_make_local = TRUE
+      )
     ),
     "Copied make/local from /old/cmdstan",
     fixed = TRUE
@@ -454,8 +518,12 @@ test_that("maybe_copy_make_local() does nothing when told not to copy", {
   new_dir <- fake_cmdstan_dir()
 
   expect_false(
-    maybe_copy_make_local(new_dir, "STAN_THREADS=true", "/old/cmdstan",
-                          copy_make_local = FALSE)
+    maybe_copy_make_local(
+      new_dir,
+      "STAN_THREADS=true",
+      "/old/cmdstan",
+      copy_make_local = FALSE
+    )
   )
   expect_false(file.exists(file.path(new_dir, "make", "local")))
 })
@@ -464,7 +532,9 @@ test_that("maybe_copy_make_local() never asks anything", {
   # The question is asked by resolve_copy_make_local() before the download.
   rlang::local_interactive(TRUE)
   local_mocked_bindings(
-    prompt_copy_make_local = function(...) stop("must not prompt after the download")
+    prompt_copy_make_local = function(...) {
+      stop("must not prompt after the download")
+    }
   )
 
   new_dir <- fake_cmdstan_dir()
@@ -477,30 +547,61 @@ test_that("maybe_copy_make_local() never asks anything", {
 test_that("maybe_copy_make_local() ignores a missing or empty make/local", {
   # cmdstan_make_local() returns NULL when there is no file and "" when the
   # file is empty.
-  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), NULL, "/old/cmdstan", TRUE))
-  expect_false(maybe_copy_make_local(fake_cmdstan_dir(), "", "/old/cmdstan", TRUE))
+  expect_false(maybe_copy_make_local(
+    fake_cmdstan_dir(),
+    NULL,
+    "/old/cmdstan",
+    TRUE
+  ))
+  expect_false(maybe_copy_make_local(
+    fake_cmdstan_dir(),
+    "",
+    "/old/cmdstan",
+    TRUE
+  ))
   expect_false(
-    maybe_copy_make_local(fake_cmdstan_dir(), character(0), "/old/cmdstan", TRUE)
+    maybe_copy_make_local(
+      fake_cmdstan_dir(),
+      character(0),
+      "/old/cmdstan",
+      TRUE
+    )
   )
 })
 
 test_that("resolve_copy_make_local() takes an explicit answer without asking", {
   rlang::local_interactive(TRUE)
   local_mocked_bindings(
-    prompt_copy_make_local = function(...) stop("must not prompt when told what to do")
+    prompt_copy_make_local = function(...) {
+      stop("must not prompt when told what to do")
+    }
   )
 
-  expect_true(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", TRUE))
-  expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", FALSE))
+  expect_true(resolve_copy_make_local(
+    "STAN_THREADS=true",
+    "/old/cmdstan",
+    TRUE
+  ))
+  expect_false(resolve_copy_make_local(
+    "STAN_THREADS=true",
+    "/old/cmdstan",
+    FALSE
+  ))
 })
 
 test_that("resolve_copy_make_local() does not prompt in a non-interactive session", {
   rlang::local_interactive(FALSE)
   local_mocked_bindings(
-    prompt_copy_make_local = function(...) stop("must not prompt when not interactive")
+    prompt_copy_make_local = function(...) {
+      stop("must not prompt when not interactive")
+    }
   )
 
-  expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+  expect_false(resolve_copy_make_local(
+    "STAN_THREADS=true",
+    "/old/cmdstan",
+    NULL
+  ))
 })
 
 test_that("resolve_copy_make_local() follows the answer to the prompt", {
@@ -508,27 +609,49 @@ test_that("resolve_copy_make_local() follows the answer to the prompt", {
 
   local({
     local_mocked_bindings(prompt_copy_make_local = function(...) TRUE)
-    expect_true(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+    expect_true(resolve_copy_make_local(
+      "STAN_THREADS=true",
+      "/old/cmdstan",
+      NULL
+    ))
   })
   local({
     local_mocked_bindings(prompt_copy_make_local = function(...) FALSE)
-    expect_false(resolve_copy_make_local("STAN_THREADS=true", "/old/cmdstan", NULL))
+    expect_false(resolve_copy_make_local(
+      "STAN_THREADS=true",
+      "/old/cmdstan",
+      NULL
+    ))
   })
 })
 
 test_that("resolve_copy_make_local() does not ask when there is nothing to copy", {
   rlang::local_interactive(TRUE)
   local_mocked_bindings(
-    prompt_copy_make_local = function(...) stop("must not prompt without flags to copy")
+    prompt_copy_make_local = function(...) {
+      stop("must not prompt without flags to copy")
+    }
   )
 
   # Nothing was requested, so a make/local with no flags is a non-event
-  expect_no_message(expect_false(resolve_copy_make_local(NULL, "/old/cmdstan", NULL)))
-  expect_no_message(expect_false(resolve_copy_make_local("", "/old/cmdstan", NULL)))
+  expect_no_message(expect_false(resolve_copy_make_local(
+    NULL,
+    "/old/cmdstan",
+    NULL
+  )))
+  expect_no_message(expect_false(resolve_copy_make_local(
+    "",
+    "/old/cmdstan",
+    NULL
+  )))
   expect_no_message(
     expect_false(resolve_copy_make_local(character(0), "/old/cmdstan", NULL))
   )
-  expect_no_message(expect_false(resolve_copy_make_local("", "/old/cmdstan", FALSE)))
+  expect_no_message(expect_false(resolve_copy_make_local(
+    "",
+    "/old/cmdstan",
+    FALSE
+  )))
 })
 
 test_that("resolve_copy_make_local() reports an explicit TRUE it cannot honour", {
@@ -578,8 +701,12 @@ test_that("copied flags are written before cpp_options, which win", {
   # asked install_cmdstan() for, and make takes the last assignment.
   new_dir <- fake_cmdstan_dir()
   suppressMessages(
-    maybe_copy_make_local(new_dir, "STANCFLAGS=--O1", "/old/cmdstan",
-                          copy_make_local = TRUE)
+    maybe_copy_make_local(
+      new_dir,
+      "STANCFLAGS=--O1",
+      "/old/cmdstan",
+      copy_make_local = TRUE
+    )
   )
   cmdstan_make_local(
     dir = new_dir,
@@ -628,8 +755,11 @@ test_that("install_cmdstan() asks about make/local before downloading", {
 
   expect_error(
     suppressMessages(
-      install_cmdstan(dir = withr::local_tempdir(), version = "2.36.0",
-                      check_toolchain = FALSE)
+      install_cmdstan(
+        dir = withr::local_tempdir(),
+        version = "2.37.0",
+        check_toolchain = FALSE
+      )
     ),
     "Download of CmdStan failed"
   )
@@ -640,6 +770,275 @@ test_that("install_cmdstan() rejects a non-logical copy_make_local", {
   expect_error(
     install_cmdstan(copy_make_local = "yes", check_toolchain = FALSE),
     "copy_make_local"
+  )
+})
+
+test_that("cmdstan_make_local() works", {
+  # Backup only, cmdstan_make_local() is the thing being tested.
+  local_make_local_backup()
+
+  make_local_path <- file.path(cmdstan_path(), "make", "local")
+  if (file.exists(make_local_path)) {
+    file.remove(make_local_path)
+  }
+  expect_null(cmdstan_make_local())
+  cpp_options <- list(
+    "CXX" = "clang++",
+    "CXXFLAGS+= -march=native",
+    TEST1 = TRUE,
+    "TEST2" = FALSE
+  )
+  expect_equal(
+    cmdstan_make_local(cpp_options = cpp_options),
+    c(
+      "CXX=clang++",
+      "CXXFLAGS+= -march=native",
+      "TEST1=true",
+      "TEST2="
+    )
+  )
+  expect_equal(
+    cmdstan_make_local(cpp_options = list("TEST3" = TRUE)),
+    c(
+      "CXX=clang++",
+      "CXXFLAGS+= -march=native",
+      "TEST1=true",
+      "TEST2=",
+      "TEST3=true"
+    )
+  )
+  expect_equal(
+    cmdstan_make_local(cpp_options = list("TEST4" = TRUE), append = FALSE),
+    c("TEST4=true")
+  )
+})
+
+test_that("cmdstan_make_local() preserves empty make/local behavior", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(dir, "make", "local"))
+
+  expect_identical(cmdstan_make_local(dir = dir), "")
+})
+
+test_that("cmdstan_make_local() reads back written make flags", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_null(cmdstan_make_local(dir = dir))
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXX" = "clang++", STAN_THREADS = TRUE)
+    ),
+    c("CXX=clang++", "STAN_THREADS=true")
+  )
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("PRECOMPILED_HEADERS" = FALSE)
+    ),
+    c("CXX=clang++", "STAN_THREADS=true", "PRECOMPILED_HEADERS=")
+  )
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXX" = "g++"),
+      append = FALSE
+    ),
+    "CXX=g++"
+  )
+})
+
+test_that("cmdstan_make_local() does not append flags that are already present", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  make_local_path <- file.path(dir, "make", "local")
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false"),
+    make_local_path
+  )
+
+  # A flag already in the file is not written again.
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false")
+  )
+
+  # Copying the make/local of a previous installation, as suggested by
+  # install_cmdstan(), adds only the flags that are new.
+  previous_install <- c(
+    "CXXFLAGS += -Wno-deprecated-declarations",
+    "PRECOMPILED_HEADERS=false",
+    "O = 3"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = as.list(previous_install)),
+    c(previous_install[1:2], "O = 3")
+  )
+
+  # Leading/trailing whitespace does not defeat the check.
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("  O = 3  ")),
+    c(previous_install[1:2], "O = 3")
+  )
+})
+
+test_that("cmdstan_make_local() appends a flag that a later line has overridden", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    "STAN_THREADS=true"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = FALSE)),
+    c("STAN_THREADS=true", "STAN_THREADS=")
+  )
+  # make applies the last assignment, so threading is off at this point and
+  # turning it back on is a real change rather than a duplicate
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c("STAN_THREADS=true", "STAN_THREADS=", "STAN_THREADS=true")
+  )
+  # ... and now it is the last assignment again
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c("STAN_THREADS=true", "STAN_THREADS=", "STAN_THREADS=true")
+  )
+})
+
+test_that("cmdstan_make_local() appends a += flag that a later assignment has wiped", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3"),
+    file.path(dir, "make", "local")
+  )
+
+  # CXXFLAGS=-O3 dropped what the += line added, so adding it back is a real
+  # change rather than a duplicate
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c(
+      "CXXFLAGS += -Wno-deprecated-declarations",
+      "CXXFLAGS=-O3",
+      "CXXFLAGS += -Wno-deprecated-declarations"
+    )
+  )
+  # ... and now it is in force again
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c(
+      "CXXFLAGS += -Wno-deprecated-declarations",
+      "CXXFLAGS=-O3",
+      "CXXFLAGS += -Wno-deprecated-declarations"
+    )
+  )
+})
+
+test_that("cmdstan_make_local() checks flags in one call against each other", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STAN_THREADS=", file.path(dir, "make", "local"))
+
+  # The second flag is a duplicate of the file but not of what the file will
+  # contain once the first flag is written, so both are needed to end up
+  # with threading off
+  expect_equal(
+    # jarl-ignore duplicated_arguments: intentional duplication
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list(STAN_THREADS = TRUE, STAN_THREADS = FALSE)
+    ),
+    c("STAN_THREADS=", "STAN_THREADS=true", "STAN_THREADS=")
+  )
+})
+
+test_that("cmdstan_make_local() leaves line continuations alone", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(c("CXXFLAGS += \\", "  -O2"), file.path(dir, "make", "local"))
+
+  # The opener matches a line in the file, but dropping it would leave a bare
+  # "-O3" that make cannot parse
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "  -O3")
+    ),
+    c("CXXFLAGS += \\", "-O2", "CXXFLAGS += \\", "-O3")
+  )
+})
+
+test_that("cmdstan_make_local() counts a line continuation as an assignment", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("CXXFLAGS=-O2", file.path(dir, "make", "local"))
+
+  # The last CXXFLAGS=-O2 matches the file, but the continued += in between
+  # changes CXXFLAGS, so writing it again is what makes -O2 the final value
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "  -O3", CXXFLAGS = "-O2")
+    ),
+    c("CXXFLAGS=-O2", "CXXFLAGS += \\", "-O3", "CXXFLAGS=-O2")
+  )
+})
+
+test_that("cmdstan_make_local() does not read a continued line as an assignment", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STAN_THREADS=true", file.path(dir, "make", "local"))
+
+  # The first FOO=bar is part of the CXXFLAGS value, so the second one is the
+  # only assignment to FOO and has to be written
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+    ),
+    c("STAN_THREADS=true", "CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+  )
+  # Same when the continued line is already in the file
+  writeLines(c("CXXFLAGS += \\", "FOO=bar"), file.path(dir, "make", "local"))
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(FOO = "bar")),
+    c("CXXFLAGS += \\", "FOO=bar", "FOO=bar")
+  )
+  # And when the file ends with a backslash, so that the first new flag
+  # continues the file's last line
+  writeLines(c("FOO=bar", "CXXFLAGS += \\"), file.path(dir, "make", "local"))
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(FOO = "bar")),
+    c("FOO=bar", "CXXFLAGS += \\", "FOO=bar")
+  )
+})
+
+test_that("cmdstan_make_local() still appends a new value for a known variable", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines("STANCFLAGS=--O1", file.path(dir, "make", "local"))
+
+  # Same variable, different value: make lets the last assignment win, so this
+  # must not be treated as a duplicate.
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list(STANCFLAGS = "--Oexperimental")
+    ),
+    c("STANCFLAGS=--O1", "STANCFLAGS=--Oexperimental")
   )
 })
 
@@ -678,7 +1077,9 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
-  fake_home <- utils::shortPathName(withr::local_tempdir(pattern = "rtools40-home-"))
+  fake_home <- utils::shortPathName(withr::local_tempdir(
+    pattern = "rtools40-home-"
+  ))
   fake_cpp_dir <- file.path(fake_home, "mingw64", "bin")
   fake_bin_dir <- file.path(fake_home, "usr", "bin")
 
@@ -938,7 +1339,11 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
   on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_soft <- withr::local_tempdir(pattern = "rtools-soft-")
-  dir.create(file.path(fake_soft, "bin"), recursive = TRUE, showWarnings = FALSE)
+  dir.create(
+    file.path(fake_soft, "bin"),
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
   # Note: no make.exe or c++.exe created
 
   fake_bin <- withr::local_tempdir(pattern = "rtools-path-")
@@ -1085,11 +1490,11 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
   })
 })
 
-test_that("check_rtools4x_windows_toolchain() stops when no toolchain found", {
+test_that("check_cmdstan_toolchain() stops with no Windows toolchain", {
   skip_if(!os_is_windows())
 
   local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
-  expect_snapshot(error = TRUE, check_rtools4x_windows_toolchain())
+  expect_snapshot(error = TRUE, check_cmdstan_toolchain())
 })
 
 test_that("is_ucrt_toolchain() returns correct values for R versions", {

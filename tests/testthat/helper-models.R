@@ -37,15 +37,19 @@ testing_model <- function(name) {
 }
 
 testing_fit <-
-  function(name,
-           method = c("sample",
-                      "optimize",
-                      "laplace",
-                      "variational",
-                      "pathfinder",
-                      "generate_quantities"),
-           seed = 123,
-           ...) {
+  function(
+    name,
+    method = c(
+      "sample",
+      "optimize",
+      "laplace",
+      "variational",
+      "pathfinder",
+      "generate_quantities"
+    ),
+    seed = 123,
+    ...
+  ) {
     method <- match.arg(method)
     mod <- testing_model(name)
     utils::capture.output(

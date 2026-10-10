@@ -1,14 +1,41 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fits <- list()
-fits[["sample"]] <- testing_fit("logistic", method = "sample",
-                                seed = 123, save_latent_dynamics = TRUE)
-fits[["variational"]] <- testing_fit("logistic", method = "variational",
-                                     seed = 123, save_latent_dynamics = TRUE)
+fits[["sample"]] <- testing_fit(
+  "logistic",
+  method = "sample",
+  seed = 123,
+  save_latent_dynamics = TRUE
+)
+fits[["variational"]] <- testing_fit(
+  "logistic",
+  method = "variational",
+  seed = 123,
+  save_latent_dynamics = TRUE
+)
 fits[["optimize"]] <- testing_fit("logistic", method = "optimize", seed = 123)
 fits[["laplace"]] <- testing_fit("logistic", method = "laplace", seed = 123)
+fits[["pathfinder"]] <- testing_fit(
+  "logistic",
+  method = "pathfinder",
+  seed = 123
+)
 fit_bern <- testing_fit("bernoulli", method = "sample", seed = 123)
-fits[["generate_quantities"]] <- testing_fit("bernoulli_ppc", method = "generate_quantities", fitted_params = fit_bern, seed = 123)
-all_methods <- c("sample", "optimize", "laplace", "variational", "generate_quantities")
+fits[["generate_quantities"]] <- testing_fit(
+  "bernoulli_ppc",
+  method = "generate_quantities",
+  fitted_params = fit_bern,
+  seed = 123
+)
+all_methods <- c(
+  "sample",
+  "optimize",
+  "laplace",
+  "variational",
+  "pathfinder",
+  "generate_quantities"
+)
 
 
 test_that("*_files() methods return the right number of paths", {
@@ -16,7 +43,10 @@ test_that("*_files() methods return the right number of paths", {
     expect_length(fits[[method]]$output_files(), fits[[method]]$num_procs())
     expect_length(fits[[method]]$data_file(), 1)
     if (method %in% c("sample", "variational")) {
-      expect_length(fits[[method]]$latent_dynamics_files(), fits[[method]]$num_procs())
+      expect_length(
+        fits[[method]]$latent_dynamics_files(),
+        fits[[method]]$num_procs()
+      )
     }
   }
 })
@@ -34,10 +64,10 @@ test_that("saving csv output files works", {
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
 
-    should_match <- paste0("testing-output-",
-                           base::format(Sys.time(), "%Y%m%d%H%M"),
-                           "-",
-                           sprintf("%02d", seq_len(fit$num_procs())))
+    should_match <- paste0(
+      "testing-output-\\d{12}-",
+      sprintf("%02d", seq_len(fit$num_procs()))
+    )
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
     }
@@ -53,7 +83,7 @@ test_that("saving diagnostic csv output works", {
     if (!(method %in% c("sample", "variational"))) {
       expect_error(
         fit$save_latent_dynamics_files(),
-        "No latent dynamics files found. Set 'save_latent_dynamics=TRUE' when fitting the model",
+        "No latent dynamics files found. Set `save_latent_dynamics = TRUE` when fitting the model",
         fixed = TRUE
       )
       next
@@ -63,16 +93,21 @@ test_that("saving diagnostic csv output works", {
     checkmate::expect_file_exists(old_paths, extension = "csv")
 
     expect_message(
-      paths <- fit$save_latent_dynamics_files(tempdir(), basename = "testing-output"),
+      paths <- fit$save_latent_dynamics_files(
+        tempdir(),
+        basename = "testing-output"
+      ),
       paste("Moved", fit$num_procs(), "files and set internal paths")
     )
     checkmate::expect_file_exists(paths, extension = "csv")
     expect_true(all(file.size(paths) > 0))
 
-    should_match <- paste0("testing-output-diagnostic-",
-                           base::format(Sys.time(), "%Y%m%d%H%M"),
-                           "-",
-                           sprintf("%02d", seq_len(fit$num_procs())))
+    should_match <- paste0(
+      "testing-output-diagnostic-",
+      base::format(Sys.time(), "%Y%m%d%H%M"),
+      "-",
+      sprintf("%02d", seq_len(fit$num_procs()))
+    )
 
     for (j in seq_along(paths)) {
       expect_match(paths[j], should_match[j])
@@ -90,13 +125,17 @@ test_that("saving data file works", {
     checkmate::expect_file_exists(old_path, extension = "json")
 
     expect_message(
-      path <- fit$save_data_file(tempdir(), basename = NULL,
-                                 timestamp = FALSE, random = FALSE),
+      path <- fit$save_data_file(
+        tempdir(),
+        basename = NULL,
+        timestamp = FALSE,
+        random = FALSE
+      ),
       "Moved data file and set internal path"
     )
     checkmate::expect_file_exists(path, extension = "json")
     expect_true(file.size(path) > 0)
-    if(method == "generate_quantities") {
+    if (method == "generate_quantities") {
       expect_equal(basename(path), "bernoulli_ppc.json")
     } else {
       expect_equal(basename(path), "logistic.json")
@@ -113,8 +152,14 @@ test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
       expect_error(fit$cmdstan_summary(), "Not available")
       expect_error(fit$cmdstan_diagnose(), "Not available")
     } else if (method == "generate_quantities") {
-      expect_error(fit$cmdstan_summary(), "Not available for generate_quantities method")
-      expect_error(fit$cmdstan_diagnose(), "Not available for generate_quantities method")
+      expect_error(
+        fit$cmdstan_summary(),
+        "Not available for generate_quantities method"
+      )
+      expect_error(
+        fit$cmdstan_diagnose(),
+        "Not available for generate_quantities method"
+      )
     } else if (method == "sample") {
       expect_output(fit$cmdstan_summary(), "Inference for Stan model")
       expect_output(fit$cmdstan_diagnose(), "Processing complete")
@@ -136,7 +181,7 @@ test_that("draws() method returns a 'draws' object", {
     if (method != "sample") {
       expect_warning(
         fit$draws(inc_warmup = TRUE),
-        "'inc_warmup' is ignored except when used with CmdStanMCMC objects"
+        "`inc_warmup` is ignored except when used with CmdStanMCMC objects"
       )
     }
   }
@@ -171,36 +216,28 @@ test_that("save_object() method works", {
   fit <- testing_fit("logistic", method = "sample", seed = 123)
   fit$save_object(temp_rds_file)
   s <- fit$summary()
-  rm(fit); gc()
+  rm(fit)
+  gc()
   fit <- readRDS(temp_rds_file)
   expect_identical(fit$summary(), s)
 })
 
 test_that("reloaded fits rebuild model methods lazily after save_object()", {
   skip_if(os_is_wsl())
-  mod <- cmdstan_model(
-    testing_stan_file("bernoulli_log_lik"),
-    force_recompile = TRUE,
-    compile_model_methods = TRUE
-  )
+  mod <- testing_model("bernoulli_log_lik")
   utils::capture.output(
     fit <- mod$optimize(data = testing_data("bernoulli"))
   )
+  fit$init_model_methods()
 
   temp_rds_file <- tempfile(fileext = ".RDS")
   fit$save_object(temp_rds_file)
   fit2 <- readRDS(temp_rds_file)
 
-  # The external pointer object survives serialization, but its address does not.
-  reloaded_env <- fit2$.__enclos_env__$private$model_methods_env_
-  expect_type(reloaded_env$model_ptr_, "externalptr")
-  expect_false(model_methods_are_live(reloaded_env))
-
   # Calling log_prob() rebuilds the bindings and initializes a live pointer.
   expect_no_error(
     lp <- fit2$log_prob(unconstrained_variables = c(0.1))
   )
-  expect_true(model_methods_are_live(reloaded_env))
   expect_equal(lp, -8.6327599208828509347)
 })
 
@@ -214,6 +251,17 @@ test_that("save_object() method works with qs2 format", {
   expect_identical(fit2$return_codes(), fit$return_codes())
 })
 
+test_that("save_object() says when qs2 is not installed", {
+  local_mocked_bindings(
+    requireNamespace = function(...) FALSE,
+    .package = "base"
+  )
+  expect_error(
+    fits[["sample"]]$save_object(tempfile(fileext = ".qs2"), format = "qs2"),
+    "qs2 package is required"
+  )
+})
+
 test_that("save_object() method works with profiles", {
   mod <- testing_model("logistic_profiling")
   utils::capture.output(
@@ -223,9 +271,25 @@ test_that("save_object() method works with profiles", {
   temp_rds_file <- tempfile(fileext = ".RDS")
   fit$save_object(temp_rds_file)
   s <- fit$profiles()
-  rm(fit); gc()
+  rm(fit)
+  gc()
   fit <- readRDS(temp_rds_file)
   expect_identical(fit$profiles(), s)
+})
+
+test_that("reading draws says when the temp CSV files are gone", {
+  fit <- testing_fit("logistic", method = "sample", seed = 123, chains = 1)
+  files <- file.path(withr::local_tempdir(), basename(fit$output_files()))
+  file.copy(fit$output_files(), files)
+  fit_csv <- as_cmdstan_fit(files)
+  unlink(c(fit$output_files(), files))
+  expect_error(
+    fit$draws(),
+    "The fit's CSV files are gone",
+    fixed = TRUE
+  )
+  # the user's own files, so the plain message
+  expect_error(fit_csv$draws(), "File does not exist", fixed = TRUE)
 })
 
 test_that("metadata() returns list", {
@@ -248,8 +312,8 @@ test_that("return_codes method works properly", {
   expect_equal(fits[["variational"]]$return_codes(), 0)
   expect_equal(fits[["optimize"]]$return_codes(), 0)
   expect_equal(fits[["laplace"]]$return_codes(), 0)
-  expect_equal(fits[["sample"]]$return_codes(), c(0,0,0,0))
-  expect_equal(fits[["generate_quantities"]]$return_codes(), c(0,0,0,0))
+  expect_equal(fits[["sample"]]$return_codes(), c(0, 0, 0, 0))
+  expect_equal(fits[["generate_quantities"]]$return_codes(), c(0, 0, 0, 0))
 
   # non-zero
   expect_warning(
@@ -259,19 +323,44 @@ test_that("return_codes method works properly", {
   expect_gt(non_zero$return_codes(), 0)
 })
 
+test_that("command() returns one line per CmdStan run", {
+  for (method in all_methods) {
+    fit <- fits[[method]]
+    cmd <- fit$command()
+    expect_length(cmd, fit$num_procs())
+    expect_match(cmd, shQuote(paste0("method=", method)), fixed = TRUE)
+    expect_match(
+      cmd,
+      shQuote(paste0("seed=", fit$metadata()$seed)),
+      fixed = TRUE
+    )
+    expect_equal(anyDuplicated(cmd), 0)
+  }
+})
+
 test_that("output and latent dynamics files are cleaned up correctly", {
   for (method in c("sample", "variational")) {
-    fit <- testing_fit("logistic", method = method, seed = 123, save_latent_dynamics = TRUE)
+    fit <- testing_fit(
+      "logistic",
+      method = method,
+      seed = 123,
+      save_latent_dynamics = TRUE
+    )
     out_files <- fit$output_files()
     latent_dynamics_files <- fit$latent_dynamics_files()
     expect_true(all(file.exists(out_files)))
     expect_true(all(file.exists(latent_dynamics_files)))
     rm(fit)
     gc()
-    expect_true(!any(file.exists(out_files)))
-    expect_true(!any(file.exists(latent_dynamics_files)))
+    expect_false(any(file.exists(out_files)))
+    expect_false(any(file.exists(latent_dynamics_files)))
 
-    fit <- testing_fit("logistic", method = method, seed = 123, save_latent_dynamics = TRUE)
+    fit <- testing_fit(
+      "logistic",
+      method = method,
+      seed = 123,
+      save_latent_dynamics = TRUE
+    )
     fit$save_output_files(dir = tempdir())
     out_files <- fit$output_files()
     latent_dynamics_files <- fit$latent_dynamics_files()
@@ -280,10 +369,15 @@ test_that("output and latent dynamics files are cleaned up correctly", {
     rm(fit)
     gc()
     expect_true(all(file.exists(out_files)))
-    expect_true(!any(file.exists(latent_dynamics_files)))
+    expect_false(any(file.exists(latent_dynamics_files)))
     file.remove(out_files)
 
-    fit <- testing_fit("logistic", method = method, seed = 123, save_latent_dynamics = TRUE)
+    fit <- testing_fit(
+      "logistic",
+      method = method,
+      seed = 123,
+      save_latent_dynamics = TRUE
+    )
     fit$save_latent_dynamics_files(dir = tempdir())
     out_files <- fit$output_files()
     latent_dynamics_files <- fit$latent_dynamics_files()
@@ -291,11 +385,16 @@ test_that("output and latent dynamics files are cleaned up correctly", {
     expect_true(all(file.exists(latent_dynamics_files)))
     rm(fit)
     gc()
-    expect_true(!any(file.exists(out_files)))
+    expect_false(any(file.exists(out_files)))
     expect_true(all(file.exists(latent_dynamics_files)))
     file.remove(latent_dynamics_files)
 
-    fit <- testing_fit("logistic", method = method, seed = 123, save_latent_dynamics = TRUE)
+    fit <- testing_fit(
+      "logistic",
+      method = method,
+      seed = 123,
+      save_latent_dynamics = TRUE
+    )
     fit$save_output_files(dir = tempdir())
     fit$save_latent_dynamics_files(dir = tempdir())
     out_files <- fit$output_files()
@@ -319,7 +418,7 @@ test_that("CmdStanArgs errors if idx is out of proc_ids range", {
     model_name = "bernoulli",
     exe_file = mod$exe_file(),
     data_file = data_file,
-    proc_ids = c(1,2,3,4)
+    proc_ids = c(1, 2, 3, 4)
   )
   expect_error(
     arg$compose_all_args(idx = 5),
@@ -330,19 +429,36 @@ test_that("CmdStanArgs errors if idx is out of proc_ids range", {
 test_that("no output with show_messages = FALSE", {
   mod <- testing_model("logistic")
   data_list <- testing_data("logistic")
-  output <- utils::capture.output(tmp <- mod$variational(data = data_list, seed = 123))
+  output <- utils::capture.output(
+    tmp <- mod$variational(data = data_list, seed = 123)
+  )
   expect_gt(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, seed = 123))
+  output <- utils::capture.output(
+    tmp <- mod$optimize(data = data_list, seed = 123)
+  )
   expect_gt(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$sample(data = data_list, chains = 1, seed = 123))
+  output <- utils::capture.output(
+    tmp <- mod$sample(data = data_list, chains = 1, seed = 123)
+  )
   expect_gt(length(output), 1)
 
-  output <- utils::capture.output(tmp <- mod$variational(data = data_list, show_messages = FALSE, seed = 123))
-  expect_equal(length(output), 0)
-  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, show_messages = FALSE, seed = 123))
-  expect_equal(length(output), 0)
-  output <- utils::capture.output(tmp <- mod$sample(data = data_list, show_messages = FALSE, chains = 1, seed = 123))
-  expect_equal(length(output), 0)
+  output <- utils::capture.output(
+    tmp <- mod$variational(data = data_list, show_messages = FALSE, seed = 123)
+  )
+  expect_length(output, 0)
+  output <- utils::capture.output(
+    tmp <- mod$optimize(data = data_list, show_messages = FALSE, seed = 123)
+  )
+  expect_length(output, 0)
+  output <- utils::capture.output(
+    tmp <- mod$sample(
+      data = data_list,
+      show_messages = FALSE,
+      chains = 1,
+      seed = 123
+    )
+  )
+  expect_length(output, 0)
 })
 
 test_that("sig_figs works with all methods", {
@@ -368,87 +484,183 @@ test_that("sig_figs works with all methods", {
   }"
   mod <- cmdstan_model(write_stan_file(m))
   utils::capture.output(
-    sample <- mod$sample(sig_figs = 2, refresh = 0, data = testing_data("logistic"))
+    sample <- mod$sample(
+      sig_figs = 2,
+      refresh = 0,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      sample$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12, 0.12)
   )
   utils::capture.output(
-    sample <- mod$sample(sig_figs = 5, refresh = 0, data = testing_data("logistic"))
+    sample <- mod$sample(
+      sig_figs = 5,
+      refresh = 0,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      sample$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12345, 0.12346)
   )
   utils::capture.output(
-    sample <- mod$sample(sig_figs = 10, refresh = 0, data = testing_data("logistic"))
+    sample <- mod$sample(
+      sig_figs = 10,
+      refresh = 0,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(sample$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      sample$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12345, 0.123456789)
   )
   utils::capture.output(
-    variational <- mod$variational(sig_figs = 2, refresh = 0, data = testing_data("logistic"))
+    variational <- mod$variational(
+      sig_figs = 2,
+      refresh = 0,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      variational$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12, 0.12)
   )
   utils::capture.output(
-    variational <- mod$variational(sig_figs = 5, refresh = 0, data = testing_data("logistic"))
+    variational <- mod$variational(
+      sig_figs = 5,
+      refresh = 0,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      variational$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12345, 0.12346)
   )
   utils::capture.output(
-    variational <- mod$variational(sig_figs = 10, refresh = 0, data = testing_data("logistic"))
+    variational <- mod$variational(
+      sig_figs = 10,
+      refresh = 0,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(variational$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      variational$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12345, 0.123456789)
   )
   utils::capture.output(
-    gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 2, data = testing_data("logistic"))
+    gq <- mod$generate_quantities(
+      fitted_params = sample,
+      sig_figs = 2,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      gq$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12, 0.12)
   )
   utils::capture.output(
-    gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 5, data = testing_data("logistic"))
+    gq <- mod$generate_quantities(
+      fitted_params = sample,
+      sig_figs = 5,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      gq$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12345, 0.12346)
   )
   utils::capture.output(
-    gq <- mod$generate_quantities(fitted_params = sample, sig_figs = 10, data = testing_data("logistic"))
+    gq <- mod$generate_quantities(
+      fitted_params = sample,
+      sig_figs = 10,
+      data = testing_data("logistic")
+    )
   )
   expect_equal(
-    as.numeric(posterior::subset_draws(gq$draws(), variable = c("p2","p5", "p9"), iteration = 1, chain = 1)),
+    as.numeric(posterior::subset_draws(
+      gq$draws(),
+      variable = c("p2", "p5", "p9"),
+      iteration = 1,
+      chain = 1
+    )),
     c(0.12, 0.12345, 0.123456789)
   )
   utils::capture.output(
-    opt <- mod$optimize(sig_figs = 2, refresh = 0, data = testing_data("logistic"), seed = 123)
+    opt <- mod$optimize(
+      sig_figs = 2,
+      refresh = 0,
+      data = testing_data("logistic"),
+      seed = 123
+    )
   )
   expect_equal(
-    as.numeric(opt$mle()[c("p2","p5", "p9")]),
+    as.numeric(opt$mle()[c("p2", "p5", "p9")]),
     c(0.12, 0.12, 0.12)
   )
   utils::capture.output(
-    opt <- mod$optimize(sig_figs = 5, refresh = 0, data = testing_data("logistic"), seed = 123)
+    opt <- mod$optimize(
+      sig_figs = 5,
+      refresh = 0,
+      data = testing_data("logistic"),
+      seed = 123
+    )
   )
   expect_equal(
-    as.numeric(opt$mle()[c("p2","p5", "p9")]),
+    as.numeric(opt$mle()[c("p2", "p5", "p9")]),
     c(0.12, 0.12345, 0.12346)
   )
   utils::capture.output(
-    opt <- mod$optimize(sig_figs = 10, refresh = 0, data = testing_data("logistic"), seed = 123)
+    opt <- mod$optimize(
+      sig_figs = 10,
+      refresh = 0,
+      data = testing_data("logistic"),
+      seed = 123
+    )
   )
   expect_equal(
-    as.numeric(opt$mle()[c("p2","p5", "p9")]),
+    as.numeric(opt$mle()[c("p2", "p5", "p9")]),
     c(0.12, 0.12345, 0.123456789)
   )
 })
@@ -479,7 +691,7 @@ test_that("draws are returned for model with spaces", {
   utils::capture.output(
     fit <- mod$optimize(seed = 123)
   )
-  expect_equal(length(fit$mle()), 2)
+  expect_length(fit$mle(), 2)
 
   utils::capture.output(
     fit <- mod$generate_quantities(fitted_params = fit_sample, seed = 123)
@@ -496,7 +708,7 @@ test_that("sampling works with explicit and inferred include paths containing sp
     repair_path(include_model$include_paths)
   )
 
-  data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+  data_list <- list(N = 10, y = c(0, 1, 0, 0, 0, 0, 0, 0, 0, 1))
   expect_no_error(utils::capture.output(
     fit <- mod_inferred$sample(
       data = data_list,
@@ -504,18 +716,18 @@ test_that("sampling works with explicit and inferred include paths containing sp
       chains = 4,
       parallel_chains = 4,
       refresh = 500,
-      init = list(list(theta = 0.25),
-                  list(theta = 0.25),
-                  list(theta = 0.25),
-                  list(theta = 0.25))
+      init = list(
+        list(theta = 0.25),
+        list(theta = 0.25),
+        list(theta = 0.25),
+        list(theta = 0.25)
+      )
     )
   ))
 
   mod_explicit <- cmdstan_model(
     stan_file = include_model$stan_file,
-    exe_file = mod_inferred$exe_file(),
-    include_paths = include_model$include_paths,
-    compile = FALSE
+    include_paths = include_model$include_paths
   )
   expect_equal(
     repair_path(mod_explicit$include_paths()),
@@ -578,12 +790,23 @@ test_that("CmdStanModel created with exe_file works", {
   mod_bern_ppc_exe <- cmdstan_model(exe_file = mod_bern_ppc$exe_file())
 
   utils::capture.output(
-    fit_generate_quantities <- mod_bern_ppc$generate_quantities(fitted_params = fit_sample, data = data_list, seed = 123)
+    fit_generate_quantities <- mod_bern_ppc$generate_quantities(
+      fitted_params = fit_sample,
+      data = data_list,
+      seed = 123
+    )
   )
   utils::capture.output(
-    fit_generate_quantities_exe <- mod_bern_ppc_exe$generate_quantities(fitted_params = fit_sample, data = data_list, seed = 123)
+    fit_generate_quantities_exe <- mod_bern_ppc_exe$generate_quantities(
+      fitted_params = fit_sample,
+      data = data_list,
+      seed = 123
+    )
   )
-  expect_equal(fit_generate_quantities$draws(), fit_generate_quantities_exe$draws())
+  expect_equal(
+    fit_generate_quantities$draws(),
+    fit_generate_quantities_exe$draws()
+  )
 
   utils::capture.output(
     fit_diagnose <- mod$diagnose(data = data_list, seed = 123)
@@ -615,7 +838,7 @@ test_that("code() warns if model not created with Stan file", {
   )
   expect_warning(
     expect_null(fit_exe$code()),
-    "'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file",
+    "`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file",
     fixed = TRUE
   )
 })

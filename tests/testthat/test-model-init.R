@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")
@@ -26,7 +28,12 @@ test_that("all fitting methods work with provided init files", {
 
   # broadcasting
   expect_sample_output(
-    fit <- mod$sample(data = data_list, chains = 2, init = init_json_1, seed = 123)
+    fit <- mod$sample(
+      data = data_list,
+      chains = 2,
+      init = init_json_1,
+      seed = 123
+    )
   )
   expect_identical(
     fit$init(),
@@ -50,13 +57,13 @@ test_that("sample method works with valid numeric init values", {
 test_that("fitting methods throw errors for invalid init arguments", {
   expect_error(
     mod$sample(data = data_list, chains = 2, init = -10, seed = 123),
-    "If 'init' is numeric it must be a single real number >= 0",
+    "If `init` is numeric it must be a single real number >= 0",
     fixed = TRUE
   )
 
   expect_error(
     mod$sample(data = data_list, init = data.frame(x = 10)),
-    "Invalid 'init' specification",
+    "Invalid `init` specification",
     fixed = TRUE
   )
 
@@ -66,12 +73,20 @@ test_that("fitting methods throw errors for invalid init arguments", {
   )
 
   expect_error(
-    mod$sample(data = data_list, chains = 2, init = c("NOT_A_FILE", "ALSO_NOT_A_FILE")),
+    mod$sample(
+      data = data_list,
+      chains = 2,
+      init = c("NOT_A_FILE", "ALSO_NOT_A_FILE")
+    ),
     "File does not exist"
   )
 
   expect_error(
-    mod$sample(data = data_list, chains = 3, init = c(init_json_1, init_json_2)),
+    mod$sample(
+      data = data_list,
+      chains = 3,
+      init = c(init_json_1, init_json_2)
+    ),
     "number of chains or Pathfinder paths"
   )
 
@@ -97,17 +112,30 @@ test_that("init can be a list of lists", {
     )
   )
   expect_optim_output(
-    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_list[1], seed = 123)
+    fit <- mod_logistic$optimize(
+      data = data_list_logistic,
+      init = init_list[1],
+      seed = 123
+    )
   )
   expect_length(fit$metadata()$init, 1)
 
   expect_laplace_output(
-    fit <- mod_logistic$laplace(data = data_list_logistic, init = init_list[1], seed = 123)
+    fit <- mod_logistic$laplace(
+      data = data_list_logistic,
+      init = init_list[1],
+      seed = 123
+    )
   )
   expect_length(fit$metadata()$init, 1)
 
   expect_sample_output(
-    fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list, seed = 123),
+    fit <- mod_logistic$sample(
+      data = data_list_logistic,
+      chains = 2,
+      init = init_list,
+      seed = 123
+    ),
     num_chains = 2
   )
 
@@ -123,7 +151,11 @@ test_that("init can be a list of lists", {
   # partial inits ok
   init_list <- list(list(alpha = 0))
   expect_sample_output(
-    fit <- mod_logistic$sample(data = data_list_logistic, chains = 1, init = init_list),
+    fit <- mod_logistic$sample(
+      data = data_list_logistic,
+      chains = 1,
+      init = init_list
+    ),
     num_chains = 1
   )
   expect_length(fit$init(), 1)
@@ -134,16 +166,24 @@ test_that("init can be a list of lists", {
 })
 
 test_that("error if init list is specified incorrectly", {
-  init_list <- list(alpha = 1, beta = c(1,1))
+  init_list <- list(alpha = 1, beta = c(1, 1))
   expect_error(
-    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "If 'init' is a list it must be a list of lists"
+    mod_logistic$sample(
+      data = data_list_logistic,
+      chains = 2,
+      init = init_list
+    ),
+    "If `init` is a list it must be a list of lists"
   )
 
   init_list <- list(init_list)
   expect_error(
-    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "'init' has the wrong length"
+    mod_logistic$sample(
+      data = data_list_logistic,
+      chains = 2,
+      init = init_list
+    ),
+    "`init` has the wrong length"
   )
 
   init_list <- list(
@@ -151,28 +191,39 @@ test_that("error if init list is specified incorrectly", {
     list(alpha = 1, beta = 1:3)
   )
   expect_error(
-    mod_logistic$optimize(data = data_list_logistic, init = init_list, seed = 123),
-    "'init' has the wrong length"
+    mod_logistic$optimize(
+      data = data_list_logistic,
+      init = init_list,
+      seed = 123
+    ),
+    "`init` has the wrong length"
   )
 
   init_list <- list(list(), list())
   expect_error(
-    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "'init' contains empty lists."
+    mod_logistic$sample(
+      data = data_list_logistic,
+      chains = 2,
+      init = init_list
+    ),
+    "`init` contains empty lists."
   )
 
   init_list <- list()
-  init_list[[1]] = list()
-  init_list[[1]]['alpha'] = 1
-  init_list[[1]]['beta[1]'] = -1
-  init_list[[1]]['beta[2]'] = 0
-  init_list[[1]]['beta[3]'] = 1
-  init_list[[2]] = init_list[[1]]
+  init_list[[1]] <- list()
+  init_list[[1]]['alpha'] <- 1
+  init_list[[1]]['beta[1]'] <- -1
+  init_list[[1]]['beta[2]'] <- 0
+  init_list[[1]]['beta[3]'] <- 1
+  init_list[[2]] <- init_list[[1]]
   expect_error(
-    mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_list),
-    "'init' contains entries with parameter names that include square-brackets, which is not permitted."
+    mod_logistic$sample(
+      data = data_list_logistic,
+      chains = 2,
+      init = init_list
+    ),
+    "`init` contains entries with parameter names that include square-brackets, which is not permitted."
   )
-
 })
 
 test_that("init can be a function", {
@@ -180,10 +231,18 @@ test_that("init can be a function", {
     list(alpha = 0, beta = 1:3)
   }
   expect_optim_output(
-    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_fun, seed = 123)
+    fit <- mod_logistic$optimize(
+      data = data_list_logistic,
+      init = init_fun,
+      seed = 123
+    )
   )
   expect_sample_output(
-    fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
+    fit <- mod_logistic$sample(
+      data = data_list_logistic,
+      chains = 2,
+      init = init_fun
+    ),
     num_chains = 2
   )
   expect_length(fit$init(), 2)
@@ -200,10 +259,18 @@ test_that("init can be a function", {
     list(alpha = 0, beta = 1:3)
   }
   expect_optim_output(
-    fit <- mod_logistic$optimize(data = data_list_logistic, init = init_fun, seed = 123)
+    fit <- mod_logistic$optimize(
+      data = data_list_logistic,
+      init = init_fun,
+      seed = 123
+    )
   )
   expect_sample_output(
-    fit <- mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
+    fit <- mod_logistic$sample(
+      data = data_list_logistic,
+      chains = 2,
+      init = init_fun
+    ),
     num_chains = 2
   )
   expect_length(fit$init(), 2)
@@ -228,9 +295,14 @@ test_that("init function is called once for each init", {
   withr::defer(unlink(init_paths_zero_arg))
   expect_equal(n_calls, 2)
   expect_equal(
-    vapply(init_paths_zero_arg, function(path) {
-      jsonlite::read_json(path, simplifyVector = TRUE)$alpha
-    }, numeric(1), USE.NAMES = FALSE),
+    vapply(
+      init_paths_zero_arg,
+      function(path) {
+        jsonlite::read_json(path, simplifyVector = TRUE)$alpha
+      },
+      numeric(1),
+      USE.NAMES = FALSE
+    ),
     1:2
   )
 
@@ -253,7 +325,7 @@ test_that("init function return value is validated for each init", {
   }
   expect_error(
     process_init(init_fun, num_procs = 2),
-    "If 'init' is a function it must return a single list"
+    "If `init` is a function it must return a single list"
   )
 })
 
@@ -261,7 +333,7 @@ test_that("error if init function specified incorrectly", {
   init_fun <- function(a, b) list(a, b)
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
-    "If 'init' is a function it must have zero arguments or only argument 'chain_id'"
+    "If `init` is a function it must have zero arguments or only argument `chain_id`"
   )
 
   init_fun <- function() {
@@ -269,7 +341,7 @@ test_that("error if init function specified incorrectly", {
   }
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
-    "If 'init' is a function it must return a single list"
+    "If `init` is a function it must return a single list"
   )
 
   init_fun <- function() {
@@ -277,13 +349,13 @@ test_that("error if init function specified incorrectly", {
   }
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 2, init = init_fun),
-    "If 'init' is a function it must return a single list"
+    "If `init` is a function it must return a single list"
   )
 
   init_fun <- function() list()
   expect_error(
     mod_logistic$sample(data = data_list_logistic, chains = 1, init = init_fun),
-    "'init' contains empty lists."
+    "`init` contains empty lists."
   )
 })
 
@@ -295,26 +367,44 @@ test_that("print message if not all parameters are initialized", {
     )
   )
   expect_message(
-    utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = init_list, seed = 123)),
+    utils::capture.output(mod_logistic$optimize(
+      data = data_list_logistic,
+      init = init_list,
+      seed = 123
+    )),
     "beta",
     fixed = TRUE
   )
   expect_message(
-    utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = list(list(a = 0)), seed = 123)),
+    utils::capture.output(mod_logistic$optimize(
+      data = data_list_logistic,
+      init = list(list(a = 0)),
+      seed = 123
+    )),
     "alpha, beta",
     fixed = TRUE
   )
 
-  init_list <- list(list(alpha = 1),list(alpha = 1))
+  init_list <- list(list(alpha = 1), list(alpha = 1))
   expect_message(
-    utils::capture.output(mod_logistic$sample(data = data_list_logistic, init = init_list, seed = 123, chains = 2)),
+    utils::capture.output(mod_logistic$sample(
+      data = data_list_logistic,
+      init = init_list,
+      seed = 123,
+      chains = 2
+    )),
     "- chain 2: beta",
     fixed = TRUE
   )
 
-  init_list <- list(list(alpha = 1),list(a = 1))
+  init_list <- list(list(alpha = 1), list(a = 1))
   expect_message(
-    utils::capture.output(mod_logistic$sample(data = data_list_logistic, init = init_list, seed = 123, chains = 2)),
+    utils::capture.output(mod_logistic$sample(
+      data = data_list_logistic,
+      init = init_list,
+      seed = 123,
+      chains = 2
+    )),
     "- chain 2: alpha, beta",
     fixed = TRUE
   )
@@ -334,15 +424,28 @@ test_that("No message printed if options(cmdstanr_warn_inits=FALSE)", {
   )
   withr::defer(unlink(init_paths))
   expect_message(
-    utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = list(list(a = 0)), seed = 123)),
+    utils::capture.output(mod_logistic$optimize(
+      data = data_list_logistic,
+      init = list(list(a = 0)),
+      seed = 123
+    )),
     regexp = NA
   )
   expect_message(
-    utils::capture.output(mod_logistic$optimize(data = data_list_logistic, init = list(list(alpha = 1)), seed = 123)),
+    utils::capture.output(mod_logistic$optimize(
+      data = data_list_logistic,
+      init = list(list(alpha = 1)),
+      seed = 123
+    )),
     regexp = NA
   )
   expect_message(
-    utils::capture.output(mod_logistic$sample(data = data_list_logistic, init = list(list(alpha = 1),list(alpha = 1)), chains = 2, seed = 123)),
+    utils::capture.output(mod_logistic$sample(
+      data = data_list_logistic,
+      init = list(list(alpha = 1), list(alpha = 1)),
+      chains = 2,
+      seed = 123
+    )),
     regexp = NA
   )
 })
@@ -398,19 +501,27 @@ test_that("Inits from fit/draws work for exe-only models with various parameter 
   utils::capture.output(
     pf <- mod$pathfinder(psis_resample = FALSE, calculate_lp = FALSE)
   )
-  
+
   # Pathfinder inits with stan file (1 chain)
   expect_no_error(
     utils::capture.output(
-      fit <- mod$sample(init = pf, chains = 1,
-                        iter_warmup = 100, iter_sampling = 100)
+      fit <- mod$sample(
+        init = pf,
+        chains = 1,
+        iter_warmup = 100,
+        iter_sampling = 100
+      )
     )
   )
   # Pathfinder inits with stan file (2 chains)
   expect_no_error(
     utils::capture.output(
-      fit <- mod$sample(init = pf, chains = 2,
-                        iter_warmup = 100, iter_sampling = 100)
+      fit <- mod$sample(
+        init = pf,
+        chains = 2,
+        iter_warmup = 100,
+        iter_sampling = 100
+      )
     )
   )
 
@@ -421,15 +532,23 @@ test_that("Inits from fit/draws work for exe-only models with various parameter 
   # Pathfinder inits without stan file (1 chain)
   expect_no_error(
     utils::capture.output(
-      fit <- mod_nostan$sample(init = pf, chains = 1,
-                               iter_warmup = 100, iter_sampling = 100)
+      fit <- mod_nostan$sample(
+        init = pf,
+        chains = 1,
+        iter_warmup = 100,
+        iter_sampling = 100
+      )
     )
   )
   # Pathfinder inits without stan file (2 chains)
   expect_no_error(
     utils::capture.output(
-      fit <- mod_nostan$sample(init = pf, chains = 2,
-                               iter_warmup = 100, iter_sampling = 100)
+      fit <- mod_nostan$sample(
+        init = pf,
+        chains = 2,
+        iter_warmup = 100,
+        iter_sampling = 100
+      )
     )
   )
 })

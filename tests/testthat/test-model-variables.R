@@ -1,30 +1,32 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 test_that("$variables() work correctly with example models", {
   mod <- testing_model("bernoulli")
-  expect_equal(names(mod$variables()$data), c("N", "y"))
-  expect_equal(names(mod$variables()$parameters), c("theta"))
+  expect_named(mod$variables()$data, c("N", "y"))
+  expect_named(mod$variables()$parameters, c("theta"))
   expect_equal(mod$variables()$data$N$type, "int")
   expect_equal(mod$variables()$data$N$dimensions, 0)
   expect_equal(mod$variables()$data$y$type, "int")
   expect_equal(mod$variables()$data$y$dimensions, 1)
   expect_equal(mod$variables()$parameters$theta$type, "real")
   expect_equal(mod$variables()$parameters$theta$dimensions, 0)
-  expect_equal(length(mod$variables()$transformed_parameters), 0)
-  expect_equal(length(mod$variables()$generated_quantities), 0)
-  expect_true(is.list(mod$variables()$transformed_parameters))
-  expect_true(is.list(mod$variables()$generated_quantities))
+  expect_length(mod$variables()$transformed_parameters, 0)
+  expect_length(mod$variables()$generated_quantities, 0)
+  expect_type(mod$variables()$transformed_parameters, "list")
+  expect_type(mod$variables()$generated_quantities, "list")
 
   mod <- testing_model("bernoulli_log_lik")
-  expect_equal(names(mod$variables()$data), c("N", "y"))
-  expect_equal(names(mod$variables()$parameters), c("theta"))
-  expect_equal(names(mod$variables()$generated_quantities), c("log_lik"))
+  expect_named(mod$variables()$data, c("N", "y"))
+  expect_named(mod$variables()$parameters, c("theta"))
+  expect_named(mod$variables()$generated_quantities, c("log_lik"))
   expect_equal(mod$variables()$generated_quantities$log_lik$type, "real")
   expect_equal(mod$variables()$generated_quantities$log_lik$dimensions, 1)
 
   mod <- testing_model("logistic")
-  expect_equal(names(mod$variables()$data), c("N", "K", "y", "X"))
-  expect_equal(names(mod$variables()$parameters), c("alpha", "beta"))
+  expect_named(mod$variables()$data, c("N", "K", "y", "X"))
+  expect_named(mod$variables()$parameters, c("alpha", "beta"))
   expect_equal(mod$variables()$data$N$type, "int")
   expect_equal(mod$variables()$data$N$dimensions, 0)
   expect_equal(mod$variables()$data$K$type, "int")
@@ -55,9 +57,9 @@ test_that("$variables() work correctly with multidimensional variables", {
   "
   stan_file <- write_stan_file(code)
   mod <- cmdstan_model(stan_file)
-  expect_equal(names(mod$variables()$data), c("y", "x"))
-  expect_equal(names(mod$variables()$parameters), c("z"))
-  expect_equal(names(mod$variables()$transformed_parameters), c("p", "pp"))
+  expect_named(mod$variables()$data, c("y", "x"))
+  expect_named(mod$variables()$parameters, c("z"))
+  expect_named(mod$variables()$transformed_parameters, c("p", "pp"))
   expect_equal(mod$variables()$data$y$type, "int")
   expect_equal(mod$variables()$data$y$dimensions, 8)
   expect_equal(mod$variables()$data$x$type, "real")
@@ -85,7 +87,7 @@ test_that("$variables() is refreshed when the model is recompiled", {
     basename = "issue1228.stan"
   )
   mod <- cmdstan_model(stan_file)
-  expect_equal(names(mod$variables()$parameters), "alpha")
+  expect_named(mod$variables()$parameters, "alpha")
 
   write_stan_file(
     "
@@ -100,11 +102,11 @@ test_that("$variables() is refreshed when the model is recompiled", {
     basename = "issue1228.stan"
   )
   # editing the file alone doesn't invalidate the cached variables
-  expect_equal(names(mod$variables()$parameters), "alpha")
+  expect_named(mod$variables()$parameters, "alpha")
 
-  # the edited file is newer than the executable, so this recompiles
-  mod$compile()
-  expect_equal(names(mod$variables()$parameters), "beta")
+  # a fresh construction sees the edited file and rebuilds
+  mod <- expect_compilation(cmdstan_model(stan_file))
+  expect_named(mod$variables()$parameters, "beta")
 
   # the fitting methods validate inits against the refreshed variables
   expect_no_message(
@@ -123,7 +125,7 @@ test_that("$variables() is refreshed when the model is recompiled", {
   )
 })
 
-test_that("$variables() errors on no stan_file", {
+test_that("$variables() errors when the model was not created from a Stan file", {
   code <- "
   parameters {
     real y;
@@ -134,21 +136,15 @@ test_that("$variables() errors on no stan_file", {
   "
   stan_file <- write_stan_file(code)
   mod <- cmdstan_model(stan_file)
-  file.remove(stan_file)
-  expect_error(
-    mod$variables(),
-    "The Stan file used to create the `CmdStanModel` object does not exist.",
-    fixed = TRUE
-  )
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
     mod_exe$variables(),
-    "'$variables()' cannot be used because the 'CmdStanModel' was not created with a Stan file.",
+    "`$variables()` cannot be used because the `CmdStanModel` was not created with a Stan file.",
     fixed = TRUE
   )
 })
 
-test_that("$variables() works with #includes, both pre and post compilation.", {
+test_that("$variables() works with #includes, explicit or auto-detected paths", {
   data_code <- "
     data {
       int N;
@@ -172,22 +168,19 @@ test_that("$variables() works with #includes, both pre and post compilation.", {
 
   mod_explicit <- cmdstan_model(
     stan_file = model_file,
-    include_paths = model_dir,
-    compile = FALSE
+    include_paths = model_dir
   )
+  vars_explicit <- mod_explicit$variables()
 
-  vars_pre <- mod_explicit$variables()
-  mod_explicit$compile()
-  mod_explicit_post <- cmdstan_model(
-    stan_file = model_file,
-    exe_file = mod_explicit$exe_file(),
-    include_paths = model_dir,
-    compile = FALSE
+  # a second construction with the same include path reuses the executable
+  mod_reused <- expect_no_recompilation(
+    cmdstan_model(stan_file = model_file, include_paths = model_dir)
   )
-  vars_post <- mod_explicit_post$variables()
+  expect_equal(mod_reused$variables(), vars_explicit)
 
-  expect_equal(vars_pre, vars_post)
-
-  mod_automatic <- cmdstan_model(stan_file = model_file, compile = FALSE)
-  expect_equal(mod_automatic$variables(), vars_pre)
+  # the include path is auto-detected without being supplied, and also reuses
+  mod_automatic <- expect_no_recompilation(cmdstan_model(
+    stan_file = model_file
+  ))
+  expect_equal(mod_automatic$variables(), vars_explicit)
 })

@@ -56,11 +56,13 @@
 #' f2 <- write_stan_file(lines)
 #' identical(readLines(f), readLines(f2))
 #'
-write_stan_file <- function(code,
-                            dir = getOption("cmdstanr_write_stan_file_dir", tempdir()),
-                            basename = NULL,
-                            force_overwrite = FALSE,
-                            hash_salt = "") {
+write_stan_file <- function(
+  code,
+  dir = getOption("cmdstanr_write_stan_file_dir", tempdir()),
+  basename = NULL,
+  force_overwrite = FALSE,
+  hash_salt = ""
+) {
   dir <- absolute_path(dir)
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE)
@@ -73,22 +75,26 @@ write_stan_file <- function(code,
     }
     file <- file.path(dir, basename)
   } else {
-    require_suggested_package("rlang")
     hash <- rlang::hash(paste0(hash_salt, collapsed_code))
     file <- file.path(dir, paste0("model_", hash, ".stan"))
   }
   overwrite <- TRUE
   # Do not overwrite file if it has the correct contents (to avoid recompilation)
   if (!force_overwrite && file.exists(file)) {
-    tryCatch({
-      file_contents <- paste0(readLines(file), collapse = "\n")
-      if (gsub("\r|\n", "\n", file_contents) == gsub("\r|\n", "\n", collapsed_code)) {
-        overwrite <- FALSE
+    tryCatch(
+      {
+        file_contents <- paste0(readLines(file), collapse = "\n")
+        if (
+          gsub("\r|\n", "\n", file_contents) ==
+            gsub("\r|\n", "\n", collapsed_code)
+        ) {
+          overwrite <- FALSE
+        }
+      },
+      error = function(e) {
+        warning("Error when checking old file contents", e)
       }
-    },
-    error = function(e) {
-      warning("Error when checking old file contents", e)
-    })
+    )
   }
 
   if (overwrite) {

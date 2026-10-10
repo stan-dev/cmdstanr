@@ -1,80 +1,171 @@
+skip_on_cran()
+
 set_cmdstan_path()
 
 data_list_schools <- testing_data("schools")
 data_list_logistic <- testing_data("logistic")
 test_inits <- function(mod, fit_init, data_list = NULL) {
- utils::capture.output({
-  fit_sample <- mod$sample(data = data_list, chains = 1, init = fit_init,
-    iter_sampling = 100, iter_warmup = 100, refresh = 0, seed = 1234)
-  fit_sample_multi <- mod$sample(data = data_list, chains = 5, init = fit_init,
-    iter_sampling = 100, iter_warmup = 100, refresh = 0, seed = 1234)
-  fit_vb <- mod$variational(data = data_list, refresh = 0, seed = 1234,
-    init = fit_init, algorithm = "fullrank")
-  fit_path <- mod$pathfinder(data = data_list, seed=1234, refresh = 0,
-    num_paths = 4, init = fit_init)
-  fit_laplace <- mod$laplace(data = data_list, seed = 1234, refresh=0,
-    init=fit_init)
-  fit_ml <- mod$optimize(data = data_list, seed = 1234, refresh = 0,
-    init = fit_init, history_size = 400, algorithm = "lbfgs")
-  draws = posterior::as_draws_rvars(fit_init$draws())
-  fit_sample_draws <- mod$sample(data = data_list, chains = 1, init = draws,
-    iter_sampling = 100, iter_warmup = 100, refresh = 0, seed = 1234)
- })
+  utils::capture.output({
+    fit_sample <- mod$sample(
+      data = data_list,
+      chains = 1,
+      init = fit_init,
+      iter_sampling = 100,
+      iter_warmup = 100,
+      refresh = 0,
+      seed = 1234
+    )
+    fit_sample_multi <- mod$sample(
+      data = data_list,
+      chains = 5,
+      init = fit_init,
+      iter_sampling = 100,
+      iter_warmup = 100,
+      refresh = 0,
+      seed = 1234
+    )
+    fit_vb <- mod$variational(
+      data = data_list,
+      refresh = 0,
+      seed = 1234,
+      init = fit_init,
+      algorithm = "fullrank"
+    )
+    fit_path <- mod$pathfinder(
+      data = data_list,
+      seed = 1234,
+      refresh = 0,
+      num_paths = 4,
+      init = fit_init
+    )
+    fit_laplace <- mod$laplace(
+      data = data_list,
+      seed = 1234,
+      refresh = 0,
+      init = fit_init
+    )
+    fit_ml <- mod$optimize(
+      data = data_list,
+      seed = 1234,
+      refresh = 0,
+      init = fit_init,
+      history_size = 400,
+      algorithm = "lbfgs"
+    )
+    draws <- posterior::as_draws_rvars(fit_init$draws())
+    fit_sample_draws <- mod$sample(
+      data = data_list,
+      chains = 1,
+      init = draws,
+      iter_sampling = 100,
+      iter_warmup = 100,
+      refresh = 0,
+      seed = 1234
+    )
+  })
   return(0)
 }
 
 test_that("Sample method works as init", {
   mod_params <- testing_model("parameter_types")
-  utils::capture.output(fit_sample_init <- mod_params$sample(chains = 1,
-    iter_warmup = 100, iter_sampling = 100, refresh = 0, seed = 1234))
+  utils::capture.output(
+    fit_sample_init <- mod_params$sample(
+      chains = 1,
+      iter_warmup = 100,
+      iter_sampling = 100,
+      refresh = 0,
+      seed = 1234
+    )
+  )
   expect_no_error(test_inits(mod_params, fit_sample_init))
 })
 
 test_that("Multi chain Sample method works as init", {
   mod_params <- testing_model("parameter_types")
-  utils::capture.output(fit_sample_multi_init <- mod_params$sample(chains = 4,
-    iter_warmup = 100, iter_sampling = 100, refresh = 0, seed = 1234))
+  utils::capture.output(
+    fit_sample_multi_init <- mod_params$sample(
+      chains = 4,
+      iter_warmup = 100,
+      iter_sampling = 100,
+      refresh = 0,
+      seed = 1234
+    )
+  )
   expect_no_error(test_inits(mod_params, fit_sample_multi_init))
 })
 
 test_that("Subsets of parameters are allowed", {
   mod_logistic_simple <- testing_model("logistic_simple")
-  utils::capture.output(fit_sample_init_simple <- mod_logistic_simple$sample(chains = 1,
-    data = data_list_logistic, iter_warmup = 100, iter_sampling = 100,
-    refresh = 0, seed = 1234))
+  utils::capture.output(
+    fit_sample_init_simple <- mod_logistic_simple$sample(
+      chains = 1,
+      data = data_list_logistic,
+      iter_warmup = 100,
+      iter_sampling = 100,
+      refresh = 0,
+      seed = 1234
+    )
+  )
   mod_logistic <- testing_model("logistic")
-  expect_no_error(test_inits(mod_logistic, fit_sample_init_simple,
-    data_list_logistic))
+  expect_no_error(test_inits(
+    mod_logistic,
+    fit_sample_init_simple,
+    data_list_logistic
+  ))
 })
 
 test_that("Pathfinder works as init", {
   mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1))
+  utils::capture.output(
+    fit_path_init <- mod_logistic$pathfinder(
+      seed = 1234,
+      data = data_list_logistic,
+      refresh = 0,
+      num_paths = 1
+    )
+  )
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
 test_that("Multi Pathfinder method works as init", {
   mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(seed=1234,
-    data = data_list_logistic, refresh = 0, num_paths = 4))
+  utils::capture.output(
+    fit_path_init <- mod_logistic$pathfinder(
+      seed = 1234,
+      data = data_list_logistic,
+      refresh = 0,
+      num_paths = 4
+    )
+  )
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
 test_that("Pathfinder method with psis_resample as false works as init", {
   mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1,
-    psis_resample = FALSE))
+  utils::capture.output(
+    fit_path_init <- mod_logistic$pathfinder(
+      seed = 1234,
+      data = data_list_logistic,
+      refresh = 0,
+      num_paths = 1,
+      psis_resample = FALSE
+    )
+  )
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
 
 test_that("Multi Pathfinder method with psis_resample as false works as init", {
   mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 4,
-    psis_resample = FALSE))
+  utils::capture.output(
+    fit_path_init <- mod_logistic$pathfinder(
+      seed = 1234,
+      data = data_list_logistic,
+      refresh = 0,
+      num_paths = 4,
+      psis_resample = FALSE
+    )
+  )
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
@@ -82,16 +173,28 @@ test_that("Multi Pathfinder method with psis_resample as false works as init", {
 test_that("Pathfinder method with calculate_lp as false works as init", {
   mod_logistic <- testing_model("logistic")
   fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 1,
-    psis_resample = FALSE, calculate_lp = FALSE)
+    seed = 1234,
+    data = data_list_logistic,
+    refresh = 0,
+    num_paths = 1,
+    psis_resample = FALSE,
+    calculate_lp = FALSE
+  )
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
 test_that("Multi Pathfinder method with calculate_lp as false works as init", {
   mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_path_init <- mod_logistic$pathfinder(
-    seed=1234, data = data_list_logistic, refresh = 0, num_paths = 4,
-    psis_resample = TRUE, calculate_lp = FALSE))
+  utils::capture.output(
+    fit_path_init <- mod_logistic$pathfinder(
+      seed = 1234,
+      data = data_list_logistic,
+      refresh = 0,
+      num_paths = 4,
+      psis_resample = TRUE,
+      calculate_lp = FALSE
+    )
+  )
   expect_no_error(test_inits(mod_logistic, fit_path_init, data_list_logistic))
 })
 
@@ -108,11 +211,13 @@ test_that("Pathfinder fit initializations use the intended weights", {
     structure(
       list(
         draws = function(format) draws,
-        metadata = function() list(
-          num_paths = num_paths,
-          psis_resample = psis_resample,
-          calculate_lp = calculate_lp
-        ),
+        metadata = function() {
+          list(
+            num_paths = num_paths,
+            psis_resample = psis_resample,
+            calculate_lp = calculate_lp
+          )
+        },
         return_codes = function() 0
       ),
       class = "CmdStanPathfinder"
@@ -160,12 +265,14 @@ test_that("Pathfinder init candidates are distinct target parameter vectors", {
   pathfinder_fit <- structure(
     list(
       draws = function(format) draws,
-      metadata = function() list(
-        num_paths = 4,
-        psis_resample = TRUE,
-        calculate_lp = TRUE,
-        stan_variables = c("theta", "unused")
-      ),
+      metadata = function() {
+        list(
+          num_paths = 4,
+          psis_resample = TRUE,
+          calculate_lp = TRUE,
+          stan_variables = c("theta", "unused")
+        )
+      },
       return_codes = function() 0
     ),
     class = "CmdStanPathfinder"
@@ -207,14 +314,16 @@ test_that("VB and Laplace inits error with the right algorithm label", {
   model_variables <- list(
     parameters = list(theta = list(dimensions = 0L))
   )
-  make_fit <- function(cls) structure(
-    list(
-      draws = function(format) draws,
-      metadata = function() list(stan_variables = "theta"),
-      return_codes = function() 0
-    ),
-    class = cls
-  )
+  make_fit <- function(cls) {
+    structure(
+      list(
+        draws = function(format) draws,
+        metadata = function() list(stan_variables = "theta"),
+        return_codes = function() 0
+      ),
+      class = cls
+    )
+  }
 
   expect_snapshot(
     error = TRUE,
@@ -247,37 +356,139 @@ test_that("draws inits are recycled in order when too few are supplied", {
   )
 })
 
+test_that("draws inits are placed by index whatever the column order", {
+  draws <- posterior::as_draws_df(
+    data.frame("x[2]" = 20, "x[1]" = 10, "x[3]" = 30, check.names = FALSE)
+  )
+  model_variables <- list(
+    parameters = list(x = list(type = "real", dimensions = 1L))
+  )
+  local_mocked_bindings(process_init = function(init, ...) init)
+
+  inits <- process_init.draws(
+    draws,
+    num_procs = 1,
+    model_variables = model_variables
+  )
+
+  expect_equal(inits[[1]]$x, array(c(10, 20, 30), 3))
+})
+
+test_that("draws inits keep tuple elements the model doesn't declare", {
+  draws <- posterior::as_draws_df(
+    data.frame("t:1" = 10, "t:2" = 20, "t:3" = 30, check.names = FALSE)
+  )
+  real <- list(type = "real", dimensions = 0L)
+  model_variables <- list(
+    parameters = list(t = list(type = list(real, real), dimensions = 0L))
+  )
+  expect_error(
+    process_init.draws(draws, num_procs = 1, model_variables = model_variables),
+    "'t' is a tuple with 2 elements, but 3 were supplied"
+  )
+})
+
 test_that("Variational method works as init", {
   mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_vb_init <- mod_logistic$variational(
-    data = data_list_logistic, seed=1234, refresh = 0))
+  utils::capture.output(
+    fit_vb_init <- mod_logistic$variational(
+      data = data_list_logistic,
+      seed = 1234,
+      refresh = 0
+    )
+  )
   expect_no_error(test_inits(mod_logistic, fit_vb_init, data_list_logistic))
 })
 
 test_that("Optimization method works as init", {
   mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_ml_init <- mod_logistic$optimize(
-    data = data_list_logistic, seed=1234, refresh = 0))
+  utils::capture.output(
+    fit_ml_init <- mod_logistic$optimize(
+      data = data_list_logistic,
+      seed = 1234,
+      refresh = 0
+    )
+  )
   expect_no_error(test_inits(mod_logistic, fit_ml_init, data_list_logistic))
 })
 
 
 test_that("Draws Object with NA or Inf throws error", {
   mod_logistic <- testing_model("logistic")
-  utils::capture.output(fit_laplace_init <- mod_logistic$laplace(
-    data = data_list_logistic, seed = 1234, refresh=0))
-  draws_df = fit_laplace_init$draws()
-  draws_df[1, 3] = NA
-  expect_error(mod_logistic$laplace(
-    data = data_list_logistic, seed = 1234, refresh=0, init = draws_df[1, ]), "alpha contains NA or Inf values!")
-  draws_df[1, 4] = NA
-  expect_error(mod_logistic$sample(
-    data = data_list_logistic, seed = 1234, refresh=0, init = draws_df[1:4, ]), "alpha, beta contains NA or Inf values!")
-  draws_df = fit_laplace_init$draws()
-  draws_df[1, 3] = Inf
-  expect_error(mod_logistic$sample(
-    data = data_list_logistic, seed = 1234, refresh=0, init = draws_df[1:4, ]), "alpha contains NA or Inf values!")
-  draws_df[1, 4] = NA
-  expect_error(mod_logistic$sample(
-    data = data_list_logistic, seed = 1234, refresh=0, init = draws_df[1:4, ]), "alpha, beta contains NA or Inf values!")
+  utils::capture.output(
+    fit_laplace_init <- mod_logistic$laplace(
+      data = data_list_logistic,
+      seed = 1234,
+      refresh = 0
+    )
+  )
+  draws_df <- fit_laplace_init$draws()
+  draws_df[1, 3] <- NA
+  expect_error(
+    mod_logistic$laplace(
+      data = data_list_logistic,
+      seed = 1234,
+      refresh = 0,
+      init = draws_df[1, ]
+    ),
+    "alpha contains NA or Inf values!"
+  )
+  draws_df[1, 4] <- NA
+  expect_error(
+    mod_logistic$sample(
+      data = data_list_logistic,
+      seed = 1234,
+      refresh = 0,
+      init = draws_df[1:4, ]
+    ),
+    "alpha, beta contains NA or Inf values!"
+  )
+  draws_df <- fit_laplace_init$draws()
+  draws_df[1, 3] <- Inf
+  expect_error(
+    mod_logistic$sample(
+      data = data_list_logistic,
+      seed = 1234,
+      refresh = 0,
+      init = draws_df[1:4, ]
+    ),
+    "alpha contains NA or Inf values!"
+  )
+  draws_df[1, 4] <- NA
+  expect_error(
+    mod_logistic$sample(
+      data = data_list_logistic,
+      seed = 1234,
+      refresh = 0,
+      init = draws_df[1:4, ]
+    ),
+    "alpha, beta contains NA or Inf values!"
+  )
+
+  mod_bern <- testing_model("bernoulli")
+  fit_bern <- testing_fit("bernoulli", method = "laplace", refresh = 0)
+  draws_bern <- fit_bern$draws()
+  draws_bern[1, "theta"] <- NA
+  expect_error(
+    mod_bern$sample(
+      data = testing_data("bernoulli"),
+      chains = 1,
+      refresh = 0,
+      init = draws_bern[1, ]
+    ),
+    "Variable: theta contains NA or Inf values!"
+  )
+})
+
+test_that("a fit used as init must share parameters with the model", {
+  fit_logistic <- testing_fit("logistic", method = "sample", refresh = 0)
+  expect_error(
+    testing_model("bernoulli")$sample(
+      data = testing_data("bernoulli"),
+      chains = 1,
+      refresh = 0,
+      init = fit_logistic
+    ),
+    "None of the names of the parameters"
+  )
 })

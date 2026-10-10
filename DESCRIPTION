@@ -1,7 +1,7 @@
 Package: cmdstanr
 Title: R Interface to 'CmdStan'
-Version: 0.9.0.9002
-Date: 2025-03-30
+Version: 0.99.0
+Date: 2026-10-09
 Authors@R:
     c(person(given = "Jonah", family = "Gabry", role = c("aut", "cre"),
              email = "jgabry@gmail.com"),
@@ -16,19 +16,29 @@ Authors@R:
       person(given = "Mikhail", family = "Popov", role = "ctb"),
       person(given = "Mike", family = "Lawrence", role = "ctb"),
       person(given = c("William", "Michael"), family = "Landau", role = "ctb",
-             email = "will.landau@gmail.com", comment = c(ORCID = "0000-0003-1878-3253")),
+             email = "will.landau@gmail.com", 
+             comment = c(ORCID = "0000-0003-1878-3253")),
       person(given = "Jacob", family = "Socolar", role = "ctb"),
       person(given = "Martin", family = "Modrák", role = "ctb"),
       person(given = "Ven", family = "Popov", role = "ctb"),
       person("Visruth", "Srimath Kandali", role = "ctb"),
-      person("Aki", "Vehtari", role = "ctb")
+      person("Aki", "Vehtari", role = "ctb"),
+      person("Katrina", "Brock", role = "ctb")
       )
-Description: A lightweight interface to 'Stan' <https://mc-stan.org>.
-    The 'CmdStanR' interface is an alternative to 'RStan' that calls the command
-    line interface for compilation and running algorithms instead of interfacing
-    with C++ via 'Rcpp'. This has many benefits including always being compatible
-    with the latest version of Stan, fewer installation errors, fewer unexpected
-    crashes in RStudio, and a more permissive license.
+Description: An interface to 'Stan' <https://mc-stan.org>. 'CmdStanR' compiles
+    'Stan' programs and runs its algorithms by calling 'CmdStan', the command
+    line interface to 'Stan'. 'RStan', by contrast, calls 'Stan' in memory
+    through 'Rcpp'. 'CmdStanR' runs 'CmdStan' in a separate process and reads
+    the output files into R, so a failure during inference does not terminate
+    the R session. 'CmdStanR' provides methods for summarizing, extracting, and
+    saving the output and works with the other R packages in the 'Stan'
+    ecosystem, including 'posterior', 'bayesplot', 'loo', and more. 'CmdStanR'
+    can also expose the functions defined in a 'Stan' program to R and evaluate
+    a model's log density, gradient, and Hessian. Installing the package
+    compiles nothing, so it is quick and works with any supported release of
+    'CmdStan'. Updating to a new 'Stan' release means updating 'CmdStan', not
+    waiting for a new R package release. Like 'Stan' itself, 'CmdStanR' uses the
+    BSD 3-clause license.
 License: BSD_3_clause + file LICENSE
 URL: https://mc-stan.org/cmdstanr/, https://discourse.mc-stan.org
 BugReports: https://github.com/stan-dev/cmdstanr/issues
@@ -46,19 +56,19 @@ Imports:
     posterior (>= 1.5.0),
     processx (>= 3.5.0),
     R6 (>= 2.4.0),
-    vctrs,
-    withr (>= 2.5.0),
-    rlang (>= 0.4.7)
+    rlang (>= 1.0.0),
+    withr (>= 2.5.0)
 Suggests:
     bayesplot,
-    fs,
     ggplot2,
     knitr (>= 1.37),
     loo (>= 2.0.0),
     qs2,
+    Rcpp,
+    RcppParallel,
     rmarkdown,
     testthat (>= 3.3.0),
-    Rcpp
+    vctrs
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0

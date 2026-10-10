@@ -27,7 +27,7 @@
 #'   C++ toolchain. It is called internally by `install_cmdstan()` but can also
 #'   be called directly by the user.
 #'
-#'   **CmdStan versions older than 2.35.0 are no longer supported.** If you need
+#'   **CmdStan versions older than 2.37.0 are no longer supported.** If you need
 #'   to work with an older CmdStan version we recommend installing an older
 #'   CmdStanR release from GitHub.
 #'
@@ -60,15 +60,19 @@
 #' @param release_url (string) The URL for the specific CmdStan release or
 #'   release candidate to install. See <https://github.com/stan-dev/cmdstan/releases>.
 #'   The URL should point to the tarball (`.tar.gz` file) itself, e.g.,
-#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.35.0/cmdstan-2.35.0.tar.gz"`.
+#'   `release_url="https://github.com/stan-dev/cmdstan/releases/download/v2.37.0/cmdstan-2.37.0.tar.gz"`.
 #'   If both `version` and `release_url` are specified then `version` will be used.
 #' @param release_file (string) A file path to a CmdStan release tar.gz file
 #'   downloaded from the releases page: <https://github.com/stan-dev/cmdstan/releases>.
-#'   For example: `release_file="./cmdstan-2.35.0.tar.gz"`. If `release_file` is
+#'   For example: `release_file="./cmdstan-2.37.0.tar.gz"`. If `release_file` is
 #'   specified then both `release_url` and `version` will be ignored.
 #' @param cpp_options (list) Any makefile flags/variables to be written to
-#'   the `make/local` file. For example, `list("CXX" = "clang++")` will force
-#'   the use of clang for compilation.
+#'   the `make/local` file. For `install_cmdstan()` they are written before
+#'   CmdStan is built, so no rebuild is needed. A named entry is written as an
+#'   assignment, so `list(CXX = "clang++")` builds with clang, `TRUE` turns a
+#'   switch on (`list(stan_threads = TRUE)` gives `STAN_THREADS=true`) and
+#'   `FALSE` turns it off (`STAN_THREADS=`). An unnamed string is written as
+#'   is, which is how a line like `"CXXFLAGS += -march=native"` goes in.
 #' @param check_toolchain (logical) Should `install_cmdstan()` attempt to check
 #'   that the required toolchain is installed and properly configured? The
 #'   default is `TRUE`.
@@ -110,26 +114,30 @@
 #' # rebuild_cmdstan()
 #' }
 #'
-install_cmdstan <- function(dir = NULL,
-                            cores = getOption("mc.cores", 2),
-                            quiet = FALSE,
-                            overwrite = FALSE,
-                            timeout = 1200,
-                            version = NULL,
-                            release_url = NULL,
-                            release_file = NULL,
-                            cpp_options = list(),
-                            check_toolchain = TRUE,
-                            wsl = FALSE,
-                            copy_make_local = NULL) {
+install_cmdstan <- function(
+  dir = NULL,
+  cores = getOption("mc.cores", 2),
+  quiet = FALSE,
+  overwrite = FALSE,
+  timeout = 1200,
+  version = NULL,
+  release_url = NULL,
+  release_file = NULL,
+  cpp_options = list(),
+  check_toolchain = TRUE,
+  wsl = FALSE,
+  copy_make_local = NULL
+) {
   checkmate::assert_flag(copy_make_local, null.ok = TRUE)
   warn_if_ignored_msys_toolchain_env()
   # Use environment variable to record WSL usage throughout install,
   # post-installation will simply check for 'wsl-' prefix in cmdstan path
   if (isTRUE(wsl)) {
     if (!os_is_windows()) {
-      warning("wsl=TRUE is only available on Windows, and will be ignored!",
-              call. = FALSE)
+      warning(
+        "wsl=TRUE is only available on Windows, and will be ignored!",
+        call. = FALSE
+      )
       wsl <- FALSE
     } else {
       .cmdstanr$WSL <- TRUE
@@ -153,16 +161,23 @@ install_cmdstan <- function(dir = NULL,
     current_make_local_contents <- cmdstan_make_local()
     # cmdstan_make_local() returns "" for a make/local that exists but is
     # empty, which carries no flags and is not worth reporting either
-    if (length(current_make_local_contents) > 0 &&
-        !identical(current_make_local_contents, "")) {
+    if (
+      length(current_make_local_contents) > 0 &&
+        !identical(current_make_local_contents, "")
+    ) {
       previous_make_local <- current_make_local_contents
-      make_local_msg <- paste0("cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"", old_cmdstan_path, "\"))")
+      make_local_msg <- paste0(
+        "cmdstan_make_local(cpp_options = cmdstan_make_local(dir = \"",
+        old_cmdstan_path,
+        "\"))"
+      )
     }
   }
   # Ask now, before the version is announced and before an existing
   # installation is removed. Argument or answer decides whether the
   # post-build message below is shown.
-  copy_make_local_decided <- !is.null(copy_make_local) || rlang::is_interactive()
+  copy_make_local_decided <- !is.null(copy_make_local) ||
+    rlang::is_interactive()
   copy_make_local <- resolve_copy_make_local(
     previous_make_local,
     old_cmdstan_path,
@@ -179,8 +194,11 @@ install_cmdstan <- function(dir = NULL,
   }
   if (!is.null(release_file)) {
     if (!is.null(release_url) || !is.null(version)) {
-      warning("release_file and release_url/version shouldn't both be specified!",
-              "\nrelease_url/version will be ignored.", call. = FALSE)
+      warning(
+        "release_file and release_url/version shouldn't both be specified!",
+        "\nrelease_url/version will be ignored.",
+        call. = FALSE
+      )
     }
 
     release_url <- release_file
@@ -188,21 +206,37 @@ install_cmdstan <- function(dir = NULL,
   if (!is.null(version) && is.null(release_file)) {
     assert_supported_requested_cmdstan_version(version, source = "version")
     if (!is.null(release_url)) {
-      warning("version and release_url shouldn't both be specified!",
-              "\nrelease_url will be ignored.", call. = FALSE)
+      warning(
+        "version and release_url shouldn't both be specified!",
+        "\nrelease_url will be ignored.",
+        call. = FALSE
+      )
     }
 
-    release_url <- paste0("https://github.com/stan-dev/cmdstan/releases/download/v",
-                          version, "/cmdstan-", version, cmdstan_arch_suffix(version), ".tar.gz")
+    release_url <- paste0(
+      "https://github.com/stan-dev/cmdstan/releases/download/v",
+      version,
+      "/cmdstan-",
+      version,
+      cmdstan_arch_suffix(version),
+      ".tar.gz"
+    )
   }
   if (!is.null(release_url)) {
     release_ver <- extract_cmdstan_version_from_archive_name(release_url)
     if (!is.null(release_ver)) {
-      assert_supported_requested_cmdstan_version(release_ver, source = "release_url/release_file")
+      assert_supported_requested_cmdstan_version(
+        release_ver,
+        source = "release_url/release_file"
+      )
     }
     if (!endsWith(release_url, ".tar.gz")) {
-      stop(release_url, " is not a .tar.gz archive!",
-           "cmdstanr supports installing from .tar.gz archives only.", call. = FALSE)
+      stop(
+        release_url,
+        " is not a .tar.gz archive!",
+        "CmdStanR supports installing from .tar.gz archives only.",
+        call. = FALSE
+      )
     }
     message("* Installing CmdStan from ", release_url)
     download_url <- release_url
@@ -229,14 +263,26 @@ install_cmdstan <- function(dir = NULL,
     return(invisible(NULL))
   }
   if (is.null(release_file)) {
-    tar_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet)
+    tar_downloaded <- download_with_retries(
+      download_url,
+      dest_file,
+      quiet = quiet
+    )
     if (inherits(tar_downloaded, "try-error")) {
-      error_msg <- paste("Download of CmdStan failed with error:",
-                          attr(tar_downloaded, "condition")$message)
+      error_msg <- paste(
+        "Download of CmdStan failed with error:",
+        attr(tar_downloaded, "condition")$message
+      )
       if (!is.null(version)) {
-        error_msg <- paste0(error_msg, "\nPlease check if the supplied version number is valid.")
+        error_msg <- paste0(
+          error_msg,
+          "\nPlease check if the supplied version number is valid."
+        )
       } else if (!is.null(release_url)) {
-        error_msg <- paste0(error_msg, "\nPlease check if the supplied release URL is valid.")
+        error_msg <- paste0(
+          error_msg,
+          "\nPlease check if the supplied release URL is valid."
+        )
       }
       stop(error_msg, call. = FALSE)
     }
@@ -248,13 +294,22 @@ install_cmdstan <- function(dir = NULL,
   if (wsl) {
     # Significantly faster to use WSL to untar the downloaded archive, as there are
     # similar IO issues accessing the WSL filesystem from windows
-    wsl_tar_gz_file <- gsub(paste0("//wsl$/", wsl_distro_name()), "",
-                            dest_file, fixed = TRUE)
+    wsl_tar_gz_file <- gsub(
+      paste0("//wsl$/", wsl_distro_name()),
+      "",
+      dest_file,
+      fixed = TRUE
+    )
     wsl_tar_gz_file <- wsl_safe_path(wsl_tar_gz_file)
     untar_rc <- processx::run(
       command = "wsl",
-      args = c("tar", "-xf", wsl_tar_gz_file, "-C",
-               gsub(tar_gz_file, "", wsl_tar_gz_file))
+      args = c(
+        "tar",
+        "-xf",
+        wsl_tar_gz_file,
+        "-C",
+        gsub(tar_gz_file, "", wsl_tar_gz_file)
+      )
     )
     remove_rc <- processx::run(
       command = "wsl",
@@ -266,22 +321,37 @@ install_cmdstan <- function(dir = NULL,
       exdir = dir
     )
     if (untar_rc != 0) {
-      stop("Problem extracting tarball. Exited with return code: ", untar_rc, call. = FALSE)
+      stop(
+        "Problem extracting tarball. Exited with return code: ",
+        untar_rc,
+        call. = FALSE
+      )
     }
     file.remove(dest_file)
   }
   extracted_version <- suppressWarnings(read_cmdstan_version(dir_cmdstan))
   if (!is.null(extracted_version)) {
-    assert_supported_requested_cmdstan_version(extracted_version, source = "archive")
+    assert_supported_requested_cmdstan_version(
+      extracted_version,
+      source = "archive"
+    )
   }
 
   # Carry the previous installation's makefile flags over before the build, so
   # that the build already uses them. Written first, so that cpp_options and
   # the platform flags below take precedence over an inherited assignment.
-  maybe_copy_make_local(dir_cmdstan, previous_make_local, old_cmdstan_path,
-                        copy_make_local)
+  maybe_copy_make_local(
+    dir_cmdstan,
+    previous_make_local,
+    old_cmdstan_path,
+    copy_make_local
+  )
 
-  cmdstan_make_local(dir = dir_cmdstan, cpp_options = cpp_options, append = TRUE)
+  cmdstan_make_local(
+    dir = dir_cmdstan,
+    cpp_options = cpp_options,
+    append = TRUE
+  )
   # Setting up native M1 compilation of CmdStan and its downstream libraries
   if (is_rosetta2()) {
     cmdstan_make_local(
@@ -326,8 +396,14 @@ install_cmdstan <- function(dir = NULL,
 
   message("* Finished installing CmdStan to ", dir_cmdstan, "\n")
   set_cmdstan_path(dir_cmdstan)
-  if (report_uncopied_make_local(make_local_msg, copy_make_local_decided,
-                                 old_cmdstan_path, cmdstan_path())) {
+  if (
+    report_uncopied_make_local(
+      make_local_msg,
+      copy_make_local_decided,
+      old_cmdstan_path,
+      cmdstan_path()
+    )
+  ) {
     message(
       "\nThe previous installation of CmdStan had a non-empty make/local file.\n",
       "If you wish to copy the file to the new installation, run the following commands:\n",
@@ -346,10 +422,12 @@ install_cmdstan <- function(dir = NULL,
 
 #' @rdname install_cmdstan
 #' @export
-rebuild_cmdstan <- function(dir = cmdstan_path(),
-                            cores = getOption("mc.cores", 2),
-                            quiet = FALSE,
-                            timeout = 600) {
+rebuild_cmdstan <- function(
+  dir = cmdstan_path(),
+  cores = getOption("mc.cores", 2),
+  quiet = FALSE,
+  timeout = 600
+) {
   clean_cmdstan(dir, cores, quiet)
   build_cmdstan(dir, cores, quiet, timeout)
   invisible(NULL)
@@ -362,9 +440,11 @@ rebuild_cmdstan <- function(dir = cmdstan_path(),
 #'   The default is `TRUE`. If `FALSE` the file is overwritten. When appending,
 #'   a flag that is already in `make/local` is not written again.
 #'
-cmdstan_make_local <- function(dir = cmdstan_path(),
-                               cpp_options = NULL,
-                               append = TRUE) {
+cmdstan_make_local <- function(
+  dir = cmdstan_path(),
+  cpp_options = NULL,
+  append = TRUE
+) {
   make_local_path <- file.path(dir, "make", "local")
   if (!is.null(cpp_options)) {
     built_flags <- c()
@@ -373,18 +453,25 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
       if (isTRUE(as.logical(cpp_options[[i]]))) {
         built_flags <- c(built_flags, paste0(toupper(option_name), "=true"))
       } else if (isFALSE(as.logical(cpp_options[[i]]))) {
-        built_flags <- c(built_flags, paste0(toupper(option_name), "=false"))
+        # An empty value turns a switch off: CmdStan tests these with ifdef,
+        # so NAME=false would turn it on.
+        built_flags <- c(built_flags, paste0(toupper(option_name), "="))
       } else {
         if (is.null(option_name) || !nzchar(option_name)) {
           built_flags <- c(built_flags, paste0(cpp_options[[i]]))
         } else {
-          built_flags <- c(built_flags, paste0(toupper(option_name), "=", cpp_options[[i]]))
+          built_flags <- c(
+            built_flags,
+            paste0(toupper(option_name), "=", cpp_options[[i]])
+          )
         }
       }
     }
     if (append && file.exists(make_local_path)) {
       existing <- suppressWarnings(readLines(make_local_path, warn = FALSE))
-      built_flags <- built_flags[!make_flag_already_applies(built_flags, existing)]
+      built_flags <- built_flags[
+        !make_flag_already_applies(built_flags, existing)
+      ]
     }
     if (length(built_flags) > 0 || !append) {
       write(built_flags, file = make_local_path, append = append)
@@ -400,9 +487,13 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
   if (length(make_local_contents) == 0) {
     return("")
   }
-  trimws(strsplit(trimws(
-    paste(make_local_contents, collapse = "\n")
-  ), "\n", fixed = TRUE)[[1]])
+  trimws(strsplit(
+    trimws(
+      paste(make_local_contents, collapse = "\n")
+    ),
+    "\n",
+    fixed = TRUE
+  )[[1]])
 }
 
 #' @rdname install_cmdstan
@@ -413,7 +504,7 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (isTRUE(fix)) {
     warning(
-      "The 'fix' argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
+      "The `fix` argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
       call. = FALSE
     )
   }
@@ -429,7 +520,10 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
     check_unix_cpp_compiler()
   }
   if (!checkmate::test_directory(dirname(tempdir()), access = "w")) {
-    stop("No write permissions to the temporary folder! Please change the permissions or location of the temporary folder.", call. = FALSE)
+    stop(
+      "No write permissions to the temporary folder! Please change the permissions or location of the temporary folder.",
+      call. = FALSE
+    )
   }
   if (!quiet) {
     message("The C++ toolchain required for CmdStan is setup properly!")
@@ -453,7 +547,12 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
 #' @param decided (logical) Was the copy question settled during the install?
 #' @param old_path,new_path (string or `NULL`) Previous and new installation.
 #' @return `TRUE` if the message should be shown.
-report_uncopied_make_local <- function(make_local_msg, decided, old_path, new_path) {
+report_uncopied_make_local <- function(
+  make_local_msg,
+  decided,
+  old_path,
+  new_path
+) {
   !is.null(make_local_msg) && !isTRUE(decided) && !identical(old_path, new_path)
 }
 
@@ -471,18 +570,25 @@ report_uncopied_make_local <- function(make_local_msg, decided, old_path, new_pa
 #'   scripts, R CMD check and CI never block on a prompt.
 #' @return `TRUE` if the flags should be copied. An explicit `TRUE` with
 #'   nothing to copy returns `FALSE` and reports why.
-resolve_copy_make_local <- function(previous_contents,
-                                    previous_path,
-                                    copy_make_local = NULL) {
+resolve_copy_make_local <- function(
+  previous_contents,
+  previous_path,
+  copy_make_local = NULL
+) {
   if (length(previous_contents) == 0 || identical(previous_contents, "")) {
     if (isTRUE(copy_make_local)) {
       # An explicit request that cannot be honoured
       if (is.null(previous_path)) {
-        message("* copy_make_local = TRUE, but no CmdStan installation is ",
-                "currently in use, so there are no makefile flags to copy.")
+        message(
+          "* copy_make_local = TRUE, but no CmdStan installation is ",
+          "currently in use, so there are no makefile flags to copy."
+        )
       } else {
-        message("* copy_make_local = TRUE, but ", previous_path,
-                " has an empty or missing make/local, so there is nothing to copy.")
+        message(
+          "* copy_make_local = TRUE, but ",
+          previous_path,
+          " has an empty or missing make/local, so there is nothing to copy."
+        )
       }
     }
     return(FALSE)
@@ -490,7 +596,8 @@ resolve_copy_make_local <- function(previous_contents,
   if (!is.null(copy_make_local)) {
     return(isTRUE(copy_make_local))
   }
-  rlang::is_interactive() && prompt_copy_make_local(previous_contents, previous_path)
+  rlang::is_interactive() &&
+    prompt_copy_make_local(previous_contents, previous_path)
 }
 
 #' Carry the makefile flags of the previous CmdStan installation over to a
@@ -503,13 +610,17 @@ resolve_copy_make_local <- function(previous_contents,
 #' @param previous_path (string) Where those contents came from.
 #' @param copy_make_local (logical) The resolved answer.
 #' @return `TRUE` if the flags were written to the new installation.
-maybe_copy_make_local <- function(dir_cmdstan,
-                                  previous_contents,
-                                  previous_path,
-                                  copy_make_local) {
-  if (!isTRUE(copy_make_local) ||
+maybe_copy_make_local <- function(
+  dir_cmdstan,
+  previous_contents,
+  previous_path,
+  copy_make_local
+) {
+  if (
+    !isTRUE(copy_make_local) ||
       length(previous_contents) == 0 ||
-      identical(previous_contents, "")) {
+      identical(previous_contents, "")
+  ) {
     return(FALSE)
   }
   cmdstan_make_local(
@@ -525,11 +636,14 @@ maybe_copy_make_local <- function(dir_cmdstan,
 # resolve_copy_make_local() so that tests can mock the answer.
 prompt_copy_make_local <- function(previous_contents, previous_path) {
   message(
-    "\nThe CmdStan installation in ", previous_path,
+    "\nThe CmdStan installation in ",
+    previous_path,
     " has a non-empty make/local:\n",
     paste0("  ", previous_contents, collapse = "\n")
   )
-  answer <- read_line("Copy these makefile flags to the new installation? [y/N] ")
+  answer <- read_line(
+    "Copy these makefile flags to the new installation? [y/N] "
+  )
   tolower(trimws(answer)) %in% c("y", "yes")
 }
 
@@ -542,7 +656,7 @@ read_line <- function(prompt) {
 #'
 #' Lines are compared as text, following the two rules of make that matter
 #' here. A plain assignment only counts while it is the last one for that
-#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=false`
+#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=`
 #' further down is a real change, not a duplicate. `+=` accumulates, so a
 #' second identical `+=` line adds nothing, unless a plain assignment in
 #' between has reset the variable and dropped what the first one added.
@@ -578,7 +692,9 @@ make_line_already_applies <- function(line, existing) {
     return(line %in% existing)
   }
   existing_variable <- make_assignment_part(existing, "\\1")
-  assignments <- which(!is.na(existing_variable) & existing_variable == variable)
+  assignments <- which(
+    !is.na(existing_variable) & existing_variable == variable
+  )
   if (make_assignment_part(line, "\\2") == "+=") {
     # A plain assignment drops what earlier += lines added, so only the
     # lines after the last one count.
@@ -610,7 +726,9 @@ check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
   if (dir.exists(dir_cmdstan)) {
     if (!overwrite) {
       warning(
-        "An installation already exists at ", dir_cmdstan, ". ",
+        "An installation already exists at ",
+        dir_cmdstan,
+        ". ",
         "Please remove or rename the installation folder or set overwrite=TRUE.",
         call. = FALSE
       )
@@ -635,21 +753,34 @@ github_auth_token <- function() {
 
 # construct url for download from cmdstan version number
 github_download_url <- function(version_number) {
-
   base_url <- "https://github.com/stan-dev/cmdstan/releases/download/"
-  paste0(base_url, "v", version_number,
-         "/cmdstan-", version_number, cmdstan_arch_suffix(), ".tar.gz")
+  paste0(
+    base_url,
+    "v",
+    version_number,
+    "/cmdstan-",
+    version_number,
+    cmdstan_arch_suffix(),
+    ".tar.gz"
+  )
 }
 
 # get version number of latest release
-latest_released_version <- function(quiet=TRUE, ...) {
+latest_released_version <- function(quiet = TRUE, ...) {
   dest_file <- tempfile(pattern = "releases-", fileext = ".json")
   download_url <- "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
-  release_list_downloaded <- download_with_retries(download_url, dest_file, quiet = quiet, ...)
+  release_list_downloaded <- download_with_retries(
+    download_url,
+    dest_file,
+    quiet = quiet,
+    ...
+  )
   if (inherits(release_list_downloaded, "try-error")) {
-    stop("GitHub download of release list failed with error: ",
-        attr(release_list_downloaded, "condition")$message,
-        call. = FALSE)
+    stop(
+      "GitHub download of release list failed with error: ",
+      attr(release_list_downloaded, "condition")$message,
+      call. = FALSE
+    )
   }
   release <- jsonlite::read_json(dest_file)
   sub("v", "", release$tag_name)
@@ -667,8 +798,10 @@ try_download <- function(
       utils::download.file(
         url = download_url,
         destfile = destination_file,
+        method = "libcurl",
         quiet = quiet,
-        headers = headers
+        headers = headers,
+        mode = 'wb'
       ),
       warning = function(w) {
         download_warning <<- conditionMessage(w)
@@ -682,7 +815,6 @@ try_download <- function(
   download_status
 }
 
-# download with retries and pauses
 download_with_retries <- function(
   download_url,
   destination_file,
@@ -690,6 +822,8 @@ download_with_retries <- function(
   pause_sec = 5,
   quiet = TRUE
 ) {
+  # R's default of 60 seconds may be too short for the CmdStan tarball
+  withr::local_options(timeout = max(300, getOption("timeout")))
   headers <- github_auth_token()
   num_retries <- 0
 
@@ -727,10 +861,12 @@ download_with_retries <- function(
   download_rc
 }
 
-build_cmdstan <- function(dir,
-                          cores = getOption("mc.cores", 2),
-                          quiet = FALSE,
-                          timeout) {
+build_cmdstan <- function(
+  dir,
+  cores = getOption("mc.cores", 2),
+  quiet = FALSE,
+  timeout
+) {
   translation_args <- NULL
   if (is_rosetta2()) {
     run_cmd <- "/usr/bin/arch"
@@ -753,16 +889,20 @@ build_cmdstan <- function(dir,
         echo = !quiet || is_verbose_mode(),
         spinner = quiet && use_spinner(),
         error_on_status = FALSE,
-        stderr_callback = function(x, p) { if (quiet) message(x) },
+        stderr_callback = function(x, p) {
+          if (quiet) message(x)
+        },
         timeout = timeout
       )
     )
   )
 }
 
-clean_cmdstan <- function(dir = cmdstan_path(),
-                          cores = getOption("mc.cores", 2),
-                          quiet = FALSE) {
+clean_cmdstan <- function(
+  dir = cmdstan_path(),
+  cores = getOption("mc.cores", 2),
+  quiet = FALSE
+) {
   withr::with_envvar(
     c("HOME" = short_path(Sys.getenv("HOME"))),
     withr::with_path(
@@ -778,7 +918,9 @@ clean_cmdstan <- function(dir = cmdstan_path(),
         echo = !quiet || is_verbose_mode(),
         spinner = quiet && use_spinner(),
         error_on_status = FALSE,
-        stderr_callback = function(x, p) { if (quiet) message(x) }
+        stderr_callback = function(x, p) {
+          if (quiet) message(x)
+        }
       )
     )
   )
@@ -794,14 +936,18 @@ build_example <- function(dir, cores, quiet, timeout) {
       ),
       wsl_compatible_run(
         command = make_cmd(),
-        args = c(paste0("-j", cores),
-                  cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))),
+        args = c(
+          paste0("-j", cores),
+          cmdstan_ext(file.path("examples", "bernoulli", "bernoulli"))
+        ),
         wd = dir,
         echo_cmd = is_verbose_mode(),
         echo = !quiet || is_verbose_mode(),
         spinner = quiet && use_spinner(),
         error_on_status = FALSE,
-        stderr_callback = function(x, p) { if (quiet) message(x) },
+        stderr_callback = function(x, p) {
+          if (quiet) message(x)
+        },
         timeout = timeout
       )
     )
@@ -811,14 +957,16 @@ build_example <- function(dir, cores, quiet, timeout) {
 build_status_ok <- function(process_log, quiet = FALSE) {
   if (process_log$timeout) {
     if (quiet) {
-      end_warning <-
-        " and running again with 'quiet=FALSE' to see full installation output."
+      end_warning <- paste0(
+        " and running again with `quiet = FALSE` to see full ",
+        "installation output."
+      )
     } else {
       end_warning <- "."
     }
     warning(
       "The build process timed out. ",
-      "Try increasing the value of the 'timeout' argument",
+      "Try increasing the value of the `timeout` argument",
       end_warning,
       call. = FALSE
     )
@@ -827,8 +975,10 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 
   if (is.na(process_log$status) || process_log$status != 0) {
     if (quiet) {
-      end_warning <-
-        " and/or try again with 'quiet=FALSE' to see full installation output."
+      end_warning <- paste0(
+        " and/or try again with `quiet = FALSE` to see full ",
+        "installation output."
+      )
     } else {
       end_warning <- "."
     }
@@ -847,40 +997,64 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 check_wsl_toolchain <- function() {
   installed <- wsl_installed()
   if (is.na(installed)) {
-    stop("\n", "WSL did not respond, so CmdStanR could not tell whether ",
-         "a WSL distribution is installed.",
-         "\n", "If WSL is still starting, wait a moment and run ",
-         "`check_cmdstan_toolchain()` again.",
-         call. = FALSE)
+    stop(
+      "\n",
+      "WSL did not respond, so CmdStanR could not tell whether ",
+      "a WSL distribution is installed.",
+      "\n",
+      "If WSL is still starting, wait a moment and run ",
+      "`check_cmdstan_toolchain()` again.",
+      call. = FALSE
+    )
   }
   if (!installed) {
-    stop("\n", "A WSL distribution is not installed or is not accessible.",
-         "\n", "Please see the Microsoft documentation for guidance on installing WSL: ",
-         "\n", "https://docs.microsoft.com/en-us/windows/wsl/install",
-         call. = FALSE)
+    stop(
+      "\n",
+      "A WSL distribution is not installed or is not accessible.",
+      "\n",
+      "Please see the Microsoft documentation for guidance on installing WSL: ",
+      "\n",
+      "https://docs.microsoft.com/en-us/windows/wsl/install",
+      call. = FALSE
+    )
   }
 
-  make_not_present <- processx::run(command = "wsl",
-                                    args = c("which", "make"),
-                                    error_on_status = FALSE)
+  make_not_present <- processx::run(
+    command = "wsl",
+    args = c("which", "make"),
+    error_on_status = FALSE
+  )
 
-  gpp_not_present <- processx::run(command = "wsl",
-                                    args = c("which", "g++"),
-                                    error_on_status = FALSE)
+  gpp_not_present <- processx::run(
+    command = "wsl",
+    args = c("which", "g++"),
+    error_on_status = FALSE
+  )
 
-  clangpp_not_present <- processx::run(command = "wsl",
-                                   args = c("which", "clang++"),
-                                   windows_verbatim_args = TRUE,
-                                   error_on_status = FALSE)
+  clangpp_not_present <- processx::run(
+    command = "wsl",
+    args = c("which", "clang++"),
+    windows_verbatim_args = TRUE,
+    error_on_status = FALSE
+  )
 
-  if (make_not_present$status || (gpp_not_present$status
-        && clangpp_not_present$status)) {
-    stop("\n", "Your distribution is missing the needed utilities for compiling C++.",
-         "\n", "Please launch your WSL and install them using the appropriate command:",
-         "\n", "Debian/Ubuntu: sudo apt-get install build-essential",
-         "\n", "Fedora: sudo dnf group install \"C Development Tools and Libraries\"",
-         "\n", "Arch: pacman -Sy base-devel",
-         call. = FALSE)
+  if (
+    make_not_present$status ||
+      (gpp_not_present$status && clangpp_not_present$status)
+  ) {
+    stop(
+      "\n",
+      "Your distribution is missing the needed utilities for compiling C++.",
+      "\n",
+      "Please launch your WSL and install them using the appropriate command:",
+      "\n",
+      "Debian/Ubuntu: sudo apt-get install build-essential",
+      "\n",
+      "Fedora: sudo dnf group install \"C Development Tools and Libraries\"",
+      "\n",
+      "Arch: pacman -Sy base-devel",
+      call. = FALSE
+    )
   }
 }
 
@@ -905,20 +1079,19 @@ check_unix_make <- function() {
   if (!nzchar(make_path)) {
     if (os_is_macos()) {
       stop(
-        "The 'make' tool was not found. ",
-        "Please install the command line tools for Mac with 'xcode-select --install' ",
+        "The make tool was not found. ",
+        "Please install the command line tools for Mac with `xcode-select --install` ",
         "or install Xcode from the app store. ",
         "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     } else {
       stop(
-        "The 'make' tool was not found. ",
-        "Please install 'make', restart R, and then run cmdstanr::check_cmdstan_toolchain().",
+        "The make tool was not found. ",
+        "Please install make, restart R, and then run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     }
-
   }
 }
 
@@ -929,7 +1102,7 @@ check_unix_cpp_compiler <- function() {
     if (os_is_macos()) {
       stop(
         "A suitable C++ compiler was not found. ",
-        "Please install the command line tools for Mac with 'xcode-select --install' ",
+        "Please install the command line tools for Mac with `xcode-select --install` ",
         "or install Xcode from the app store. ",
         "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
@@ -937,7 +1110,7 @@ check_unix_cpp_compiler <- function() {
     } else {
       stop(
         "A C++ compiler was not found. ",
-        "Please install the 'clang++' or 'g++' compiler, restart R, ",
+        "Please install the clang++ or g++ compiler, restart R, ",
         "and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
@@ -965,13 +1138,26 @@ cmdstan_arch_suffix <- function(version = NULL) {
 
   arch <- gsub("aarch64", "arm64", arch)
   arch <- gsub("armv7l", "armel", arch)
-  available_archs <- c("arm64", "armel", "armhf", "mips64el", "ppc64el", "s390x")
+  available_archs <- c(
+    "arm64",
+    "armel",
+    "armhf",
+    "mips64el",
+    "ppc64el",
+    "s390x"
+  )
   selected_arch <- grep(arch, available_archs, value = TRUE)
 
   if (length(selected_arch) == 0) {
-    stop("Your CPU architecture: ", arch, " is not compatible!", "\n",
-          "Supported architectures are: ", paste0(available_archs, collapse = ", "),
-          call. = FALSE)
+    stop(
+      "Your CPU architecture: ",
+      arch,
+      " is not compatible!",
+      "\n",
+      "Supported architectures are: ",
+      paste0(available_archs, collapse = ", "),
+      call. = FALSE
+    )
   }
 
   paste0("-linux-", selected_arch)
@@ -1014,13 +1200,17 @@ toolchain_PATH_env_var <- function() {
   rtools_cpp_dir <- file.path(rtools_soft, "bin")
 
   # R 4.2+ prepends the toolchain directory to PATH, so it will be found first
-  if (!nzchar(rtools_soft) ||
-      !file.exists(file.path(rtools_bin_dir, "make.exe"))) {
+  if (
+    !nzchar(rtools_soft) ||
+      !file.exists(file.path(rtools_bin_dir, "make.exe"))
+  ) {
     make_path <- Sys.which("make")
     rtools_bin_dir <- ifelse(nzchar(make_path), dirname(make_path), "")
   }
-  if (!nzchar(rtools_soft) ||
-      !file.exists(file.path(rtools_cpp_dir, "c++.exe"))) {
+  if (
+    !nzchar(rtools_soft) ||
+      !file.exists(file.path(rtools_cpp_dir, "c++.exe"))
+  ) {
     cpp_path <- Sys.which("c++")
     rtools_cpp_dir <- ifelse(nzchar(cpp_path), dirname(cpp_path), "")
   }
@@ -1044,14 +1234,23 @@ toolchain_PATH_env_var <- function() {
   .cmdstanr$TOOLCHAIN_PATH
 }
 
-assert_supported_requested_cmdstan_version <- function(version, source = "version") {
+assert_supported_requested_cmdstan_version <- function(
+  version,
+  source = "version"
+) {
   if (is_supported_cmdstan_version(version)) {
     return(invisible(NULL))
   }
   stop(
-    "Requested CmdStan ", source, " (", version, ") is unsupported. ",
-    "cmdstanr now requires CmdStan v", cmdstan_min_version(), " or newer. ",
-    "If you need an older CmdStan release, install an older cmdstanr version from GitHub.",
+    "Requested CmdStan ",
+    source,
+    " (",
+    version,
+    ") is unsupported. ",
+    "CmdStanR now requires CmdStan v",
+    cmdstan_min_version(),
+    " or newer. ",
+    "If you need an older CmdStan release, install an older CmdStanR version from GitHub.",
     call. = FALSE
   )
 }
@@ -1061,9 +1260,11 @@ extract_cmdstan_version_from_archive_name <- function(path_or_url) {
   archive <- sub("\\?.*$", "", archive)
   matches <- regmatches(
     archive,
-    regexec("^cmdstan-([0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?)(?:-linux-[a-z0-9_]+)?\\.tar\\.gz$",
-            archive,
-            perl = TRUE)
+    regexec(
+      "^cmdstan-([0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?)(?:-linux-[a-z0-9_]+)?\\.tar\\.gz$",
+      archive,
+      perl = TRUE
+    )
   )[[1]]
   if (length(matches) >= 2) {
     return(matches[2])

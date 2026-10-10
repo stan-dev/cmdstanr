@@ -1,8 +1,8 @@
-set_cmdstan_path()
-fit_mcmc <- testing_fit("logistic", method = "sample",
-                        seed = 123, chains = 2)
-fit_mle <- testing_fit("logistic", method = "opt", seed = 123)
+skip_on_cran()
 
+set_cmdstan_path()
+fit_mcmc <- testing_fit("logistic", method = "sample", seed = 123, chains = 2)
+fit_mle <- testing_fit("logistic", method = "opt", seed = 123)
 
 
 # diagnostic checks -------------------------------------------------------
@@ -11,36 +11,56 @@ test_that("check_divergences() works", {
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "14 of 100 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(
+    divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    output
+  )
   expect_equal(divs, 14)
 
-  csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
-                 test_path("resources", "csv", "model1-2-no-warmup.csv"))
+  csv_files <- c(
+    test_path("resources", "csv", "model1-2-no-warmup.csv"),
+    test_path("resources", "csv", "model1-2-no-warmup.csv")
+  )
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "28 of 200 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(
+    divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    output
+  )
   expect_equal(divs, c(14, 14))
 
   # force different number of divergences per chain just to test
   csv_output$post_warmup_sampler_diagnostics[1, 1:2, "divergent__"] <- c(0, 1)
   output <- "27 of 200 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(
+    divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    output
+  )
   expect_equal(divs, c(13, 14))
 
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "1 of 100 \\(1.0%\\) transitions ended with a divergence."
-  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(
+    check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    output
+  )
 
-
-  fit_wramup_no_samples <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 1,
-                          iter_sampling = 0,
-                          iter_warmup = 10,
-                          save_warmup = TRUE,
-                          diagnostics = "")
+  fit_wramup_no_samples <- testing_fit(
+    "logistic",
+    method = "sample",
+    seed = 123,
+    chains = 1,
+    iter_sampling = 0,
+    iter_warmup = 10,
+    save_warmup = TRUE,
+    diagnostics = ""
+  )
   csv_output <- read_cmdstan_csv(fit_wramup_no_samples$output_files())
-  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), regexp = NA)
+  expect_message(
+    divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    regexp = NA
+  )
   expect_null(divs)
 })
 
@@ -51,19 +71,23 @@ test_that("check_max_treedepth() works", {
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
-      csv_output$metadata),
+      csv_output$metadata
+    ),
     output
   )
   expect_equal(max_tds, 16)
 
-  csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
-                 test_path("resources", "csv", "model1-2-no-warmup.csv"))
+  csv_files <- c(
+    test_path("resources", "csv", "model1-2-no-warmup.csv"),
+    test_path("resources", "csv", "model1-2-no-warmup.csv")
+  )
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "32 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5."
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
-      csv_output$metadata),
+      csv_output$metadata
+    ),
     output
   )
   expect_equal(max_tds, c(16, 16))
@@ -74,7 +98,8 @@ test_that("check_max_treedepth() works", {
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
-      csv_output$metadata),
+      csv_output$metadata
+    ),
     output
   )
   expect_equal(max_tds, c(15, 16))
@@ -85,7 +110,8 @@ test_that("check_max_treedepth() works", {
   expect_message(
     check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
-      csv_output$metadata),
+      csv_output$metadata
+    ),
     output
   )
 })
@@ -93,27 +119,56 @@ test_that("check_max_treedepth() works", {
 test_that("check_ebfmi and computing ebfmi works", {
   set.seed(1)
   energy_df <- data.frame("energy__" = rnorm(1000))
-  expect_error(suppressWarnings(check_ebfmi(posterior::as_draws(energy_df))), NA)
+  expect_error(
+    suppressWarnings(check_ebfmi(posterior::as_draws(energy_df))),
+    NA
+  )
   expect_error(suppressWarnings(ebfmi(posterior::as_draws(energy_df))), NA)
   energy_df[1] <- 0
-  for(i in 1:999){
-    energy_df$energy__[i+1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
+  for (i in 1:999) {
+    energy_df$energy__[i + 1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
   }
   energy_df <- posterior::as_draws(energy_df)
   expect_message(check_ebfmi(energy_df), "had an E-BFMI less than")
   energy_vec <- energy_df$energy__
-  check_val <- (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec)
+  check_val <- (sum(diff(energy_vec)^2) / length(energy_vec)) /
+    stats::var(energy_vec)
   expect_equal(as.numeric(ebfmi(energy_df)), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_array(energy_df))), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_list(energy_df))), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_matrix(energy_df))), check_val)
+  expect_equal(
+    as.numeric(ebfmi(posterior::as_draws_array(energy_df))),
+    check_val
+  )
+  expect_equal(
+    as.numeric(ebfmi(posterior::as_draws_list(energy_df))),
+    check_val
+  )
+  expect_equal(
+    as.numeric(ebfmi(posterior::as_draws_matrix(energy_df))),
+    check_val
+  )
   energy_df <- posterior::as_draws(data.frame("energy__" = 0))
-  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
-  expect_warning(ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
+  expect_warning(
+    check_ebfmi(energy_df),
+    "E-BFMI not computed because it is undefined for posterior chains of length less than 3."
+  )
+  expect_warning(
+    ebfmi(energy_df),
+    "E-BFMI not computed because it is undefined for posterior chains of length less than 3."
+  )
 
   energy_df <- posterior::as_draws(data.frame("somethingelse" = 0))
-  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
-  expect_warning(ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
+  expect_warning(
+    check_ebfmi(energy_df),
+    "E-BFMI not computed because the 'energy__' diagnostic could not be located."
+  )
+  expect_warning(
+    ebfmi(energy_df),
+    "E-BFMI not computed because the 'energy__' diagnostic could not be located."
+  )
+
+  energy_df <- posterior::as_draws(data.frame("energy__" = rep(0, 10)))
+  expect_no_message(expect_no_warning(check_ebfmi(energy_df)))
+  expect_equal(as.numeric(ebfmi(energy_df)), NA_real_)
 })
 
 
@@ -133,50 +188,6 @@ test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
     fit_mcmc$cmdstan_diagnose()
   }
   expect_output(delete_and_run(), "Checking sampler transitions treedepth")
-})
-
-test_that("get_standalone_hpp() reports stanc failures", {
-  model_dir <- withr::local_tempdir()
-  stan_file <- file.path(model_dir, "model.stan")
-  hpp_file <- file.path(model_dir, "model.hpp")
-  writeLines("parameters { real y; } model { y ~ std_normal(); }", stan_file)
-  writeLines("// partial output", hpp_file)
-  local_mocked_bindings(
-    wsl_compatible_run = function(...) {
-      list(
-        status = 124L,
-        stdout = "",
-        stderr = "stanc: invalid canonicalize value"
-      )
-    }
-  )
-
-  expect_snapshot(
-    error = TRUE,
-    get_standalone_hpp(
-      stan_file,
-      "--canonicalize='deprecations'"
-    )
-  )
-  expect_false(file.exists(hpp_file))
-})
-
-test_that("get_standalone_hpp() suggests formatting deprecated syntax", {
-  stan_file <- withr::local_tempfile(fileext = ".stan")
-  local_mocked_bindings(
-    wsl_compatible_run = function(...) {
-      list(
-        status = 1L,
-        stdout = "",
-        stderr = "Syntax error: Use the auto-format flag to stanc"
-      )
-    }
-  )
-
-  expect_snapshot(
-    error = TRUE,
-    get_standalone_hpp(stan_file, character())
-  )
 })
 
 
@@ -206,208 +217,24 @@ test_that("generate_file_names() zero-pads IDs for lexicographic sorting", {
   expect_equal(sort(file_names), file_names)
 })
 
-test_that("copy_temp_files retains sources if any copy fails", {
-  source_dir <- withr::local_tempdir()
+test_that("save_output_files() keeps the sources if any copy fails", {
   destination_dir <- withr::local_tempdir()
-  source_paths <- file.path(source_dir, c("one.csv", "two.csv"))
-  writeLines("one", source_paths[1])
-  writeLines("two", source_paths[2])
-  # Simulate a partial copy failure without relying on platform-specific file
-  # permissions. The original binding is restored at the end of the test.
+  # Simulate a partial copy failure without relying on platform-specific
+  # file permissions.
   local_mocked_bindings(
     file.copy = function(...) c(TRUE, FALSE),
     .package = "base"
   )
-
   expect_snapshot(
     error = TRUE,
-    copy_temp_files(
-      current_paths = source_paths,
-      new_dir = destination_dir,
-      new_basename = "output",
-      ids = 1:2,
+    fit_mcmc$save_output_files(
+      destination_dir,
+      basename = "output",
       timestamp = FALSE,
       random = FALSE
     )
   )
-  expect_identical(file.exists(source_paths), c(TRUE, TRUE))
-})
-
-local_exe_fixture <- function(destination_exists = TRUE,
-                              .local_envir = parent.frame()) {
-  dir <- withr::local_tempdir(.local_envir = .local_envir)
-  fixture <- list(
-    dir = dir,
-    from = file.path(dir, "compiled-exe"),
-    to = file.path(dir, "model-exe")
-  )
-  writeLines("new executable", fixture$from)
-  # Compiled by make, so executable. Installation has to preserve that.
-  Sys.chmod(fixture$from, "0755", use_umask = FALSE)
-  if (destination_exists) {
-    writeLines("old executable", fixture$to)
-  }
-  fixture
-}
-
-# POSIX execute permissions are not available through Windows R, including WSL.
-expect_installed_executable <- function(path) {
-  expect_identical(readLines(path), "new executable")
-  if (!os_is_windows()) {
-    expect_identical(file.access(path, mode = 1)[[1]], 0L)
-  }
-}
-
-# Replace platform-specific directory spellings and random filenames without
-# hiding separator regressions in paths created by install_executable().
-exe_path_transform <- function(fixture) {
-  dirs <- unique(c(
-    fixture$dir,
-    repair_path(fixture$dir),
-    gsub("\\\\", "/", fixture$dir)
-  ))
-  function(lines) {
-    for (dir in dirs) {
-      lines <- gsub(dir, "<dir>", lines, fixed = TRUE)
-    }
-    gsub("exe-(new|old)-[0-9a-f]+", "exe-\\1-<random>", lines)
-  }
-}
-
-# Make the n-th file.rename() call fail, optionally warning first, as base does.
-local_failing_file_rename <- function(fail_on,
-                                      warn = FALSE,
-                                      .local_envir = parent.frame()) {
-  real_file_rename <- base::file.rename
-  calls <- 0
-  local_mocked_bindings(
-    file.rename = function(from, to) {
-      calls <<- calls + 1
-      if (calls %in% fail_on) {
-        if (warn) warning("cannot rename file")
-        return(FALSE)
-      }
-      real_file_rename(from, to)
-    },
-    .package = "base",
-    .env = .local_envir
-  )
-}
-
-test_that("install_executable() installs when there is no existing executable", {
-  fixture <- local_exe_fixture(destination_exists = FALSE)
-
-  expect_null(install_executable(fixture$from, fixture$to))
-  expect_installed_executable(fixture$to)
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
-})
-
-test_that("install_executable() replaces an executable and removes the backup", {
-  fixture <- local_exe_fixture()
-
-  expect_null(install_executable(fixture$from, fixture$to))
-  expect_installed_executable(fixture$to)
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
-})
-
-test_that("install_executable() refuses to install over a directory", {
-  fixture <- local_exe_fixture(destination_exists = FALSE)
-  dir.create(fixture$to)
-  writeLines("important", file.path(fixture$to, "data.txt"))
-
-  # Directories satisfy file.exists(), so reject them before staging or renaming.
-  # Both $exe_file(path) and exe_file= can pass a directory here.
-  expect_error(
-    install_executable(fixture$from, fixture$to),
-    "is a directory",
-    fixed = TRUE
-  )
-  expect_true(dir.exists(fixture$to))
-  expect_identical(readLines(file.path(fixture$to, "data.txt")), "important")
-  expect_setequal(
-    list.files(fixture$dir),
-    basename(c(fixture$from, fixture$to))
-  )
-})
-
-test_that("install_executable() leaves the destination alone if staging fails", {
-  fixture <- local_exe_fixture()
-  local_mocked_bindings(file.copy = function(...) FALSE, .package = "base")
-
-  expect_snapshot(
-    error = TRUE,
-    install_executable(fixture$from, fixture$to),
-    transform = exe_path_transform(fixture)
-  )
-  expect_identical(readLines(fixture$to), "old executable")
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
-})
-
-test_that("install_executable() leaves the destination alone if the backup fails", {
-  fixture <- local_exe_fixture()
-  local_failing_file_rename(fail_on = 1)
-
-  expect_snapshot(
-    error = TRUE,
-    install_executable(fixture$from, fixture$to),
-    transform = exe_path_transform(fixture)
-  )
-  expect_identical(readLines(fixture$to), "old executable")
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
-})
-
-test_that("install_executable() restores the backup if the install fails", {
-  fixture <- local_exe_fixture()
-  local_failing_file_rename(fail_on = 2)
-
-  expect_snapshot(
-    error = TRUE,
-    install_executable(fixture$from, fixture$to),
-    transform = exe_path_transform(fixture)
-  )
-  expect_identical(readLines(fixture$to), "old executable")
-  expect_setequal(list.files(fixture$dir), basename(c(fixture$from, fixture$to)))
-})
-
-test_that("install_executable() keeps the backup if it cannot be restored", {
-  fixture <- local_exe_fixture()
-  local_failing_file_rename(fail_on = c(2, 3))
-
-  expect_snapshot(
-    error = TRUE,
-    install_executable(fixture$from, fixture$to),
-    transform = exe_path_transform(fixture)
-  )
-  # The destination is gone, so the error has to name a real recovery path.
-  expect_false(file.exists(fixture$to))
-  leftover <- setdiff(list.files(fixture$dir), basename(fixture$from))
-  expect_match(leftover, "^exe-old-")
-  expect_identical(readLines(file.path(fixture$dir, leftover)), "old executable")
-})
-
-test_that("install_executable() rolls back when warnings are errors", {
-  fixture <- local_exe_fixture()
-  # file.rename() warnings must not interrupt rollback when warn = 2.
-  local_failing_file_rename(fail_on = 2, warn = TRUE)
-  withr::local_options(warn = 2)
-
-  expect_error(
-    install_executable(fixture$from, fixture$to),
-    "previously compiled executable has been restored",
-    fixed = TRUE
-  )
-  expect_identical(readLines(fixture$to), "old executable")
-})
-
-test_that("install_executable() reports a backup it could not remove", {
-  fixture <- local_exe_fixture()
-  local_mocked_bindings(unlink = function(...) 1L, .package = "base")
-
-  # Return the backup without warning so the caller can commit state first.
-  expect_no_warning(leftover <- install_executable(fixture$from, fixture$to))
-  expect_identical(readLines(fixture$to), "new executable")
-  expect_true(file.exists(leftover))
-  expect_identical(readLines(leftover), "old executable")
+  expect_true(all(file.exists(fit_mcmc$output_files())))
 })
 
 test_that("repair_path() fixes slashes", {
@@ -428,26 +255,33 @@ test_that("repair_path works with multiple paths", {
 
 test_that("wsl_safe_path() works with multiple paths", {
   skip_if_not(os_is_wsl())
+  prefix <- wsl_dir_prefix()
   expect_equal(
     wsl_safe_path(
       c(
         "/mnt/c/project/init-1.json",
         "/mnt/d/project/init-2.json",
-        "relative/init-3.json"
+        "relative/init-3.json",
+        "/home/me/project/init-4.json",
+        paste0(prefix, "/tmp/init-5.json")
       ),
       revert = TRUE
     ),
     c(
       "C:/project/init-1.json",
       "D:/project/init-2.json",
-      "relative/init-3.json"
+      "relative/init-3.json",
+      paste0(prefix, "/home/me/project/init-4.json"),
+      paste0(prefix, "/tmp/init-5.json")
     )
   )
   expect_equal(
-    wsl_safe_path(
-      paste0(wsl_dir_prefix(), c("/tmp/init-1.json", "/tmp/init-2.json"))
-    ),
+    wsl_safe_path(paste0(prefix, c("/tmp/init-1.json", "/tmp/init-2.json"))),
     c("/tmp/init-1.json", "/tmp/init-2.json")
+  )
+  expect_equal(
+    wsl_safe_path(paste0(prefix, "/tmp\\init-3.json")),
+    "/tmp/init-3.json"
   )
 })
 
@@ -464,298 +298,10 @@ test_that("wsl_compatible_run() preserves arguments containing spaces", {
   expect_equal(result$stdout, arg)
 })
 
-test_that("list_to_array works with empty list", {
-  expect_equal(list_to_array(list()), NULL)
-})
-
-test_that("list_to_array fails for non-numeric values", {
-  expect_error(list_to_array(list(k = "test"), name = "test-list"),
-               "All elements in list 'test-list' must be numeric or logical!")
-})
-
-test_that("cmdstan_make_local() works", {
-  # Backup only, cmdstan_make_local() is the thing being tested.
-  local_make_local_backup()
-
-  make_local_path <- file.path(cmdstan_path(), "make", "local")
-  if (file.exists(make_local_path)) {
-    file.remove(make_local_path)
-  }
-  expect_equal(cmdstan_make_local(), NULL)
-  cpp_options = list(
-   "CXX" = "clang++",
-   "CXXFLAGS+= -march=native",
-   TEST1 = TRUE,
-   "TEST2" = FALSE
-  )
-  expect_equal(cmdstan_make_local(cpp_options = cpp_options),
-               c(
-                 "CXX=clang++",
-                 "CXXFLAGS+= -march=native",
-                 "TEST1=true",
-                 "TEST2=false"
-                 ))
-  expect_equal(cmdstan_make_local(cpp_options = list("TEST3" = TRUE)),
-               c(
-                 "CXX=clang++",
-                 "CXXFLAGS+= -march=native",
-                 "TEST1=true",
-                 "TEST2=false",
-                 "TEST3=true"
-               ))
-  expect_equal(cmdstan_make_local(cpp_options = list("TEST4" = TRUE), append = FALSE),
-               c("TEST4=true"))
-})
-
-test_that("cmdstan_make_local() preserves empty make/local behavior", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  file.create(file.path(dir, "make", "local"))
-
-  expect_identical(cmdstan_make_local(dir = dir), "")
-})
-
-test_that("cmdstan_make_local() reads back written make flags", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-
-  expect_null(cmdstan_make_local(dir = dir))
-  expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list("CXX" = "clang++", STAN_THREADS = TRUE)
-    ),
-    c("CXX=clang++", "STAN_THREADS=true")
-  )
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list("PRECOMPILED_HEADERS" = FALSE)),
-    c("CXX=clang++", "STAN_THREADS=true", "PRECOMPILED_HEADERS=false")
-  )
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list("CXX" = "g++"), append = FALSE),
-    "CXX=g++"
-  )
-})
-
-test_that("cmdstan_make_local() does not append flags that are already present", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  make_local_path <- file.path(dir, "make", "local")
-  writeLines(
-    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false"),
-    make_local_path
-  )
-
-  # A flag already in the file is not written again.
-  expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
-    ),
-    c("CXXFLAGS += -Wno-deprecated-declarations", "PRECOMPILED_HEADERS=false")
-  )
-
-  # Copying the make/local of a previous installation, as suggested by
-  # install_cmdstan(), adds only the flags that are new.
-  previous_install <- c(
-    "CXXFLAGS += -Wno-deprecated-declarations",
-    "PRECOMPILED_HEADERS=false",
-    "O = 3"
-  )
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = as.list(previous_install)),
-    c(previous_install[1:2], "O = 3")
-  )
-
-  # Leading/trailing whitespace does not defeat the check.
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list("  O = 3  ")),
-    c(previous_install[1:2], "O = 3")
-  )
-})
-
-test_that("cmdstan_make_local() appends a flag that a later line has overridden", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
-    "STAN_THREADS=true"
-  )
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = FALSE)),
-    c("STAN_THREADS=true", "STAN_THREADS=false")
-  )
-  # make applies the last assignment, so threading is off at this point and
-  # turning it back on is a real change rather than a duplicate
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
-    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
-  )
-  # ... and now it is the last assignment again
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
-    c("STAN_THREADS=true", "STAN_THREADS=false", "STAN_THREADS=true")
-  )
-})
-
-test_that("cmdstan_make_local() appends a += flag that a later assignment has wiped", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  writeLines(
-    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3"),
-    file.path(dir, "make", "local")
-  )
-
-  # CXXFLAGS=-O3 dropped what the += line added, so adding it back is a real
-  # change rather than a duplicate
-  expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
-    ),
-    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3",
-      "CXXFLAGS += -Wno-deprecated-declarations")
-  )
-  # ... and now it is in force again
-  expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
-    ),
-    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS=-O3",
-      "CXXFLAGS += -Wno-deprecated-declarations")
-  )
-})
-
-test_that("cmdstan_make_local() checks flags in one call against each other", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  writeLines("STAN_THREADS=false", file.path(dir, "make", "local"))
-
-  # The second flag is a duplicate of the file but not of what the file will
-  # contain once the first flag is written, so both are needed to end up
-  # with threading off
-  expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list(STAN_THREADS = TRUE, STAN_THREADS = FALSE)
-    ),
-    c("STAN_THREADS=false", "STAN_THREADS=true", "STAN_THREADS=false")
-  )
-})
-
-test_that("cmdstan_make_local() leaves line continuations alone", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  writeLines(c("CXXFLAGS += \\", "  -O2"), file.path(dir, "make", "local"))
-
-  # The opener matches a line in the file, but dropping it would leave a bare
-  # "-O3" that make cannot parse
-  expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list("CXXFLAGS += \\", "  -O3")
-    ),
-    c("CXXFLAGS += \\", "-O2", "CXXFLAGS += \\", "-O3")
-  )
-})
-
-test_that("cmdstan_make_local() counts a line continuation as an assignment", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  writeLines("CXXFLAGS=-O2", file.path(dir, "make", "local"))
-
-  # The last CXXFLAGS=-O2 matches the file, but the continued += in between
-  # changes CXXFLAGS, so writing it again is what makes -O2 the final value
-  expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list("CXXFLAGS += \\", "  -O3", CXXFLAGS = "-O2")
-    ),
-    c("CXXFLAGS=-O2", "CXXFLAGS += \\", "-O3", "CXXFLAGS=-O2")
-  )
-})
-
-test_that("cmdstan_make_local() does not read a continued line as an assignment", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  writeLines("STAN_THREADS=true", file.path(dir, "make", "local"))
-
-  # The first FOO=bar is part of the CXXFLAGS value, so the second one is the
-  # only assignment to FOO and has to be written
-  expect_equal(
-    cmdstan_make_local(
-      dir = dir,
-      cpp_options = list("CXXFLAGS += \\", "FOO=bar", "FOO=bar")
-    ),
-    c("STAN_THREADS=true", "CXXFLAGS += \\", "FOO=bar", "FOO=bar")
-  )
-  # Same when the continued line is already in the file
-  writeLines(c("CXXFLAGS += \\", "FOO=bar"), file.path(dir, "make", "local"))
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list(FOO = "bar")),
-    c("CXXFLAGS += \\", "FOO=bar", "FOO=bar")
-  )
-  # And when the file ends with a backslash, so that the first new flag
-  # continues the file's last line
-  writeLines(c("FOO=bar", "CXXFLAGS += \\"), file.path(dir, "make", "local"))
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list(FOO = "bar")),
-    c("FOO=bar", "CXXFLAGS += \\", "FOO=bar")
-  )
-})
-
-test_that("cmdstan_make_local() still appends a new value for a known variable", {
-  dir <- withr::local_tempdir()
-  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
-  writeLines("STANCFLAGS=--O1", file.path(dir, "make", "local"))
-
-  # Same variable, different value: make lets the last assignment win, so this
-  # must not be treated as a duplicate.
-  expect_equal(
-    cmdstan_make_local(dir = dir, cpp_options = list(STANCFLAGS = "--Oexperimental")),
-    c("STANCFLAGS=--O1", "STANCFLAGS=--Oexperimental")
-  )
-})
-
-test_that("matching_variables() works", {
-  ret <- matching_variables(c("beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(
-    ret$matching,
-    c("beta[1]", "beta[2]", "beta[3]")
-  )
-  expect_equal(length(ret$not_found), 0)
-
-  ret <- matching_variables(c("alpha"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(
-    ret$matching,
-    c("alpha")
-  )
-  expect_equal(length(ret$not_found), 0)
-
-  ret <- matching_variables(c("alpha", "theta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(
-    ret$matching,
-    c("alpha")
-  )
-  expect_equal(
-    ret$not_found,
-    c("theta")
-  )
-
-  ret <- matching_variables(c("alpha", "beta"),  c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(
-    ret$matching,
-    c("alpha", "beta[1]", "beta[2]", "beta[3]")
-  )
-  expect_equal(length(ret$not_found), 0)
-})
-
 test_that("require_suggested_package() works", {
   expect_error(
     require_suggested_package("not_a_real_package"),
-    "Please install the 'not_a_real_package' package to use this function."
+    "Please install the 'not_a_real_package' package to use this feature."
   )
 })
 
@@ -766,7 +312,10 @@ test_that("use_spinner() respects the cmdstanr_spinner option", {
   withr::local_options(list(rlang_interactive = TRUE, cmdstanr_spinner = NULL))
   withr::local_envvar(IN_PKGDOWN = NA)
   expect_true(use_spinner())
-  withr::with_options(list(cmdstanr_spinner = FALSE), expect_false(use_spinner()))
+  withr::with_options(
+    list(cmdstanr_spinner = FALSE),
+    expect_false(use_spinner())
+  )
   withr::with_options(list(cmdstanr_spinner = TRUE), expect_true(use_spinner()))
 })
 
@@ -776,7 +325,10 @@ test_that("use_spinner() is FALSE unless interactive", {
 
   withr::local_options(rlang_interactive = FALSE)
   expect_false(use_spinner())
-  withr::with_options(list(cmdstanr_spinner = TRUE), expect_false(use_spinner()))
+  withr::with_options(
+    list(cmdstanr_spinner = TRUE),
+    expect_false(use_spinner())
+  )
 
   withr::local_options(rlang_interactive = TRUE)
   withr::local_envvar(IN_PKGDOWN = "true")
@@ -791,7 +343,10 @@ test_that("as_mcmc.list() works", {
 
   draws <- fit_mcmc$draws()
   x1 <- x[[1]]
-  expect_equal(dim(x1), c(posterior::niterations(draws), posterior::nvariables(draws)))
+  expect_equal(
+    dim(x1),
+    c(posterior::niterations(draws), posterior::nvariables(draws))
+  )
   expect_equal(dimnames(x1)$variable, posterior::variables(draws))
 
   expect_error(
@@ -822,7 +377,10 @@ test_that("get_cmdstan_flags() can be used recursively in `make`", {
     )
     return(invisible())
   }
-  expected_stdout <- paste(capture.output(cat(nonrecursive_flags)), collapse = "\n")
+  expected_stdout <- paste(
+    capture.output(cat(nonrecursive_flags)),
+    collapse = "\n"
+  )
   expect_equal(recursive_run$stdout, expected_stdout)
 })
 
@@ -842,7 +400,10 @@ test_that("parse_make_print_flag() ignores unrelated make output", {
 
 test_that("parse_make_print_flag() errors if no matching flag line is found", {
   expect_error(
-    parse_make_print_flag("STANCFLAGS", "make: Entering directory '/tmp/cmdstan'"),
+    parse_make_print_flag(
+      "STANCFLAGS",
+      "make: Entering directory '/tmp/cmdstan'"
+    ),
     "Failed to parse `STANCFLAGS`",
     fixed = TRUE
   )
@@ -867,8 +428,55 @@ test_that("get_cmdstan_flags() returns empty STANCFLAGS as character(0)", {
       expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
     },
     wsl_compatible_run = function(...) {
-      list(stdout = "STANCFLAGS =\n")
+      list(stdout = "cmdstanr-stancflag=\n")
     }
+  )
+})
+
+test_that("get_cmdstan_flags() ignores unrelated output around STANCFLAGS", {
+  with_mocked_bindings(
+    {
+      expect_equal(
+        get_cmdstan_flags("STANCFLAGS"),
+        c("--O1", "--warn-pedantic")
+      )
+    },
+    wsl_compatible_run = function(...) {
+      list(
+        stdout = paste(
+          "make[1]: Entering directory '/tmp/cmdstan'",
+          "cmdstanr-stancflag=--O1",
+          "cmdstanr-stancflag=--warn-pedantic",
+          "make[1]: Leaving directory '/tmp/cmdstan'",
+          sep = "\n"
+        )
+      )
+    }
+  )
+})
+
+test_that("get_cmdstan_flags() reads several flags from one make call", {
+  calls <- list()
+  with_mocked_bindings(
+    {
+      expect_equal(
+        get_cmdstan_flags(c("CPPFLAGS", "LDLIBS", "CXXFLAGS")),
+        c("-DBOOST_DISABLE_ASSERTS", "-ltbb", "-O3")
+      )
+    },
+    wsl_compatible_run = function(command, args, ...) {
+      calls[[length(calls) + 1]] <<- args
+      list(
+        stdout = paste0(
+          "CPPFLAGS = -DBOOST_DISABLE_ASSERTS\n",
+          "LDLIBS = -ltbb\nCXXFLAGS = -O3\n"
+        )
+      )
+    }
+  )
+  expect_equal(
+    calls,
+    list(c("-s", "print-CPPFLAGS", "print-LDLIBS", "print-CXXFLAGS"))
   )
 })
 
@@ -883,27 +491,133 @@ test_that("get_cmdstan_flags() preserves empty non-STANCFLAGS values", {
   )
 })
 
-test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/local", {
-  tmpdir <- withr::local_tempdir()
-  # Build a minimal make setup so we can exercise real make line continuations.
-  writeLines(
-    c(
-      "print-%: ; @echo $* = $($*)",
-      "-include local"
-    ),
-    file.path(tmpdir, "Makefile")
+# Run get_cmdstan_flags()'s own make call against a directory holding a
+# minimal `makefile` that includes `local`, as CmdStan's does.
+local_mini_make_local <- function(local_lines, envir = parent.frame()) {
+  tmpdir <- withr::local_tempdir(.local_envir = envir)
+  # Binary mode keeps the line endings LF; under WSL a Linux make reads files
+  # written on Windows.
+  write_lf <- function(lines, path) {
+    con <- file(path, open = "wb")
+    on.exit(close(con))
+    writeLines(lines, con, sep = "\n")
+  }
+  write_lf("-include local", file.path(tmpdir, "makefile"))
+  write_lf(local_lines, file.path(tmpdir, "local"))
+  # Keep the real runner so the call still goes through wsl under WSL, where
+  # the rule file path is already converted to /mnt/.
+  run <- wsl_compatible_run
+  local_mocked_bindings(
+    wsl_compatible_run = function(command, args, ...) {
+      run(command = command, args = args, wd = tmpdir)
+    },
+    .env = envir
   )
+  invisible(tmpdir)
+}
+
+test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/local", {
+  local_mini_make_local(c(
+    "STANCFLAGS += --O1 \\",
+    "  --warn-pedantic \\",
+    "  --allow-undefined"
+  ))
+  expect_equal(
+    get_cmdstan_flags("STANCFLAGS"),
+    c("--O1", "--warn-pedantic", "--allow-undefined")
+  )
+})
+
+test_that("get_cmdstan_flags() keeps quoted STANCFLAGS values whole (#1232)", {
+  local_mini_make_local(
+    "STANCFLAGS += --O1 --filename-in-msg='/my dir/model.stan'"
+  )
+  expect_equal(
+    get_cmdstan_flags("STANCFLAGS"),
+    c("--O1", "--filename-in-msg=/my dir/model.stan")
+  )
+})
+
+test_that("get_cmdstan_flags() splits STANCFLAGS the way the shell does", {
+  local_mini_make_local(c(
+    'STANCFLAGS += --filename-in-msg="/my dir/model.stan"',
+    "STANCFLAGS += 'a b'\"c d\"e",
+    "STANCFLAGS += x\\ y",
+    "STANCFLAGS +=   --O1  "
+  ))
+  expect_equal(
+    get_cmdstan_flags("STANCFLAGS"),
+    c("--filename-in-msg=/my dir/model.stan", "a bc de", "x y", "--O1")
+  )
+})
+
+test_that("get_cmdstan_flags() returns an unset STANCFLAGS as character(0)", {
+  local_mini_make_local("CXXFLAGS += -O3")
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
+})
+
+test_that("get_cmdstan_flags() keeps the rule file out of MAKEFILE_LIST", {
+  local_mini_make_local(
+    "STANCFLAGS = --filename-in-msg=$(lastword $(MAKEFILE_LIST))"
+  )
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--filename-in-msg=local")
+})
+
+test_that("get_cmdstan_flags() resolves STANCFLAGS with the call's cpp_options applied", {
+  local_mini_make_local(c(
+    "ifdef STAN_OPENCL",
+    "STANCFLAGS += --use-opencl",
+    "endif"
+  ))
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
+  expect_equal(
+    get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL=TRUE"),
+    "--use-opencl"
+  )
+  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL="), character(0))
+})
+
+test_that("the call's cpp_options override make/local when STANCFLAGS are resolved", {
+  local_mini_make_local(c(
+    "STAN_OPENCL=true",
+    "ifdef STAN_OPENCL",
+    "STANCFLAGS += --use-opencl",
+    "endif"
+  ))
+  expect_equal(get_cmdstan_flags("STANCFLAGS"), "--use-opencl")
+  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL="), character(0))
+})
+
+test_that("make_shell_quote() survives Make expansion and shell splitting (#1230)", {
+  words <- c(
+    "--O1",
+    "--filename-in-msg=/my dir/model.stan",
+    "/the model's includes",
+    "/costs $5",
+    "/the model's $5",
+    "C:/Users/me/inc",
+    "*"
+  )
+  quoted <- make_shell_quote(words)
+  # Words the shell and Make leave alone are not touched
+  expect_equal(quoted[c(1, 6)], words[c(1, 6)])
+  expect_equal(quoted[2], "'--filename-in-msg=/my dir/model.stan'")
+  expect_equal(quoted[4], "'/costs $$5'")
+
+  # Oracle: hand the quoted words to make the way build_executable() does and
+  # read back what the shell delivers to the recipe, one argument per line.
+  tmpdir <- withr::local_tempdir()
   writeLines(
-    c(
-      "STANCFLAGS += --O1 \\",
-      "  --warn-pedantic \\",
-      "  --allow-undefined"
-    ),
-    file.path(tmpdir, "local")
+    "args: ; @printf '%s\\n' $(STANCFLAGS)",
+    file.path(tmpdir, "Makefile")
   )
   make_run <- processx::run(
     command = "make",
-    args = c("-s", "print-STANCFLAGS"),
+    args = c(
+      "-s",
+      "args",
+      paste0("STANCFLAGS += ", paste(quoted, collapse = " "))
+    ),
     wd = tmpdir,
     error_on_status = FALSE
   )
@@ -921,18 +635,7 @@ test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/loca
     )
     return(invisible())
   }
-
-  with_mocked_bindings(
-    {
-      expect_equal(
-        get_cmdstan_flags("STANCFLAGS"),
-        c("--O1", "--warn-pedantic", "--allow-undefined")
-      )
-    },
-    wsl_compatible_run = function(...) {
-      list(stdout = make_run$stdout)
-    }
-  )
+  expect_equal(strsplit(make_run$stdout, "\n")[[1]], words)
 })
 
 test_that("local_make_local_backup() heals residue and nests", {
@@ -951,7 +654,11 @@ test_that("local_make_local_backup() heals residue and nests", {
     unlink(make_local_backup_path())
   })
   contents <- function() {
-    if (file.exists(make_local_path)) readLines(make_local_path) else character()
+    if (file.exists(make_local_path)) {
+      readLines(make_local_path)
+    } else {
+      character()
+    }
   }
 
   # A run killed before its restore leaves residue in make/local and its backup
@@ -1110,5 +817,5 @@ test_that("restore_cmdstan_make_local() preserves the backup when verification f
   )
 
   expect_identical(readLines(make_local_path), "MUTATED=true")
-  expect_identical(file.exists(backup_path), TRUE)
+  expect_true(file.exists(backup_path))
 })

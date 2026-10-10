@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 mod_gq <- testing_model("bernoulli_ppc")
@@ -13,7 +15,7 @@ ok_arg_values <- list(
 
 # using any of these should cause optimize() to error
 bad_arg_values <- list(
-  fitter_params = "NOT_A_FILE",
+  fitted_params = "NOT_A_FILE",
   data = "NOT_A_FILE",
   seed = "NOT_A_SEED",
   parallel_chains = -20
@@ -31,7 +33,9 @@ test_that("generate_quantities() method runs when all arguments specified validl
   expect_gte(min(run_times$chains$total), 0)
 
   # leaving all at default (except 'data')
-  expect_gq_output(fit2 <- mod_gq$generate_quantities(fitted_params = fit, data = data_list))
+  expect_gq_output(
+    fit2 <- mod_gq$generate_quantities(fitted_params = fit, data = data_list)
+  )
   expect_s3_class(fit2, "CmdStanGQ")
 })
 
@@ -43,48 +47,122 @@ test_that("generate_quantities() method errors for any invalid argument before c
   }
 })
 
+test_that("generate_quantities() rejects fitted_params it cannot read", {
+  error_msg <- paste0(
+    "`fitted_params` must be a list of paths to CSV files, a CmdStanMCMC, ",
+    "CmdStanMLE, CmdStanLaplace, CmdStanVB, or CmdStanPathfinder object, ",
+    "a posterior::draws_array or a posterior::draws_matrix."
+  )
+  expect_error(
+    mod_gq$generate_quantities(fitted_params = 5, data = data_list),
+    error_msg,
+    fixed = TRUE
+  )
+  expect_error(
+    mod_gq$generate_quantities(fitted_params = NULL, data = data_list),
+    error_msg,
+    fixed = TRUE
+  )
+
+  # saveRDS() keeps neither the draws nor the CSV files behind them
+  skip_if(os_is_wsl())
+  fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
+  temp_file <- tempfile(fileext = ".rds")
+  saveRDS(fit_tmp, file = temp_file)
+  rm(fit_tmp)
+  gc()
+  expect_error(
+    mod_gq$generate_quantities(
+      fitted_params = readRDS(temp_file),
+      data = data_list
+    ),
+    "The fit's CSV files are gone"
+  )
+})
+
+test_that("generate_quantities() reads a fit whose CSV files are gone", {
+  fit_tmp <- testing_fit("bernoulli", method = "sample", seed = 123)
+  temp_file <- tempfile(fileext = ".rds")
+  fit_tmp$save_object(temp_file)
+  rm(fit_tmp)
+  gc()
+  fit_tmp <- readRDS(temp_file)
+  expect_false(any(file.exists(fit_tmp$output_files())))
+  expect_gq_output(
+    gq_tmp <- mod_gq$generate_quantities(
+      fitted_params = fit_tmp,
+      data = data_list,
+      seed = 1
+    )
+  )
+  expect_gq_output(
+    gq_ref <- mod_gq$generate_quantities(
+      fitted_params = fit,
+      data = data_list,
+      seed = 1
+    )
+  )
+  expect_equal(gq_tmp$draws(), gq_ref$draws())
+})
+
 test_that("generate_quantities work for different chains and parallel_chains", {
-  fit_1_chain <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
-  fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
+  fit_1_chain <- testing_fit(
+    "bernoulli",
+    method = "sample",
+    seed = 123,
+    chains = 1
+  )
+  fit_gq <- testing_fit(
+    "bernoulli_ppc",
+    method = "generate_quantities",
+    seed = 123,
+    fitted_params = fit
+  )
   expect_gq_output(
     mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain)
   )
   expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 2)
-  )
-  expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit, parallel_chains = 4)
-  )
-  # The existing executable is unthreaded and is not rebuilt, so do not report
-  # the requested thread count (#1019).
-  expect_warning(
-    mod_gq <- cmdstan_model(testing_stan_file("bernoulli_ppc"), cpp_options = list(stan_threads = TRUE)),
-    "do not match the ones requested"
-  )
-  threads_output <- capture.output(
-    expect_warning(
-      mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain, threads_per_chain = 2),
-      "'threads_per_chain' is set but the model was not compiled with"
+    mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit,
+      parallel_chains = 2
     )
   )
-  expect_match(
-    paste(threads_output, collapse = "\n"),
-    "Running standalone generated quantities after ",
-    fixed = TRUE
+  expect_gq_output(
+    mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit,
+      parallel_chains = 4
+    )
   )
-  expect_false(any(grepl("thread(s) per chain", threads_output, fixed = TRUE)))
 })
 
 test_that("generate_quantities works with draws_array", {
-  fit_1_chain <- testing_fit("bernoulli", method = "sample", seed = 123, chains = 1)
-  expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit_1_chain$draws())
+  fit_1_chain <- testing_fit(
+    "bernoulli",
+    method = "sample",
+    seed = 123,
+    chains = 1
   )
   expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit$draws(), parallel_chains = 2)
+    mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit_1_chain$draws()
+    )
   )
   expect_gq_output(
-    mod_gq$generate_quantities(data = data_list, fitted_params = fit$draws(), parallel_chains = 4)
+    mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit$draws(),
+      parallel_chains = 2
+    )
+  )
+  expect_gq_output(
+    mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit$draws(),
+      parallel_chains = 4
+    )
   )
 })
 
@@ -172,16 +250,15 @@ test_that("generate_quantities works with CmdStanPathfinder", {
   )
 })
 
-test_that("generate_quantities() warns if threads specified but not enabled", {
-  expect_warning(
-    expect_gq_output(
-      fit_gq <- mod_gq$generate_quantities(
-        data = data_list,
-        fitted_params = fit,
-        threads_per_chain = 4
-      )
+test_that("generate_quantities() errors if threads specified but not enabled", {
+  expect_error(
+    mod_gq$generate_quantities(
+      data = data_list,
+      fitted_params = fit,
+      threads_per_chain = 4
     ),
-    "'threads_per_chain' will have no effect"
+    "does not report threading as enabled",
+    fixed = TRUE
   )
 })
 
@@ -193,5 +270,5 @@ test_that("no output with show_messages = FALSE", {
       show_messages = FALSE
     )
   )
-  expect_equal(length(output), 0)
+  expect_length(output, 0)
 })

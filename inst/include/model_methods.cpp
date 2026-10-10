@@ -101,24 +101,6 @@ size_t get_num_upars(SEXP ext_model_ptr) {
 }
 
 // [[Rcpp::export]]
-Rcpp::List get_param_metadata(SEXP ext_model_ptr) {
-  Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
-  std::vector<std::string> param_names;
-  std::vector<std::vector<size_t> > param_dims;
-  ptr->get_param_names(param_names);
-  ptr->get_dims(param_dims);
-
-  Rcpp::List param_metadata = Rcpp::List::create(
-    Rcpp::Named(param_names[0]) = param_dims[0]
-  );
-  for (size_t i = 1; i < param_names.size(); i++) {
-    param_metadata.push_back(param_dims[i], param_names[i]);
-  }
-
-  return param_metadata;
-}
-
-// [[Rcpp::export]]
 Eigen::VectorXd unconstrain_variables(SEXP ext_model_ptr, Eigen::VectorXd variables) {
   Rcpp::XPtr<stan::model::model_base> ptr(ext_model_ptr);
   Eigen::VectorXd unconstrained_variables;

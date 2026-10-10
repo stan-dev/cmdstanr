@@ -1,4 +1,6 @@
 # Standalone functions not expected to work on WSL yet
+skip_on_cran()
+
 skip_if(os_is_wsl())
 
 set_cmdstan_path()
@@ -70,11 +72,30 @@ functions {
   tuple(int, tuple(array[] complex_vector, array[] complex_vector))  rtn_nest_tuple_complex_vec_array(tuple(int, tuple(array[] complex_vector, array[] complex_vector)) x) { return x; }
   tuple(int, tuple(array[] complex_row_vector, array[] complex_row_vector))  rtn_nest_tuple_complex_rowvec_array(tuple(int, tuple(array[] complex_row_vector, array[] complex_row_vector)) x) { return x; }
   tuple(int, tuple(array[] complex_matrix, array[] complex_matrix))  rtn_nest_tuple_complex_matrix_array(tuple(int, tuple(array[] complex_matrix, array[] complex_matrix)) x) { return x; }
+
+  real wrap_normal_rng(real mu, real sigma) { return normal_rng(mu, sigma); }
+
+  // algebra_solver_newton links SUNDIALS/KINSOL
+  vector linear_system(vector y, vector theta, data array[] real x_r,
+                       data array[] int x_i) {
+    return y - theta;
+  }
+  vector call_solver(vector guess, vector theta, data array[] real x_r,
+                     data array[] int x_i) {
+    return algebra_solver_newton(linear_system, guess, theta, x_r, x_i);
+  }
+
+  // class is a C++ keyword, allowed as a local inside a function body
+  real add_one(real x) {
+    real class = 1;
+    return x + class;
+  }
 }"
-stan_prog <- paste(function_decl,
-                  paste(readLines(testing_stan_file("bernoulli")),
-                        collapse = "\n"),
-                  collapse = "\n")
+stan_prog <- paste(
+  function_decl,
+  paste(readLines(testing_stan_file("bernoulli")), collapse = "\n"),
+  collapse = "\n"
+)
 model <- write_stan_file(stan_prog)
 data_list <- testing_data("bernoulli")
 mod <- cmdstan_model(model, force_recompile = TRUE)
@@ -96,7 +117,7 @@ test_that("Functions handle types correctly", {
 
   ### Container
 
-  vec <- c(1.2,234,0.3,-0.4)
+  vec <- c(1.2, 234, 0.3, -0.4)
   rowvec <- t(vec)
   matrix <- matrix(c(2.11, -6.35, 4.87, -0.9871), nrow = 2, ncol = 2)
 
@@ -133,7 +154,10 @@ test_that("Functions handle types correctly", {
   expect_equal(mod$functions$rtn_tuple_vec(tuple_vec), tuple_vec)
   expect_equal(mod$functions$rtn_tuple_rowvec(tuple_rowvec), tuple_rowvec)
   expect_equal(mod$functions$rtn_tuple_matrix(tuple_matrix), tuple_matrix)
-  expect_equal(mod$functions$rtn_tuple_int_array(tuple_int_array), tuple_int_array)
+  expect_equal(
+    mod$functions$rtn_tuple_int_array(tuple_int_array),
+    tuple_int_array
+  )
   expect_equal(mod$functions$rtn_tuple_real_array(tuple_vec), tuple_vec)
 
   ### Tuple of Container Arrays
@@ -142,16 +166,28 @@ test_that("Functions handle types correctly", {
   tuple_rowvec_array <- list(rowvec_array, rowvec_array)
   tuple_matrix_array <- list(matrix_array, matrix_array)
 
-  expect_equal(mod$functions$rtn_tuple_vec_array(tuple_vec_array), tuple_vec_array)
-  expect_equal(mod$functions$rtn_tuple_rowvec_array(tuple_rowvec_array), tuple_rowvec_array)
-  expect_equal(mod$functions$rtn_tuple_matrix_array(tuple_matrix_array), tuple_matrix_array)
+  expect_equal(
+    mod$functions$rtn_tuple_vec_array(tuple_vec_array),
+    tuple_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_rowvec_array(tuple_rowvec_array),
+    tuple_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_matrix_array(tuple_matrix_array),
+    tuple_matrix_array
+  )
 
   ### Nested Tuple of Scalar
 
   nest_tuple_int <- list(10, tuple_int)
   nest_tuple_dbl <- list(31, tuple_dbl)
   expect_equal(mod$functions$rtn_nest_tuple_int(nest_tuple_int), nest_tuple_int)
-  expect_equal(mod$functions$rtn_nest_tuple_real(nest_tuple_dbl), nest_tuple_dbl)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_real(nest_tuple_dbl),
+    nest_tuple_dbl
+  )
 
   ### Nested Tuple of Container
 
@@ -161,10 +197,22 @@ test_that("Functions handle types correctly", {
   nest_tuple_int_array <- list(21, tuple_int_array)
 
   expect_equal(mod$functions$rtn_nest_tuple_vec(nest_tuple_vec), nest_tuple_vec)
-  expect_equal(mod$functions$rtn_nest_tuple_rowvec(nest_tuple_rowvec), nest_tuple_rowvec)
-  expect_equal(mod$functions$rtn_nest_tuple_matrix(nest_tuple_matrix), nest_tuple_matrix)
-  expect_equal(mod$functions$rtn_nest_tuple_int_array(nest_tuple_int_array), nest_tuple_int_array)
-  expect_equal(mod$functions$rtn_nest_tuple_real_array(nest_tuple_vec), nest_tuple_vec)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_rowvec(nest_tuple_rowvec),
+    nest_tuple_rowvec
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_matrix(nest_tuple_matrix),
+    nest_tuple_matrix
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_int_array(nest_tuple_int_array),
+    nest_tuple_int_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_real_array(nest_tuple_vec),
+    nest_tuple_vec
+  )
 
   ### Nested Tuple of Container Arrays
 
@@ -172,9 +220,18 @@ test_that("Functions handle types correctly", {
   nest_tuple_rowvec_array <- list(1000, tuple_rowvec_array)
   nest_tuple_matrix_array <- list(0, tuple_matrix_array)
 
-  expect_equal(mod$functions$rtn_nest_tuple_vec_array(nest_tuple_vec_array), nest_tuple_vec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_rowvec_array(nest_tuple_rowvec_array), nest_tuple_rowvec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_matrix_array(nest_tuple_matrix_array), nest_tuple_matrix_array)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_vec_array(nest_tuple_vec_array),
+    nest_tuple_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_rowvec_array(nest_tuple_rowvec_array),
+    nest_tuple_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_matrix_array(nest_tuple_matrix_array),
+    nest_tuple_matrix_array
+  )
 })
 
 test_that("Functions handle complex types correctly", {
@@ -186,9 +243,12 @@ test_that("Functions handle complex types correctly", {
 
   ### Container
 
-  complex_vec <- complex(real = c(2,1.5,0.11, 1.2), imaginary = c(11.2,21.5,6.1,3.2))
+  complex_vec <- complex(
+    real = c(2, 1.5, 0.11, 1.2),
+    imaginary = c(11.2, 21.5, 6.1, 3.2)
+  )
   complex_rowvec <- t(complex_vec)
-  complex_matrix <- matrix(complex_vec, nrow=2, ncol=2)
+  complex_matrix <- matrix(complex_vec, nrow = 2, ncol = 2)
 
   expect_equal(mod$functions$rtn_complex_vec(complex_vec), complex_vec)
   expect_equal(mod$functions$rtn_complex_rowvec(complex_rowvec), complex_rowvec)
@@ -198,12 +258,29 @@ test_that("Functions handle complex types correctly", {
   ### Array of Container
 
   complex_vec_array <- list(complex_vec, complex_vec * 2, complex_vec + 0.1)
-  complex_rowvec_array <- list(complex_rowvec, complex_rowvec * 2, complex_rowvec + 0.1)
-  complex_matrix_array <- list(complex_matrix, complex_matrix * 2, complex_matrix + 0.1)
+  complex_rowvec_array <- list(
+    complex_rowvec,
+    complex_rowvec * 2,
+    complex_rowvec + 0.1
+  )
+  complex_matrix_array <- list(
+    complex_matrix,
+    complex_matrix * 2,
+    complex_matrix + 0.1
+  )
 
-  expect_equal(mod$functions$rtn_complex_vec_array(complex_vec_array), complex_vec_array)
-  expect_equal(mod$functions$rtn_complex_rowvec_array(complex_rowvec_array), complex_rowvec_array)
-  expect_equal(mod$functions$rtn_complex_matrix_array(complex_matrix_array), complex_matrix_array)
+  expect_equal(
+    mod$functions$rtn_complex_vec_array(complex_vec_array),
+    complex_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_complex_rowvec_array(complex_rowvec_array),
+    complex_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_complex_matrix_array(complex_matrix_array),
+    complex_matrix_array
+  )
 
   ### Tuple of Scalar
 
@@ -216,10 +293,22 @@ test_that("Functions handle complex types correctly", {
   tuple_complex_rowvec <- list(complex_rowvec, complex_rowvec * 0.5)
   tuple_complex_matrix <- list(complex_matrix, complex_matrix * 10.2)
 
-  expect_equal(mod$functions$rtn_tuple_complex_array(tuple_complex_vec), tuple_complex_vec)
-  expect_equal(mod$functions$rtn_tuple_complex_vec(tuple_complex_vec), tuple_complex_vec)
-  expect_equal(mod$functions$rtn_tuple_complex_rowvec(tuple_complex_rowvec), tuple_complex_rowvec)
-  expect_equal(mod$functions$rtn_tuple_complex_matrix(tuple_complex_matrix), tuple_complex_matrix)
+  expect_equal(
+    mod$functions$rtn_tuple_complex_array(tuple_complex_vec),
+    tuple_complex_vec
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_vec(tuple_complex_vec),
+    tuple_complex_vec
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_rowvec(tuple_complex_rowvec),
+    tuple_complex_rowvec
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_matrix(tuple_complex_matrix),
+    tuple_complex_matrix
+  )
 
   ### Tuple of Container Arrays
 
@@ -227,14 +316,26 @@ test_that("Functions handle complex types correctly", {
   tuple_complex_rowvec_array <- list(complex_rowvec_array, complex_rowvec_array)
   tuple_complex_matrix_array <- list(complex_matrix_array, complex_matrix_array)
 
-  expect_equal(mod$functions$rtn_tuple_complex_vec_array(tuple_complex_vec_array), tuple_complex_vec_array)
-  expect_equal(mod$functions$rtn_tuple_complex_rowvec_array(tuple_complex_rowvec_array), tuple_complex_rowvec_array)
-  expect_equal(mod$functions$rtn_tuple_complex_matrix_array(tuple_complex_matrix_array), tuple_complex_matrix_array)
+  expect_equal(
+    mod$functions$rtn_tuple_complex_vec_array(tuple_complex_vec_array),
+    tuple_complex_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_rowvec_array(tuple_complex_rowvec_array),
+    tuple_complex_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_tuple_complex_matrix_array(tuple_complex_matrix_array),
+    tuple_complex_matrix_array
+  )
 
   ### Nested Tuple of Scalar
 
   nest_tuple_complex <- list(31, tuple_complex)
-  expect_equal(mod$functions$rtn_nest_tuple_complex(nest_tuple_complex), nest_tuple_complex)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex(nest_tuple_complex),
+    nest_tuple_complex
+  )
 
   ### Nested Tuple of Container
 
@@ -243,10 +344,22 @@ test_that("Functions handle complex types correctly", {
   nest_tuple_complex_matrix <- list(-23, tuple_complex_matrix)
   nest_tuple_complex_array <- list(21, tuple_complex_vec)
 
-  expect_equal(mod$functions$rtn_nest_tuple_complex_array(nest_tuple_complex_vec), nest_tuple_complex_vec)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_vec(nest_tuple_complex_vec), nest_tuple_complex_vec)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_rowvec(nest_tuple_complex_rowvec), nest_tuple_complex_rowvec)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_matrix(nest_tuple_complex_matrix), nest_tuple_complex_matrix)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_array(nest_tuple_complex_vec),
+    nest_tuple_complex_vec
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_vec(nest_tuple_complex_vec),
+    nest_tuple_complex_vec
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_rowvec(nest_tuple_complex_rowvec),
+    nest_tuple_complex_rowvec
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_matrix(nest_tuple_complex_matrix),
+    nest_tuple_complex_matrix
+  )
 
   ### Nested Tuple of Container Arrays
 
@@ -254,18 +367,60 @@ test_that("Functions handle complex types correctly", {
   nest_tuple_complex_rowvec_array <- list(1000, tuple_complex_rowvec_array)
   nest_tuple_complex_matrix_array <- list(0, tuple_complex_matrix_array)
 
-  expect_equal(mod$functions$rtn_nest_tuple_complex_vec_array(nest_tuple_complex_vec_array), nest_tuple_complex_vec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_rowvec_array(nest_tuple_complex_rowvec_array), nest_tuple_complex_rowvec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_matrix_array(nest_tuple_complex_matrix_array), nest_tuple_complex_matrix_array)
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_vec_array(
+      nest_tuple_complex_vec_array
+    ),
+    nest_tuple_complex_vec_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_rowvec_array(
+      nest_tuple_complex_rowvec_array
+    ),
+    nest_tuple_complex_rowvec_array
+  )
+  expect_equal(
+    mod$functions$rtn_nest_tuple_complex_matrix_array(
+      nest_tuple_complex_matrix_array
+    ),
+    nest_tuple_complex_matrix_array
+  )
+})
+
+test_that("Returned tuples survive a garbage collection (#1001)", {
+  mod$expose_functions(quiet = TRUE)
+  tuple_dbl <- list(31.87, -19.09)
+  gctorture(TRUE)
+  withr::defer(gctorture(FALSE))
+  out <- mod$functions$rtn_tuple_real(tuple_dbl)
+  gctorture(FALSE)
+  expect_equal(out, tuple_dbl)
 })
 
 test_that("Functions can be exposed in fit object", {
   fit$expose_functions()
 
   expect_equal(
-    fit$functions$rtn_vec(c(1,2,3,4)),
-    c(1,2,3,4)
+    fit$functions$rtn_vec(c(1, 2, 3, 4)),
+    c(1, 2, 3, 4)
   )
+})
+
+test_that("Functions can be exposed again on a fit reloaded with readRDS()", {
+  fit$expose_functions()
+  rds_file <- tempfile(fileext = ".RDS")
+  fit$save_object(rds_file)
+  fit2 <- readRDS(rds_file)
+  expect_no_error(fit2$expose_functions())
+  expect_equal(fit2$functions$rtn_vec(c(1, 2, 3, 4)), c(1, 2, 3, 4))
+})
+
+test_that("Functions exposed globally first stay in the functions field", {
+  mod <- cmdstan_model(model)
+  mod$expose_functions(global = TRUE)
+  withr::defer(rm(list = mod$functions$fun_names, envir = globalenv()))
+  expect_identical(globalenv()$rtn_vec, mod$functions$rtn_vec)
+  expect_equal(mod$functions$rtn_vec(c(1, 2, 3, 4)), c(1, 2, 3, 4))
 })
 
 test_that("Compiled functions can be copied to global environment", {
@@ -276,14 +431,15 @@ test_that("Compiled functions can be copied to global environment", {
   )
 
   expect_equal(
-    rtn_vec(c(1,2,3,4)),
-    c(1,2,3,4)
+    rtn_vec(c(1, 2, 3, 4)),
+    c(1, 2, 3, 4)
   )
 })
 
 
 test_that("Functions can be compiled with model", {
-  mod <- cmdstan_model(model, force_recompile = TRUE, compile_standalone = TRUE)
+  mod <- cmdstan_model(model, force_recompile = TRUE)
+  mod$expose_functions()
   utils::capture.output(
     fit <- mod$sample(data = data_list)
   )
@@ -295,8 +451,8 @@ test_that("Functions can be compiled with model", {
   )
 
   expect_equal(
-    fit$functions$rtn_vec(c(1,2,3,4)),
-    c(1,2,3,4)
+    fit$functions$rtn_vec(c(1, 2, 3, 4)),
+    c(1, 2, 3, 4)
   )
 
   expect_message(
@@ -306,106 +462,50 @@ test_that("Functions can be compiled with model", {
   )
 
   expect_equal(
-    rtn_vec(c(1,2,3,4)),
-    c(1,2,3,4)
+    rtn_vec(c(1, 2, 3, 4)),
+    c(1, 2, 3, 4)
   )
 })
 
-test_that("recompiling drops previously exposed functions", {
-  model_dir <- withr::local_tempdir()
-  write_model <- function(code) {
-    write_stan_file(code, dir = model_dir, basename = "issue1228.stan")
-  }
-  code_two_functions <- "
-    functions {
-      real times_two(real x) { return 2 * x; }
-      real times_three(real x) { return 3 * x; }
-    }
-    parameters {
-      real y;
-    }
-    model {
-      y ~ std_normal();
-    }
-  "
-  stan_file <- write_model(code_two_functions)
-  mod <- cmdstan_model(stan_file)
-  mod$expose_functions()
-  expect_equal(mod$functions$times_two(1), 2)
-  expect_equal(mod$functions$times_three(1), 3)
-
-  # change one function and remove the other, then recompile
-  write_model("
-    functions {
-      real times_two(real x) { return 20 * x; }
-    }
-    parameters {
-      real y;
-    }
-    model {
-      y ~ std_normal();
-    }
-  ")
-  mod$compile()
-  expect_false(mod$functions$compiled)
-  expect_false("times_three" %in% ls(mod$functions))
-  mod$expose_functions()
-  expect_equal(mod$functions$times_two(1), 20)
-  expect_false("times_three" %in% ls(mod$functions))
-
-  # compile_standalone exposes the functions of the recompiled model
-  write_model(code_two_functions)
-  mod$compile(compile_standalone = TRUE)
-  expect_equal(mod$functions$times_two(1), 2)
-  expect_equal(mod$functions$times_three(1), 3)
-})
-
-test_that("compile_standalone warns but doesn't error if no functions", {
-  stan_no_funs_block <- write_stan_file("
+test_that("$expose_functions() warns but doesn't error if no functions", {
+  stan_no_funs_block <- write_stan_file(
+    "
     parameters {
       real x;
     }
     model {
       x ~ std_normal();
     }
-  ")
+  "
+  )
+  mod1 <- mock_cmdstan_model(stan_no_funs_block)
   expect_warning(
-    mod1 <- cmdstan_model(stan_no_funs_block, compile = TRUE, compile_standalone = TRUE, force_recompile = TRUE),
+    mod1$expose_functions(),
     "No standalone functions found to compile and expose to R"
   )
   checkmate::expect_r6(mod1, "CmdStanModel")
 
-  stan_empty_funs_block <- write_stan_file("
+  stan_empty_funs_block <- write_stan_file(
+    "
    functions {
    }
-  ")
+  "
+  )
+  mod2 <- mock_cmdstan_model(stan_empty_funs_block)
   expect_warning(
-    mod2 <- cmdstan_model(stan_empty_funs_block, compile = TRUE, compile_standalone = TRUE, force_recompile = TRUE),
+    mod2$expose_functions(),
     "No standalone functions found to compile and expose to R"
   )
   checkmate::expect_r6(mod2, "CmdStanModel")
 })
 
 test_that("rng functions can be exposed", {
-  function_decl <- "functions { real wrap_normal_rng(real mu, real sigma) { return normal_rng(mu, sigma); } }"
-  stan_prog <- paste(function_decl,
-                     paste(readLines(testing_stan_file("bernoulli")),
-                           collapse = "\n"),
-                     collapse = "\n")
-  model <- write_stan_file(stan_prog)
-  data_list <- testing_data("bernoulli")
-  mod <- cmdstan_model(model, force_recompile = TRUE)
-  utils::capture.output(
-    fit <- mod$sample(data = data_list)
-  )
-
-  fit$expose_functions()
   set.seed(10)
-  res1_1 <- fit$functions$wrap_normal_rng(5,10)
-  res2_1 <- fit$functions$wrap_normal_rng(5,10)
+  res1_1 <- mod$functions$wrap_normal_rng(5, 10)
+  res2_1 <- mod$functions$wrap_normal_rng(5, 10)
   set.seed(10)
-  res1_2 <- fit$functions$wrap_normal_rng(5,10)
-  res2_2 <- fit$functions$wrap_normal_rng(5,10)
+  res1_2 <- mod$functions$wrap_normal_rng(5, 10)
+  res2_2 <- mod$functions$wrap_normal_rng(5, 10)
 
   expect_equal(res1_1, res1_2)
   expect_equal(res2_1, res2_2)
@@ -422,9 +522,11 @@ test_that("Overloaded functions give meaningful errors", {
   }
   "
 
-  funmod <- cmdstan_model(write_stan_file(funcode), force_recompile = TRUE)
-  expect_error(funmod$expose_functions(),
-               "Overloaded functions are currently not able to be exposed to R! The following overloaded functions were found: fun1, fun3")
+  funmod <- mock_cmdstan_model(write_stan_file(funcode))
+  expect_error(
+    funmod$expose_functions(),
+    "Overloaded functions are currently not able to be exposed to R! The following overloaded functions were found: fun1, fun3"
+  )
 })
 
 reserved_names_msg <- function(names) {
@@ -448,7 +550,7 @@ test_that("Reserved names in Stan code give the same error", {
   "
   )
 
-  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  funmod <- mock_cmdstan_model(stan_file)
   expect_error(
     funmod$expose_functions(),
     reserved_names_msg(c("min", "max", "class")),
@@ -467,7 +569,7 @@ test_that("Multiple reserved C++ keywords in Stan code give the same error", {
   "
   )
 
-  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
+  funmod <- mock_cmdstan_model(stan_file)
   expect_error(
     funmod$expose_functions(),
     reserved_names_msg(c("template", "class", "namespace", "private")),
@@ -476,35 +578,7 @@ test_that("Multiple reserved C++ keywords in Stan code give the same error", {
 })
 
 test_that("Reserved keywords in Stan function bodies are allowed", {
-  stan_file <- write_stan_file(
-    "
-  functions {
-    real add_one(real x) {
-      real class = 1;
-      return x + class;
-    }
-  }
-  "
-  )
-
-  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
-  expect_no_error(funmod$expose_functions())
-  expect_equal(funmod$functions$add_one(2), 3)
-})
-
-test_that("Stan code with no reserved names exposes functions", {
-  stan_file <- write_stan_file(
-    "
-  functions {
-    real add_pair(real left, real right) {
-      return left + right;
-    }
-  }
-  "
-  )
-
-  funmod <- cmdstan_model(stan_file, force_recompile = TRUE)
-  expect_no_error(funmod$expose_functions())
+  expect_equal(mod$functions$add_one(2), 3)
 })
 
 # Bug in exposing external, skip for now
@@ -527,52 +601,39 @@ test_that("Stan code with no reserved names exposes functions", {
 #   expect_equal(ext_mod$functions$rtn_int(10), 10)
 # })
 
-test_that("Exposing functions with precompiled model gives meaningful error", {
-  stan_file <- write_stan_file("
-    functions {
-      real a_plus_b(real a, real b) { return a + b; }
-    }
-    parameters { real x; }
-    model { x ~ std_normal(); }
-  ")
-  mod1 <- cmdstan_model(stan_file, compile_standalone = TRUE,
-                        force_recompile = TRUE)
-  expect_equal(7.5, mod1$functions$a_plus_b(5, 2.5))
-
-  mod2 <- cmdstan_model(stan_file)
-  expect_error(
-    mod2$expose_functions(),
-    "Exporting standalone functions is not possible with a pre-compiled Stan model!",
-    fixed = TRUE
-  )
+test_that("Exposing functions works on a model built from a reused executable", {
+  mod2 <- expect_no_recompilation(cmdstan_model(model))
+  mod2$expose_functions()
+  expect_equal(mod2$functions$rtn_int(10), 10)
 })
 
-test_that("$expose_functions() after a dry run reports why it cannot", {
-  stan_file <- write_stan_file("
-    functions { real a_plus_b(real a, real b) { return a + b; } }
-    parameters { real x; }
-    model { x ~ std_normal(); }
-  ")
-  mod <- cmdstan_model(stan_file, compile = FALSE)
-  mod$compile(dry_run = TRUE)
-  # The wording is wrong for a model that was never compiled at all (#1245).
+test_that("functions cannot be exposed from an executable alone", {
+  adopted <- cmdstan_model(exe_file = mod$exe_file())
   expect_error(
-    mod$expose_functions(),
-    "Exporting standalone functions is not possible with a pre-compiled Stan model!",
+    adopted$expose_functions(),
+    "created from an executable alone",
     fixed = TRUE
   )
 })
 
 test_that("Functions with SUNDIALS/KINSOL methods link correctly", {
-  modcode <- "
-    functions {
-      vector dummy_functor(vector guess, vector theta, data array[] real tails, data array[] int x_i) {
-        return [1, 1]';
-      }
-      vector call_solver(vector guess, vector theta, data array[] real tails, data array[] int x_i) {
-        return algebra_solver_newton(dummy_functor, guess, theta, tails, x_i);
-      }
-    }"
-  mod <- cmdstan_model(write_stan_file(modcode), force_recompile=TRUE)
-  expect_no_error(mod$expose_functions())
+  expect_equal(
+    mod$functions$call_solver(c(0, 0), c(1, 2), c(0), c(0L)),
+    c(1, 2),
+    tolerance = 1e-6
+  )
+})
+
+test_that("expose_functions(quiet = TRUE) suppresses the messages", {
+  rlang::local_interactive(TRUE)
+  local_mocked_bindings(compile_functions = function(...) invisible(NULL))
+  env <- new.env()
+  env$hpp_code <- "// [[stan::function]]"
+  env$compiled <- FALSE
+  expect_message(expose_stan_functions(env), "Compiling standalone functions")
+  expect_no_message(expose_stan_functions(env, quiet = TRUE))
+  env$compiled <- TRUE
+  env$fun_names <- "f"
+  expect_message(expose_stan_functions(env), "already compiled")
+  expect_no_message(expose_stan_functions(env, quiet = TRUE))
 })

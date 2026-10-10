@@ -1,0 +1,3 @@
+[lint]
+extend-select = ["TESTTHAT"]
+ignore = ["implicit_assignment"]

@@ -24,8 +24,6 @@ object queries the compiled model binary for the default argument
 values used by a given inference method. The returned list uses
 CmdStanR-style argument names (e.g., \code{iter_sampling} instead of
 CmdStan's \code{num_samples}).
-
-The model must be compiled before calling this method.
 }
 \examples{
 \dontrun{
@@ -48,12 +46,13 @@ The Stan and CmdStan documentation:
 }
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},

@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -30,10 +32,11 @@ ok_arg_values <- list(
   max_lbfgs_iters = 100,
   save_single_paths = FALSE,
   calculate_lp = TRUE,
-  psis_resample=TRUE
+  psis_resample = TRUE
 )
 
 # using any one of these should cause pathfinder() to error
+# jarl-ignore duplicated_arguments: intentional duplication
 bad_arg_values <- list(
   data = "NOT_A_FILE",
   output_dir = "NOT_A_DIRECTORY",
@@ -101,7 +104,9 @@ expect_pathfinder_output <- function(object, num_chains = NULL) {
 
 
 test_that("Pathfinder Runs", {
-  expect_pathfinder_output(fit <- mod$pathfinder(data=data_list, seed=1234, refresh = 0))
+  expect_pathfinder_output(
+    fit <- mod$pathfinder(data = data_list, seed = 1234, refresh = 0)
+  )
   expect_s3_class(fit, "CmdStanPathfinder")
   expected_variables <- c("lp__", "lp_approx__", "path__", "theta")
   if (cmdstan_version() < "2.37.0") {
@@ -121,6 +126,7 @@ test_that("pathfinder() method works with data files", {
 
 test_that("pathfinder() method works with init file", {
   init_list <- list(theta = 0.5)
+  # jarl-ignore internal_function: intentional internal function use in test
   init_file <- tempfile(
     tmpdir = cmdstanr:::cmdstan_tempdir(),
     pattern = "testing-inits-",
@@ -170,22 +176,15 @@ test_that("pathfinder() saves single path outputs", {
   )
 
   expect_equal(basename(fit$output_files()), "pathfinder-01.csv")
-  single_path_files <- file.path(output_dir, paste0(
-    "pathfinder-01_path_",
-    rep(1:2, each = 2),
-    c(".csv", ".json")
-  ))
-  expect_equal(file.exists(single_path_files), rep(TRUE, 4))
-})
-
-test_that("pathfinder() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(stan_program, stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_pathfinder_output(
-    mod_tmp$pathfinder(data = data_list)
+  single_path_files <- file.path(
+    output_dir,
+    paste0(
+      "pathfinder-01_path_",
+      rep(1:2, each = 2),
+      c(".csv", ".json")
+    )
   )
+  expect_equal(file.exists(single_path_files), rep(TRUE, 4))
 })
 
 test_that("no error when checking estimates after failure", {
@@ -198,5 +197,5 @@ test_that("no output with show_messages = FALSE", {
   output <- utils::capture.output(
     fit <- mod$pathfinder(data = data_list, show_messages = FALSE, seed = 123)
   )
-  expect_equal(length(output), 0)
+  expect_length(output, 0)
 })

@@ -40,7 +40,9 @@
 #'  should contain a sublist for each path. For other model fitting methods
 #'  there should be just one sublist. The sublists should have named elements
 #'  corresponding to the parameters for which you are specifying initial
-#'  values. See **Examples**.
+#'  values. See **Examples**. A tuple parameter is given as an unnamed list
+#'  of its elements and a complex parameter as an R complex value, see
+#'  [write_stan_json()].
 #'  * A function that returns a single list with names corresponding to the
 #'  parameters for which you are specifying initial values. The function can
 #'  take no arguments or a single argument `chain_id`. For MCMC and Pathfinder,
@@ -108,8 +110,8 @@
 #'
 #' @param opencl_ids (integer vector of length 2) The platform and device IDs of
 #'   the OpenCL device to use for fitting. The model must be compiled with
-#'   `cpp_options = list(stan_opencl = TRUE)` for this argument to have an
-#'   effect.
+#'   `cpp_options = list(stan_opencl = TRUE)`, otherwise setting this argument
+#'   is an error.
 #'
 #' @param show_messages (logical) When `TRUE` (the default), prints all output
 #'   during the execution process, such as iteration numbers and elapsed times.
