@@ -230,14 +230,12 @@ read_cmdstan_csv <- function(
     for (file_id in 2:length(csv_metadata)) {
       file_metadata <- csv_metadata[[file_id]]
       id <- file_metadata$id
-      csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id)
-      csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
-      csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init)
+      csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id) ;      csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
+      csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init);
       csv_metadata[[1]]$step_size <- c(
         csv_metadata[[1]]$step_size,
         file_metadata$step_size
-      )
-      csv_metadata[[1]]$step_size_adaptation <- c(
+      )csv_metadata[[1]]$step_size_adaptation <- c(
         csv_metadata[[1]]$step_size_adaptation,
         file_metadata$step_size_adaptation
       )
