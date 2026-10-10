@@ -821,6 +821,16 @@ validate_sample_args <- function(self, num_procs) {
   invisible(TRUE)
 }
 
+# arguments only available for lbfgs and bfgs
+bfgs_args <- c(
+  "init_alpha",
+  "tol_obj",
+  "tol_rel_obj",
+  "tol_grad",
+  "tol_rel_grad",
+  "tol_param"
+)
+
 #' Validate arguments for optimization
 #' @noRd
 #' @param self An `OptimizeArgs` object.
@@ -839,7 +849,6 @@ validate_optimize_args <- function(self) {
   }
 
   # check args only available for lbfgs and bfgs
-  bfgs_args <- c("init_alpha", "tol_obj", "tol_rel_obj", "tol_grad", "tol_rel_grad", "tol_param")
   for (arg in bfgs_args) {
     # check that arg is positive or NULL and that algorithm='lbfgs' or 'bfgs' is
     # explicitly specified (error if not or if 'newton')
@@ -1010,7 +1019,6 @@ validate_pathfinder_args <- function(self) {
 
 
   # check args only available for lbfgs and bfgs
-  bfgs_args <- c("init_alpha", "tol_obj", "tol_rel_obj", "tol_grad", "tol_rel_grad", "tol_param")
   for (arg in bfgs_args) {
     checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
   }
