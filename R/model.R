@@ -499,14 +499,16 @@ CmdStanModel <- R6::R6Class(
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
-        warning("`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
+        warning("`$code()` will return NULL because the `CmdStanModel` ",
+                "was not created with a Stan file.", call. = FALSE)
         return(NULL)
       }
       private$stan_code_
     },
     print = function(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE)) {
       if (length(private$stan_code_) == 0) {
-        stop("`$print()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
+        stop("`$print()` cannot be used because the `CmdStanModel` ",
+             "was not created with a Stan file.", call. = FALSE)
       }
       lines <- self$code()
       if (line_numbers) {
@@ -539,7 +541,8 @@ CmdStanModel <- R6::R6Class(
     },
     hpp_file = function() {
       if (!self$has_stan_file()) {
-        stop("`$hpp_file()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
+        stop("`$hpp_file()` cannot be used because the `CmdStanModel` ",
+             "was not created with a Stan file.", call. = FALSE)
       }
       private$hpp_file_
     },
@@ -771,7 +774,8 @@ check_syntax <- function(pedantic = FALSE,
                          stanc_options = list(),
                          quiet = FALSE) {
   if (length(self$stan_file()) == 0) {
-    stop("`$check_syntax()` cannot be used because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
+    stop("`$check_syntax()` cannot be used because the `CmdStanModel` ",
+         "was not created with a Stan file.", call. = FALSE)
   }
   assert_stan_file_exists(self$stan_file())
   check_syntax_stan_file(
@@ -804,12 +808,11 @@ check_syntax_stan_file <- function(stan_file,
     stanc_options[["warn-pedantic"]] <- TRUE
   }
   stanc_options[["name"]] <- paste0(model_name_from_path(stan_file), "_model")
+  include_paths <- effective_include_paths(stan_file, include_paths)
   run_stanc(
     stan_file,
     c(stanc_options_to_args(stanc_options),
-      include_paths_stanc3_args(
-        effective_include_paths(stan_file, include_paths), direct_call = TRUE
-      )),
+      include_paths_stanc3_args(include_paths, direct_call = TRUE)),
     spinner = quiet && use_spinner()
   )
   if (!quiet) {
@@ -936,12 +939,11 @@ format_stan_file <- function(stan_file,
   } else if (is.list(canonicalize) && length(canonicalize) > 0) {
     stanc_options[["canonicalize"]] <- paste0(canonicalize, collapse = ",")
   }
+  include_paths <- effective_include_paths(stan_file, include_paths)
   formatted <- run_stanc(
     stan_file,
     c(stanc_options_to_args(stanc_options),
-      include_paths_stanc3_args(
-        effective_include_paths(stan_file, include_paths), direct_call = TRUE
-      ))
+      include_paths_stanc3_args(include_paths, direct_call = TRUE))
   )
   out_file <- ""
   if (isTRUE(overwrite_file)) {
@@ -956,8 +958,7 @@ format_stan_file <- function(stan_file,
     }
     out_file <- stan_file
   }
-  cat(formatted, file = out_file, sep = "
-")
+  cat(formatted, file = out_file, sep = "\n")
   invisible(TRUE)
 }
 
@@ -1508,7 +1509,8 @@ laplace <- function(data = NULL,
       cmdstan_mode <- mode
     } else {
       if (!(is.character(mode) && length(mode) == 1)) {
-        stop("If not NULL or a CmdStanMLE object then `mode` must be a path to a CSV file.", call. = FALSE)
+        stop("If not NULL or a CmdStanMLE object ",
+             "then `mode` must be a path to a CSV file.", call. = FALSE)
       }
       cmdstan_mode <- as_cmdstan_fit(mode)
     }
@@ -1836,7 +1838,8 @@ pathfinder <- function(data = NULL,
       stop("Cannot specify both `threads` and deprecated `num_threads`.", call. = FALSE)
     }
     warning(
-      "`num_threads` is deprecated as of CmdStanR 1.0.0 and will be removed in a future release. Please use `threads` instead.",
+      "`num_threads` is deprecated as of CmdStanR 1.0.0 ",
+      "and will be removed in a future release. Please use `threads` instead.",
       call. = FALSE
     )
     threads <- num_threads
@@ -2325,7 +2328,8 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
     sprintf(
       paste0(
         "`%s` cannot be supplied for a model created from an executable alone. ",
-        "With no Stan file there is nothing to build, so the executable is used as it is."
+        "With no Stan file there is nothing to build, ",
+        "so the executable is used as it is."
       ),
       arg
     )
@@ -2338,8 +2342,10 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
   }
   if (!is.null(include_paths)) {
     stop(
-      "`include_paths` cannot be supplied for a model created from an executable alone. ",
-      "Include paths resolve `#include` lines in a Stan file, and there is none.",
+      "`include_paths` cannot be supplied for a model created ",
+      "from an executable alone. ",
+      "Include paths resolve `#include` lines in a Stan file, ",
+      "and there is none.",
       call. = FALSE
     )
   }
@@ -2351,7 +2357,8 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
   }
   if (isTRUE(pedantic)) {
     stop(
-      "`pedantic` cannot be supplied for a model created from an executable alone. ",
+      "`pedantic` cannot be supplied for a model created ",
+      "from an executable alone. ",
       "Pedantic mode checks a Stan program, and there is none.",
       call. = FALSE
     )

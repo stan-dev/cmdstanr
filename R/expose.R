@@ -14,7 +14,8 @@ check_sundials_fpic <- function(sundials_flags, verbose) {
     message(
       "SUNDIALS needs to be compiled with -fPIC when exposing functions or ",
       "model methods on Linux.\n",
-      "Updating your make/local file to include -fPIC and rebuilding CmdStan now..."
+      "Updating your make/local file to include -fPIC ",
+      "and rebuilding CmdStan now..."
     )
   }
   cmdstan_make_local(cpp_options = list("CPPFLAGS_SUNDIALS += -fPIC"), append = TRUE)
@@ -227,7 +228,10 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   fun_body <- gsub("std::ostream\\*\\s*pstream__\\s*=\\s*nullptr", "", fun_body)
   if (grepl("stan::rng_t", fun_body)) {
     fun_body <- gsub("stan::rng_t&\\s*base_rng__", "SEXP base_rng_ptr, SEXP seed", fun_body)
-    rng_seed <- "Rcpp::XPtr<stan::rng_t> base_rng(base_rng_ptr);base_rng->seed(Rcpp::as<int>(seed));"
+    rng_seed <- paste0(
+      "Rcpp::XPtr<stan::rng_t> base_rng(base_rng_ptr);",
+      "base_rng->seed(Rcpp::as<int>(seed));"
+    )
     fun_body <- gsub("return", paste(rng_seed, "return"), fun_body)
     fun_body <- gsub("base_rng__,", "*(base_rng.get()),", fun_body, fixed = TRUE)
   }
@@ -261,11 +265,11 @@ compile_functions <- function(env, verbose = FALSE) {
   if (length(reserved_names) > 0) {
     stop(
       paste0(
-        "expose_functions() can't expose this Stan function because the function ",
-        "name and/or one or more argument names use a reserved keyword ",
-        "(typically in the C++ toolchain used to compile Stan). Please rename ",
-        "the function/arguments in your Stan functions block and try again. ",
-        "Conflicting names: ",
+        "expose_functions() can't expose this Stan function because the ",
+        "function name and/or one or more argument names use a reserved ",
+        "keyword (typically in the C++ toolchain used to compile Stan). ",
+        "Please rename the function/arguments in your Stan functions block ",
+        "and try again. Conflicting names: ",
         paste(reserved_names, collapse = ", ")
       ),
       call. = FALSE

@@ -62,7 +62,8 @@ CmdStanFit <- R6::R6Class(
       base::print(out, row.names = FALSE)
       if (max_rows < total_rows) {
         cat("\n # showing", max_rows, "of", total_rows,
-            "rows (change via `max_rows` argument or `cmdstanr_max_rows` option)\n")
+            paste0("rows (change via `max_rows` argument or ",
+                   "`cmdstanr_max_rows` option)\n"))
       }
       invisible(self)
     },
@@ -455,12 +456,12 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #'
 log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
-  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
-    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(unconstrained_variables), " were provided!", call. = FALSE)
+  env <- private$model_methods_env_
+  if (length(unconstrained_variables) != env$num_upars_) {
+    stop("Model has ", env$num_upars_, " unconstrained parameter(s), but ",
+         length(unconstrained_variables), " were provided!", call. = FALSE)
   }
-  private$model_methods_env_$log_prob(private$model_methods_env_$model_ptr_,
-                                      unconstrained_variables, jacobian)
+  env$log_prob(env$model_ptr_, unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "log_prob", value = log_prob)
 
@@ -487,12 +488,12 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #'
 grad_log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
-  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
-    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(unconstrained_variables), " were provided!", call. = FALSE)
+  env <- private$model_methods_env_
+  if (length(unconstrained_variables) != env$num_upars_) {
+    stop("Model has ", env$num_upars_, " unconstrained parameter(s), but ",
+         length(unconstrained_variables), " were provided!", call. = FALSE)
   }
-  private$model_methods_env_$grad_log_prob(private$model_methods_env_$model_ptr_,
-                                            unconstrained_variables, jacobian)
+  env$grad_log_prob(env$model_ptr_, unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 
@@ -520,12 +521,12 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #'
 hessian <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
-  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
-    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(unconstrained_variables), " were provided!", call. = FALSE)
+  env <- private$model_methods_env_
+  if (length(unconstrained_variables) != env$num_upars_) {
+    stop("Model has ", env$num_upars_, " unconstrained parameter(s), but ",
+         length(unconstrained_variables), " were provided!", call. = FALSE)
   }
-  private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_,
-                                      unconstrained_variables, jacobian)
+  env$hessian(env$model_ptr_, unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "hessian", value = hessian)
 
@@ -555,7 +556,9 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #'
 unconstrain_variables <- function(variables) {
   self$init_model_methods()
-  model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
+  env <- private$model_methods_env_
+  stan_variables <- self$metadata()$stan_variables
+  model_par_names <- stan_variables[stan_variables != "lp__"]
   prov_par_names <- names(variables)
 
   # Ignore extraneous parameters
@@ -574,7 +577,7 @@ unconstrain_variables <- function(variables) {
   }
 
   variables_vector <- flatten_variables(variables[model_par_names])
-  private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, variables_vector)
+  env$unconstrain_variables(env$model_ptr_, variables_vector)
 }
 CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
 
@@ -621,6 +624,7 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
                               format = getOption("cmdstanr_draws_format", "draws_array"),
                               inc_warmup = FALSE) {
   self$init_model_methods()
+  env <- private$model_methods_env_
   format <- assert_valid_draws_format(format)
   if (!is.null(files) || !is.null(draws)) {
     if (!is.null(files) && !is.null(draws)) {
@@ -650,12 +654,11 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
   chains <- posterior::nchains(draws)
 
   # the parameters' columns, in the order unconstrain_array() reads them
-  pars <- private$model_methods_env_$constrained_param_names(
-    private$model_methods_env_$model_ptr_, FALSE, FALSE)
+  pars <- env$constrained_param_names(env$model_ptr_, FALSE, FALSE)
   draws <- posterior::subset_draws(draws,
                                    variable = repair_variable_names(pars))
-  unconstrained <- private$model_methods_env_$unconstrain_draws(private$model_methods_env_$model_ptr_, draws)
-  uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
+  unconstrained <- env$unconstrain_draws(env$model_ptr_, draws)
+  uncon_names <- env$unconstrained_param_names(env$model_ptr_, FALSE, FALSE)
   names(unconstrained) <- repair_variable_names(uncon_names)
   unconstrained$.nchains <- chains
 
@@ -697,17 +700,17 @@ CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
 constrain_variables <- function(unconstrained_variables, transformed_parameters = TRUE,
                                 generated_quantities = TRUE) {
   self$init_model_methods()
-  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
-    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(unconstrained_variables), " were provided!", call. = FALSE)
+  env <- private$model_methods_env_
+  if (length(unconstrained_variables) != env$num_upars_) {
+    stop("Model has ", env$num_upars_, " unconstrained parameter(s), but ",
+         length(unconstrained_variables), " were provided!", call. = FALSE)
   }
-  cpars <- private$model_methods_env_$constrain_variables(
-    private$model_methods_env_$model_ptr_,
-    private$model_methods_env_$model_rng_,
+  cpars <- env$constrain_variables(
+    env$model_ptr_,
+    env$model_rng_,
     unconstrained_variables, transformed_parameters, generated_quantities)
-  names <- private$model_methods_env_$constrained_param_names(
-    private$model_methods_env_$model_ptr_, transformed_parameters,
-    generated_quantities)
+  names <- env$constrained_param_names(
+    env$model_ptr_, transformed_parameters, generated_quantities)
   declarations <- unlist(unname(self$runset$args$model_variables),
                          recursive = FALSE)
   unflatten_variables(cpars, names, declarations)
@@ -782,7 +785,8 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'
 lp <- function() {
   lp__ <- self$draws(variables = "lp__")
-  lp__ <- posterior::as_draws_matrix(lp__) # if mcmc this combines all chains, otherwise does nothing
+  # if mcmc this combines all chains, otherwise does nothing
+  lp__ <- posterior::as_draws_matrix(lp__)
   as.numeric(lp__)
 }
 CmdStanFit$set("public", name = "lp", value = lp)
@@ -1397,7 +1401,8 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 code <- function() {
   stan_code <- self$runset$stan_code()
   if (is.null(stan_code)) {
-    warning("`$code()` will return NULL because the `CmdStanModel` was not created with a Stan file.", call. = FALSE)
+    warning("`$code()` will return NULL because the `CmdStanModel` ",
+            "was not created with a Stan file.", call. = FALSE)
   }
   stan_code
 }
@@ -1581,7 +1586,10 @@ CmdStanMCMC <- R6::R6Class(
         if (is.null(private$draws_)) {
           private$draws_ <- csv_contents$post_warmup_draws
         } else {
-          missing_variables <- posterior::variables(csv_contents$post_warmup_draws)[!(posterior::variables(csv_contents$post_warmup_draws) %in% posterior::variables(private$draws_))]
+          missing_variables <- setdiff(
+            posterior::variables(csv_contents$post_warmup_draws),
+            posterior::variables(private$draws_)
+          )
           private$draws_ <- posterior::bind_draws(
             private$draws_,
             posterior::subset_draws(csv_contents$post_warmup_draws, variable = missing_variables),
@@ -1594,7 +1602,10 @@ CmdStanMCMC <- R6::R6Class(
         if (is.null(private$sampler_diagnostics_)) {
           private$sampler_diagnostics_ <- csv_contents$post_warmup_sampler_diagnostics
         } else {
-          missing_variables <- posterior::variables(csv_contents$post_warmup_sampler_diagnostics)[!(posterior::variables(csv_contents$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))]
+          missing_variables <- setdiff(
+            posterior::variables(csv_contents$post_warmup_sampler_diagnostics),
+            posterior::variables(private$sampler_diagnostics_)
+          )
           private$sampler_diagnostics_ <- posterior::bind_draws(
             private$sampler_diagnostics_,
             posterior::subset_draws(csv_contents$post_warmup_sampler_diagnostics, variable = missing_variables),
@@ -1608,7 +1619,10 @@ CmdStanMCMC <- R6::R6Class(
           if (is.null(private$warmup_draws_)) {
             private$warmup_draws_ <- csv_contents$warmup_draws
           } else {
-            missing_variables <- posterior::variables(csv_contents$warmup_draws)[!(posterior::variables(csv_contents$warmup_draws) %in% posterior::variables(private$warmup_draws_))]
+            missing_variables <- setdiff(
+              posterior::variables(csv_contents$warmup_draws),
+              posterior::variables(private$warmup_draws_)
+            )
             private$warmup_draws_ <- posterior::bind_draws(
               private$warmup_draws_,
               posterior::subset_draws(csv_contents$warmup_draws, variable = missing_variables),
@@ -1620,7 +1634,10 @@ CmdStanMCMC <- R6::R6Class(
           if (is.null(private$warmup_sampler_diagnostics_)) {
             private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
           } else {
-            missing_variables <- posterior::variables(csv_contents$warmup_sampler_diagnostics)[!(posterior::variables(csv_contents$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))]
+            missing_variables <- setdiff(
+              posterior::variables(csv_contents$warmup_sampler_diagnostics),
+              posterior::variables(private$warmup_sampler_diagnostics_)
+            )
             private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
               private$warmup_sampler_diagnostics_,
               posterior::subset_draws(csv_contents$warmup_sampler_diagnostics, variable = missing_variables),
@@ -1725,7 +1742,8 @@ loo <- function(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...)
     suppressWarnings(loo_result <- loo::loo.array(LLarray, r_eff = r_eff, ...))
 
     log_lik_i <- function(x, i, parameter_name = "log_lik", ...) {
-      ll_array <- x$draws(variables = parameter_name, format = "draws_array")[,,i]
+      ll_draws <- x$draws(variables = parameter_name, format = "draws_array")
+      ll_array <- ll_draws[,, i]
       # draws_array types don't drop the last dimension when it's 1, so we do this manually
       attr(ll_array, "dim") <- attributes(ll_array)$dim[1:2]
       ll_array
@@ -1802,8 +1820,9 @@ sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr
   }
   if (inc_warmup) {
     if (!private$metadata_$save_warmup) {
-      stop("Warmup sampler diagnostics were requested from a fit object without them! ",
-           "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
+      stop("Warmup sampler diagnostics were requested from a fit object ",
+           "without them! Please rerun the model with save_warmup = TRUE.",
+           call. = FALSE)
     }
     posterior::bind_draws(
       private$warmup_sampler_diagnostics_,
@@ -1864,28 +1883,28 @@ diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfm
     choices = available_hmc_diagnostics(),
     several.ok = TRUE
   )
-  post_warmup_sampler_diagnostics <- self$sampler_diagnostics(inc_warmup = FALSE)
+  post_warmup <- self$sampler_diagnostics(inc_warmup = FALSE)
   if ("divergences" %in% diagnostics) {
     if (quiet) {
-      divergences <- suppressMessages(check_divergences(post_warmup_sampler_diagnostics))
+      divergences <- suppressMessages(check_divergences(post_warmup))
     } else {
-      divergences <- check_divergences(post_warmup_sampler_diagnostics)
+      divergences <- check_divergences(post_warmup)
     }
     out[["num_divergent"]] <- divergences
   }
   if ("treedepth" %in% diagnostics) {
     if (quiet) {
-      max_treedepth_hit <- suppressMessages(check_max_treedepth(post_warmup_sampler_diagnostics, self$metadata()))
+      max_treedepth_hit <- suppressMessages(check_max_treedepth(post_warmup, self$metadata()))
     } else {
-      max_treedepth_hit <- check_max_treedepth(post_warmup_sampler_diagnostics, self$metadata())
+      max_treedepth_hit <- check_max_treedepth(post_warmup, self$metadata())
     }
     out[["num_max_treedepth"]] <- max_treedepth_hit
   }
   if ("ebfmi" %in% diagnostics) {
     if (quiet) {
-      ebfmi <- suppressMessages(check_ebfmi(post_warmup_sampler_diagnostics))
+      ebfmi <- suppressMessages(check_ebfmi(post_warmup))
     } else {
-      ebfmi <- check_ebfmi(post_warmup_sampler_diagnostics)
+      ebfmi <- check_ebfmi(post_warmup)
     }
     out[["ebfmi"]] <- ebfmi %||% NA
   }
@@ -2575,7 +2594,10 @@ CmdStanGQ <- R6::R6Class(
       )
       private$metadata_ <- csv_contents$metadata
       if (!is.null(csv_contents$generated_quantities)) {
-        missing_variables <- posterior::variables(csv_contents$generated_quantities)[!(posterior::variables(csv_contents$generated_quantities) %in% posterior::variables(private$draws_))]
+        missing_variables <- setdiff(
+          posterior::variables(csv_contents$generated_quantities),
+          posterior::variables(private$draws_)
+        )
         private$draws_ <-
           posterior::bind_draws(
             private$draws_,

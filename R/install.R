@@ -333,13 +333,15 @@ install_cmdstan <- function(dir = NULL,
   if (report_uncopied_make_local(make_local_msg, copy_make_local_decided,
                                  old_cmdstan_path, cmdstan_path())) {
     message(
-      "\nThe previous installation of CmdStan had a non-empty make/local file.\n",
-      "If you wish to copy the file to the new installation, run the following commands:\n",
+      "\nThe previous installation of CmdStan ",
+      "had a non-empty make/local file.\n",
+      "If you wish to copy the file to the new installation, run the ",
+      "following commands:\n",
       "\n",
       make_local_msg,
       "\nrebuild_cmdstan(cores = ...)",
-      "\n\nNext time, install_cmdstan(copy_make_local = TRUE) copies the flags\n",
-      "before the build, so that no rebuild is needed."
+      "\n\nNext time, install_cmdstan(copy_make_local = TRUE) copies ",
+      "the flags\nbefore the build, so that no rebuild is needed."
     )
   }
   if (isTRUE(wsl)) {
@@ -390,7 +392,8 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
     }
     if (append && file.exists(make_local_path)) {
       existing <- suppressWarnings(readLines(make_local_path, warn = FALSE))
-      built_flags <- built_flags[!make_flag_already_applies(built_flags, existing)]
+      applied <- make_flag_already_applies(built_flags, existing)
+      built_flags <- built_flags[!applied]
     }
     if (length(built_flags) > 0 || !append) {
       write(built_flags, file = make_local_path, append = append)
@@ -406,9 +409,8 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
   if (length(make_local_contents) == 0) {
     return("")
   }
-  trimws(strsplit(trimws(
-    paste(make_local_contents, collapse = "\n")
-  ), "\n", fixed = TRUE)[[1]])
+  contents <- trimws(paste(make_local_contents, collapse = "\n"))
+  trimws(strsplit(contents, "\n", fixed = TRUE)[[1]])
 }
 
 #' @rdname install_cmdstan
@@ -419,7 +421,8 @@ cmdstan_make_local <- function(dir = cmdstan_path(),
 check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
   if (isTRUE(fix)) {
     warning(
-      "The `fix` argument is deprecated as of CmdStanR 1.0.0 and will be removed in a future release.",
+      "The `fix` argument is deprecated as of CmdStanR 1.0.0 ",
+      "and will be removed in a future release.",
       call. = FALSE
     )
   }
@@ -435,7 +438,9 @@ check_cmdstan_toolchain <- function(fix = FALSE, quiet = FALSE) {
     check_unix_cpp_compiler()
   }
   if (!checkmate::test_directory(dirname(tempdir()), access = "w")) {
-    stop("No write permissions to the temporary folder! Please change the permissions or location of the temporary folder.", call. = FALSE)
+    stop("No write permissions to the temporary folder! ",
+         "Please change the permissions or location of the temporary folder.",
+         call. = FALSE)
   }
   if (!quiet) {
     message("The C++ toolchain required for CmdStan is setup properly!")
@@ -617,7 +622,8 @@ check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
     if (!overwrite) {
       warning(
         "An installation already exists at ", dir_cmdstan, ". ",
-        "Please remove or rename the installation folder or set overwrite=TRUE.",
+        "Please remove or rename the installation folder ",
+        "or set overwrite=TRUE.",
         call. = FALSE
       )
       return(FALSE)
@@ -859,16 +865,17 @@ build_status_ok <- function(process_log, quiet = FALSE) {
 check_wsl_toolchain <- function() {
   installed <- wsl_installed()
   if (is.na(installed)) {
-    stop("\n", "WSL did not respond, so CmdStanR could not tell whether ",
+    stop("\nWSL did not respond, so CmdStanR could not tell whether ",
          "a WSL distribution is installed.",
-         "\n", "If WSL is still starting, wait a moment and run ",
+         "\nIf WSL is still starting, wait a moment and run ",
          "`check_cmdstan_toolchain()` again.",
          call. = FALSE)
   }
   if (!installed) {
-    stop("\n", "A WSL distribution is not installed or is not accessible.",
-         "\n", "Please see the Microsoft documentation for guidance on installing WSL: ",
-         "\n", "https://docs.microsoft.com/en-us/windows/wsl/install",
+    stop("\nA WSL distribution is not installed or is not accessible.\n",
+         "Please see the Microsoft documentation ",
+         "for guidance on installing WSL: ",
+         "\nhttps://docs.microsoft.com/en-us/windows/wsl/install",
          call. = FALSE)
   }
 
@@ -887,12 +894,15 @@ check_wsl_toolchain <- function() {
 
   if (make_not_present$status || (gpp_not_present$status
         && clangpp_not_present$status)) {
-    stop("\n", "Your distribution is missing the needed utilities for compiling C++.",
-         "\n", "Please launch your WSL and install them using the appropriate command:",
-         "\n", "Debian/Ubuntu: sudo apt-get install build-essential",
-         "\n", "Fedora: sudo dnf group install \"C Development Tools and Libraries\"",
-         "\n", "Arch: pacman -Sy base-devel",
-         call. = FALSE)
+    stop(paste(
+      "",
+      "Your distribution is missing the needed utilities for compiling C++.",
+      "Please launch your WSL and install them using the appropriate command:",
+      "Debian/Ubuntu: sudo apt-get install build-essential",
+      "Fedora: sudo dnf group install \"C Development Tools and Libraries\"",
+      "Arch: pacman -Sy base-devel",
+      sep = "\n"
+    ), call. = FALSE)
   }
 }
 
@@ -918,7 +928,8 @@ check_unix_make <- function() {
     if (os_is_macos()) {
       stop(
         "The make tool was not found. ",
-        "Please install the command line tools for Mac with `xcode-select --install` ",
+        "Please install the command line tools for Mac with ",
+        "`xcode-select --install` ",
         "or install Xcode from the app store. ",
         "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
@@ -926,7 +937,8 @@ check_unix_make <- function() {
     } else {
       stop(
         "The make tool was not found. ",
-        "Please install make, restart R, and then run cmdstanr::check_cmdstan_toolchain().",
+        "Please install make, restart R, and then run ",
+        "cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
       )
     }
@@ -941,7 +953,8 @@ check_unix_cpp_compiler <- function() {
     if (os_is_macos()) {
       stop(
         "A suitable C++ compiler was not found. ",
-        "Please install the command line tools for Mac with `xcode-select --install` ",
+        "Please install the command line tools for Mac with ",
+        "`xcode-select --install` ",
         "or install Xcode from the app store. ",
         "Then restart R and run cmdstanr::check_cmdstan_toolchain().",
         call. = FALSE
@@ -1063,7 +1076,8 @@ assert_supported_requested_cmdstan_version <- function(version, source = "versio
   stop(
     "Requested CmdStan ", source, " (", version, ") is unsupported. ",
     "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer. ",
-    "If you need an older CmdStan release, install an older CmdStanR version from GitHub.",
+    "If you need an older CmdStan release, ",
+    "install an older CmdStanR version from GitHub.",
     call. = FALSE
   )
 }
@@ -1073,7 +1087,8 @@ extract_cmdstan_version_from_archive_name <- function(path_or_url) {
   archive <- sub("\\?.*$", "", archive)
   matches <- regmatches(
     archive,
-    regexec("^cmdstan-([0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?)(?:-linux-[a-z0-9_]+)?\\.tar\\.gz$",
+    regexec(paste0("^cmdstan-([0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?)",
+                   "(?:-linux-[a-z0-9_]+)?\\.tar\\.gz$"),
             archive,
             perl = TRUE)
   )[[1]]

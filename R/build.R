@@ -477,6 +477,7 @@ stancflags_added_by_make <- function(make_vars) {
 #'   error.
 #' @noRd
 run_make <- function(args, quiet) {
+  arch_error <- "but the current translation unit is being compiled for target"
   withr::with_envvar(
     c("HOME" = short_path(Sys.getenv("HOME"))),
     withr::with_path(
@@ -497,7 +498,8 @@ run_make <- function(args, quiet) {
           }
           if (grepl("PCH file", x) || grepl("precompiled header", x) || grepl(".hpp.gch", x) ) {
             warning(
-              "CmdStan's precompiled header (PCH) files may need to be rebuilt.\n",
+              "CmdStan's precompiled header (PCH) files ",
+              "may need to be rebuilt.\n",
               "If your model failed to compile please run rebuild_cmdstan().\n",
               "If the issue persists please open a bug report.",
               call. = FALSE
@@ -505,17 +507,17 @@ run_make <- function(args, quiet) {
           }
           if (grepl("No space left on device", x) || grepl("error in backend: IO failure on output stream", x)) {
             warning(
-              "The C++ compiler ran out of disk space and was unable to build the executables for your model!\n",
+              "The C++ compiler ran out of disk space ",
+              "and was unable to build the executables for your model!\n",
               "See the above error for more details.",
               call. = FALSE
             )
           }
           if (os_is_macos()) {
-            if (R.version$arch == "aarch64"
-                && grepl("but the current translation unit is being compiled for target", x)) {
+            if (R.version$arch == "aarch64" && grepl(arch_error, x)) {
               warning(
-                "The C++ compiler has errored due to incompatibility between the x86 and ",
-                "Apple Silicon architectures.\n",
+                "The C++ compiler has errored due to incompatibility between ",
+                "the x86 and Apple Silicon architectures.\n",
                 "If you are running R inside an IDE (RStudio, VSCode, ...), ",
                 "make sure the IDE is a native Apple Silicon app.\n",
                 call. = FALSE
@@ -528,7 +530,8 @@ run_make <- function(args, quiet) {
     )
   )
   if (is.na(run_log$status) || run_log$status != 0) {
-    stop("An error occurred during compilation! See the message above for more information.",
+    stop("An error occurred during compilation! ",
+         "See the message above for more information.",
          call. = FALSE)
   }
   invisible(run_log)

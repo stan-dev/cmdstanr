@@ -396,7 +396,7 @@ test_that("unsupported release-candidate versions are rejected by the floor chec
 
 test_that("deprecated CMDSTANR_USE_MSYS_TOOLCHAIN is ignored with warning", {
   old_flag <- .cmdstanr$WARNED_IGNORED_MSYS_TOOLCHAIN
-  on.exit(.cmdstanr$WARNED_IGNORED_MSYS_TOOLCHAIN <- old_flag)
+  withr::defer(.cmdstanr$WARNED_IGNORED_MSYS_TOOLCHAIN <- old_flag)
 
   .cmdstanr$WARNED_IGNORED_MSYS_TOOLCHAIN <- FALSE
   withr::with_envvar(c(CMDSTANR_USE_MSYS_TOOLCHAIN = "true"), {
@@ -887,7 +887,7 @@ test_that("toolchain_PATH_env_var() returns NULL on non-Windows", {
   skip_if(os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   expect_null(toolchain_PATH_env_var())
@@ -897,7 +897,7 @@ test_that("toolchain_PATH_env_var() caches result after first call", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
 
@@ -914,9 +914,10 @@ test_that("toolchain_PATH_env_var() uses RTOOLS40_HOME for R < 4.2", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
-  fake_home <- utils::shortPathName(withr::local_tempdir(pattern = "rtools40-home-"))
+  fake_home <- withr::local_tempdir(pattern = "rtools40-home-")
+  fake_home <- utils::shortPathName(fake_home)
   fake_cpp_dir <- file.path(fake_home, "mingw64", "bin")
   fake_bin_dir <- file.path(fake_home, "usr", "bin")
 
@@ -977,7 +978,7 @@ test_that("toolchain_PATH_env_var() compares R versions numerically", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_home <- withr::local_tempdir(pattern = "rtools-home-")
   rcmd_calls <- 0L
@@ -1001,7 +1002,7 @@ test_that("toolchain_PATH_env_var() uses configured R_TOOLS_SOFT", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_home <- withr::local_tempdir(pattern = "rtools-home-")
   fake_soft <- file.path(fake_home, "toolchain")
@@ -1047,7 +1048,7 @@ test_that("toolchain_PATH_env_var() falls back to Sys.which() when Rcmd fails", 
   skip_if(!os_is_windows())
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
 
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_bin <- withr::local_tempdir(pattern = "rtools-fallback-")
   file.create(file.path(fake_bin, "make.exe"))
@@ -1083,7 +1084,7 @@ test_that("toolchain_PATH_env_var() searches PATH when R_TOOLS_SOFT is empty", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_bin <- withr::local_tempdir(pattern = "rtools-fallback-")
   file_exists_calls <- character()
@@ -1123,7 +1124,7 @@ test_that("toolchain_PATH_env_var() returns NULL when both approaches fail", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   .cmdstanr$TOOLCHAIN_PATH <- NULL
   local({
@@ -1146,7 +1147,7 @@ test_that("toolchain_PATH_env_var() returns NULL when only one tool in PATH", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_bin <- withr::local_tempdir(pattern = "rtools-partial-")
   file.create(file.path(fake_bin, "make"))
@@ -1173,7 +1174,7 @@ test_that("toolchain_PATH_env_var() falls back to PATH when executables missing 
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_soft <- withr::local_tempdir(pattern = "rtools-soft-")
   dir.create(file.path(fake_soft, "bin"), recursive = TRUE, showWarnings = FALSE)
@@ -1208,7 +1209,7 @@ test_that("toolchain_PATH_env_var() preserves configured compiler", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_home <- withr::local_tempdir(pattern = "rtools-home-")
   fake_soft <- file.path(fake_home, "toolchain")
@@ -1252,7 +1253,7 @@ test_that("toolchain_PATH_env_var() preserves configured make", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_home <- withr::local_tempdir(pattern = "rtools-home-")
   fake_soft <- file.path(fake_home, "toolchain")
@@ -1296,7 +1297,7 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
   skip_if(!os_is_windows())
 
   old_cache <- .cmdstanr$TOOLCHAIN_PATH
-  on.exit(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
+  withr::defer(.cmdstanr$TOOLCHAIN_PATH <- old_cache)
 
   fake_home <- withr::local_tempdir(pattern = "rtools path-")
   fake_soft <- file.path(fake_home, "toolchain")

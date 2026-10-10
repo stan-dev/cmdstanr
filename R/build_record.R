@@ -834,26 +834,32 @@ print.stan_build_info <- function(x, ...) {
   cat("Reported features:\n")
   for (name in names(x$reported_features)) {
     value <- x$reported_features[[name]]
-    cat("  ", name, ": ", if (is.na(value)) "unknown" else value, "\n", sep = "")
+    if (is.na(value)) {
+      value <- "unknown"
+    }
+    cat("  ", name, ": ", value, "\n", sep = "")
   }
   if (x$record$status != "available") {
     return(invisible(x))
   }
 
   cat("Configuration:\n")
+  option_line <- function(label, values, collapse = " ") {
+    text <- paste(values, collapse = collapse)
+    if (length(values) == 0) {
+      text <- "none"
+    }
+    cat("  ", label, ": ", text, "\n", sep = "")
+  }
   cpp_options <- x$configuration$cpp_options
-  cat("  cpp_options: ", if (length(cpp_options) == 0) "none" else
-    paste(names(cpp_options), unlist(cpp_options), sep = "=", collapse = " "),
-    "\n", sep = "")
-  stanc_options <- unlist(x$configuration$stanc_options)
-  cat("  stanc_options: ", if (length(stanc_options) == 0) "none" else
-    paste(stanc_options, collapse = " "), "\n", sep = "")
-  from_make <- unlist(x$configuration$stanc_options_from_make)
-  cat("  stanc_options_from_make: ", if (length(from_make) == 0) "none" else
-    paste(from_make, collapse = " "), "\n", sep = "")
-  include_paths <- x$configuration$include_paths
-  cat("  include_paths: ", if (length(include_paths) == 0) "none" else
-    paste(include_paths, collapse = ", "), "\n", sep = "")
+  cpp_options <- paste(names(cpp_options), unlist(cpp_options), sep = "=")
+  option_line("cpp_options", cpp_options)
+  option_line("stanc_options", unlist(x$configuration$stanc_options))
+  option_line(
+    "stanc_options_from_make",
+    unlist(x$configuration$stanc_options_from_make)
+  )
+  option_line("include_paths", x$configuration$include_paths, ", ")
 
   cat("Dependencies:\n")
   path_line <- function(label, entry) {
@@ -871,14 +877,14 @@ print.stan_build_info <- function(x, ...) {
   path_line("make_local", x$dependencies$make_local)
 
   cmdstan <- x$cmdstan
-  cat("CmdStan ", cmdstan$version, " at ", cmdstan$path,
-    if (cmdstan$exists) "" else " (no longer exists)", "\n", sep = "")
+  gone <- if (cmdstan$exists) "" else " (no longer exists)"
+  cat("CmdStan ", cmdstan$version, " at ", cmdstan$path, gone, "\n", sep = "")
 
   if (length(x$untracked_dependencies) > 0) {
     cat("Dependencies CmdStanR does not track:\n")
     for (entry in x$untracked_dependencies) {
-      cat("  ", untracked_dependency_descriptions[[entry$kind]], " (",
-        entry$detected_in, ")\n", sep = "")
+      description <- untracked_dependency_descriptions[[entry$kind]]
+      cat("  ", description, " (", entry$detected_in, ")\n", sep = "")
     }
   }
   invisible(x)
@@ -902,8 +908,10 @@ build_record_status_line <- function(x) {
       "Build record: could not be read. Rebuilding the executable writes a ",
       "new one."
     ),
-    executable_mismatch =
-      "Build record: does not match. Executable changed after the build.",
+    executable_mismatch = paste0(
+      "Build record: does not match. ",
+      "Executable changed after the build."
+    ),
     unsupported_format = if (x$format_version > build_record_format_version) {
       paste0(
         "Build record: format ", x$format_version, " (newer CmdStanR). ",

@@ -24,7 +24,8 @@ CmdStanArgs <- R6::R6Class(
   "CmdStanArgs",
   lock_objects = FALSE,
   public = list(
-    method_args = NULL, # this will be a SampleArgs object (or OptimizeArgs, etc.)
+    # this will be a SampleArgs object (or OptimizeArgs, etc.)
+    method_args = NULL,
     initialize = function(model_name,
                           stan_file = NULL,
                           stan_code = NULL,
@@ -463,7 +464,8 @@ LaplaceArgs <- R6::R6Class(
                           draws = NULL,
                           jacobian = TRUE) {
       checkmate::assert_r6(mode, classes = "CmdStanMLE")
-      self$mode_object <- mode  # keep the CmdStanMLE for later use (can be returned by CmdStanLaplace$mode())
+      # kept so that CmdStanLaplace$mode() can return it
+      self$mode_object <- mode
       # mode <- file path to pass to CmdStan
       # This needs to be a path that can be accessed within WSL
       # since the files are used by CmdStan, not R
@@ -821,6 +823,16 @@ validate_sample_args <- function(self, num_procs) {
   invisible(TRUE)
 }
 
+# arguments only available for lbfgs and bfgs
+bfgs_args <- c(
+  "init_alpha",
+  "tol_obj",
+  "tol_rel_obj",
+  "tol_grad",
+  "tol_rel_grad",
+  "tol_param"
+)
+
 #' Validate arguments for optimization
 #' @noRd
 #' @param self An `OptimizeArgs` object.
@@ -839,7 +851,6 @@ validate_optimize_args <- function(self) {
   }
 
   # check args only available for lbfgs and bfgs
-  bfgs_args <- c("init_alpha", "tol_obj", "tol_rel_obj", "tol_grad", "tol_rel_grad", "tol_param")
   for (arg in bfgs_args) {
     # check that arg is positive or NULL and that algorithm='lbfgs' or 'bfgs' is
     # explicitly specified (error if not or if 'newton')
@@ -855,7 +866,8 @@ validate_optimize_args <- function(self) {
   # history_size only available for lbfgs
   if (!is.null(self$history_size)) {
     if (!isTRUE(self$algorithm == "lbfgs")) {
-      stop("`history_size` is only allowed if `algorithm` is specified as `\"lbfgs\"`.", call. = FALSE)
+      stop("`history_size` is only allowed ",
+           "if `algorithm` is specified as `\"lbfgs\"`.", call. = FALSE)
     } else {
       checkmate::assert_integerish(self$history_size, lower = 1, len = 1, null.ok = FALSE)
       self$history_size <- as.integer(self$history_size)
@@ -1010,7 +1022,6 @@ validate_pathfinder_args <- function(self) {
 
 
   # check args only available for lbfgs and bfgs
-  bfgs_args <- c("init_alpha", "tol_obj", "tol_rel_obj", "tol_grad", "tol_rel_grad", "tol_param")
   for (arg in bfgs_args) {
     checkmate::assert_number(self[[arg]], .var.name = arg, lower = 0, null.ok = TRUE)
   }
@@ -1058,8 +1069,8 @@ process_init.draws <- function(init, num_procs, model_variables = NULL,
   # Since all other process_init functions return `num_proc` inits
   # This will only happen if a raw draws object is passed
   if (nrow(draws) < num_procs) {
-    idx <- rep(1:nrow(draws), ceiling(num_procs / nrow(draws)))[1:num_procs]
-    draws <- draws[idx,]
+    idx <- rep_len(seq_len(nrow(draws)), num_procs)
+    draws <- draws[idx, ]
   } else if (nrow(draws) > num_procs) {
     draws <- posterior::resample_draws(draws, ndraws = num_procs,
                                        method ="simple_no_replace")
@@ -1114,14 +1125,15 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
     missing_parameter_values <- list()
     parameter_names <- names(model_variables$parameters)
     for (i in seq_along(init)) {
-      is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
-      if (!all(is_parameter_value_supplied)) {
-        missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
+      missing <- setdiff(parameter_names, names(init[[i]]))
+      if (length(missing) > 0) {
+        missing_parameter_values[[i]] <- missing
       }
     }
     if (length(missing_parameter_values) > 0 && isTRUE(warn_partial)) {
       warning_message <- c(
-        "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
+        "Init values were only set for a subset of parameters. \n",
+        "Missing init values for the following parameters:\n"
       )
       for (i in seq_along(missing_parameter_values)) {
         if (length(init) > 1) {
@@ -1130,7 +1142,9 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
           line_text <- ""
         }
         if (length(missing_parameter_values[[i]]) > 0) {
-          warning_message <- c(warning_message, paste0(line_text, paste0(missing_parameter_values[[i]], collapse = ", "), "\n"))
+          names_text <- paste0(missing_parameter_values[[i]], collapse = ", ")
+          line <- paste0(line_text, names_text, "\n")
+          warning_message <- c(warning_message, line)
         }
       }
       warning_message <- c(warning_message, "\nTo disable this message use options(cmdstanr_warn_inits = FALSE).\n")
@@ -1139,7 +1153,8 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
   }
   if (any(grepl("\\[", names(unlist(init))))) {
     stop(
-      "`init` contains entries with parameter names that include square-brackets, which is not permitted. ",
+      "`init` contains entries with parameter names that include ",
+      "square-brackets, which is not permitted. ",
       "To supply inits for a vector, matrix or array of parameters, ",
       "create a single entry with the parameter's name in the `init` list ",
       "and specify initial values for the entire parameter container.",
@@ -1193,10 +1208,21 @@ process_init.function <- function(init, num_procs, model_variables = NULL,
 #' @noRd
 validate_fit_init <- function(init, model_variables) {
   if (all(init$return_codes() == 1)) {
-    stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
-  } else if (!is.null(model_variables) &&!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
-    stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
+    stop("We are unable to create initial values from a model ",
+         "with no samples. ",
+         "Please check the results of the model used for inits ",
+         "before continuing.", call. = FALSE)
   }
+  if (is.null(model_variables)) {
+    return(invisible(NULL))
+  }
+  init_names <- init$metadata()$stan_variables
+  if (!any(names(model_variables$parameters) %in% init_names)) {
+    stop("None of the names of the parameters for the model used for ",
+         "initial values match the names of parameters from the model ",
+         "currently running.", call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 #' Write initial values to files if provided as a `CmdStanMCMC` class
@@ -1293,7 +1319,8 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
       metadata$calculate_lp
   }
   log_weights <- draws_df$lp__ - draws_df$lp_approx__
-  log_weights[!is.finite(log_weights)] <- -Inf   # non-finite -> zero selection weight
+  # non-finite -> zero selection weight
+  log_weights[!is.finite(log_weights)] <- -Inf
   num_unique_log_weights <- length(unique(log_weights))
 
   # Selection weights for resampling.
@@ -1453,8 +1480,7 @@ validate_init <- function(init, num_procs) {
 #' @param num_procs Number of CmdStan processes.
 #' @return `init`, unless numeric and length 1, in which case `rep(init, num_procs)`.
 maybe_recycle_init <- function(init, num_procs) {
-  if (is.null(init) ||
-      length(init) == num_procs) {
+  if (is.null(init) || length(init) == num_procs) {
     return(init)
   }
   rep(init, num_procs)
@@ -1529,7 +1555,7 @@ validate_metric_file <- function(metric_file, num_procs) {
   if (length(metric_file) != 1 && length(metric_file) != num_procs) {
     stop(length(metric_file), " metric(s) provided. Must provide ",
          if (num_procs > 1) "1 or ", num_procs, " metric(s) for ",
-         num_procs, " chain(s).")
+         num_procs, " chain(s).", call. = FALSE)
   }
 
   invisible(TRUE)
@@ -1542,8 +1568,7 @@ validate_metric_file <- function(metric_file, num_procs) {
 #' @return `rep(metric_file, num_procs)` if metric_file is a single path, otherwise
 #'    return `metric_file`.
 maybe_recycle_metric_file <- function(metric_file, num_procs) {
-  if (is.null(metric_file) ||
-      length(metric_file) == num_procs) {
+  if (is.null(metric_file) || length(metric_file) == num_procs) {
     return(metric_file)
   }
   rep(metric_file, num_procs)

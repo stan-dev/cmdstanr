@@ -163,7 +163,8 @@ CmdStanRun <- R6::R6Class(
                                           timestamp = TRUE,
                                           random = TRUE,
                                           compress = NULL) {
-      current_files <- self$latent_dynamics_files(include_failed = TRUE) # used so we get error if 0 files
+      # used so we get error if 0 files
+      current_files <- self$latent_dynamics_files(include_failed = TRUE)
       new_paths <- copy_csv_files(
         current_paths = current_files,
         compress = compress,
@@ -190,7 +191,8 @@ CmdStanRun <- R6::R6Class(
                                   basename = NULL,
                                   timestamp = TRUE,
                                   random = TRUE) {
-      current_files <- self$profile_files(include_failed = TRUE) # used so we get error if 0 files
+      # used so we get error if 0 files
+      current_files <- self$profile_files(include_failed = TRUE)
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -238,7 +240,8 @@ CmdStanRun <- R6::R6Class(
                                     basename = NULL,
                                     timestamp = TRUE,
                                     random = TRUE) {
-      current_files <- self$config_files(include_failed = TRUE) # used so we get error if 0 files
+      # used so we get error if 0 files
+      current_files <- self$config_files(include_failed = TRUE)
       new_paths <- copy_temp_files(
         current_paths = current_files,
         new_dir = dir,
@@ -265,10 +268,12 @@ CmdStanRun <- R6::R6Class(
                                  basename = NULL,
                                  timestamp = TRUE,
                                  random = TRUE) {
-      current_files <- self$metric_files(include_failed = TRUE) # used so we get error if 0 files
+      # used so we get error if 0 files
+      current_files <- self$metric_files(include_failed = TRUE)
       if (!length(current_files)) {
         stop(
-          "No metric files found. Make sure to set `save_metric = TRUE` when fitting the model.",
+          "No metric files found. Make sure to set `save_metric = TRUE` ",
+          "when fitting the model.",
           call. = FALSE
         )
       }
@@ -304,7 +309,8 @@ CmdStanRun <- R6::R6Class(
             idx = j,
             output_file = private$output_files_[j],
             profile_file = private$profile_files_[j],
-            latent_dynamics_file = private$latent_dynamics_files_[j] # maybe NULL
+            # maybe NULL
+            latent_dynamics_file = private$latent_dynamics_files_[j]
           )
         })
       }
@@ -727,9 +733,11 @@ CmdStanRun$set("private", name = "run_generate_quantities_", value = .run_genera
     successful_fit <- TRUE
   }
   if (successful_fit) {
-    procs$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
+    # mark_proc_stop will mark this process successful
+    procs$set_proc_state(id = id, new_state = 5)
   } else {
-    procs$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
+    # mark_proc_stop will mark this process unsuccessful
+    procs$set_proc_state(id = id, new_state = 4)
   }
   procs$mark_proc_stop(id)
   procs$set_total_time(as.double((Sys.time() - start_time), units = "secs"))
@@ -1057,7 +1065,9 @@ CmdStanProcs <- R6::R6Class(
     },
     report_time = function(id = NULL) {
       if (self$proc_state(id) == 7) {
-        warning("Fitting finished unexpectedly! Use the $output() method for more information.\n", immediate. = TRUE, call. = FALSE)
+        warning("Fitting finished unexpectedly! ",
+                "Use the $output() method for more information.\n",
+                immediate. = TRUE, call. = FALSE)
       }
       if (private$show_stdout_messages_) {
         cat("Finished in ",
@@ -1103,11 +1113,19 @@ CmdStanMCMCProcs <- R6::R6Class(
       if (length(out) == 0) {
         return(invisible(NULL))
       }
+      ignored <- paste(
+        c(
+          "Gradient evaluation took",
+          "leapfrog steps per transition would take",
+          "Adjust your expectations accordingly!",
+          "stanc_version",
+          "stancflags"
+        ),
+        collapse = "|"
+      )
       for (line in out) {
         private$proc_output_[[id]] <- c(private$proc_output_[[id]], line)
         if (nzchar(line)) {
-          ignore_line <- FALSE
-          last_section_start_time <- private$proc_section_time_[id, "last_section_start"]
           state <- private$proc_state_[[id]]
           # State machine for reading stdout.
           # 0 - chain has not started yet
@@ -1144,27 +1162,27 @@ CmdStanMCMCProcs <- R6::R6Class(
             next_state <- 5 # writing csv and finishing
           }
           if (grepl("seconds (Total)", line, fixed = TRUE)) {
-            private$proc_total_time_[[id]] <- as.double(trimws(sub("seconds (Total)", "", line, fixed = TRUE)))
+            seconds <- sub("seconds (Total)", "", line, fixed = TRUE)
+            private$proc_total_time_[[id]] <- as.double(trimws(seconds))
             next_state <- 5
             state <- 5
           }
           if (grepl("seconds (Sampling)", line, fixed = TRUE)) {
-            private$proc_section_time_[id, "sampling"] <- as.double(trimws(sub("seconds (Sampling)", "", line, fixed = TRUE)))
+            seconds <- sub("seconds (Sampling)", "", line, fixed = TRUE)
+            seconds <- as.double(trimws(seconds))
+            private$proc_section_time_[id, "sampling"] <- seconds
             next_state <- 5
             state <- 5
           }
           if (grepl("seconds (Warm-up)", line, fixed = TRUE)) {
-            private$proc_section_time_[id, "warmup"] <- as.double(trimws(sub("Elapsed Time: ", "", sub("seconds (Warm-up)", "", line, fixed = TRUE), fixed = TRUE)))
+            seconds <- sub("seconds (Warm-up)", "", line, fixed = TRUE)
+            seconds <- sub("Elapsed Time: ", "", seconds, fixed = TRUE)
+            seconds <- as.double(trimws(seconds))
+            private$proc_section_time_[id, "warmup"] <- seconds
             next_state <- 5
             state <- 5
           }
-          if (grepl("Gradient evaluation took", line, fixed = TRUE)
-              || grepl("leapfrog steps per transition would take", line, fixed = TRUE)
-              || grepl("Adjust your expectations accordingly!", line, fixed = TRUE)
-              || grepl("stanc_version", line, fixed = TRUE)
-              || grepl("stancflags", line, fixed = TRUE)) {
-            ignore_line <- TRUE
-          }
+          ignore_line <- grepl(ignored, line)
           if ((state > 1.5 && state < 5 && !ignore_line && private$show_stdout_messages_) || is_verbose_mode()) {
             if (state == 2) {
               message("Chain ", id, " ", line)
@@ -1218,8 +1236,11 @@ CmdStanMCMCProcs <- R6::R6Class(
                 base::format(round(self$total_time(), 1), nsmall = 1),
                 "seconds.\n\n")
           } else if (num_failed == num_chains) {
-            warning("All chains finished unexpectedly! Use the $output(chain_id) method for more information.\n", call. = FALSE)
-            warning("Use read_cmdstan_csv() to read the results of the failed chains.",
+            warning("All chains finished unexpectedly! ",
+                    "Use the $output(chain_id) method for more information.\n",
+                    call. = FALSE)
+            warning("Use read_cmdstan_csv() to read the results ",
+                    "of the failed chains.",
                     immediate. = TRUE,
                     call. = FALSE)
           } else {
@@ -1229,9 +1250,12 @@ CmdStanMCMCProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 base::format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of successful chains. ",
-              "Please use read_cmdstan_csv() to read the results of the failed chains separately.",
-              "Use the $output(chain_id) method for more output of the failed chains.",
+            warning("The returned fit object will only read in results of ",
+              "successful chains. ",
+              "Please use read_cmdstan_csv() to read the results ",
+              "of the failed chains separately.",
+              "Use the $output(chain_id) method for more output ",
+              "of the failed chains.",
               immediate. = TRUE,
               call. = FALSE)
           }
@@ -1255,9 +1279,11 @@ CmdStanGQProcs <- R6::R6Class(
           self$process_output(id)
           self$process_error_output(id)
           if (self$get_proc(id)$get_exit_status() == 0) {
-            self$set_proc_state(id = id, new_state = 5) # mark_proc_stop will mark this process successful
+            # mark_proc_stop will mark this process successful
+            self$set_proc_state(id = id, new_state = 5)
           } else {
-            self$set_proc_state(id = id, new_state = 4) # mark_proc_stop will mark this process unsuccessful
+            # mark_proc_stop will mark this process unsuccessful
+            self$set_proc_state(id = id, new_state = 4)
           }
           self$mark_proc_stop(id)
           self$report_time(id)
@@ -1322,8 +1348,10 @@ CmdStanGQProcs <- R6::R6Class(
                 "seconds.\n")
           } else if (num_failed == num_chains) {
             warning("All chains finished unexpectedly!\n", call. = FALSE)
-            warning("Use read_cmdstan_csv() to read the results of the failed chains.",
-                    "Use $output(chain_id) on the fit object for more output of the failed chains.",
+            warning("Use read_cmdstan_csv() to read the results ",
+                    "of the failed chains.",
+                    "Use $output(chain_id) on the fit object for more output ",
+                    "of the failed chains.",
                     immediate. = TRUE,
                     call. = FALSE)
           } else {
@@ -1333,9 +1361,12 @@ CmdStanGQProcs <- R6::R6Class(
             cat("The remaining chains had a mean execution time of",
                 base::format(round(mean(self$total_time()), 1), nsmall = 1),
                 "seconds.\n")
-            warning("The returned fit object will only read in results of successful chains. ",
-                    "Please use read_cmdstan_csv() to read the results of the failed chains separately.",
-                    "Use $output(chain_id) on the fit object for more output of the failed chains.",
+            warning("The returned fit object will only read in results of ",
+                    "successful chains. ",
+                    "Please use read_cmdstan_csv() to read the results ",
+                    "of the failed chains separately.",
+                    "Use $output(chain_id) on the fit object for more output ",
+                    "of the failed chains.",
                     immediate. = TRUE,
                     call. = FALSE)
           }
