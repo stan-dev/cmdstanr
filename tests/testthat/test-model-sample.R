@@ -88,6 +88,61 @@ test_that("sample() method works with data list", {
   expect_s3_class(fit, "CmdStanMCMC")
 })
 
+test_that("sample progress follows CmdStan's cumulative iteration count", {
+  skip_if_not_installed("progressr")
+
+  total <- NULL
+  amounts <- numeric()
+  handler <- progressr::make_progression_handler(
+    "cmdstanr-test",
+    reporter = list(
+      initiate = function(config, ...) {
+        total <<- config$max_steps
+      },
+      update = function(config, state, progression, ...) {
+        if (progression$amount > 0) {
+          amounts <<- c(amounts, progression$amount)
+        }
+      }
+    ),
+    intrusiveness = 0,
+    enable = TRUE
+  )
+
+  fit <- progressr::with_progress(
+    mod$sample(
+      data = data_list,
+      chains = 2,
+      parallel_chains = 2,
+      iter_warmup = 100,
+      iter_sampling = 70,
+      refresh = 50,
+      show_messages = FALSE,
+      show_progress_bar = TRUE
+    ),
+    handlers = handler,
+    enable = TRUE
+  )
+
+  expect_s3_class(fit, "CmdStanMCMC")
+  expect_equal(total, 340)
+  expect_equal(sum(amounts), 340)
+})
+
+test_that("show_iteration_messages = FALSE hides the iteration lines", {
+  output <- capture.output(
+    fit <- mod$sample(
+      data = data_list,
+      chains = 1,
+      iter_warmup = 10,
+      iter_sampling = 10,
+      refresh = 5,
+      show_iteration_messages = FALSE
+    )
+  )
+  expect_false(any(grepl("Iteration:", output, fixed = TRUE)))
+})
+
 test_that("sample() method works with data files", {
   expect_sample_output(fit_r <- mod$sample(data = data_file_r, chains = 1), 1)
   expect_s3_class(fit_r, "CmdStanMCMC")

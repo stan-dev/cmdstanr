@@ -39,6 +39,10 @@
 #' * `cmdstanr_compress`: Compression for the output CSV files when fitting
 #' models: `"none"`, `"gzip"`, or `"bzip2"`. The default is `"none"`.
 #'
+#' * `cmdstanr_progress_bar`: Should `$sample()` and `$sample_mpi()` show a
+#' progress bar? The default is `FALSE`. See the `show_progress_bar` argument
+#' of [`$sample()`][model-method-sample].
+#'
 #' * `cmdstanr_spinner`: Should a spinner be shown while CmdStan compiles a
 #' model, checks syntax, or is installed or rebuilt? The default is `TRUE`. The
 #' spinner is only ever shown in interactive sessions, so setting this to

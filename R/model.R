@@ -512,13 +512,7 @@ CmdStanModel <- R6::R6Class(
       }
       lines <- self$code()
       if (line_numbers) {
-        line_num_indent <- nchar(as.character(length(lines)))
-        line_nums <- vapply(seq_along(lines), function(y) {
-          paste0(
-            rep(" ", line_num_indent - nchar(as.character(y))), y, collapse = ""
-          )
-        }, character(1))
-        lines <- paste(paste(line_nums, lines, sep = ": "), collapse = "\n")
+        lines <- paste(base::format(seq_along(lines)), lines, sep = ": ")
       }
       cat(lines, sep = "\n")
       invisible(self)
@@ -990,6 +984,8 @@ format_stan_file <- function(stan_file,
 #' @template model-save-latent-dynamics-arg
 #' @template model-sample-args
 #'
+#' @template model-progress-bar-section
+#'
 #' @return A [`CmdStanMCMC`] object.
 #'
 #' @references
@@ -1037,6 +1033,8 @@ sample <- function(data = NULL,
                    fixed_param = FALSE,
                    show_messages = TRUE,
                    show_exceptions = TRUE,
+                   show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+                   show_iteration_messages = !show_progress_bar,
                    diagnostics = c("divergences", "treedepth", "ebfmi"),
                    save_metric = getOption("cmdstanr_save_metric", FALSE),
                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
@@ -1053,7 +1051,9 @@ sample <- function(data = NULL,
       threads_per_chain, private$reported_features_, multiple_chains = TRUE
     ),
     show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages
+    show_stdout_messages = show_messages,
+    show_progress_bar = show_progress_bar,
+    show_iteration_messages = show_iteration_messages
   )
   model_variables <- private$variables_
   sample_args <- SampleArgs$new(
@@ -1148,6 +1148,8 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #'   as `mpiexec -n 4 model_executable`, followed by CmdStan arguments for the
 #'   model executable.
 #'
+#' @template model-progress-bar-section
+#'
 #' @return A [`CmdStanMCMC`] object.
 #'
 #' @references
@@ -1203,6 +1205,8 @@ sample_mpi <- function(data = NULL,
                        sig_figs = NULL,
                        show_messages = TRUE,
                        show_exceptions = TRUE,
+                       show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+                       show_iteration_messages = !show_progress_bar,
                        diagnostics = c("divergences", "treedepth", "ebfmi"),
                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
                        compress = getOption("cmdstanr_compress", "none")) {
@@ -1216,7 +1220,9 @@ sample_mpi <- function(data = NULL,
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
     parallel_procs = 1,
     show_stderr_messages = show_exceptions,
-    show_stdout_messages = show_messages
+    show_stdout_messages = show_messages,
+    show_progress_bar = show_progress_bar,
+    show_iteration_messages = show_iteration_messages
   )
   model_variables <- private$variables_
   sample_args <- SampleArgs$new(
