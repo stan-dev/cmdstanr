@@ -166,7 +166,7 @@ test_that("time() aligns successful gq process ids and times", {
     )
   )
   procs <- fit_gq$runset$procs
-  on.exit(fit_gq$runset$procs <- procs)
+  withr::defer(fit_gq$runset$procs <- procs)
   fit_gq$runset$procs <- MockGQProcs$new()
 
   expect_equal(

@@ -171,7 +171,13 @@ test_that("assert_valid_cpp_options rejects -B and --always-make", {
 })
 
 test_that("assert_valid_cpp_options sends -f entries to make/local's include", {
-  for (entry in c("-f other.mk", "-fother.mk", "--file=other.mk", "--makefile=other.mk")) {
+  entries <- c(
+    "-f other.mk",
+    "-fother.mk",
+    "--file=other.mk",
+    "--makefile=other.mk"
+  )
+  for (entry in entries) {
     expect_error(
       assert_valid_cpp_options(list(entry)),
       paste0(

@@ -111,7 +111,8 @@ warn_if_ignored_msys_toolchain_env <- function() {
     return(invisible(NULL))
   }
   warning(
-    "Environment variable `CMDSTANR_USE_MSYS_TOOLCHAIN` is deprecated and ignored. ",
+    "Environment variable `CMDSTANR_USE_MSYS_TOOLCHAIN` is deprecated ",
+    "and ignored. ",
     "CmdStanR now requires CmdStan v", cmdstan_min_version(), " or newer.\n",
     "If you need legacy MSYS toolchain support, use an older CmdStanR release.",
     call. = FALSE
@@ -359,9 +360,11 @@ ebfmi <- function(post_warmup_sampler_diagnostics) {
   efbmi_per_chain <- NULL
   if (!is.null(post_warmup_sampler_diagnostics)) {
     if (!("energy__" %in% posterior::variables(post_warmup_sampler_diagnostics))) {
-      warning("E-BFMI not computed because the 'energy__' diagnostic could not be located.", call. = FALSE)
+      warning("E-BFMI not computed because the 'energy__' diagnostic ",
+              "could not be located.", call. = FALSE)
     } else if (posterior::niterations(post_warmup_sampler_diagnostics) < 3) {
-      warning("E-BFMI not computed because it is undefined for posterior chains of length less than 3.", call. = FALSE)
+      warning("E-BFMI not computed because it is undefined ",
+              "for posterior chains of length less than 3.", call. = FALSE)
     } else {
       energy <- posterior::extract_variable_matrix(post_warmup_sampler_diagnostics, "energy__")
       if (anyNA(energy)) {
@@ -843,6 +846,7 @@ quote_cmdstan_flag_paths <- function(flag_name, flags, cmdstan_path) {
   # shQuote Remaining " stan/" paths
   flags <- strsplit(flags, split = " ", fixed = TRUE)[[1]]
   oth_stan_flags <- grep("^stan/", flags)
-  flags[oth_stan_flags] <- shQuote(paste0(cmdstan_path, "/", flags[oth_stan_flags]))
+  stan_paths <- file.path(cmdstan_path, flags[oth_stan_flags])
+  flags[oth_stan_flags] <- shQuote(stan_paths)
   paste(flags, collapse = " ")
 }

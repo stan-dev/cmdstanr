@@ -140,7 +140,7 @@ test_that("CmdStan version detected when setting path", {
 
 test_that("cmdstan_version() behaves correctly when version is not set", {
   version <- .cmdstanr$VERSION
-  on.exit(.cmdstanr$VERSION <- version)
+  withr::defer(.cmdstanr$VERSION <- version)
   .cmdstanr$VERSION <- NULL
   expect_error(cmdstan_version())
   expect_null(cmdstan_version(error_on_NA = FALSE))
@@ -158,7 +158,7 @@ test_that("Setting path rejects unsupported CmdStan versions", {
   old_path <- .cmdstanr$PATH
   old_version <- .cmdstanr$VERSION
   old_wsl <- .cmdstanr$WSL
-  on.exit({
+  withr::defer({
     .cmdstanr$PATH <- old_path
     .cmdstanr$VERSION <- old_version
     .cmdstanr$WSL <- old_wsl

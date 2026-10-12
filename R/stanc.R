@@ -250,9 +250,15 @@ stancflags_from_make <- function(cmdstan_path, make_args = character()) {
   con <- file(rule_file, open = "wb")
   writeLines(
     c(
-      "MAKEFILE_LIST := $(filter-out $(lastword $(MAKEFILE_LIST)),$(MAKEFILE_LIST))",
+      paste0(
+        "MAKEFILE_LIST := $(filter-out $(lastword $(MAKEFILE_LIST)),",
+        "$(MAKEFILE_LIST))"
+      ),
       ".PHONY: cmdstanr-print-stancflags",
-      "cmdstanr-print-stancflags: ; @printf 'cmdstanr-stancflag=%s\\n' $(STANCFLAGS)"
+      paste0(
+        "cmdstanr-print-stancflags: ; ",
+        "@printf 'cmdstanr-stancflag=%s\\n' $(STANCFLAGS)"
+      )
     ),
     con,
     sep = "\n"

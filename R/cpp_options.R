@@ -63,11 +63,12 @@ assert_valid_cpp_options <- function(cpp_options) {
   }
   checkmate::assert_list(cpp_options, .var.name = "cpp_options")
   option_names <- names(cpp_options)
+  name_pattern <- paste0("^", make_variable_name_pattern, "$")
   for (i in seq_along(cpp_options)) {
     if (is.null(option_names) || !nzchar(option_names[[i]])) {
       stop(unnamed_cpp_option_message(cpp_options[[i]]), call. = FALSE)
     }
-    if (!grepl(paste0("^", make_variable_name_pattern, "$"), option_names[[i]])) {
+    if (!grepl(name_pattern, option_names[[i]])) {
       stop(
         "`cpp_options` names must be make variable names, made of letters, ",
         "digits and underscores and not starting with a digit. `",
@@ -148,7 +149,8 @@ unnamed_cpp_option_message <- function(value) {
     return(sprintf(
       paste0(
         "`%s` is makefile syntax and cannot be passed through `cpp_options`. ",
-        "To set it in `make/local` use `cmdstan_make_local(cpp_options = list(%s))`."
+        "To set it in `make/local` use ",
+        "`cmdstan_make_local(cpp_options = list(%s))`."
       ),
       encodeString(entry, quote = '"'), encodeString(entry, quote = '"')
     ))
@@ -168,8 +170,8 @@ unnamed_cpp_option_message <- function(value) {
     return(sprintf(
       paste0(
         "`cpp_options` cannot pass flags to make. ",
-        "To read another makefile add `include %s` to `make/local`, for example ",
-        "`cmdstan_make_local(cpp_options = list(%s))`."
+        "To read another makefile add `include %s` to `make/local`, ",
+        "for example `cmdstan_make_local(cpp_options = list(%s))`."
       ),
       path, encodeString(paste0("include ", path), quote = '"')
     ))

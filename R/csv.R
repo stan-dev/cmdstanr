@@ -798,9 +798,8 @@ assert_compress <- function(compress) {
   found <- nzchar(Sys.which(compress))
   where <- "on the PATH"
   if (found && os_is_wsl()) {
-    found <- processx::run(
-      "wsl", c("which", compress), error_on_status = FALSE
-    )$status == 0
+    ret <- processx::run("wsl", c("which", compress), error_on_status = FALSE)
+    found <- ret$status == 0
     where <- "inside the WSL distribution"
   }
   if (!found) {
@@ -853,9 +852,10 @@ read_csv_metadata <- function(csv_file) {
         if (csv_file_info$method == "pathfinder") {
           non_sampler_diagnostics <- c(non_sampler_diagnostics, "lp_approx__", "path__")
         }
-        csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
-        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% non_sampler_diagnostics)]
-        csv_file_info[["variables"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
+        diagnostics <- all_names[endsWith(all_names, "__")]
+        diagnostics <- diagnostics[!(diagnostics %in% non_sampler_diagnostics)]
+        csv_file_info[["sampler_diagnostics"]] <- diagnostics
+        csv_file_info[["variables"]] <- all_names[!(all_names %in% diagnostics)]
       } else {
         csv_file_info[["variables"]] <- all_names[!endsWith(all_names, "__")]
       }
@@ -1038,11 +1038,13 @@ check_csv_metadata_matches <- function(csv_metadata) {
   }
   method <- sapply(csv_metadata, function(x) x$method)
   if (!all(method == method[1])) {
-    stop("Supplied CSV files were produced by different methods and need to be read in separately!", call. = FALSE)
+    stop("Supplied CSV files were produced by different methods ",
+         "and need to be read in separately!", call. = FALSE)
   }
+  variables <- csv_metadata[[1]]$variables
   for (i in 2:length(csv_metadata)) {
-    if (length(csv_metadata[[1]]$variables) != length(csv_metadata[[i]]$variables) ||
-      !all(csv_metadata[[1]]$variables == csv_metadata[[i]]$variables)) {
+    other <- csv_metadata[[i]]$variables
+    if (length(variables) != length(other) || !all(variables == other)) {
       stop("Supplied CSV files have samples for different variables!", call. = FALSE)
     }
   }
@@ -1250,9 +1252,8 @@ unflatten_leaves <- function(values, suffixes, name) {
                   function(i) as.integer(i[-1]))
   dims <- do.call(pmax, index)
   # column-major position of each column, whatever order they came in
-  position <- vapply(index, function(i) {
-    sum((i - 1) * cumprod(c(1, dims[-length(dims)]))) + 1
-  }, numeric(1))
+  strides <- cumprod(c(1, dims[-length(dims)]))
+  position <- vapply(index, function(i) sum((i - 1) * strides) + 1, numeric(1))
   if (length(unique(position)) != prod(dims)) {
     stop("Variable '", name, "' is missing elements.", call. = FALSE)
   }

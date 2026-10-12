@@ -274,9 +274,12 @@ test_that("Functions handle complex types correctly", {
   nest_tuple_complex_rowvec_array <- list(1000, tuple_complex_rowvec_array)
   nest_tuple_complex_matrix_array <- list(0, tuple_complex_matrix_array)
 
-  expect_equal(mod$functions$rtn_nest_tuple_complex_vec_array(nest_tuple_complex_vec_array), nest_tuple_complex_vec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_rowvec_array(nest_tuple_complex_rowvec_array), nest_tuple_complex_rowvec_array)
-  expect_equal(mod$functions$rtn_nest_tuple_complex_matrix_array(nest_tuple_complex_matrix_array), nest_tuple_complex_matrix_array)
+  x <- nest_tuple_complex_vec_array
+  expect_equal(mod$functions$rtn_nest_tuple_complex_vec_array(x), x)
+  x <- nest_tuple_complex_rowvec_array
+  expect_equal(mod$functions$rtn_nest_tuple_complex_rowvec_array(x), x)
+  x <- nest_tuple_complex_matrix_array
+  expect_equal(mod$functions$rtn_nest_tuple_complex_matrix_array(x), x)
 })
 
 test_that("Returned tuples survive a garbage collection (#1001)", {

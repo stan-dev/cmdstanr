@@ -147,31 +147,63 @@ test_that("read_cmdstan_csv() matches utils::read.csv", {
 
   draws_array_1 <- utils::read.csv(test_path("resources", "csv", "model1-1-warmup.csv"), comment.char = "#")
   draws_array_2 <- utils::read.csv(test_path("resources", "csv", "model1-2-warmup.csv"), comment.char = "#")
-  post_warmup_draws_array_1 <- posterior::as_draws_array(draws_array_1[101:200,,])
-  post_warmup_draws_array_2 <- posterior::as_draws_array(draws_array_2[101:200,,])
+  post_warmup_draws_array_1 <- posterior::as_draws_array(
+    draws_array_1[101:200, , ]
+  )
+  post_warmup_draws_array_2 <- posterior::as_draws_array(
+    draws_array_2[101:200, , ]
+  )
   warmup_draws_array_1 <- posterior::as_draws_array(draws_array_1[1:100,,])
   warmup_draws_array_2 <- posterior::as_draws_array(draws_array_2[1:100,,])
 
   csv_output <- read_cmdstan_csv(csv_files)
+  post_warmup <- csv_output$post_warmup_draws
+  warmup <- csv_output$warmup_draws
   for (param in c("mu", "sigma", "lp__")) {
-    expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 1, variable = param),
-                 post_warmup_draws_array_1[,,param])
-    expect_equal(posterior::subset_draws(csv_output$warmup_draws, chain = 1, variable = param),
-                 warmup_draws_array_1[,,param])
-    expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 2, variable = param),
-                 post_warmup_draws_array_2[,,param])
-    expect_equal(posterior::subset_draws(csv_output$warmup_draws, chain = 2, variable = param),
-                 warmup_draws_array_2[,,param])
+    expect_equal(
+      posterior::subset_draws(post_warmup, chain = 1, variable = param),
+      post_warmup_draws_array_1[,, param]
+    )
+    expect_equal(
+      posterior::subset_draws(warmup, chain = 1, variable = param),
+      warmup_draws_array_1[,, param]
+    )
+    expect_equal(
+      posterior::subset_draws(post_warmup, chain = 2, variable = param),
+      post_warmup_draws_array_2[,, param]
+    )
+    expect_equal(
+      posterior::subset_draws(warmup, chain = 2, variable = param),
+      warmup_draws_array_2[,, param]
+    )
   }
-  for (diagnostic in c("divergent__", "accept_stat__", "treedepth__", "stepsize__", "n_leapfrog__", "energy__")) {
-    expect_equal(posterior::subset_draws(csv_output$post_warmup_sampler_diagnostics, chain = 1, variable = diagnostic),
-                 post_warmup_draws_array_1[,,diagnostic])
-    expect_equal(posterior::subset_draws(csv_output$warmup_sampler_diagnostics, chain = 1, variable = diagnostic),
-                 warmup_draws_array_1[,,diagnostic])
-    expect_equal(posterior::subset_draws(csv_output$post_warmup_sampler_diagnostics, chain = 2, variable = diagnostic),
-                 post_warmup_draws_array_2[,,diagnostic])
-    expect_equal(posterior::subset_draws(csv_output$warmup_sampler_diagnostics, chain = 2, variable = diagnostic),
-                 warmup_draws_array_2[,,diagnostic])
+  post_warmup <- csv_output$post_warmup_sampler_diagnostics
+  warmup <- csv_output$warmup_sampler_diagnostics
+  diagnostics <- c(
+    "divergent__",
+    "accept_stat__",
+    "treedepth__",
+    "stepsize__",
+    "n_leapfrog__",
+    "energy__"
+  )
+  for (diagnostic in diagnostics) {
+    expect_equal(
+      posterior::subset_draws(post_warmup, chain = 1, variable = diagnostic),
+      post_warmup_draws_array_1[,, diagnostic]
+    )
+    expect_equal(
+      posterior::subset_draws(warmup, chain = 1, variable = diagnostic),
+      warmup_draws_array_1[,, diagnostic]
+    )
+    expect_equal(
+      posterior::subset_draws(post_warmup, chain = 2, variable = diagnostic),
+      post_warmup_draws_array_2[,, diagnostic]
+    )
+    expect_equal(
+      posterior::subset_draws(warmup, chain = 2, variable = diagnostic),
+      warmup_draws_array_2[,, diagnostic]
+    )
   }
 })
 
@@ -181,12 +213,19 @@ test_that("read_cmdstan_csv() matches utils::read.csv for csv file without warmu
   draws_array <- utils::read.csv(test_path("resources", "csv", "model1-2-no-warmup.csv"), comment.char = "#")
   draws_array <- posterior::as_draws_array(draws_array)
   csv_output <- read_cmdstan_csv(csv_files)
-  expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 1, variable = "mu"),
-               draws_array[,,"mu"])
-  expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 1, variable = "sigma"),
-               draws_array[,,"sigma"])
-  expect_equal(posterior::subset_draws(csv_output$post_warmup_draws, chain = 1, variable = "lp__"),
-               draws_array[,,"lp__"])
+  draws <- csv_output$post_warmup_draws
+  expect_equal(
+    posterior::subset_draws(draws, chain = 1, variable = "mu"),
+    draws_array[,, "mu"]
+  )
+  expect_equal(
+    posterior::subset_draws(draws, chain = 1, variable = "sigma"),
+    draws_array[,, "sigma"]
+  )
+  expect_equal(
+    posterior::subset_draws(draws, chain = 1, variable = "lp__"),
+    draws_array[,, "lp__"]
+  )
 
 })
 
@@ -206,45 +245,90 @@ test_that("read_cmdstan_csv() returns correct diagonal of inverse mass matrix", 
 test_that("read_cmdstan_csv() returns correct dense inverse mass matrix", {
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  expect_equal(as.vector(csv_output$inv_metric[[1]]),
-               c(10.2742, -0.189148, 5.92065, 8.2658, 10.9931, 8.67196, 9.75007, 8.30008, 6.3396, 8.75422,
-                -0.189148, 0.552614, 2.28054, 0.587285, -0.557112, 0.0689745, -1.06614, -0.502288, 1.49863, 0.450733,
-                5.92065, 2.28054, 52.7011, 7.89278, 3.9639, 5.71556, 2.16445, 1.88834, 13.8962, 15.1166,
-                8.2658, 0.587285, 7.89278, 30.7924, 8.39762, 8.51489, 8.27253, 9.96521, 7.58758, 7.8403,
-                10.9931, -0.557112, 3.9639, 8.39762, 39.6164, 9.88103, 9.62453, 9.80744, 6.28594, 6.77034,
-                8.67196, 0.0689745, 5.71556, 8.51489, 9.88103, 29.6702, 8.5937, 8.3289, 8.76294, 5.63637,
-                9.75007, -1.06614, 2.16445, 8.27253, 9.62453, 8.5937, 26.3294, 10.1908, 2.76266, 4.56938,
-                8.30008, -0.502288, 1.88834, 9.96521, 9.80744, 8.3289, 10.1908, 26.5846, 3.7247, 4.26521,
-                6.3396, 1.49863, 13.8962, 7.58758, 6.28594, 8.76294, 2.76266, 3.7247, 28.8872, 8.43035,
-                8.75422, 0.450733, 15.1166, 7.8403, 6.77034, 5.63637, 4.56938, 4.26521, 8.43035, 42.5438))
+  # fmt: skip
+  expect_equal(
+    as.vector(csv_output$inv_metric[[1]]),
+    c(
+      10.2742, -0.189148, 5.92065, 8.2658, 10.9931,
+      8.67196, 9.75007, 8.30008, 6.3396, 8.75422,
+      -0.189148, 0.552614, 2.28054, 0.587285, -0.557112,
+      0.0689745, -1.06614, -0.502288, 1.49863, 0.450733,
+      5.92065, 2.28054, 52.7011, 7.89278, 3.9639,
+      5.71556, 2.16445, 1.88834, 13.8962, 15.1166,
+      8.2658, 0.587285, 7.89278, 30.7924, 8.39762,
+      8.51489, 8.27253, 9.96521, 7.58758, 7.8403,
+      10.9931, -0.557112, 3.9639, 8.39762, 39.6164,
+      9.88103, 9.62453, 9.80744, 6.28594, 6.77034,
+      8.67196, 0.0689745, 5.71556, 8.51489, 9.88103,
+      29.6702, 8.5937, 8.3289, 8.76294, 5.63637,
+      9.75007, -1.06614, 2.16445, 8.27253, 9.62453,
+      8.5937, 26.3294, 10.1908, 2.76266, 4.56938,
+      8.30008, -0.502288, 1.88834, 9.96521, 9.80744,
+      8.3289, 10.1908, 26.5846, 3.7247, 4.26521,
+      6.3396, 1.49863, 13.8962, 7.58758, 6.28594,
+      8.76294, 2.76266, 3.7247, 28.8872, 8.43035,
+      8.75422, 0.450733, 15.1166, 7.8403, 6.77034,
+      5.63637, 4.56938, 4.26521, 8.43035, 42.5438
+    )
+  )
 })
 
 test_that("read_cmdstan_csv() returns correct dense inverse mass matrix for 2 csv files ", {
   csv_files <- c(test_path("resources", "csv", "model1-1-dense_e_metric.csv"),
                  test_path("resources", "csv", "model1-2-dense_e_metric.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
-  expect_equal(as.vector(csv_output$inv_metric[[1]]),
-             c(10.2742, -0.189148, 5.92065, 8.2658, 10.9931, 8.67196, 9.75007, 8.30008, 6.3396, 8.75422,
-                -0.189148, 0.552614, 2.28054, 0.587285, -0.557112, 0.0689745, -1.06614, -0.502288, 1.49863, 0.450733,
-                5.92065, 2.28054, 52.7011, 7.89278, 3.9639, 5.71556, 2.16445, 1.88834, 13.8962, 15.1166,
-                8.2658, 0.587285, 7.89278, 30.7924, 8.39762, 8.51489, 8.27253, 9.96521, 7.58758, 7.8403,
-                10.9931, -0.557112, 3.9639, 8.39762, 39.6164, 9.88103, 9.62453, 9.80744, 6.28594, 6.77034,
-                8.67196, 0.0689745, 5.71556, 8.51489, 9.88103, 29.6702, 8.5937, 8.3289, 8.76294, 5.63637,
-                9.75007, -1.06614, 2.16445, 8.27253, 9.62453, 8.5937, 26.3294, 10.1908, 2.76266, 4.56938,
-                8.30008, -0.502288, 1.88834, 9.96521, 9.80744, 8.3289, 10.1908, 26.5846, 3.7247, 4.26521,
-                6.3396, 1.49863, 13.8962, 7.58758, 6.28594, 8.76294, 2.76266, 3.7247, 28.8872, 8.43035,
-                8.75422, 0.450733, 15.1166, 7.8403, 6.77034, 5.63637, 4.56938, 4.26521, 8.43035, 42.5438))
-  expect_equal(as.vector(csv_output$inv_metric[[2]]),
-             c( 11.08, -0.305763, 5.27013, 7.33046, 7.31263, 6.93229, 10.1923, 7.46852, 7.51557, 7.78791,
-                -0.305763, 0.678461, 1.70598, 0.337143, -0.69887, 0.423236, -0.974023, -0.605539, 1.83794, 0.0780934,
-                5.27013, 1.70598, 36.2726, 7.9386, 3.88642, 12.0214, 4.2487, 3.84886, 12.9738, 4.34037,
-                7.33046, 0.337143, 7.9386, 23.9878, 4.93047, 5.76139, 7.34008, 7.78631, 6.79063, 8.13132,
-                7.31263, -0.69887, 3.88642, 4.93047, 25.3662, 7.2269, 7.5408, 8.18066, 5.77239, 7.53072,
-                6.93229, 0.423236, 12.0214, 5.76139, 7.2269, 24.0619, 7.24315, 7.194, 10.1647, 5.61617,
-                10.1923, -0.974023, 4.2487, 7.34008, 7.5408, 7.24315, 26.2403, 6.91029, 1.26095, 4.72335,
-                7.46852, -0.605539, 3.84886, 7.78631, 8.18066, 7.194, 6.91029, 30.2862, 5.61914, 8.10162,
-                7.51557, 1.83794, 12.9738, 6.79063, 5.77239, 10.1647, 1.26095, 5.61914, 34.5498, 7.75486,
-                7.78791, 0.0780934, 4.34037, 8.13132, 7.53072, 5.61617, 4.72335, 8.10162, 7.75486, 35.6602))
+  # fmt: skip
+  expect_equal(
+    as.vector(csv_output$inv_metric[[1]]),
+    c(
+      10.2742, -0.189148, 5.92065, 8.2658, 10.9931,
+      8.67196, 9.75007, 8.30008, 6.3396, 8.75422,
+      -0.189148, 0.552614, 2.28054, 0.587285, -0.557112,
+      0.0689745, -1.06614, -0.502288, 1.49863, 0.450733,
+      5.92065, 2.28054, 52.7011, 7.89278, 3.9639,
+      5.71556, 2.16445, 1.88834, 13.8962, 15.1166,
+      8.2658, 0.587285, 7.89278, 30.7924, 8.39762,
+      8.51489, 8.27253, 9.96521, 7.58758, 7.8403,
+      10.9931, -0.557112, 3.9639, 8.39762, 39.6164,
+      9.88103, 9.62453, 9.80744, 6.28594, 6.77034,
+      8.67196, 0.0689745, 5.71556, 8.51489, 9.88103,
+      29.6702, 8.5937, 8.3289, 8.76294, 5.63637,
+      9.75007, -1.06614, 2.16445, 8.27253, 9.62453,
+      8.5937, 26.3294, 10.1908, 2.76266, 4.56938,
+      8.30008, -0.502288, 1.88834, 9.96521, 9.80744,
+      8.3289, 10.1908, 26.5846, 3.7247, 4.26521,
+      6.3396, 1.49863, 13.8962, 7.58758, 6.28594,
+      8.76294, 2.76266, 3.7247, 28.8872, 8.43035,
+      8.75422, 0.450733, 15.1166, 7.8403, 6.77034,
+      5.63637, 4.56938, 4.26521, 8.43035, 42.5438
+    )
+  )
+  # fmt: skip
+  expect_equal(
+    as.vector(csv_output$inv_metric[[2]]),
+    c(
+      11.08, -0.305763, 5.27013, 7.33046, 7.31263,
+      6.93229, 10.1923, 7.46852, 7.51557, 7.78791,
+      -0.305763, 0.678461, 1.70598, 0.337143, -0.69887,
+      0.423236, -0.974023, -0.605539, 1.83794, 0.0780934,
+      5.27013, 1.70598, 36.2726, 7.9386, 3.88642,
+      12.0214, 4.2487, 3.84886, 12.9738, 4.34037,
+      7.33046, 0.337143, 7.9386, 23.9878, 4.93047,
+      5.76139, 7.34008, 7.78631, 6.79063, 8.13132,
+      7.31263, -0.69887, 3.88642, 4.93047, 25.3662,
+      7.2269, 7.5408, 8.18066, 5.77239, 7.53072,
+      6.93229, 0.423236, 12.0214, 5.76139, 7.2269,
+      24.0619, 7.24315, 7.194, 10.1647, 5.61617,
+      10.1923, -0.974023, 4.2487, 7.34008, 7.5408,
+      7.24315, 26.2403, 6.91029, 1.26095, 4.72335,
+      7.46852, -0.605539, 3.84886, 7.78631, 8.18066,
+      7.194, 6.91029, 30.2862, 5.61914, 8.10162,
+      7.51557, 1.83794, 12.9738, 6.79063, 5.77239,
+      10.1647, 1.26095, 5.61914, 34.5498, 7.75486,
+      7.78791, 0.0780934, 4.34037, 8.13132, 7.53072,
+      5.61617, 4.72335, 8.10162, 7.75486, 35.6602
+    )
+  )
 })
 
 test_that("read_cmdstan_csv() works with thin", {
@@ -733,8 +817,9 @@ test_that("read_cmdstan_csv works with optimization and draws_df format", {
   expect_equal(posterior::variables(bern_opt$point_estimates),
                posterior::variables(bern_opt_df$point_estimates))
 
-  expect_equal(as.numeric(posterior::subset_draws(bern_opt$point_estimates, variable = "theta")),
-               as.numeric(posterior::subset_draws(bern_opt_df$point_estimates, variable = "theta")$theta))
+  theta <- posterior::subset_draws(bern_opt$point_estimates, "theta")
+  theta_df <- posterior::subset_draws(bern_opt_df$point_estimates, "theta")
+  expect_equal(as.numeric(theta), as.numeric(theta_df$theta))
 })
 
 test_that("read_cmdstan_csv works with optimization and draws_list format", {
@@ -750,8 +835,9 @@ test_that("read_cmdstan_csv works with optimization and draws_list format", {
   expect_equal(posterior::variables(bern_opt$point_estimates),
                posterior::variables(bern_opt_list$point_estimates))
 
-  expect_equal(as.numeric(posterior::subset_draws(bern_opt$point_estimates, variable = "theta")),
-               as.numeric(posterior::subset_draws(bern_opt_list$point_estimates, variable = "theta")[[1]]$theta))
+  theta <- posterior::subset_draws(bern_opt$point_estimates, "theta")
+  theta_list <- posterior::subset_draws(bern_opt_list$point_estimates, "theta")
+  expect_equal(as.numeric(theta), as.numeric(theta_list[[1]]$theta))
 
 })
 
@@ -800,8 +886,9 @@ test_that("read_cmdstan_csv works with laplace and draws_list format", {
   expect_equal(posterior::variables(bern_laplace$draws),
                posterior::variables(bern_laplace_list$draws))
 
-  expect_equal(as.numeric(posterior::subset_draws(bern_laplace$draws, variable = "theta")),
-               as.numeric(posterior::subset_draws(bern_laplace_list$draws, variable = "theta")[[1]]$theta))
+  theta <- posterior::subset_draws(bern_laplace$draws, "theta")
+  theta_list <- posterior::subset_draws(bern_laplace_list$draws, "theta")
+  expect_equal(as.numeric(theta), as.numeric(theta_list[[1]]$theta))
 
 })
 

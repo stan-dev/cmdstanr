@@ -421,7 +421,7 @@ local_mini_make_local <- function(local_lines, envir = parent.frame()) {
   # written on Windows.
   write_lf <- function(lines, path) {
     con <- file(path, open = "wb")
-    on.exit(close(con))
+    withr::defer(close(con))
     writeLines(lines, con, sep = "\n")
   }
   write_lf("-include local", file.path(tmpdir, "makefile"))

@@ -91,24 +91,24 @@ test_that("process_data() correctly casts integers and floating point numbers", 
   mod <- mock_cmdstan_model(stan_file)
   test_file <- process_data(list(a = 1, b = 2), model_variables = mod$variables())
   expect_match(
-    "  \"a\": 1,",
     readLines(test_file)[2],
+    "  \"a\": 1,",
     fixed = TRUE
   )
   expect_match(
-    "  \"b\": 2.0",
     readLines(test_file)[3],
+    "  \"b\": 2.0",
     fixed = TRUE
   )
   test_file <- process_data(list(a = 1L, b = 1774000000), model_variables = mod$variables())
   expect_match(
-    "  \"a\": 1,",
     readLines(test_file)[2],
+    "  \"a\": 1,",
     fixed = TRUE
   )
   expect_match(
-    "  \"b\": 1774000000.0",
     readLines(test_file)[3],
+    "  \"b\": 1774000000.0",
     fixed = TRUE
   )
 
@@ -118,15 +118,16 @@ test_that("process_data() correctly casts integers and floating point numbers", 
   }
   ")
   mod <- mock_cmdstan_model(stan_file)
-  test_file <- process_data(list(k = matrix(c(18, 18, 16, 13, 9, 6, 4, 4, 4), nrow=3, ncol=3, byrow=T)), model_variables = mod$variables())
+  k <- matrix(c(18, 18, 16, 13, 9, 6, 4, 4, 4), nrow = 3, byrow = TRUE)
+  test_file <- process_data(list(k = k), model_variables = mod$variables())
   expect_match(
-    "  \"k\": [",
     readLines(test_file)[2],
+    "  \"k\": [",
     fixed = TRUE
   )
   expect_match(
-    "    [18, 18, 16],",
     readLines(test_file)[3],
+    "    [18, 18, 16],",
     fixed = TRUE
   )
 })
@@ -432,8 +433,8 @@ test_that("Floating-point differences do not cause truncation towards 0", {
   expect_false(is.integer(a))
   test_file <- process_data(list(a = a, b = 2.0), model_variables = mod$variables())
   expect_match(
-    "  \"a\": 3,",
     readLines(test_file)[2],
+    "  \"a\": 3,",
     fixed = TRUE
   )
 })

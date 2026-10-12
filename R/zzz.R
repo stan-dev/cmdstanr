@@ -36,16 +36,18 @@ startup_messages <- function() {
   }
   if (!skip_version_check) {
     newer <- try(
-      cmdstan_version_compare(
-        suppressWarnings(latest_released_version(retries = 0)),
-        cmdstan_version()
-      ) > 0,
+      {
+        latest <- suppressWarnings(latest_released_version(retries = 0))
+        cmdstan_version_compare(latest, cmdstan_version()) > 0
+      },
       silent = TRUE
     )
     if (isTRUE(newer)) {
       packageStartupMessage(
-        "\nA newer version of CmdStan is available. See ?install_cmdstan() to install it.",
-        "\nTo disable this check set option or environment variable cmdstanr_no_ver_check=TRUE."
+        "\nA newer version of CmdStan is available. ",
+        "See ?install_cmdstan() to install it.",
+        "\nTo disable this check set option or environment variable ",
+        "cmdstanr_no_ver_check=TRUE."
       )
     }
   }
