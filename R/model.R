@@ -1545,6 +1545,8 @@ laplace <- function(data = NULL,
       threads = threads,
       opencl_ids = opencl_ids,
       jacobian = jacobian,
+      show_messages = show_messages,
+      show_exceptions = show_exceptions,
       compress = compress
     )
     cmdstan_mode <- do.call(self$optimize, append(args, opt_args))
