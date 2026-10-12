@@ -129,6 +129,31 @@ test_that("sample progress follows CmdStan's cumulative iteration count", {
   expect_equal(sum(amounts), 340)
 })
 
+test_that("the chain timing lines held by the progress bar print once each", {
+  skip_if_not_installed("progressr")
+
+  output <- capture.output(
+    fit <- progressr::with_progress(
+      mod$sample(
+        data = data_list,
+        chains = 2,
+        parallel_chains = 2,
+        iter_warmup = 20,
+        iter_sampling = 20,
+        refresh = 10,
+        show_progress_bar = TRUE
+      ),
+      handlers = progressr::handler_void(),
+      enable = TRUE
+    )
+  )
+
+  expect_s3_class(fit, "CmdStanMCMC")
+  finished <- grep("finished in", output, value = TRUE)
+  chains <- sort(sub(" finished in.*", "", finished))
+  expect_equal(chains, c("Chain 1", "Chain 2"))
+})
+
 test_that("show_iteration_messages = FALSE hides the iteration lines", {
   output <- capture.output(
     fit <- mod$sample(
