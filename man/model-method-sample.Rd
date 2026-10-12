@@ -285,10 +285,11 @@ numerical error. If the messages are silenced then the
 used to display the silenced messages.}
 
 \item{show_progress_bar}{(logical) \strong{Experimental} and may change in a later
-release. When \code{TRUE}, show a progress bar through \pkg{progressr} in
-place of CmdStan's iteration lines. The default is \code{FALSE}, or the
-\code{cmdstanr_progress_bar} option if set. \pkg{progressr} shows the bar only
-once you turn its reporting on, see the \strong{Progress bar} section below.}
+release. When \code{TRUE}, shows a progress bar through \pkg{progressr} in place
+of CmdStan's iteration lines. The default is \code{FALSE} but can be set to
+\code{TRUE} for an entire session by \code{options(cmdstanr_progress_bar = TRUE)}.
+The bar also needs \pkg{progressr}'s reporting turned on once per
+session. See the \strong{Progress bar} section below for details.}
 
 \item{show_iteration_messages}{(logical) Whether to print CmdStan's
 iteration lines. The default is \code{!show_progress_bar}, so the progress bar
@@ -350,11 +351,17 @@ default arguments. These values are also available via the
 
 \subsection{Setup}{
 
-The bar needs two things: \code{show_progress_bar = TRUE}, and \pkg{progressr}'s
-reporting turned on once per session with
-\code{progressr::handlers(global = TRUE)}. The bar is opt-in on CmdStanR's side
-as well, so even with \pkg{progressr} reporting on for other packages,
-CmdStanR only prints CmdStan's iteration lines until you request the bar.
+The bar needs two things: \code{show_progress_bar = TRUE}, either in each
+\verb{$sample()} call or once per session with \code{options(cmdstanr_progress_bar = TRUE)}, and \pkg{progressr}'s reporting turned on once per session with
+\code{progressr::handlers(global = TRUE)}. The following turns on the progress bar
+for an entire R session:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{options(cmdstanr_progress_bar = TRUE)
+progressr::handlers(global = TRUE)
+}\if{html}{\out{</div>}}
+
+This also works to enable the bar when another package such as \pkg{brms}
+calls \verb{$sample()} for you.
 
 CmdStanR shows one bar for all chains rather than one per chain, because
 older versions of RStudio's console only support single-line bars. The

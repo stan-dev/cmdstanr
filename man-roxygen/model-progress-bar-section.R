@@ -1,10 +1,16 @@
 #' @section Progress bar:
 #' ### Setup
-#' The bar needs two things: `show_progress_bar = TRUE`, and \pkg{progressr}'s
-#' reporting turned on once per session with
-#' `progressr::handlers(global = TRUE)`. The bar is opt-in on CmdStanR's side
-#' as well, so even with \pkg{progressr} reporting on for other packages,
-#' CmdStanR only prints CmdStan's iteration lines until you request the bar.
+#' The bar needs two things: `show_progress_bar = TRUE`, either in each
+#' `$sample()` call or once per session with
+#' `options(cmdstanr_progress_bar = TRUE)`, and \pkg{progressr}'s reporting
+#' turned on once per session with `progressr::handlers(global = TRUE)`. The
+#' following turns on the progress bar for an entire R session:
+#'
+#'     options(cmdstanr_progress_bar = TRUE)
+#'     progressr::handlers(global = TRUE)
+#'
+#' This also works to enable the bar when another package such as \pkg{brms}
+#' calls `$sample()` for you.
 #'
 #' CmdStanR shows one bar for all chains rather than one per chain, because
 #' older versions of RStudio's console only support single-line bars. The
