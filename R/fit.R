@@ -57,8 +57,7 @@ CmdStanFit <- R6::R6Class(
         out[[col]] <- as.integer(out[[col]])
       }
 
-      opts <- options(max.print = prod(dim(out)))
-      on.exit(options(max.print = opts$max.print), add = TRUE)
+      withr::local_options(max.print = prod(dim(out)))
       base::print(out, row.names = FALSE)
       if (max_rows < total_rows) {
         cat("\n # showing", max_rows, "of", total_rows,

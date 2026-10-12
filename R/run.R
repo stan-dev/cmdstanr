@@ -636,7 +636,7 @@ CmdStanRun$set("private", name = "run_sample_", value = .run_sample)
 
 .run_generate_quantities <- function() {
   procs <- self$procs
-  on.exit(procs$cleanup(), add = TRUE)
+  withr::defer(procs$cleanup())
   if (procs$num_procs() == 1) {
     start_msg <- "Running standalone generated quantities after 1 MCMC chain"
   } else if (procs$num_procs() == procs$parallel_procs()) {
