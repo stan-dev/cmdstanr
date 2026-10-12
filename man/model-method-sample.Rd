@@ -352,9 +352,10 @@ default arguments. These values are also available via the
 \subsection{Setup}{
 
 The bar needs two things: \code{show_progress_bar = TRUE}, either in each
-\verb{$sample()} call or once per session with \code{options(cmdstanr_progress_bar = TRUE)}, and \pkg{progressr}'s reporting turned on once per session with
-\code{progressr::handlers(global = TRUE)}. The following turns on the progress bar
-for an entire R session:
+\verb{$sample()} call or once per session with
+\code{options(cmdstanr_progress_bar = TRUE)}, and \pkg{progressr}'s reporting
+turned on once per session with \code{progressr::handlers(global = TRUE)}. The
+following turns on the progress bar for an entire R session:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{options(cmdstanr_progress_bar = TRUE)
 progressr::handlers(global = TRUE)
@@ -401,103 +402,74 @@ lines in the rendered output.
 
 \examples{
 \dontrun{
-library(cmdstanr)
-library(posterior)
-library(bayesplot)
-color_scheme_set("brightblue")
-
-# Set path to CmdStan
-# (Note: if you installed CmdStan via install_cmdstan() with default settings
-# then setting the path is unnecessary but the default below should still work.
-# Otherwise use the `path` argument to specify the location of your
-# CmdStan installation.)
-set_cmdstan_path(path = NULL)
-
-# Create a CmdStanModel object from a Stan program,
-# here using the example model that comes with CmdStan
 file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(file)
-mod$print()
-# Print with line numbers. This can be set globally using the
-# `cmdstanr_print_line_numbers` option.
-mod$print(line_numbers = TRUE)
-
-# Data as a named list (like RStan)
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 
-# Run MCMC using the 'sample' method
-fit_mcmc <- mod$sample(
+# Four chains in parallel with the number of iterations set
+fit <- mod$sample(
   data = stan_data,
   seed = 123,
-  chains = 2,
-  parallel_chains = 2
+  chains = 4,
+  parallel_chains = 4,
+  iter_warmup = 500,
+  iter_sampling = 1000
 )
+fit$summary()
+fit$diagnostic_summary()
+bayesplot::mcmc_hist(fit$draws("theta"))
 
-# Use 'posterior' package for summaries
-fit_mcmc$summary()
-
-# Check sampling diagnostics
-fit_mcmc$diagnostic_summary()
-
-# Get posterior draws
-draws <- fit_mcmc$draws()
-print(draws)
-
-# Convert to data frame using posterior::as_draws_df
-as_draws_df(draws)
-
-# Plot posterior using bayesplot (ggplot2)
-mcmc_hist(fit_mcmc$draws("theta"))
-
-# Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
-# and also demonstrate specifying data as a path to a file instead of a list
-my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
-fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-fit_optim$summary()
-
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
-# to the posterior
-fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
-fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
-fit_laplace$summary()
-
-# Run 'variational' method to use ADVI to approximate posterior
-fit_vb <- mod$variational(data = stan_data, seed = 123)
-fit_vb$summary()
-mcmc_hist(fit_vb$draws("theta"))
-
-# Run the Pathfinder variational inference method
-fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
-fit_pf$summary()
-mcmc_hist(fit_pf$draws("theta"))
-
-# Run 'pathfinder' again with more paths, fewer draws per path,
-# better covariance approximation, and fewer LBFGSs iterations
-fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
-                         history_size=50, max_lbfgs_iters=100)
-
-# Specifying initial values as a function
-fit_mcmc_w_init_fun <- mod$sample(
+# Sampler settings, here the target acceptance rate and initial step size.
+# refresh = 0 here and below turns off the iteration updates.
+fit <- mod$sample(
   data = stan_data,
   seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = function() list(theta = runif(1))
+  adapt_delta = 0.95,
+  step_size = 0.01,
+  refresh = 0
 )
-fit_mcmc_w_init_fun_2 <- mod$sample(
+
+# Keep the warmup draws
+fit <- mod$sample(
   data = stan_data,
   seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = function(chain_id) {
-    # silly but demonstrates optional use of chain_id
-    list(theta = 1 / (chain_id + 1))
-  }
+  save_warmup = TRUE,
+  refresh = 0
 )
-fit_mcmc_w_init_fun_2$init()
+fit$draws(inc_warmup = TRUE)
 
-# Specifying initial values as a list of lists
-fit_mcmc_w_init_list <- mod$sample(
+# A progress bar in place of the iteration messages. progressr's
+# reporting is turned on once per session, see the Progress bar section.
+if (interactive()) {
+  progressr::handlers(global = TRUE)
+  fit <- mod$sample(data = stan_data, seed = 123, show_progress_bar = TRUE)
+}
+}
+\dontrun{
+# The rest of these examples work the same way for every fitting method.
+
+# Draws as a posterior draws object
+fit$draws()
+fit$draws("theta", format = "df")
+
+# Data as a path to a JSON or R dump file instead of a list
+data_file <- file.path(
+  cmdstan_path(),
+  "examples/bernoulli/bernoulli.data.json"
+)
+fit <- mod$sample(data = data_file, seed = 123, refresh = 0)
+
+# Initial values from a function
+fit <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  init = function() list(theta = runif(1)),
+  refresh = 0
+)
+fit$init()
+
+# Initial values as one list per chain
+fit <- mod$sample(
   data = stan_data,
   seed = 123,
   chains = 2,
@@ -507,16 +479,53 @@ fit_mcmc_w_init_list <- mod$sample(
     list(theta = 0.25)  # chain 2
   )
 )
-fit_optim_w_init_list <- mod$optimize(
+fit$init()
+
+# Initial values from a previous fit (can be a fit from a different method)
+fit2 <- mod$sample(
   data = stan_data,
   seed = 123,
-  init = list(
-    list(theta = 0.75)
-  )
+  init = fit,
+  refresh = 0
 )
-fit_optim_w_init_list$init()
-}
 
+# Initial values from a posterior::draws object
+inits <- fit$draws()
+fit <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  init = inits,
+  refresh = 0
+)
+
+# Suppress output from CmdStan while it runs
+fit <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  show_messages = FALSE,
+  show_exceptions = FALSE
+)
+
+# The CSV files CmdStan wrote, in a temporary directory by default. Move
+# them to keep them past the R session. Replace tempdir below with a
+# directory you'll keep.
+fit$output_files()
+
+my_dir <- tempdir()
+fit$save_output_files(dir = my_dir, basename = "bernoulli")
+
+# Or use output_dir to have CmdStan write them there in the first place,
+# here gzip-compressed to save disk space
+fit <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  output_dir = my_dir,
+  output_basename = "bernoulli",
+  compress = "gzip",
+  refresh = 0
+)
+fit$output_files()
+}
 }
 \references{
 \itemize{

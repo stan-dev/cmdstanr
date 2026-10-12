@@ -231,18 +231,86 @@ mod$print()
 
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 fit_mode <- mod$optimize(data = stan_data, jacobian = TRUE)
-fit_laplace <- mod$laplace(data = stan_data, mode = fit_mode)
-fit_laplace$summary()
+fit <- mod$laplace(data = stan_data, mode = fit_mode)
+fit$summary()
 
-# if mode isn't specified optimize is run internally first
-fit_laplace <- mod$laplace(data = stan_data)
-fit_laplace$summary()
+# If mode isn't specified optimize is run internally first.
+# show_messages = FALSE here and below hides CmdStan's output. That's to
+# keep these examples short, not a recommendation.
+fit <- mod$laplace(data = stan_data, show_messages = FALSE)
+fit$summary()
 
 # plot approximate posterior
-bayesplot::mcmc_hist(fit_laplace$draws("theta"))
+bayesplot::mcmc_hist(fit$draws("theta"))
 }
+\dontrun{
+# The rest of these examples work the same way for every fitting method.
 
+# Draws as a posterior draws object
+fit$draws()
+fit$draws("theta", format = "df")
 
+# Data as a path to a JSON or R dump file instead of a list
+data_file <- file.path(
+  cmdstan_path(),
+  "examples/bernoulli/bernoulli.data.json"
+)
+fit <- mod$laplace(data = data_file, seed = 123, show_messages = FALSE)
+
+# Initial values from a function
+fit <- mod$laplace(
+  data = stan_data,
+  seed = 123,
+  init = function() list(theta = runif(1)),
+  show_messages = FALSE
+)
+fit$init()
+
+# Initial values from a previous fit (can be a fit from a different method)
+fit2 <- mod$laplace(
+  data = stan_data,
+  seed = 123,
+  init = fit,
+  show_messages = FALSE
+)
+
+# Initial values from a posterior::draws object
+inits <- fit$draws()
+fit <- mod$laplace(
+  data = stan_data,
+  seed = 123,
+  init = inits,
+  show_messages = FALSE
+)
+
+# Suppress output from CmdStan while it runs
+fit <- mod$laplace(
+  data = stan_data,
+  seed = 123,
+  show_messages = FALSE,
+  show_exceptions = FALSE
+)
+
+# The CSV files CmdStan wrote, in a temporary directory by default. Move
+# them to keep them past the R session. Replace tempdir below with a
+# directory you'll keep.
+fit$output_files()
+
+my_dir <- tempdir()
+fit$save_output_files(dir = my_dir, basename = "bernoulli")
+
+# Or use output_dir to have CmdStan write them there in the first place,
+# here gzip-compressed to save disk space
+fit <- mod$laplace(
+  data = stan_data,
+  seed = 123,
+  output_dir = my_dir,
+  output_basename = "bernoulli",
+  compress = "gzip",
+  show_messages = FALSE
+)
+fit$output_files()
+}
 }
 \references{
 \itemize{

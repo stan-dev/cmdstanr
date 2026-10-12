@@ -350,9 +350,10 @@ only define the number of processes. To use \code{n_procs} processes specify
 \subsection{Setup}{
 
 The bar needs two things: \code{show_progress_bar = TRUE}, either in each
-\verb{$sample()} call or once per session with \code{options(cmdstanr_progress_bar = TRUE)}, and \pkg{progressr}'s reporting turned on once per session with
-\code{progressr::handlers(global = TRUE)}. The following turns on the progress bar
-for an entire R session:
+\verb{$sample()} call or once per session with
+\code{options(cmdstanr_progress_bar = TRUE)}, and \pkg{progressr}'s reporting
+turned on once per session with \code{progressr::handlers(global = TRUE)}. The
+following turns on the progress bar for an entire R session:
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{options(cmdstanr_progress_bar = TRUE)
 progressr::handlers(global = TRUE)
