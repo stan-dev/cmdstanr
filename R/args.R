@@ -1125,9 +1125,9 @@ process_init.list <- function(init, num_procs, model_variables = NULL,
     missing_parameter_values <- list()
     parameter_names <- names(model_variables$parameters)
     for (i in seq_along(init)) {
-      missing <- setdiff(parameter_names, names(init[[i]]))
-      if (length(missing) > 0) {
-        missing_parameter_values[[i]] <- missing
+      missing_names <- setdiff(parameter_names, names(init[[i]]))
+      if (length(missing_names) > 0) {
+        missing_parameter_values[[i]] <- missing_names
       }
     }
     if (length(missing_parameter_values) > 0 && isTRUE(warn_partial)) {
