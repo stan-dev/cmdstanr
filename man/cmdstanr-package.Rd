@@ -240,6 +240,7 @@ Other contributors:
   \item Visruth Srimath Kandali [contributor]
   \item Aki Vehtari [contributor]
   \item Katrina Brock [contributor]
+  \item Joss Wright [contributor]
 }
 
 }

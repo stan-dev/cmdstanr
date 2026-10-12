@@ -80,6 +80,15 @@
 #'   Markov chain; only generated quantities may change. This can be useful
 #'   when, for example, trying to generate pseudo-data using the generated
 #'   quantities block.
+#' @param show_progress_bar (logical) **Experimental** and may change in a later
+#'   release. When `TRUE`, shows a progress bar through \pkg{progressr} in place
+#'   of CmdStan's iteration lines. The default is `FALSE` but can be set to
+#'   `TRUE` for an entire session by `options(cmdstanr_progress_bar = TRUE)`.
+#'   The bar also needs \pkg{progressr}'s reporting turned on once per
+#'   session. See the **Progress bar** section below for details.
+#' @param show_iteration_messages (logical) Whether to print CmdStan's
+#'   iteration lines. The default is `!show_progress_bar`, so the progress bar
+#'   replaces them.
 #' @param diagnostics (character vector) The diagnostics to automatically check
 #'   and warn about after sampling. Setting this to an empty string `""` or
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the
