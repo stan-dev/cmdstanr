@@ -25,20 +25,32 @@ test_that("threading works with sample()", {
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
 
   expect_output(
-    f <- mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
+    f <- mod$sample(
+      data = data_file_json,
+      parallel_chains = 4,
+      threads_per_chain = 1
+    ),
     "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
     fixed = TRUE
   )
   expect_equal(f$metadata()$threads_per_chain, 1)
 
   expect_output(
-    f <- mod$sample(data = data_file_json,  parallel_chains = 4, threads_per_chain = 2),
+    f <- mod$sample(
+      data = data_file_json,
+      parallel_chains = 4,
+      threads_per_chain = 2
+    ),
     "Running MCMC with 4 parallel chains, with 2 thread(s) per chain..",
     fixed = TRUE
   )
   expect_equal(f$metadata()$threads_per_chain, 2)
   expect_output(
-    f <- mod$sample(data = data_file_json,  parallel_chains = 4, threads_per_chain = 4),
+    f <- mod$sample(
+      data = data_file_json,
+      parallel_chains = 4,
+      threads_per_chain = 4
+    ),
     "Running MCMC with 4 parallel chains, with 4 thread(s) per chain..",
     fixed = TRUE
   )
@@ -50,7 +62,9 @@ test_that("the thread count reaches the child process and not the session", {
   mod <- cmdstan_model(stan_program, cpp_options = list(stan_threads = TRUE))
   utils::capture.output({
     with_threads <- mod$sample(
-      data = data_file_json, chains = 1, threads_per_chain = 4
+      data = data_file_json,
+      chains = 1,
+      threads_per_chain = 4
     )
     without <- mod$sample(data = data_file_json, chains = 1)
   })
@@ -159,26 +173,45 @@ test_that("threading works with generate_quantities()", {
     cpp_options = list(stan_threads = TRUE)
   )
   expect_output(
-    f <- mod$sample(data = data_file_json, parallel_chains = 4, threads_per_chain = 1),
+    f <- mod$sample(
+      data = data_file_json,
+      parallel_chains = 4,
+      threads_per_chain = 1
+    ),
     "Running MCMC with 4 parallel chains, with 1 thread(s) per chain..",
     fixed = TRUE
   )
   expect_output(
-    f_gq <- mod_gq$generate_quantities(fitted_params = f, data = data_file_gq_json, threads_per_chain = 1, seed = 123),
+    f_gq <- mod_gq$generate_quantities(
+      fitted_params = f,
+      data = data_file_gq_json,
+      threads_per_chain = 1,
+      seed = 123
+    ),
     "Running standalone generated quantities after 4 MCMC chains",
     fixed = TRUE
   )
   expect_equal(f_gq$metadata()$threads_per_chain, 1)
 
   expect_output(
-    f_gq <- mod_gq$generate_quantities(fitted_params = f, data = data_file_gq_json, threads_per_chain = 2, seed = 123),
+    f_gq <- mod_gq$generate_quantities(
+      fitted_params = f,
+      data = data_file_gq_json,
+      threads_per_chain = 2,
+      seed = 123
+    ),
     "Running standalone generated quantities after 4 MCMC chains",
     fixed = TRUE
   )
   expect_equal(f_gq$metadata()$threads_per_chain, 2)
 
   expect_output(
-    f_gq <- mod_gq$generate_quantities(fitted_params = f, data = data_file_gq_json, threads_per_chain = 4, seed = 123),
+    f_gq <- mod_gq$generate_quantities(
+      fitted_params = f,
+      data = data_file_gq_json,
+      threads_per_chain = 4,
+      seed = 123
+    ),
     "Running standalone generated quantities after 4 MCMC chains",
     fixed = TRUE
   )

@@ -61,18 +61,18 @@ summary results are named they will take precedence.
 ```{r}
 my_sd <- function(x) c(My_SD = sd(x))
 fit$summary(
-  c("mu", "tau"), 
-  MEAN = mean, 
-  "median",
-  my_sd,
-  ~quantile(.x, probs = c(0.1, 0.9)),
-  Minimum = function(x) min(x)
-)        
+    c("mu", "tau"),
+    MEAN = mean,
+    "median",
+    my_sd,
+    ~ quantile(.x, probs = c(0.1, 0.9)),
+    Minimum = function(x) min(x)
+)
 ```
 
 Arguments to all summary functions can also be specified with `.args`. 
 ```{r}
-fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, .05, .95, .975)))
+fit$summary(c("mu", "tau"), quantile, .args = list(probs = c(0.025, 0.05, 0.95, 0.975)))
 ```
 
 Each summary function is applied separately to each variable and receives a
@@ -85,7 +85,7 @@ fit$summary(variables = "theta", dim, colMeans)
 For this reason users may have unexpected results if they use `stats::var()` directly, as it will return a covariance matrix. An alternative is the `distributional::variance()` function, 
 which can also be accessed via `posterior::variance()`.
 ```{r}
-fit$summary(c("mu", "tau"), posterior::variance, ~var(as.vector(.x)))
+fit$summary(c("mu", "tau"), posterior::variance, ~ var(as.vector(.x)))
 ```
 
 Summary functions need not return numeric values when used with `$summary()`.
@@ -135,9 +135,9 @@ giving the same general structure as the list returned by `rstan::extract()`:
 
 ```{r variable-arrays}
 draw_arrays <- extract_list_of_variable_arrays(
-  fit$draws(),
-  variables = c("mu", "theta"),
-  with_chains = FALSE
+    fit$draws(),
+    variables = c("mu", "theta"),
+    with_chains = FALSE
 )
 str(draw_arrays)
 dim(draw_arrays$theta)
@@ -152,7 +152,7 @@ handled behind the scenes:
 
 ```{r structured-draws}
 draws_rvars <- as_draws_rvars(
-  fit$draws(c("mu", "theta"))
+    fit$draws(c("mu", "theta"))
 )
 theta_rvar <- draws_rvars$theta
 
@@ -162,9 +162,9 @@ theta_difference <- theta_rvar[1] - theta_rvar[2]
 theta_difference
 
 hist(
-  draws_of(theta_difference),
-  main = "Difference between theta[1] and theta[2]",
-  xlab = "theta[1] - theta[2]"
+    draws_of(theta_difference),
+    main = "Difference between theta[1] and theta[2]",
+    xlab = "theta[1] - theta[2]"
 )
 
 # Direct access to the underlying draws is also available with posterior::draws_of
@@ -188,13 +188,13 @@ overlay the individual draws.
 theta_plot <- draw_arrays$theta
 
 theta_df <- data.frame(
-  .draw = rep(seq_len(nrow(theta_plot)), times = ncol(theta_plot)),
-  school = rep(seq_len(ncol(theta_plot)), each = nrow(theta_plot)),
-  theta = c(theta_plot)
+    .draw = rep(seq_len(nrow(theta_plot)), times = ncol(theta_plot)),
+    school = rep(seq_len(ncol(theta_plot)), each = nrow(theta_plot)),
+    theta = c(theta_plot)
 )
 
 ggplot(theta_df, aes(school, theta, group = .draw)) +
-  geom_line(alpha = 0.01)
+    geom_line(alpha = 0.01)
 ```
 
 The reshaping above uses only base R. Tidyverse users can produce the same plot
@@ -204,14 +204,14 @@ directly from the draws data frame (`format = "df"`) with
 
 ```{r vector-draws-plot-tidy, eval=FALSE}
 fit$draws("theta", format = "df") |>
-  tidyr::pivot_longer(
-    cols = dplyr::starts_with("theta"),
-    names_to = "school",
-    names_transform = readr::parse_number,
-    values_to = "theta"
-  ) |>
-  ggplot(aes(school, theta, group = .draw)) +
-  geom_line(alpha = 0.01)
+    tidyr::pivot_longer(
+        cols = dplyr::starts_with("theta"),
+        names_to = "school",
+        names_transform = readr::parse_number,
+        values_to = "theta"
+    ) |>
+    ggplot(aes(school, theta, group = .draw)) +
+    geom_line(alpha = 0.01)
 ```
 
 Here `school` is simply the index into the `theta` vector. In many models the

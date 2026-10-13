@@ -2,7 +2,13 @@ skip_on_cran()
 
 set_cmdstan_path()
 fit_vb <- testing_fit("logistic", method = "variational", seed = 123)
-fit_vb_sci_not <- testing_fit("logistic", method = "variational", seed = 123, iter = 200000, adapt_iter = 100000)
+fit_vb_sci_not <- testing_fit(
+  "logistic",
+  method = "variational",
+  seed = 123,
+  iter = 200000,
+  adapt_iter = 100000
+)
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
@@ -61,7 +67,10 @@ test_that("draws() method returns posterior sample (reading csv works)", {
   draws <- fit_vb$draws()
   expect_type(draws, "double")
   expect_s3_class(draws, "draws_matrix")
-  expect_equal(posterior::variables(draws), c("lp__", "lp_approx__", PARAM_NAMES))
+  expect_equal(
+    posterior::variables(draws),
+    c("lp__", "lp_approx__", PARAM_NAMES)
+  )
 })
 
 test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
@@ -69,7 +78,7 @@ test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
   lg <- fit_vb$lp_approx()
   expect_type(lp, "double")
   expect_type(lg, "double")
-  expect_equal(length(lp), nrow(fit_vb$draws()))
+  expect_length(lp, nrow(fit_vb$draws()))
   expect_equal(length(lg), length(lp))
 })
 
@@ -105,18 +114,18 @@ test_that("time() method works after vb", {
 })
 
 test_that("output() works for vb", {
-  expect_output(fit_vb$output(),
-                "method = variational")
+  expect_output(fit_vb$output(), "method = variational")
 })
 
 test_that("time is reported after vb", {
   expect_output(
-    mod$variational(data = data_list,
-                    seed = 123,
-                    elbo_samples = 1000,
-                    iter = 2000,
-                    draws = 50
-                    ),
+    mod$variational(
+      data = data_list,
+      seed = 123,
+      elbo_samples = 1000,
+      iter = 2000,
+      draws = 50
+    ),
     "Finished in"
   )
 })

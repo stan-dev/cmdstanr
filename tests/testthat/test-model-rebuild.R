@@ -33,7 +33,8 @@ seed_from <- function(canonical_stan_file, canonical_exe_file, dir) {
 local_gone_installation <- function(.local_envir = parent.frame()) {
   path <- cmdstan_path()
   gone <- repair_path(file.path(
-    withr::local_tempdir(.local_envir = .local_envir), "cmdstan"
+    withr::local_tempdir(.local_envir = .local_envir),
+    "cmdstan"
   ))
   .cmdstanr$PATH <- gone
   withr::defer(.cmdstanr$PATH <- path, envir = .local_envir)
@@ -41,19 +42,22 @@ local_gone_installation <- function(.local_envir = parent.frame()) {
 }
 
 canonical_bernoulli_stan <- local_program(
-  "bernoulli", .local_envir = teardown_env()
+  "bernoulli",
+  .local_envir = teardown_env()
 )
 canonical_bernoulli_exe <- cmdstan_model(canonical_bernoulli_stan)$exe_file()
 
 canonical_include_stan <- local_program(
-  "bernoulli_include", .local_envir = teardown_env()
+  "bernoulli_include",
+  .local_envir = teardown_env()
 )
 canonical_include_exe <- cmdstan_model(canonical_include_stan)$exe_file()
 
 # The first three tests share this pair: an object built from the program,
 # and one that replaces its executable with force_recompile.
 replaced_stan_file <- seed_from(
-  canonical_bernoulli_stan, canonical_bernoulli_exe,
+  canonical_bernoulli_stan,
+  canonical_bernoulli_exe,
   withr::local_tempdir(.local_envir = teardown_env())
 )
 mod_a <- cmdstan_model(replaced_stan_file)
@@ -62,7 +66,8 @@ mod_b <- cmdstan_model(replaced_stan_file, force_recompile = TRUE)
 test_that("a replaced executable is refused by the object that built it", {
   expect_error(
     mod_a$cmdstan_defaults(),
-    "changed after this model was created", fixed = TRUE,
+    "changed after this model was created",
+    fixed = TRUE,
     class = "cmdstanr_stale_executable"
   )
   expect_no_error(mod_b$cmdstan_defaults())
@@ -78,7 +83,8 @@ test_that("adoption from a record verifies by hash alone", {
   cmdstan_model(replaced_stan_file, force_recompile = TRUE)
   expect_error(
     mod_c$cmdstan_defaults(),
-    "changed after this model was created", fixed = TRUE,
+    "changed after this model was created",
+    fixed = TRUE,
     class = "cmdstanr_stale_executable"
   )
 })
@@ -90,7 +96,9 @@ test_that("an adopted executable that is deleted is refused", {
   mod <- cmdstan_model(exe_file = exe)
   file.remove(exe)
   expect_error(
-    mod$cmdstan_defaults(), "no longer exists", fixed = TRUE,
+    mod$cmdstan_defaults(),
+    "no longer exists",
+    fixed = TRUE,
     class = "cmdstanr_stale_executable"
   )
 })
@@ -101,7 +109,9 @@ test_that("adoption without a record verifies by the hash it captured", {
   kept <- withr::local_tempdir()
   file.copy(c(exe, record), kept)
   withr::defer(file.copy(
-    file.path(kept, basename(c(exe, record))), dirname(exe), overwrite = TRUE
+    file.path(kept, basename(c(exe, record))),
+    dirname(exe),
+    overwrite = TRUE
   ))
 
   file.remove(record)
@@ -113,7 +123,8 @@ test_that("adoption without a record verifies by the hash it captured", {
   file.copy(bernoulli_exe, exe, overwrite = TRUE)
   expect_error(
     mod_d$cmdstan_defaults(),
-    "changed after this model was created", fixed = TRUE,
+    "changed after this model was created",
+    fixed = TRUE,
     class = "cmdstanr_stale_executable"
   )
 })
@@ -138,7 +149,8 @@ test_that("an edited program with an old mtime still triggers a rebuild", {
   Sys.setFileTime(stan_file, exe_mtime - 10)
 
   expect_interactive_message(
-    cmdstan_model(stan_file), "the Stan program changed"
+    cmdstan_model(stan_file),
+    "the Stan program changed"
   )
   expect_error(mod$cmdstan_defaults(), class = "cmdstanr_stale_executable")
 })
@@ -151,7 +163,9 @@ test_that("a failure resolving again errors instead of producing a verdict", {
 
   file.remove(file.path(dir, "divide_real_by_two.stan"))
   expect_error(
-    cmdstan_model(stan_file), "divide_real_by_two.stan", fixed = TRUE
+    cmdstan_model(stan_file),
+    "divide_real_by_two.stan",
+    fixed = TRUE
   )
   expect_equal(file.mtime(mod$exe_file()), exe_mtime)
 
@@ -174,26 +188,31 @@ test_that("adoption from a record ignores a CmdStan it never selected", {
   expect_no_error(mod$cmdstan_defaults())
 
   expect_interactive_message(
-    mock_cmdstan_model(replaced_stan_file), "selected CmdStan changed"
+    mock_cmdstan_model(replaced_stan_file),
+    "selected CmdStan changed"
   )
 })
 
 test_that("identical included content reuses across different include paths", {
   base_dir <- withr::local_tempdir()
-  stan_file <- write_stan_file(c(
-    "functions {",
-    "#include helper.stan",
-    "}",
-    "parameters {",
-    "  real x;",
-    "}",
-    "model {",
-    "  x ~ std_normal();",
-    "}",
-    "generated quantities {",
-    "  real h = helper(x);",
-    "}"
-  ), dir = base_dir, basename = "with_helper")
+  stan_file <- write_stan_file(
+    c(
+      "functions {",
+      "#include helper.stan",
+      "}",
+      "parameters {",
+      "  real x;",
+      "}",
+      "model {",
+      "  x ~ std_normal();",
+      "}",
+      "generated quantities {",
+      "  real h = helper(x);",
+      "}"
+    ),
+    dir = base_dir,
+    basename = "with_helper"
+  )
   v1 <- file.path(base_dir, "v1")
   v2 <- file.path(base_dir, "v2")
   v1copy <- file.path(base_dir, "v1copy")
@@ -201,17 +220,20 @@ test_that("identical included content reuses across different include paths", {
   dir.create(v2)
   dir.create(v1copy)
   writeLines(
-    "real helper(real x) { return x + 1; }", file.path(v1, "helper.stan")
+    "real helper(real x) { return x + 1; }",
+    file.path(v1, "helper.stan")
   )
   writeLines(
-    "real helper(real x) { return x + 2; }", file.path(v2, "helper.stan")
+    "real helper(real x) { return x + 2; }",
+    file.path(v2, "helper.stan")
   )
   file.copy(file.path(v1, "helper.stan"), file.path(v1copy, "helper.stan"))
 
   expect_compilation(cmdstan_model(stan_file, include_paths = v1))
   expect_no_recompilation(cmdstan_model(stan_file, include_paths = v1copy))
   expect_interactive_message(
-    cmdstan_model(stan_file, include_paths = v2), "included files changed"
+    cmdstan_model(stan_file, include_paths = v2),
+    "included files changed"
   )
   expect_no_recompilation(cmdstan_model(stan_file, include_paths = v2))
 })
@@ -238,7 +260,8 @@ test_that("an edit to a nested include rebuilds", {
 
   writeLines("// c v2", file.path(dir, "c.stan"))
   expect_mock_compile(expect_interactive_message(
-    mock_cmdstan_model(stan_file), "included files changed.*c\\.stan"
+    mock_cmdstan_model(stan_file),
+    "included files changed.*c\\.stan"
   ))
 })
 
@@ -249,7 +272,8 @@ test_that("include paths reordered to the same resolution do not rebuild", {
   dir.create(dir1)
   dir.create(dir2)
   writeLines(
-    "real helper(real x) { return x + 1; }", file.path(dir1, "helper.stan")
+    "real helper(real x) { return x + 1; }",
+    file.path(dir1, "helper.stan")
   )
   stan_file <- file.path(dir, "model.stan")
   writeLines(
@@ -274,64 +298,75 @@ test_that("include paths reordered to the same resolution do not rebuild", {
 
 test_that("formatting the program invalidates the executable that built it", {
   dir <- withr::local_tempdir()
-  stan_file <- write_stan_file(c(
-    "data {",
-    "  int<lower=0>   N;",
-    "  array[N] int<lower=0,upper=1>    y;",
-    "}",
-    "parameters {",
-    "  real<lower=0,upper=1>    theta;",
-    "}",
-    "model {",
-    "  theta ~ beta(1,1);",
-    "  y ~ bernoulli(theta);",
-    "}"
-  ), dir = dir)
+  stan_file <- write_stan_file(
+    c(
+      "data {",
+      "  int<lower=0>   N;",
+      "  array[N] int<lower=0,upper=1>    y;",
+      "}",
+      "parameters {",
+      "  real<lower=0,upper=1>    theta;",
+      "}",
+      "model {",
+      "  theta ~ beta(1,1);",
+      "  y ~ bernoulli(theta);",
+      "}"
+    ),
+    dir = dir
+  )
   mod <- expect_compilation(cmdstan_model(stan_file))
 
   mod$format(overwrite_file = TRUE, backup = FALSE)
   expect_error(mod$sample(), class = "cmdstanr_stale_executable")
   expect_interactive_message(
-    cmdstan_model(stan_file), "the Stan program changed"
+    cmdstan_model(stan_file),
+    "the Stan program changed"
   )
   expect_true(any(grepl("   N", mod$code(), fixed = TRUE)))
 })
 
 test_that("pedantic mode runs on a current executable without rebuilding", {
   dir <- withr::local_tempdir()
-  stan_file <- write_stan_file(c(
-    "data {",
-    "  int<lower=0> N;",
-    "  vector[N] y;",
-    "}",
-    "parameters {",
-    "  real mu;",
-    "  real sigma;",
-    "}",
-    "model {",
-    "  mu ~ normal(0, 1);",
-    "  y ~ normal(mu, sigma);",
-    "}"
-  ), dir = dir)
+  stan_file <- write_stan_file(
+    c(
+      "data {",
+      "  int<lower=0> N;",
+      "  vector[N] y;",
+      "}",
+      "parameters {",
+      "  real mu;",
+      "  real sigma;",
+      "}",
+      "model {",
+      "  mu ~ normal(0, 1);",
+      "  y ~ normal(mu, sigma);",
+      "}"
+    ),
+    dir = dir
+  )
   expect_compilation(cmdstan_model(stan_file))
 
   expect_no_recompilation(cmdstan_model(stan_file, pedantic = TRUE))
   expect_message(
     cmdstan_model(stan_file, pedantic = TRUE),
-    "not constrained to be strictly positive", fixed = TRUE
+    "not constrained to be strictly positive",
+    fixed = TRUE
   )
 })
 
 test_that("a warning flag in stanc_options is quiet on a reuse", {
   dir <- withr::local_tempdir()
-  stan_file <- write_stan_file(c(
-    "parameters { real y; }",
-    "model {",
-    "  real x;",
-    "  target += x;",
-    "  y ~ normal(0, 1);",
-    "}"
-  ), dir = dir)
+  stan_file <- write_stan_file(
+    c(
+      "parameters { real y; }",
+      "model {",
+      "  real x;",
+      "  target += x;",
+      "  y ~ normal(0, 1);",
+      "}"
+    ),
+    dir = dir
+  )
   mock_cmdstan_model(stan_file, stanc_options = list("warn-uninitialized"))
 
   expect_no_mock_compile(expect_no_message(
@@ -340,9 +375,12 @@ test_that("a warning flag in stanc_options is quiet on a reuse", {
 
   expect_message(
     mock_cmdstan_model(
-      stan_file, stanc_options = list("warn-uninitialized"), pedantic = TRUE
+      stan_file,
+      stanc_options = list("warn-uninitialized"),
+      pedantic = TRUE
     ),
-    "may not have been assigned a value before its first use", fixed = TRUE
+    "may not have been assigned a value before its first use",
+    fixed = TRUE
   )
 })
 
@@ -355,12 +393,18 @@ test_that("an edited include is caught, then rebuilt", {
   expect_error(mod$sample(), "divide_real_by_two.stan", fixed = TRUE)
 
   mod2 <- expect_interactive_message(
-    cmdstan_model(stan_file), "included files changed"
+    cmdstan_model(stan_file),
+    "included files changed"
   )
-  utils::capture.output(fit <- mod2$sample(
-    data = testing_data("bernoulli"), chains = 1,
-    iter_warmup = 50, iter_sampling = 50, refresh = 0
-  ))
+  utils::capture.output(
+    fit <- mod2$sample(
+      data = testing_data("bernoulli"),
+      chains = 1,
+      iter_warmup = 50,
+      iter_sampling = 50,
+      refresh = 0
+    )
+  )
   expect_s3_class(fit, "CmdStanMCMC")
 })
 
@@ -377,7 +421,8 @@ test_that("log_prob after an edit still reflects the program that was built", {
   fit$init_model_methods()
   theta <- plogis(0.3)
   expected_lp <- sum(dbinom(data$y, size = 1, prob = theta, log = TRUE)) +
-    log(theta) + log(1 - theta)
+    log(theta) +
+    log(1 - theta)
   expect_equal(fit$log_prob(unconstrained_variables = 0.3), expected_lp)
 })
 
@@ -403,18 +448,25 @@ test_that("toggling cpp_options rebuilds and threading follows the exe", {
     cmdstan_model(stan_file, cpp_options = list(stan_threads = TRUE)),
     "`cpp_options` changed"
   )
-  utils::capture.output(fit <- mod_threaded$sample(
-    data = data, chains = 1, threads_per_chain = 2, refresh = 0
-  ))
+  utils::capture.output(
+    fit <- mod_threaded$sample(
+      data = data,
+      chains = 1,
+      threads_per_chain = 2,
+      refresh = 0
+    )
+  )
   expect_equal(fit$metadata()$threads_per_chain, 2)
 
   mod_plain <- expect_interactive_message(
-    cmdstan_model(stan_file), "`cpp_options` changed"
+    cmdstan_model(stan_file),
+    "`cpp_options` changed"
   )
   expect_length(mod_plain$cpp_options(), 0)
   expect_error(
     mod_plain$sample(data = data, threads_per_chain = 2),
-    "does not report threading as enabled", fixed = TRUE
+    "does not report threading as enabled",
+    fixed = TRUE
   )
 })
 
@@ -424,16 +476,21 @@ test_that("a program in a directory with an apostrophe builds", {
   dir.create(dir)
   withr::defer(unlink(dir, recursive = TRUE))
   stan_file <- file.path(dir, "model.stan")
-  writeLines(c("parameters { real y; }", "model { y ~ std_normal(); }"), stan_file)
+  writeLines(
+    c("parameters { real y; }", "model { y ~ std_normal(); }"),
+    stan_file
+  )
 
   exe <- expect_interactive_message(
-    compile_stan_file(stan_file), "Compiling Stan program..."
+    compile_stan_file(stan_file),
+    "Compiling Stan program..."
   )
   expect_true(file.exists(exe))
 
   before_mtime <- file.mtime(exe)
   expect_interactive_message(
-    compile_stan_file(stan_file), "Model executable is up to date!"
+    compile_stan_file(stan_file),
+    "Model executable is up to date!"
   )
   expect_equal(file.mtime(exe), before_mtime)
 })
@@ -447,7 +504,8 @@ test_that("a model whose Stan file is gone errors, and its executable can be ado
 
   file.remove(stan_file)
   expect_error(
-    mod$sample(data = data), "this model was created from no longer exists",
+    mod$sample(data = data),
+    "this model was created from no longer exists",
     fixed = TRUE
   )
   adopted <- cmdstan_model(exe_file = mod$exe_file())

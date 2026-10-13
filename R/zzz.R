@@ -1,12 +1,20 @@
 startup_messages <- function() {
-  packageStartupMessage("This is CmdStanR version ", utils::packageVersion("cmdstanr"))
-  packageStartupMessage("- CmdStanR documentation and vignettes: mc-stan.org/cmdstanr")
+  packageStartupMessage(
+    "This is CmdStanR version ",
+    utils::packageVersion("cmdstanr")
+  )
+  packageStartupMessage(
+    "- CmdStanR documentation and vignettes: mc-stan.org/cmdstanr"
+  )
   if (is.null(.cmdstanr$PATH)) {
     packageStartupMessage("- Use set_cmdstan_path() to set the path to CmdStan")
     packageStartupMessage("- Use install_cmdstan() to install CmdStan")
   } else {
     packageStartupMessage("- CmdStan path: ", cmdstan_path())
-    packageStartupMessage("- CmdStan version: ", cmdstan_version(error_on_NA = FALSE))
+    packageStartupMessage(
+      "- CmdStan version: ",
+      cmdstan_version(error_on_NA = FALSE)
+    )
   }
 
   skip_version_check <- isTRUE(getOption(
@@ -19,8 +27,10 @@ startup_messages <- function() {
       "CMDSTANR_NO_VER_CHECK",
       unset = NA_character_
     )
-    if (!is.null(deprecated_no_ver_check_option) ||
-        !is.na(deprecated_no_ver_check_env)) {
+    if (
+      !is.null(deprecated_no_ver_check_option) ||
+        !is.na(deprecated_no_ver_check_env)
+    ) {
       warning(
         "The `CMDSTANR_NO_VER_CHECK` option and environment variable are ",
         "deprecated as of CmdStanR 1.0.0 and will be removed in a future ",

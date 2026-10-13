@@ -20,12 +20,16 @@ available_result <- function(edit = identity) {
 test_that("an available build record is read in full without launching the executable", {
   result <- available_result()
 
-  expect_identical(class(result), "stan_build_info")
+  expect_s3_class(result, "stan_build_info")
   expect_named(
     result,
     c(
-      "record", "reported_features", "configuration", "dependencies",
-      "cmdstan", "untracked_dependencies"
+      "record",
+      "reported_features",
+      "configuration",
+      "dependencies",
+      "cmdstan",
+      "untracked_dependencies"
     )
   )
 
@@ -37,7 +41,10 @@ test_that("an available build record is read in full without launching the execu
   expect_named(
     features,
     c(
-      "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks",
+      "stan_threads",
+      "stan_mpi",
+      "stan_opencl",
+      "stan_no_range_checks",
       "stan_version"
     )
   )
@@ -55,7 +62,9 @@ test_that("an available build record is read in full without launching the execu
   expect_named(
     result$configuration,
     c(
-      "cpp_options", "stanc_options", "stanc_options_from_make",
+      "cpp_options",
+      "stanc_options",
+      "stanc_options_from_make",
       "include_paths"
     )
   )
@@ -65,7 +74,8 @@ test_that("an available build record is read in full without launching the execu
   expect_type(result$configuration$include_paths, "character")
 
   expect_named(
-    result$dependencies, c("stan_file", "included_files", "user_header", "make_local")
+    result$dependencies,
+    c("stan_file", "included_files", "user_header", "make_local")
   )
   expect_named(result$dependencies$stan_file, c("built_from", "exists"))
   expect_equal(
@@ -104,7 +114,10 @@ test_that("fields the record withholds are absent from the result", {
   expect_false("hash" %in% names(result$dependencies$included_files[[1]]))
   expect_false("hash" %in% names(result$dependencies$make_local))
   expect_named(result$dependencies$stan_file, c("built_from", "exists"))
-  expect_named(result$dependencies$included_files[[1]], c("built_from", "exists"))
+  expect_named(
+    result$dependencies$included_files[[1]],
+    c("built_from", "exists")
+  )
   expect_named(result$dependencies$make_local, c("built_from", "exists"))
 
   expect_false("stanc_options_added" %in% names(result$configuration))
@@ -112,7 +125,9 @@ test_that("fields the record withholds are absent from the result", {
   expect_named(
     result$configuration,
     c(
-      "cpp_options", "stanc_options", "stanc_options_from_make",
+      "cpp_options",
+      "stanc_options",
+      "stanc_options_from_make",
       "include_paths"
     )
   )
@@ -138,7 +153,7 @@ test_that("a missing build record falls back to the executable's own info", {
   )
   result <- stan_build_info(exe)
 
-  expect_identical(class(result), "stan_build_info")
+  expect_s3_class(result, "stan_build_info")
   expect_named(result, c("record", "reported_features"))
   expect_equal(result$record, list(status = "unavailable", reason = "missing"))
   expect_named(result$record, c("status", "reason"))
@@ -158,9 +173,12 @@ test_that("an unreadable build record falls back to the executable's own info", 
   )
   result <- stan_build_info(exe)
 
-  expect_identical(class(result), "stan_build_info")
+  expect_s3_class(result, "stan_build_info")
   expect_named(result, c("record", "reported_features"))
-  expect_equal(result$record, list(status = "unavailable", reason = "unreadable"))
+  expect_equal(
+    result$record,
+    list(status = "unavailable", reason = "unreadable")
+  )
   expect_identical(result$reported_features$stan_version, "2.39.0")
   expect_false("format_version" %in% names(result))
 })
@@ -178,10 +196,11 @@ test_that("an unsupported record format reports its version and nothing else", {
   jsonlite::write_json(newer, build_record_path(newer_exe), auto_unbox = TRUE)
   newer_result <- stan_build_info(newer_exe)
 
-  expect_identical(class(newer_result), "stan_build_info")
+  expect_s3_class(newer_result, "stan_build_info")
   expect_named(newer_result, c("record", "reported_features", "format_version"))
   expect_equal(
-    newer_result$record, list(status = "unavailable", reason = "unsupported_format")
+    newer_result$record,
+    list(status = "unavailable", reason = "unsupported_format")
   )
   expect_identical(newer_result$format_version, 2L)
 
@@ -193,7 +212,8 @@ test_that("an unsupported record format reports its version and nothing else", {
   older_result <- stan_build_info(older_exe)
 
   expect_equal(
-    older_result$record, list(status = "unavailable", reason = "unsupported_format")
+    older_result$record,
+    list(status = "unavailable", reason = "unsupported_format")
   )
   expect_identical(older_result$format_version, 0L)
 })
@@ -206,7 +226,10 @@ test_that("an executable mismatch discards the recorded features for the binary'
 
   mismatched_info <- default_info_ret
   mismatched_info$stdout <- sub(
-    "STAN_THREADS=true", "STAN_THREADS=false", mismatched_info$stdout, fixed = TRUE
+    "STAN_THREADS=true",
+    "STAN_THREADS=false",
+    mismatched_info$stdout,
+    fixed = TRUE
   )
   local_mocked_bindings(
     run_exe_info = function(...) mismatched_info,
@@ -214,10 +237,11 @@ test_that("an executable mismatch discards the recorded features for the binary'
   )
   result <- stan_build_info(exe)
 
-  expect_identical(class(result), "stan_build_info")
+  expect_s3_class(result, "stan_build_info")
   expect_named(result, c("record", "reported_features"))
   expect_equal(
-    result$record, list(status = "unavailable", reason = "executable_mismatch")
+    result$record,
+    list(status = "unavailable", reason = "executable_mismatch")
   )
   expect_false(result$reported_features$stan_threads)
   expect_null(result$configuration)
@@ -277,7 +301,8 @@ test_that("a record without a user header or make/local reports them as NULL", {
   })
 
   expect_named(
-    result$dependencies, c("stan_file", "included_files", "user_header", "make_local")
+    result$dependencies,
+    c("stan_file", "included_files", "user_header", "make_local")
   )
   expect_null(result$dependencies$user_header)
   expect_null(result$dependencies$make_local)
@@ -304,7 +329,11 @@ test_that("untracked dependencies are ordered by kind and deduplicated", {
   result <- available_result(function(record) {
     record$untracked_dependencies <- list(
       list(kind = "user_header_include", detected_in = "z.hpp"),
-      list(kind = "user_header_include", detected_in = "user.hpp", target = "a"),
+      list(
+        kind = "user_header_include",
+        detected_in = "user.hpp",
+        target = "a"
+      ),
       list(kind = "make_local_include", detected_in = "make/local"),
       list(detected_in = "user.hpp", kind = "user_header_include"),
       list(kind = "user_header_include", detected_in = "a.hpp")
@@ -406,13 +435,16 @@ test_that("a relative path names a file in the working directory, not one on PAT
   bin <- file.path(dir, "bin")
   dir.create(bin)
   info_script <- function(path, threads) {
-    writeLines(c(
-      "#!/bin/sh",
-      "echo STAN_VERSION_MAJOR=2",
-      "echo STAN_VERSION_MINOR=39",
-      "echo STAN_VERSION_PATCH=0",
-      paste0("echo STAN_THREADS=", threads)
-    ), path)
+    writeLines(
+      c(
+        "#!/bin/sh",
+        "echo STAN_VERSION_MAJOR=2",
+        "echo STAN_VERSION_MINOR=39",
+        "echo STAN_VERSION_PATCH=0",
+        paste0("echo STAN_THREADS=", threads)
+      ),
+      path
+    )
     Sys.chmod(path, "0755")
   }
   info_script(file.path(dir, "model"), "false")
@@ -437,7 +469,9 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
   expect_error(
     stan_build_info(failed_exe),
     paste0(
-      "Running '", resolve_path(failed_exe), "' with the argument `info` did ",
+      "Running '",
+      resolve_path(failed_exe),
+      "' with the argument `info` did ",
       "not report a ",
       "Stan version, so it is either not a CmdStan executable or cannot be ",
       "run."
@@ -447,13 +481,17 @@ test_that("stan_build_info() errors on unusable paths and unidentifiable executa
 
   no_version_exe <- local_fake_exe("no_version")
   local_mocked_bindings(
-    run_exe_info = function(...) list(status = 0, stdout = "STAN_THREADS=true\n"),
+    run_exe_info = function(...) {
+      list(status = 0, stdout = "STAN_THREADS=true\n")
+    },
     .package = "cmdstanr"
   )
   expect_error(
     stan_build_info(no_version_exe),
     paste0(
-      "Running '", resolve_path(no_version_exe), "' with the argument `info` ",
+      "Running '",
+      resolve_path(no_version_exe),
+      "' with the argument `info` ",
       "did not report a Stan version, so it is either not a CmdStan ",
       "executable or cannot be run."
     ),
@@ -473,7 +511,10 @@ test_that("features reported by the binary have the fixed shape", {
   expect_named(
     features,
     c(
-      "stan_threads", "stan_mpi", "stan_opencl", "stan_no_range_checks",
+      "stan_threads",
+      "stan_mpi",
+      "stan_opencl",
+      "stan_no_range_checks",
       "stan_version"
     )
   )
@@ -487,16 +528,22 @@ test_that("features reported by the binary have the fixed shape", {
 
 test_that("print.stan_build_info() output for each record state", {
   unavailable_features <- list(
-    stan_threads = NA, stan_mpi = NA, stan_opencl = NA,
-    stan_no_range_checks = NA, stan_version = NA_character_
+    stan_threads = NA,
+    stan_mpi = NA,
+    stan_opencl = NA,
+    stan_no_range_checks = NA,
+    stan_version = NA_character_
   )
 
   sparse_x <- structure(
     list(
       record = list(status = "available", reason = NULL),
       reported_features = list(
-        stan_threads = TRUE, stan_mpi = NA, stan_opencl = FALSE,
-        stan_no_range_checks = NA, stan_version = "2.39.0"
+        stan_threads = TRUE,
+        stan_mpi = NA,
+        stan_opencl = FALSE,
+        stan_no_range_checks = NA,
+        stan_version = "2.39.0"
       ),
       configuration = list(
         cpp_options = list(STAN_THREADS = "true"),
@@ -511,7 +558,9 @@ test_that("print.stan_build_info() output for each record state", {
         make_local = NULL
       ),
       cmdstan = list(
-        path = "/opt/cmdstan-2.39.0", version = "2.39.0", exists = FALSE
+        path = "/opt/cmdstan-2.39.0",
+        version = "2.39.0",
+        exists = FALSE
       ),
       untracked_dependencies = list()
     ),
@@ -559,8 +608,11 @@ test_that("print.stan_build_info() output for each record state", {
     list(
       record = list(status = "available", reason = NULL),
       reported_features = list(
-        stan_threads = TRUE, stan_mpi = FALSE, stan_opencl = FALSE,
-        stan_no_range_checks = NA, stan_version = "2.39.0"
+        stan_threads = TRUE,
+        stan_mpi = FALSE,
+        stan_opencl = FALSE,
+        stan_no_range_checks = NA,
+        stan_version = "2.39.0"
       ),
       configuration = list(
         cpp_options = list(STAN_THREADS = "true", STAN_CPP_OPTIMS = "true"),
@@ -576,11 +628,14 @@ test_that("print.stan_build_info() output for each record state", {
         ),
         user_header = list(built_from = "/proj/helpers.hpp", exists = TRUE),
         make_local = list(
-          built_from = "/opt/cmdstan-2.39.0/make/local", exists = TRUE
+          built_from = "/opt/cmdstan-2.39.0/make/local",
+          exists = TRUE
         )
       ),
       cmdstan = list(
-        path = "/opt/cmdstan-2.39.0", version = "2.39.0", exists = TRUE
+        path = "/opt/cmdstan-2.39.0",
+        version = "2.39.0",
+        exists = TRUE
       ),
       untracked_dependencies = list(
         list(
