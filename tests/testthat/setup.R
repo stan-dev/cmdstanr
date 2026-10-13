@@ -1,9 +1,17 @@
 # CI runners have four cores, so run two chains at a time
 options(mc.cores = 2)
 
+stan_dir <- file.path(tempdir(), "stan")
+dir.create(stan_dir, recursive = TRUE, showWarnings = FALSE)
+file.copy(
+  list.files(test_path("resources", "stan"), full.names = TRUE),
+  stan_dir,
+  recursive = TRUE
+)
+
 cleanup_stan_artifacts <- function() {
   all_files_in_stan <- list.files(
-    test_path("resources", "stan"),
+    stan_dir,
     full.names = TRUE,
     recursive = TRUE
   )
@@ -18,3 +26,9 @@ cleanup_stan_artifacts <- function() {
 
 cleanup_stan_artifacts()
 withr::defer(cleanup_stan_artifacts(), testthat::teardown_env())
+
+shared_cmdstan <- cmdstan_path()
+worker_cmdstan <- file.path(tempdir(), "cmdstan", basename(shared_cmdstan))
+dir.create(dirname(worker_cmdstan), recursive = TRUE, showWarnings = FALSE)
+file.copy(shared_cmdstan, dirname(worker_cmdstan), recursive = TRUE)
+Sys.setenv(CMDSTAN = worker_cmdstan)

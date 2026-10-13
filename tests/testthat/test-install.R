@@ -161,9 +161,13 @@ test_that("check_cmdstan_toolchain() reports what is missing on Unix", {
 })
 
 test_that("clean and rebuild works", {
-  set_cmdstan_path()
+  dir <- withr::local_tempdir()
+  withr::defer(set_cmdstan_path())
+  install_cmdstan(dir = dir, cores = 2, quiet = TRUE, overwrite = TRUE,
+                  release_url = cmdstan_test_tarball_url,
+                  wsl = os_is_wsl())
   expect_output(
-    rebuild_cmdstan(cores = 2),
+    rebuild_cmdstan(dir = cmdstan_path(), cores = 2),
     paste0("CmdStan v", cmdstan_version(), " built"),
     fixed = TRUE
   )

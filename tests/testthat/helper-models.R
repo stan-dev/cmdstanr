@@ -6,7 +6,10 @@ testing_data <- function(name) {
   }
 }
 testing_stan_file <- function(name) {
-  test_path("resources", "stan", paste0(name, ".stan"))
+  stan_fixture(paste0(name, ".stan"))
+}
+stan_fixture <- function(...) {
+  file.path(tempdir(), "stan", ...)
 }
 
 local_include_model_with_spaces <- function(.local_envir = parent.frame()) {
