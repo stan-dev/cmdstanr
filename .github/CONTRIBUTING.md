@@ -39,7 +39,7 @@ helpful if this process is new to you.
 
 ### Code style
 
-*   New code should follow the style used in the package. We lint our code using [`Jarl`](https://jarl.etiennebacher.com/) and format using [`Air`](https://posit-dev.github.io/air/). It is best if you run these before commiting code, so all code in the repo is always formatted.
+*   New code should follow the style used in the package. We lint our code using [`Jarl`](https://jarl.etiennebacher.com/) and format using [`Air`](https://posit-dev.github.io/air/). It is best if you run these before committing code, so all code in the repo is always formatted.
 
 *  We use [`roxygen2`](https://cran.r-project.org/package=roxygen2), with [Markdown syntax](https://cran.r-project.org/web/packages/roxygen2/vignettes/rd-formatting.html), for documentation.  
 
