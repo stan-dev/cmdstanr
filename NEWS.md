@@ -279,6 +279,9 @@ argument. Previously they were split on whitespace. (#1232)
 * `laplace()` no longer overwrites the internally generated optimizer CSV when
 `mode = NULL` and `output_basename` is supplied. The internally generated
 optimizer CSV now uses the filename `<output_basename>-mode-01.csv`.
+* `$laplace()` now passes `show_messages` and `show_exceptions` to the
+optimizer run it starts when `mode` is not supplied. Previously that run
+printed its output regardless.
 * `read_cmdstan_csv()` now expands `~` in file paths. (#1098)
 * Loading CmdStanR no longer causes `parallel::mclapply()` to leave zombie
 processes behind. (#1105)
