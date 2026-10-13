@@ -240,122 +240,104 @@ default arguments. These values are also available via the
 }
 \examples{
 \dontrun{
-library(cmdstanr)
-library(posterior)
-library(bayesplot)
-color_scheme_set("brightblue")
-
-# Set path to CmdStan
-# (Note: if you installed CmdStan via install_cmdstan() with default settings
-# then setting the path is unnecessary but the default below should still work.
-# Otherwise use the `path` argument to specify the location of your
-# CmdStan installation.)
-set_cmdstan_path(path = NULL)
-
-# Create a CmdStanModel object from a Stan program,
-# here using the example model that comes with CmdStan
 file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(file)
-mod$print()
-# Print with line numbers. This can be set globally using the
-# `cmdstanr_print_line_numbers` option.
-mod$print(line_numbers = TRUE)
-
-# Data as a named list (like RStan)
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 
-# Run MCMC using the 'sample' method
-fit_mcmc <- mod$sample(
+# Mean-field ADVI by default
+fit <- mod$variational(data = stan_data, seed = 123)
+fit$summary()
+bayesplot::mcmc_hist(fit$draws("theta"))
+
+# A full-rank approximation, with more draws from it.
+# show_messages = FALSE here and below hides CmdStan's output. That's to
+# keep these examples short, not a recommendation.
+fit <- mod$variational(
   data = stan_data,
   seed = 123,
-  chains = 2,
-  parallel_chains = 2
+  algorithm = "fullrank",
+  draws = 4000,
+  show_messages = FALSE
 )
 
-# Use 'posterior' package for summaries
-fit_mcmc$summary()
-
-# Check sampling diagnostics
-fit_mcmc$diagnostic_summary()
-
-# Get posterior draws
-draws <- fit_mcmc$draws()
-print(draws)
-
-# Convert to data frame using posterior::as_draws_df
-as_draws_df(draws)
-
-# Plot posterior using bayesplot (ggplot2)
-mcmc_hist(fit_mcmc$draws("theta"))
-
-# Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
-# and also demonstrate specifying data as a path to a file instead of a list
-my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
-fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-fit_optim$summary()
-
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
-# to the posterior
-fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
-fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
-fit_laplace$summary()
-
-# Run 'variational' method to use ADVI to approximate posterior
-fit_vb <- mod$variational(data = stan_data, seed = 123)
-fit_vb$summary()
-mcmc_hist(fit_vb$draws("theta"))
-
-# Run the Pathfinder variational inference method
-fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
-fit_pf$summary()
-mcmc_hist(fit_pf$draws("theta"))
-
-# Run 'pathfinder' again with more paths, fewer draws per path,
-# better covariance approximation, and fewer LBFGSs iterations
-fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
-                         history_size=50, max_lbfgs_iters=100)
-
-# Specifying initial values as a function
-fit_mcmc_w_init_fun <- mod$sample(
+# More Monte Carlo draws for the gradient and the ELBO, for a less
+# noisy optimization
+fit <- mod$variational(
   data = stan_data,
   seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = function() list(theta = runif(1))
+  grad_samples = 10,
+  elbo_samples = 500,
+  show_messages = FALSE
 )
-fit_mcmc_w_init_fun_2 <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = function(chain_id) {
-    # silly but demonstrates optional use of chain_id
-    list(theta = 1 / (chain_id + 1))
-  }
-)
-fit_mcmc_w_init_fun_2$init()
-
-# Specifying initial values as a list of lists
-fit_mcmc_w_init_list <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = list(
-    list(theta = 0.75), # chain 1
-    list(theta = 0.25)  # chain 2
-  )
-)
-fit_optim_w_init_list <- mod$optimize(
-  data = stan_data,
-  seed = 123,
-  init = list(
-    list(theta = 0.75)
-  )
-)
-fit_optim_w_init_list$init()
 }
+\dontrun{
+# The rest of these examples work the same way for every fitting method.
 
+# Draws as a posterior draws object
+fit$draws()
+fit$draws("theta", format = "df")
+
+# Data as a path to a JSON or R dump file instead of a list
+data_file <- file.path(
+  cmdstan_path(),
+  "examples/bernoulli/bernoulli.data.json"
+)
+fit <- mod$variational(data = data_file, seed = 123, show_messages = FALSE)
+
+# Initial values from a function
+fit <- mod$variational(
+  data = stan_data,
+  seed = 123,
+  init = function() list(theta = runif(1)),
+  show_messages = FALSE
+)
+fit$init()
+
+# Initial values from a previous fit (can be a fit from a different method)
+fit2 <- mod$variational(
+  data = stan_data,
+  seed = 123,
+  init = fit,
+  show_messages = FALSE
+)
+
+# Initial values from a posterior::draws object
+inits <- fit$draws()
+fit <- mod$variational(
+  data = stan_data,
+  seed = 123,
+  init = inits,
+  show_messages = FALSE
+)
+
+# Suppress output from CmdStan while it runs
+fit <- mod$variational(
+  data = stan_data,
+  seed = 123,
+  show_messages = FALSE,
+  show_exceptions = FALSE
+)
+
+# The CSV files CmdStan wrote, in a temporary directory by default. Move
+# them to keep them past the R session. Replace tempdir below with a
+# directory you'll keep.
+fit$output_files()
+
+my_dir <- tempdir()
+fit$save_output_files(dir = my_dir, basename = "bernoulli")
+
+# Or use output_dir to have CmdStan write them there in the first place,
+# here gzip-compressed to save disk space
+fit <- mod$variational(
+  data = stan_data,
+  seed = 123,
+  output_dir = my_dir,
+  output_basename = "bernoulli",
+  compress = "gzip",
+  show_messages = FALSE
+)
+fit$output_files()
+}
 }
 \references{
 \itemize{
