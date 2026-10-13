@@ -125,6 +125,7 @@ jobs:
 
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
@@ -147,3 +148,9 @@ jobs:
           git commit -m "Remove pkgdown preview for PR #$PR_NUMBER"
           git pull --rebase origin gh-pages
           git push origin HEAD:gh-pages
+          
+      - name: Hide preview comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          hide: true
+          hide_classify: OUTDATED
