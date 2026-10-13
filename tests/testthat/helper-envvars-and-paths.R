@@ -152,10 +152,8 @@ local_make_local_backup <- function(envir = parent.frame()) {
           },
           error = function(e) FALSE
         )
-        if (!identical(
-          read_make_local_contents(make_local_path),
-          make_local_orig
-        )) {
+        restored <- read_make_local_contents(make_local_path)
+        if (!identical(restored, make_local_orig)) {
           stop(
             "Could not restore nested CmdStan 'make/local' state. The ",
             "recovery backup has been retained at '",

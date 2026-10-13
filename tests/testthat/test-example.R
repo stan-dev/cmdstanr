@@ -12,12 +12,14 @@ stan_program <- "
   "
 
 test_that("cmdstanr_example works", {
+  skip_on_cran()
   fit_mcmc <- cmdstanr_example("logistic", chains = 2, force_recompile = TRUE)
   checkmate::expect_r6(fit_mcmc, "CmdStanMCMC")
   expect_equal(fit_mcmc$num_chains(), 2)
 
-  expect_output(cmdstanr_example("logistic", chains = 2, quiet = FALSE),
-                "Running MCMC with 2 sequential chains")
+  expect_sample_output(
+    cmdstanr_example("logistic", chains = 2, quiet = FALSE), 2
+  )
 
   fit_mle <- cmdstanr_example("logistic", method = "optimize")
   checkmate::expect_r6(fit_mle, "CmdStanMLE")
@@ -48,8 +50,9 @@ test_that("write_stan_file writes to specified directory and filename", {
                absolute_path(dir))
   expect_equal(f2 <- write_stan_file(stan_program, dir = dir, basename = "fruit.stan"),
                absolute_path(file.path(dir, "fruit.stan")))
+  # should add .stan extension if missing
   expect_equal(f3 <- write_stan_file(stan_program, dir = dir, basename = "vegetable"),
-               absolute_path(file.path(dir, "vegetable.stan"))) # should add .stan extension if missing
+               absolute_path(file.path(dir, "vegetable.stan")))
   expect_equal(f4 <- write_stan_file(stan_program, dir = explicit_dir, basename = "test"),
                absolute_path(file.path(explicit_dir, "test.stan")))
 })

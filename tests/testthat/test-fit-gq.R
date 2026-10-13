@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit <- testing_fit("bernoulli", method = "sample", seed = 123)
 fit_gq <- testing_fit("bernoulli_ppc", method = "generate_quantities", seed = 123, fitted_params = fit)
@@ -164,7 +166,7 @@ test_that("time() aligns successful gq process ids and times", {
     )
   )
   procs <- fit_gq$runset$procs
-  on.exit(fit_gq$runset$procs <- procs)
+  withr::defer(fit_gq$runset$procs <- procs)
   fit_gq$runset$procs <- MockGQProcs$new()
 
   expect_equal(

@@ -16,7 +16,8 @@ generate_quantities(
   threads_per_chain = NULL,
   opencl_ids = NULL,
   show_messages = TRUE,
-  show_exceptions = TRUE
+  show_exceptions = TRUE,
+  compress = getOption("cmdstanr_compress", "none")
 )
 }
 \arguments{
@@ -27,7 +28,8 @@ the following:
 \link{CmdStanPathfinder} fitted model object.
 \item A \link[posterior:draws_array]{posterior::draws_array} or \link[posterior:draws_matrix]{posterior::draws_matrix} object returned by
 CmdStanR's \code{\link[=fit-method-draws]{$draws()}} method.
-\item A character vector of paths to CmdStan CSV output files.
+\item A character vector of paths to CmdStan CSV output files (\code{.csv},
+\code{.csv.gz} or \code{.csv.bz2}).
 }
 
 For a \link{CmdStanMLE} object, optimization supplies one point estimate, so
@@ -102,18 +104,22 @@ session by \code{options(mc.cores=value)}. If the \code{"mc.cores"} option has n
 been set then the default is \code{1}.}
 
 \item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
+\link[=cmdstan_model]{compiled} with threading support, the number of
 threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
 contrast with \code{parallel_chains}, which specifies the number of chains to
 run in parallel. The actual number of CPU cores used is
-\code{parallel_chains*threads_per_chain}. For an example of using threading see
+\code{parallel_chains*threads_per_chain}. If not set, CmdStan uses one
+thread, or the value of the \code{STAN_NUM_THREADS} environment variable if
+that is set. A model built with threading pays a small, constant cost
+even when it runs on one thread, so build with threading only the models
+that use it. For an example of using threading see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
 the OpenCL device to use for fitting. The model must be compiled with
-\code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
-effect.}
+\code{cpp_options = list(stan_opencl = TRUE)}, otherwise setting this argument
+is an error.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
 during the execution process, such as iteration numbers and elapsed times.
@@ -127,6 +133,13 @@ recommended unless you are very confident that the model is correct up to
 numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
+
+\item{compress}{(string) Compression to apply to the output CSV files after
+CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
+(the default), \code{"gzip"}, or \code{"bzip2"}. The fit reads compressed files by
+decompressing them to a temporary copy first, which makes each read
+slower in exchange for using less disk space. The \code{cmdstanr_compress}
+option sets the default for every fitting method.}
 }
 \value{
 A \code{\link{CmdStanGQ}} object.
@@ -137,7 +150,7 @@ runs Stan's standalone generated quantities to obtain generated quantities
 based on previously fitted parameters.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide} for more details on the
 default arguments. These values are also available via the
 \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
@@ -197,12 +210,13 @@ The Stan and CmdStan documentation:
 }
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},

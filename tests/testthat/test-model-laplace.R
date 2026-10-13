@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 mod <- testing_model("logistic")
 data_list <- testing_data("logistic")
@@ -127,7 +129,7 @@ test_that("laplace() errors if jacobian arg doesn't match what optimize used", {
   )
   expect_error(
     mod$laplace(data = data_list, mode = fit, jacobian = TRUE),
-    "'jacobian' argument to optimize and laplace must match"
+    "`jacobian` argument to optimize and laplace must match"
   )
   expect_error(
     mod$laplace(data = data_list, mode = fit, jacobian = TRUE),
@@ -141,11 +143,11 @@ test_that("laplace() errors with bad combinations of arguments", {
   )
   expect_error(
     mod$laplace(data = data_list, mode = mod, opt_args = list(iter = 10)),
-    "Cannot specify both 'opt_args' and 'mode' arguments."
+    "Cannot specify both `opt_args` and `mode` arguments."
   )
   expect_error(
     mod$laplace(data = data_list, mode = rnorm(10)),
-    "If not NULL or a CmdStanMLE object then 'mode' must be a path to a CSV file"
+    "If not NULL or a CmdStanMLE object then `mode` must be a path to a CSV file"
   )
 })
 
@@ -162,4 +164,26 @@ test_that("laplace() errors if optimize() fails", {
       ),
       "Optimization failed"
     ))
+})
+
+test_that("laplace() accepts a compressed optimization fit as the mode", {
+  mle <- mod$optimize(data = data_list, seed = 123, refresh = 0)
+  mle_gz <- mod$optimize(
+    data = data_list, seed = 123, refresh = 0, compress = "gzip"
+  )
+  checkmate::expect_file_exists(mle_gz$output_files(), extension = "csv.gz")
+
+  plain <- mod$laplace(
+    mode = mle, data = data_list, seed = 123, refresh = 0, jacobian = FALSE
+  )
+  fit <- mod$laplace(
+    mode = mle_gz,
+    data = data_list,
+    seed = 123,
+    refresh = 0,
+    jacobian = FALSE,
+    compress = "gzip"
+  )
+  checkmate::expect_file_exists(fit$output_files(), extension = "csv.gz")
+  expect_equal(fit$draws(), plain$draws())
 })

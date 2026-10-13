@@ -40,7 +40,9 @@
 #'  should contain a sublist for each path. For other model fitting methods
 #'  there should be just one sublist. The sublists should have named elements
 #'  corresponding to the parameters for which you are specifying initial
-#'  values. See **Examples**.
+#'  values. See **Examples**. A tuple parameter is given as an unnamed list
+#'  of its elements and a complex parameter as an R complex value, see
+#'  [write_stan_json()].
 #'  * A function that returns a single list with names corresponding to the
 #'  parameters for which you are specifying initial values. The function can
 #'  take no arguments or a single argument `chain_id`. For MCMC and Pathfinder,
@@ -99,6 +101,13 @@
 #'   the output CSV files is composed of the model name, timestamp, and a
 #'   six-character random hexadecimal suffix.
 #'
+#' @param compress (string) Compression to apply to the output CSV files after
+#'   CmdStan finishes (including latent dynamics files, if saved): `"none"`
+#'   (the default), `"gzip"`, or `"bzip2"`. The fit reads compressed files by
+#'   decompressing them to a temporary copy first, which makes each read
+#'   slower in exchange for using less disk space. The `cmdstanr_compress`
+#'   option sets the default for every fitting method.
+#'
 #' @param sig_figs (positive integer) The number of significant figures (up to a
 #'   maximum of 18) to use when storing the output values. If `NULL` (the
 #'   default), the default from the installed CmdStan version is used. Use
@@ -108,8 +117,8 @@
 #'
 #' @param opencl_ids (integer vector of length 2) The platform and device IDs of
 #'   the OpenCL device to use for fitting. The model must be compiled with
-#'   `cpp_options = list(stan_opencl = TRUE)` for this argument to have an
-#'   effect.
+#'   `cpp_options = list(stan_opencl = TRUE)`, otherwise setting this argument
+#'   is an error.
 #'
 #' @param show_messages (logical) When `TRUE` (the default), prints all output
 #'   during the execution process, such as iteration numbers and elapsed times.

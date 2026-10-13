@@ -1,4 +1,5 @@
 # see separate test-json for testing writing data to JSON
+skip_on_cran()
 
 set_cmdstan_path()
 mod <- testing_model("logistic")

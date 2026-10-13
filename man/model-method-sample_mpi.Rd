@@ -35,8 +35,11 @@ sample_mpi(
   sig_figs = NULL,
   show_messages = TRUE,
   show_exceptions = TRUE,
+  show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+  show_iteration_messages = !show_progress_bar,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
-  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
 )
 }
 \arguments{
@@ -93,7 +96,9 @@ MCMC the list should contain a sublist for each chain, and for Pathfinder it
 should contain a sublist for each path. For other model fitting methods
 there should be just one sublist. The sublists should have named elements
 corresponding to the parameters for which you are specifying initial
-values. See \strong{Examples}.
+values. See \strong{Examples}. A tuple parameter is given as an unnamed list
+of its elements and a complex parameter as an R complex value, see
+\code{\link[=write_stan_json]{write_stan_json()}}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC and Pathfinder,
@@ -239,8 +244,7 @@ adaptation interval.}
 sampler generates a new sample without changing the current state of the
 Markov chain; only generated quantities may change. This can be useful
 when, for example, trying to generate pseudo-data using the generated
-quantities block. For CmdStan versions before 2.36, \code{fixed_param = TRUE}
-is mandatory if the parameters block is empty.}
+quantities block.}
 
 \item{sig_figs}{(positive integer) The number of significant figures (up to a
 maximum of 18) to use when storing the output values. If \code{NULL} (the
@@ -261,6 +265,17 @@ recommended unless you are very confident that the model is correct up to
 numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
+
+\item{show_progress_bar}{(logical) \strong{Experimental} and may change in a later
+release. When \code{TRUE}, shows a progress bar through \pkg{progressr} in place
+of CmdStan's iteration lines. The default is \code{FALSE} but can be set to
+\code{TRUE} for an entire session by \code{options(cmdstanr_progress_bar = TRUE)}.
+The bar also needs \pkg{progressr}'s reporting turned on once per
+session. See the \strong{Progress bar} section below for details.}
+
+\item{show_iteration_messages}{(logical) Whether to print CmdStan's
+iteration lines. The default is \code{!show_progress_bar}, so the progress bar
+replaces them.}
 
 \item{diagnostics}{(character vector) The diagnostics to automatically check
 and warn about after sampling. Setting this to an empty string \code{""} or
@@ -285,6 +300,13 @@ using the \code{\link[=fit-method-summary]{$summary()}} method.}
 tree and extra information (equivalent to the output CSV file header). The
 default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
 \code{options(cmdstanr_save_config = TRUE)}.}
+
+\item{compress}{(string) Compression to apply to the output CSV files after
+CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
+(the default), \code{"gzip"}, or \code{"bzip2"}. The fit reads compressed files by
+decompressing them to a temporary copy first, which makes each read
+slower in exchange for using less disk space. The \code{cmdstanr_compress}
+option sets the default for every fitting method.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
@@ -309,7 +331,7 @@ mod = cmdstan_model("model.stan", cpp_options = mpi_options)
 }\if{html}{\out{</div>}}
 
 The C++ options that must be supplied to the
-\link[=model-method-compile]{compile} call are:
+\code{\link[=cmdstan_model]{cmdstan_model()}} call are:
 \itemize{
 \item \code{stan_mpi}: Enables the use of MPI with Stan if \code{TRUE}.
 \item \code{CXX}: The name of the MPI C++ compiler wrapper. Typically \code{"mpicxx"}.
@@ -323,6 +345,59 @@ other MPI launch arguments (\code{mpi_args}). In most cases, it is enough to
 only define the number of processes. To use \code{n_procs} processes specify
 \code{mpi_args = list("n" = n_procs)}.
 }
+\section{Progress bar}{
+
+\subsection{Setup}{
+
+The bar needs two things: \code{show_progress_bar = TRUE}, either in each
+\verb{$sample()} call or once per session with
+\code{options(cmdstanr_progress_bar = TRUE)}, and \pkg{progressr}'s reporting
+turned on once per session with \code{progressr::handlers(global = TRUE)}. The
+following turns on the progress bar for an entire R session:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{options(cmdstanr_progress_bar = TRUE)
+progressr::handlers(global = TRUE)
+}\if{html}{\out{</div>}}
+
+This also works to enable the bar when another package such as \pkg{brms}
+calls \verb{$sample()} for you.
+
+CmdStanR shows one bar for all chains rather than one per chain, because
+older versions of RStudio's console only support single-line bars. The
+default is to show the progress bar instead of CmdStan's iteration lines,
+but those can be kept with \code{show_iteration_messages = TRUE}. The per-chain
+timing lines print once the bar is done.
+}
+
+\subsection{Choosing a bar}{
+
+The default progress bar is very simple. To customize it, select one of the
+many available handlers, for example \code{progressr::handlers("cli")}. The
+\pkg{progressr} vignette on
+\href{https://progressr.futureverse.org/articles/progressr-11-handlers.html}{handlers}
+lists the bars it ships and their options.
+}
+
+\subsection{Overhead and the \code{refresh} argument}{
+
+The bar advances with CmdStan's iteration lines, one every \code{refresh}
+iterations (CmdStan's default is 100). With \code{refresh = 0} CmdStan prints
+none, so no bar is shown. A small \code{refresh} adds overhead, because CmdStanR
+reads every line CmdStan prints, with or without the bar. For a model that
+samples quickly the overhead can be noticeable. For a slow model it is small
+next to the sampling time, and \code{refresh = 1} gives the smoothest bar.
+}
+
+\subsection{Quarto and R Markdown}{
+
+In a Quarto or R Markdown document, write
+\code{if (interactive()) progressr::handlers(global = TRUE)} in the setup chunk,
+because the call fails while the document renders. Add
+\code{options(cmdstanr_progress_bar = interactive())} to keep CmdStan's iteration
+lines in the rendered output.
+}
+}
+
 \examples{
 \dontrun{
 # mpi_options <- list(stan_mpi = TRUE, CXX = "mpicxx", TBB_CXX_TYPE = "gcc")
@@ -352,13 +427,14 @@ The Stan Math Library's documentation
 details on MPI support in Stan.
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},

@@ -1,3 +1,6 @@
+# CI runners have four cores, so run two chains at a time
+options(mc.cores = 2)
+
 cleanup_stan_artifacts <- function() {
   all_files_in_stan <- list.files(
     test_path("resources", "stan"),

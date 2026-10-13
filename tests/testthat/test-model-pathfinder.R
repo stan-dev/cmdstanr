@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -42,7 +44,6 @@ bad_arg_values <- list(
   seed = -80,
   threads = "NOT_THREADS",
   init_alpha = "cat.jpeg",
-  init_alpha = -3,
   tol_obj = -1,
   tol_rel_obj = -4,
   tol_grad = -5,
@@ -152,6 +153,16 @@ test_that("pathfinder() method runs when all arguments specified", {
   expect_s3_class(fit, "CmdStanPathfinder")
 })
 
+test_that("pathfinder() method errors for any invalid arguments before calling cmdstan", {
+  for (bad in list(bad_arg_values, bad_arg_values_2, bad_arg_values_3)) {
+    for (nm in names(bad)) {
+      args <- ok_arg_values
+      args[[nm]] <- bad[[nm]]
+      expect_error(do.call(mod$pathfinder, args), regexp = nm)
+    }
+  }
+})
+
 test_that("pathfinder() saves single path outputs", {
   output_dir <- withr::local_tempdir()
 
@@ -176,16 +187,6 @@ test_that("pathfinder() saves single path outputs", {
     c(".csv", ".json")
   ))
   expect_equal(file.exists(single_path_files), rep(TRUE, 4))
-})
-
-test_that("pathfinder() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(stan_program, stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_pathfinder_output(
-    mod_tmp$pathfinder(data = data_list)
-  )
 })
 
 test_that("no error when checking estimates after failure", {

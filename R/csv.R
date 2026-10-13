@@ -39,7 +39,17 @@
 #' `read_cmdstan_csv()` returns a named list with the following components:
 #'
 #' * `metadata`: A list of the meta information from the run that produced the
-#' CSV file(s). See **Examples** below.
+#' CSV file(s). See **Examples** below. A note about variable names and sizes
+#' reported in `metadata`: `stan_variables` lists the Stan variables and
+#' `stan_variable_sizes` the shape each one's columns fill. A complex variable
+#' gets a trailing dimension of 2 for its real and imaginary parts, and a tuple
+#' the dimensions of its outer array only. Column names use `[i,j]` for indices,
+#' `[real]` and `[imag]` for the parts of a complex number, and `:` for tuple
+#' elements (`tup:2[1,1]` is element `[1,1]` of the matrix in a tuple's second
+#' element, `arr_tup[1]:2` the second element of the first tuple in an array of
+#' tuples). The \pkg{posterior} package treats everything before the last `[` as
+#' the variable name, so it groups the columns of a complex variable but not
+#' those of a tuple.
 #'
 #' The other components in the returned list depend on the method that produced
 #' the CSV file(s).
@@ -169,14 +179,7 @@ read_cmdstan_csv <- function(files,
   withr::local_path(toolchain_PATH_env_var())
   # If the CSV files are stored in the WSL filesystem then it is significantly
   # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
-  if (os_is_wsl() && any(grepl("^//wsl", files))) {
-    wsl_files <- sapply(files, wsl_safe_path)
-    processx::run(
-      "wsl", c("cp", wsl_files, wsl_safe_path(temp_dir)),
-      error_on_status = TRUE
-    )
-    files <- file.path(temp_dir, basename(files))
-  }
+  files <- stage_wsl_csv_files(files, temp_dir)
   format <- assert_valid_draws_format(format)
   assert_file_exists(
     files,
@@ -184,9 +187,7 @@ read_cmdstan_csv <- function(files,
     extension = c("csv", "csv.gz", "csv.bz2")
   )
   files <- wsl_safe_path(files, revert = TRUE)
-  for (i in grep("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)) {
-    files[i] <- decompress_csv(files[i], temp_dir)
-  }
+  files <- decompress_csv_files(files, temp_dir)
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -295,51 +296,70 @@ read_cmdstan_csv <- function(files,
     sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
   }
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
-  num_post_warmup_draws <- ceiling(metadata$iter_sampling / metadata$thin)
   selected <- c(sampler_diagnostics, variables)
-  for (output_file in files) {
-    if (length(selected) > 0) {
-      csv_data <- suppressWarnings(data.table::fread(
-        file = output_file,
-        select = selected,
-        comment.char = "#",
-        data.table = FALSE
-      ))
+  repaired_variables <- repair_variable_names(variables)
+  supports_multi_chain <-
+    metadata$method %in% c("sample", "generate_quantities")
+  n_warmup <- 0
+  if (metadata$method == "sample" && metadata$save_warmup == 1) {
+    n_warmup <- num_warmup_draws
+  }
+  for (i in seq_along(files)) {
+    if (length(selected) == 0) {
+      next
     }
-    if (length(sampler_diagnostics) > 0) {
-      post_warmup_sd_id <- length(post_warmup_sampler_diagnostics) + 1
-      warmup_sd_id <- length(warmup_sampler_diagnostics) + 1
-      post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <-
-        csv_data[, sampler_diagnostics, drop = FALSE]
-      if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
-        warmup_sampler_diagnostics[[warmup_sd_id]] <-
-          post_warmup_sampler_diagnostics[[post_warmup_sd_id]][1:num_warmup_draws, , drop = FALSE]
-        if (num_post_warmup_draws > 0) {
-          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <-
-            post_warmup_sampler_diagnostics[[post_warmup_sd_id]][(num_warmup_draws + 1):(num_warmup_draws + num_post_warmup_draws), , drop = FALSE]
-        } else {
-          post_warmup_sampler_diagnostics[[post_warmup_sd_id]] <- NULL
-        }
+    csv_data <- suppressWarnings(data.table::fread(
+      file = files[i],
+      select = selected,
+      comment.char = "#",
+      data.table = FALSE
+    ))
+    if (!supports_multi_chain) {
+      if (length(variables) > 0) {
+        draws[[i]] <- csv_data[, variables, drop = FALSE]
       }
+      next
     }
-    if (length(variables) > 0) {
-      draws_list_id <- length(draws) + 1
-      warmup_draws_list_id <- length(warmup_draws) + 1
-      draws[[draws_list_id]] <- csv_data[, variables, drop = FALSE]
-      if (metadata$method == "sample" && metadata$save_warmup == 1 && num_warmup_draws > 0) {
-        warmup_draws[[warmup_draws_list_id]] <-
-          draws[[draws_list_id]][1:num_warmup_draws, , drop = FALSE]
-        if (num_post_warmup_draws > 0) {
-          draws[[draws_list_id]] <- draws[[draws_list_id]][(num_warmup_draws + 1):(num_warmup_draws + num_post_warmup_draws), , drop = FALSE]
-        } else {
-          draws[[draws_list_id]] <- NULL
-        }
+    # fill each output array chain by chain, holding one data frame at a time
+    if (i == 1) {
+      chain_array <- function(n, columns) {
+        array(
+          NA, c(n, length(files), length(columns)),
+          dimnames = list(NULL, NULL, columns)
+        )
       }
+      # a chain that stopped early has fewer rows than its header says
+      n_rows <- nrow(csv_data)
+      n_warmup <- min(n_warmup, n_rows)
+      n_post <- n_rows - n_warmup
+      warmup_draws <- chain_array(n_warmup, repaired_variables)
+      draws <- chain_array(n_post, repaired_variables)
+      warmup_sampler_diagnostics <- chain_array(n_warmup, sampler_diagnostics)
+      post_warmup_sampler_diagnostics <-
+        chain_array(n_post, sampler_diagnostics)
+      warmup_rows <- seq_len(n_warmup)
+      post_rows <- n_warmup + seq_len(n_post)
+    }
+    if (nrow(csv_data) != n_rows) {
+      stop("Supplied CSV files do not match in the number of output samples!",
+           call. = FALSE)
+    }
+    var_idx <- match(variables, names(csv_data))
+    for (j in seq_along(var_idx)) {
+      col <- csv_data[[var_idx[j]]]
+      warmup_draws[, i, j] <- col[warmup_rows]
+      draws[, i, j] <- col[post_rows]
+    }
+    sd_idx <- match(sampler_diagnostics, names(csv_data))
+    for (j in seq_along(sd_idx)) {
+      col <- csv_data[[sd_idx[j]]]
+      warmup_sampler_diagnostics[, i, j] <- col[warmup_rows]
+      post_warmup_sampler_diagnostics[, i, j] <- col[post_rows]
     }
   }
+  csv_data <- NULL # free the last chain before converting the arrays
   metadata$inv_metric <- NULL
   metadata$variables <- repair_variable_names(metadata$variables)
-  repaired_variables <- repair_variable_names(variables)
   if (metadata$method == "variational") {
     metadata$variables <- metadata$variables[metadata$variables != "lp__"]
     metadata$variables <- gsub("log_p__", "lp__", metadata$variables)
@@ -362,49 +382,17 @@ read_cmdstan_csv <- function(files,
       format <- "draws_array"
     }
     as_draws_format <- as_draws_format_fun(format)
-    if (length(warmup_draws) > 0) {
-      warmup_draws <- do.call(as_draws_format, list(warmup_draws))
-      posterior::variables(warmup_draws) <- repaired_variables
-      if (posterior::niterations(warmup_draws) == 0) {
-        warmup_draws <- NULL
-      }
-    } else {
-      warmup_draws <- NULL
-    }
-    if (length(draws) > 0) {
-      draws <-  do.call(as_draws_format, list(draws))
-      posterior::variables(draws) <- repaired_variables
-      if (posterior::niterations(draws) == 0) {
-        draws <- NULL
-      }
-    } else {
-      draws <- NULL
-    }
-    if (length(warmup_sampler_diagnostics) > 0) {
-      warmup_sampler_diagnostics <- do.call(as_draws_format, list(warmup_sampler_diagnostics))
-      if (posterior::niterations(warmup_sampler_diagnostics) == 0) {
-        warmup_sampler_diagnostics <- NULL
-      }
-    } else {
-      warmup_sampler_diagnostics <- NULL
-    }
-    if (length(post_warmup_sampler_diagnostics) > 0) {
-      post_warmup_sampler_diagnostics <- do.call(as_draws_format, list(post_warmup_sampler_diagnostics))
-      if (posterior::niterations(post_warmup_sampler_diagnostics) == 0) {
-        post_warmup_sampler_diagnostics <- NULL
-      }
-    } else {
-      post_warmup_sampler_diagnostics <- NULL
-    }
+    as_draws_or_null <- function(x) if (length(x) > 0) as_draws_format(x)
     list(
       metadata = metadata,
       time = list(total = NA_integer_, chains = time),
       inv_metric = inv_metric,
       step_size = step_size,
-      warmup_draws = warmup_draws,
-      post_warmup_draws = draws,
-      warmup_sampler_diagnostics = warmup_sampler_diagnostics,
-      post_warmup_sampler_diagnostics = post_warmup_sampler_diagnostics
+      warmup_draws = as_draws_or_null(warmup_draws),
+      post_warmup_draws = as_draws_or_null(draws),
+      warmup_sampler_diagnostics = as_draws_or_null(warmup_sampler_diagnostics),
+      post_warmup_sampler_diagnostics =
+        as_draws_or_null(post_warmup_sampler_diagnostics)
     )
   } else if (metadata$method == "variational") {
     if (is.null(format)) {
@@ -475,9 +463,10 @@ read_cmdstan_csv <- function(files,
       format <- "draws_array"
     }
     as_draws_format <- as_draws_format_fun(format)
-    draws <- do.call(as_draws_format, list(draws))
-    if (!is.null(draws)) {
-      posterior::variables(draws) <- repaired_variables
+    if (length(draws) > 0) {
+      draws <- as_draws_format(draws)
+    } else {
+      draws <- NULL
     }
     list(
       metadata = metadata,
@@ -667,13 +656,13 @@ unavailable_methods_CmdStanFit_CSV <- c(
   "init",
   "output",
   "return_codes",
+  "command",
   "num_procs",
   "time", # available for MCMC, not other methods
   "expose_functions",
   "init_model_methods",
   "log_prob", "grad_log_prob", "hessian",
-  "constrain_variables", "unconstrain_variables", "unconstrain_draws",
-  "variable_skeleton"
+  "constrain_variables", "unconstrain_variables", "unconstrain_draws"
 )
 error_unavailable_CmdStanFit_CSV <- function(...) {
   stop("This method is not available for objects created using as_cmdstan_fit().",
@@ -722,6 +711,7 @@ parse_generated_quantities_time <- function(line) {
 decompress_csv <- function(file, dir) {
   out <- tempfile(tmpdir = dir, fileext = ".csv")
   tool <- if (endsWith(tolower(file), ".gz")) "gzip" else "bzip2"
+  withr::local_path(toolchain_PATH_env_var())
   status <- processx::run(
     tool,
     c("-dc", path.expand(file)),
@@ -735,6 +725,91 @@ decompress_csv <- function(file, dir) {
     )
   }
   invisible(out)
+}
+
+#' Decompress the compressed CSV files in a vector of paths
+#'
+#' @noRd
+#' @param files Paths to CSV files, compressed or not.
+#' @param dir Directory for the decompressed copies.
+#' @return `files` with each compressed path replaced by its decompressed copy.
+decompress_csv_files <- function(files, dir) {
+  compressed <- grepl("\\.csv\\.(gz|bz2)$", files, ignore.case = TRUE)
+  files[compressed] <- vapply(
+    stage_wsl_csv_files(files[compressed], dir),
+    decompress_csv,
+    character(1),
+    dir = dir,
+    USE.NAMES = FALSE
+  )
+  files
+}
+
+#' Copy CSV files stored in the WSL filesystem into a Windows directory
+#'
+#' @noRd
+#' @param files Paths to CSV files.
+#' @param dir Directory to copy into.
+#' @return Paths to the copies if `files` are in WSL, otherwise `files`.
+stage_wsl_csv_files <- function(files, dir) {
+  if (os_is_wsl() && any(grepl("^//wsl", files))) {
+    wsl_compatible_run(
+      command = "cp",
+      args = c(wsl_safe_path(files), wsl_safe_path(dir))
+    )
+    files <- file.path(dir, basename(files))
+  }
+  files
+}
+
+#' Compress existing CSV files in place
+#'
+#' @noRd
+#' @param files Paths to CSV files.
+#' @param compress One of `"none"`, `"gzip"` or `"bzip2"`.
+#' @return `files` with the compressed files' extensions added.
+compress_csv <- function(files, compress) {
+  existing <- file.exists(files)
+  if (compress == "none" || !any(existing)) {
+    return(files)
+  }
+  withr::local_path(toolchain_PATH_env_var())
+  wsl_compatible_run(
+    command = compress,
+    args = c("-f", wsl_safe_path(path.expand(files[existing])))
+  )
+  files[existing] <- paste0(
+    files[existing], switch(compress, gzip = ".gz", bzip2 = ".bz2")
+  )
+  files
+}
+
+#' Check `compress` and that the program it needs is available
+#'
+#' @noRd
+#' @param compress One of `"none"`, `"gzip"` or `"bzip2"`.
+#' @return `compress`.
+assert_compress <- function(compress) {
+  compress <- match.arg(compress, c("none", "gzip", "bzip2"))
+  if (compress == "none") {
+    return(compress)
+  }
+  withr::local_path(toolchain_PATH_env_var())
+  found <- nzchar(Sys.which(compress))
+  where <- "on the PATH"
+  if (found && os_is_wsl()) {
+    ret <- processx::run("wsl", c("which", compress), error_on_status = FALSE)
+    found <- ret$status == 0
+    where <- "inside the WSL distribution"
+  }
+  if (!found) {
+    stop(
+      "`compress = \"", compress, "\"` needs the ", compress,
+      " program, which was not found ", where, ".",
+      call. = FALSE
+    )
+  }
+  compress
 }
 
 #' Reads the sampling arguments and the diagonal of the
@@ -777,9 +852,10 @@ read_csv_metadata <- function(csv_file) {
         if (csv_file_info$method == "pathfinder") {
           non_sampler_diagnostics <- c(non_sampler_diagnostics, "lp_approx__", "path__")
         }
-        csv_file_info[["sampler_diagnostics"]] <- all_names[endsWith(all_names, "__")]
-        csv_file_info[["sampler_diagnostics"]] <- csv_file_info[["sampler_diagnostics"]][!(csv_file_info[["sampler_diagnostics"]] %in% non_sampler_diagnostics)]
-        csv_file_info[["variables"]] <- all_names[!(all_names %in% csv_file_info[["sampler_diagnostics"]])]
+        diagnostics <- all_names[endsWith(all_names, "__")]
+        diagnostics <- diagnostics[!(diagnostics %in% non_sampler_diagnostics)]
+        csv_file_info[["sampler_diagnostics"]] <- diagnostics
+        csv_file_info[["variables"]] <- all_names[!(all_names %in% diagnostics)]
       } else {
         csv_file_info[["variables"]] <- all_names[!endsWith(all_names, "__")]
       }
@@ -962,11 +1038,13 @@ check_csv_metadata_matches <- function(csv_metadata) {
   }
   method <- sapply(csv_metadata, function(x) x$method)
   if (!all(method == method[1])) {
-    stop("Supplied CSV files were produced by different methods and need to be read in separately!", call. = FALSE)
+    stop("Supplied CSV files were produced by different methods ",
+         "and need to be read in separately!", call. = FALSE)
   }
+  variables <- csv_metadata[[1]]$variables
   for (i in 2:length(csv_metadata)) {
-    if (length(csv_metadata[[1]]$variables) != length(csv_metadata[[i]]$variables) ||
-      !all(csv_metadata[[1]]$variables == csv_metadata[[i]]$variables)) {
+    other <- csv_metadata[[i]]$variables
+    if (length(variables) != length(other) || !all(variables == other)) {
       stop("Supplied CSV files have samples for different variables!", call. = FALSE)
     }
   }
@@ -1011,21 +1089,27 @@ check_csv_metadata_matches <- function(csv_metadata) {
   NULL
 }
 
-# convert names like beta.1.1 to beta[1,1]
+# Convert CmdStan's column names to the bracketed names posterior uses,
+# beta.1.1 to beta[1,1]. Tuple elements are separated by colons and each
+# piece is converted on its own: tup:1.2 to tup:1[2], arr.1:2 to
+# arr[1]:2. A complex number's parts become indices, z.real to z[real].
 repair_variable_names <- function(names) {
-  names <- sub("\\.", "[", names)
-  names <- gsub("\\.", ",", names)
-  names[grep("\\[", names)] <-
-    paste0(names[grep("\\[", names)], "]")
-  names
+  repair <- function(pieces) {
+    pieces <- sub(".", "[", pieces, fixed = TRUE)
+    pieces <- gsub(".", ",", pieces, fixed = TRUE)
+    indexed <- grepl("[", pieces, fixed = TRUE)
+    pieces[indexed] <- paste0(pieces[indexed], "]")
+    paste(pieces, collapse = ":")
+  }
+  pieces <- strsplit(as.character(names), ":", fixed = TRUE)
+  vapply(pieces, repair, character(1))
 }
 
-# convert names like beta[1,1] to beta.1.1
+# convert names like beta[1,1] back to beta.1.1
 unrepair_variable_names <- function(names) {
-  names <- sub("\\[", "\\.", names)
-  names <- gsub(",", "\\.",  names)
-  names <- gsub("\\]", "",  names)
-  names
+  names <- gsub("[", ".", names, fixed = TRUE)
+  names <- gsub(",", ".", names, fixed = TRUE)
+  gsub("]", "", names, fixed = TRUE)
 }
 
 remaining_columns_to_read <- function(requested, currently_read, all) {
@@ -1046,8 +1130,9 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
     matched <- as.list(match(requested, all_remaining))
     # loop over requests not exactly matched
     for (id in which(is.na(matched))) {
-      matched[[id]] <-
-        which(startsWith(all_remaining, paste0(requested[id], "[")))
+      prefix <- paste0(requested[id], c("[", ":"))
+      matched[[id]] <- which(startsWith(all_remaining, prefix[1]) |
+                               startsWith(all_remaining, prefix[2]))
     }
     # collect all unread variables
     unread <- all_remaining[unlist(matched)]
@@ -1066,7 +1151,9 @@ remaining_columns_to_read <- function(requested, currently_read, all) {
 #'   individual elements (e.g., `c("beta[1]", "beta[2]")`, not just `"beta"`).
 #' @return A list giving the dimensions of the variables. The equivalent of the
 #'   `par_dims` slot of RStan's stanfit objects, except that scalars have
-#'   dimension `1` instead of `0`.
+#'   dimension `1` instead of `0`. A complex variable's parts are its last
+#'   dimension, of size 2, and a tuple's size is that of its outer array, `1`
+#'   when it isn't in an array.
 #' @note For this function to return the correct dimensions the input must be
 #'   already sorted in ascending order. Since CmdStan always has the variables
 #'   sorted correctly we avoid a sort by not sorting again here.
@@ -1075,19 +1162,147 @@ variable_dims <- function(variable_names = NULL) {
   if (is.null(variable_names)) {
     return(NULL)
   }
+  # the Stan variable each column belongs to
+  variables <- sub("(\\[|:).*", "", variable_names)
   dims <- list()
-  uniq_variable_names <- unique(gsub("\\[.*\\]", "", variable_names))
-  var_names <- gsub("\\]", "", variable_names)
-  for (var in uniq_variable_names) {
-    pattern <- paste0("^", var, "\\[")
-    var_indices <- var_names[grep(pattern, var_names)]
-    var_indices <- gsub(pattern, "", var_indices)
-    if (length(var_indices)) {
-      var_indices <- strsplit(var_indices[length(var_indices)], ",")[[1]]
-      dims[[var]] <- as.numeric(var_indices)
-    } else {
+  for (var in unique(variables)) {
+    last <- variable_names[max(which(variables == var))]
+    # a tuple's size is that of its outer array, before its first element
+    outer <- sub(":.*", "", last)
+    if (!grepl("[", outer, fixed = TRUE)) {
       dims[[var]] <- 1
+    } else {
+      indices <- strsplit(gsub("^.*\\[|\\]$", "", outer), ",")[[1]]
+      indices[indices == "imag"] <- "2"
+      dims[[var]] <- as.numeric(indices)
     }
   }
   dims
+}
+
+#' Rebuild R objects from the scalars of one draw
+#'
+#' CmdStan writes a draw as scalars in column-major order, one column per
+#' element, tuple element or complex part. This is the inverse of
+#' `flatten_variables()`: a scalar comes back as a number, an indexed
+#' variable as an array with its dims, a complex variable as an R complex
+#' scalar or array, a tuple as an unnamed list of its elements, and an
+#' array of tuples as a list of tuples, with a `dim` when the array has
+#' more than one dimension. These are the shapes `$constrain_variables()`
+#' returns and `$unconstrain_variables()`, `init` and `write_stan_json()`
+#' accept.
+#'
+#' @param values Numeric vector, one draw.
+#' @param names The columns' names, CmdStan's or repaired, in the same
+#'   order.
+#' @param declarations Optional, the variables' entries of `$variables()`,
+#'   to size tuples whose last elements are empty.
+#' @return A named list with one element per Stan variable.
+#' @noRd
+unflatten_variables <- function(values, names, declarations = NULL) {
+  names <- unrepair_variable_names(names)
+  variables <- sub("(\\.|:).*", "", names)
+  suffixes <- substring(names, nchar(variables) + 1)
+  groups <- split(seq_along(values),
+                  factor(variables, levels = unique(variables)))
+  result <- lapply(names(groups), function(var) {
+    unflatten_leaves(values[groups[[var]]], suffixes[groups[[var]]], var)
+  })
+  names(result) <- names(groups)
+  for (var in intersect(names(result), names(declarations))) {
+    result[[var]] <- pad_tuple(result[[var]], declarations[[var]])
+  }
+  result
+}
+
+# `suffixes` are what follows the variable's name in CmdStan's column
+# names: "" for a scalar, ".1.2" for an element, ":2.1" for a tuple
+# element's element, ".real" and ".imag" for the parts of a complex number.
+# `name` is the variable's name, for the error message.
+unflatten_leaves <- function(values, suffixes, name) {
+  if (all(suffixes == "")) {
+    return(values)
+  }
+  if (all(suffixes %in% c(".real", ".imag"))) {
+    if (!identical(sort(suffixes), c(".imag", ".real"))) {
+      stop("Variable '", name, "' is missing elements.", call. = FALSE)
+    }
+    return(complex(real = values[suffixes == ".real"],
+                   imaginary = values[suffixes == ".imag"]))
+  }
+  if (startsWith(suffixes[1], ":")) {
+    elements <- as.integer(sub("^:([0-9]+).*", "\\1", suffixes))
+    rest <- sub("^:[0-9]+", "", suffixes)
+    # an element with no columns is empty
+    groups <- split(seq_along(values),
+                    factor(elements, levels = seq_len(max(elements))))
+    return(unname(lapply(groups, function(i) {
+      if (length(i) == 0) {
+        numeric(0)
+      } else {
+        unflatten_leaves(values[i], rest[i], name)
+      }
+    })))
+  }
+  # array indices come first, then a tuple element, a complex part, or
+  # nothing
+  indices <- sub("^((\\.[0-9]+)+).*", "\\1", suffixes)
+  rest <- substring(suffixes, nchar(indices) + 1)
+  index <- lapply(strsplit(indices, ".", fixed = TRUE),
+                  function(i) as.integer(i[-1]))
+  dims <- do.call(pmax, index)
+  # column-major position of each column, whatever order they came in
+  strides <- cumprod(c(1, dims[-length(dims)]))
+  position <- vapply(index, function(i) sum((i - 1) * strides) + 1, numeric(1))
+  if (length(unique(position)) != prod(dims)) {
+    stop("Variable '", name, "' is missing elements.", call. = FALSE)
+  }
+  ord <- order(position)
+  values <- values[ord]
+  rest <- rest[ord]
+  position <- position[ord]
+  if (all(rest == "")) {
+    return(array(values, dim = dims))
+  }
+  cells <- split(seq_along(values), factor(position))
+  cells <- unname(lapply(cells, function(i) {
+    unflatten_leaves(values[i], rest[i], name)
+  }))
+  if (all(rest %in% c(".real", ".imag"))) {
+    return(array(unlist(cells), dim = dims))
+  }
+  if (length(dims) == 1) cells else array(cells, dim = dims)
+}
+
+# A tuple's trailing empty elements have no columns; its declaration says
+# how many elements it has
+pad_tuple <- function(x, declaration) {
+  if (!is.list(declaration$type)) {
+    return(x)
+  }
+  if (declaration$dimensions > 0) {
+    element <- list(type = declaration$type, dimensions = 0L)
+    padded <- lapply(x, pad_tuple, declaration = element)
+    return(if (is.null(dim(x))) padded else array(padded, dim = dim(x)))
+  }
+  declared <- seq_along(declaration$type)
+  x <- c(x, rep(list(numeric(0)), max(0, length(declared) - length(x))))
+  x[declared] <- Map(pad_tuple, x[declared], declaration$type)
+  x
+}
+
+#' Flatten R objects to the scalars of one draw
+#'
+#' The inverse of `unflatten_variables()`: lists in order, arrays in
+#' column-major order, a complex value as its real and imaginary parts.
+#' @noRd
+flatten_variables <- function(variables) {
+  if (is.list(variables)) {
+    return(unlist(lapply(variables, flatten_variables), use.names = FALSE))
+  }
+  if (is.complex(variables)) {
+    return(as.vector(rbind(as.vector(Re(variables)),
+                           as.vector(Im(variables)))))
+  }
+  as.vector(variables)
 }

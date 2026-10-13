@@ -36,9 +36,12 @@ sample(
   fixed_param = FALSE,
   show_messages = TRUE,
   show_exceptions = TRUE,
+  show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+  show_iteration_messages = !show_progress_bar,
   diagnostics = c("divergences", "treedepth", "ebfmi"),
   save_metric = getOption("cmdstanr_save_metric", FALSE),
-  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE)
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
 )
 }
 \arguments{
@@ -87,7 +90,9 @@ MCMC the list should contain a sublist for each chain, and for Pathfinder it
 should contain a sublist for each path. For other model fitting methods
 there should be just one sublist. The sublists should have named elements
 corresponding to the parameters for which you are specifying initial
-values. See \strong{Examples}.
+values. See \strong{Examples}. A tuple parameter is given as an unnamed list
+of its elements and a complex parameter as an R complex value, see
+\code{\link[=write_stan_json]{write_stan_json()}}.
 \item A function that returns a single list with names corresponding to the
 parameters for which you are specifying initial values. The function can
 take no arguments or a single argument \code{chain_id}. For MCMC and Pathfinder,
@@ -177,18 +182,22 @@ unique positive integers as the number of chains. If not set, the default
 chain IDs are used (integers starting from \code{1}).}
 
 \item{threads_per_chain}{(positive integer) If the model was
-\link[=model-method-compile]{compiled} with threading support, the number of
+\link[=cmdstan_model]{compiled} with threading support, the number of
 threads to use in parallelized sections \emph{within} an MCMC chain (e.g., when
 using the Stan functions \code{reduce_sum()} or \code{map_rect()}). This is in
 contrast with \code{parallel_chains}, which specifies the number of chains to
 run in parallel. The actual number of CPU cores used is
-\code{parallel_chains*threads_per_chain}. For an example of using threading see
+\code{parallel_chains*threads_per_chain}. If not set, CmdStan uses one
+thread, or the value of the \code{STAN_NUM_THREADS} environment variable if
+that is set. A model built with threading pays a small, constant cost
+even when it runs on one thread, so build with threading only the models
+that use it. For an example of using threading see
 the Stan case study \href{https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html}{Reduce Sum: A Minimal Example}.}
 
 \item{opencl_ids}{(integer vector of length 2) The platform and device IDs of
 the OpenCL device to use for fitting. The model must be compiled with
-\code{cpp_options = list(stan_opencl = TRUE)} for this argument to have an
-effect.}
+\code{cpp_options = list(stan_opencl = TRUE)}, otherwise setting this argument
+is an error.}
 
 \item{iter_warmup}{(positive integer) The number of warmup iterations to run
 per chain. Note: in the CmdStan User's Guide this is referred to as
@@ -260,8 +269,7 @@ adaptation interval.}
 sampler generates a new sample without changing the current state of the
 Markov chain; only generated quantities may change. This can be useful
 when, for example, trying to generate pseudo-data using the generated
-quantities block. For CmdStan versions before 2.36, \code{fixed_param = TRUE}
-is mandatory if the parameters block is empty.}
+quantities block.}
 
 \item{show_messages}{(logical) When \code{TRUE} (the default), prints all output
 during the execution process, such as iteration numbers and elapsed times.
@@ -275,6 +283,17 @@ recommended unless you are very confident that the model is correct up to
 numerical error. If the messages are silenced then the
 \code{\link[=fit-method-output]{$output()}} method of the resulting fit object can be
 used to display the silenced messages.}
+
+\item{show_progress_bar}{(logical) \strong{Experimental} and may change in a later
+release. When \code{TRUE}, shows a progress bar through \pkg{progressr} in place
+of CmdStan's iteration lines. The default is \code{FALSE} but can be set to
+\code{TRUE} for an entire session by \code{options(cmdstanr_progress_bar = TRUE)}.
+The bar also needs \pkg{progressr}'s reporting turned on once per
+session. See the \strong{Progress bar} section below for details.}
+
+\item{show_iteration_messages}{(logical) Whether to print CmdStan's
+iteration lines. The default is \code{!show_progress_bar}, so the progress bar
+replaces them.}
 
 \item{diagnostics}{(character vector) The diagnostics to automatically check
 and warn about after sampling. Setting this to an empty string \code{""} or
@@ -305,6 +324,13 @@ entire \R session by \code{options(cmdstanr_save_metric = TRUE)}.}
 tree and extra information (equivalent to the output CSV file header). The
 default is \code{FALSE} but can be set to \code{TRUE} for an entire \R session by
 \code{options(cmdstanr_save_config = TRUE)}.}
+
+\item{compress}{(string) Compression to apply to the output CSV files after
+CmdStan finishes (including latent dynamics files, if saved): \code{"none"}
+(the default), \code{"gzip"}, or \code{"bzip2"}. The fit reads compressed files by
+decompressing them to a temporary copy first, which makes each read
+slower in exchange for using less disk space. The \code{cmdstanr_compress}
+option sets the default for every fitting method.}
 }
 \value{
 A \code{\link{CmdStanMCMC}} object.
@@ -317,109 +343,133 @@ After model fitting any diagnostics specified via the \code{diagnostics}
 argument will be checked and warnings will be printed if warranted.
 
 Any argument left as \code{NULL} will default to the default value used by the
-installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User’s Guide} for more details on the
+installed version of CmdStan. See the \href{https://mc-stan.org/docs/cmdstan-guide/}{CmdStan User's Guide} for more details on the
 default arguments. These values are also available via the
 \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults}} method.
 }
+\section{Progress bar}{
+
+\subsection{Setup}{
+
+The bar needs two things: \code{show_progress_bar = TRUE}, either in each
+\verb{$sample()} call or once per session with
+\code{options(cmdstanr_progress_bar = TRUE)}, and \pkg{progressr}'s reporting
+turned on once per session with \code{progressr::handlers(global = TRUE)}. The
+following turns on the progress bar for an entire R session:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{options(cmdstanr_progress_bar = TRUE)
+progressr::handlers(global = TRUE)
+}\if{html}{\out{</div>}}
+
+This also works to enable the bar when another package such as \pkg{brms}
+calls \verb{$sample()} for you.
+
+CmdStanR shows one bar for all chains rather than one per chain, because
+older versions of RStudio's console only support single-line bars. The
+default is to show the progress bar instead of CmdStan's iteration lines,
+but those can be kept with \code{show_iteration_messages = TRUE}. The per-chain
+timing lines print once the bar is done.
+}
+
+\subsection{Choosing a bar}{
+
+The default progress bar is very simple. To customize it, select one of the
+many available handlers, for example \code{progressr::handlers("cli")}. The
+\pkg{progressr} vignette on
+\href{https://progressr.futureverse.org/articles/progressr-11-handlers.html}{handlers}
+lists the bars it ships and their options.
+}
+
+\subsection{Overhead and the \code{refresh} argument}{
+
+The bar advances with CmdStan's iteration lines, one every \code{refresh}
+iterations (CmdStan's default is 100). With \code{refresh = 0} CmdStan prints
+none, so no bar is shown. A small \code{refresh} adds overhead, because CmdStanR
+reads every line CmdStan prints, with or without the bar. For a model that
+samples quickly the overhead can be noticeable. For a slow model it is small
+next to the sampling time, and \code{refresh = 1} gives the smoothest bar.
+}
+
+\subsection{Quarto and R Markdown}{
+
+In a Quarto or R Markdown document, write
+\code{if (interactive()) progressr::handlers(global = TRUE)} in the setup chunk,
+because the call fails while the document renders. Add
+\code{options(cmdstanr_progress_bar = interactive())} to keep CmdStan's iteration
+lines in the rendered output.
+}
+}
+
 \examples{
 \dontrun{
-library(cmdstanr)
-library(posterior)
-library(bayesplot)
-color_scheme_set("brightblue")
-
-# Set path to CmdStan
-# (Note: if you installed CmdStan via install_cmdstan() with default settings
-# then setting the path is unnecessary but the default below should still work.
-# Otherwise use the `path` argument to specify the location of your
-# CmdStan installation.)
-set_cmdstan_path(path = NULL)
-
-# Create a CmdStanModel object from a Stan program,
-# here using the example model that comes with CmdStan
 file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(file)
-mod$print()
-# Print with line numbers. This can be set globally using the
-# `cmdstanr_print_line_numbers` option.
-mod$print(line_numbers = TRUE)
-
-# Data as a named list (like RStan)
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 
-# Run MCMC using the 'sample' method
-fit_mcmc <- mod$sample(
+# Four chains in parallel with the number of iterations set
+fit <- mod$sample(
   data = stan_data,
   seed = 123,
-  chains = 2,
-  parallel_chains = 2
+  chains = 4,
+  parallel_chains = 4,
+  iter_warmup = 500,
+  iter_sampling = 1000
 )
+fit$summary()
+fit$diagnostic_summary()
+bayesplot::mcmc_hist(fit$draws("theta"))
 
-# Use 'posterior' package for summaries
-fit_mcmc$summary()
-
-# Check sampling diagnostics
-fit_mcmc$diagnostic_summary()
-
-# Get posterior draws
-draws <- fit_mcmc$draws()
-print(draws)
-
-# Convert to data frame using posterior::as_draws_df
-as_draws_df(draws)
-
-# Plot posterior using bayesplot (ggplot2)
-mcmc_hist(fit_mcmc$draws("theta"))
-
-# Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
-# and also demonstrate specifying data as a path to a file instead of a list
-my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
-fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-fit_optim$summary()
-
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
-# to the posterior
-fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
-fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
-fit_laplace$summary()
-
-# Run 'variational' method to use ADVI to approximate posterior
-fit_vb <- mod$variational(data = stan_data, seed = 123)
-fit_vb$summary()
-mcmc_hist(fit_vb$draws("theta"))
-
-# Run the Pathfinder variational inference method
-fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
-fit_pf$summary()
-mcmc_hist(fit_pf$draws("theta"))
-
-# Run 'pathfinder' again with more paths, fewer draws per path,
-# better covariance approximation, and fewer LBFGSs iterations
-fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
-                         history_size=50, max_lbfgs_iters=100)
-
-# Specifying initial values as a function
-fit_mcmc_w_init_fun <- mod$sample(
+# Sampler settings, here the target acceptance rate and initial step size.
+# refresh = 0 here and below turns off the iteration updates.
+fit <- mod$sample(
   data = stan_data,
   seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = function() list(theta = runif(1))
+  adapt_delta = 0.95,
+  step_size = 0.01,
+  refresh = 0
 )
-fit_mcmc_w_init_fun_2 <- mod$sample(
+
+# Keep the warmup draws
+fit <- mod$sample(
   data = stan_data,
   seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = function(chain_id) {
-    # silly but demonstrates optional use of chain_id
-    list(theta = 1 / (chain_id + 1))
-  }
+  save_warmup = TRUE,
+  refresh = 0
 )
-fit_mcmc_w_init_fun_2$init()
+fit$draws(inc_warmup = TRUE)
 
-# Specifying initial values as a list of lists
-fit_mcmc_w_init_list <- mod$sample(
+# A progress bar in place of the iteration messages. progressr's
+# reporting is turned on once per session, see the Progress bar section.
+if (interactive()) {
+  progressr::handlers(global = TRUE)
+  fit <- mod$sample(data = stan_data, seed = 123, show_progress_bar = TRUE)
+}
+}
+\dontrun{
+# The rest of these examples work the same way for every fitting method.
+
+# Draws as a posterior draws object
+fit$draws()
+fit$draws("theta", format = "df")
+
+# Data as a path to a JSON or R dump file instead of a list
+data_file <- file.path(
+  cmdstan_path(),
+  "examples/bernoulli/bernoulli.data.json"
+)
+fit <- mod$sample(data = data_file, seed = 123, refresh = 0)
+
+# Initial values from a function
+fit <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  init = function() list(theta = runif(1)),
+  refresh = 0
+)
+fit$init()
+
+# Initial values as one list per chain
+fit <- mod$sample(
   data = stan_data,
   seed = 123,
   chains = 2,
@@ -429,16 +479,53 @@ fit_mcmc_w_init_list <- mod$sample(
     list(theta = 0.25)  # chain 2
   )
 )
-fit_optim_w_init_list <- mod$optimize(
+fit$init()
+
+# Initial values from a previous fit (can be a fit from a different method)
+fit2 <- mod$sample(
   data = stan_data,
   seed = 123,
-  init = list(
-    list(theta = 0.75)
-  )
+  init = fit,
+  refresh = 0
 )
-fit_optim_w_init_list$init()
-}
 
+# Initial values from a posterior::draws object
+inits <- fit$draws()
+fit <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  init = inits,
+  refresh = 0
+)
+
+# Suppress output from CmdStan while it runs
+fit <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  show_messages = FALSE,
+  show_exceptions = FALSE
+)
+
+# The CSV files CmdStan wrote, in a temporary directory by default. Move
+# them to keep them past the R session. Replace tempdir below with a
+# directory you'll keep.
+fit$output_files()
+
+my_dir <- tempdir()
+fit$save_output_files(dir = my_dir, basename = "bernoulli")
+
+# Or use output_dir to have CmdStan write them there in the first place,
+# here gzip-compressed to save disk space
+fit <- mod$sample(
+  data = stan_data,
+  seed = 123,
+  output_dir = my_dir,
+  output_basename = "bernoulli",
+  compress = "gzip",
+  refresh = 0
+)
+fit$output_files()
+}
 }
 \references{
 \itemize{
@@ -457,13 +544,14 @@ https://mc-stan.org/docs/cmdstan-guide/
 }
 \seealso{
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-model-info}},
 \code{\link{model-method-optimize}},

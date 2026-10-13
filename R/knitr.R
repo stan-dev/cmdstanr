@@ -25,7 +25,7 @@
 #' for an example.
 #'
 #' **Note:** When running chunks interactively in RStudio (e.g. when using
-#' [R Notebooks](https://bookdown.org/yihui/rmarkdown/notebook.html)), it has
+#' [R Notebooks](https://pkg.yihui.org/rmarkdown-book/notebook)), it has
 #' been observed that the built-in, RStan-based engine is used for `stan`
 #' chunks even when CmdStanR's engine has been registered in the session. When
 #' the R Markdown document is knit/rendered, the correct engine is used. As a
@@ -37,8 +37,8 @@
 #' `cmdstan` engine with `override = FALSE`.
 #'
 #' @references
-#' * [Register a custom language engine for knitr](https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html)
-#' * [knitr's built-in Stan language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#stan)
+#' * [Register a custom language engine for knitr](https://pkg.yihui.org/rmarkdown-cookbook/custom-engine)
+#' * [knitr's built-in Stan language engine](https://pkg.yihui.org/rmarkdown-book/language-engines#stan)
 #'
 #' @seealso [eng_cmdstan()]
 #'

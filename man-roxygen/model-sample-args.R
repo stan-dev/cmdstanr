@@ -9,12 +9,16 @@
 #'   unique positive integers as the number of chains. If not set, the default
 #'   chain IDs are used (integers starting from `1`).
 #' @param threads_per_chain (positive integer) If the model was
-#'   [compiled][model-method-compile] with threading support, the number of
+#'   [compiled][cmdstan_model] with threading support, the number of
 #'   threads to use in parallelized sections _within_ an MCMC chain (e.g., when
 #'   using the Stan functions `reduce_sum()` or `map_rect()`). This is in
 #'   contrast with `parallel_chains`, which specifies the number of chains to
 #'   run in parallel. The actual number of CPU cores used is
-#'   `parallel_chains*threads_per_chain`. For an example of using threading see
+#'   `parallel_chains*threads_per_chain`. If not set, CmdStan uses one
+#'   thread, or the value of the `STAN_NUM_THREADS` environment variable if
+#'   that is set. A model built with threading pays a small, constant cost
+#'   even when it runs on one thread, so build with threading only the models
+#'   that use it. For an example of using threading see
 #'   the Stan case study [Reduce Sum: A Minimal
 #'   Example](https://mc-stan.org/users/documentation/case-studies/reduce_sum_tutorial.html).
 #'
@@ -75,8 +79,16 @@
 #'   sampler generates a new sample without changing the current state of the
 #'   Markov chain; only generated quantities may change. This can be useful
 #'   when, for example, trying to generate pseudo-data using the generated
-#'   quantities block. For CmdStan versions before 2.36, `fixed_param = TRUE`
-#'   is mandatory if the parameters block is empty.
+#'   quantities block.
+#' @param show_progress_bar (logical) **Experimental** and may change in a later
+#'   release. When `TRUE`, shows a progress bar through \pkg{progressr} in place
+#'   of CmdStan's iteration lines. The default is `FALSE` but can be set to
+#'   `TRUE` for an entire session by `options(cmdstanr_progress_bar = TRUE)`.
+#'   The bar also needs \pkg{progressr}'s reporting turned on once per
+#'   session. See the **Progress bar** section below for details.
+#' @param show_iteration_messages (logical) Whether to print CmdStan's
+#'   iteration lines. The default is `!show_progress_bar`, so the progress bar
+#'   replaces them.
 #' @param diagnostics (character vector) The diagnostics to automatically check
 #'   and warn about after sampling. Setting this to an empty string `""` or
 #'   `NULL` can be used to prevent CmdStanR from automatically reading in the

@@ -73,7 +73,6 @@ write_stan_file <- function(code,
     }
     file <- file.path(dir, basename)
   } else {
-    require_suggested_package("rlang")
     hash <- rlang::hash(paste0(hash_salt, collapsed_code))
     file <- file.path(dir, paste0("model_", hash, ".stan"))
   }

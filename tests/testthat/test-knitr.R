@@ -5,6 +5,7 @@ test_that("eng_cmdstan throws correct errors", {
 })
 
 test_that("eng_cmdstan works", {
+  skip_on_cran()
   skip_if_not_installed("knitr")
   code <- "
   parameters {
@@ -18,11 +19,20 @@ test_that("eng_cmdstan works", {
     output.var = "ABC",
     code = code,
     cache = TRUE,
-    cache.path = tempdir()
+    cache.path = withr::local_tempdir()
   ))
   expect_interactive_message(eng_cmdstan(opts), "Compiling Stan program")
   opts$eval <- FALSE
   expect_noninteractive_silent(eng_cmdstan(opts))
+
+  opts$eval <- TRUE
+  opts$cache <- FALSE
+  expect_interactive_message(eng_cmdstan(opts), "Compiling Stan program")
+  opts$cache <- TRUE
+  opts$cache.path <- NA
+  opts$label <- "cmdstanr-knitr"
+  withr::local_dir(withr::local_tempdir())
+  expect_interactive_message(eng_cmdstan(opts), "Compiling Stan program")
 })
 
 test_that("register_knitr_engine works with and without override", {

@@ -19,5 +19,5 @@
       variable mean median sd mad q5 q95
       lp__
       
-      # showing 1 of 6 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 1 of 6 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 
