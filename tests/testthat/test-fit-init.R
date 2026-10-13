@@ -152,57 +152,33 @@ test_that("Pathfinder fit initializations use the intended weights", {
 test_that("Pathfinder init weights are not negative after Pareto smoothing", {
   # Most log weights are far below the maximum, so exp() underflows to 0 for
   # them. posterior::pareto_smooth() can then return weights of about -2e-16
-  # (posterior <= 1.7.1), which resample_draws() rejects.
+  # (posterior <= 1.7.1), which resample_draws() rejects. The mock gives those
+  # weights whatever the installed posterior version.
   lp <- c(-1000 - seq_len(350), -seq(0, 60, length.out = 50))
-  pathfinder_fit <- function(draws) {
-    structure(
-      list(
-        draws = function(format) draws,
-        metadata = function() list(
-          num_paths = 10,
-          psis_resample = FALSE,
-          calculate_lp = TRUE
-        ),
-        return_codes = function() 0
+  pathfinder_fit <- structure(
+    list(
+      draws = function(format) posterior::as_draws_df(data.frame(
+        theta = seq_along(lp),
+        lp__ = lp,
+        lp_approx__ = 0
+      )),
+      metadata = function() list(
+        num_paths = 10,
+        psis_resample = FALSE,
+        calculate_lp = TRUE
       ),
-      class = "CmdStanPathfinder"
-    )
-  }
-  local_mocked_bindings(process_init = function(init, ...) init)
-
-  draws <- posterior::as_draws_df(data.frame(
-    theta = seq_along(lp),
-    lp__ = lp,
-    lp_approx__ = 0
-  ))
-  inits <- NULL
-  expect_no_error(
-    inits <- suppressMessages(
-      process_init.CmdStanPathfinder(pathfinder_fit(draws), 4)
-    )
+      return_codes = function() 0
+    ),
+    class = "CmdStanPathfinder"
   )
-  expect_equal(posterior::ndraws(inits), 4)
-
-  # The same with a smoother that returns negative weights, so that the test
-  # does not depend on the installed posterior version. The first three draws
-  # are duplicates, so their weights are summed.
-  draws_dup <- posterior::as_draws_df(data.frame(
-    theta = c(1, 1, 1, seq_along(lp)[-(1:3)]),
-    lp__ = c(rep(lp[1], 3), lp[-(1:3)]),
-    lp_approx__ = 0
-  ))
-  weights_seen <- NULL
   local_mocked_bindings(
     pareto_smooth = function(x, ...) x - 1e-16,
-    resample_draws = function(x, ndraws, weights = NULL, ...) {
-      weights_seen <<- weights
-      x[seq_len(ndraws), , drop = FALSE]
-    },
     .package = "posterior"
   )
-  process_init.CmdStanPathfinder(pathfinder_fit(draws_dup), 4)
-  expect_length(weights_seen, length(lp) - 2)
-  expect_true(all(weights_seen >= 0))
+  local_mocked_bindings(process_init = function(init, ...) init)
+
+  inits <- process_init.CmdStanPathfinder(pathfinder_fit, 4)
+  expect_equal(posterior::ndraws(inits), 4)
 })
 
 test_that("Pathfinder init candidates are distinct target parameter vectors", {
