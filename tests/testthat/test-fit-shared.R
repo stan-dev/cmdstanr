@@ -441,18 +441,33 @@ test_that("no output with show_messages = FALSE", {
     tmp <- mod$sample(data = data_list, chains = 1, seed = 123)
   )
   expect_gt(length(output), 1)
-  output <- utils::capture.output(tmp <- mod$laplace(data = data_list, seed = 123))
+  output <- utils::capture.output(
+    tmp <- mod$laplace(data = data_list, seed = 123)
+  )
   expect_gt(length(output), 1)
 
-  output <- utils::capture.output(tmp <- mod$variational(data = data_list, show_messages = FALSE, seed = 123))
-  expect_equal(length(output), 0)
-  output <- utils::capture.output(tmp <- mod$optimize(data = data_list, show_messages = FALSE, seed = 123))
-  expect_equal(length(output), 0)
-  output <- utils::capture.output(tmp <- mod$sample(data = data_list, show_messages = FALSE, chains = 1, seed = 123))
-  expect_equal(length(output), 0)
+  output <- utils::capture.output(
+    tmp <- mod$variational(data = data_list, show_messages = FALSE, seed = 123)
+  )
+  expect_length(output, 0)
+  output <- utils::capture.output(
+    tmp <- mod$optimize(data = data_list, show_messages = FALSE, seed = 123)
+  )
+  expect_length(output, 0)
+  output <- utils::capture.output(
+    tmp <- mod$sample(
+      data = data_list,
+      show_messages = FALSE,
+      chains = 1,
+      seed = 123
+    )
+  )
+  expect_length(output, 0)
   # laplace() runs optimize() first and passes show_messages along
-  output <- utils::capture.output(tmp <- mod$laplace(data = data_list, show_messages = FALSE, seed = 123))
-  expect_equal(length(output), 0)
+  output <- utils::capture.output(
+    tmp <- mod$laplace(data = data_list, show_messages = FALSE, seed = 123)
+  )
+  expect_length(output, 0)
 })
 
 test_that("sig_figs works with all methods", {

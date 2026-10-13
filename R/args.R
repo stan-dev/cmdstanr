@@ -1604,8 +1604,11 @@ process_init_approx <- function(
     weights <- exp(log_weights - max(log_weights))
   } else {
     weights <- posterior::pareto_smooth(
-      exp(log_weights - max(log_weights)), tail = "right", r_eff = 1,
-      return_k = FALSE, verbose = FALSE
+      exp(log_weights - max(log_weights)),
+      tail = "right",
+      r_eff = 1,
+      return_k = FALSE,
+      verbose = FALSE
     )
   }
   if (num_candidates < nrow(draws_df)) {
