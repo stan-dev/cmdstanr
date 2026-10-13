@@ -38,10 +38,13 @@ jobs:
 
       - name: Install
         uses: posit-dev/setup-air@v1
+        with:
+          version: "0.12.0"
 
       - name: Jarl format
         uses: etiennebacher/setup-jarl@v0.1.1
         with:
+          version: "0.6.0"
           args: "check --fix"
 
       - name: Format
