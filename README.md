@@ -61,21 +61,8 @@ CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette.
 
 There is a lot of work still to be done, and we welcome contributions from
 anyone! If you are interested in contributing, please [comment on an open issue or
-open a new one](https://github.com/stan-dev/cmdstanr/issues) on GitHub.
-
-We use the following tools for developing CmdStanR:
-
-- [`testthat`](https://testthat.r-lib.org/) for unit testing.
-- [`roxygen2`](https://roxygen2.r-lib.org/) for generating package documentation.
-- [`devtools`](https://devtools.r-lib.org/) for checking the package.
-- [`Jarl`](https://jarl.etiennebacher.com/) for linting R code.
-- [`Air`](https://posit-dev.github.io/air/) for formatting R code.
-
-Jarl and Air can be run from the repository root using  `jarl check .` and `air format .`,
-respectively. To run tests, use `devtools::test()`, and to check the package, 
-use `devtools::check()`.
-
-For more details, please check [CONTRIBUTING.md](.github/CONTRIBUTING.md).
+open a new one](https://github.com/stan-dev/cmdstanr/issues) on GitHub. For more details, 
+please check [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
 ### License
 
