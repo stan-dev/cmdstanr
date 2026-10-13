@@ -153,7 +153,9 @@ test_that("Pathfinder init weights are not negative after Pareto smoothing", {
   # Most log weights are far below the maximum, so exp() underflows to 0 for
   # them. posterior::pareto_smooth() can then return weights of about -2e-16
   # (posterior <= 1.7.1), which resample_draws() rejects. The mock gives those
-  # weights whatever the installed posterior version.
+  # weights whatever the installed posterior version. Remove this test with
+  # the clamp once the minimum posterior version includes
+  # stan-dev/posterior#468.
   lp <- c(-1000 - seq_len(350), -seq(0, 60, length.out = 50))
   pathfinder_fit <- structure(
     list(
