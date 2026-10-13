@@ -1381,6 +1381,9 @@ process_init_approx <- function(init, num_procs, model_variables = NULL,
   } else {
     weights <- posterior::pareto_smooth(
       exp(log_weights - max(log_weights)), tail = "right", r_eff=1, return_k=FALSE)
+    # posterior <= 1.7.1 can return weights of about -2e-16 when many weights
+    # underflow to 0
+    weights <- pmax(weights, 0)
   }
   if (num_candidates < nrow(draws_df)) {
     # Collapse duplicate candidates to one row, summing their weights so a vector
