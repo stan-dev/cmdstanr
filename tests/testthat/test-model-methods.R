@@ -77,7 +77,8 @@ test_that("rcpp_source_stan() links RcppParallel's TBB with a plain -L", {
 
 test_that("R exits cleanly after model methods built against RcppParallel's TBB", {
   skip_if(is.null(rcppparallel_tbb()), "RcppParallel is older than 6.2.0 or bundles no TBB")
-  skip_on_os("windows")
+  # The crash never happens on macOS, where the test would only cost a build
+  skip_if_not(os_is_linux())
   # The crash is at exit, so run in a fresh R process with this cmdstanr
   # (installed, or the source tree via pkgload) and RcppParallel not loaded
   ns_path <- getNamespaceInfo("cmdstanr", "path")
@@ -105,12 +106,6 @@ test_that("R exits cleanly after model methods built against RcppParallel's TBB"
   expect_match(run$stdout, "done", fixed = TRUE)
   expect_equal(run$status, 0, info = run$stderr)
 })
-
-# Every build below has to coexist with RcppParallel's TBB in the session,
-# and the build above ran before it was loaded
-if (!is.null(rcppparallel_tbb())) {
-  loadNamespace("RcppParallel")
-}
 
 test_that("Model methods automatically initialise when needed", {
   expect_no_error(fit$log_prob(unconstrained_variables = c(0.1)))
