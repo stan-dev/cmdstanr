@@ -3,25 +3,45 @@ library(cmdstanr)
 
 prebuild_precompiled_headers <- function() {
   variants <- list(character(), "STAN_THREADS=true")
-  headers <- vapply(variants, function(make_args) {
-    header <- cmdstanr:::get_cmdstan_flags(
-      "PRECOMPILED_MODEL_HEADER", make_args = make_args
-    )
-    gsub("\"", "", header, fixed = TRUE)
-  }, "")
-  missing <- nzchar(headers) & !file.exists(headers)
-  if (any(missing)) {
-    targets <- sub("^.*/(stan/src/stan/model/)", "\\1", headers)
-    cluster <- parallel::makeCluster(sum(missing))
-    on.exit(parallel::stopCluster(cluster))
-    parallel::clusterMap(
-      cluster,
-      function(target, make_args) {
-        cmdstanr:::run_make(c(target, make_args), quiet = TRUE)
-      },
-      targets[missing], variants[missing]
-    )
-  }
+  cluster <- parallel::makeCluster(length(variants), outfile = "")
+  on.exit(parallel::stopCluster(cluster))
+  parallel::clusterApply(
+    cluster,
+    variants,
+    function(make_args) {
+      output <- character()
+      tryCatch(
+        withCallingHandlers(
+          {
+            printed <- cmdstanr:::run_make(
+              c("-s", make_args, "print-PRECOMPILED_MODEL_HEADER"),
+              quiet = TRUE
+            )$stdout
+            line <- grep(
+              "^PRECOMPILED_MODEL_HEADER", trimws(strsplit(printed, "\n")[[1]]),
+              value = TRUE
+            )
+            header <- trimws(sub("^PRECOMPILED_MODEL_HEADER\\s*=", "", line))
+            if (
+              length(header) == 1 && nzchar(header) &&
+              !file.exists(file.path(cmdstanr::cmdstan_path(), header))
+            ) {
+              cmdstanr:::run_make(c(header, make_args), quiet = TRUE)
+            }
+          },
+          message = function(m) {
+            output <<- c(output, conditionMessage(m))
+            invokeRestart("muffleMessage")
+          }
+        ),
+        error = function(e) {
+          message(paste(c(output, conditionMessage(e)), collapse = "\n"))
+        }
+      )
+      invisible()
+    }
+  )
+  invisible()
 }
 
 shared <- NULL
