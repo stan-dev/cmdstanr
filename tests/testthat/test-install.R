@@ -5,7 +5,7 @@ if (!nzchar(cmdstan_test_tarball_url)) {
   cmdstan_test_tarball_url <- NULL
 }
 
-test_that("install_cmdstan() successfully installs cmdstan", {
+test_that("install_cmdstan() successfully installs cmdstan and rebuild_cmdstan() rebuilds it", {
   dir <- withr::local_tempdir()
   withr::defer(set_cmdstan_path())
   expect_message(
@@ -17,6 +17,11 @@ test_that("install_cmdstan() successfully installs cmdstan", {
       fixed = TRUE
     ),
     "CmdStan path set",
+    fixed = TRUE
+  )
+  expect_output(
+    rebuild_cmdstan(dir = cmdstan_path(), cores = 2),
+    paste0("CmdStan v", cmdstan_version(), " built"),
     fixed = TRUE
   )
 })
@@ -158,19 +163,6 @@ test_that("check_cmdstan_toolchain() reports what is missing on Unix", {
   file.symlink(make, file.path(only_make, "make"))
   withr::local_envvar(c(PATH = only_make))
   expect_error(check_cmdstan_toolchain(), err_msg_cpp, fixed = TRUE)
-})
-
-test_that("clean and rebuild works", {
-  dir <- withr::local_tempdir()
-  withr::defer(set_cmdstan_path())
-  install_cmdstan(dir = dir, cores = 2, quiet = TRUE, overwrite = TRUE,
-                  release_url = cmdstan_test_tarball_url,
-                  wsl = os_is_wsl())
-  expect_output(
-    rebuild_cmdstan(dir = cmdstan_path(), cores = 2),
-    paste0("CmdStan v", cmdstan_version(), " built"),
-    fixed = TRUE
-  )
 })
 
 test_that("github_download_url constructs correct url", {
