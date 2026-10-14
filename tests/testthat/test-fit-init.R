@@ -262,16 +262,20 @@ test_that("Pathfinder init weights are not negative after Pareto smoothing", {
   lp <- c(-1000 - seq_len(350), -seq(0, 60, length.out = 50))
   pathfinder_fit <- structure(
     list(
-      draws = function(format) posterior::as_draws_df(data.frame(
-        theta = seq_along(lp),
-        lp__ = lp,
-        lp_approx__ = 0
-      )),
-      metadata = function() list(
-        num_paths = 10,
-        psis_resample = FALSE,
-        calculate_lp = TRUE
-      ),
+      draws = function(format) {
+        posterior::as_draws_df(data.frame(
+          theta = seq_along(lp),
+          lp__ = lp,
+          lp_approx__ = 0
+        ))
+      },
+      metadata = function() {
+        list(
+          num_paths = 10,
+          psis_resample = FALSE,
+          calculate_lp = TRUE
+        )
+      },
       return_codes = function() 0
     ),
     class = "CmdStanPathfinder"
