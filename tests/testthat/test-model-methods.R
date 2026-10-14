@@ -186,6 +186,24 @@ test_that("Methods return correct values", {
   expect_equal(unconstrained_variables, c(0.1))
 })
 
+test_that("model methods don't export Stan Math's autodiff stack", {
+  skip_on_os("windows")
+  # On Linux the loader would bind rstan's copy to it (#1177)
+  instance <- paste0(
+    "_ZN4stan4math22AutodiffStackSingletonINS0_9vari_baseE",
+    "NS0_15chainable_allocEE9instance_E"
+  )
+  fit$init_model_methods()
+  dlls <- Filter(
+    function(dll) startsWith(dll[["name"]], "sourceCpp"),
+    getLoadedDLLs()
+  )
+  expect_gt(length(dlls), 0)
+  for (dll in dlls) {
+    expect_false(is.loaded(instance, PACKAGE = dll[["name"]]))
+  }
+})
+
 test_that("Model methods environments are independent", {
   data_list_2 <- data_list
   data_list_2$N <- 20
