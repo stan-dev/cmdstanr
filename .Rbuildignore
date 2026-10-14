@@ -15,3 +15,5 @@
 ^\.vscode$
 ^dev-notes$
 ^\.claude$
+^jarl\.toml$
+^[.]?air[.]toml$
