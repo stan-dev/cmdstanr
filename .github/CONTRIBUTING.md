@@ -25,29 +25,25 @@ has more advice.
 ### Pull request process
 
 If you are new to creating pull requests here are some tips. Using the functions
-from the `usethis` package is not required but can be helpful if this process is
-new to you.
+from the [`usethis`](https://usethis.r-lib.org/) package is not required but can be
+helpful if this process is new to you.
 
 *   Fork the package and clone onto your computer. If you haven't done this before, we recommend using `usethis::create_from_github("stan-dev/cmdstanr", fork = TRUE)`.
-
 *   Install all development dependencies with `devtools::install_dev_deps()`, and then make sure the package passes R CMD check by running `devtools::check()`. 
     If R CMD check doesn't pass cleanly, it's a good idea to ask for help before continuing. 
 *   Create a Git branch for your pull request (PR). We recommend using `usethis::pr_init("brief-description-of-change")`.
-
 *   Make your changes, commit to git, and then create a PR by running `usethis::pr_push()`, and following the prompts in your browser.
     The title of your PR should briefly describe the change.
     The body of your PR should contain `Fixes #issue-number`.
-
 *  For user-facing changes, add a bullet to the top of `NEWS.md` (i.e. just below the first header). Follow the style already used in `NEWS.md`.
 
 ### Code style
 
-*   New code should attempt to follow the style used in the package. When in doubt follow the tidyverse [style guide](https://style.tidyverse.org). 
+*   New code should follow the style used in the package. We lint our code using [`Jarl`](https://jarl.etiennebacher.com/) and format using [`Air`](https://posit-dev.github.io/air/). It is best if you run these before committing code, so all code in the repo is always formatted.
 
-*  We use [roxygen2](https://cran.r-project.org/package=roxygen2), with [Markdown syntax](https://cran.r-project.org/web/packages/roxygen2/vignettes/rd-formatting.html), for documentation.  
+*  We use [`roxygen2`](https://cran.r-project.org/package=roxygen2), with [Markdown syntax](https://cran.r-project.org/web/packages/roxygen2/vignettes/rd-formatting.html), for documentation.  
 
-*  We use [testthat](https://cran.r-project.org/package=testthat) for unit tests. 
-   Contributions with test cases included are easier to accept.  
+*  We use [`testthat`](https://cran.r-project.org/package=testthat) for unit tests. Contributions with test cases included are easier to accept.  
 
 ## Code of Conduct
 

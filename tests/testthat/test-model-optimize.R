@@ -58,7 +58,8 @@ test_that("optimize() method runs when arguments are specified in scientific not
 test_that("optimize() errors if threads specified but not enabled", {
   expect_error(
     mod$optimize(data = data_list, threads = 2, seed = 123),
-    "does not report threading as enabled", fixed = TRUE
+    "does not report threading as enabled",
+    fixed = TRUE
   )
 })
 

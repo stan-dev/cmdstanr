@@ -1,30 +1,59 @@
 skip_on_cran()
 
 set_cmdstan_path()
-fit_mcmc <- testing_fit("logistic", method = "sample",
-                        seed = 123, chains = 2, save_metric = FALSE)
-fit_mcmc_0 <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2,
-                          refresh = 0)
-fit_mcmc_1 <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 2,
-                          refresh = 0, save_warmup = TRUE)
-fit_mcmc_2 <- testing_fit("logistic", method = "sample",
-                          seed = 1234, chains = 1,
-                          iter_sampling = 10000,
-                          refresh = 0, metric = "dense_e")
-fit_mcmc_3 <- testing_fit("logistic", method = "sample",
-                          seed = 1234, chains = 1,
-                          iter_warmup = 100,
-                          iter_sampling = 0,
-                          save_warmup = 1,
-                          refresh = 0, metric = "dense_e")
-fit_mcmc_fixed_param <- testing_fit("logistic", method = "sample",
-                                    seed = 1234, chains = 1,
-                                    iter_warmup = 100,
-                                    iter_sampling = 0,
-                                    save_warmup = 1,
-                                    refresh = 0, fixed_param = TRUE)
+fit_mcmc <- testing_fit(
+  "logistic",
+  method = "sample",
+  seed = 123,
+  chains = 2,
+  save_metric = FALSE
+)
+fit_mcmc_0 <- testing_fit(
+  "logistic",
+  method = "sample",
+  seed = 123,
+  chains = 2,
+  refresh = 0
+)
+fit_mcmc_1 <- testing_fit(
+  "logistic",
+  method = "sample",
+  seed = 123,
+  chains = 2,
+  refresh = 0,
+  save_warmup = TRUE
+)
+fit_mcmc_2 <- testing_fit(
+  "logistic",
+  method = "sample",
+  seed = 1234,
+  chains = 1,
+  iter_sampling = 10000,
+  refresh = 0,
+  metric = "dense_e"
+)
+fit_mcmc_3 <- testing_fit(
+  "logistic",
+  method = "sample",
+  seed = 1234,
+  chains = 1,
+  iter_warmup = 100,
+  iter_sampling = 0,
+  save_warmup = 1,
+  refresh = 0,
+  metric = "dense_e"
+)
+fit_mcmc_fixed_param <- testing_fit(
+  "logistic",
+  method = "sample",
+  seed = 1234,
+  chains = 1,
+  iter_warmup = 100,
+  iter_sampling = 0,
+  save_warmup = 1,
+  refresh = 0,
+  fixed_param = TRUE
+)
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
 
 test_that("draws() stops for unknown variables", {
@@ -47,8 +76,12 @@ test_that("draws() stops for unknown variables", {
 })
 
 test_that("draws() works when gradually adding variables", {
-  fit <- testing_fit("logistic", method = "sample", refresh = 0,
-                     save_warmup = TRUE)
+  fit <- testing_fit(
+    "logistic",
+    method = "sample",
+    refresh = 0,
+    save_warmup = TRUE
+  )
 
   draws_lp__ <- fit$draws(variables = c("lp__"), inc_warmup = TRUE)
   sampler_diagnostics <- fit$sampler_diagnostics(inc_warmup = TRUE)
@@ -59,8 +92,14 @@ test_that("draws() works when gradually adding variables", {
   expect_s3_class(sampler_diagnostics, "draws_array")
   expect_equal(
     posterior::variables(sampler_diagnostics),
-    c("accept_stat__", "stepsize__", "treedepth__", "n_leapfrog__",
-      "divergent__", "energy__")
+    c(
+      "accept_stat__",
+      "stepsize__",
+      "treedepth__",
+      "n_leapfrog__",
+      "divergent__",
+      "energy__"
+    )
   )
   draws_alpha <- fit$draws(variables = c("alpha"), inc_warmup = TRUE)
   expect_type(draws_alpha, "double")
@@ -69,7 +108,10 @@ test_that("draws() works when gradually adding variables", {
   draws_beta <- fit$draws(variables = c("beta"), inc_warmup = TRUE)
   expect_type(draws_beta, "double")
   expect_s3_class(draws_beta, "draws_array")
-  expect_equal(posterior::variables(draws_beta), c("beta[1]", "beta[2]", "beta[3]"))
+  expect_equal(
+    posterior::variables(draws_beta),
+    c("beta[1]", "beta[2]", "beta[3]")
+  )
 })
 
 test_that("draws() method returns draws_array (reading csv works)", {
@@ -97,8 +139,14 @@ test_that("draws() method returns draws_array (reading csv works)", {
   expect_equal(posterior::nchains(draws_all_after), fit_mcmc$num_chains())
 
   # check the order of the draws
-  expect_equal(posterior::variables(draws_alpha_beta), c("alpha", "beta[1]", "beta[2]", "beta[3]"))
-  expect_equal(posterior::variables(draws_beta_alpha), c("beta[1]", "beta[2]", "beta[3]", "alpha"))
+  expect_equal(
+    posterior::variables(draws_alpha_beta),
+    c("alpha", "beta[1]", "beta[2]", "beta[3]")
+  )
+  expect_equal(
+    posterior::variables(draws_beta_alpha),
+    c("beta[1]", "beta[2]", "beta[3]", "alpha")
+  )
 })
 
 test_that("inv_metric() method works after mcmc", {
@@ -108,7 +156,7 @@ test_that("inv_metric() method works after mcmc", {
   checkmate::expect_matrix(x[[2]])
   expect_equal(x[[1]], diag(diag(x[[1]])))
 
-  x <- fit_mcmc_1$inv_metric(matrix=FALSE)
+  x <- fit_mcmc_1$inv_metric(matrix = FALSE)
   expect_length(x, fit_mcmc_1$num_chains())
   expect_null(dim(x[[1]]))
   checkmate::expect_numeric(x[[1]])
@@ -117,7 +165,7 @@ test_that("inv_metric() method works after mcmc", {
   x <- fit_mcmc_2$inv_metric()
   expect_length(x, fit_mcmc_2$num_chains())
   checkmate::expect_matrix(x[[1]])
-  expect_false(x[[1]][1,2] == 0) # dense
+  expect_false(x[[1]][1, 2] == 0) # dense
 })
 
 test_that("summary() method works after mcmc", {
@@ -215,17 +263,19 @@ test_that("time() method works after mcmc", {
 
   run_times_0 <- fit_mcmc_0$time()
   checkmate::expect_number(run_times_0$total, finite = TRUE)
-  checkmate::expect_data_frame(run_times_0$chains,
-                               any.missing = TRUE,
-                               types = c("integer", "numeric"),
-                               nrows = fit_mcmc_0$runset$num_procs(),
-                               ncols = 4)
-  for (j in 1:nrow(run_times_0$chains)) {
+  checkmate::expect_data_frame(
+    run_times_0$chains,
+    any.missing = TRUE,
+    types = c("integer", "numeric"),
+    nrows = fit_mcmc_0$runset$num_procs(),
+    ncols = 4
+  )
+  for (j in seq_len(nrow(run_times_0$chains))) {
     checkmate::expect_number(run_times_0$chains$warmup[j])
     checkmate::expect_number(run_times_0$chains$sampling[j])
   }
   # check that reported times match the times reported in the CSV
-  for (j in 1:nrow(run_times_0$chains)) {
+  for (j in seq_len(nrow(run_times_0$chains))) {
     sampling_time <- NULL
     warmup_time <- NULL
     total_time <- NULL
@@ -260,8 +310,10 @@ test_that("inc_warmup in draws() works", {
   x2_b <- fit_mcmc_1$draws(inc_warmup = TRUE, variables = c("beta"))
   x2_after <- fit_mcmc_1$draws(inc_warmup = TRUE)
   expect_equal(dim(x0), c(1000, 2, 5))
-  expect_error(fit_mcmc_0$draws(inc_warmup = TRUE),
-               "Warmup draws were requested from a fit object without them!")
+  expect_error(
+    fit_mcmc_0$draws(inc_warmup = TRUE),
+    "Warmup draws were requested from a fit object without them!"
+  )
   expect_equal(dim(x1), c(1000, 2, 5))
   expect_equal(dim(x2), c(2000, 2, 5))
   expect_equal(dim(x2_a), c(2000, 2, 1))
@@ -273,19 +325,23 @@ test_that("inc_warmup in draws() works", {
   y3 <- fit_mcmc_3$sampler_diagnostics(inc_warmup = TRUE)
   y4 <- fit_mcmc_3$sampler_diagnostics(inc_warmup = FALSE)
   expect_equal(dim(y0), c(1000, 2, 6))
-  expect_error(fit_mcmc_0$sampler_diagnostics(inc_warmup = TRUE),
-               "Warmup sampler diagnostics were requested from a fit object without them!")
+  expect_error(
+    fit_mcmc_0$sampler_diagnostics(inc_warmup = TRUE),
+    "Warmup sampler diagnostics were requested from a fit object without them!"
+  )
   expect_equal(dim(y1), c(1000, 2, 6))
   expect_equal(dim(y2), c(2000, 2, 6))
   expect_equal(dim(y3), c(100, 1, 6))
-  expect_equal(dim(y4), NULL)
+  expect_null(dim(y4))
 })
 
 test_that("inc_warmup in draws() works with a single chain", {
   x3 <- fit_mcmc_2$draws(inc_warmup = FALSE)
   expect_equal(dim(x3), c(10000, 1, 5))
-  expect_error(fit_mcmc_2$draws(inc_warmup = TRUE),
-               "Warmup draws were requested from a fit object without them! Please rerun the model with save_warmup = TRUE.")
+  expect_error(
+    fit_mcmc_2$draws(inc_warmup = TRUE),
+    "Warmup draws were requested from a fit object without them! Please rerun the model with save_warmup = TRUE."
+  )
   y3 <- fit_mcmc_2$sampler_diagnostics(inc_warmup = FALSE)
   expect_equal(dim(y3), c(10000, 1, 6))
 })
@@ -306,7 +362,10 @@ test_that("output() shows informational messages depending on show_messages", {
 test_that("loo method works if log_lik is available", {
   skip_if_not_installed("loo")
   fit_bernoulli <- testing_fit("bernoulli_log_lik")
-  expect_s3_class(suppressWarnings(fit_bernoulli$loo(cores = 1, save_psis = TRUE)), "loo")
+  expect_s3_class(
+    suppressWarnings(fit_bernoulli$loo(cores = 1, save_psis = TRUE)),
+    "loo"
+  )
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = FALSE)), "loo")
   expect_s3_class(suppressWarnings(fit_bernoulli$loo(r_eff = TRUE)), "loo")
 
@@ -321,7 +380,10 @@ test_that("loo method works with moment-matching", {
   skip_if(os_is_wsl())
 
   # Moment-matching needs model-methods, so make sure hpp is available
-  mod <- cmdstan_model(testing_stan_file("loo_moment_match"), force_recompile = TRUE)
+  mod <- cmdstan_model(
+    testing_stan_file("loo_moment_match"),
+    force_recompile = TRUE
+  )
   data_list <- testing_data("loo_moment_match")
   utils::capture.output(
     fit <- mod$sample(data = data_list, chains = 1, seed = 1000)
@@ -347,7 +409,7 @@ test_that("loo method works with moment-matching", {
   }
 
   # After moment-matching with lower target threshold there definitely shouldn't be a warning
-  expect_no_warning(fit$loo(moment_match = TRUE, k_threshold=0.4))
+  expect_no_warning(fit$loo(moment_match = TRUE, k_threshold = 0.4))
 })
 
 test_that("loo errors if it can't find log like variables", {
@@ -421,7 +483,10 @@ test_that("diagnostic_summary() works", {
   )
   expect_equal(
     diagnostics$num_max_treedepth,
-    suppressMessages(check_max_treedepth(fit$sampler_diagnostics(), fit$metadata()))
+    suppressMessages(check_max_treedepth(
+      fit$sampler_diagnostics(),
+      fit$metadata()
+    ))
   )
   expect_equal(
     diagnostics$ebfmi,
@@ -429,7 +494,10 @@ test_that("diagnostic_summary() works", {
   )
 
   # ebfmi not defined if iter < 3
-  fit <- suppressWarnings(suppressMessages(testing_fit("schools", iter_sampling = 2)))
+  fit <- suppressWarnings(suppressMessages(testing_fit(
+    "schools",
+    iter_sampling = 2
+  )))
   expect_warning(
     diagnostics <- fit$diagnostic_summary(),
     "E-BFMI not computed"

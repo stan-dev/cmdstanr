@@ -37,7 +37,8 @@ test_that("check_syntax_stan_file() and variables_stan_file() leave nothing behi
 
 test_that("format_stan_file() formats a program", {
   stan_file <- withr::local_tempfile(
-    lines = "parameters {real y;} model {y ~ std_normal();}", fileext = ".stan"
+    lines = "parameters {real y;} model {y ~ std_normal();}",
+    fileext = ".stan"
   )
   expect_output(format_stan_file(stan_file), "  real y;", fixed = TRUE)
   expect_message(
@@ -47,7 +48,8 @@ test_that("format_stan_file() formats a program", {
   expect_true("  real y;" %in% readLines(stan_file))
   expect_length(
     list.files(
-      dirname(stan_file), pattern = paste0(basename(stan_file), ".bak-")
+      dirname(stan_file),
+      pattern = paste0(basename(stan_file), ".bak-")
     ),
     1
   )
@@ -55,28 +57,37 @@ test_that("format_stan_file() formats a program", {
   include_model <- local_include_model_with_spaces()
   expect_output(
     format_stan_file(
-      include_model$stan_file, include_paths = include_model$include_paths
+      include_model$stan_file,
+      include_paths = include_model$include_paths
     ),
-    "#include ", fixed = TRUE
+    "#include ",
+    fixed = TRUE
   )
   expect_output(
     format_stan_file(include_model$stan_file, canonicalize = list("includes")),
-    "real divide_real_by_two", fixed = TRUE
+    "real divide_real_by_two",
+    fixed = TRUE
   )
 
   expect_output(
-    format_stan_file(stan_file, canonicalize = TRUE), "  real y;", fixed = TRUE
+    format_stan_file(stan_file, canonicalize = TRUE),
+    "  real y;",
+    fixed = TRUE
   )
   long_line <- withr::local_tempfile(
     lines = paste0(
       "parameters {real y;} model {y ~ normal(0, ",
-      paste(rep("1", 20), collapse = " + "), ");}"
+      paste(rep("1", 20), collapse = " + "),
+      ");}"
     ),
     fileext = ".stan"
   )
   expect_gt(max(nchar(capture.output(format_stan_file(long_line)))), 30)
   format_stan_file(
-    long_line, max_line_length = 30, overwrite_file = TRUE, backup = FALSE
+    long_line,
+    max_line_length = 30,
+    overwrite_file = TRUE,
+    backup = FALSE
   )
   expect_true(all(nchar(readLines(long_line)) <= 30))
 })
@@ -89,9 +100,10 @@ test_that("variables_stan_file() reports a program's variables", {
 
   include_model <- local_include_model_with_spaces()
   with_paths <- variables_stan_file(
-    include_model$stan_file, include_paths = include_model$include_paths
+    include_model$stan_file,
+    include_paths = include_model$include_paths
   )
-  expect_equal(names(with_paths$parameters), "theta")
+  expect_named(with_paths$parameters, "theta")
   expect_equal(variables_stan_file(include_model$stan_file), with_paths)
 })
 
@@ -127,7 +139,9 @@ test_that("compile_stan_file() builds or reuses the executable", {
     expect_equal(mod$cpp_options(), list(STAN_THREADS = "true"))
 
     exe_dir <- withr::local_tempdir()
-    expect_mock_compile(exe_in_dir <- compile_stan_file(stan_file, dir = exe_dir))
+    expect_mock_compile(
+      exe_in_dir <- compile_stan_file(stan_file, dir = exe_dir)
+    )
     expect_equal(dirname(exe_in_dir), resolve_path(exe_dir))
   })
 

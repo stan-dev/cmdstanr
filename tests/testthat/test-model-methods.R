@@ -11,7 +11,9 @@ utils::capture.output(
 
 # One program with every parameter shape the tests below need, built once.
 # N = 0 and K = 0 give zero-length containers.
-shapes_mod <- cmdstan_model(write_stan_file("
+shapes_mod <- cmdstan_model(
+  write_stan_file(
+    "
   data {
     int N;
     int K;
@@ -30,7 +32,10 @@ shapes_mod <- cmdstan_model(write_stan_file("
     to_vector(m) ~ std_normal();
     rv ~ std_normal();
   }
-"), force_recompile = TRUE)
+"
+  ),
+  force_recompile = TRUE
+)
 
 test_that("RcppParallel's TBB works from a library path with a space", {
   tbb <- rcppparallel_tbb()
@@ -60,7 +65,7 @@ if (!is.null(rcppparallel_tbb())) {
 }
 
 test_that("Model methods automatically initialise when needed", {
-  expect_no_error(fit$log_prob(unconstrained_variables=c(0.1)))
+  expect_no_error(fit$log_prob(unconstrained_variables = c(0.1)))
 })
 
 test_that("a later fit of the same model reuses the compiled methods", {
@@ -71,33 +76,37 @@ test_that("a later fit of the same model reuses the compiled methods", {
   local_mocked_bindings(expose_model_methods = function(...) {
     stop("compiled a second time")
   })
-  expect_equal(fit2$log_prob(unconstrained_variables = 0.1),
-               fit$log_prob(unconstrained_variables = 0.1))
+  expect_equal(
+    fit2$log_prob(unconstrained_variables = 0.1),
+    fit$log_prob(unconstrained_variables = 0.1)
+  )
 })
 
 test_that("Methods return correct values", {
-  lp <- fit$log_prob(unconstrained_variables=c(0.1))
+  lp <- fit$log_prob(unconstrained_variables = c(0.1))
   expect_equal(lp, -8.6327599208828509347)
 
   grad_lp <- -3.2997502497472801508
   attr(grad_lp, "log_prob") <- lp
-  expect_equal(fit$grad_log_prob(unconstrained_variables=c(0.1)), grad_lp)
+  expect_equal(fit$grad_log_prob(unconstrained_variables = c(0.1)), grad_lp)
 
   hessian <- list(
     log_prob = lp,
     grad_log_prob = -3.2997502497472801508,
-    hessian = as.matrix(-2.9925124823147033482, nrow=1, ncol=1)
+    hessian = as.matrix(-2.9925124823147033482, nrow = 1, ncol = 1)
   )
-  expect_equal(fit$hessian(unconstrained_variables=c(0.1)), hessian)
+  expect_equal(fit$hessian(unconstrained_variables = c(0.1)), hessian)
 
   hessian_noadj <- list(
     log_prob = -7.2439666007357095268,
     grad_log_prob = -3.2497918747894001257,
-    hessian = as.matrix(-2.4937604019289194568, nrow=1, ncol=1)
+    hessian = as.matrix(-2.4937604019289194568, nrow = 1, ncol = 1)
   )
 
-  expect_equal(fit$hessian(unconstrained_variables=c(0.1), jacobian = FALSE),
-               hessian_noadj)
+  expect_equal(
+    fit$hessian(unconstrained_variables = c(0.1), jacobian = FALSE),
+    hessian_noadj
+  )
 
   cpars <- fit$constrain_variables(c(0.1))
   cpars_true <- list(
@@ -106,8 +115,10 @@ test_that("Methods return correct values", {
   )
   expect_equal(cpars, cpars_true)
 
-  expect_equal(fit$constrain_variables(c(0.1), generated_quantities = FALSE),
-               list(theta = 0.52497918747894001257))
+  expect_equal(
+    fit$constrain_variables(c(0.1), generated_quantities = FALSE),
+    list(theta = 0.52497918747894001257)
+  )
 
   unconstrained_variables <- fit$unconstrain_variables(cpars)
   expect_equal(unconstrained_variables, c(0.1))
@@ -122,28 +133,34 @@ test_that("Model methods environments are independent", {
   )
   fit_2$init_model_methods()
 
-  expect_equal(fit$log_prob(unconstrained_variables=c(0.1)), -8.6327599208828509347)
-  expect_equal(fit_2$log_prob(unconstrained_variables=c(0.1)), -15.87672652161856135)
+  expect_equal(
+    fit$log_prob(unconstrained_variables = c(0.1)),
+    -8.6327599208828509347
+  )
+  expect_equal(
+    fit_2$log_prob(unconstrained_variables = c(0.1)),
+    -15.87672652161856135
+  )
 })
 
 test_that("methods error for incorrect inputs", {
   expect_error(
-    fit$log_prob(c(1,2)),
+    fit$log_prob(c(1, 2)),
     "Model has 1 unconstrained parameter(s), but 2 were provided!",
     fixed = TRUE
   )
   expect_error(
-    fit$grad_log_prob(c(1,2)),
+    fit$grad_log_prob(c(1, 2)),
     "Model has 1 unconstrained parameter(s), but 2 were provided!",
     fixed = TRUE
   )
   expect_error(
-    fit$hessian(c(1,2)),
+    fit$hessian(c(1, 2)),
     "Model has 1 unconstrained parameter(s), but 2 were provided!",
     fixed = TRUE
   )
   expect_error(
-    fit$constrain_variables(c(1,2)),
+    fit$constrain_variables(c(1, 2)),
     "Model has 1 unconstrained parameter(s), but 2 were provided!",
     fixed = TRUE
   )
@@ -185,8 +202,10 @@ test_that("Reloaded models recompile model methods lazily after saveRDS/readRDS"
       fit <- mod2$optimize(data = data_list)
     )
   )
-  expect_equal(fit$log_prob(unconstrained_variables = c(0.1)),
-               -8.6327599208828509347)
+  expect_equal(
+    fit$log_prob(unconstrained_variables = c(0.1)),
+    -8.6327599208828509347
+  )
 })
 
 test_that("stale model-method bindings are detected and dropped", {
@@ -224,7 +243,11 @@ test_that("source_cpp_native_symbol_is_null() only flags null .Call symbols", {
   null_symbol <- new_null_external_pointer()
   class(null_symbol) <- "NativeSymbol"
   null_symbol_fun <- function(x) NULL
-  body(null_symbol_fun) <- as.call(list(as.name(".Call"), null_symbol, quote(x)))
+  body(null_symbol_fun) <- as.call(list(
+    as.name(".Call"),
+    null_symbol,
+    quote(x)
+  ))
   expect_true(source_cpp_native_symbol_is_null(null_symbol_fun))
 
   expect_false(source_cpp_native_symbol_is_null(function(x) x + 1))
@@ -250,8 +273,11 @@ test_that("unconstrain_variables correctly handles zero-length containers", {
 
 test_that("unconstrain_draws returns correct values", {
   utils::capture.output({
-    fit <- shapes_mod$sample(data = list(N = 0, K = 0), chains = 2,
-                             save_warmup = TRUE)
+    fit <- shapes_mod$sample(
+      data = list(N = 0, K = 0),
+      chains = 2,
+      save_warmup = TRUE
+    )
     fit_no_warmup <- shapes_mod$sample(data = list(N = 0, K = 0), chains = 2)
   })
 
@@ -266,8 +292,10 @@ test_that("unconstrain_draws returns correct values", {
 
   # Unconstrain all internal draws
   expect_unconstrained(fit$unconstrain_draws())
-  expect_unconstrained(fit$unconstrain_draws(inc_warmup = TRUE),
-                       inc_warmup = TRUE)
+  expect_unconstrained(
+    fit$unconstrain_draws(inc_warmup = TRUE),
+    inc_warmup = TRUE
+  )
 
   expect_error(
     fit_no_warmup$unconstrain_draws(inc_warmup = TRUE),
@@ -284,8 +312,10 @@ test_that("unconstrain_draws returns correct values", {
   # Unconstrain existing draws object
   expect_unconstrained(fit$unconstrain_draws(draws = fit$draws()))
 
-  expect_message(fit$unconstrain_draws(draws = fit$draws(), inc_warmup = TRUE),
-                 "`inc_warmup` cannot be used with a draws object. Ignoring.")
+  expect_message(
+    fit$unconstrain_draws(draws = fit$draws(), inc_warmup = TRUE),
+    "`inc_warmup` cannot be used with a draws object. Ignoring."
+  )
 
   expect_error(
     fit$unconstrain_draws(files = fit$output_files(), draws = fit$draws()),
@@ -303,7 +333,9 @@ test_that("unconstrain_draws returns correct values", {
 })
 
 test_that("Model methods can be initialised for models with no data", {
-  stan_file <- write_stan_file("parameters { real x; } model { x ~ std_normal(); }")
+  stan_file <- write_stan_file(
+    "parameters { real x; } model { x ~ std_normal(); }"
+  )
   mod <- cmdstan_model(stan_file, force_recompile = TRUE)
   expect_no_error(
     utils::capture.output(
@@ -317,8 +349,12 @@ test_that("constrain_variables() returns the declared shapes", {
   N <- 4
   K <- 3
   utils::capture.output(
-    fit <- shapes_mod$sample(data = list(N = N, K = K), chains = 1,
-                             iter_warmup = 1, iter_sampling = 5)
+    fit <- shapes_mod$sample(
+      data = list(N = N, K = K),
+      chains = 1,
+      iter_warmup = 1,
+      iter_sampling = 5
+    )
   )
 
   x <- fit$constrain_variables(rep(0.1, 2 + N + N * K + K))
@@ -333,13 +369,17 @@ test_that("model methods refuse a fit from an executable alone", {
   adopted <- cmdstan_model(exe_file = mod$exe_file())
   utils::capture.output(
     fit_adopted <- adopted$sample(
-      data = data_list, chains = 1, iter_warmup = 10, iter_sampling = 10,
+      data = data_list,
+      chains = 1,
+      iter_warmup = 10,
+      iter_sampling = 10,
       refresh = 0
     )
   )
   expect_error(
     fit_adopted$log_prob(unconstrained_variables = c(0.1)),
-    "created from an executable alone", fixed = TRUE
+    "created from an executable alone",
+    fixed = TRUE
   )
 })
 

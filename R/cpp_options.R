@@ -72,7 +72,8 @@ assert_valid_cpp_options <- function(cpp_options) {
       stop(
         "`cpp_options` names must be make variable names, made of letters, ",
         "digits and underscores and not starting with a digit. `",
-        option_names[[i]], "` is not one.",
+        option_names[[i]],
+        "` is not one.",
         call. = FALSE
       )
     }
@@ -95,9 +96,12 @@ assert_valid_cpp_options <- function(cpp_options) {
     bad <- grep("$", flags, fixed = TRUE, value = TRUE)
     if (length(bad) > 0) {
       stop(
-        "`", names(cpp_options)[[tbb_at]], "` must be a literal directory. ",
+        "`",
+        names(cpp_options)[[tbb_at]],
+        "` must be a literal directory. ",
         "cmdstanr records it to launch the model with the right TBB and ",
-        "doesn't expand make expressions like `", sub("^[^=]*=", "", bad[[1]]),
+        "doesn't expand make expressions like `",
+        sub("^[^=]*=", "", bad[[1]]),
         "`.",
         call. = FALSE
       )
@@ -118,7 +122,9 @@ unnamed_cpp_option_message <- function(value) {
   entry <- if (checkmate::test_string(value)) trimws(value) else ""
   assignment <- paste0("^(", make_variable_name_pattern, ")[ \t]*=(.*)$")
   operator <- paste0(
-    "^(", make_variable_name_pattern, ")[ \t]*(\\+=|\\?=|::=|:=|!=).*$"
+    "^(",
+    make_variable_name_pattern,
+    ")[ \t]*(\\+=|\\?=|::=|:=|!=).*$"
   )
   is_assignment <- grepl(assignment, entry)
   is_operator <- !is_assignment && grepl(operator, entry)
@@ -142,7 +148,9 @@ unnamed_cpp_option_message <- function(value) {
         "`cpp_options` entries must be named. ",
         "Write `list(%s = %s)` instead of `%s`."
       ),
-      option_name, encodeString(value, quote = '"'), encodeString(entry, quote = '"')
+      option_name,
+      encodeString(value, quote = '"'),
+      encodeString(entry, quote = '"')
     ))
   }
   if (is_operator) {
@@ -152,7 +160,8 @@ unnamed_cpp_option_message <- function(value) {
         "To set it in `make/local` use ",
         "`cmdstan_make_local(cpp_options = list(%s))`."
       ),
-      encodeString(entry, quote = '"'), encodeString(entry, quote = '"')
+      encodeString(entry, quote = '"'),
+      encodeString(entry, quote = '"')
     ))
   }
   if (grepl("^(-B|--always-make)$", entry)) {
@@ -173,7 +182,8 @@ unnamed_cpp_option_message <- function(value) {
         "To read another makefile add `include %s` to `make/local`, ",
         "for example `cmdstan_make_local(cpp_options = list(%s))`."
       ),
-      path, encodeString(paste0("include ", path), quote = '"')
+      path,
+      encodeString(paste0("include ", path), quote = '"')
     ))
   }
   if (startsWith(entry, "-")) {
@@ -196,13 +206,19 @@ user_header_cpp_option_message <- function(value) {
   if (is.null(value) || isFALSE(value) || is_empty_string) {
     example <- ": `user_header = NULL`"
   } else if (checkmate::test_string(value)) {
-    example <- paste0(": `user_header = ", encodeString(value, quote = '"'), "`")
+    example <- paste0(
+      ": `user_header = ",
+      encodeString(value, quote = '"'),
+      "`"
+    )
   } else {
     example <- ""
   }
   paste0(
     "The user header cannot be set through `cpp_options`. ",
-    "Pass it with the `user_header` argument", example, "."
+    "Pass it with the `user_header` argument",
+    example,
+    "."
   )
 }
 
@@ -238,12 +254,19 @@ cpp_option_value <- function(cpp_options, option) {
 #' @noRd
 assert_valid_threads <- function(threads, features, multiple_chains = FALSE) {
   threads_arg <- if (multiple_chains) "threads_per_chain" else "threads"
-  checkmate::assert_integerish(threads, .var.name = threads_arg,
-                               null.ok = TRUE, lower = 1, len = 1)
+  checkmate::assert_integerish(
+    threads,
+    .var.name = threads_arg,
+    null.ok = TRUE,
+    lower = 1,
+    len = 1
+  )
   threaded <- isTRUE(features[["stan_threads"]])
   if (!is.null(threads) && threads > 1 && !threaded) {
     stop(
-      "`", threads_arg, "` is set but the executable does not report ",
+      "`",
+      threads_arg,
+      "` is set but the executable does not report ",
       "threading as enabled.\nRecompile the model with ",
       "`cpp_options = list(stan_threads = TRUE)`.",
       call. = FALSE
