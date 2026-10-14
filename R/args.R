@@ -1610,6 +1610,10 @@ process_init_approx <- function(
       return_k = FALSE,
       verbose = FALSE
     )
+    # posterior <= 1.7.1 can return weights of about -2e-16 when many weights
+    # underflow to 0. Remove this once the minimum posterior version includes
+    # stan-dev/posterior#468.
+    weights <- pmax(weights, 0)
   }
   if (num_candidates < nrow(draws_df)) {
     # Collapse duplicate candidates to one row, summing their weights so a vector
