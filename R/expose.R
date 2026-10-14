@@ -112,7 +112,10 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
     make_args
   )
   check_sundials_fpic(flags[8], verbose)
-  cxxflags <- flags[1]
+  # With GCC, Stan Math's autodiff stack is a unique symbol that the loader
+  # binds to rstan's, or any other Stan Math build in the session, and R
+  # crashes (#1177). Hidden visibility keeps it out of the exported symbols.
+  cxxflags <- paste(flags[1], "$(CXX_VISIBILITY)")
   cppflags <- flags[2]
   libs <- paste(flags[3:7], collapse = " ")
   cmdstanr_includes <- system.file(
