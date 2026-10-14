@@ -80,7 +80,10 @@ test_that("rcpp_source_stan() links RcppParallel's TBB with a plain -L", {
 })
 
 test_that("R exits cleanly after model methods built against RcppParallel's TBB", {
-  skip_if(is.null(rcppparallel_tbb()), "RcppParallel is older than 6.2.0 or bundles no TBB")
+  skip_if(
+    is.null(rcppparallel_tbb()),
+    "RcppParallel is older than 6.2.0 or bundles no TBB"
+  )
   # The crash never happens on macOS, where the test would only cost a build
   skip_if_not(os_is_linux())
   # The crash is at exit, so run in a fresh R process with this cmdstanr
@@ -88,23 +91,35 @@ test_that("R exits cleanly after model methods built against RcppParallel's TBB"
   ns_path <- getNamespaceInfo("cmdstanr", "path")
   from_source <- length(list.files(file.path(ns_path, "R"), "\\.R$")) > 0
   load_cmdstanr <- if (from_source) {
-    sprintf("asNamespace('pkgload')$load_all(%s, quiet = TRUE)", deparse(ns_path))
+    sprintf(
+      "asNamespace('pkgload')$load_all(%s, quiet = TRUE)",
+      deparse(ns_path)
+    )
   } else {
     sprintf("library(cmdstanr, lib.loc = %s)", deparse(dirname(ns_path)))
   }
   script <- withr::local_tempfile(fileext = ".R")
-  writeLines(c(
-    "suppressMessages(suppressWarnings(", load_cmdstanr, "))",
-    "f <- write_stan_file('parameters { real mu; } model { mu ~ normal(0, 1); }')",
-    "fit <- cmdstan_model(f)$sample(chains = 1, refresh = 0, show_messages = FALSE)",
-    "fit$init_model_methods(quiet = TRUE)",
-    "stopifnot(isTRUE(all.equal(fit$log_prob(0.5), -0.125)))",
-    "cat('done\\n')"
-  ), script)
+  writeLines(
+    c(
+      "suppressMessages(suppressWarnings(",
+      load_cmdstanr,
+      "))",
+      "f <- write_stan_file('parameters { real mu; } model { mu ~ normal(0, 1); }')",
+      "fit <- cmdstan_model(f)$sample(chains = 1, refresh = 0, show_messages = FALSE)",
+      "fit$init_model_methods(quiet = TRUE)",
+      "stopifnot(isTRUE(all.equal(fit$log_prob(0.5), -0.125)))",
+      "cat('done\\n')"
+    ),
+    script
+  )
   run <- processx::run(
-    file.path(R.home("bin"), "Rscript"), script,
-    env = c("current", CMDSTAN = cmdstan_path(),
-            R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep)),
+    file.path(R.home("bin"), "Rscript"),
+    script,
+    env = c(
+      "current",
+      CMDSTAN = cmdstan_path(),
+      R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep)
+    ),
     error_on_status = FALSE
   )
   expect_match(run$stdout, "done", fixed = TRUE)
