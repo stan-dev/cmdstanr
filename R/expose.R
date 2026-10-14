@@ -65,46 +65,6 @@ rcppparallel_tbb <- function() {
   )
 }
 
-#' Is R's `CXX`, which `Rcpp::sourceCpp()` uses, GCC?
-#'
-#' Checks `--version` for "Free Software Foundation" and skips a leading
-#' `ccache`. Cached for the session.
-#'
-#' @return `TRUE` or `FALSE` (also when the compiler cannot be run).
-#' @noRd
-r_cxx_is_gcc <- function() {
-  if (!is.null(.cmdstanr$R_CXX_IS_GCC)) {
-    return(.cmdstanr$R_CXX_IS_GCC)
-  }
-  is_gcc <- tryCatch(
-    {
-      config <- processx::run(
-        file.path(R.home("bin"), "R"),
-        c("CMD", "config", "CXX"),
-        error_on_status = FALSE
-      )
-      words <- strsplit(trimws(config$stdout), "[[:space:]]+")[[1]]
-      words <- words[nzchar(words) & !startsWith(words, "-")]
-      if (length(words) > 1 && basename(words[1]) %in% c("ccache", "sccache")) {
-        words <- words[-1]
-      }
-      if (length(words) == 0) {
-        FALSE
-      } else {
-        version <- processx::run(words[1], "--version", error_on_status = FALSE)
-        grepl(
-          "Free Software Foundation",
-          paste(version$stdout, version$stderr),
-          fixed = TRUE
-        )
-      }
-    },
-    error = function(e) FALSE
-  )
-  .cmdstanr$R_CXX_IS_GCC <- is_gcc
-  is_gcc
-}
-
 #' Compile C++ that uses the Stan Math library and load it into R
 #'
 #' Wraps `Rcpp::sourceCpp()` with the include paths, defines and link
@@ -152,7 +112,10 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
     make_args
   )
   check_sundials_fpic(flags[8], verbose)
-  cxxflags <- flags[1]
+  # With GCC, Stan Math's autodiff stack is a unique symbol that the loader
+  # binds to rstan's, or any other Stan Math build in the session, and R
+  # crashes (#1177). Hidden visibility keeps it out of the exported symbols.
+  cxxflags <- paste(flags[1], "$(CXX_VISIBILITY)")
   cppflags <- flags[2]
   libs <- paste(flags[3:7], collapse = " ")
   cmdstanr_includes <- system.file(
@@ -168,12 +131,6 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
   }
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
-  }
-  if (os_is_linux() && r_cxx_is_gcc()) {
-    # GCC makes Stan Math's AutodiffStackSingleton data STB_GNU_UNIQUE, which
-    # the loader binds once per process. Another Stan Math build in the
-    # session (e.g. rstan) would then share it and segfault on load.
-    cxxflags <- paste(cxxflags, "-fno-gnu-unique")
   }
   withr::with_path(
     tbb_dir,

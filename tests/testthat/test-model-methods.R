@@ -124,6 +124,24 @@ test_that("Methods return correct values", {
   expect_equal(unconstrained_variables, c(0.1))
 })
 
+test_that("model methods don't export Stan Math's autodiff stack", {
+  skip_on_os("windows")
+  # On Linux the loader would bind rstan's copy to it (#1177)
+  instance <- paste0(
+    "_ZN4stan4math22AutodiffStackSingletonINS0_9vari_baseE",
+    "NS0_15chainable_allocEE9instance_E"
+  )
+  fit$init_model_methods()
+  dlls <- Filter(
+    function(dll) startsWith(dll[["name"]], "sourceCpp"),
+    getLoadedDLLs()
+  )
+  expect_gt(length(dlls), 0)
+  for (dll in dlls) {
+    expect_false(is.loaded(instance, PACKAGE = dll[["name"]]))
+  }
+})
+
 test_that("Model methods environments are independent", {
   data_list_2 <- data_list
   data_list_2$N <- 20
@@ -398,86 +416,4 @@ test_that("init_model_methods(quiet = TRUE) suppresses the message", {
     "Compiling additional model methods"
   )
   expect_no_message(readRDS(temp_rds_file)$init_model_methods(quiet = TRUE))
-})
-
-test_that("rcpp_source_stan() adds -fno-gnu-unique only for GCC on Linux", {
-  flags_for <- function(linux, gcc) {
-    seen <- NULL
-    local_mocked_bindings(
-      os_is_linux = function() linux,
-      r_cxx_is_gcc = function() gcc
-    )
-    local_mocked_bindings(
-      sourceCpp = function(...) {
-        # the Makevars file only exists during the call
-        seen <<- paste(
-          readLines(Sys.getenv("R_MAKEVARS_USER")),
-          collapse = "\n"
-        )
-        invisible(NULL)
-      },
-      .package = "Rcpp"
-    )
-    rcpp_source_stan("// no code", new.env())
-    seen
-  }
-  expect_match(
-    flags_for(linux = TRUE, gcc = TRUE),
-    "-fno-gnu-unique",
-    fixed = TRUE
-  )
-  expect_no_match(
-    flags_for(linux = TRUE, gcc = FALSE),
-    "-fno-gnu-unique",
-    fixed = TRUE
-  )
-  expect_no_match(
-    flags_for(linux = FALSE, gcc = TRUE),
-    "-fno-gnu-unique",
-    fixed = TRUE
-  )
-})
-
-test_that("model methods and rstan can be loaded in one R process", {
-  skip_if_not(os_is_linux(), "STB_GNU_UNIQUE is Linux only")
-  skip_if_not_installed("rstan")
-  # A failure is a segfault, so run each order in a fresh R process with
-  # this cmdstanr (installed, or the source tree via pkgload)
-  ns_path <- getNamespaceInfo("cmdstanr", "path")
-  from_source <- length(list.files(file.path(ns_path, "R"), "\\.R$")) > 0
-  load_cmdstanr <- if (from_source) {
-    sprintf(
-      "asNamespace('pkgload')$load_all(%s, quiet = TRUE)",
-      deparse(ns_path)
-    )
-  } else {
-    sprintf("library(cmdstanr, lib.loc = %s)", deparse(dirname(ns_path)))
-  }
-  script <- withr::local_tempfile(fileext = ".R")
-  writeLines(
-    c(
-      "order <- commandArgs(trailingOnly = TRUE)[1]",
-      "suppressMessages(suppressWarnings(",
-      load_cmdstanr,
-      "))",
-      "f <- write_stan_file('parameters { real mu; } model { mu ~ normal(0, 1); }')",
-      "if (order == 'rstan_first') loadNamespace('rstan')",
-      "fit <- cmdstan_model(f)$sample(chains = 1, refresh = 0, show_messages = FALSE)",
-      "fit$init_model_methods(quiet = TRUE)",
-      "stopifnot(isTRUE(all.equal(fit$log_prob(0.5), -0.125)))",
-      "if (order == 'methods_first') loadNamespace('rstan')",
-      "cat('done\\n')"
-    ),
-    script
-  )
-  for (order in c("methods_first", "rstan_first")) {
-    run <- processx::run(
-      file.path(R.home("bin"), "Rscript"),
-      c(script, order),
-      env = c("current", CMDSTAN = cmdstan_path()),
-      error_on_status = FALSE
-    )
-    expect_equal(run$status, 0, info = paste(order, run$stderr, sep = "\n"))
-    expect_match(run$stdout, "done", fixed = TRUE, info = order)
-  }
 })
