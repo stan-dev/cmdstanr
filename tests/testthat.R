@@ -44,6 +44,16 @@ prebuild_precompiled_headers <- function() {
   invisible()
 }
 
+ensure_sundials_fpic <- function() {
+  withr::with_options(
+    list(mc.cores = min(parallel::detectCores(), 4)),
+    cmdstanr:::check_sundials_fpic(
+      cmdstanr:::get_cmdstan_flags("CPPFLAGS_SUNDIALS"),
+      verbose = FALSE
+    )
+  )
+}
+
 shared <- NULL
 if (identical(Sys.getenv("NOT_CRAN"), "true") &&
     !identical(Sys.getenv("TESTTHAT_PARALLEL"), "false")) {
@@ -53,6 +63,7 @@ if (identical(Sys.getenv("NOT_CRAN"), "true") &&
   if (!nzchar(Sys.getenv("TESTTHAT_CPUS"))) {
     Sys.setenv(TESTTHAT_CPUS = min(parallel::detectCores(), 4))
   }
+  ensure_sundials_fpic()
   prebuild_precompiled_headers()
 }
 
