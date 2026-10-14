@@ -9,10 +9,10 @@ test_that("eng_cmdstan works", {
   skip_if_not_installed("knitr")
   code <- "
   parameters {
-    real y;
+    real knitr_y;
   }
   model {
-    y ~ std_normal();
+    knitr_y ~ std_normal();
   }
   "
   opts <- knitr::opts_chunk$merge(list(
