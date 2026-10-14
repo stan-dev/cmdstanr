@@ -100,9 +100,17 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
     cxxflags <- paste0(cxxflags, " -I", shQuote(tbb$include))
     # make's print rule drops the quotes, so quote the path here
     libs <- gsub(tbb$lib, shQuote(tbb$lib), libs, fixed = TRUE)
+    # make passes -Wl,-L, which the linker searches after the compiler's
+    # default directories, so -ltbb could find a system TBB first
+    libs <- paste0("-L", shQuote(tbb$lib), " ", libs)
   }
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")
+  }
+  if (!is.null(tbb)) {
+    # RcppParallel loads its TBB and tbbmalloc early. Otherwise libtbb loads
+    # tbbmalloc itself, its destructors run first at exit, and R segfaults.
+    loadNamespace("RcppParallel")
   }
   withr::with_path(tbb_dir,
     withr::with_makevars(
