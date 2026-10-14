@@ -76,23 +76,31 @@ r_cxx_is_gcc <- function() {
   if (!is.null(.cmdstanr$R_CXX_IS_GCC)) {
     return(.cmdstanr$R_CXX_IS_GCC)
   }
-  is_gcc <- tryCatch({
-    config <- processx::run(file.path(R.home("bin"), "R"),
-                            c("CMD", "config", "CXX"),
-                            error_on_status = FALSE)
-    words <- strsplit(trimws(config$stdout), "[[:space:]]+")[[1]]
-    words <- words[nzchar(words) & !startsWith(words, "-")]
-    if (length(words) > 1 && basename(words[1]) %in% c("ccache", "sccache")) {
-      words <- words[-1]
-    }
-    if (length(words) == 0) {
-      FALSE
-    } else {
-      version <- processx::run(words[1], "--version", error_on_status = FALSE)
-      grepl("Free Software Foundation", paste(version$stdout, version$stderr),
-            fixed = TRUE)
-    }
-  }, error = function(e) FALSE)
+  is_gcc <- tryCatch(
+    {
+      config <- processx::run(
+        file.path(R.home("bin"), "R"),
+        c("CMD", "config", "CXX"),
+        error_on_status = FALSE
+      )
+      words <- strsplit(trimws(config$stdout), "[[:space:]]+")[[1]]
+      words <- words[nzchar(words) & !startsWith(words, "-")]
+      if (length(words) > 1 && basename(words[1]) %in% c("ccache", "sccache")) {
+        words <- words[-1]
+      }
+      if (length(words) == 0) {
+        FALSE
+      } else {
+        version <- processx::run(words[1], "--version", error_on_status = FALSE)
+        grepl(
+          "Free Software Foundation",
+          paste(version$stdout, version$stderr),
+          fixed = TRUE
+        )
+      }
+    },
+    error = function(e) FALSE
+  )
   .cmdstanr$R_CXX_IS_GCC <- is_gcc
   is_gcc
 }

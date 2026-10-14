@@ -410,7 +410,10 @@ test_that("rcpp_source_stan() adds -fno-gnu-unique only for GCC on Linux", {
     local_mocked_bindings(
       sourceCpp = function(...) {
         # the Makevars file only exists during the call
-        seen <<- paste(readLines(Sys.getenv("R_MAKEVARS_USER")), collapse = "\n")
+        seen <<- paste(
+          readLines(Sys.getenv("R_MAKEVARS_USER")),
+          collapse = "\n"
+        )
         invisible(NULL)
       },
       .package = "Rcpp"
@@ -418,9 +421,21 @@ test_that("rcpp_source_stan() adds -fno-gnu-unique only for GCC on Linux", {
     rcpp_source_stan("// no code", new.env())
     seen
   }
-  expect_match(flags_for(linux = TRUE, gcc = TRUE), "-fno-gnu-unique", fixed = TRUE)
-  expect_no_match(flags_for(linux = TRUE, gcc = FALSE), "-fno-gnu-unique", fixed = TRUE)
-  expect_no_match(flags_for(linux = FALSE, gcc = TRUE), "-fno-gnu-unique", fixed = TRUE)
+  expect_match(
+    flags_for(linux = TRUE, gcc = TRUE),
+    "-fno-gnu-unique",
+    fixed = TRUE
+  )
+  expect_no_match(
+    flags_for(linux = TRUE, gcc = FALSE),
+    "-fno-gnu-unique",
+    fixed = TRUE
+  )
+  expect_no_match(
+    flags_for(linux = FALSE, gcc = TRUE),
+    "-fno-gnu-unique",
+    fixed = TRUE
+  )
 })
 
 test_that("model methods and rstan can be loaded in one R process", {
@@ -431,25 +446,34 @@ test_that("model methods and rstan can be loaded in one R process", {
   ns_path <- getNamespaceInfo("cmdstanr", "path")
   from_source <- length(list.files(file.path(ns_path, "R"), "\\.R$")) > 0
   load_cmdstanr <- if (from_source) {
-    sprintf("asNamespace('pkgload')$load_all(%s, quiet = TRUE)", deparse(ns_path))
+    sprintf(
+      "asNamespace('pkgload')$load_all(%s, quiet = TRUE)",
+      deparse(ns_path)
+    )
   } else {
     sprintf("library(cmdstanr, lib.loc = %s)", deparse(dirname(ns_path)))
   }
   script <- withr::local_tempfile(fileext = ".R")
-  writeLines(c(
-    "order <- commandArgs(trailingOnly = TRUE)[1]",
-    "suppressMessages(suppressWarnings(", load_cmdstanr, "))",
-    "f <- write_stan_file('parameters { real mu; } model { mu ~ normal(0, 1); }')",
-    "if (order == 'rstan_first') loadNamespace('rstan')",
-    "fit <- cmdstan_model(f)$sample(chains = 1, refresh = 0, show_messages = FALSE)",
-    "fit$init_model_methods(quiet = TRUE)",
-    "stopifnot(isTRUE(all.equal(fit$log_prob(0.5), -0.125)))",
-    "if (order == 'methods_first') loadNamespace('rstan')",
-    "cat('done\\n')"
-  ), script)
+  writeLines(
+    c(
+      "order <- commandArgs(trailingOnly = TRUE)[1]",
+      "suppressMessages(suppressWarnings(",
+      load_cmdstanr,
+      "))",
+      "f <- write_stan_file('parameters { real mu; } model { mu ~ normal(0, 1); }')",
+      "if (order == 'rstan_first') loadNamespace('rstan')",
+      "fit <- cmdstan_model(f)$sample(chains = 1, refresh = 0, show_messages = FALSE)",
+      "fit$init_model_methods(quiet = TRUE)",
+      "stopifnot(isTRUE(all.equal(fit$log_prob(0.5), -0.125)))",
+      "if (order == 'methods_first') loadNamespace('rstan')",
+      "cat('done\\n')"
+    ),
+    script
+  )
   for (order in c("methods_first", "rstan_first")) {
     run <- processx::run(
-      file.path(R.home("bin"), "Rscript"), c(script, order),
+      file.path(R.home("bin"), "Rscript"),
+      c(script, order),
       env = c("current", CMDSTAN = cmdstan_path()),
       error_on_status = FALSE
     )
