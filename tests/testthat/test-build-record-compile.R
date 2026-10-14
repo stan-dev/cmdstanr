@@ -19,7 +19,8 @@ mock_compile <- function(stan_file, ..., info_ret = default_info_ret) {
 # the executable goes, which must never be the one the other test files share.
 local_bernoulli <- function(.local_envir = parent.frame()) {
   stan_file <- file.path(
-    withr::local_tempdir(.local_envir = .local_envir), "bernoulli.stan"
+    withr::local_tempdir(.local_envir = .local_envir),
+    "bernoulli.stan"
   )
   file.copy(testing_stan_file("bernoulli"), stan_file)
   stan_file
@@ -69,7 +70,8 @@ test_that("supplied and added stanc options are recorded apart", {
   expect_equal(
     record$configuration$stanc_options_added,
     list(
-      "--warn-pedantic", "--name=bernoulli_model",
+      "--warn-pedantic",
+      "--name=bernoulli_model",
       paste0("--filename-in-msg=", wsl_safe_path(mod$stan_file()))
     )
   )
@@ -105,12 +107,19 @@ test_that("included files are recorded in stanc's order with content hashes", {
   writeLines("real f_zz(real x) { return x; }", zz)
   writeLines("real f_aa(real x) { return x; }", aa)
   stan_file <- file.path(dir, "model.stan")
-  writeLines(c(
-    "functions {", "#include note.stan", "#include zz.stan",
-    "#include note.stan", "#include aa.stan", "}",
-    "parameters { real y; }",
-    "model { y ~ normal(f_zz(0), f_aa(1)); }"
-  ), stan_file)
+  writeLines(
+    c(
+      "functions {",
+      "#include note.stan",
+      "#include zz.stan",
+      "#include note.stan",
+      "#include aa.stan",
+      "}",
+      "parameters { real y; }",
+      "model { y ~ normal(f_zz(0), f_aa(1)); }"
+    ),
+    stan_file
+  )
   mod <- mock_compile(stan_file)
 
   record <- read_build_record(mod$exe_file())$record
@@ -140,13 +149,20 @@ test_that("an include on the WSL filesystem is recorded by its share path", {
   include <- file.path(include_dir, "f.stan")
   writeLines("real f(real x) { return x; }", include)
   stan_file <- file.path(withr::local_tempdir(), "model.stan")
-  writeLines(c(
-    "functions {", "#include f.stan", "}",
-    "parameters { real y; }",
-    "model { y ~ normal(f(0), 1); }"
-  ), stan_file)
+  writeLines(
+    c(
+      "functions {",
+      "#include f.stan",
+      "}",
+      "parameters { real y; }",
+      "model { y ~ normal(f(0), 1); }"
+    ),
+    stan_file
+  )
   mod <- cmdstan_model(
-    stan_file, include_paths = include_dir, force_recompile = TRUE
+    stan_file,
+    include_paths = include_dir,
+    force_recompile = TRUE
   )
 
   record <- read_build_record(mod$exe_file())$record
@@ -172,7 +188,9 @@ test_that("the other injection sites land in the added list", {
   expect_equal(
     record$configuration$stanc_options_added,
     list(
-      "--use-opencl", "--allow-undefined", "--name=bernoulli_model",
+      "--use-opencl",
+      "--allow-undefined",
+      "--name=bernoulli_model",
       paste0("--filename-in-msg=", wsl_safe_path(mod$stan_file()))
     )
   )
@@ -272,7 +290,8 @@ test_that("the model is launched with the TBB its record names", {
   stan_file <- local_bernoulli()
   tbb <- withr::local_tempdir()
   mod <- mock_compile(
-    stan_file, cpp_options = list(tbb_lib = wsl_safe_path(tbb))
+    stan_file,
+    cpp_options = list(tbb_lib = wsl_safe_path(tbb))
   )
   handed <- "unset"
   local_mocked_bindings(

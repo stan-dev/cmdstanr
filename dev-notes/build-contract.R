@@ -41,13 +41,22 @@ marks <- rbind(
   data.frame(pos = closes, open = FALSE)
 )
 marks <- marks[order(marks$pos), ]
-line_of <- function(pos) sum(strsplit(substr(text, 1, pos), "")[[1]] == "\n") + 1
+line_of <- function(pos) {
+  sum(strsplit(substr(text, 1, pos), "")[[1]] == "\n") + 1
+}
 expected <- rep(c(TRUE, FALSE), length.out = nrow(marks))
-if (nrow(marks) == 0) stop("no contract markers found in ", src)
+if (nrow(marks) == 0) {
+  stop("no contract markers found in ", src)
+}
 if (nrow(marks) %% 2 == 1 || any(marks$open != expected)) {
   bad <- which(marks$open != expected)
   bad <- if (length(bad)) marks$pos[bad[1]] else marks$pos[nrow(marks)]
-  stop("unmatched or nested contract marker at ", basename(src), ":", line_of(bad))
+  stop(
+    "unmatched or nested contract marker at ",
+    basename(src),
+    ":",
+    line_of(bad)
+  )
 }
 
 # Heading in force at each position: the nearest ## above, and the nearest ###
@@ -102,7 +111,9 @@ header <- c(
   "# Compilation state and C++ options: the contract",
   "",
   paste0(
-    "Generated from `", basename(src), "` by `build-contract.R`. Do not edit this",
+    "Generated from `",
+    basename(src),
+    "` by `build-contract.R`. Do not edit this",
     " file; edit the marked blocks there and rerun the script."
   ),
   "",
@@ -116,13 +127,20 @@ header <- c(
 
 result <- c(header, body[-1])
 blank <- result == ""
-result <- result[!(blank & c(FALSE, head(blank, -1)))]  # collapse doubled blanks
+result <- result[!(blank & c(FALSE, head(blank, -1)))] # collapse doubled blanks
 generated <- paste(result, collapse = "\n")
 
 if (check_only) {
-  current <- if (file.exists(out)) paste(readLines(out, warn = FALSE, encoding = "UTF-8"), collapse = "\n") else ""
+  current <- if (file.exists(out)) {
+    paste(readLines(out, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+  } else {
+    ""
+  }
   if (!identical(current, generated)) {
-    stop(basename(out), " is out of date; rerun Rscript dev-notes/build-contract.R")
+    stop(
+      basename(out),
+      " is out of date; rerun Rscript dev-notes/build-contract.R"
+    )
   }
   cat(basename(out), "is current\n")
 } else {

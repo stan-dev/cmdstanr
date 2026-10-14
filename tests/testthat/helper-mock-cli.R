@@ -16,10 +16,10 @@ with_mocked_cli <- function(code, compile_ret, info_ret) {
     wsl_compatible_run = function(command, args, ...) {
       if (
         # Match the configured make command.
-        !is.null(command)
-        && command == make_cmd()
-        && !is.null(args)
-        && startsWith(basename(args[1]), "model-")
+        !is.null(command) &&
+          command == make_cmd() &&
+          !is.null(args) &&
+          startsWith(basename(args[1]), "model-")
       ) {
         message("mock-compile-was-called")
         # Successful builds create an executable artifact, just like make.
@@ -59,8 +59,12 @@ default_info_ret <- list(
 # it. The text file and its record go when the caller's frame ends, so a
 # later real build of the same program in the same place does not find them
 # current.
-mock_cmdstan_model <- function(stan_file, ..., info_ret = default_info_ret,
-                               .local_envir = parent.frame()) {
+mock_cmdstan_model <- function(
+  stan_file,
+  ...,
+  info_ret = default_info_ret,
+  .local_envir = parent.frame()
+) {
   mod <- with_mocked_cli(
     compile_ret = list(status = 0),
     info_ret = info_ret,

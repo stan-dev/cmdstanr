@@ -172,7 +172,10 @@ test_that("sample() method works with data files", {
   expect_sample_output(fit_r <- mod$sample(data = data_file_r, chains = 1), 1)
   expect_s3_class(fit_r, "CmdStanMCMC")
 
-  expect_sample_output(fit_json <- mod$sample(data = data_file_json, chains = 1), 1)
+  expect_sample_output(
+    fit_json <- mod$sample(data = data_file_json, chains = 1),
+    1
+  )
   expect_s3_class(fit_json, "CmdStanMCMC")
 })
 
@@ -195,7 +198,10 @@ test_that("sample() method works with init file", {
     fileext = ".json"
   )
   write_stan_json(init_list, file = init_file)
-  expect_sample_output(mod$sample(data = data_file_r, init = init_file, chains = 1), 1)
+  expect_sample_output(
+    mod$sample(data = data_file_r, init = init_file, chains = 1),
+    1
+  )
 })
 
 test_that("sample() method runs when all arguments specified", {
@@ -275,15 +281,28 @@ test_that("mc.cores option detected", {
 })
 
 test_that("sample() method runs when fixed_param = TRUE", {
-  expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 4)
+  expect_sample_output(
+    fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000),
+    4
+  )
   expect_s3_class(fit_1000, "CmdStanMCMC")
-  expect_equal(dim(fit_1000$draws()), c(1000,4,10))
+  expect_equal(dim(fit_1000$draws()), c(1000, 4, 10))
 
-  expect_sample_output(fit_500 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500), 4)
-  expect_equal(dim(fit_500$draws()), c(500,4,10))
+  expect_sample_output(
+    fit_500 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500),
+    4
+  )
+  expect_equal(dim(fit_500$draws()), c(500, 4, 10))
 
-  expect_sample_output(fit_500_w <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500, iter_warmup = 5000), 4)
-  expect_equal(dim(fit_500_w$draws()), c(500,4,10))
+  expect_sample_output(
+    fit_500_w <- mod_fp$sample(
+      fixed_param = TRUE,
+      iter_sampling = 500,
+      iter_warmup = 5000
+    ),
+    4
+  )
+  expect_equal(dim(fit_500_w$draws()), c(500, 4, 10))
 
   expect_equal(fit_1000$metadata()$algorithm, "fixed_param")
   expect_equal(fit_500$metadata()$algorithm, "fixed_param")
@@ -291,32 +310,47 @@ test_that("sample() method runs when fixed_param = TRUE", {
 })
 
 test_that("sample() method runs when adapt_engaged = FALSE", {
-  expect_sample_output(fit <- mod$sample(data = data_list, chains = 1, adapt_engaged = FALSE), 1)
+  expect_sample_output(
+    fit <- mod$sample(data = data_list, chains = 1, adapt_engaged = FALSE),
+    1
+  )
   draws <- try(fit$draws(), silent = TRUE)
   expect_false(inherits(draws, "try-error"))
 })
 
 test_that("chain_ids work with sample()", {
-  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
+  expect_sample_output(
+    fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10, 12))
+  )
   expect_s3_class(fit12, "CmdStanMCMC")
-  expect_equal(fit12$metadata()$id, c(10,12))
+  expect_equal(fit12$metadata()$id, c(10, 12))
 
-  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100,7)))
+  expect_sample_output(
+    fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100, 7))
+  )
   expect_s3_class(fit12, "CmdStanMCMC")
-  expect_equal(fit12$metadata()$id, c(100,7))
+  expect_equal(fit12$metadata()$id, c(100, 7))
 
-  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 1, chain_ids = c(6)))
+  expect_sample_output(
+    fit12 <- mod$sample(data = data_list, chains = 1, chain_ids = c(6))
+  )
   expect_s3_class(fit12, "CmdStanMCMC")
   expect_equal(fit12$metadata()$id, c(6))
 
-  expect_error(mod$sample(data = data_list, chains = 1, chain_ids = c(0)),
-               "Assertion on 'chain_ids' failed: Element 1 is not >= 1.")
+  expect_error(
+    mod$sample(data = data_list, chains = 1, chain_ids = c(0)),
+    "Assertion on 'chain_ids' failed: Element 1 is not >= 1."
+  )
 
-  expect_error(mod$sample(data = data_list, chains = 2, chain_ids = c(1,1)),
-               "Assertion on 'chain_ids' failed: Contains duplicated values, position 2.")
+  expect_error(
+    mod$sample(data = data_list, chains = 2, chain_ids = c(1, 1)),
+    "Assertion on 'chain_ids' failed: Contains duplicated values, position 2."
+  )
 
-  expect_error(mod$sample(data = data_list, chains = 1, chain_ids = c(1,2)),
-               "Assertion on 'chain_ids' failed: Must have length 1, but has length 2.")
+  expect_error(
+    mod$sample(data = data_list, chains = 1, chain_ids = c(1, 2)),
+    "Assertion on 'chain_ids' failed: Must have length 1, but has length 2."
+  )
 })
 
 test_that("print statements in transformed data work", {
@@ -333,7 +367,9 @@ test_that("print statements in transformed data work", {
   }'
   ))
 
-  out <- capture.output(fit <- mod$sample(iter_warmup = 1, iter_sampling = 5, chains = 1))
+  out <- capture.output(
+    fit <- mod$sample(iter_warmup = 1, iter_sampling = 5, chains = 1)
+  )
   expect_true(any(grepl("*N = 2*", out)))
 })
 
@@ -363,7 +399,12 @@ test_that("seed works for multi chain sampling", {
   f <- write_stan_file(m, basename = "rngs.stan")
   mod <- cmdstan_model(f)
   utils::capture.output(
-    fit_sample <- mod$sample(chains = 2, iter_sampling = 5, iter_warmup = 100, seed = 2)
+    fit_sample <- mod$sample(
+      chains = 2,
+      iter_sampling = 5,
+      iter_warmup = 100,
+      seed = 2
+    )
   )
   chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
   chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
@@ -373,8 +414,12 @@ test_that("seed works for multi chain sampling", {
   expect_false(all(chain_tdata_1 == chain_tdata_2))
 
   utils::capture.output(
-    fit_sample <- mod$sample(chains = 2, iter_sampling = 5, iter_warmup = 100,
-                             seed = c(1, 2))
+    fit_sample <- mod$sample(
+      chains = 2,
+      iter_sampling = 5,
+      iter_warmup = 100,
+      seed = c(1, 2)
+    )
   )
   chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
   chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
@@ -426,12 +471,18 @@ test_that("Errors are suppressed with show_exceptions", {
       suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1)),
       "Chain 1 Exception: vector[uni] assign: accessing element out of range",
       fixed = TRUE
-    ))
+    )
+  )
 
   expect_sample_output(
     expect_no_message(
-      suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1, show_exceptions = FALSE))
-    ))
+      suppressWarnings(errmod$sample(
+        data = list(y_mean = 1),
+        chains = 1,
+        show_exceptions = FALSE
+      ))
+    )
+  )
 })
 
 test_that("compressed fits support latent dynamics files and CmdStan tools", {
@@ -443,7 +494,8 @@ test_that("compressed fits support latent dynamics files and CmdStan tools", {
     save_latent_dynamics = TRUE
   )
   checkmate::expect_file_exists(
-    fit$latent_dynamics_files(), extension = "csv.gz"
+    fit$latent_dynamics_files(),
+    extension = "csv.gz"
   )
   expect_output(fit$cmdstan_summary(), "Inference for Stan model")
   expect_output(fit$cmdstan_diagnose(), "Processing complete")

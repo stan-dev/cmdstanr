@@ -8,7 +8,8 @@ stan_program <- testing_stan_file("bernoulli")
 local_gone_installation <- function(.local_envir = parent.frame()) {
   path <- cmdstan_path()
   gone <- repair_path(file.path(
-    withr::local_tempdir(.local_envir = .local_envir), "cmdstan"
+    withr::local_tempdir(.local_envir = .local_envir),
+    "cmdstan"
   ))
   .cmdstanr$PATH <- gone
   withr::defer(.cmdstanr$PATH <- path, envir = .local_envir)
