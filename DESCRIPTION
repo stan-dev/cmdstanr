@@ -74,5 +74,5 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/testthat/parallel: true
-Config/testthat/start-first: test-install.R
+Config/testthat/start-first: install
 Config/roxygen2/version: 8.1.1

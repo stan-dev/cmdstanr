@@ -27,8 +27,16 @@ cleanup_stan_artifacts <- function() {
 cleanup_stan_artifacts()
 withr::defer(cleanup_stan_artifacts(), testthat::teardown_env())
 
-shared_cmdstan <- cmdstan_path()
-worker_cmdstan <- file.path(tempdir(), "cmdstan", basename(shared_cmdstan))
-dir.create(dirname(worker_cmdstan), recursive = TRUE, showWarnings = FALSE)
-file.copy(shared_cmdstan, dirname(worker_cmdstan), recursive = TRUE)
-Sys.setenv(CMDSTAN = worker_cmdstan)
+if (!os_is_wsl()) {
+  shared_cmdstan <- cmdstan_path()
+  worker_cmdstan <- file.path(tempdir(), "cmdstan", basename(shared_cmdstan))
+  dir.create(dirname(worker_cmdstan), recursive = TRUE, showWarnings = FALSE)
+  file.copy(
+    shared_cmdstan,
+    dirname(worker_cmdstan),
+    recursive = TRUE,
+    copy.date = TRUE
+  )
+  Sys.setenv(CMDSTAN = worker_cmdstan)
+  suppressMessages(set_cmdstan_path())
+}
