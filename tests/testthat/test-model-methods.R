@@ -72,7 +72,11 @@ test_that("rcpp_source_stan() links RcppParallel's TBB with a plain -L", {
     .package = "Rcpp"
   )
   rcpp_source_stan("// no code", new.env())
-  expect_match(grep("^PKG_LIBS", seen, value = TRUE), "-L'/rp/lib' ", fixed = TRUE)
+  expect_match(
+    grep("^PKG_LIBS", seen, value = TRUE),
+    paste0("-L", shQuote(tbb$lib), " "),
+    fixed = TRUE
+  )
 })
 
 test_that("R exits cleanly after model methods built against RcppParallel's TBB", {
