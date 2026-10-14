@@ -26,24 +26,3 @@ cleanup_stan_artifacts <- function() {
 
 cleanup_stan_artifacts()
 withr::defer(cleanup_stan_artifacts(), testthat::teardown_env())
-
-if (!os_is_wsl()) {
-  shared_cmdstan <- cmdstan_path()
-  worker_cmdstan <- file.path(tempdir(), "cmdstan", basename(shared_cmdstan))
-  dir.create(dirname(worker_cmdstan), recursive = TRUE, showWarnings = FALSE)
-  if (os_is_windows()) {
-    system2(
-      "robocopy",
-      c(
-        shQuote(shared_cmdstan),
-        shQuote(worker_cmdstan),
-        "/E", "/MT:16", "/NFL", "/NDL", "/NJH", "/NJS", "/NP"
-      ),
-      stdout = FALSE
-    )
-  } else {
-    system2("cp", c("-a", shQuote(shared_cmdstan), shQuote(worker_cmdstan)))
-  }
-  Sys.setenv(CMDSTAN = worker_cmdstan)
-  suppressMessages(set_cmdstan_path())
-}

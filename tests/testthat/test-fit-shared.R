@@ -546,10 +546,9 @@ test_that("sampling works with explicit and inferred include paths containing sp
 })
 
 test_that("CmdStanModel created with exe_file works", {
-  stan_program <- testing_stan_file("bernoulli")
   data_list <- testing_data("bernoulli")
 
-  mod <- cmdstan_model(stan_file = stan_program)
+  mod <- testing_model("bernoulli")
   mod_exe <- cmdstan_model(exe_file = mod$exe_file())
 
   utils::capture.output(
@@ -584,10 +583,9 @@ test_that("CmdStanModel created with exe_file works", {
   )
   expect_equal(fit_sample$draws(), fit_sample_exe$draws())
 
-  stan_ppc_program <- testing_stan_file("bernoulli_ppc")
   data_ppc_list <- testing_data("bernoulli_ppc")
 
-  mod_bern_ppc <- cmdstan_model(stan_file = stan_ppc_program)
+  mod_bern_ppc <- testing_model("bernoulli_ppc")
   mod_bern_ppc_exe <- cmdstan_model(exe_file = mod_bern_ppc$exe_file())
 
   utils::capture.output(

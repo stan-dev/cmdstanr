@@ -71,7 +71,7 @@ test_that("cmdstan_model() records a user header", {
 })
 
 test_that("cmdstan_model() honours an explicit user_header = NULL", {
-  model <- cmdstan_model(testing_stan_file("bernoulli"), user_header = NULL)
+  model <- testing_model("bernoulli", user_header = NULL)
   expect_null(model$user_header())
 })
 

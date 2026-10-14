@@ -523,8 +523,8 @@ test_that("filename-in-msg supplied unnamed is not added again", {
   expect_match(hpp, "published.stan", fixed = TRUE)
 })
 
-# Writes the shared installation's make/local, so it runs last and once.
 test_that("an edited make/local rebuilds", {
+  local_private_cmdstan()
   stan_file <- local_bernoulli()
   mocked(expect_mock_compile(cmdstan_model(stan_file)))
 

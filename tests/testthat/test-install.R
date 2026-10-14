@@ -632,6 +632,7 @@ test_that("install_cmdstan() rejects a non-logical copy_make_local", {
 })
 
 test_that("cmdstan_make_local() works", {
+  local_private_cmdstan()
   # Backup only, cmdstan_make_local() is the thing being tested.
   local_make_local_backup()
 

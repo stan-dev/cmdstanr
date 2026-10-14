@@ -173,6 +173,39 @@ local_make_local_backup <- function(envir = parent.frame()) {
 # top level of a test file, the restore runs after all tests in that file.
 local_cmdstan_make_local <- function(cpp_options, envir = parent.frame(),
                                      append = TRUE) {
+  local_private_cmdstan(envir = envir)
   local_make_local_backup(envir = envir)
   cmdstan_make_local(cpp_options = cpp_options, append = append)
+}
+
+copy_cmdstan_tree <- function(from, to) {
+  if (os_is_windows()) {
+    system2(
+      "robocopy",
+      c(
+        shQuote(from),
+        shQuote(to),
+        "/E", "/MT:16", "/NFL", "/NDL", "/NJH", "/NJS", "/NP"
+      ),
+      stdout = FALSE
+    )
+  } else {
+    system2("cp", c("-a", shQuote(from), shQuote(to)))
+  }
+}
+
+private_cmdstan <- new.env(parent = emptyenv())
+
+local_private_cmdstan <- function(envir = parent.frame()) {
+  if (os_is_wsl()) {
+    return(invisible())
+  }
+  shared <- cmdstan_path()
+  if (is.null(private_cmdstan$path)) {
+    private_cmdstan$path <- file.path(tempfile("cmdstan-"), basename(shared))
+    dir.create(dirname(private_cmdstan$path))
+    copy_cmdstan_tree(shared, private_cmdstan$path)
+  }
+  suppressMessages(set_cmdstan_path(private_cmdstan$path))
+  withr::defer(suppressMessages(set_cmdstan_path(shared)), envir = envir)
 }

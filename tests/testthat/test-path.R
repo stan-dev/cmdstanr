@@ -1,6 +1,5 @@
 skip_on_cran()
 
-worker_cmdstan <- Sys.getenv("CMDSTAN")
 Sys.unsetenv("CMDSTAN")
 PATH <- absolute_path(set_cmdstan_path())
 VERSION <- cmdstan_version()
@@ -313,5 +312,5 @@ test_that("is_release_candidate() works", {
 })
 
 # cleanup -----------------------------------------------------------------
-Sys.setenv(CMDSTAN = worker_cmdstan)
+Sys.unsetenv("CMDSTAN")
 unset_cmdstan_path()

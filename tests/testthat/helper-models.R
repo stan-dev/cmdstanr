@@ -35,8 +35,42 @@ cmdstan_example_file <- function() {
   file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
 }
 
-testing_model <- function(name) {
-  cmdstan_model(stan_file = testing_stan_file(name))
+test_run_dir <- function() {
+  dir <- Sys.getenv("CMDSTANR_TEST_SHARED")
+  if (nzchar(dir)) dir else NULL
+}
+
+with_test_lock <- function(key, code, timeout = 900) {
+  lock <- file.path(test_run_dir(), paste0(key, ".lock"))
+  deadline <- Sys.time() + timeout
+  while (!dir.create(lock, showWarnings = FALSE) && Sys.time() < deadline) {
+    Sys.sleep(0.25)
+  }
+  on.exit(unlink(lock, recursive = TRUE))
+  force(code)
+}
+
+testing_model <- function(name, ...) {
+  stan_file <- testing_stan_file(name)
+  if (is.null(test_run_dir())) {
+    return(cmdstan_model(stan_file = stan_file, ...))
+  }
+  exe <- executable_path(stan_file)
+  files <- c(exe, build_record_path(exe))
+  variant <- rlang::hash(list(cmdstan_path(), rlang::hash_file(stan_file), ...))
+  cache <- file.path(test_run_dir(), variant)
+  with_test_lock(variant, {
+    if (dir.exists(cache)) {
+      file.copy(
+        file.path(cache, basename(files)), dirname(exe),
+        overwrite = TRUE, copy.date = TRUE
+      )
+    }
+    mod <- cmdstan_model(stan_file = stan_file, ...)
+    dir.create(cache, showWarnings = FALSE)
+    file.copy(files, cache, overwrite = TRUE, copy.date = TRUE)
+    mod
+  })
 }
 
 testing_fit <-

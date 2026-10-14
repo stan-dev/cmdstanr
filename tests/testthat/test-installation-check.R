@@ -31,14 +31,14 @@ test_that("a model is not built when the selected installation is gone", {
 })
 
 test_that("check_syntax() and format() error naming the gone installation", {
-  mod <- cmdstan_model(stan_program)
+  mod <- testing_model("bernoulli")
   gone <- local_gone_installation()
   expect_error(mod$check_syntax(), gone, fixed = TRUE)
   expect_error(mod$format(), gone, fixed = TRUE)
 })
 
 test_that("variables() works with the installation gone while variables_stan_file() does not", {
-  mod <- cmdstan_model(stan_program)
+  mod <- testing_model("bernoulli")
   gone <- local_gone_installation()
   expect_no_error(mod$variables())
   expect_error(variables_stan_file(stan_program), gone, fixed = TRUE)
