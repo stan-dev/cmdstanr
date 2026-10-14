@@ -99,7 +99,7 @@ jobs:
         if: >
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name == github.repository
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           message: |
             Preview: ${{ env.PREVIEW_URL }}
@@ -150,7 +150,7 @@ jobs:
           git push origin HEAD:gh-pages
           
       - name: Hide preview comment
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           hide: true
           hide_classify: OUTDATED
