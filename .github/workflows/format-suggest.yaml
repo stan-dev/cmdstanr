@@ -5,9 +5,11 @@ on:
   # privileges, otherwise we can't set `pull-requests: write` when the pull
   # request comes from a fork, which is our main use case (external contributors).
   #
-  # `pull_request_target` runs in the context of the target branch (`main`, usually),
-  # rather than in the context of the pull request like `pull_request` does. Due
-  # to this, we must explicitly checkout `ref: ${{ github.event.pull_request.head.sha }}`.
+  # `pull_request_target` runs in the context of the default branch (`master`),
+  # whatever the pull request's base branch, so the copy of this file on `master`
+  # is the one that runs. It doesn't check out the pull request like
+  # `pull_request` does, so we must explicitly checkout
+  # `ref: ${{ github.event.pull_request.head.sha }}`.
   # This is typically frowned upon by GitHub, as it exposes you to potentially running
   # untrusted code in a context where you have elevated privileges, but they explicitly
   # call out the use case of reformatting and committing back / commenting on the PR
