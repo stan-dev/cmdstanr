@@ -36,7 +36,11 @@ test_that("print_stan_file() wraps in <details> when fold=TRUE", {
 
 test_that("print_stan_file() uses custom summary text", {
   out <- with_mocked_bindings(
-    capture.output(print_stan_file(stan_file, fold = TRUE, summary = "My Stan Code")),
+    capture.output(print_stan_file(
+      stan_file,
+      fold = TRUE,
+      summary = "My Stan Code"
+    )),
     is_knitr_asis_output = function() TRUE
   )
   expect_snapshot(cat(out, sep = "\n"), cran = TRUE)

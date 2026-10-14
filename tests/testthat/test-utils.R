@@ -1,10 +1,8 @@
 skip_on_cran()
 
 set_cmdstan_path()
-fit_mcmc <- testing_fit("logistic", method = "sample",
-                        seed = 123, chains = 2)
+fit_mcmc <- testing_fit("logistic", method = "sample", seed = 123, chains = 2)
 fit_mle <- testing_fit("logistic", method = "opt", seed = 123)
-
 
 
 # diagnostic checks -------------------------------------------------------
@@ -13,36 +11,56 @@ test_that("check_divergences() works", {
   csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "14 of 100 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(
+    divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    output
+  )
   expect_equal(divs, 14)
 
-  csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
-                 test_path("resources", "csv", "model1-2-no-warmup.csv"))
+  csv_files <- c(
+    test_path("resources", "csv", "model1-2-no-warmup.csv"),
+    test_path("resources", "csv", "model1-2-no-warmup.csv")
+  )
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "28 of 200 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(
+    divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    output
+  )
   expect_equal(divs, c(14, 14))
 
   # force different number of divergences per chain just to test
   csv_output$post_warmup_sampler_diagnostics[1, 1:2, "divergent__"] <- c(0, 1)
   output <- "27 of 200 \\(14.0%\\) transitions ended with a divergence."
-  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(
+    divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    output
+  )
   expect_equal(divs, c(13, 14))
 
   csv_files <- c(test_path("resources", "csv", "model1-2-warmup.csv"))
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "1 of 100 \\(1.0%\\) transitions ended with a divergence."
-  expect_message(check_divergences(csv_output$post_warmup_sampler_diagnostics), output)
+  expect_message(
+    check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    output
+  )
 
-
-  fit_wramup_no_samples <- testing_fit("logistic", method = "sample",
-                          seed = 123, chains = 1,
-                          iter_sampling = 0,
-                          iter_warmup = 10,
-                          save_warmup = TRUE,
-                          diagnostics = "")
+  fit_wramup_no_samples <- testing_fit(
+    "logistic",
+    method = "sample",
+    seed = 123,
+    chains = 1,
+    iter_sampling = 0,
+    iter_warmup = 10,
+    save_warmup = TRUE,
+    diagnostics = ""
+  )
   csv_output <- read_cmdstan_csv(fit_wramup_no_samples$output_files())
-  expect_message(divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics), regexp = NA)
+  expect_message(
+    divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
+    regexp = NA
+  )
   expect_null(divs)
 })
 
@@ -53,19 +71,23 @@ test_that("check_max_treedepth() works", {
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
-      csv_output$metadata),
+      csv_output$metadata
+    ),
     output
   )
   expect_equal(max_tds, 16)
 
-  csv_files <- c(test_path("resources", "csv", "model1-2-no-warmup.csv"),
-                 test_path("resources", "csv", "model1-2-no-warmup.csv"))
+  csv_files <- c(
+    test_path("resources", "csv", "model1-2-no-warmup.csv"),
+    test_path("resources", "csv", "model1-2-no-warmup.csv")
+  )
   csv_output <- read_cmdstan_csv(csv_files)
   output <- "32 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5."
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
-      csv_output$metadata),
+      csv_output$metadata
+    ),
     output
   )
   expect_equal(max_tds, c(16, 16))
@@ -76,7 +98,8 @@ test_that("check_max_treedepth() works", {
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
-      csv_output$metadata),
+      csv_output$metadata
+    ),
     output
   )
   expect_equal(max_tds, c(15, 16))
@@ -87,7 +110,8 @@ test_that("check_max_treedepth() works", {
   expect_message(
     check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
-      csv_output$metadata),
+      csv_output$metadata
+    ),
     output
   )
 })
@@ -95,27 +119,52 @@ test_that("check_max_treedepth() works", {
 test_that("check_ebfmi and computing ebfmi works", {
   set.seed(1)
   energy_df <- data.frame("energy__" = rnorm(1000))
-  expect_error(suppressWarnings(check_ebfmi(posterior::as_draws(energy_df))), NA)
+  expect_error(
+    suppressWarnings(check_ebfmi(posterior::as_draws(energy_df))),
+    NA
+  )
   expect_error(suppressWarnings(ebfmi(posterior::as_draws(energy_df))), NA)
   energy_df[1] <- 0
-  for(i in 1:999){
-    energy_df$energy__[i+1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
+  for (i in 1:999) {
+    energy_df$energy__[i + 1] <- energy_df$energy__[i] + rnorm(1, 0, 0.01)
   }
   energy_df <- posterior::as_draws(energy_df)
   expect_message(check_ebfmi(energy_df), "had an E-BFMI less than")
   energy_vec <- energy_df$energy__
-  check_val <- (sum(diff(energy_vec)^2) / length(energy_vec)) / stats::var(energy_vec)
+  check_val <- (sum(diff(energy_vec)^2) / length(energy_vec)) /
+    stats::var(energy_vec)
   expect_equal(as.numeric(ebfmi(energy_df)), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_array(energy_df))), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_list(energy_df))), check_val)
-  expect_equal(as.numeric(ebfmi(posterior::as_draws_matrix(energy_df))), check_val)
+  expect_equal(
+    as.numeric(ebfmi(posterior::as_draws_array(energy_df))),
+    check_val
+  )
+  expect_equal(
+    as.numeric(ebfmi(posterior::as_draws_list(energy_df))),
+    check_val
+  )
+  expect_equal(
+    as.numeric(ebfmi(posterior::as_draws_matrix(energy_df))),
+    check_val
+  )
   energy_df <- posterior::as_draws(data.frame("energy__" = 0))
-  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
-  expect_warning(ebfmi(energy_df), "E-BFMI not computed because it is undefined for posterior chains of length less than 3.")
+  expect_warning(
+    check_ebfmi(energy_df),
+    "E-BFMI not computed because it is undefined for posterior chains of length less than 3."
+  )
+  expect_warning(
+    ebfmi(energy_df),
+    "E-BFMI not computed because it is undefined for posterior chains of length less than 3."
+  )
 
   energy_df <- posterior::as_draws(data.frame("somethingelse" = 0))
-  expect_warning(check_ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
-  expect_warning(ebfmi(energy_df), "E-BFMI not computed because the 'energy__' diagnostic could not be located.")
+  expect_warning(
+    check_ebfmi(energy_df),
+    "E-BFMI not computed because the 'energy__' diagnostic could not be located."
+  )
+  expect_warning(
+    ebfmi(energy_df),
+    "E-BFMI not computed because the 'energy__' diagnostic could not be located."
+  )
 
   energy_df <- posterior::as_draws(data.frame("energy__" = rep(0, 10)))
   expect_no_message(expect_no_warning(check_ebfmi(energy_df)))
@@ -179,7 +228,10 @@ test_that("save_output_files() keeps the sources if any copy fails", {
   expect_snapshot(
     error = TRUE,
     fit_mcmc$save_output_files(
-      destination_dir, basename = "output", timestamp = FALSE, random = FALSE
+      destination_dir,
+      basename = "output",
+      timestamp = FALSE,
+      random = FALSE
     )
   )
   expect_true(all(file.exists(fit_mcmc$output_files())))
@@ -260,7 +312,10 @@ test_that("use_spinner() respects the cmdstanr_spinner option", {
   withr::local_options(list(rlang_interactive = TRUE, cmdstanr_spinner = NULL))
   withr::local_envvar(IN_PKGDOWN = NA)
   expect_true(use_spinner())
-  withr::with_options(list(cmdstanr_spinner = FALSE), expect_false(use_spinner()))
+  withr::with_options(
+    list(cmdstanr_spinner = FALSE),
+    expect_false(use_spinner())
+  )
   withr::with_options(list(cmdstanr_spinner = TRUE), expect_true(use_spinner()))
 })
 
@@ -270,7 +325,10 @@ test_that("use_spinner() is FALSE unless interactive", {
 
   withr::local_options(rlang_interactive = FALSE)
   expect_false(use_spinner())
-  withr::with_options(list(cmdstanr_spinner = TRUE), expect_false(use_spinner()))
+  withr::with_options(
+    list(cmdstanr_spinner = TRUE),
+    expect_false(use_spinner())
+  )
 
   withr::local_options(rlang_interactive = TRUE)
   withr::local_envvar(IN_PKGDOWN = "true")
@@ -285,7 +343,10 @@ test_that("as_mcmc.list() works", {
 
   draws <- fit_mcmc$draws()
   x1 <- x[[1]]
-  expect_equal(dim(x1), c(posterior::niterations(draws), posterior::nvariables(draws)))
+  expect_equal(
+    dim(x1),
+    c(posterior::niterations(draws), posterior::nvariables(draws))
+  )
   expect_equal(dimnames(x1)$variable, posterior::variables(draws))
 
   expect_error(
@@ -316,7 +377,10 @@ test_that("get_cmdstan_flags() can be used recursively in `make`", {
     )
     return(invisible())
   }
-  expected_stdout <- paste(capture.output(cat(nonrecursive_flags)), collapse = "\n")
+  expected_stdout <- paste(
+    capture.output(cat(nonrecursive_flags)),
+    collapse = "\n"
+  )
   expect_equal(recursive_run$stdout, expected_stdout)
 })
 
@@ -336,7 +400,10 @@ test_that("parse_make_print_flag() ignores unrelated make output", {
 
 test_that("parse_make_print_flag() errors if no matching flag line is found", {
   expect_error(
-    parse_make_print_flag("STANCFLAGS", "make: Entering directory '/tmp/cmdstan'"),
+    parse_make_print_flag(
+      "STANCFLAGS",
+      "make: Entering directory '/tmp/cmdstan'"
+    ),
     "Failed to parse `STANCFLAGS`",
     fixed = TRUE
   )
@@ -369,16 +436,21 @@ test_that("get_cmdstan_flags() returns empty STANCFLAGS as character(0)", {
 test_that("get_cmdstan_flags() ignores unrelated output around STANCFLAGS", {
   with_mocked_bindings(
     {
-      expect_equal(get_cmdstan_flags("STANCFLAGS"), c("--O1", "--warn-pedantic"))
+      expect_equal(
+        get_cmdstan_flags("STANCFLAGS"),
+        c("--O1", "--warn-pedantic")
+      )
     },
     wsl_compatible_run = function(...) {
-      list(stdout = paste(
-        "make[1]: Entering directory '/tmp/cmdstan'",
-        "cmdstanr-stancflag=--O1",
-        "cmdstanr-stancflag=--warn-pedantic",
-        "make[1]: Leaving directory '/tmp/cmdstan'",
-        sep = "\n"
-      ))
+      list(
+        stdout = paste(
+          "make[1]: Entering directory '/tmp/cmdstan'",
+          "cmdstanr-stancflag=--O1",
+          "cmdstanr-stancflag=--warn-pedantic",
+          "make[1]: Leaving directory '/tmp/cmdstan'",
+          sep = "\n"
+        )
+      )
     }
   )
 })
@@ -394,12 +466,18 @@ test_that("get_cmdstan_flags() reads several flags from one make call", {
     },
     wsl_compatible_run = function(command, args, ...) {
       calls[[length(calls) + 1]] <<- args
-      list(stdout = paste0("CPPFLAGS = -DBOOST_DISABLE_ASSERTS\n",
-                           "LDLIBS = -ltbb\nCXXFLAGS = -O3\n"))
+      list(
+        stdout = paste0(
+          "CPPFLAGS = -DBOOST_DISABLE_ASSERTS\n",
+          "LDLIBS = -ltbb\nCXXFLAGS = -O3\n"
+        )
+      )
     }
   )
-  expect_equal(calls, list(c("-s", "print-CPPFLAGS", "print-LDLIBS",
-                             "print-CXXFLAGS")))
+  expect_equal(
+    calls,
+    list(c("-s", "print-CPPFLAGS", "print-LDLIBS", "print-CXXFLAGS"))
+  )
 })
 
 test_that("get_cmdstan_flags() preserves empty non-STANCFLAGS values", {
@@ -451,7 +529,9 @@ test_that("get_cmdstan_flags() handles line-continuation STANCFLAGS in make/loca
 })
 
 test_that("get_cmdstan_flags() keeps quoted STANCFLAGS values whole (#1232)", {
-  local_mini_make_local("STANCFLAGS += --O1 --filename-in-msg='/my dir/model.stan'")
+  local_mini_make_local(
+    "STANCFLAGS += --O1 --filename-in-msg='/my dir/model.stan'"
+  )
   expect_equal(
     get_cmdstan_flags("STANCFLAGS"),
     c("--O1", "--filename-in-msg=/my dir/model.stan")
@@ -477,7 +557,9 @@ test_that("get_cmdstan_flags() returns an unset STANCFLAGS as character(0)", {
 })
 
 test_that("get_cmdstan_flags() keeps the rule file out of MAKEFILE_LIST", {
-  local_mini_make_local("STANCFLAGS = --filename-in-msg=$(lastword $(MAKEFILE_LIST))")
+  local_mini_make_local(
+    "STANCFLAGS = --filename-in-msg=$(lastword $(MAKEFILE_LIST))"
+  )
   expect_equal(get_cmdstan_flags("STANCFLAGS"), "--filename-in-msg=local")
 })
 
@@ -488,7 +570,10 @@ test_that("get_cmdstan_flags() resolves STANCFLAGS with the call's cpp_options a
     "endif"
   ))
   expect_equal(get_cmdstan_flags("STANCFLAGS"), character(0))
-  expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL=TRUE"), "--use-opencl")
+  expect_equal(
+    get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL=TRUE"),
+    "--use-opencl"
+  )
   expect_equal(get_cmdstan_flags("STANCFLAGS", "STAN_OPENCL="), character(0))
 })
 
@@ -528,7 +613,11 @@ test_that("make_shell_quote() survives Make expansion and shell splitting (#1230
   )
   make_run <- processx::run(
     command = "make",
-    args = c("-s", "args", paste0("STANCFLAGS += ", paste(quoted, collapse = " "))),
+    args = c(
+      "-s",
+      "args",
+      paste0("STANCFLAGS += ", paste(quoted, collapse = " "))
+    ),
     wd = tmpdir,
     error_on_status = FALSE
   )
@@ -565,7 +654,11 @@ test_that("local_make_local_backup() heals residue and nests", {
     unlink(make_local_backup_path())
   })
   contents <- function() {
-    if (file.exists(make_local_path)) readLines(make_local_path) else character()
+    if (file.exists(make_local_path)) {
+      readLines(make_local_path)
+    } else {
+      character()
+    }
   }
 
   # A run killed before its restore leaves residue in make/local and its backup
@@ -724,5 +817,5 @@ test_that("restore_cmdstan_make_local() preserves the backup when verification f
   )
 
   expect_identical(readLines(make_local_path), "MUTATED=true")
-  expect_identical(file.exists(backup_path), TRUE)
+  expect_true(file.exists(backup_path))
 })

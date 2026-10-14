@@ -29,7 +29,6 @@ analysis.
 
 * Flexible [BSD-3 license](https://opensource.org/license/bsd-3-clause).
 
-
 ### Installation
 
 #### Installing the R package
@@ -57,7 +56,6 @@ R package, it is also necessary to install CmdStan using CmdStanR's
 `install_cmdstan()` function. A suitable C++ toolchain is also required.
 Instructions are provided in the [_Getting started with
 CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette.
-
 
 ### Contributing
 
