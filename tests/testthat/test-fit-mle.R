@@ -15,7 +15,10 @@ test_that("mle and lp methods work after optimization", {
 test_that("mle() ignores non-matrix default draws formats", {
   expected <- fit_mle$draws(format = "draws_matrix")
   expected <- expected[, colnames(expected) != "lp__", drop = FALSE]
-  expected <- stats::setNames(as.numeric(expected), posterior::variables(expected))
+  expected <- stats::setNames(
+    as.numeric(expected),
+    posterior::variables(expected)
+  )
 
   for (format in c("draws_array", "draws_df")) {
     withr::local_options(list(cmdstanr_draws_format = format))
@@ -62,13 +65,11 @@ test_that("time() method works after optimization", {
 
 
 test_that("output() works for optimization", {
-  expect_output(fit_mle$output(),
-                "method = optimize")
+  expect_output(fit_mle$output(), "method = optimize")
 })
 
 test_that("time is reported after optimization", {
-  expect_output(mod$optimize(data = data_list, seed = 123),
-                "Finished in")
+  expect_output(mod$optimize(data = data_list, seed = 123), "Finished in")
 })
 
 test_that("no error when checking estimates after failure", {

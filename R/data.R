@@ -136,8 +136,12 @@
 #' cat(readLines(file), sep = "\n")
 #' }
 #'
-write_stan_json <- function(data, file, always_decimal = FALSE,
-                            variables = NULL) {
+write_stan_json <- function(
+  data,
+  file,
+  always_decimal = FALSE,
+  variables = NULL
+) {
   if (!is.list(data)) {
     stop("`data` must be a list.", call. = FALSE)
   }
@@ -146,19 +150,23 @@ write_stan_json <- function(data, file, always_decimal = FALSE,
   }
 
   data_names <- names(data)
-  if (length(data) > 0 &&
+  if (
+    length(data) > 0 &&
       (length(data_names) == 0 ||
-       length(data_names) != sum(nzchar(data_names)))) {
+        length(data_names) != sum(nzchar(data_names)))
+  ) {
     stop("All elements in `data` list must have names.", call. = FALSE)
-
   }
   if (anyDuplicated(data_names) != 0) {
     stop("Duplicate names not allowed in `data`.", call. = FALSE)
   }
 
   for (var_name in data_names) {
-    data[[var_name]] <- convert_variable(data[[var_name]], var_name,
-                                         variables[[var_name]])
+    data[[var_name]] <- convert_variable(
+      data[[var_name]],
+      var_name,
+      variables[[var_name]]
+    )
   }
 
   # unboxing variables (N = 10 is stored as N : 10, not N: [10])
@@ -189,8 +197,12 @@ has_factor <- function(x) {
 # Error if a variable is not one of the types accepted in a data list. Data
 # frames and lists are accepted here and converted by convert_to_array().
 validate_data_type <- function(var, var_name) {
-  if (!is_valid_data_type(var) && !is.complex(var) && !is.data.frame(var) &&
-      !is.list(var)) {
+  if (
+    !is_valid_data_type(var) &&
+      !is.complex(var) &&
+      !is.data.frame(var) &&
+      !is.list(var)
+  ) {
     stop("Variable '", var_name, "' is of invalid type.", call. = FALSE)
   }
   invisible(NULL)
@@ -208,8 +220,14 @@ convert_to_array <- function(var, var_name = NULL) {
     # coerce character columns to factor codes and date/time columns to numeric
     invalid <- !vapply(var, is_valid_data_type, logical(1))
     if (any(invalid)) {
-      stop("Variable '", var_name, "' has columns of invalid type: ",
-           paste(names(var)[invalid], collapse = ", "), ".", call. = FALSE)
+      stop(
+        "Variable '",
+        var_name,
+        "' has columns of invalid type: ",
+        paste(names(var)[invalid], collapse = ", "),
+        ".",
+        call. = FALSE
+      )
     }
     var <- data.matrix(var)
   } else if (is.list(var)) {
@@ -234,13 +252,23 @@ list_to_array <- function(x, name = NULL) {
     isTRUE(all.equal(d, all_dims[[1]]))
   }))
   if (!all_equal_dim) {
-    stop("All matrices/vectors in list '", name, "' must be the same size!", call. = FALSE)
+    stop(
+      "All matrices/vectors in list '",
+      name,
+      "' must be the same size!",
+      call. = FALSE
+    )
   }
   all_numeric <- all(sapply(x, function(a) {
     is.numeric(a) || is.logical(a) || is.complex(a)
   }))
   if (!all_numeric) {
-    stop("All elements in list '", name, "' must be numeric or logical!", call. = FALSE)
+    stop(
+      "All elements in list '",
+      name,
+      "' must be numeric or logical!",
+      call. = FALSE
+    )
   }
   element_num_of_dim <- length(all_dims[[1]])
   x <- unlist(x)
@@ -272,8 +300,14 @@ convert_variable <- function(var, var_name, declaration = NULL) {
       var <- as.integer(var)
     }
   } else if (!is.null(declaration) && has_factor(var)) {
-    stop("A factor was supplied for '", var_name, "', which is declared as '",
-         declaration$type, "'.", call. = FALSE)
+    stop(
+      "A factor was supplied for '",
+      var_name,
+      "', which is declared as '",
+      declaration$type,
+      "'.",
+      call. = FALSE
+    )
   }
   var <- convert_to_array(var, var_name)
   if (anyNA(var)) {
@@ -290,8 +324,13 @@ convert_variable <- function(var, var_name, declaration = NULL) {
   # generating a decimal point in write_stan_json
   if (identical(declaration$type, "int") && !is.integer(var)) {
     if (!isTRUE(all(is_wholenumber(var)))) {
-      warning("A non-integer value was supplied for '", var_name, "'!",
-              " It will be truncated to an integer.", call. = FALSE)
+      warning(
+        "A non-integer value was supplied for '",
+        var_name,
+        "'!",
+        " It will be truncated to an integer.",
+        call. = FALSE
+      )
     } else {
       # Round before setting mode to integer to avoid floating point errors
       var <- round(var)
@@ -306,18 +345,34 @@ convert_variable <- function(var, var_name, declaration = NULL) {
 # dim for more than one array dimension, written as nested JSON arrays.
 convert_tuple <- function(var, var_name, declaration) {
   if (!is.list(var) || is.data.frame(var)) {
-    stop("Variable '", var_name, "' is declared as a tuple and must be a list.",
-         call. = FALSE)
+    stop(
+      "Variable '",
+      var_name,
+      "' is declared as a tuple and must be a list.",
+      call. = FALSE
+    )
   }
   if (declaration$dimensions > 0) {
     element <- list(type = declaration$type, dimensions = 0L)
-    cells <- lapply(var, convert_tuple, var_name = var_name,
-                    declaration = element)
+    cells <- lapply(
+      var,
+      convert_tuple,
+      var_name = var_name,
+      declaration = element
+    )
     return(nest_cells(cells, dim(var) %||% length(var)))
   }
   if (length(var) != length(declaration$type)) {
-    stop("Variable '", var_name, "' is a tuple with ", length(declaration$type),
-         " elements, but ", length(var), " were supplied.", call. = FALSE)
+    stop(
+      "Variable '",
+      var_name,
+      "' is a tuple with ",
+      length(declaration$type),
+      " elements, but ",
+      length(var),
+      " were supplied.",
+      call. = FALSE
+    )
   }
   elements <- lapply(seq_along(var), function(k) {
     convert_variable(var[[k]], paste0(var_name, ":", k), declaration$type[[k]])
@@ -367,7 +422,7 @@ process_data <- function(data, model_variables = NULL) {
   } else if (is.list(data) && !is.data.frame(data)) {
     if (!is.null(model_variables)) {
       data_variables <- model_variables$data
-      is_data_supplied <- names(data_variables) %in%  names(data)
+      is_data_supplied <- names(data_variables) %in% names(data)
       if (!all(is_data_supplied)) {
         missing <- names(data_variables[!is_data_supplied])
         stop(
@@ -379,9 +434,12 @@ process_data <- function(data, model_variables = NULL) {
       }
     }
     path <- tempfile(pattern = "standata-", fileext = ".json")
-    write_stan_json(data = data, file = path,
-                    always_decimal = !is.null(model_variables),
-                    variables = model_variables$data)
+    write_stan_json(
+      data = data,
+      file = path,
+      always_decimal = !is.null(model_variables),
+      variables = model_variables$data
+    )
   } else {
     stop("`data` should be a path or a named list.", call. = FALSE)
   }
@@ -436,13 +494,19 @@ process_data <- function(data, model_variables = NULL) {
 #' #                                 basename = "my-samples")
 #' }
 #'
-draws_to_csv <- function(draws,
-                         sampler_diagnostics = NULL,
-                         dir = tempdir(),
-                         basename = "fittedParams") {
+draws_to_csv <- function(
+  draws,
+  sampler_diagnostics = NULL,
+  dir = tempdir(),
+  basename = "fittedParams"
+) {
   sampler_diagnostics_names <- c(
-    "accept_stat__", "stepsize__", "treedepth__",
-    "n_leapfrog__", "divergent__", "energy__"
+    "accept_stat__",
+    "stepsize__",
+    "treedepth__",
+    "n_leapfrog__",
+    "divergent__",
+    "energy__"
   )
   n <- posterior::niterations(draws)
   n_chains <- posterior::nchains(draws)
@@ -462,15 +526,22 @@ draws_to_csv <- function(draws,
       additional_sampler_diagnostics[[name]] <- zeros
     }
     additional_sampler_diagnostics[[".nchains"]] <- n_chains
-    additional_sampler_diagnostics <- do.call(posterior::draws_array, additional_sampler_diagnostics)
-    sampler_diagnostics <- posterior::bind_draws(sampler_diagnostics, additional_sampler_diagnostics)
+    additional_sampler_diagnostics <- do.call(
+      posterior::draws_array,
+      additional_sampler_diagnostics
+    )
+    sampler_diagnostics <- posterior::bind_draws(
+      sampler_diagnostics,
+      additional_sampler_diagnostics
+    )
   }
 
   # the columns must be in order "lp__, sampler_diagnostics, parameters"
   draws_variables <- posterior::variables(draws)
   if ("lp__" %in% draws_variables) {
     lp__ <- NULL
-  } else { # create a dummy lp__ if it does not exist
+  } else {
+    # create a dummy lp__ if it does not exist
     lp__ <- posterior::draws_array(lp__ = zeros, .nchains = n_chains)
   }
   skipped <- c("lp__", "lp_approx__", sampler_diagnostics_names)
@@ -522,19 +593,23 @@ draws_to_csv <- function(draws,
 process_fitted_params <- function(fitted_params) {
   if (is.character(fitted_params)) {
     paths <- absolute_path(fitted_params)
-  } else if (checkmate::test_r6(fitted_params, "CmdStanMCMC") &&
-             all(file.exists(fitted_params$output_files()))) {
-      paths <- absolute_path(fitted_params$output_files())
+  } else if (
+    checkmate::test_r6(fitted_params, "CmdStanMCMC") &&
+      all(file.exists(fitted_params$output_files()))
+  ) {
+    paths <- absolute_path(fitted_params$output_files())
   } else if (checkmate::test_r6(fitted_params, "CmdStanMCMC")) {
     draws <- fitted_params$draws()
     sampler_diagnostics <- tryCatch(
       fitted_params$sampler_diagnostics()
     )
     paths <- draws_to_csv(draws, sampler_diagnostics)
-  } else if (checkmate::test_r6(fitted_params, "CmdStanMLE") ||
-             checkmate::test_r6(fitted_params, "CmdStanLaplace") ||
-             checkmate::test_r6(fitted_params, "CmdStanVB") ||
-             checkmate::test_r6(fitted_params, "CmdStanPathfinder")) {
+  } else if (
+    checkmate::test_r6(fitted_params, "CmdStanMLE") ||
+      checkmate::test_r6(fitted_params, "CmdStanLaplace") ||
+      checkmate::test_r6(fitted_params, "CmdStanVB") ||
+      checkmate::test_r6(fitted_params, "CmdStanPathfinder")
+  ) {
     draws <- fitted_params$draws()
     paths <- draws_to_csv(posterior::as_draws_array(draws))
   } else if (any(class(fitted_params) == "draws_array")) {
@@ -546,7 +621,9 @@ process_fitted_params <- function(fitted_params) {
       "`fitted_params` must be a list of paths to CSV files, ",
       "a CmdStanMCMC, CmdStanMLE, CmdStanLaplace, CmdStanVB, or ",
       "CmdStanPathfinder object, ",
-      "a posterior::draws_array or a posterior::draws_matrix.", call. = FALSE)
+      "a posterior::draws_array or a posterior::draws_matrix.",
+      call. = FALSE
+    )
   }
   decompress_csv_files(paths, tempdir())
 }

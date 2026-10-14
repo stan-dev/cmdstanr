@@ -105,131 +105,58 @@
 #' @examples
 #' \dontrun{
 #' library(cmdstanr)
-#' library(posterior)
-#' library(bayesplot)
-#' color_scheme_set("brightblue")
 #'
-#' # Set path to CmdStan
-#' # (Note: if you installed CmdStan via install_cmdstan() with default settings
-#' # then setting the path is unnecessary but the default below should still work.
-#' # Otherwise use the `path` argument to specify the location of your
-#' # CmdStan installation.)
-#' set_cmdstan_path(path = NULL)
+#' # If you installed CmdStan with install_cmdstan() the path is already set.
+#' # Otherwise point CmdStanR at your installation with set_cmdstan_path().
+#' cmdstan_path()
 #'
-#' # Create a CmdStanModel object from a Stan program,
-#' # here using the example model that comes with CmdStan
+#' # Create a CmdStanModel object from a Stan program. This compiles the
+#' # program, or reuses the executable if it's already up to date.
 #' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 #' mod <- cmdstan_model(file)
 #' mod$print()
-#' # Print with line numbers. This can be set globally using the
-#' # `cmdstanr_print_line_numbers` option.
-#' mod$print(line_numbers = TRUE)
 #'
-#' # Data as a named list (like RStan)
+#' # Options for the Stan compiler (stanc_options) and the C++ build
+#' # (cpp_options). dir puts this executable in its own directory instead of
+#' # next to the Stan file, so it doesn't replace the one mod uses. Replace
+#' # tempdir() with a directory you'd keep.
+#' mod_threads <- cmdstan_model(
+#'   file,
+#'   dir = tempdir(),
+#'   stanc_options = list("O1"),
+#'   cpp_options = list(stan_threads = TRUE)
+#' )
+#'
+#' # What an executable was built from
+#' mod_threads$build_info()
+#'
+#' # Data is a named list matching the data block
 #' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 #'
-#' # Run MCMC using the 'sample' method
-#' fit_mcmc <- mod$sample(
-#'   data = stan_data,
-#'   seed = 123,
-#'   chains = 2,
-#'   parallel_chains = 2
-#' )
+#' # Fit the model with MCMC
+#' fit <- mod$sample(data = stan_data, seed = 123)
+#' fit$summary()
+#' fit$diagnostic_summary()
 #'
-#' # Use 'posterior' package for summaries
-#' fit_mcmc$summary()
+#' # Posterior draws, here as a posterior::draws_df
+#' fit$draws(format = "df")
 #'
-#' # Check sampling diagnostics
-#' fit_mcmc$diagnostic_summary()
-#'
-#' # Get posterior draws
-#' draws <- fit_mcmc$draws()
-#' print(draws)
-#'
-#' # Convert to data frame using posterior::as_draws_df
-#' as_draws_df(draws)
-#'
-#' # Plot posterior using bayesplot (ggplot2)
-#' mcmc_hist(fit_mcmc$draws("theta"))
-#'
-#' # Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
-#' # and also demonstrate specifying data as a path to a file instead of a list
-#' my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
-#' fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-#' fit_optim$summary()
-#'
-#' # Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
-#' # to the posterior
-#' fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
-#' fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
-#' fit_laplace$summary()
-#'
-#' # Run 'variational' method to use ADVI to approximate posterior
-#' fit_vb <- mod$variational(data = stan_data, seed = 123)
-#' fit_vb$summary()
-#' mcmc_hist(fit_vb$draws("theta"))
-#'
-#' # Run the Pathfinder variational inference method
-#' fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
-#' fit_pf$summary()
-#' mcmc_hist(fit_pf$draws("theta"))
-#'
-#' # Run 'pathfinder' again with more paths, fewer draws per path,
-#' # better covariance approximation, and fewer LBFGSs iterations
-#' fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
-#'                          history_size=50, max_lbfgs_iters=100)
-#'
-#' # Specifying initial values as a function
-#' fit_mcmc_w_init_fun <- mod$sample(
-#'   data = stan_data,
-#'   seed = 123,
-#'   chains = 2,
-#'   refresh = 0,
-#'   init = function() list(theta = runif(1))
-#' )
-#' fit_mcmc_w_init_fun_2 <- mod$sample(
-#'   data = stan_data,
-#'   seed = 123,
-#'   chains = 2,
-#'   refresh = 0,
-#'   init = function(chain_id) {
-#'     # silly but demonstrates optional use of chain_id
-#'     list(theta = 1 / (chain_id + 1))
-#'   }
-#' )
-#' fit_mcmc_w_init_fun_2$init()
-#'
-#' # Specifying initial values as a list of lists
-#' fit_mcmc_w_init_list <- mod$sample(
-#'   data = stan_data,
-#'   seed = 123,
-#'   chains = 2,
-#'   refresh = 0,
-#'   init = list(
-#'     list(theta = 0.75), # chain 1
-#'     list(theta = 0.25)  # chain 2
-#'   )
-#' )
-#' fit_optim_w_init_list <- mod$optimize(
-#'   data = stan_data,
-#'   seed = 123,
-#'   init = list(
-#'     list(theta = 0.75)
-#'   )
-#' )
-#' fit_optim_w_init_list$init()
+#' # Plot with bayesplot
+#' bayesplot::mcmc_hist(fit$draws("theta"))
 #' }
 #'
-cmdstan_model <- function(stan_file = NULL,
-                          exe_file = NULL,
-                          quiet = TRUE,
-                          dir = NULL,
-                          pedantic = FALSE,
-                          include_paths = NULL,
-                          user_header = NULL,
-                          cpp_options = NULL,
-                          stanc_options = NULL,
-                          force_recompile = NULL) {
+cmdstan_model <- function(
+  stan_file = NULL,
+  exe_file = NULL,
+  quiet = TRUE,
+  dir = NULL,
+  pedantic = FALSE,
+  include_paths = NULL,
+  user_header = NULL,
+  cpp_options = NULL,
+  stanc_options = NULL,
+  force_recompile = NULL
+) {
   if (is.null(exe_file) && is.null(stan_file)) {
     stop(
       "Unable to create a `CmdStanModel` object. ",
@@ -260,17 +187,21 @@ cmdstan_model <- function(stan_file = NULL,
 
 #' @rdname cmdstan_model
 #' @export
-compile_stan_file <- function(stan_file,
-                              quiet = TRUE,
-                              dir = NULL,
-                              pedantic = FALSE,
-                              include_paths = NULL,
-                              user_header = NULL,
-                              cpp_options = NULL,
-                              stanc_options = NULL,
-                              force_recompile = NULL) {
+compile_stan_file <- function(
+  stan_file,
+  quiet = TRUE,
+  dir = NULL,
+  pedantic = FALSE,
+  include_paths = NULL,
+  user_header = NULL,
+  cpp_options = NULL,
+  stanc_options = NULL,
+  force_recompile = NULL
+) {
   assert_file_exists(
-    stan_file, access = "r", extension = c("stan", "stanfunctions")
+    stan_file,
+    access = "r",
+    extension = c("stan", "stanfunctions")
   )
   built <- build_executable(
     resolve_path(stan_file),
@@ -384,7 +315,8 @@ CmdStanModel <- R6::R6Class(
         }
         if (!identical(hash_file(exe), private$executable_hash_)) {
           stop_stale_executable(paste0(
-            "The executable at '", exe,
+            "The executable at '",
+            exe,
             "' changed after this model was created."
           ))
         }
@@ -392,13 +324,18 @@ CmdStanModel <- R6::R6Class(
       }
       if (!file.exists(private$stan_file_)) {
         stop_stale_executable(paste0(
-          "The Stan file '", private$stan_file_, "' this model was created ",
+          "The Stan file '",
+          private$stan_file_,
+          "' this model was created ",
           "from no longer exists. To run the executable without its program, ",
           "create the model with `cmdstan_model(exe_file = )`."
         ))
       }
       current <- read_current_build(
-        private$stan_file_, private$include_paths_, private$user_header_, exe
+        private$stan_file_,
+        private$include_paths_,
+        private$user_header_,
+        exe
       )
       reasons <- assess_build(
         list(
@@ -424,14 +361,21 @@ CmdStanModel <- R6::R6Class(
         configuration <- private$record_$configuration
         self$functions$hpp_code <- get_standalone_hpp(
           private$stan_file_,
-          c("--standalone-functions",
+          c(
+            "--standalone-functions",
             include_paths_stanc3_args(
-              private$include_paths_, direct_call = TRUE
+              private$include_paths_,
+              direct_call = TRUE
             ),
-            unlist(configuration[c(
-              "stanc_options", "stanc_options_added",
-              "stanc_options_from_make"
-            )], use.names = FALSE))
+            unlist(
+              configuration[c(
+                "stanc_options",
+                "stanc_options_added",
+                "stanc_options_from_make"
+              )],
+              use.names = FALSE
+            )
+          )
         )
       }
       self$functions
@@ -439,20 +383,26 @@ CmdStanModel <- R6::R6Class(
   ),
   public = list(
     functions = NULL,
-    initialize = function(stan_file = NULL,
-                          exe_file = NULL,
-                          quiet = TRUE,
-                          dir = NULL,
-                          pedantic = FALSE,
-                          include_paths = NULL,
-                          user_header = NULL,
-                          cpp_options = NULL,
-                          stanc_options = NULL,
-                          force_recompile = NULL) {
+    initialize = function(
+      stan_file = NULL,
+      exe_file = NULL,
+      quiet = TRUE,
+      dir = NULL,
+      pedantic = FALSE,
+      include_paths = NULL,
+      user_header = NULL,
+      cpp_options = NULL,
+      stanc_options = NULL,
+      force_recompile = NULL
+    ) {
       self$functions <- new.env()
       self$functions$compiled <- FALSE
       if (!is.null(stan_file)) {
-        assert_file_exists(stan_file, access = "r", extension = c("stan", "stanfunctions"))
+        assert_file_exists(
+          stan_file,
+          access = "r",
+          extension = c("stan", "stanfunctions")
+        )
         private$stan_file_ <- resolve_path(stan_file)
         private$stan_code_ <- readLines(stan_file)
         private$model_name_ <- model_name_from_path(private$stan_file_)
@@ -477,8 +427,13 @@ CmdStanModel <- R6::R6Class(
         facts <- facts_from_record(built$record)
       } else {
         assert_no_build_args_for_exe_only(
-          cpp_options, stanc_options, include_paths, user_header,
-          force_recompile, pedantic, dir
+          cpp_options,
+          stanc_options,
+          include_paths,
+          user_header,
+          force_recompile,
+          pedantic,
+          dir
         )
         ext <- if (os_is_windows() && !os_is_wsl()) "exe" else ""
         assert_file_exists(exe_file, access = "r", extension = ext)
@@ -499,16 +454,24 @@ CmdStanModel <- R6::R6Class(
     },
     code = function() {
       if (length(private$stan_code_) == 0) {
-        warning("`$code()` will return NULL because the `CmdStanModel` ",
-                "was not created with a Stan file.", call. = FALSE)
+        warning(
+          "`$code()` will return NULL because the `CmdStanModel` ",
+          "was not created with a Stan file.",
+          call. = FALSE
+        )
         return(NULL)
       }
       private$stan_code_
     },
-    print = function(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE)) {
+    print = function(
+      line_numbers = getOption("cmdstanr_print_line_numbers", FALSE)
+    ) {
       if (length(private$stan_code_) == 0) {
-        stop("`$print()` cannot be used because the `CmdStanModel` ",
-             "was not created with a Stan file.", call. = FALSE)
+        stop(
+          "`$print()` cannot be used because the `CmdStanModel` ",
+          "was not created with a Stan file.",
+          call. = FALSE
+        )
       }
       lines <- self$code()
       if (line_numbers) {
@@ -541,8 +504,11 @@ CmdStanModel <- R6::R6Class(
     },
     hpp_file = function() {
       if (!self$has_stan_file()) {
-        stop("`$hpp_file()` cannot be used because the `CmdStanModel` ",
-             "was not created with a Stan file.", call. = FALSE)
+        stop(
+          "`$hpp_file()` cannot be used because the `CmdStanModel` ",
+          "was not created with a Stan file.",
+          call. = FALSE
+        )
       }
       private$hpp_file_
     },
@@ -552,11 +518,17 @@ CmdStanModel <- R6::R6Class(
         dir <- dirname(private$stan_file_)
       }
       assert_dir_exists(dir, access = "r")
-      new_hpp_loc <- file.path(dir, paste0(strip_ext(basename(private$stan_file_)), ".hpp"))
+      new_hpp_loc <- file.path(
+        dir,
+        paste0(strip_ext(basename(private$stan_file_)), ".hpp")
+      )
       file.copy(hpp_file, new_hpp_loc, overwrite = TRUE)
       file.remove(hpp_file)
-      message("Moved .hpp file and set internal path to new location:\n",
-              "- ", new_hpp_loc)
+      message(
+        "Moved .hpp file and set internal path to new location:\n",
+        "- ",
+        new_hpp_loc
+      )
       private$hpp_file_ <- new_hpp_loc
       invisible(private$hpp_file_)
     }
@@ -702,7 +674,9 @@ CmdStanModel$set("public", name = "variables", value = variables)
 #' @inheritParams cmdstan_model
 variables_stan_file <- function(stan_file, include_paths = NULL) {
   assert_file_exists(
-    stan_file, access = "r", extension = c("stan", "stanfunctions")
+    stan_file,
+    access = "r",
+    extension = c("stan", "stanfunctions")
   )
   stan_file <- resolve_path(stan_file)
   include_paths <- effective_include_paths(stan_file, include_paths)
@@ -769,13 +743,18 @@ variables_stan_file <- function(stan_file, include_paths = NULL) {
 #' mod$check_syntax(pedantic = TRUE)
 #' }
 #'
-check_syntax <- function(pedantic = FALSE,
-                         include_paths = NULL,
-                         stanc_options = list(),
-                         quiet = FALSE) {
+check_syntax <- function(
+  pedantic = FALSE,
+  include_paths = NULL,
+  stanc_options = list(),
+  quiet = FALSE
+) {
   if (length(self$stan_file()) == 0) {
-    stop("`$check_syntax()` cannot be used because the `CmdStanModel` ",
-         "was not created with a Stan file.", call. = FALSE)
+    stop(
+      "`$check_syntax()` cannot be used because the `CmdStanModel` ",
+      "was not created with a Stan file.",
+      call. = FALSE
+    )
   }
   assert_stan_file_exists(self$stan_file())
   check_syntax_stan_file(
@@ -790,13 +769,17 @@ CmdStanModel$set("public", name = "check_syntax", value = check_syntax)
 
 #' @rdname model-method-check_syntax
 #' @export
-check_syntax_stan_file <- function(stan_file,
-                                   include_paths = NULL,
-                                   pedantic = FALSE,
-                                   stanc_options = list(),
-                                   quiet = FALSE) {
+check_syntax_stan_file <- function(
+  stan_file,
+  include_paths = NULL,
+  pedantic = FALSE,
+  stanc_options = list(),
+  quiet = FALSE
+) {
   assert_file_exists(
-    stan_file, access = "r", extension = c("stan", "stanfunctions")
+    stan_file,
+    access = "r",
+    extension = c("stan", "stanfunctions")
   )
   stan_file <- resolve_path(stan_file)
   stanc_options <- assert_valid_stanc_options(stanc_options)
@@ -811,8 +794,10 @@ check_syntax_stan_file <- function(stan_file,
   include_paths <- effective_include_paths(stan_file, include_paths)
   run_stanc(
     stan_file,
-    c(stanc_options_to_args(stanc_options),
-      include_paths_stanc3_args(include_paths, direct_call = TRUE)),
+    c(
+      stanc_options_to_args(stanc_options),
+      include_paths_stanc3_args(include_paths, direct_call = TRUE)
+    ),
     spinner = quiet && use_spinner()
   )
   if (!quiet) {
@@ -889,15 +874,18 @@ check_syntax_stan_file <- function(stan_file,
 #' mod <- cmdstan_model(file)
 #' }
 #'
-format <- function(overwrite_file = FALSE,
-                   canonicalize = FALSE,
-                   backup = TRUE,
-                   max_line_length = NULL,
-                   quiet = FALSE) {
+format <- function(
+  overwrite_file = FALSE,
+  canonicalize = FALSE,
+  backup = TRUE,
+  max_line_length = NULL,
+  quiet = FALSE
+) {
   if (length(self$stan_file()) == 0) {
     stop(
       "`$format()` cannot be used because the `CmdStanModel`",
-      " was not created with a Stan file.", call. = FALSE
+      " was not created with a Stan file.",
+      call. = FALSE
     )
   }
   assert_stan_file_exists(self$stan_file())
@@ -915,20 +903,26 @@ CmdStanModel$set("public", name = "format", value = format)
 
 #' @rdname model-method-format
 #' @export
-format_stan_file <- function(stan_file,
-                             include_paths = NULL,
-                             overwrite_file = FALSE,
-                             canonicalize = FALSE,
-                             backup = TRUE,
-                             max_line_length = NULL,
-                             quiet = FALSE) {
+format_stan_file <- function(
+  stan_file,
+  include_paths = NULL,
+  overwrite_file = FALSE,
+  canonicalize = FALSE,
+  backup = TRUE,
+  max_line_length = NULL,
+  quiet = FALSE
+) {
   assert_file_exists(
-    stan_file, access = "r", extension = c("stan", "stanfunctions")
+    stan_file,
+    access = "r",
+    extension = c("stan", "stanfunctions")
   )
   stan_file <- resolve_path(stan_file)
   checkmate::assert_integerish(
     max_line_length,
-    lower = 1, len = 1, null.ok = TRUE
+    lower = 1,
+    len = 1,
+    null.ok = TRUE
   )
   stanc_options <- list("allow-undefined" = TRUE, "auto-format" = TRUE)
   if (!is.null(max_line_length)) {
@@ -942,14 +936,18 @@ format_stan_file <- function(stan_file,
   include_paths <- effective_include_paths(stan_file, include_paths)
   formatted <- run_stanc(
     stan_file,
-    c(stanc_options_to_args(stanc_options),
-      include_paths_stanc3_args(include_paths, direct_call = TRUE))
+    c(
+      stanc_options_to_args(stanc_options),
+      include_paths_stanc3_args(include_paths, direct_call = TRUE)
+    )
   )
   out_file <- ""
   if (isTRUE(overwrite_file)) {
     if (backup) {
       backup_file <- paste0(
-        stan_file, ".bak-", base::format(Sys.time(), "%Y%m%d%H%M%S")
+        stan_file,
+        ".bak-",
+        base::format(Sys.time(), "%Y%m%d%H%M%S")
       )
       file.copy(stan_file, backup_file)
       if (!quiet) {
@@ -1001,54 +999,108 @@ format_stan_file <- function(stan_file,
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @inherit cmdstan_model examples
+#' @examples
+#' \dontrun{
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(file)
+#' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 #'
-sample <- function(data = NULL,
-                   seed = NULL,
-                   refresh = NULL,
-                   init = NULL,
-                   save_latent_dynamics = FALSE,
-                   output_dir = getOption("cmdstanr_output_dir"),
-                   output_basename = NULL,
-                   sig_figs = NULL,
-                   chains = 4,
-                   parallel_chains = getOption("mc.cores", 1),
-                   chain_ids = seq_len(chains),
-                   threads_per_chain = NULL,
-                   opencl_ids = NULL,
-                   iter_warmup = NULL,
-                   iter_sampling = NULL,
-                   save_warmup = FALSE,
-                   thin = NULL,
-                   max_treedepth = NULL,
-                   adapt_engaged = TRUE,
-                   adapt_delta = NULL,
-                   step_size = NULL,
-                   metric = NULL,
-                   metric_file = NULL,
-                   inv_metric = NULL,
-                   init_buffer = NULL,
-                   term_buffer = NULL,
-                   window = NULL,
-                   fixed_param = FALSE,
-                   show_messages = TRUE,
-                   show_exceptions = TRUE,
-                   show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
-                   show_iteration_messages = !show_progress_bar,
-                   diagnostics = c("divergences", "treedepth", "ebfmi"),
-                   save_metric = getOption("cmdstanr_save_metric", FALSE),
-                   save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                   compress = getOption("cmdstanr_compress", "none")) {
-
+#' # Four chains in parallel with the number of iterations set
+#' fit <- mod$sample(
+#'   data = stan_data,
+#'   seed = 123,
+#'   chains = 4,
+#'   parallel_chains = 4,
+#'   iter_warmup = 500,
+#'   iter_sampling = 1000
+#' )
+#' fit$summary()
+#' fit$diagnostic_summary()
+#' bayesplot::mcmc_hist(fit$draws("theta"))
+#'
+#' # Sampler settings, here the target acceptance rate and initial step size.
+#' # refresh = 0 here and below turns off the iteration updates.
+#' fit <- mod$sample(
+#'   data = stan_data,
+#'   seed = 123,
+#'   adapt_delta = 0.95,
+#'   step_size = 0.01,
+#'   refresh = 0
+#' )
+#'
+#' # Keep the warmup draws
+#' fit <- mod$sample(
+#'   data = stan_data,
+#'   seed = 123,
+#'   save_warmup = TRUE,
+#'   refresh = 0
+#' )
+#' fit$draws(inc_warmup = TRUE)
+#'
+#' # A progress bar in place of the iteration messages. progressr's
+#' # reporting is turned on once per session, see the Progress bar section.
+#' if (interactive()) {
+#'   progressr::handlers(global = TRUE)
+#'   fit <- mod$sample(data = stan_data, seed = 123, show_progress_bar = TRUE)
+#' }
+#' }
+#' @templateVar method sample
+#' @templateVar quiet refresh = 0
+#' @template model-common-examples
+#'
+sample <- function(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  save_latent_dynamics = FALSE,
+  output_dir = getOption("cmdstanr_output_dir"),
+  output_basename = NULL,
+  sig_figs = NULL,
+  chains = 4,
+  parallel_chains = getOption("mc.cores", 1),
+  chain_ids = seq_len(chains),
+  threads_per_chain = NULL,
+  opencl_ids = NULL,
+  iter_warmup = NULL,
+  iter_sampling = NULL,
+  save_warmup = FALSE,
+  thin = NULL,
+  max_treedepth = NULL,
+  adapt_engaged = TRUE,
+  adapt_delta = NULL,
+  step_size = NULL,
+  metric = NULL,
+  metric_file = NULL,
+  inv_metric = NULL,
+  init_buffer = NULL,
+  term_buffer = NULL,
+  window = NULL,
+  fixed_param = FALSE,
+  show_messages = TRUE,
+  show_exceptions = TRUE,
+  show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+  show_iteration_messages = !show_progress_bar,
+  diagnostics = c("divergences", "treedepth", "ebfmi"),
+  save_metric = getOption("cmdstanr_save_metric", FALSE),
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
+) {
   private$assert_current_()
   if (fixed_param) {
     save_warmup <- FALSE
   }
   procs <- CmdStanMCMCProcs$new(
     num_procs = checkmate::assert_integerish(chains, lower = 1, len = 1),
-    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
+    parallel_procs = checkmate::assert_integerish(
+      parallel_chains,
+      lower = 1,
+      null.ok = TRUE
+    ),
     threads_per_proc = assert_valid_threads(
-      threads_per_chain, private$reported_features_, multiple_chains = TRUE
+      threads_per_chain,
+      private$reported_features_,
+      multiple_chains = TRUE
     ),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages,
@@ -1084,7 +1136,13 @@ sample <- function(data = NULL,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
-    proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
+    proc_ids = checkmate::assert_integerish(
+      chain_ids,
+      lower = 1,
+      len = chains,
+      unique = TRUE,
+      null.ok = FALSE
+    ),
     data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
@@ -1176,40 +1234,42 @@ CmdStanModel$set("public", name = "sample", value = sample)
 #' # fit <- mod$sample_mpi(..., mpi_args = list("n" = 4))
 #' }
 #'
-sample_mpi <- function(data = NULL,
-                       mpi_cmd = "mpiexec",
-                       mpi_args = NULL,
-                       seed = NULL,
-                       refresh = NULL,
-                       init = NULL,
-                       save_latent_dynamics = FALSE,
-                       output_dir = getOption("cmdstanr_output_dir"),
-                       output_basename = NULL,
-                       chains = 1,
-                       chain_ids = seq_len(chains),
-                       iter_warmup = NULL,
-                       iter_sampling = NULL,
-                       save_warmup = FALSE,
-                       thin = NULL,
-                       max_treedepth = NULL,
-                       adapt_engaged = TRUE,
-                       adapt_delta = NULL,
-                       step_size = NULL,
-                       metric = NULL,
-                       metric_file = NULL,
-                       inv_metric = NULL,
-                       init_buffer = NULL,
-                       term_buffer = NULL,
-                       window = NULL,
-                       fixed_param = FALSE,
-                       sig_figs = NULL,
-                       show_messages = TRUE,
-                       show_exceptions = TRUE,
-                       show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
-                       show_iteration_messages = !show_progress_bar,
-                       diagnostics = c("divergences", "treedepth", "ebfmi"),
-                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                       compress = getOption("cmdstanr_compress", "none")) {
+sample_mpi <- function(
+  data = NULL,
+  mpi_cmd = "mpiexec",
+  mpi_args = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  save_latent_dynamics = FALSE,
+  output_dir = getOption("cmdstanr_output_dir"),
+  output_basename = NULL,
+  chains = 1,
+  chain_ids = seq_len(chains),
+  iter_warmup = NULL,
+  iter_sampling = NULL,
+  save_warmup = FALSE,
+  thin = NULL,
+  max_treedepth = NULL,
+  adapt_engaged = TRUE,
+  adapt_delta = NULL,
+  step_size = NULL,
+  metric = NULL,
+  metric_file = NULL,
+  inv_metric = NULL,
+  init_buffer = NULL,
+  term_buffer = NULL,
+  window = NULL,
+  fixed_param = FALSE,
+  sig_figs = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE,
+  show_progress_bar = getOption("cmdstanr_progress_bar", FALSE),
+  show_iteration_messages = !show_progress_bar,
+  diagnostics = c("divergences", "treedepth", "ebfmi"),
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
+) {
   private$assert_current_()
 
   if (fixed_param) {
@@ -1252,7 +1312,13 @@ sample_mpi <- function(data = NULL,
     model_name = self$model_name(),
     exe_file = self$exe_file(),
     tbb_dir = private$record_$tbb_dir,
-    proc_ids = checkmate::assert_integerish(chain_ids, lower = 1, len = chains, unique = TRUE, null.ok = FALSE),
+    proc_ids = checkmate::assert_integerish(
+      chain_ids,
+      lower = 1,
+      len = chains,
+      unique = TRUE,
+      null.ok = FALSE
+    ),
     data_file = process_data(data, model_variables),
     save_latent_dynamics = save_latent_dynamics,
     seed = seed,
@@ -1336,31 +1402,61 @@ CmdStanModel$set("public", name = "sample_mpi", value = sample_mpi)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @inherit cmdstan_model examples
+#' @examples
+#' \dontrun{
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(file)
+#' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 #'
-optimize <- function(data = NULL,
-                     seed = NULL,
-                     refresh = NULL,
-                     init = NULL,
-                     output_dir = getOption("cmdstanr_output_dir"),
-                     output_basename = NULL,
-                     sig_figs = NULL,
-                     threads = NULL,
-                     opencl_ids = NULL,
-                     algorithm = NULL,
-                     jacobian = FALSE,
-                     init_alpha = NULL,
-                     iter = NULL,
-                     tol_obj = NULL,
-                     tol_rel_obj = NULL,
-                     tol_grad = NULL,
-                     tol_rel_grad = NULL,
-                     tol_param = NULL,
-                     history_size = NULL,
-                     show_messages = TRUE,
-                     show_exceptions = TRUE,
-                     save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                     compress = getOption("cmdstanr_compress", "none")) {
+#' # A mode in the constrained space (L-BFGS by default)
+#' fit <- mod$optimize(data = stan_data, seed = 123)
+#' fit$summary()
+#'
+#' # With the Jacobian adjustment the result is a mode in the unconstrained
+#' # space, which is what $laplace() centers its approximation at.
+#' # show_messages = FALSE here and below hides CmdStan's output. That's to
+#' # keep these examples short, not a recommendation.
+#' fit_mode <- mod$optimize(
+#'   data = stan_data,
+#'   seed = 123,
+#'   jacobian = TRUE,
+#'   show_messages = FALSE
+#' )
+#' fit_laplace <- mod$laplace(
+#'   data = stan_data,
+#'   mode = fit_mode,
+#'   show_messages = FALSE
+#' )
+#' }
+#' @templateVar method optimize
+#' @templateVar quiet show_messages = FALSE
+#' @template model-common-examples
+#'
+optimize <- function(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  output_dir = getOption("cmdstanr_output_dir"),
+  output_basename = NULL,
+  sig_figs = NULL,
+  threads = NULL,
+  opencl_ids = NULL,
+  algorithm = NULL,
+  jacobian = FALSE,
+  init_alpha = NULL,
+  iter = NULL,
+  tol_obj = NULL,
+  tol_rel_obj = NULL,
+  tol_grad = NULL,
+  tol_rel_grad = NULL,
+  tol_param = NULL,
+  history_size = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE,
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
+) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1475,35 +1571,41 @@ CmdStanModel$set("public", name = "optimize", value = optimize)
 #'
 #' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 #' fit_mode <- mod$optimize(data = stan_data, jacobian = TRUE)
-#' fit_laplace <- mod$laplace(data = stan_data, mode = fit_mode)
-#' fit_laplace$summary()
+#' fit <- mod$laplace(data = stan_data, mode = fit_mode)
+#' fit$summary()
 #'
-#' # if mode isn't specified optimize is run internally first
-#' fit_laplace <- mod$laplace(data = stan_data)
-#' fit_laplace$summary()
+#' # If mode isn't specified optimize is run internally first.
+#' # show_messages = FALSE here and below hides CmdStan's output. That's to
+#' # keep these examples short, not a recommendation.
+#' fit <- mod$laplace(data = stan_data, show_messages = FALSE)
+#' fit$summary()
 #'
 #' # plot approximate posterior
-#' bayesplot::mcmc_hist(fit_laplace$draws("theta"))
+#' bayesplot::mcmc_hist(fit$draws("theta"))
 #' }
+#' @templateVar method laplace
+#' @templateVar quiet show_messages = FALSE
+#' @template model-common-examples
 #'
-#'
-laplace <- function(data = NULL,
-                    seed = NULL,
-                    refresh = NULL,
-                    init = NULL,
-                    output_dir = getOption("cmdstanr_output_dir"),
-                    output_basename = NULL,
-                    sig_figs = NULL,
-                    threads = NULL,
-                    opencl_ids = NULL,
-                    mode = NULL,
-                    opt_args = NULL,
-                    jacobian = TRUE, # different default than for optimize!
-                    draws = NULL,
-                    show_messages = TRUE,
-                    show_exceptions = TRUE,
-                    save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                    compress = getOption("cmdstanr_compress", "none")) {
+laplace <- function(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  output_dir = getOption("cmdstanr_output_dir"),
+  output_basename = NULL,
+  sig_figs = NULL,
+  threads = NULL,
+  opencl_ids = NULL,
+  mode = NULL,
+  opt_args = NULL,
+  jacobian = TRUE, # different default than for optimize!
+  draws = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE,
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
+) {
   private$assert_current_()
   if (!is.null(mode) && !is.null(opt_args)) {
     stop("Cannot specify both `opt_args` and `mode` arguments.", call. = FALSE)
@@ -1521,13 +1623,22 @@ laplace <- function(data = NULL,
       cmdstan_mode <- mode
     } else {
       if (!(is.character(mode) && length(mode) == 1)) {
-        stop("If not NULL or a CmdStanMLE object ",
-             "then `mode` must be a path to a CSV file.", call. = FALSE)
+        stop(
+          "If not NULL or a CmdStanMLE object ",
+          "then `mode` must be a path to a CSV file.",
+          call. = FALSE
+        )
       }
       cmdstan_mode <- as_cmdstan_fit(mode)
     }
-  } else { # mode = NULL, run optimize()
-    checkmate::assert_list(opt_args, any.missing = FALSE, names = "unique", null.ok = TRUE)
+  } else {
+    # mode = NULL, run optimize()
+    checkmate::assert_list(
+      opt_args,
+      any.missing = FALSE,
+      names = "unique",
+      null.ok = TRUE
+    )
     mode_output_basename <- output_basename
     if (!is.null(mode_output_basename)) {
       mode_output_basename <- paste0(mode_output_basename, "-mode")
@@ -1543,6 +1654,8 @@ laplace <- function(data = NULL,
       threads = threads,
       opencl_ids = opencl_ids,
       jacobian = jacobian,
+      show_messages = show_messages,
+      show_exceptions = show_exceptions,
       compress = compress
     )
     cmdstan_mode <- do.call(self$optimize, append(args, opt_args))
@@ -1648,32 +1761,68 @@ CmdStanModel$set("public", name = "laplace", value = laplace)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @inherit cmdstan_model examples
+#' @examples
+#' \dontrun{
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(file)
+#' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 #'
-variational <- function(data = NULL,
-                        seed = NULL,
-                        refresh = NULL,
-                        init = NULL,
-                        save_latent_dynamics = FALSE,
-                        output_dir = getOption("cmdstanr_output_dir"),
-                        output_basename = NULL,
-                        sig_figs = NULL,
-                        threads = NULL,
-                        opencl_ids = NULL,
-                        algorithm = NULL,
-                        iter = NULL,
-                        grad_samples = NULL,
-                        elbo_samples = NULL,
-                        eta = NULL,
-                        adapt_engaged = NULL,
-                        adapt_iter = NULL,
-                        tol_rel_obj = NULL,
-                        eval_elbo = NULL,
-                        draws = NULL,
-                        show_messages = TRUE,
-                        show_exceptions = TRUE,
-                        save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                        compress = getOption("cmdstanr_compress", "none")) {
+#' # Mean-field ADVI by default
+#' fit <- mod$variational(data = stan_data, seed = 123)
+#' fit$summary()
+#' bayesplot::mcmc_hist(fit$draws("theta"))
+#'
+#' # A full-rank approximation, with more draws from it.
+#' # show_messages = FALSE here and below hides CmdStan's output. That's to
+#' # keep these examples short, not a recommendation.
+#' fit <- mod$variational(
+#'   data = stan_data,
+#'   seed = 123,
+#'   algorithm = "fullrank",
+#'   draws = 4000,
+#'   show_messages = FALSE
+#' )
+#'
+#' # More Monte Carlo draws for the gradient and the ELBO, for a less
+#' # noisy optimization
+#' fit <- mod$variational(
+#'   data = stan_data,
+#'   seed = 123,
+#'   grad_samples = 10,
+#'   elbo_samples = 500,
+#'   show_messages = FALSE
+#' )
+#' }
+#' @templateVar method variational
+#' @templateVar quiet show_messages = FALSE
+#' @template model-common-examples
+#'
+variational <- function(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  save_latent_dynamics = FALSE,
+  output_dir = getOption("cmdstanr_output_dir"),
+  output_basename = NULL,
+  sig_figs = NULL,
+  threads = NULL,
+  opencl_ids = NULL,
+  algorithm = NULL,
+  iter = NULL,
+  grad_samples = NULL,
+  elbo_samples = NULL,
+  eta = NULL,
+  adapt_engaged = NULL,
+  adapt_iter = NULL,
+  tol_rel_obj = NULL,
+  eval_elbo = NULL,
+  draws = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE,
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
+) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -1813,41 +1962,90 @@ CmdStanModel$set("public", name = "variational", value = variational)
 #' * Stan Development Team. CmdStan User's Guide:
 #'   https://mc-stan.org/docs/cmdstan-guide/
 #'
-#' @inherit cmdstan_model examples
+#' @examples
+#' \dontrun{
+#' file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
+#' mod <- cmdstan_model(file)
+#' stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 #'
-pathfinder <- function(data = NULL,
-                       seed = NULL,
-                       refresh = NULL,
-                       init = NULL,
-                       output_dir = getOption("cmdstanr_output_dir"),
-                       output_basename = NULL,
-                       sig_figs = NULL,
-                       threads = NULL,
-                       opencl_ids = NULL,
-                       num_threads = NULL,
-                       init_alpha = NULL,
-                       tol_obj = NULL,
-                       tol_rel_obj = NULL,
-                       tol_grad = NULL,
-                       tol_rel_grad = NULL,
-                       tol_param = NULL,
-                       history_size = NULL,
-                       single_path_draws = NULL,
-                       draws = NULL,
-                       num_paths = 4,
-                       max_lbfgs_iters = NULL,
-                       num_elbo_draws = NULL,
-                       save_single_paths = NULL,
-                       psis_resample = NULL,
-                       calculate_lp = NULL,
-                       show_messages = TRUE,
-                       show_exceptions = TRUE,
-                       save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
-                       compress = getOption("cmdstanr_compress", "none")) {
+#' # Four single-path Pathfinders by default, combined by importance
+#' # resampling
+#' fit <- mod$pathfinder(data = stan_data, seed = 123)
+#' fit$summary()
+#' bayesplot::mcmc_hist(fit$draws("theta"))
+#'
+#' # More paths, fewer draws per path, a longer L-BFGS history and fewer
+#' # L-BFGS iterations. show_messages = FALSE here and below hides
+#' # CmdStan's output. That's to keep these examples short, not a
+#' # recommendation.
+#' fit <- mod$pathfinder(
+#'   data = stan_data,
+#'   seed = 123,
+#'   num_paths = 10,
+#'   single_path_draws = 100,
+#'   history_size = 50,
+#'   max_lbfgs_iters = 100,
+#'   show_messages = FALSE
+#' )
+#'
+#' # Keep every path's draws instead of resampling them
+#' fit <- mod$pathfinder(
+#'   data = stan_data,
+#'   seed = 123,
+#'   psis_resample = FALSE,
+#'   show_messages = FALSE
+#' )
+#'
+#' # Pathfinder draws as initial values for MCMC
+#' fit_mcmc <- mod$sample(
+#'   data = stan_data,
+#'   seed = 123,
+#'   init = fit,
+#'   show_messages = FALSE
+#' )
+#' }
+#' @templateVar method pathfinder
+#' @templateVar quiet show_messages = FALSE
+#' @template model-common-examples
+#'
+pathfinder <- function(
+  data = NULL,
+  seed = NULL,
+  refresh = NULL,
+  init = NULL,
+  output_dir = getOption("cmdstanr_output_dir"),
+  output_basename = NULL,
+  sig_figs = NULL,
+  threads = NULL,
+  opencl_ids = NULL,
+  num_threads = NULL,
+  init_alpha = NULL,
+  tol_obj = NULL,
+  tol_rel_obj = NULL,
+  tol_grad = NULL,
+  tol_rel_grad = NULL,
+  tol_param = NULL,
+  history_size = NULL,
+  single_path_draws = NULL,
+  draws = NULL,
+  num_paths = 4,
+  max_lbfgs_iters = NULL,
+  num_elbo_draws = NULL,
+  save_single_paths = NULL,
+  psis_resample = NULL,
+  calculate_lp = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE,
+  save_cmdstan_config = getOption("cmdstanr_save_config", FALSE),
+  compress = getOption("cmdstanr_compress", "none")
+) {
   private$assert_current_()
   if (!is.null(num_threads)) {
     if (!is.null(threads)) {
-      stop("Cannot specify both `threads` and deprecated `num_threads`.", call. = FALSE)
+      stop(
+        "Cannot specify both `threads` and deprecated `num_threads`.",
+        call. = FALSE
+      )
     }
     warning(
       "`num_threads` is deprecated as of CmdStanR 1.0.0 ",
@@ -1996,25 +2194,33 @@ CmdStanModel$set("public", name = "pathfinder", value = pathfinder)
 #' as_draws_df(fit_gq$draws())
 #' }
 #'
-generate_quantities <- function(fitted_params,
-                                data = NULL,
-                                seed = NULL,
-                                output_dir = getOption("cmdstanr_output_dir"),
-                                output_basename = NULL,
-                                sig_figs = NULL,
-                                parallel_chains = getOption("mc.cores", 1),
-                                threads_per_chain = NULL,
-                                opencl_ids = NULL,
-                                show_messages = TRUE,
-                                show_exceptions = TRUE,
-                                compress = getOption("cmdstanr_compress", "none")) {
+generate_quantities <- function(
+  fitted_params,
+  data = NULL,
+  seed = NULL,
+  output_dir = getOption("cmdstanr_output_dir"),
+  output_basename = NULL,
+  sig_figs = NULL,
+  parallel_chains = getOption("mc.cores", 1),
+  threads_per_chain = NULL,
+  opencl_ids = NULL,
+  show_messages = TRUE,
+  show_exceptions = TRUE,
+  compress = getOption("cmdstanr_compress", "none")
+) {
   private$assert_current_()
   fitted_params_files <- process_fitted_params(fitted_params)
   procs <- CmdStanGQProcs$new(
     num_procs = length(fitted_params_files),
-    parallel_procs = checkmate::assert_integerish(parallel_chains, lower = 1, null.ok = TRUE),
+    parallel_procs = checkmate::assert_integerish(
+      parallel_chains,
+      lower = 1,
+      null.ok = TRUE
+    ),
     threads_per_proc = assert_valid_threads(
-      threads_per_chain, private$reported_features_, multiple_chains = TRUE
+      threads_per_chain,
+      private$reported_features_,
+      multiple_chains = TRUE
     ),
     show_stderr_messages = show_exceptions,
     show_stdout_messages = show_messages
@@ -2044,7 +2250,11 @@ generate_quantities <- function(fitted_params,
   runset$run_cmdstan()
   CmdStanGQ$new(runset)
 }
-CmdStanModel$set("public", name = "generate_quantities", value = generate_quantities)
+CmdStanModel$set(
+  "public",
+  name = "generate_quantities",
+  value = generate_quantities
+)
 
 #' Run Stan's diagnose method
 #'
@@ -2077,13 +2287,15 @@ CmdStanModel$set("public", name = "generate_quantities", value = generate_quanti
 #' @template seealso-docs
 #' @inherit CmdStanDiagnose examples
 #'
-diagnose <- function(data = NULL,
-                     seed = NULL,
-                     init = NULL,
-                     output_dir = getOption("cmdstanr_output_dir"),
-                     output_basename = NULL,
-                     epsilon = NULL,
-                     error = NULL) {
+diagnose <- function(
+  data = NULL,
+  seed = NULL,
+  init = NULL,
+  output_dir = getOption("cmdstanr_output_dir"),
+  output_basename = NULL,
+  epsilon = NULL,
+  error = NULL
+) {
   private$assert_current_()
   procs <- CmdStanProcs$new(
     num_procs = 1,
@@ -2183,10 +2395,9 @@ CmdStanModel$set("public", name = "diagnose", value = diagnose)
 #' }
 #'
 #'
-expose_functions = function(global = FALSE, verbose = FALSE, quiet = FALSE) {
+expose_functions <- function(global = FALSE, verbose = FALSE, quiet = FALSE) {
   private$assert_current_()
-  expose_stan_functions(private$standalone_functions_(), global, verbose,
-                         quiet)
+  expose_stan_functions(private$standalone_functions_(), global, verbose, quiet)
   invisible(NULL)
 }
 CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
@@ -2220,12 +2431,16 @@ CmdStanModel$set("public", name = "expose_functions", value = expose_functions)
 #' mod$cmdstan_defaults("optimize")
 #' }
 #'
-cmdstan_defaults <- function(method = c("sample", "optimize", "variational",
-                                        "pathfinder", "laplace")) {
+cmdstan_defaults <- function(
+  method = c("sample", "optimize", "variational", "pathfinder", "laplace")
+) {
   method <- match.arg(method)
   private$assert_current_()
   parse_cmdstan_args(
-    self$exe_file(), method, self$stan_file(), private$record_$tbb_dir
+    self$exe_file(),
+    method,
+    self$stan_file(),
+    private$record_$tbb_dir
   )
 }
 CmdStanModel$set("public", name = "cmdstan_defaults", value = cmdstan_defaults)
@@ -2320,7 +2535,6 @@ is_current <- function() {
 CmdStanModel$set("public", name = "is_current", value = is_current)
 
 
-
 # internal ----------------------------------------------------------------
 #' The error for a build argument supplied with no `stan_file`
 #'
@@ -2333,9 +2547,15 @@ CmdStanModel$set("public", name = "is_current", value = is_current)
 #'   `cmdstan_model()`.
 #' @return `NULL`, invisibly. The first argument supplied is an error.
 #' @noRd
-assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
-                                              include_paths, user_header,
-                                              force_recompile, pedantic, dir) {
+assert_no_build_args_for_exe_only <- function(
+  cpp_options,
+  stanc_options,
+  include_paths,
+  user_header,
+  force_recompile,
+  pedantic,
+  dir
+) {
   build_arg_message <- function(arg) {
     sprintf(
       paste0(
@@ -2384,7 +2604,9 @@ assert_no_build_args_for_exe_only <- function(cpp_options, stanc_options,
 assert_stan_file_exists <- function(stan_file) {
   if (!file.exists(stan_file)) {
     stop(
-      "The Stan file '", stan_file, "' this model was created from no longer ",
+      "The Stan file '",
+      stan_file,
+      "' this model was created from no longer ",
       "exists.",
       call. = FALSE
     )
@@ -2430,7 +2652,8 @@ parse_cmdstan_args <- function(model_binary, method, stan_file, tbb_dir) {
   if (is.na(ret$status) || ret$status != 0) {
     output <- trimws(paste0(ret$stderr, ret$stdout))
     stop_cannot_run(
-      model_binary, stan_file,
+      model_binary,
+      stan_file,
       if (nzchar(output)) output else paste("exit status", ret$status),
       tbb_dir
     )
@@ -2454,13 +2677,17 @@ parse_cmdstan_args <- function(model_binary, method, stan_file, tbb_dir) {
     content <- trimws(line)
 
     # Skip blank lines so they don't reset the section stack
-    if (!nzchar(content)) next
+    if (!nzchar(content)) {
+      next
+    }
 
     indent <- nchar(sub("^(\\s*).*", "\\1", line))
 
     # Drop sections at deeper or equal indentation
-    while (length(section_indents) > 0 &&
-           section_indents[[length(section_indents)]] >= indent) {
+    while (
+      length(section_indents) > 0 &&
+        section_indents[[length(section_indents)]] >= indent
+    ) {
       section_indents <- section_indents[-length(section_indents)]
       section_names <- section_names[-length(section_names)]
     }
@@ -2474,7 +2701,6 @@ parse_cmdstan_args <- function(model_binary, method, stan_file, tbb_dir) {
 
     arg_name <- parse_cmdstan_arg_name(content)
     if (!is.null(arg_name)) {
-
       # Build the full dotted argument key: method.section1.section2...arg_name
       # The top-level method heading (e.g. "sample") is tracked as a section,
       # so it becomes the first segment of the key.
@@ -2529,77 +2755,84 @@ find_cmdstan_default_value <- function(output, line_idx, n_lines) {
 #' @noRd
 parse_default_value <- function(line) {
   val_str <- sub("^Defaults to\\s*", "", line)
-  if (val_str %in% c("true", "false")) return(val_str == "true")
-  if (grepl("^-?[0-9]+$", val_str)) return(as.integer(val_str))
-  if (grepl("^-?[0-9]*\\.?[0-9]+([eE][+-]?[0-9]+)?$", val_str)) return(as.numeric(val_str))
+  if (val_str %in% c("true", "false")) {
+    return(val_str == "true")
+  }
+  if (grepl("^-?[0-9]+$", val_str)) {
+    return(as.integer(val_str))
+  }
+  if (grepl("^-?[0-9]*\\.?[0-9]+([eE][+-]?[0-9]+)?$", val_str)) {
+    return(as.numeric(val_str))
+  }
   val_str
 }
 
 #' Map CmdStan argument names to CmdStanR argument names
 #' @noRd
 map_cmdstan_to_cmdstanr <- function(method) {
-  switch(method,
-         sample = c(
-           iter_sampling = "sample.num_samples",
-           iter_warmup = "sample.num_warmup",
-           save_warmup = "sample.save_warmup",
-           thin = "sample.thin",
-           adapt_engaged = "sample.adapt.engaged",
-           adapt_delta = "sample.adapt.delta",
-           init_buffer = "sample.adapt.init_buffer",
-           term_buffer = "sample.adapt.term_buffer",
-           window = "sample.adapt.window",
-           save_metric = "sample.adapt.save_metric",
-           max_treedepth = "sample.hmc.nuts.max_depth",
-           metric = "sample.hmc.metric",
-           metric_file = "sample.hmc.metric_file",
-           step_size = "sample.hmc.stepsize"
-         ),
-         optimize = c(
-           algorithm = "optimize.algorithm",
-           jacobian = "optimize.jacobian",
-           iter = "optimize.iter",
-           init_alpha = "optimize.lbfgs.init_alpha",
-           tol_obj = "optimize.lbfgs.tol_obj",
-           tol_rel_obj = "optimize.lbfgs.tol_rel_obj",
-           tol_grad = "optimize.lbfgs.tol_grad",
-           tol_rel_grad = "optimize.lbfgs.tol_rel_grad",
-           tol_param = "optimize.lbfgs.tol_param",
-           history_size = "optimize.lbfgs.history_size"
-         ),
-         variational = c(
-           algorithm = "variational.algorithm",
-           iter = "variational.iter",
-           grad_samples = "variational.grad_samples",
-           elbo_samples = "variational.elbo_samples",
-           eta = "variational.eta",
-           adapt_engaged = "variational.adapt.engaged",
-           adapt_iter = "variational.adapt.iter",
-           tol_rel_obj = "variational.tol_rel_obj",
-           eval_elbo = "variational.eval_elbo",
-           draws = "variational.output_samples"
-         ),
-         pathfinder = c(
-           init_alpha = "pathfinder.init_alpha",
-           tol_obj = "pathfinder.tol_obj",
-           tol_rel_obj = "pathfinder.tol_rel_obj",
-           tol_grad = "pathfinder.tol_grad",
-           tol_rel_grad = "pathfinder.tol_rel_grad",
-           tol_param = "pathfinder.tol_param",
-           history_size = "pathfinder.history_size",
-           draws = "pathfinder.num_psis_draws",
-           num_paths = "pathfinder.num_paths",
-           save_single_paths = "pathfinder.save_single_paths",
-           psis_resample = "pathfinder.psis_resample",
-           calculate_lp = "pathfinder.calculate_lp",
-           max_lbfgs_iters = "pathfinder.max_lbfgs_iters",
-           single_path_draws = "pathfinder.num_draws",
-           num_elbo_draws = "pathfinder.num_elbo_draws"
-         ),
-         laplace = c(
-           jacobian = "laplace.jacobian",
-           draws = "laplace.draws"
-         ),
-         character(0)
+  switch(
+    method,
+    sample = c(
+      iter_sampling = "sample.num_samples",
+      iter_warmup = "sample.num_warmup",
+      save_warmup = "sample.save_warmup",
+      thin = "sample.thin",
+      adapt_engaged = "sample.adapt.engaged",
+      adapt_delta = "sample.adapt.delta",
+      init_buffer = "sample.adapt.init_buffer",
+      term_buffer = "sample.adapt.term_buffer",
+      window = "sample.adapt.window",
+      save_metric = "sample.adapt.save_metric",
+      max_treedepth = "sample.hmc.nuts.max_depth",
+      metric = "sample.hmc.metric",
+      metric_file = "sample.hmc.metric_file",
+      step_size = "sample.hmc.stepsize"
+    ),
+    optimize = c(
+      algorithm = "optimize.algorithm",
+      jacobian = "optimize.jacobian",
+      iter = "optimize.iter",
+      init_alpha = "optimize.lbfgs.init_alpha",
+      tol_obj = "optimize.lbfgs.tol_obj",
+      tol_rel_obj = "optimize.lbfgs.tol_rel_obj",
+      tol_grad = "optimize.lbfgs.tol_grad",
+      tol_rel_grad = "optimize.lbfgs.tol_rel_grad",
+      tol_param = "optimize.lbfgs.tol_param",
+      history_size = "optimize.lbfgs.history_size"
+    ),
+    variational = c(
+      algorithm = "variational.algorithm",
+      iter = "variational.iter",
+      grad_samples = "variational.grad_samples",
+      elbo_samples = "variational.elbo_samples",
+      eta = "variational.eta",
+      adapt_engaged = "variational.adapt.engaged",
+      adapt_iter = "variational.adapt.iter",
+      tol_rel_obj = "variational.tol_rel_obj",
+      eval_elbo = "variational.eval_elbo",
+      draws = "variational.output_samples"
+    ),
+    pathfinder = c(
+      init_alpha = "pathfinder.init_alpha",
+      tol_obj = "pathfinder.tol_obj",
+      tol_rel_obj = "pathfinder.tol_rel_obj",
+      tol_grad = "pathfinder.tol_grad",
+      tol_rel_grad = "pathfinder.tol_rel_grad",
+      tol_param = "pathfinder.tol_param",
+      history_size = "pathfinder.history_size",
+      draws = "pathfinder.num_psis_draws",
+      num_paths = "pathfinder.num_paths",
+      save_single_paths = "pathfinder.save_single_paths",
+      psis_resample = "pathfinder.psis_resample",
+      calculate_lp = "pathfinder.calculate_lp",
+      max_lbfgs_iters = "pathfinder.max_lbfgs_iters",
+      single_path_draws = "pathfinder.num_draws",
+      num_elbo_draws = "pathfinder.num_elbo_draws"
+    ),
+    laplace = c(
+      jacobian = "laplace.jacobian",
+      draws = "laplace.draws"
+    ),
+    character(0)
   )
 }
