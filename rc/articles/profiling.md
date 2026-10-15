@@ -124,11 +124,11 @@ fit$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1 likelihood 140494169515840 0.441749380  0.359777820   0.08197156       51261
-    2     priors 140494169515840 0.002880372  0.002086812   0.00079356       34174
+    1     priors 140292827801408 0.003522289  0.002532073  0.000990216       34174
+    2 likelihood 140292827801408 0.552306220  0.455607520  0.096698703       51261
       no_chain_stack autodiff_calls no_autodiff_calls
-    1       34191087          17087                 1
-    2          34174          17087                 1
+    1          34174          17087                 1
+    2       34191087          17087                 1
 
 The `total_time`, `forward_time`, and `reverse_time` columns are
 measured in seconds.
@@ -186,8 +186,8 @@ fit_glm$profiles()
 
     [[1]]
             name       thread_id  total_time forward_time reverse_time chain_stack
-    1     priors 140054809306944 0.003199326  0.002397284  0.000802042       35712
-    2 likelihood 140054809306944 0.297120670  0.296159130  0.000961541       53568
+    1     priors 140423236945728 0.003608969  0.002687596  0.000921373       35712
+    2 likelihood 140423236945728 0.331322710  0.330271200  0.001051504       53568
       no_chain_stack autodiff_calls no_autodiff_calls
     1          35712          17856                 1
     2          17856          17856                 1
@@ -220,7 +220,7 @@ per_gradient_timing <- profile_chain_1$total_time / profile_chain_1$autodiff_cal
 print(per_gradient_timing) # two elements for the two profile statements in the model
 ```
 
-    [1] 2.585295e-05 1.685710e-07
+    [1] 2.061385e-07 3.232318e-05
 
 ### Accessing and saving the profile files
 
@@ -234,7 +234,7 @@ The paths of the profiling CSV files can be retrieved using
 fit$profile_files()
 ```
 
-    [1] "/tmp/RtmpHYN8Nz/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202610151441-01-8ed827.csv"
+    [1] "/tmp/RtmpzxUQFr/model_4c7df895fdf82ba61c6604cbf28ec9b5-profile-202610151534-01-8ed7e4.csv"
 
 These can be saved to a more permanent location with the
 [`$save_profile_files()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_output_files.html)

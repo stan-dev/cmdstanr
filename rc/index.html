@@ -130,10 +130,11 @@
 <code class="sourceCode R"><span><span class="co"># we recommend running this in a fresh R session or restarting your current session</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'https://stan-dev.r-universe.dev'</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>This does not install the vignettes, which take a long time to build, but they are always available online at <a href="https://mc-stan.org/cmdstanr/articles/" class="external-link uri">https://mc-stan.org/cmdstanr/articles/</a>.</p>
-<p>To instead install the latest development version of the package from GitHub use</p>
+<p>The development version is currently the release candidate for CmdStanR 1.0, which we’d like people to test. Install it from GitHub with</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"stan-dev/cmdstanr"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"stan-dev/cmdstanr@v1.0"</span><span class="op">)</span></span></code></pre></div>
+<p>The release notes and documentation for the candidate are at <a href="https://mc-stan.org/cmdstanr/rc" class="uri">https://mc-stan.org/cmdstanr/rc</a>.</p>
 </div>
 <div class="section level4">
 <h4 id="installing-cmdstan">Installing CmdStan<a class="anchor" aria-label="anchor" href="#installing-cmdstan"></a>
