@@ -128,6 +128,13 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
     cxxflags <- paste0(cxxflags, " -I", shQuote(tbb$include))
     # make's print rule drops the quotes, so quote the path here
     libs <- gsub(tbb$lib, shQuote(tbb$lib), libs, fixed = TRUE)
+    # make passes -Wl,-L, which the linker searches after the compiler's
+    # default directories, so -ltbb could find a system TBB first
+    libs <- paste0("-L", shQuote(tbb$lib), " ", libs)
+    # libtbb loads tbbmalloc on its own and unloads it at exit while the
+    # compiled code still uses it, and R segfaults. RcppParallel's
+    # .onLoad() loads tbbmalloc too, so libtbb's unload doesn't remove it.
+    loadNamespace("RcppParallel")
   }
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")

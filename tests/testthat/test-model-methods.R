@@ -58,11 +58,73 @@ test_that("RcppParallel's TBB works from a library path with a space", {
   expect_no_error(rcpp_source_stan(code, new.env()))
 })
 
-# Every build below has to coexist with RcppParallel's TBB in the session,
-# and the build above ran before it was loaded
-if (!is.null(rcppparallel_tbb())) {
-  loadNamespace("RcppParallel")
-}
+test_that("rcpp_source_stan() links RcppParallel's TBB with a plain -L", {
+  skip_if_not_installed("RcppParallel")
+  tbb <- list(include = "/rp/include", lib = "/rp/lib")
+  local_mocked_bindings(rcppparallel_tbb = function() tbb)
+  seen <- NULL
+  local_mocked_bindings(
+    sourceCpp = function(...) {
+      # the Makevars file only exists during the call
+      seen <<- readLines(Sys.getenv("R_MAKEVARS_USER"))
+      invisible(NULL)
+    },
+    .package = "Rcpp"
+  )
+  rcpp_source_stan("// no code", new.env())
+  expect_match(
+    grep("^PKG_LIBS", seen, value = TRUE),
+    paste0("-L", shQuote(tbb$lib), " "),
+    fixed = TRUE
+  )
+})
+
+test_that("R exits cleanly after model methods built against RcppParallel's TBB", {
+  skip_if(
+    is.null(rcppparallel_tbb()),
+    "RcppParallel is older than 6.2.0 or bundles no TBB"
+  )
+  # The crash never happens on macOS, where the test would only cost a build
+  skip_if_not(os_is_linux())
+  # The crash is at exit, so run in a fresh R process with this cmdstanr
+  # (installed, or the source tree via pkgload) and RcppParallel not loaded
+  ns_path <- getNamespaceInfo("cmdstanr", "path")
+  from_source <- length(list.files(file.path(ns_path, "R"), "\\.R$")) > 0
+  load_cmdstanr <- if (from_source) {
+    sprintf(
+      "asNamespace('pkgload')$load_all(%s, quiet = TRUE)",
+      deparse(ns_path)
+    )
+  } else {
+    sprintf("library(cmdstanr, lib.loc = %s)", deparse(dirname(ns_path)))
+  }
+  script <- withr::local_tempfile(fileext = ".R")
+  writeLines(
+    c(
+      "suppressMessages(suppressWarnings(",
+      load_cmdstanr,
+      "))",
+      "f <- write_stan_file('parameters { real mu; } model { mu ~ normal(0, 1); }')",
+      "fit <- cmdstan_model(f)$sample(chains = 1, refresh = 0, show_messages = FALSE)",
+      "fit$init_model_methods(quiet = TRUE)",
+      "stopifnot(isTRUE(all.equal(fit$log_prob(0.5), -0.125)))",
+      "cat('done\\n')"
+    ),
+    script
+  )
+  run <- processx::run(
+    file.path(R.home("bin"), "Rscript"),
+    script,
+    env = c(
+      "current",
+      CMDSTAN = cmdstan_path(),
+      R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep)
+    ),
+    error_on_status = FALSE
+  )
+  expect_match(run$stdout, "done", fixed = TRUE)
+  expect_equal(run$status, 0, info = run$stderr)
+})
 
 test_that("Model methods automatically initialise when needed", {
   expect_no_error(fit$log_prob(unconstrained_variables = c(0.1)))
