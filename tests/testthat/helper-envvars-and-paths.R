@@ -179,7 +179,12 @@ local_cmdstan_make_local <- function(
 }
 
 copy_cmdstan_tree <- function(from, to) {
-  if (os_is_windows()) {
+  if (os_is_wsl()) {
+    wsl_compatible_run(
+      command = "cp",
+      args = c("-a", wsl_safe_path(from), wsl_safe_path(to))
+    )
+  } else if (os_is_windows()) {
     system2(
       "robocopy",
       c(
@@ -197,13 +202,18 @@ copy_cmdstan_tree <- function(from, to) {
 private_cmdstan <- new.env(parent = emptyenv())
 
 local_private_cmdstan <- function(envir = parent.frame()) {
-  if (os_is_wsl()) {
-    return(invisible())
-  }
   shared <- cmdstan_path()
   if (is.null(private_cmdstan$path)) {
-    private_cmdstan$path <- file.path(tempfile("cmdstan-"), basename(shared))
-    dir.create(dirname(private_cmdstan$path))
+    root <- tempfile("cmdstan-")
+    if (os_is_wsl()) {
+      root <- file.path(dirname(dirname(shared)), basename(root))
+      withr::defer(
+        unlink(root, recursive = TRUE, force = TRUE),
+        testthat::teardown_env()
+      )
+    }
+    private_cmdstan$path <- file.path(root, basename(shared))
+    dir.create(root)
     copy_cmdstan_tree(shared, private_cmdstan$path)
   }
   suppressMessages(set_cmdstan_path(private_cmdstan$path))

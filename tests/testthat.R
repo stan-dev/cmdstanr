@@ -10,6 +10,7 @@ prebuild_precompiled_headers <- function() {
     variants,
     function(make_args) {
       output <- character()
+      # jarl-ignore internal_function: deliberate use of internals
       tryCatch(
         withCallingHandlers(
           {
@@ -45,6 +46,7 @@ prebuild_precompiled_headers <- function() {
 }
 
 ensure_sundials_fpic <- function() {
+  # jarl-ignore internal_function: deliberate use of internals
   withr::with_options(
     list(mc.cores = min(parallel::detectCores(), 4)),
     cmdstanr:::check_sundials_fpic(

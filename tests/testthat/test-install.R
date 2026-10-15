@@ -6,13 +6,14 @@ if (!nzchar(cmdstan_test_tarball_url)) {
 }
 
 test_that("install_cmdstan() successfully installs cmdstan and rebuild_cmdstan() rebuilds it", {
+  build_cores <- min(parallel::detectCores(), 4)
   dir <- withr::local_tempdir()
   withr::defer(set_cmdstan_path())
   expect_message(
     expect_output(
       install_cmdstan(
         dir = dir,
-        cores = 2,
+        cores = build_cores,
         quiet = FALSE,
         overwrite = TRUE,
         release_url = cmdstan_test_tarball_url,
@@ -25,7 +26,7 @@ test_that("install_cmdstan() successfully installs cmdstan and rebuild_cmdstan()
     fixed = TRUE
   )
   expect_output(
-    rebuild_cmdstan(dir = cmdstan_path(), cores = 2),
+    rebuild_cmdstan(dir = cmdstan_path(), cores = build_cores),
     paste0("CmdStan v", cmdstan_version(), " built"),
     fixed = TRUE
   )

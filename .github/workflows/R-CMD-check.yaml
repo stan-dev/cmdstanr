@@ -136,15 +136,20 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain()
+          cpp_options <- list()
+          if (Sys.info()[["sysname"]] == "Linux") {
+            cpp_options <- list("CPPFLAGS_SUNDIALS += -fPIC")
+          }
           tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
           if (nzchar(tarball_url)) {
             cmdstanr::install_cmdstan(
               cores = 2,
               overwrite = TRUE,
-              release_url = tarball_url
+              release_url = tarball_url,
+              cpp_options = cpp_options
             )
           } else {
-            cmdstanr::install_cmdstan(cores = 2)
+            cmdstanr::install_cmdstan(cores = 2, cpp_options = cpp_options)
           }
         shell: Rscript {0}
 
@@ -156,6 +161,8 @@ jobs:
         shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual", "--as-cran", "--no-build-vignettes")'
         env:
           _R_CHECK_CRAN_INCOMING_: false
           _R_CHECK_FORCE_SUGGESTS_: ${{ matrix.config.r == '4.1' && 'false' || 'true' }}
