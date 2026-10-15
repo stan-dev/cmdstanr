@@ -6,7 +6,8 @@ dir.create(stan_dir, recursive = TRUE, showWarnings = FALSE)
 file.copy(
   list.files(test_path("resources", "stan"), full.names = TRUE),
   stan_dir,
-  recursive = TRUE
+  recursive = TRUE,
+  overwrite = TRUE
 )
 
 cleanup_stan_artifacts <- function() {
@@ -26,3 +27,92 @@ cleanup_stan_artifacts <- function() {
 
 cleanup_stan_artifacts()
 withr::defer(cleanup_stan_artifacts(), testthat::teardown_env())
+
+ensure_sundials_fpic <- function() {
+  with_test_lock("sundials-fpic", {
+    withr::with_options(
+      list(mc.cores = min(parallel::detectCores(), 4)),
+      check_sundials_fpic(get_cmdstan_flags("CPPFLAGS_SUNDIALS"), verbose = FALSE)
+    )
+  })
+}
+
+precompiled_header_path <- function(make_args) {
+  printed <- run_make(
+    c("-s", make_args, "print-PRECOMPILED_MODEL_HEADER"),
+    quiet = TRUE
+  )$stdout
+  line <- grep(
+    "^PRECOMPILED_MODEL_HEADER",
+    trimws(strsplit(printed, "\n")[[1]]),
+    value = TRUE
+  )
+  header <- trimws(sub("^PRECOMPILED_MODEL_HEADER[[:space:]]*=", "", line))
+  if (length(header) != 1 || !nzchar(header)) {
+    return(NULL)
+  }
+  file.path(cmdstan_path(), header)
+}
+
+build_precompiled_header <- function(make_args, timeout) {
+  header_path <- precompiled_header_path(make_args)
+  if (is.null(header_path) || file.exists(header_path)) {
+    return(TRUE)
+  }
+  lock <- NULL
+  if (!is.null(test_run_dir())) {
+    lock <- filelock::lock(
+      file.path(test_run_dir(), paste0("pch-", rlang::hash(make_args), ".lock")),
+      timeout = timeout
+    )
+    if (is.null(lock)) {
+      return(FALSE)
+    }
+    on.exit(filelock::unlock(lock))
+  }
+  if (!file.exists(header_path)) {
+    run_make(c(basename(header_path), make_args), quiet = TRUE)
+  }
+  TRUE
+}
+
+ensure_precompiled_headers <- function() {
+  pending <- list(character(), "STAN_THREADS=true")
+  for (timeout in c(0, -1)) {
+    built <- vapply(pending, build_precompiled_header, logical(1), timeout)
+    pending <- pending[!built]
+  }
+}
+
+remove_dead_run_dirs <- function(root) {
+  for (dir in Sys.glob(file.path(root, "cmdstanr-tests-*"))) {
+    pid <- as.integer(sub("^cmdstanr-tests-", "", basename(dir)))
+    alive <- tryCatch(
+      ps::ps_is_running(ps::ps_handle(pid)),
+      error = function(e) FALSE
+    )
+    if (!alive) {
+      unlink(dir, recursive = TRUE)
+    }
+  }
+}
+
+if (identical(Sys.getenv("NOT_CRAN"), "true")) {
+  if (
+    identical(Sys.getenv("CALLR_IS_RUNNING"), "true") &&
+      !nzchar(Sys.getenv("CMDSTANR_TEST_SHARED"))
+  ) {
+    root <- dirname(tempdir())
+    remove_dead_run_dirs(root)
+    run_dir <- file.path(root, paste0("cmdstanr-tests-", ps::ps_ppid()))
+    dir.create(run_dir, showWarnings = FALSE)
+    Sys.setenv(CMDSTANR_TEST_SHARED = run_dir)
+  }
+  tryCatch(
+    {
+      ensure_sundials_fpic()
+      ensure_precompiled_headers()
+    },
+    error = function(e) message(conditionMessage(e))
+  )
+}

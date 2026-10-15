@@ -41,6 +41,9 @@ test_run_dir <- function() {
 }
 
 with_test_lock <- function(key, code, timeout = 900) {
+  if (is.null(test_run_dir())) {
+    return(force(code))
+  }
   lock <- filelock::lock(
     file.path(test_run_dir(), paste0(key, ".lock")),
     timeout = timeout * 1000
