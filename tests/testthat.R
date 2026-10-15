@@ -19,13 +19,15 @@ prebuild_precompiled_headers <- function() {
               quiet = TRUE
             )$stdout
             line <- grep(
-              "^PRECOMPILED_MODEL_HEADER", trimws(strsplit(printed, "\n")[[1]]),
+              "^PRECOMPILED_MODEL_HEADER",
+              trimws(strsplit(printed, "\n")[[1]]),
               value = TRUE
             )
             header <- trimws(sub("^PRECOMPILED_MODEL_HEADER\\s*=", "", line))
             if (
-              length(header) == 1 && nzchar(header) &&
-              !file.exists(file.path(cmdstanr::cmdstan_path(), header))
+              length(header) == 1 &&
+                nzchar(header) &&
+                !file.exists(file.path(cmdstanr::cmdstan_path(), header))
             ) {
               cmdstanr:::run_make(c(header, make_args), quiet = TRUE)
             }
@@ -57,8 +59,10 @@ ensure_sundials_fpic <- function() {
 }
 
 shared <- NULL
-if (identical(Sys.getenv("NOT_CRAN"), "true") &&
-    !identical(Sys.getenv("TESTTHAT_PARALLEL"), "false")) {
+if (
+  identical(Sys.getenv("NOT_CRAN"), "true") &&
+    !identical(Sys.getenv("TESTTHAT_PARALLEL"), "false")
+) {
   shared <- tempfile("cmdstanr-tests-")
   dir.create(shared)
   Sys.setenv(CMDSTANR_TEST_SHARED = shared)

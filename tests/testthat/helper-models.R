@@ -62,8 +62,10 @@ testing_model <- function(name, ...) {
   with_test_lock(variant, {
     if (dir.exists(cache)) {
       file.copy(
-        file.path(cache, basename(files)), dirname(exe),
-        overwrite = TRUE, copy.date = TRUE
+        file.path(cache, basename(files)),
+        dirname(exe),
+        overwrite = TRUE,
+        copy.date = TRUE
       )
     }
     mod <- cmdstan_model(stan_file = stan_file, ...)

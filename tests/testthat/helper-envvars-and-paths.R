@@ -190,7 +190,13 @@ copy_cmdstan_tree <- function(from, to) {
       c(
         shQuote(from),
         shQuote(to),
-        "/E", "/MT:16", "/NFL", "/NDL", "/NJH", "/NJS", "/NP"
+        "/E",
+        "/MT:16",
+        "/NFL",
+        "/NDL",
+        "/NJH",
+        "/NJS",
+        "/NP"
       ),
       stdout = FALSE
     )
