@@ -42,12 +42,16 @@ install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOpt
 This does not install the vignettes, which take a long time to build, but they are always available
 online at https://mc-stan.org/cmdstanr/articles/.
 
-To instead install the latest development version of the package from GitHub use
+The development version is currently the release candidate for CmdStanR 1.0,
+which we'd like people to test. Install it from GitHub with
 
 ```r
 # install.packages("remotes")
-remotes::install_github("stan-dev/cmdstanr")
+remotes::install_github("stan-dev/cmdstanr@v1.0")
 ```
+
+The release notes and documentation for the candidate are at
+https://mc-stan.org/cmdstanr/rc.
 
 #### Installing CmdStan
 
