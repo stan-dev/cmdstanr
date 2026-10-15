@@ -61,7 +61,6 @@ Imports:
     withr (>= 2.5.0)
 Suggests:
     bayesplot,
-    filelock,
     ggplot2,
     knitr (>= 1.37),
     loo (>= 2.0.0),

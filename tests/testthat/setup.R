@@ -32,7 +32,10 @@ ensure_sundials_fpic <- function() {
   with_test_lock("sundials-fpic", {
     withr::with_options(
       list(mc.cores = min(parallel::detectCores(), 4)),
-      check_sundials_fpic(get_cmdstan_flags("CPPFLAGS_SUNDIALS"), verbose = FALSE)
+      check_sundials_fpic(
+        get_cmdstan_flags("CPPFLAGS_SUNDIALS"),
+        verbose = FALSE
+      )
     )
   })
 }
@@ -61,14 +64,11 @@ build_precompiled_header <- function(make_args, timeout) {
   }
   lock <- NULL
   if (!is.null(test_run_dir())) {
-    lock <- filelock::lock(
-      file.path(test_run_dir(), paste0("pch-", rlang::hash(make_args), ".lock")),
-      timeout = timeout
-    )
+    lock <- acquire_test_lock(paste0("pch-", rlang::hash(make_args)), timeout)
     if (is.null(lock)) {
       return(FALSE)
     }
-    on.exit(filelock::unlock(lock))
+    on.exit(release_test_lock(lock))
   }
   if (!file.exists(header_path)) {
     run_make(c(basename(header_path), make_args), quiet = TRUE)
@@ -78,7 +78,7 @@ build_precompiled_header <- function(make_args, timeout) {
 
 ensure_precompiled_headers <- function() {
   pending <- list(character(), "STAN_THREADS=true")
-  for (timeout in c(0, -1)) {
+  for (timeout in c(0, 900)) {
     built <- vapply(pending, build_precompiled_header, logical(1), timeout)
     pending <- pending[!built]
   }

@@ -40,15 +40,30 @@ test_run_dir <- function() {
   if (nzchar(dir)) dir else NULL
 }
 
+acquire_test_lock <- function(key, timeout = 900) {
+  lock <- file.path(test_run_dir(), paste0(key, ".lock"))
+  deadline <- Sys.time() + timeout
+  while (!dir.create(lock, showWarnings = FALSE)) {
+    if (Sys.time() >= deadline) {
+      return(NULL)
+    }
+    Sys.sleep(0.25)
+  }
+  lock
+}
+
+release_test_lock <- function(lock) {
+  if (!is.null(lock)) {
+    unlink(lock, recursive = TRUE)
+  }
+}
+
 with_test_lock <- function(key, code, timeout = 900) {
   if (is.null(test_run_dir())) {
     return(force(code))
   }
-  lock <- filelock::lock(
-    file.path(test_run_dir(), paste0(key, ".lock")),
-    timeout = timeout * 1000
-  )
-  on.exit(if (!is.null(lock)) filelock::unlock(lock))
+  lock <- acquire_test_lock(key, timeout)
+  on.exit(release_test_lock(lock))
   force(code)
 }
 
