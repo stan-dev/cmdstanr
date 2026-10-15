@@ -41,12 +41,11 @@ test_run_dir <- function() {
 }
 
 with_test_lock <- function(key, code, timeout = 900) {
-  lock <- file.path(test_run_dir(), paste0(key, ".lock"))
-  deadline <- Sys.time() + timeout
-  while (!dir.create(lock, showWarnings = FALSE) && Sys.time() < deadline) {
-    Sys.sleep(0.25)
-  }
-  on.exit(unlink(lock, recursive = TRUE))
+  lock <- filelock::lock(
+    file.path(test_run_dir(), paste0(key, ".lock")),
+    timeout = timeout * 1000
+  )
+  on.exit(if (!is.null(lock)) filelock::unlock(lock))
   force(code)
 }
 
