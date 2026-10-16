@@ -142,7 +142,10 @@ compressed). The
 
 \verb{$save_data_file()} uses the pattern \code{basename-timestamp-random.ext}, where
 \code{.ext} is the original data file extension. No \code{id} is included because even
-with multiple MCMC chains the data file is the same.
+with multiple MCMC chains the data file is the same. The original is removed
+only when it is in R's temporary directory, where CmdStanR writes data
+passed as a list. A data file passed as a path from anywhere else is copied
+and stays where it is.
 }
 
 \examples{
