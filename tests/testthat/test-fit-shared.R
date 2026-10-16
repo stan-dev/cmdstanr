@@ -131,7 +131,7 @@ test_that("saving data file works", {
         timestamp = FALSE,
         random = FALSE
       ),
-      "Moved data file and set internal path"
+      "Saved data file and set internal path"
     )
     checkmate::expect_file_exists(path, extension = "json")
     expect_true(file.size(path) > 0)
@@ -143,6 +143,20 @@ test_that("saving data file works", {
     expect_false(file.exists(old_path))
     expect_equal(fit$data_file(), path)
   }
+})
+
+test_that("saving a data file passed as a path keeps the original", {
+  data_file <- file.path(withr::local_tempdir(), "bernoulli.data.json")
+  file.copy(test_path("resources", "data", "bernoulli.data.json"), data_file)
+  mod <- testing_model("bernoulli")
+  utils::capture.output(fit <- mod$optimize(data = data_file, seed = 123))
+  expect_message(
+    path <- fit$save_data_file(withr::local_tempdir()),
+    "Saved data file and set internal path"
+  )
+  expect_true(file.exists(data_file))
+  expect_true(file.exists(path))
+  expect_equal(fit$data_file(), path)
 })
 
 test_that("cmdstan_summary() and cmdstan_diagnose() work correctly", {
