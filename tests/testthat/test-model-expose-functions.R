@@ -43,6 +43,9 @@ functions {
   tuple(int, tuple(array[] row_vector, array[] row_vector))  rtn_nest_tuple_rowvec_array(tuple(int, tuple(array[] row_vector, array[] row_vector)) x) { return x; }
   tuple(int, tuple(array[] matrix, array[] matrix))  rtn_nest_tuple_matrix_array(tuple(int, tuple(array[] matrix, array[] matrix)) x) { return x; }
 
+  array[] tuple(real, real) rtn_tuple_array(array[] tuple(real, real) x) { return x; }
+  array[,] tuple(int, tuple(vector, vector)) rtn_nest_tuple_array(array[,] tuple(int, tuple(vector, vector)) x) { return x; }
+
   complex rtn_complex(complex x) { return x; }
   complex_vector rtn_complex_vec(complex_vector x) { return x; }
   complex_row_vector rtn_complex_rowvec(complex_row_vector x) { return x; }
@@ -231,6 +234,16 @@ test_that("Functions handle types correctly", {
   expect_equal(
     mod$functions$rtn_nest_tuple_matrix_array(nest_tuple_matrix_array),
     nest_tuple_matrix_array
+  )
+
+  ### Array of Tuples
+
+  tuple_array <- list(tuple_dbl, list(1, 2))
+  expect_equal(mod$functions$rtn_tuple_array(tuple_array), tuple_array)
+  nest_tuple_array <- list(list(list(1L, tuple_vec)), list(list(2L, tuple_vec)))
+  expect_equal(
+    mod$functions$rtn_nest_tuple_array(nest_tuple_array),
+    nest_tuple_array
   )
 })
 

@@ -112,7 +112,10 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
     make_args
   )
   check_sundials_fpic(flags[8], verbose)
-  cxxflags <- flags[1]
+  # With GCC, Stan Math's autodiff stack is a unique symbol that the loader
+  # binds to rstan's, or any other Stan Math build in the session, and R
+  # crashes (#1177). Hidden visibility keeps it out of the exported symbols.
+  cxxflags <- paste(flags[1], "$(CXX_VISIBILITY)")
   cppflags <- flags[2]
   libs <- paste(flags[3:7], collapse = " ")
   cmdstanr_includes <- system.file(
@@ -125,6 +128,13 @@ rcpp_source_stan <- function(code, env, verbose = FALSE, ...) {
     cxxflags <- paste0(cxxflags, " -I", shQuote(tbb$include))
     # make's print rule drops the quotes, so quote the path here
     libs <- gsub(tbb$lib, shQuote(tbb$lib), libs, fixed = TRUE)
+    # make passes -Wl,-L, which the linker searches after the compiler's
+    # default directories, so -ltbb could find a system TBB first
+    libs <- paste0("-L", shQuote(tbb$lib), " ", libs)
+    # libtbb loads tbbmalloc on its own and unloads it at exit while the
+    # compiled code still uses it, and R segfaults. RcppParallel's
+    # .onLoad() loads tbbmalloc too, so libtbb's unload doesn't remove it.
+    loadNamespace("RcppParallel")
   }
   if (.Platform$OS.type == "windows") {
     libs <- paste(libs, "-fopenmp")

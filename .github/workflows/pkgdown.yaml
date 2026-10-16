@@ -40,6 +40,7 @@ jobs:
       PREVIEW: ${{ github.event.pull_request.number && format('pr/{0}', github.event.pull_request.number) || inputs.preview }}
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
 
@@ -68,8 +69,11 @@ jobs:
               Sys.setenv(PKGDOWN_DEV_MODE = "unreleased")
             }
 
+            preview_url <- paste0(pkg$meta$url, "/", preview)
+            cat(paste0("PREVIEW_URL=", preview_url, "\n"), file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+
             override <- list(
-              url = paste0(pkg$meta$url, "/", preview),
+              url = preview_url,
               template = list(
                 params = list(noindex = TRUE)
               )
@@ -100,6 +104,16 @@ jobs:
           clean: true
           force: false
 
+      - name: Comment preview link
+        if: >
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          message: |
+            Preview: ${{ env.PREVIEW_URL }}
+            Built from ${{ github.event.pull_request.head.sha }}
+
       - name: Deploy site
         if: env.PREVIEW == ''
         uses: JamesIves/github-pages-deploy-action@v4
@@ -120,6 +134,7 @@ jobs:
 
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
@@ -142,3 +157,9 @@ jobs:
           git commit -m "Remove pkgdown preview for PR #$PR_NUMBER"
           git pull --rebase origin gh-pages
           git push origin HEAD:gh-pages
+          
+      - name: Hide preview comment
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          hide: true
+          hide_classify: OUTDATED

@@ -258,6 +258,8 @@ standalone generated quantities CSV files. (#1168)
 
 ## Bug fixes
 
+* `$expose_functions()` can now expose a function that returns an array of
+tuples. (#1329)
 * A fit whose CSV files were written to the temporary directory and are gone
 (a cached Quarto chunk, a fit saved with `saveRDS()`) now says so and how to
 avoid it, instead of failing with "File does not exist". (#1012)
@@ -322,7 +324,7 @@ without running its cleanup, for example a future worker interrupted from the
 parent session. Previously they kept running as orphans. (#1086)
 * `$init_model_methods()` and `$expose_functions()` now work in the same R
 session as rstan or brms, whichever loads first, when RcppParallel 6.2.0 or
-later is installed. (#1270)
+later is installed. (#1177, #1270)
 * A function exposed with `$expose_functions()` that returns a tuple no longer
 occasionally crashes R or returns a list with wrong elements. (#1001)
 * `$expose_functions(global = TRUE)` now also keeps the functions in the
