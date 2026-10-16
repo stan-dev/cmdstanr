@@ -77,6 +77,8 @@ functions {
   tuple(int, tuple(array[] complex_matrix, array[] complex_matrix))  rtn_nest_tuple_complex_matrix_array(tuple(int, tuple(array[] complex_matrix, array[] complex_matrix)) x) { return x; }
 
   real wrap_normal_rng(real mu, real sigma) { return normal_rng(mu, sigma); }
+  // CmdStanR adds its own seed argument to every RNG function
+  real seed_rng(real seed) { return normal_rng(seed, 1); }
 
   // algebra_solver_newton links SUNDIALS/KINSOL
   vector linear_system(vector y, vector theta, data array[] real x_r,
@@ -510,6 +512,15 @@ test_that("rng functions can be exposed", {
 
   expect_equal(res1_1, res1_2)
   expect_equal(res2_1, res2_2)
+})
+
+test_that("An RNG function can have an argument named seed", {
+  set.seed(10)
+  res1 <- mod$functions$seed_rng(100)
+  set.seed(10)
+  res2 <- mod$functions$seed_rng(100)
+  expect_equal(res1, res2)
+  expect_gt(res1, 90)
 })
 
 test_that("Overloaded functions give meaningful errors", {
