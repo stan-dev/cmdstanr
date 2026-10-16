@@ -21,3 +21,4 @@
 ^\.claude$
 ^jarl\.toml$
 ^[.]?air[.]toml$
+^\.git-blame-ignore-revs$
