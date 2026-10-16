@@ -171,6 +171,12 @@ CmdStanFit$set("public", name = "materialize", value = materialize)
 #'   more memory efficient. Internally this will use `qs2::qs_save()` to save
 #'   the object and you can read it back into \R later with `qs2::qs_read()`.
 #'
+#'   The data file is not part of the saved object. When the data was passed
+#'   as a list, the file is in the session's temporary directory, so a fit
+#'   that will use the compiled model methods in a later session needs either
+#'   `$save_data_file()` first or the data passed to `$init_model_methods()`
+#'   after reloading.
+#'
 #' @param file (string) Path where the file should be saved.
 #' @param format (string) Serialization format for the object. The default is
 #'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the
@@ -414,11 +420,23 @@ CmdStanFit$set("public", name = "init", value = init)
 #'
 #'   If a model or fit object was saved with [base::saveRDS()] and later
 #'   reloaded, any previously compiled model-method bindings will be rebuilt in
-#'   the current R session when this method is called.
+#'   the current R session when this method is called. A reloaded fit also
+#'   needs the data the model was fit with. Data originally passed as a file
+#'   is found again as long as the file still exists. However, data passed as
+#'   a list was written to the temporary directory, so either call
+#'   `$save_data_file()` *before* saving the fit (to keep that file) or pass
+#'   the original data again via the `data` argument.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
 #'
+#' @param data (multiple options) The data the fit was run with, as a named
+#'   list or the path to a JSON data file. This is only needed for a fit
+#'   reloaded in a new R session whose JSON data file no longer exists, which
+#'   happens when the data was originally passed as a list instead of a file.
+#'   The data is checked against the model's data block for structure only,
+#'   so data with the right structure but different values gives wrong results
+#'   with no error.
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
 #' @param quiet (logical) Should the message announcing the compilation be
@@ -435,8 +453,13 @@ CmdStanFit$set("public", name = "init", value = init)
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
 #'   [unconstrain_variables()], [unconstrain_draws()], [hessian()]
 #'
-init_model_methods <- function(seed = 1, verbose = FALSE, quiet = FALSE) {
-  if (model_methods_are_live(private$model_methods_env_)) {
+init_model_methods <- function(
+  data = NULL,
+  seed = 1,
+  verbose = FALSE,
+  quiet = FALSE
+) {
+  if (is.null(data) && model_methods_are_live(private$model_methods_env_)) {
     return(invisible(NULL))
   }
   if (os_is_wsl()) {
@@ -457,6 +480,22 @@ init_model_methods <- function(seed = 1, verbose = FALSE, quiet = FALSE) {
       call. = FALSE
     )
   }
+  data_file <- if (is.null(data)) {
+    self$data_file()
+  } else {
+    resolve_path(process_data(data, self$runset$args$model_variables))
+  }
+  if (!is.null(data_file) && !file.exists(data_file)) {
+    stop(
+      "Can't find data file '",
+      data_file,
+      "', so the model methods can't ",
+      "be initialized. Pass the data the fit was run with to ",
+      "`$init_model_methods()` as `data`, or call `$save_data_file()` ",
+      "before saving a fit for a later session.",
+      call. = FALSE
+    )
+  }
   drop_stale_model_methods(model_env)
   if (is.null(model_env$model_ptr)) {
     require_suggested_package("Rcpp")
@@ -465,7 +504,8 @@ init_model_methods <- function(seed = 1, verbose = FALSE, quiet = FALSE) {
   for (n in ls(model_env, all.names = TRUE)) {
     assign(n, get(n, model_env), private$model_methods_env_)
   }
-  initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
+  initialize_model_pointer(private$model_methods_env_, data_file, seed)
+  self$runset$args$data_file <- data_file
   invisible(NULL)
 }
 CmdStanFit$set(

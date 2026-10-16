@@ -302,6 +302,32 @@ test_that("stale model-method bindings are detected and dropped", {
   expect_false(drop_stale_model_methods(model_methods_env))
 })
 
+test_that("init_model_methods() checks the data file and takes data", {
+  utils::capture.output(fit <- mod$optimize(data = data_list))
+  temp_rds_file <- tempfile(fileext = ".RDS")
+  saveRDS(fit, temp_rds_file)
+  file.remove(fit$data_file())
+  fit2 <- readRDS(temp_rds_file)
+  expect_error(
+    fit2$init_model_methods(),
+    "so the model methods can't be initialized"
+  )
+  utils::capture.output(fit2$init_model_methods(data = data_list))
+  expect_true(file.exists(fit2$data_file()))
+  expect_equal(
+    fit2$log_prob(unconstrained_variables = c(0.1)),
+    -8.6327599208828509347
+  )
+  data_list_2 <- data_list
+  data_list_2$N <- 20
+  data_list_2$y <- c(data_list$y, data_list$y)
+  fit2$init_model_methods(data = data_list_2)
+  expect_equal(
+    fit2$log_prob(unconstrained_variables = c(0.1)),
+    -15.87672652161856135
+  )
+})
+
 test_that("model_methods_are_live() rejects pointers without an address", {
   # Serializing an external pointer discards its address, which is the state a
   # reloaded fit's model_ptr_ is in. No compilation needed to reproduce it.

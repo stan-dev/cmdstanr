@@ -6,9 +6,17 @@
 \title{Compile additional methods for accessing the model log-probability function
 and parameter constraining and unconstraining.}
 \usage{
-init_model_methods(seed = 1, verbose = FALSE, quiet = FALSE)
+init_model_methods(data = NULL, seed = 1, verbose = FALSE, quiet = FALSE)
 }
 \arguments{
+\item{data}{(multiple options) The data the fit was run with, as a named
+list or the path to a JSON data file. This is only needed for a fit
+reloaded in a new R session whose JSON data file no longer exists, which
+happens when the data was originally passed as a list instead of a file.
+The data is checked against the model's data block for structure only,
+so data with the right structure but different values gives wrong results
+with no error.}
+
 \item{seed}{(integer) The random seed to use when initializing the model.}
 
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
@@ -32,7 +40,12 @@ described for \code{\link[=model-method-expose_functions]{$expose_functions()}}.
 
 If a model or fit object was saved with \code{\link[base:saveRDS]{base::saveRDS()}} and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
-the current R session when this method is called.
+the current R session when this method is called. A reloaded fit also
+needs the data the model was fit with. Data originally passed as a file
+is found again as long as the file still exists. However, data passed as
+a list was written to the temporary directory, so either call
+\verb{$save_data_file()} \emph{before} saving the fit (to keep that file) or pass
+the original data again via the \code{data} argument.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.

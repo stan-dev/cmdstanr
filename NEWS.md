@@ -335,6 +335,10 @@ exposed nothing. (#1317)
 argument of `install_cmdstan()`, now turn the option off by writing
 `STAN_THREADS=` to `make/local`. Previously they wrote `STAN_THREADS=false`,
 which CmdStan reads as on. (#605)
+* `$init_model_methods()` gains a `data` argument for a fit reloaded in a new
+session whose data file is gone, and stops before compiling when the data file
+no longer exists instead of failing with a JSON parsing error afterwards.
+(#1331)
 
 ## Removed and deprecated
 
@@ -348,6 +352,8 @@ to be consistent with other methods.
 * `fit$variable_skeleton()` is removed. `fit$constrain_variables()` now
 returns the values already structured, so `utils::relist()` and the
 skeleton are no longer needed. (#925)
+* `data` is now the first argument of `$init_model_methods()`, so a `seed`
+passed by position must be named. (#1331)
 * Removed legacy Windows toolchain paths for older CmdStan releases. (#1144)
 * `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a warning). (#1144)
 * Removed deprecated items (replacements in parentheses). (#1061)
