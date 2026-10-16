@@ -258,6 +258,8 @@ standalone generated quantities CSV files. (#1168)
 
 ## Bug fixes
 
+* `$expose_functions()` can now expose a function that returns an array of
+tuples. (#1329)
 * A fit whose CSV files were written to the temporary directory and are gone
 (a cached Quarto chunk, a fit saved with `saveRDS()`) now says so and how to
 avoid it, instead of failing with "File does not exist". (#1012)
