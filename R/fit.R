@@ -1983,9 +1983,7 @@ loo <- function(
 
   if (isTRUE(moment_match)) {
     # Moment-matching requires log-prob, constrain, and unconstrain methods
-    if (is.null(private$model_methods_env_$model_ptr)) {
-      self$init_model_methods()
-    }
+    self$init_model_methods()
 
     suppressWarnings(loo_result <- loo::loo.array(LLarray, r_eff = r_eff, ...))
 
