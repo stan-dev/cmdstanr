@@ -231,6 +231,9 @@ Previously copying the flags of a previous installation after every upgrade
 added the same lines again each time. (#1266)
 * `install_cmdstan()` now retries a download without the token if GitHub rejects
 the one in `GITHUB_PAT`, and warns the token may not be valid. (#909)
+* The `timeout` argument of `install_cmdstan()` now also limits the download
+of the CmdStan archive. Previously the download was limited by R's `timeout`
+option, 60 seconds by default, which could be too short on a slow connection.
 * Chain IDs in generated file names are now zero-padded to at least two digits, 
 for example `01` instead of `1`. (#1244)
 * When using CmdStan through WSL, paths for output, diagnostic, profile, config, 
