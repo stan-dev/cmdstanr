@@ -40,20 +40,20 @@ test_run_dir <- function() {
   if (nzchar(dir)) dir else NULL
 }
 
-with_test_lock <- function(key, code, timeout = 900, on_timeout = code) {
+with_test_lock <- function(key, code, timeout = 900) {
   if (is.null(test_run_dir())) {
-    return(force(code))
+    return(code)
   }
   lock <- file.path(test_run_dir(), paste0(key, ".lock"))
   deadline <- Sys.time() + timeout
   while (!dir.create(lock, showWarnings = FALSE)) {
     if (Sys.time() >= deadline) {
-      return(on_timeout)
+      return(code)
     }
     Sys.sleep(0.25)
   }
   on.exit(unlink(lock, recursive = TRUE))
-  force(code)
+  code
 }
 
 testing_model <- function(name, ...) {
