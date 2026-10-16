@@ -1163,7 +1163,10 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' `$save_data_file()` uses the pattern `basename-timestamp-random.ext`, where
 #' `.ext` is the original data file extension. No `id` is included because even
-#' with multiple MCMC chains the data file is the same.
+#' with multiple MCMC chains the data file is the same. The original is removed
+#' only when it is in R's temporary directory, where CmdStanR writes data
+#' passed as a list. A data file passed as a path from anywhere else is copied
+#' and stays where it is.
 #'
 #' @return
 #' The `$save_*` methods print a message with the new file paths and (invisibly)
