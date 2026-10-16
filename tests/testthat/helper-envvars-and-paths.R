@@ -209,6 +209,7 @@ private_cmdstan <- new.env(parent = emptyenv())
 
 local_private_cmdstan <- function(envir = parent.frame()) {
   shared <- cmdstan_path()
+  .cmdstanr$WSL <- grepl("//wsl$", shared, fixed = TRUE)
   if (is.null(private_cmdstan$path)) {
     root <- tempfile("cmdstan-")
     if (os_is_wsl()) {
