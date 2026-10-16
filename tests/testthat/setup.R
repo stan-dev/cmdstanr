@@ -55,7 +55,7 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
         )
       )
       if (nzchar(header) && !file.exists(file.path(cmdstan_path(), header))) {
-        run_make(c(basename(header), make_args), quiet = TRUE)
+        run_make(c(header, make_args), quiet = TRUE)
       }
     }
   })
