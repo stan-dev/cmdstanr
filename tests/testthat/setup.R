@@ -36,14 +36,18 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
     list(mc.cores = parallel::detectCores()),
     check_sundials_fpic(get_cmdstan_flags("CPPFLAGS_SUNDIALS"), FALSE)
   )
-  for (threads in c(FALSE, TRUE)) {
-    dir <- file.path(warmup, threads)
-    dir.create(dir, showWarnings = FALSE)
-    cmdstan_model(
-      testing_stan_file("bernoulli"),
-      dir = dir,
-      cpp_options = list(stan_threads = threads)
+  for (make_args in list(character(), "STAN_THREADS=true")) {
+    header <- trimws(
+      sub(
+        ".*=",
+        "",
+        run_make(
+          c("-s", make_args, "print-PRECOMPILED_MODEL_HEADER"),
+          quiet = TRUE
+        )$stdout
+      )
     )
+    run_make(c(header, make_args), quiet = TRUE)
   }
   filelock::unlock(lock)
 }
