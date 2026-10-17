@@ -61,6 +61,7 @@ Imports:
     withr (>= 2.5.0)
 Suggests:
     bayesplot,
+    filelock,
     ggplot2,
     knitr (>= 1.37),
     loo (>= 2.0.0),
@@ -73,4 +74,9 @@ Suggests:
     vctrs
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/testthat/parallel: true
+Config/testthat/start-first: install, model-compile, model-rebuild,
+    fit-shared, fit-mcmc, model-sample, model-variables, model-methods,
+    fit-init, csv, failed-chains, model-init, model-expose-functions,
+    threads, model-diagnose, tuple-complex
 Config/roxygen2/version: 8.1.1

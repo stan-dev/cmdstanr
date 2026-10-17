@@ -639,6 +639,7 @@ test_that("make_shell_quote() survives Make expansion and shell splitting (#1230
 })
 
 test_that("local_make_local_backup() heals residue and nests", {
+  local_private_cmdstan()
   make_local_path <- file.path(cmdstan_path(), "make", "local")
   original <- if (file.exists(make_local_path)) {
     readBin(make_local_path, "raw", file.size(make_local_path))

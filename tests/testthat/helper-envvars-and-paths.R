@@ -173,6 +173,53 @@ local_cmdstan_make_local <- function(
   envir = parent.frame(),
   append = TRUE
 ) {
+  local_private_cmdstan(envir = envir)
   local_make_local_backup(envir = envir)
   cmdstan_make_local(cpp_options = cpp_options, append = append)
+}
+
+private_cmdstan <- new.env(parent = emptyenv())
+
+local_private_cmdstan <- function(envir = parent.frame()) {
+  shared <- cmdstan_path()
+  .cmdstanr$WSL <- grepl("//wsl$", shared, fixed = TRUE)
+  if (is.null(private_cmdstan$path)) {
+    root <- tempfile("cmdstan-")
+    if (os_is_wsl()) {
+      root <- file.path(dirname(dirname(shared)), basename(root))
+      withr::defer(
+        unlink(root, recursive = TRUE, force = TRUE),
+        testthat::teardown_env()
+      )
+    }
+    private_cmdstan$path <- file.path(root, basename(shared))
+    dir.create(root)
+    to <- private_cmdstan$path
+    if (os_is_wsl()) {
+      wsl_compatible_run(
+        command = "cp",
+        args = c("-a", wsl_safe_path(shared), wsl_safe_path(to))
+      )
+    } else if (os_is_windows()) {
+      system2(
+        "robocopy",
+        c(
+          shQuote(shared),
+          shQuote(to),
+          "/E",
+          "/MT:16",
+          "/NFL",
+          "/NDL",
+          "/NJH",
+          "/NJS",
+          "/NP"
+        ),
+        stdout = FALSE
+      )
+    } else {
+      system2("cp", c("-a", shQuote(shared), shQuote(to)))
+    }
+  }
+  suppressMessages(set_cmdstan_path(private_cmdstan$path))
+  withr::defer(suppressMessages(set_cmdstan_path(shared)), envir = envir)
 }

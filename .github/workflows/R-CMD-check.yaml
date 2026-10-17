@@ -50,6 +50,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
+      TESTTHAT_CPUS: ${{ (matrix.config.os == 'macOS-latest' || matrix.config.os == 'macos-26') && 3 || 4 }}
       CMDSTANR_OPENCL_TESTS: ${{ matrix.config.opencl }}
       CMDSTAN_TEST_TARBALL_URL: ${{ github.event.inputs.tarball_url }}
       PKG_SYSREQS_DB_UPDATE_TIMEOUT: 30s
@@ -136,15 +137,20 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain()
+          cpp_options <- list()
+          if (Sys.info()[["sysname"]] == "Linux") {
+            cpp_options <- list("CPPFLAGS_SUNDIALS += -fPIC")
+          }
           tarball_url <- Sys.getenv("CMDSTAN_TEST_TARBALL_URL")
           if (nzchar(tarball_url)) {
             cmdstanr::install_cmdstan(
               cores = 2,
               overwrite = TRUE,
-              release_url = tarball_url
+              release_url = tarball_url,
+              cpp_options = cpp_options
             )
           } else {
-            cmdstanr::install_cmdstan(cores = 2)
+            cmdstanr::install_cmdstan(cores = 2, cpp_options = cpp_options)
           }
         shell: Rscript {0}
 
