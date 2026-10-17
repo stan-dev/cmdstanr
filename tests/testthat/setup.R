@@ -47,7 +47,9 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
         )$stdout
       )
     )
-    run_make(c(header, make_args), quiet = TRUE)
+    if (nzchar(header) && !file.exists(file.path(cmdstan_path(), header))) {
+      run_make(c(header, make_args), quiet = TRUE)
+    }
   }
   filelock::unlock(lock)
 }
