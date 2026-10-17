@@ -28,24 +28,22 @@ cleanup_stan_artifacts <- function() {
 cleanup_stan_artifacts()
 withr::defer(cleanup_stan_artifacts(), testthat::teardown_env())
 
-shared <- tempdir()
-if (identical(Sys.getenv("CALLR_IS_RUNNING"), "true")) {
-  root <- dirname(tempdir())
-  runs <- list.files(root, "^cmdstanr-tests-", full.names = TRUE)
-  alive <- paste0("cmdstanr-tests-", ps::ps_pids())
-  unlink(runs[!basename(runs) %in% alive], recursive = TRUE)
-  shared <- file.path(root, paste0("cmdstanr-tests-", ps::ps_ppid()))
-  dir.create(shared, showWarnings = FALSE)
-}
-Sys.setenv(CMDSTANR_TEST_SHARED = shared)
-
 if (identical(Sys.getenv("NOT_CRAN"), "true")) {
-  with_test_lock("prebuild", {
-    withr::with_options(
-      list(mc.cores = parallel::detectCores()),
-      check_sundials_fpic(get_cmdstan_flags("CPPFLAGS_SUNDIALS"), FALSE)
+  warmup <- file.path(dirname(tempdir()), "cmdstanr-warmup")
+  dir.create(warmup, showWarnings = FALSE)
+  lock <- filelock::lock(file.path(warmup, "lock"))
+  withr::with_options(
+    list(mc.cores = parallel::detectCores()),
+    check_sundials_fpic(get_cmdstan_flags("CPPFLAGS_SUNDIALS"), FALSE)
+  )
+  for (threads in c(FALSE, TRUE)) {
+    dir <- file.path(warmup, threads)
+    dir.create(dir, showWarnings = FALSE)
+    cmdstan_model(
+      testing_stan_file("bernoulli"),
+      dir = dir,
+      cpp_options = list(stan_threads = threads)
     )
-    testing_model("bernoulli")
-    testing_model("bernoulli", cpp_options = list(stan_threads = TRUE))
-  })
+  }
+  filelock::unlock(lock)
 }

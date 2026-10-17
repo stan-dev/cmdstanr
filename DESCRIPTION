@@ -66,7 +66,6 @@ Suggests:
     knitr (>= 1.37),
     loo (>= 2.0.0),
     progressr,
-    ps,
     qs2,
     Rcpp,
     RcppParallel,

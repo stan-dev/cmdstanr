@@ -35,35 +35,8 @@ cmdstan_example_file <- function() {
   file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
 }
 
-with_test_lock <- function(key, code) {
-  lock <- filelock::lock(
-    file.path(
-      Sys.getenv("CMDSTANR_TEST_SHARED"),
-      paste0(key, ".lock")
-    )
-  )
-  on.exit(filelock::unlock(lock))
-  code
-}
-
-testing_model <- function(name, ...) {
-  stan_file <- testing_stan_file(name)
-  exe <- executable_path(stan_file)
-  files <- c(exe, build_record_path(exe))
-  key <- rlang::hash(list(cmdstan_path(), rlang::hash_file(stan_file), ...))
-  cache <- file.path(Sys.getenv("CMDSTANR_TEST_SHARED"), key)
-  with_test_lock(key, {
-    file.copy(
-      file.path(cache, basename(files)),
-      dirname(exe),
-      overwrite = TRUE,
-      copy.date = TRUE
-    )
-    mod <- cmdstan_model(stan_file = stan_file, ...)
-    dir.create(cache, showWarnings = FALSE)
-    file.copy(files, cache, overwrite = TRUE, copy.date = TRUE)
-    mod
-  })
+testing_model <- function(name) {
+  cmdstan_model(stan_file = testing_stan_file(name))
 }
 
 testing_fit <-
