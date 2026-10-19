@@ -292,6 +292,12 @@ works. (#1317)
 * `cmdstan_make_local(cpp_options = list(stan_threads = FALSE))`, and the same
 argument of `install_cmdstan()`, now turn threading off. Previously they turned
 it on. (#605)
+* `$init_model_methods()` gains a `data` argument for a fit reloaded in a new
+session whose data file is gone, and stops before compiling when the data file
+no longer exists instead of failing with a JSON parsing error afterwards.
+(#1331)
+* `$save_data_file()` now leaves the original data file in place. Previously
+it removed the original, even a file the user had passed as a path. (#1331)
 
 ## Removed and deprecated
 
@@ -308,6 +314,8 @@ these files.
 * `fit$variable_skeleton()` is removed. `fit$constrain_variables()` now returns
 the values already structured, so `utils::relist()` and the skeleton are no
 longer needed. (#925)
+* `data` is now the first argument of `$init_model_methods()`, so a `seed`
+passed by position must be named. (#1331)
 * The `CMDSTANR_USE_MSYS_TOOLCHAIN` environment variable is deprecated and
 ignored (with a warning). (#1144)
 * Removed deprecated items (replacements in parentheses). (#1061)

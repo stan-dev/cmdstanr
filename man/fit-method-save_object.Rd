@@ -32,6 +32,12 @@ By default objects are saved using \code{\link[base:saveRDS]{base::saveRDS()}}. 
 object to save, we recommend setting \code{format = "qs2"}, which is faster and
 more memory efficient. Internally this will use \code{qs2::qs_save()} to save
 the object and you can read it back into \R later with \code{qs2::qs_read()}.
+
+The data file is not part of the saved object. When the data was passed
+as a list, the file is in the session's temporary directory, so a fit
+that will use the compiled model methods in a later session needs either
+\verb{$save_data_file()} first or the data passed to \verb{$init_model_methods()}
+after reloading.
 }
 \examples{
 \dontrun{
