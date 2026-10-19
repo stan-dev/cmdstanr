@@ -16,6 +16,12 @@ faster and more memory efficient. Internally this will use
 object and you can read it back into R later with
 [`qs2::qs_read()`](https://rdrr.io/pkg/qs2/man/qs_read.html).
 
+The data file is not part of the saved object. When the data was passed
+as a list, the file is in the session's temporary directory, so a fit
+that will use the compiled model methods in a later session needs either
+`$save_data_file()` first or the data passed to `$init_model_methods()`
+after reloading.
+
 ## Usage
 
 ``` r

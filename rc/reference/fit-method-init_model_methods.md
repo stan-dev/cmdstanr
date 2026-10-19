@@ -12,7 +12,12 @@ in every new R session, set the `rcpp.cache.dir` option as described for
 If a model or fit object was saved with
 [`base::saveRDS()`](https://rdrr.io/r/base/readRDS.html) and later
 reloaded, any previously compiled model-method bindings will be rebuilt
-in the current R session when this method is called.
+in the current R session when this method is called. A reloaded fit also
+needs the data the model was fit with. Data originally passed as a file
+is found again as long as the file still exists. However, data passed as
+a list was written to the temporary directory, so either call
+`$save_data_file()` *before* saving the fit (to keep that file) or pass
+the original data again via the `data` argument.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.
@@ -20,10 +25,21 @@ these can be ignored so long as they are warnings and not errors.
 ## Usage
 
 ``` r
-init_model_methods(seed = 1, verbose = FALSE, quiet = FALSE)
+init_model_methods(data = NULL, seed = 1, verbose = FALSE, quiet = FALSE)
 ```
 
 ## Arguments
+
+- data:
+
+  (multiple options) A named list or the path to a JSON data file. Pass
+  the data the fit was run with when a fit reloaded in a new R session
+  has lost its data file, which happens when the data was originally
+  passed as a list instead of a file. Other data with the same structure
+  is accepted, so pass it only when you mean to evaluate the draws under
+  other data. `$data_file()` then returns the new path. A list is
+  written to the temporary directory again, so call `$save_data_file()`
+  before saving the fit if you'll reload it in another session.
 
 - seed:
 

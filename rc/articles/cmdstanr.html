@@ -639,8 +639,8 @@ EXPERIMENTAL ALGORITHM:
   This procedure has not been thoroughly tested and may be unstable 
   or buggy. The interface is subject to change. 
 ------------------------------------------------------------ 
-Gradient evaluation took 3e-06 seconds 
-1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+Gradient evaluation took 2e-06 seconds 
+1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
 Adjust your expectations accordingly! 
 Begin eta adaptation. 
 Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -750,8 +750,8 @@ example.</p>
 </h2>
 <p>The <a href="https://mc-stan.org/cmdstanr/reference/fit-method-save_object.html" class="external-link"><code>$save_object()</code></a>
 method provided by CmdStanR is the most convenient way to save a fitted
-model object to disk and ensure that all of the contents are available
-when reading the object back into R. By default,
+model object to disk and ensure that all of the draws and diagnostics
+are available when reading the object back into R. By default,
 <code>fit$save_object()</code> will use the <code>RDS</code> format to
 save the object. The saved object can then be read back into R using
 <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code>.</p>

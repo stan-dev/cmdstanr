@@ -2,12 +2,12 @@
 
 Fitted model objects returned directly by a
 [`CmdStanModel`](https://mc-stan.org/cmdstanr/rc/reference/CmdStanModel.md)
-method have methods for saving (moving to a specified location) files
-created by CmdStanR, including CmdStan output CSV files and input data
-files. These methods move the files from their current location
-(possibly the temporary directory) to a user-specified location. **The
-paths stored in the fitted model object will also be updated to point to
-the new file locations.**
+method have methods for saving files created by CmdStanR, including
+CmdStan output CSV files and input data files. These methods move the
+CSV files from their current location (possibly the temporary directory)
+to a user-specified location, and copy the data file. **The paths stored
+in the fitted model object will also be updated to point to the new file
+locations.**
 
 The versions without the `save_` prefix (e.g., `$output_files()`) return
 the current file paths without moving any files.
@@ -142,7 +142,8 @@ objects created with `save_latent_dynamics = TRUE`.
 
 `$save_data_file()` uses the pattern `basename-timestamp-random.ext`,
 where `.ext` is the original data file extension. No `id` is included
-because even with multiple MCMC chains the data file is the same.
+because even with multiple MCMC chains the data file is the same. The
+original file is left in place.
 
 ## Examples
 
@@ -150,10 +151,10 @@ because even with multiple MCMC chains the data file is the same.
 # \dontrun{
 fit <- cmdstanr_example()
 fit$output_files()
-#> [1] "/tmp/Rtmpa796TJ/logistic-202610191824-01-98a3e2.csv"
-#> [2] "/tmp/Rtmpa796TJ/logistic-202610191824-02-98a3e2.csv"
-#> [3] "/tmp/Rtmpa796TJ/logistic-202610191824-03-98a3e2.csv"
-#> [4] "/tmp/Rtmpa796TJ/logistic-202610191824-04-98a3e2.csv"
+#> [1] "/tmp/RtmpOsjGdL/logistic-202610192205-01-98a4c5.csv"
+#> [2] "/tmp/RtmpOsjGdL/logistic-202610192205-02-98a4c5.csv"
+#> [3] "/tmp/RtmpOsjGdL/logistic-202610192205-03-98a4c5.csv"
+#> [4] "/tmp/RtmpOsjGdL/logistic-202610192205-04-98a4c5.csv"
 fit$data_file()
 #> [1] "/home/runner/work/_temp/Library/cmdstanr/logistic.data.json"
 
@@ -161,21 +162,21 @@ fit$data_file()
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "banana")
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/Rtmpa796TJ/banana-202610191824-01-90a794.csv
-#> - /tmp/Rtmpa796TJ/banana-202610191824-02-90a794.csv
-#> - /tmp/Rtmpa796TJ/banana-202610191824-03-90a794.csv
-#> - /tmp/Rtmpa796TJ/banana-202610191824-04-90a794.csv
+#> - /tmp/RtmpOsjGdL/banana-202610192205-01-90a877.csv
+#> - /tmp/RtmpOsjGdL/banana-202610192205-02-90a877.csv
+#> - /tmp/RtmpOsjGdL/banana-202610192205-03-90a877.csv
+#> - /tmp/RtmpOsjGdL/banana-202610192205-04-90a877.csv
 fit$save_output_files(dir = my_dir, basename = "tomato", timestamp = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/Rtmpa796TJ/tomato-01-21145d.csv
-#> - /tmp/Rtmpa796TJ/tomato-02-21145d.csv
-#> - /tmp/Rtmpa796TJ/tomato-03-21145d.csv
-#> - /tmp/Rtmpa796TJ/tomato-04-21145d.csv
+#> - /tmp/RtmpOsjGdL/tomato-01-211540.csv
+#> - /tmp/RtmpOsjGdL/tomato-02-211540.csv
+#> - /tmp/RtmpOsjGdL/tomato-03-211540.csv
+#> - /tmp/RtmpOsjGdL/tomato-04-211540.csv
 fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/Rtmpa796TJ/lettuce-01.csv
-#> - /tmp/Rtmpa796TJ/lettuce-02.csv
-#> - /tmp/Rtmpa796TJ/lettuce-03.csv
-#> - /tmp/Rtmpa796TJ/lettuce-04.csv
+#> - /tmp/RtmpOsjGdL/lettuce-01.csv
+#> - /tmp/RtmpOsjGdL/lettuce-02.csv
+#> - /tmp/RtmpOsjGdL/lettuce-03.csv
+#> - /tmp/RtmpOsjGdL/lettuce-04.csv
 # }
 ```

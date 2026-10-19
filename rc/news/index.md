@@ -439,6 +439,14 @@ that went into it.
   [`install_cmdstan()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md),
   now turn threading off. Previously they turned it on.
   ([\#605](https://github.com/stan-dev/cmdstanr/issues/605))
+- `$init_model_methods()` gains a `data` argument for a fit reloaded in
+  a new session whose data file is gone, and stops before compiling when
+  the data file no longer exists instead of failing with a JSON parsing
+  error afterwards.
+  ([\#1331](https://github.com/stan-dev/cmdstanr/issues/1331))
+- `$save_data_file()` now leaves the original data file in place.
+  Previously it removed the original, even a file the user had passed as
+  a path. ([\#1331](https://github.com/stan-dev/cmdstanr/issues/1331))
 
 ### Removed and deprecated
 
@@ -459,6 +467,9 @@ that went into it.
   [`utils::relist()`](https://rdrr.io/r/utils/relist.html) and the
   skeleton are no longer needed.
   ([\#925](https://github.com/stan-dev/cmdstanr/issues/925))
+- `data` is now the first argument of `$init_model_methods()`, so a
+  `seed` passed by position must be named.
+  ([\#1331](https://github.com/stan-dev/cmdstanr/issues/1331))
 - The `CMDSTANR_USE_MSYS_TOOLCHAIN` environment variable is deprecated
   and ignored (with a warning).
   ([\#1144](https://github.com/stan-dev/cmdstanr/issues/1144))

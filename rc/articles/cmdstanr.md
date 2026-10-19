@@ -691,8 +691,8 @@ fit_vb <- mod$variational(
       This procedure has not been thoroughly tested and may be unstable 
       or buggy. The interface is subject to change. 
     ------------------------------------------------------------ 
-    Gradient evaluation took 3e-06 seconds 
-    1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+    Gradient evaluation took 2e-06 seconds 
+    1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
     Adjust your expectations accordingly! 
     Begin eta adaptation. 
     Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -835,10 +835,10 @@ example.
 The
 [`$save_object()`](https://mc-stan.org/cmdstanr/reference/fit-method-save_object.html)
 method provided by CmdStanR is the most convenient way to save a fitted
-model object to disk and ensure that all of the contents are available
-when reading the object back into R. By default, `fit$save_object()`
-will use the `RDS` format to save the object. The saved object can then
-be read back into R using
+model object to disk and ensure that all of the draws and diagnostics
+are available when reading the object back into R. By default,
+`fit$save_object()` will use the `RDS` format to save the object. The
+saved object can then be read back into R using
 [`readRDS()`](https://rdrr.io/r/base/readRDS.html).
 
 ``` r

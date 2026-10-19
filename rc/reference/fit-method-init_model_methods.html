@@ -10,7 +10,12 @@ them again in every new R session, set the rcpp.cache.dir option as
 described for $expose_functions().
 If a model or fit object was saved with base::saveRDS() and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
-the current R session when this method is called.
+the current R session when this method is called. A reloaded fit also
+needs the data the model was fit with. Data originally passed as a file
+is found again as long as the file still exists. However, data passed as
+a list was written to the temporary directory, so either call
+$save_data_file() before saving the fit (to keep that file) or pass
+the original data again via the data argument.
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors."><meta property="og:description" content="The $init_model_methods() method compiles and initializes the
 log_prob, grad_log_prob, hessian, constrain_variables,
@@ -22,7 +27,12 @@ them again in every new R session, set the rcpp.cache.dir option as
 described for $expose_functions().
 If a model or fit object was saved with base::saveRDS() and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
-the current R session when this method is called.
+the current R session when this method is called. A reloaded fit also
+needs the data the model was fit with. Data originally passed as a file
+is found again as long as the file still exists. However, data passed as
+a list was written to the temporary directory, so either call
+$save_data_file() before saving the fit (to keep that file) or pass
+the original data again via the data argument.
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors."><meta property="og:image" content="https://mc-stan.org/cmdstanr/rc/logo.svg"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -99,21 +109,38 @@ them again in every new R session, set the <code>rcpp.cache.dir</code> option as
 described for <code><a href="model-method-expose_functions.html">$expose_functions()</a></code>.</p>
 <p>If a model or fit object was saved with <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">base::saveRDS()</a></code> and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
-the current R session when this method is called.</p>
+the current R session when this method is called. A reloaded fit also
+needs the data the model was fit with. Data originally passed as a file
+is found again as long as the file still exists. However, data passed as
+a list was written to the temporary directory, so either call
+<code>$save_data_file()</code> <em>before</em> saving the fit (to keep that file) or pass
+the original data again via the <code>data</code> argument.</p>
 <p>Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">init_model_methods</span><span class="op">(</span>seed <span class="op">=</span> <span class="fl">1</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">init_model_methods</span><span class="op">(</span>data <span class="op">=</span> <span class="cn">NULL</span>, seed <span class="op">=</span> <span class="fl">1</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
+<dd><p>(multiple options) A named list or the path to a JSON data
+file. Pass the data the fit was run with when a fit reloaded in a new
+R session has lost its data file, which happens when the data was
+originally passed as a list instead of a file. Other data with the
+same structure is accepted, so pass it only when you mean to
+evaluate the draws under other data. <code>$data_file()</code> then returns the
+new path. A list is written to the temporary directory again, so
+call <code>$save_data_file()</code> before saving the fit if you'll reload it
+in another session.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>(integer) The random seed to use when initializing the model.</p></dd>
 
 

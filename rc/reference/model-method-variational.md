@@ -372,8 +372,8 @@ fit <- mod$variational(data = stan_data, seed = 123)
 #>   This procedure has not been thoroughly tested and may be unstable 
 #>   or buggy. The interface is subject to change. 
 #> ------------------------------------------------------------ 
-#> Gradient evaluation took 3e-06 seconds 
-#> 1000 transitions using 10 leapfrog steps per transition would take 0.03 seconds. 
+#> Gradient evaluation took 2e-06 seconds 
+#> 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds. 
 #> Adjust your expectations accordingly! 
 #> Begin eta adaptation. 
 #> Iteration:   1 / 250 [  0%]  (Adaptation) 
@@ -507,12 +507,12 @@ fit <- mod$variational(
 # them to keep them past the R session. Replace tempdir below with a
 # directory you'll keep.
 fit$output_files()
-#> [1] "/tmp/Rtmpa796TJ/bernoulli-202610191827-01-00b7ee.csv"
+#> [1] "/tmp/RtmpOsjGdL/bernoulli-202610192209-01-00b8d1.csv"
 
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "bernoulli")
 #> Moved 1 files and set internal paths to new locations:
-#> - /tmp/Rtmpa796TJ/bernoulli-202610191827-01-218edd.csv
+#> - /tmp/RtmpOsjGdL/bernoulli-202610192209-01-218fc0.csv
 
 # Or use output_dir to have CmdStan write them there in the first place,
 # here gzip-compressed to save disk space
@@ -525,6 +525,6 @@ fit <- mod$variational(
   show_messages = FALSE
 )
 fit$output_files()
-#> [1] "/tmp/Rtmpa796TJ/bernoulli-01.csv.gz"
+#> [1] "/tmp/RtmpOsjGdL/bernoulli-01.csv.gz"
 # }
 ```

@@ -233,10 +233,10 @@ CmdStanR</p></div>
 <span class="r-in"><span><span class="va">fit1</span> <span class="op">&lt;-</span> <span class="fu"><a href="cmdstanr_example.html">cmdstanr_example</a></span><span class="op">(</span><span class="st">"logistic"</span>, method <span class="op">=</span> <span class="st">"sample"</span>, save_warmup <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">csv_files</span> <span class="op">&lt;-</span> <span class="va">fit1</span><span class="op">$</span><span class="fu">output_files</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">csv_files</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/Rtmpa796TJ/logistic-202610191827-01-854068.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/Rtmpa796TJ/logistic-202610191827-02-854068.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/Rtmpa796TJ/logistic-202610191827-03-854068.csv"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/Rtmpa796TJ/logistic-202610191827-04-854068.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "/tmp/RtmpOsjGdL/logistic-202610192209-01-85414b.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "/tmp/RtmpOsjGdL/logistic-202610192209-02-85414b.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "/tmp/RtmpOsjGdL/logistic-202610192209-03-85414b.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "/tmp/RtmpOsjGdL/logistic-202610192209-04-85414b.csv"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Creating fitting model objects with as_cmdstan_fit()</span></span></span>
 <span class="r-in"><span></span></span>
@@ -265,7 +265,7 @@ CmdStanR</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_major  : num 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_minor  : num 40</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_version_patch  : num 0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ start_datetime      : chr "2026-10-19 18:27:43 UTC"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ start_datetime      : chr "2026-10-19 22:09:05 UTC"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ method              : chr "sample"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ save_warmup         : int 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ thin                : num 1</span>
@@ -286,7 +286,7 @@ CmdStanR</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ seed                : num 6.3e+08</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ refresh             : num 100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ sig_figs            : num 8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ profile_file        : chr "/tmp/Rtmpa796TJ/logistic-profile-202610191827-01-3a641d.csv"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ profile_file        : chr "/tmp/RtmpOsjGdL/logistic-profile-202610192209-01-3a6500.csv"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ save_cmdstan_config : int 0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stanc_version       : chr "stanc3 v2.40.0"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ sampler_diagnostics : chr [1:6] "accept_stat__" "stepsize__" "treedepth__" "n_leapfrog__" ...</span>
@@ -302,9 +302,9 @@ CmdStanR</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ threads_per_chain   : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ time                :'data.frame':	4 obs. of  4 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain_id: num [1:4] 1 2 3 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.031 0.039 0.03 0.031</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.032 0.051 0.031 0.031</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.063 0.09 0.061 0.062</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.053 0.052 0.052 0.053</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.055 0.054 0.054 0.053</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.108 0.106 0.106 0.106</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ stan_variable_sizes :List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ lp__   : num 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ alpha  : num 1</span>
@@ -316,9 +316,9 @@ CmdStanR</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ total : int NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ chains:'data.frame':	4 obs. of  4 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ chain_id: num [1:4] 1 2 3 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.031 0.039 0.03 0.031</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.032 0.051 0.031 0.031</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.063 0.09 0.061 0.062</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ warmup  : num [1:4] 0.053 0.052 0.052 0.053</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ sampling: num [1:4] 0.055 0.054 0.054 0.053</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   .. ..$ total   : num [1:4] 0.108 0.106 0.106 0.106</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ inv_metric                     :List of 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 1: num [1:4] 0.0466 0.0632 0.0488 0.0752</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ 2: num [1:4] 0.0481 0.0551 0.0536 0.0744</span>
