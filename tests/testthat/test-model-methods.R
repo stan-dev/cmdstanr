@@ -310,7 +310,13 @@ test_that("init_model_methods() checks the data file and takes data", {
   fit2 <- readRDS(temp_rds_file)
   expect_error(
     fit2$init_model_methods(),
-    "so the model methods can't be initialized"
+    "so the model methods can't be initialized. Pass the data"
+  )
+  # The hint to pass `data` makes no sense when the missing file is the
+  # one the user just passed
+  expect_error(
+    fit2$init_model_methods(data = "missing.json"),
+    "missing.json', so the model methods can't be initialized.$"
   )
   utils::capture.output(fit2$init_model_methods(data = data_list))
   expect_true(file.exists(fit2$data_file()))

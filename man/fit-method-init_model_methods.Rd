@@ -9,13 +9,15 @@ and parameter constraining and unconstraining.}
 init_model_methods(data = NULL, seed = 1, verbose = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{data}{(multiple options) The data the fit was run with, as a named
-list or the path to a JSON data file. This is only needed for a fit
-reloaded in a new R session whose JSON data file no longer exists, which
-happens when the data was originally passed as a list instead of a file.
-The data is checked against the model's data block for structure only,
-so data with the right structure but different values gives wrong results
-with no error.}
+\item{data}{(multiple options) A named list or the path to a JSON data
+file. Pass the data the fit was run with when a fit reloaded in a new
+R session has lost its data file, which happens when the data was
+originally passed as a list instead of a file. Other data with the
+same structure is accepted, so pass it only when you mean to
+evaluate the draws under other data. \verb{$data_file()} then returns the
+new path. A list is written to the temporary directory again, so
+call \verb{$save_data_file()} before saving the fit if you'll reload it
+in another session.}
 
 \item{seed}{(integer) The random seed to use when initializing the model.}
 

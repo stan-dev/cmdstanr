@@ -430,13 +430,15 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
 #'
-#' @param data (multiple options) The data the fit was run with, as a named
-#'   list or the path to a JSON data file. This is only needed for a fit
-#'   reloaded in a new R session whose JSON data file no longer exists, which
-#'   happens when the data was originally passed as a list instead of a file.
-#'   The data is checked against the model's data block for structure only,
-#'   so data with the right structure but different values gives wrong results
-#'   with no error.
+#' @param data (multiple options) A named list or the path to a JSON data
+#'   file. Pass the data the fit was run with when a fit reloaded in a new
+#'   R session has lost its data file, which happens when the data was
+#'   originally passed as a list instead of a file. Other data with the
+#'   same structure is accepted, so pass it only when you mean to
+#'   evaluate the draws under other data. `$data_file()` then returns the
+#'   new path. A list is written to the temporary directory again, so
+#'   call `$save_data_file()` before saving the fit if you'll reload it
+#'   in another session.
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
 #' @param quiet (logical) Should the message announcing the compilation be
@@ -489,10 +491,14 @@ init_model_methods <- function(
     stop(
       "Can't find data file '",
       data_file,
-      "', so the model methods can't ",
-      "be initialized. Pass the data the fit was run with to ",
-      "`$init_model_methods()` as `data`, or call `$save_data_file()` ",
-      "before saving a fit for a later session.",
+      "', so the model methods can't be initialized.",
+      if (is.null(data)) {
+        paste0(
+          " Pass the data the fit was run with to ",
+          "`$init_model_methods()` as `data`, or call `$save_data_file()` ",
+          "before saving a fit for a later session."
+        )
+      },
       call. = FALSE
     )
   }
