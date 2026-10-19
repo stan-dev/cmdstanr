@@ -58,12 +58,13 @@ test_that("install_cmdstan() errors on timeout, quiet silences the download", {
   )
 
   # expect_message() does not see download.file()'s progress lines, so
-  # capture stderr and grep it
+  # capture stderr and grep it. The timeout is long enough for the
+  # download and far too short for the build.
   expect_warning(
     quiet_log <- capture.output(
       install_cmdstan(
         dir = dir,
-        timeout = 1,
+        timeout = 30,
         quiet = TRUE,
         cores = 2,
         wsl = os_is_wsl()
@@ -86,7 +87,7 @@ test_that("install_cmdstan() errors on timeout, quiet silences the download", {
       invisible(capture.output(
         install_cmdstan(
           dir = dir,
-          timeout = 1,
+          timeout = 30,
           quiet = FALSE,
           overwrite = TRUE,
           cores = 2,
@@ -139,7 +140,7 @@ test_that("install_cmdstan() installs from release_url", {
     expect_message(
       install_cmdstan(
         dir = dir,
-        timeout = 1,
+        timeout = 30,
         quiet = TRUE,
         cores = 2,
         release_url = url,

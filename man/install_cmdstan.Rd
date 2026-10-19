@@ -57,9 +57,11 @@ even if an installation of the same version is found in \code{dir}? The default
 is \code{FALSE}, in which case an informative error is thrown instead of
 overwriting the user's installation.}
 
-\item{timeout}{(positive real) Timeout (in seconds) for the build stage of
-the installation. The default is 1200 seconds for \code{install_cmdstan()} and
-600 seconds for \code{rebuild_cmdstan()}.}
+\item{timeout}{(positive real) Time limit (in seconds) for each stage of
+the installation. For \code{install_cmdstan()} the stages are the download of
+the CmdStan archive, the build of CmdStan and the build of the example
+model, and the default is 1200 seconds. For \code{rebuild_cmdstan()} the only
+stage is the build and the default is 600 seconds.}
 
 \item{version}{(string) The CmdStan release version to install. The default
 is \code{NULL}, which downloads the latest stable release from

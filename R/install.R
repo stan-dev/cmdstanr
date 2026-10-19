@@ -51,9 +51,11 @@
 #'   even if an installation of the same version is found in `dir`? The default
 #'   is `FALSE`, in which case an informative error is thrown instead of
 #'   overwriting the user's installation.
-#' @param timeout (positive real) Timeout (in seconds) for the build stage of
-#'   the installation. The default is 1200 seconds for `install_cmdstan()` and
-#'   600 seconds for `rebuild_cmdstan()`.
+#' @param timeout (positive real) Time limit (in seconds) for each stage of
+#'   the installation. For `install_cmdstan()` the stages are the download of
+#'   the CmdStan archive, the build of CmdStan and the build of the example
+#'   model, and the default is 1200 seconds. For `rebuild_cmdstan()` the only
+#'   stage is the build and the default is 600 seconds.
 #' @param version (string) The CmdStan release version to install. The default
 #'   is `NULL`, which downloads the latest stable release from
 #'   <https://github.com/stan-dev/cmdstan/releases>.
@@ -266,7 +268,8 @@ install_cmdstan <- function(
     tar_downloaded <- download_with_retries(
       download_url,
       dest_file,
-      quiet = quiet
+      quiet = quiet,
+      timeout = timeout
     )
     if (inherits(tar_downloaded, "try-error")) {
       error_msg <- paste(
@@ -819,10 +822,10 @@ download_with_retries <- function(
   destination_file,
   retries = 5,
   pause_sec = 5,
-  quiet = TRUE
+  quiet = TRUE,
+  timeout = getOption("timeout")
 ) {
-  # R's default of 60 seconds may be too short for the CmdStan tarball
-  withr::local_options(timeout = max(300, getOption("timeout")))
+  withr::local_options(timeout = timeout)
   headers <- github_auth_token()
   num_retries <- 0
 
