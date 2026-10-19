@@ -577,12 +577,12 @@ fit <- mod$pathfinder(
 # them to keep them past the R session. Replace tempdir below with a
 # directory you'll keep.
 fit$output_files()
-#> [1] "/tmp/RtmpwHIm89/bernoulli-202610151532-01-6a8f1f.csv"
+#> [1] "/tmp/Rtmpa796TJ/bernoulli-202610191827-01-6a8f20.csv"
 
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "bernoulli")
 #> Moved 1 files and set internal paths to new locations:
-#> - /tmp/RtmpwHIm89/bernoulli-202610151532-01-462556.csv
+#> - /tmp/Rtmpa796TJ/bernoulli-202610191827-01-462557.csv
 
 # Or use output_dir to have CmdStan write them there in the first place,
 # here gzip-compressed to save disk space
@@ -595,6 +595,6 @@ fit <- mod$pathfinder(
   show_messages = FALSE
 )
 fit$output_files()
-#> [1] "/tmp/RtmpwHIm89/bernoulli-01.csv.gz"
+#> [1] "/tmp/Rtmpa796TJ/bernoulli-01.csv.gz"
 # }
 ```

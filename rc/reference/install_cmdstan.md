@@ -98,9 +98,11 @@ check_cmdstan_toolchain(fix = FALSE, quiet = FALSE)
 
 - timeout:
 
-  (positive real) Timeout (in seconds) for the build stage of the
-  installation. The default is 1200 seconds for `install_cmdstan()` and
-  600 seconds for `rebuild_cmdstan()`.
+  (positive real) Time limit (in seconds) for each stage of the
+  installation. For `install_cmdstan()` the stages are the download of
+  the CmdStan archive, the build of CmdStan and the build of the example
+  model, and the default is 1200 seconds. For `rebuild_cmdstan()` the
+  only stage is the build and the default is 600 seconds.
 
 - version:
 

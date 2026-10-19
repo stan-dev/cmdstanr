@@ -857,7 +857,7 @@ fit <- mod$sample(
 #> 
 #> Both chains finished successfully.
 #> Mean chain execution time: 0.0 seconds.
-#> Total execution time: 0.2 seconds.
+#> Total execution time: 0.3 seconds.
 #> 
 fit$init()
 #> [[1]]
@@ -924,18 +924,18 @@ fit <- mod$sample(
 # them to keep them past the R session. Replace tempdir below with a
 # directory you'll keep.
 fit$output_files()
-#> [1] "/tmp/RtmpwHIm89/bernoulli-202610151532-01-8728d2.csv"
-#> [2] "/tmp/RtmpwHIm89/bernoulli-202610151532-02-8728d2.csv"
-#> [3] "/tmp/RtmpwHIm89/bernoulli-202610151532-03-8728d2.csv"
-#> [4] "/tmp/RtmpwHIm89/bernoulli-202610151532-04-8728d2.csv"
+#> [1] "/tmp/Rtmpa796TJ/bernoulli-202610191827-01-8728d3.csv"
+#> [2] "/tmp/Rtmpa796TJ/bernoulli-202610191827-02-8728d3.csv"
+#> [3] "/tmp/Rtmpa796TJ/bernoulli-202610191827-03-8728d3.csv"
+#> [4] "/tmp/Rtmpa796TJ/bernoulli-202610191827-04-8728d3.csv"
 
 my_dir <- tempdir()
 fit$save_output_files(dir = my_dir, basename = "bernoulli")
 #> Moved 4 files and set internal paths to new locations:
-#> - /tmp/RtmpwHIm89/bernoulli-202610151532-01-056e39.csv
-#> - /tmp/RtmpwHIm89/bernoulli-202610151532-02-056e39.csv
-#> - /tmp/RtmpwHIm89/bernoulli-202610151532-03-056e39.csv
-#> - /tmp/RtmpwHIm89/bernoulli-202610151532-04-056e39.csv
+#> - /tmp/Rtmpa796TJ/bernoulli-202610191827-01-056e3a.csv
+#> - /tmp/Rtmpa796TJ/bernoulli-202610191827-02-056e3a.csv
+#> - /tmp/Rtmpa796TJ/bernoulli-202610191827-03-056e3a.csv
+#> - /tmp/Rtmpa796TJ/bernoulli-202610191827-04-056e3a.csv
 
 # Or use output_dir to have CmdStan write them there in the first place,
 # here gzip-compressed to save disk space
@@ -959,7 +959,7 @@ fit <- mod$sample(
 #> Total execution time: 0.5 seconds.
 #> 
 fit$output_files()
-#> [1] "/tmp/RtmpwHIm89/bernoulli-01.csv.gz" "/tmp/RtmpwHIm89/bernoulli-02.csv.gz"
-#> [3] "/tmp/RtmpwHIm89/bernoulli-03.csv.gz" "/tmp/RtmpwHIm89/bernoulli-04.csv.gz"
+#> [1] "/tmp/Rtmpa796TJ/bernoulli-01.csv.gz" "/tmp/Rtmpa796TJ/bernoulli-02.csv.gz"
+#> [3] "/tmp/Rtmpa796TJ/bernoulli-03.csv.gz" "/tmp/Rtmpa796TJ/bernoulli-04.csv.gz"
 # }
 ```

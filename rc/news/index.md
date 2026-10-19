@@ -14,8 +14,8 @@ are handled, **Other new features** and **Bug fixes** cover what their
 titles suggest, and **Removed and deprecated** lists everything else
 that could break existing code beyond the compilation redesign.
 
-Each entry says what changed and what it replaced, so you (or your
-coding agent) can update existing code from them.
+Where a change can break existing code, the entry says what to use
+instead, so you (or your coding agent) can update it.
 
 A massive thank you to everyone who contributed code and reviews to this
 release and to everyone who filed the bug reports and feature requests
@@ -26,239 +26,207 @@ that went into it.
 - [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md)
   now compiles the model, or reuses an up-to-date executable, before it
   returns. The `compile` argument and the `$compile()` method are gone.
-  To compile a Stan file without creating a model object use the new
+  To compile a Stan file without creating a model object, use the new
   [`compile_stan_file()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md),
   which returns the path to the executable. The new
   [`check_syntax_stan_file()`](https://mc-stan.org/cmdstanr/rc/reference/model-method-check_syntax.md),
   [`format_stan_file()`](https://mc-stan.org/cmdstanr/rc/reference/model-method-format.md)
   and
   [`variables_stan_file()`](https://mc-stan.org/cmdstanr/rc/reference/model-method-variables.md)
-  likewise work from a Stan file alone.
+  also work without a model object.
   ([\#1256](https://github.com/stan-dev/cmdstanr/issues/1256))
 - [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md)
-  recompiles whenever anything it tracks has changed: the Stan program
-  and its `#include`s, the user header, `cpp_options`, `stanc_options`,
-  `make/local` or the CmdStan installation. In an interactive session,
-  or with `quiet = FALSE`, a message says which. Changes it cannot see,
-  such as a new C++ compiler, need `force_recompile = TRUE`. The
-  vignette “How does CmdStanR work?” lists them.
+  now recompiles when the Stan program or its `#include`s, the user
+  header, `cpp_options`, `stanc_options`, `make/local` or the CmdStan
+  installation has changed, and in an interactive session (or with
+  `quiet = FALSE`) it says which. For changes it can’t detect, such as a
+  new C++ compiler, use `force_recompile = TRUE`. The vignette “How does
+  CmdStanR work?” lists them.
   ([\#1255](https://github.com/stan-dev/cmdstanr/issues/1255),
   [\#1237](https://github.com/stan-dev/cmdstanr/issues/1237),
   [\#1019](https://github.com/stan-dev/cmdstanr/issues/1019),
   [\#1308](https://github.com/stan-dev/cmdstanr/issues/1308))
-- Each executable now comes with a build record, a hidden JSON file
-  beside it that says how it was built: `bernoulli` gets
-  `.bernoulli.cmdstanr.json` and `bernoulli.exe` gets
-  `.bernoulli.exe.cmdstanr.json`. Add `.*.cmdstanr.json` to `.gitignore`
-  wherever the executable is already ignored. If the record is missing,
+- Compiling now writes a hidden file next to the executable that records
+  how it was built, for example `.bernoulli.cmdstanr.json` next to
+  `bernoulli`. If your `.gitignore` ignores the executable, add
+  `.*.cmdstanr.json` too. If the file is missing,
   [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md)
-  recompiles. The vignette “How does CmdStanR work?” has the details.
+  recompiles.
   ([\#1238](https://github.com/stan-dev/cmdstanr/issues/1238))
 - The new
   [`stan_build_info()`](https://mc-stan.org/cmdstanr/rc/reference/stan_build_info.md)
-  shows how an executable was built: the options it was asked for, the
-  files it read, the CmdStan installation that built it, and what the
-  executable itself reports. Without a usable record it says why and
-  shows only what the executable reports. `$build_info()` does the same
-  for a model object.
-  ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-- When a build depends on files CmdStanR cannot track, such as a
+  and `$build_info()` show how an executable was built: the options and
+  files used, the CmdStan installation, and what the executable itself
+  reports. ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
+- If a build uses files CmdStanR can’t check for changes, such as a
   makefile included from `make/local` or a header included from the user
-  header, the build prints a one-line note saying that changes to them
-  need `force_recompile = TRUE`.
+  header, compiling prints a note that changes to them need
+  `force_recompile = TRUE`.
   ([\#1257](https://github.com/stan-dev/cmdstanr/issues/1257))
-- `pedantic = TRUE` now runs the pedantic check whether or not the
-  executable is rebuilt. Previously an up-to-date executable skipped the
-  build and the check with it.
+- `pedantic = TRUE` now shows the pedantic warnings even when the
+  executable is up to date and isn’t rebuilt.
   ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-- Running a model whose executable is out of date is now an error that
-  points at
-  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md).
-  Previously the stale executable ran as if it were current. Because the
-  check reads the Stan file, a model created from one needs that file
-  whenever it runs. To run an executable without its Stan file, create
-  the model with `cmdstan_model(exe_file = )`.
+- Running a model whose executable is out of date, for example because
+  the Stan file was edited after
+  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md),
+  is now an error. Previously the old executable ran. This means the
+  Stan file has to exist whenever the model runs. To run an executable
+  without its Stan file, create the model with
+  `cmdstan_model(exe_file = )`.
   ([\#1255](https://github.com/stan-dev/cmdstanr/issues/1255))
-- The new `$is_current()` method runs that same check and returns `TRUE`
-  or `FALSE` instead of raising that error, so a package that keeps a
-  `CmdStanModel` inside a saved fit can decide whether to rebuild before
-  running it.
+- The new `$is_current()` method returns `FALSE` when the executable is
+  out of date, so you can check before running a model, such as one
+  stored in a saved fit.
   ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-- A failed compilation leaves the previous executable in place.
-  Previously a failure at the C++ stage could leave the old executable
-  paired with model methods generated from the new program, and a failed
-  installation could leave the model with no executable at all.
+- A failed compilation now leaves the previous executable in place and
+  usable. Previously the model could end up with no executable, or with
+  one that didn’t match its model methods.
   ([\#1235](https://github.com/stan-dev/cmdstanr/issues/1235))
 - The `compile_standalone` and `compile_model_methods` arguments are
-  gone. Previously both did nothing when the executable was already up
-  to date. Call `$expose_functions()` and `fit$init_model_methods()`
-  instead, which work whether the executable was just compiled or
-  reused. ([\#1256](https://github.com/stan-dev/cmdstanr/issues/1256),
+  gone. Use `$expose_functions()` and `fit$init_model_methods()`
+  instead. ([\#1256](https://github.com/stan-dev/cmdstanr/issues/1256),
   [\#1245](https://github.com/stan-dev/cmdstanr/issues/1245))
-- `cmdstan_model(exe_file = )` with no `stan_file` now rejects
-  `cpp_options`, `stanc_options`, `include_paths`, `user_header`,
-  `force_recompile` and `pedantic`: with no Stan file there is nothing
-  to compile, so the executable is used as it is. The
-  `cmdstanr_force_recompile` option is ignored for such a model.
-  ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
+- `cmdstan_model(exe_file = )` without a `stan_file` now gives an error
+  if you also pass `cpp_options`, `stanc_options`, `include_paths`,
+  `user_header`, `force_recompile` or `pedantic`, since there is nothing
+  to compile. The `cmdstanr_force_recompile` option is ignored for these
+  models. ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
 - [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md)
-  no longer accepts `stan_file` and `exe_file` together. Use `dir` to
-  choose the directory the executable is built in. The executable is
-  named after the Stan file. Previously `exe_file` beside `stan_file`
-  set the path the executable was built at.
-  ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-- `$exe_file()` no longer accepts a path. Where the executable goes is
-  set when the model is created, with `dir`.
-  ([\#1253](https://github.com/stan-dev/cmdstanr/issues/1253))
+  no longer accepts both `stan_file` and `exe_file`, and `$exe_file()`
+  no longer accepts a path. The executable is named after the Stan file,
+  and the `dir` argument of
+  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md)
+  sets where it goes.
+  ([\#1253](https://github.com/stan-dev/cmdstanr/issues/1253),
+  [\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
 - `$cmdstan_version()` now reports the version of CmdStan that compiled
   the executable, not the version at
   [`cmdstan_path()`](https://mc-stan.org/cmdstanr/rc/reference/set_cmdstan_path.md).
   ([\#1249](https://github.com/stan-dev/cmdstanr/issues/1249))
-- `$cpp_options()` now returns exactly the options the model was created
-  with, spelled as make variables: `list(stan_threads = TRUE)` comes
-  back as `STAN_THREADS`, with the value `"true"` (the string make
-  received, so `FALSE` comes back as `""`). What the executable reports
-  about its own build has moved to
-  [`stan_build_info()`](https://mc-stan.org/cmdstanr/rc/reference/stan_build_info.md).
+- `$cpp_options()` now returns the options the model was created with,
+  using make variable names and values, so `list(stan_threads = TRUE)`
+  comes back as `list(STAN_THREADS = "true")`. Use
+  [`stan_build_info()`](https://mc-stan.org/cmdstanr/rc/reference/stan_build_info.md)
+  to see what the executable reports about its own build.
   ([\#1019](https://github.com/stan-dev/cmdstanr/issues/1019),
   [\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-- Every `cpp_options` entry must now be named, with a make variable
-  name. An unnamed entry gets an error saying where it belongs:
-  `list(NAME = value)` for a plain assignment,
-  [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
-  for `+=` and the other makefile operators. Previously unnamed entries
-  reached make but nothing else saw them.
+- Every `cpp_options` entry must now be named, as in
+  `list(STAN_THREADS = TRUE)`. For `+=` and the other makefile
+  operators, use
+  [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md).
   ([\#1250](https://github.com/stan-dev/cmdstanr/issues/1250))
-- `cpp_options = list(stan_threads = FALSE)` now turns threading off,
-  even when `make/local` turns it on, and the same holds for `FALSE` on
-  any option. Previously `FALSE` was passed through as a value, which
-  enabled the option.
+- Setting an option to `FALSE` in `cpp_options`, as in
+  `list(stan_threads = FALSE)`, now turns it off, even if `make/local`
+  turns it on. Previously `FALSE` turned the option on.
   ([\#1251](https://github.com/stan-dev/cmdstanr/issues/1251))
-- Running a model compiled with threading no longer errors when
-  `threads_per_chain` is not set. Asking for more than one thread from a
-  model compiled *without* threading is now an error. The thread count
-  also no longer lingers in the session’s environment after the call.
+- A model compiled with threading now runs when `threads_per_chain`
+  isn’t set, and asking for more than one thread from a model compiled
+  without threading is now an error.
   ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-- Each build setting now has one place to go, and putting it anywhere
-  else is an error that points at the right argument.
+- Each build setting now goes in one argument, and putting it somewhere
+  else gives an error that names the right one.
   ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-  - Include paths go in `include_paths`, not in `stanc_options`, in
-    `cpp_options` as `STANCFLAGS` or in `make/local`’s `STANCFLAGS`.
-    Previously a model with include paths in `stanc_options` compiled
-    and then failed on `$sample()`.
+  - Include paths go in `include_paths`, not in `stanc_options`,
+    `cpp_options` or the `STANCFLAGS` in `make/local`.
   - The user header goes in `user_header`, not in `cpp_options`. The new
     `$user_header()` method returns its path, and `$cpp_options()` no
     longer includes it.
   - Other stanc flags go in `stanc_options`, not in `cpp_options` as
     `STANCFLAGS`.
-  - `stanc_options` rejects the flags CmdStanR’s own arguments set:
-    `include-paths` (use `include_paths`), `warn-pedantic` (`pedantic`),
-    `allow-undefined` (`user_header`), `use-opencl`
-    (`cpp_options = list(stan_opencl = TRUE)`) and `name`, which comes
-    from the file name.
-- A flag in `stanc_options` now overrides the same flag in
-  `make/local`’s `STANCFLAGS`.
+  - `stanc_options` no longer accepts flags that have their own
+    argument: `include-paths` (use `include_paths`), `warn-pedantic`
+    (`pedantic`), `allow-undefined` (`user_header`), `use-opencl`
+    (`cpp_options = list(stan_opencl = TRUE)`) and `name` (set from the
+    file name).
+- A flag in `stanc_options` now overrides the same flag in the
+  `STANCFLAGS` of `make/local`.
   ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-- Named `stanc_options` values such as
-  `list(canonicalize = "deprecations")` and numeric ones such as
-  `list("max-line-length" = 78)` now work. Previously the named values
-  reached stanc shell-quoted, which it rejected, and the numeric ones
-  were dropped. A value holding a space, a quote or a `$` now also
-  reaches stanc intact through make.
+- `stanc_options` entries with values, such as
+  `list(canonicalize = "deprecations")` or
+  `list("max-line-length" = 78)`, now work, including values that
+  contain spaces or quotes.
   ([\#1227](https://github.com/stan-dev/cmdstanr/issues/1227),
   [\#1233](https://github.com/stan-dev/cmdstanr/issues/1233),
   [\#1263](https://github.com/stan-dev/cmdstanr/issues/1263))
-- A stanc error now stops the build immediately and shows stanc’s
-  message. Previously it surfaced several steps later.
-  ([\#1227](https://github.com/stan-dev/cmdstanr/issues/1227))
-- An include path that does not exist is now reported by its absolute
-  path. ([\#1227](https://github.com/stan-dev/cmdstanr/issues/1227))
-- `$include_paths()` now returns absolute paths, resolved when the model
-  is created. Previously a relative include path was resolved on every
-  stanc call, so changing the working directory could point `#include`
-  at the wrong directory.
-  ([\#1229](https://github.com/stan-dev/cmdstanr/issues/1229))
+- A stanc error now stops compilation right away and shows the stanc
+  message. ([\#1227](https://github.com/stan-dev/cmdstanr/issues/1227))
+- Relative include paths are now resolved when the model is created, so
+  changing the working directory afterwards no longer breaks `#include`.
+  `$include_paths()` returns the absolute paths, and the error for an
+  include path that doesn’t exist shows its absolute path.
+  ([\#1227](https://github.com/stan-dev/cmdstanr/issues/1227),
+  [\#1229](https://github.com/stan-dev/cmdstanr/issues/1229))
 - `#include` directories with spaces in their paths now work.
   ([\#820](https://github.com/stan-dev/cmdstanr/issues/820),
   [\#1230](https://github.com/stan-dev/cmdstanr/issues/1230))
-- Error messages from a running model now name the Stan file the model
-  was created from. Previously they named a temporary copy of the
-  program that no longer existed.
+- Error messages from a running model now name the model’s Stan file
+  instead of a temporary copy of it.
   ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
-- `$code()` and `$variables()` now describe the program the model was
-  created from, even after `$format(overwrite_file = TRUE)` rewrites the
-  file. Create the model again to pick up the change. Previously
-  `$format(overwrite_file = TRUE)` replaced what `$code()` returned.
+- `$code()` and `$variables()` now always describe the program the model
+  was created from. After `$format(overwrite_file = TRUE)`, call
+  [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md)
+  again to pick up the rewritten file.
   ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
 - `$expose_functions()` and `fit$init_model_methods()` now work on a
   model or fit loaded with
-  [`readRDS()`](https://rdrr.io/r/base/readRDS.html), compiling the
-  functions and methods again. Previously they claimed to be compiled
-  already and calling one failed with a null symbol address.
-  ([\#1157](https://github.com/stan-dev/cmdstanr/issues/1157),
+  [`readRDS()`](https://rdrr.io/r/base/readRDS.html). Previously calling
+  one of the functions or methods failed with a null symbol address
+  error. ([\#1157](https://github.com/stan-dev/cmdstanr/issues/1157),
   [\#1158](https://github.com/stan-dev/cmdstanr/issues/1158))
-- Compiling no longer leaves a copy of the Stan program, the generated
-  C++ and a second copy of the executable in the session’s temporary
-  directory, and checking syntax or reading a program’s variables no
-  longer leaves stanc’s output there.
+- Compiling, checking syntax and reading a program’s variables no longer
+  leave copies of the program, the generated C++ or the executable in
+  R’s temporary directory.
   ([\#1258](https://github.com/stan-dev/cmdstanr/issues/1258))
 
 ### Data and initial values
 
-- Lists of matrices/vectors and data frames can now be supplied for
-  variables declared as `int` in the Stan program. Previously these
-  worked only for `real` variables and errored for `int` ones.
+- Lists of matrices or vectors, and data frames, can now be passed for
+  `int` variables, not just `real` ones.
   ([\#817](https://github.com/stan-dev/cmdstanr/issues/817))
-- Data frame columns that are not numeric, integer, logical, or factor
-  are now an error. Previously
-  [`data.matrix()`](https://rdrr.io/r/base/data.matrix.html) silently
-  coerced them, so a character column reached Stan as alphabetically
-  ordered integer codes. Convert the column explicitly, e.g. with
-  [`as.integer()`](https://rdrr.io/r/base/integer.html), if integer
-  codes are what you want.
+- A data frame column that isn’t numeric, integer, logical or factor is
+  now an error. Previously a character column was silently converted to
+  integer codes in alphabetical order. If that’s what you want, convert
+  the column yourself, e.g. with `as.integer(factor(x))`.
   ([\#1225](https://github.com/stan-dev/cmdstanr/issues/1225))
-- Lists of logical vectors/matrices are now converted to integers like
-  logical variables are, instead of erroring.
+- Lists of logical vectors or matrices are now converted to integers,
+  like other logical data, instead of giving an error.
   ([\#1225](https://github.com/stan-dev/cmdstanr/issues/1225))
 - Supplying a factor for a variable not declared as `int` is now an
   error. ([\#1225](https://github.com/stan-dev/cmdstanr/issues/1225))
 - Factors are now accepted for length-1 `int` arrays
-  (e.g. `array[1] int x`), which previously errored.
+  (e.g. `array[1] int x`).
   ([\#1225](https://github.com/stan-dev/cmdstanr/issues/1225))
-- Pathfinder fits used as initial values now use uniform weights when
-  CmdStan already PSIS-resampled their draws, avoiding a second
-  application of importance weights.
+- Initial values taken from a Pathfinder fit now use the right weights.
+  Draws CmdStan already resampled with PSIS are no longer reweighted,
+  distinct draws with equal log weights are no longer merged, and a draw
+  that was resampled several times keeps that weight.
+  ([\#1206](https://github.com/stan-dev/cmdstanr/issues/1206),
+  [\#1207](https://github.com/stan-dev/cmdstanr/issues/1207))
+- `$pathfinder()` now gives each path its own initial values when `init`
+  supplies one set per path. Previously every path used the first set.
   ([\#1206](https://github.com/stan-dev/cmdstanr/issues/1206))
-- Pathfinder fits used as initial values now correctly treat draws with
-  different initialization parameter values as distinct even when their
-  log weights are equal, and collapse duplicate resampled draws while
-  retaining their selection frequency.
-  ([\#1207](https://github.com/stan-dev/cmdstanr/issues/1207))
-- [`pathfinder()`](https://mc-stan.org/cmdstanr/rc/reference/model-method-pathfinder.md)
-  now passes separately supplied initial values to every path instead of
-  using only the first path’s initial values.
-  ([\#1206](https://github.com/stan-dev/cmdstanr/issues/1206))
-- Initial values taken from a fitted model object now work for a model
-  created with only `exe_file`. Previously the error was “‘init’
-  contains empty lists”.
+- Initial values taken from a fit now work for a model created with only
+  `exe_file`. Previously this failed with “‘init’ contains empty lists”.
   ([\#1171](https://github.com/stan-dev/cmdstanr/issues/1171))
-- Functions supplied as `init` are no longer called an extra time to
-  validate them. Validation occurs in the same pass.
+- A function passed as `init` is no longer called an extra time to check
+  its output.
   ([\#1195](https://github.com/stan-dev/cmdstanr/issues/1195))
-- Tuple and complex values can now be passed as data and initial values,
-  a tuple as an unnamed list of its elements and a complex number as an
-  R complex value, and `init = fit` now carries tuple parameters over.
+- Tuples and complex numbers can now be passed as data and initial
+  values. Pass a tuple as an unnamed list of its elements and a complex
+  number as an R complex value. `init = fit` now includes tuple
+  parameters.
   [`write_stan_json()`](https://mc-stan.org/cmdstanr/rc/reference/write_stan_json.md)
-  gains a `variables` argument for the declarations it needs to tell a
-  tuple from a list of arrays.
+  gains a `variables` argument, which it needs to tell a tuple from a
+  list of arrays.
   ([\#925](https://github.com/stan-dev/cmdstanr/issues/925))
 
 ### Other new features
 
-- `$sample()` can show a progress bar through the progressr package with
-  `show_progress_bar = TRUE` or `options(cmdstanr_progress_bar = TRUE)`.
-  The option also turns it on when another package such as brms calls
-  CmdStanR for you.
+- `$sample()` can now show a progress bar (using the progressr package)
+  with `show_progress_bar = TRUE` or
+  `options(cmdstanr_progress_bar = TRUE)`. The option also turns it on
+  when another package such as brms calls CmdStanR for you. The feature
+  is still experimental and may change in the future.
   ([\#1138](https://github.com/stan-dev/cmdstanr/issues/1138))
 - Reading MCMC and generated quantities draws from CmdStan CSV files now
   uses less memory.
@@ -266,8 +234,8 @@ that went into it.
   [\#1307](https://github.com/stan-dev/cmdstanr/issues/1307))
 - [`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/rc/reference/read_cmdstan_csv.md)
   now reads draws from the CSV files when they’re first requested (like
-  fits from `$sample()` do). Reading a large fit to look at a few
-  variables takes much less memory.
+  fits from `$sample()` do), so looking at a few variables of a large
+  fit takes much less memory.
   ([\#1294](https://github.com/stan-dev/cmdstanr/issues/1294))
 - [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/rc/reference/read_cmdstan_csv.md)
   and
@@ -277,10 +245,10 @@ that went into it.
   data.table 1.18.0 or later.
   ([\#1027](https://github.com/stan-dev/cmdstanr/issues/1027),
   [\#1217](https://github.com/stan-dev/cmdstanr/issues/1217))
-- All fitting methods plus `$save_output_files()` and
-  `$save_latent_dynamics_files()` gain a `compress` argument that writes
-  the CSV files gzip- or bzip2-compressed, with the `cmdstanr_compress`
-  option setting the default for the fitting methods.
+- The fitting methods, `$save_output_files()` and
+  `$save_latent_dynamics_files()` gain a `compress` argument for writing
+  gzip- or bzip2-compressed CSV files. The `cmdstanr_compress` option
+  sets the default for the fitting methods.
   ([\#1276](https://github.com/stan-dev/cmdstanr/issues/1276),
   [\#1311](https://github.com/stan-dev/cmdstanr/issues/1311))
 - The new
@@ -289,8 +257,8 @@ that went into it.
   R Markdown document.
   ([\#1166](https://github.com/stan-dev/cmdstanr/issues/1166))
 - The new `$cmdstan_defaults()` method returns CmdStan’s default
-  argument values for a method, `"sample"` by default, under the
-  corresponding CmdStanR argument names.
+  argument values for a method (`"sample"` by default), using CmdStanR’s
+  argument names.
   ([\#1167](https://github.com/stan-dev/cmdstanr/issues/1167))
 - The new `$materialize()` method reads a fit’s draws, sampler
   diagnostics, initial values and profiles from the CSV files into R in
@@ -298,9 +266,9 @@ that went into it.
 - The new `$command()` method returns the command line CmdStanR ran for
   each CmdStan run.
   ([\#900](https://github.com/stan-dev/cmdstanr/issues/900))
-- `$save_object()` gains `format = "qs2"`, which saves with the qs2
-  package instead of [`saveRDS()`](https://rdrr.io/r/base/readRDS.html)
-  and is faster and uses less memory.
+- `$save_object()` gains `format = "qs2"`, which uses the qs2 package
+  and is faster and uses less memory than
+  [`saveRDS()`](https://rdrr.io/r/base/readRDS.html).
   ([\#1125](https://github.com/stan-dev/cmdstanr/issues/1125))
 - [`as_cmdstan_fit()`](https://mc-stan.org/cmdstanr/rc/reference/read_cmdstan_csv.md)
   gains a `variables` argument to read only some of the variables from
@@ -324,52 +292,47 @@ that went into it.
   functions compile.
   ([\#914](https://github.com/stan-dev/cmdstanr/issues/914))
 - [`install_cmdstan()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
-  now offers to copy the `make/local` flags of the current installation
-  into the new one before building it, so the new CmdStan is built with
-  the same flags. In an interactive session it shows the previous
-  `make/local` and asks if the `copy_make_local` argument isn’t set to
-  `TRUE` or `FALSE`.
+  can now copy the `make/local` flags of the current installation into
+  the new one, so the new CmdStan is built the same way. Set
+  `copy_make_local = TRUE` or `FALSE`, or leave it unset and an
+  interactive session shows the old `make/local` and asks.
   ([\#1267](https://github.com/stan-dev/cmdstanr/issues/1267))
 - [`cmdstan_make_local()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
-  now skips flags that are already in `make/local`. Previously copying
-  the flags of a previous installation after every upgrade added the
-  same lines again each time.
+  no longer adds a flag that’s already in `make/local`.
   ([\#1266](https://github.com/stan-dev/cmdstanr/issues/1266))
 - [`install_cmdstan()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
   now retries a download without the token if GitHub rejects the one in
-  `GITHUB_PAT`, and warns the token may not be valid.
+  `GITHUB_PAT`, and warns that the token may be invalid.
   ([\#909](https://github.com/stan-dev/cmdstanr/issues/909))
+- The `timeout` argument of
+  [`install_cmdstan()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
+  now also applies to the download of CmdStan. Previously the download
+  used R’s `timeout` option (60 seconds by default), which could be too
+  short on a slow connection.
 - Chain IDs in generated file names are now zero-padded to at least two
   digits, for example `01` instead of `1`.
   ([\#1244](https://github.com/stan-dev/cmdstanr/issues/1244))
-- When using CmdStan through WSL, paths for output, diagnostic, profile,
-  config, and metric files now remain accessible to Windows R when an
-  explicit output directory is supplied.
-  ([\#1110](https://github.com/stan-dev/cmdstanr/issues/1110); related:
-  [\#1113](https://github.com/stan-dev/cmdstanr/issues/1113))
-- [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
-  now locates Windows toolchains using `R_TOOLS_SOFT` and falls back to
-  `PATH`, improving support for alternate R distributions and future
-  Rtools releases.
+- On Windows,
+  [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
+  now finds Rtools through `R_TOOLS_SOFT` and falls back to `PATH`, so
+  it works with more R distributions and with future Rtools releases.
   ([\#1211](https://github.com/stan-dev/cmdstanr/issues/1211))
-- Exposing functions using names that are reserved keywords now throws
-  an informative error message.
+- `$expose_functions()` now gives an error naming the conflicting names
+  when a function or argument name is a reserved word in C++.
   ([\#1154](https://github.com/stan-dev/cmdstanr/issues/1154))
-- Compiled Stan functions and model methods can be kept across R
-  sessions by setting the `rcpp.cache.dir` option, as the
-  `$expose_functions()` documentation now explains.
+- The `$expose_functions()` documentation now explains how to keep
+  compiled functions and model methods across R sessions with the
+  `rcpp.cache.dir` option.
   ([\#870](https://github.com/stan-dev/cmdstanr/issues/870))
-- `save_cmdstan_config` and `save_metric` default to `FALSE` but can be
-  set to `TRUE` for an entire R session via new global options.
+- The new `cmdstanr_save_metric` and `cmdstanr_save_config` options set
+  the defaults of the `save_metric` and `save_cmdstan_config` arguments.
   ([\#1159](https://github.com/stan-dev/cmdstanr/issues/1159))
-- The compilation spinner can now be disabled for an entire R session by
-  setting the new `cmdstanr_spinner` global option to `FALSE`. The
-  spinner shown while installing or rebuilding CmdStan and while
-  checking syntax also respects this option, and is no longer shown when
-  knitting. ([\#486](https://github.com/stan-dev/cmdstanr/issues/486))
+- Set the new `cmdstanr_spinner` option to `FALSE` to turn off the
+  spinner shown while compiling, checking syntax or installing CmdStan.
+  The spinner is also no longer shown when knitting.
+  ([\#486](https://github.com/stan-dev/cmdstanr/issues/486))
 - `$generate_quantities()` now also accepts `CmdStanMLE`,
-  `CmdStanLaplace`, and `CmdStanPathfinder` fitted model objects as
-  `fitted_params`.
+  `CmdStanLaplace`, and `CmdStanPathfinder` objects as `fitted_params`.
   ([\#1203](https://github.com/stan-dev/cmdstanr/issues/1203))
 - `$generate_quantities()` now reports per-process execution times with
   CmdStan 2.39 or newer, and
@@ -379,39 +342,35 @@ that went into it.
 
 ### Bug fixes
 
-- A fit whose CSV files were written to the temporary directory and are
-  gone (a cached Quarto chunk, a fit saved with
-  [`saveRDS()`](https://rdrr.io/r/base/readRDS.html)) now says so and
-  how to avoid it, instead of failing with “File does not exist”.
+- `$expose_functions()` can now expose a function that returns an array
+  of tuples.
+  ([\#1329](https://github.com/stan-dev/cmdstanr/issues/1329))
+- If a fit’s CSV files were in a temporary directory that no longer
+  exists (for example a cached Quarto chunk, or a fit saved with
+  [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) and loaded in a new
+  session), the error now says so and how to avoid it.
   ([\#1012](https://github.com/stan-dev/cmdstanr/issues/1012))
 - [`check_cmdstan_toolchain()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
   now waits longer for WSL to respond and says so when it doesn’t,
   instead of reporting that no WSL distribution is installed.
   ([\#1297](https://github.com/stan-dev/cmdstanr/issues/1297))
-- [`pathfinder()`](https://mc-stan.org/cmdstanr/rc/reference/model-method-pathfinder.md)
-  now respects `save_single_paths = TRUE` instead of always passing `0`
-  to CmdStan.
-- The `save_latent_dynamics` argument is now limited to `$sample()`,
-  `$sample_mpi()`, and `$variational()`, matching the CmdStan algorithms
-  that support diagnostic CSV output.
-- [`save_metric_files()`](https://mc-stan.org/cmdstanr/rc/reference/fit-method-save_output_files.md)
-  now gives an informative error when metric files were not created and
-  keeps saved metric files after the fitted model is garbage-collected.
+- `$pathfinder(save_single_paths = TRUE)` now works. Previously the
+  argument was ignored.
+- `$save_metric_files()` now gives a clear error when no metric files
+  were written, and saved metric files are no longer deleted when the
+  fit is garbage-collected.
   ([\#1021](https://github.com/stan-dev/cmdstanr/issues/1021))
 - [`cmdstan_model()`](https://mc-stan.org/cmdstanr/rc/reference/cmdstan_model.md)
   no longer fails when `MAKEFLAGS` turns on directory printing.
   ([\#1163](https://github.com/stan-dev/cmdstanr/issues/1163))
-- Quoted values in `make/local`’s `STANCFLAGS` now reach stanc as one
-  argument. Previously they were split on whitespace.
+- Quoted values in the `STANCFLAGS` of `make/local` now reach stanc as
+  one argument instead of being split on spaces.
   ([\#1232](https://github.com/stan-dev/cmdstanr/issues/1232))
-- [`laplace()`](https://mc-stan.org/cmdstanr/rc/reference/model-method-laplace.md)
-  no longer overwrites the internally generated optimizer CSV when
-  `mode = NULL` and `output_basename` is supplied. The internally
-  generated optimizer CSV now uses the filename
-  `<output_basename>-mode-01.csv`.
+- `$laplace()` with `output_basename` and no `mode` no longer writes
+  over the CSV file from the optimization it runs first. That file is
+  now named `<output_basename>-mode-01.csv`.
 - `$laplace()` now passes `show_messages` and `show_exceptions` to the
-  optimizer run it starts when `mode` is not supplied. Previously that
-  run printed its output regardless.
+  optimization it runs when `mode` isn’t supplied.
 - [`read_cmdstan_csv()`](https://mc-stan.org/cmdstanr/rc/reference/read_cmdstan_csv.md)
   now expands `~` in file paths.
   ([\#1098](https://github.com/stan-dev/cmdstanr/issues/1098))
@@ -419,7 +378,7 @@ that went into it.
   [`parallel::mclapply()`](https://rdrr.io/r/parallel/mclapply.html) to
   leave zombie processes behind.
   ([\#1105](https://github.com/stan-dev/cmdstanr/issues/1105))
-- Supplying data with a `NULL` element now gives an informative error.
+- Data with a `NULL` element now gives an error naming the variable.
   ([\#1129](https://github.com/stan-dev/cmdstanr/issues/1129))
 - `$metadata()` now reports the number of chains in `num_chains`.
   Previously it was always 1.
@@ -427,47 +386,42 @@ that went into it.
 - `$lp_approx()` and `$mle()` now return numeric vectors whatever the
   `cmdstanr_draws_format` option is set to.
   ([\#1190](https://github.com/stan-dev/cmdstanr/issues/1190))
-- A Stan file name with several spaces, or quotes, now gives a valid
-  model name for stanc. Previously only the first space was replaced and
-  the quotes ended up in the generated C++.
+- Stan files whose names contain several spaces or quotes now compile.
   ([\#1200](https://github.com/stan-dev/cmdstanr/issues/1200))
-- `$draws()` on a pathfinder fit now orders the diagnostic columns the
+- `$draws()` on a Pathfinder fit now orders the diagnostic columns the
   same way as the other methods.
   ([\#1205](https://github.com/stan-dev/cmdstanr/issues/1205))
-- An executable that cannot be run, for example one that lost its
-  execute bit or was built for another platform, now gives an error
-  naming the executable and saying how to rebuild it. Previously the
-  fitting methods and `$cmdstan_defaults()` surfaced a raw `processx`
-  error. ([\#1246](https://github.com/stan-dev/cmdstanr/issues/1246))
+- An executable that can’t be run, for example one that lost its execute
+  permission or was built for another platform, now gives an error that
+  names the executable and says how to rebuild it.
+  ([\#1246](https://github.com/stan-dev/cmdstanr/issues/1246))
 - A model with no parameters no longer ends every `$sample()` call with
   a warning about a NaN E-BFMI.
 - [`install_cmdstan()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md)
-  now always downloads with R’s libcurl method. Previously, with the
-  option set to `"curl"`, a bad `GITHUB_PAT` left a GitHub error page in
-  place of the download instead of triggering a retry without the token.
-- On WSL a failed copy of the executable or the output CSV files now
-  gives an error at the copy instead of later when the run or read can’t
-  find the file.
-- On Windows a model executable is now launched with the TBB it was
-  built against. Previously the selected CmdStan installation’s TBB was
-  used, which was wrong once
+  now always downloads with R’s libcurl method, so the retry without a
+  rejected `GITHUB_PAT` also works when
+  `options(download.file.method = "curl")` is set.
+- On WSL, a failed copy of the executable or the output CSV files now
+  gives an error right away.
+- On Windows, a model now runs with the TBB from the CmdStan
+  installation that built it, even after
   [`set_cmdstan_path()`](https://mc-stan.org/cmdstanr/rc/reference/set_cmdstan_path.md)
-  had selected a different one.
+  switches to another installation.
   ([\#1261](https://github.com/stan-dev/cmdstanr/issues/1261))
-- Fits with tuple or complex variables now work throughout:
-  `$metadata()` reports their names and sizes, a tuple’s name selects
-  all of its columns in `$draws()` and the other methods with a
-  `variables` argument, and the model methods accept and return them.
-  Previously reading such a fit warned about NAs in the variable sizes.
+- Fits with tuple or complex variables now work fully. `$metadata()`
+  reports their sizes, a tuple’s name selects all of its columns in
+  `$draws()` and the other methods with a `variables` argument, and the
+  model methods accept and return them.
   ([\#925](https://github.com/stan-dev/cmdstanr/issues/925))
-- When using CmdStan through WSL, a data or init file on the WSL
-  filesystem is now found when R spells its path with backslashes, as it
-  does for temporary files when `TMPDIR` points at the `//wsl$` share.
-  ([\#1113](https://github.com/stan-dev/cmdstanr/issues/1113))
-- CmdStan processes are now killed when the R process that started them
-  dies without running its cleanup, for example a future worker
-  interrupted from the parent session. Previously they kept running as
-  orphans. ([\#1086](https://github.com/stan-dev/cmdstanr/issues/1086))
+- With CmdStan in WSL, R can now read the output, diagnostic, profile,
+  config and metric files when `output_dir` is set, and CmdStan can find
+  data and init files when `TMPDIR` points at the `//wsl$` share.
+  ([\#1110](https://github.com/stan-dev/cmdstanr/issues/1110),
+  [\#1113](https://github.com/stan-dev/cmdstanr/issues/1113))
+- CmdStan processes are now stopped when the R process that started them
+  dies, for example a future worker interrupted from the parent session.
+  Previously they kept running.
+  ([\#1086](https://github.com/stan-dev/cmdstanr/issues/1086))
 - `$init_model_methods()` and `$expose_functions()` now work in the same
   R session as rstan or brms, whichever loads first, when RcppParallel
   6.2.0 or later is installed.
@@ -476,40 +430,38 @@ that went into it.
 - A function exposed with `$expose_functions()` that returns a tuple no
   longer occasionally crashes R or returns a list with wrong elements.
   ([\#1001](https://github.com/stan-dev/cmdstanr/issues/1001))
-- `$expose_functions(global = TRUE)` now also keeps the functions in the
-  `$functions` field of the model or fit. Previously it left that field
-  empty while marking the functions as compiled, so a later
-  `$expose_functions()` call exposed nothing.
+- `$expose_functions(global = TRUE)` now also puts the functions in the
+  `$functions` field of the model or fit, so a later
+  `$expose_functions()` call works.
   ([\#1317](https://github.com/stan-dev/cmdstanr/issues/1317))
 - `cmdstan_make_local(cpp_options = list(stan_threads = FALSE))`, and
   the same argument of
   [`install_cmdstan()`](https://mc-stan.org/cmdstanr/rc/reference/install_cmdstan.md),
-  now turn the option off by writing `STAN_THREADS=` to `make/local`.
-  Previously they wrote `STAN_THREADS=false`, which CmdStan reads as on.
+  now turn threading off. Previously they turned it on.
   ([\#605](https://github.com/stan-dev/cmdstanr/issues/605))
 
 ### Removed and deprecated
 
-- Minimum R version increased to 4.0.0.
+- CmdStanR now requires R 4.0.0 or later.
   ([\#1144](https://github.com/stan-dev/cmdstanr/issues/1144))
 - CmdStan versions older than 2.37.0 are no longer supported. To use an
-  older CmdStan version install an older CmdStanR release from GitHub.
+  older CmdStan, install an older CmdStanR release from GitHub.
   ([\#1144](https://github.com/stan-dev/cmdstanr/issues/1144))
-- The `CMDSTANR_NO_VER_CHECK` R option and environment variable are
-  deprecated as of CmdStanR 1.0.0; use the lowercase
-  `cmdstanr_no_ver_check` forms instead.
-- [`pathfinder()`](https://mc-stan.org/cmdstanr/rc/reference/model-method-pathfinder.md)
-  now uses the `threads` argument (`num_threads` is deprecated), to be
-  consistent with other methods.
+- The `CMDSTANR_NO_VER_CHECK` option and environment variable are
+  deprecated. Use the lowercase `cmdstanr_no_ver_check` instead.
+- The `num_threads` argument of `$pathfinder()` is deprecated. Use
+  `threads` instead.
+- The `save_latent_dynamics` argument is now only available in
+  `$sample()`, `$sample_mpi()` and `$variational()`, the methods for
+  which CmdStan writes these files.
 - `fit$variable_skeleton()` is removed. `fit$constrain_variables()` now
   returns the values already structured, so
   [`utils::relist()`](https://rdrr.io/r/utils/relist.html) and the
   skeleton are no longer needed.
   ([\#925](https://github.com/stan-dev/cmdstanr/issues/925))
-- Removed legacy Windows toolchain paths for older CmdStan releases.
+- The `CMDSTANR_USE_MSYS_TOOLCHAIN` environment variable is deprecated
+  and ignored (with a warning).
   ([\#1144](https://github.com/stan-dev/cmdstanr/issues/1144))
-- `CMDSTANR_USE_MSYS_TOOLCHAIN` is now deprecated and ignored (with a
-  warning). ([\#1144](https://github.com/stan-dev/cmdstanr/issues/1144))
 - Removed deprecated items (replacements in parentheses).
   ([\#1061](https://github.com/stan-dev/cmdstanr/issues/1061))
   - `read_sample_csv()`
@@ -520,8 +472,8 @@ that went into it.
     methods (`jacobian` argument)
   - `output_samples` argument to `model$variational()` (`draws`
     argument)
-  - `hessian` argument to `fit$init_model_methods()` (`hessian` method
-    always compiled now)
+  - `hessian` argument to `fit$init_model_methods()` (the Hessian method
+    is now always compiled)
   - `threads` (`cpp_options = list(stan_threads = TRUE)`) and
     `compile_hessian_method` (always compiled), formerly arguments to
     `$compile()`

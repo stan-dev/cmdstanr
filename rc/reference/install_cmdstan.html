@@ -208,9 +208,11 @@ overwriting the user's installation.</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
-<dd><p>(positive real) Timeout (in seconds) for the build stage of
-the installation. The default is 1200 seconds for <code>install_cmdstan()</code> and
-600 seconds for <code>rebuild_cmdstan()</code>.</p></dd>
+<dd><p>(positive real) Time limit (in seconds) for each stage of
+the installation. For <code>install_cmdstan()</code> the stages are the download of
+the CmdStan archive, the build of CmdStan and the build of the example
+model, and the default is 1200 seconds. For <code>rebuild_cmdstan()</code> the only
+stage is the build and the default is 600 seconds.</p></dd>
 
 
 <dt id="arg-version">version<a class="anchor" aria-label="anchor" href="#arg-version"></a></dt>
