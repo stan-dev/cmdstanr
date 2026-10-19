@@ -29,6 +29,7 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 test_that("install_cmdstan() errors if installation already exists", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "cmdstan-2.37.0"))
+  wsl_before <- os_is_wsl()
   expect_warning(
     install_cmdstan(
       dir = dir,
@@ -39,6 +40,7 @@ test_that("install_cmdstan() errors if installation already exists", {
     "An installation already exists",
     fixed = TRUE
   )
+  expect_identical(os_is_wsl(), wsl_before)
 })
 
 test_that("install_cmdstan() errors on timeout, quiet silences the download", {
