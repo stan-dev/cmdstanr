@@ -245,12 +245,6 @@ CmdStanRun <- R6::R6Class(
         timestamp = timestamp,
         random = random
       )
-      if (
-        !same_path(new_path, self$data_file()) &&
-          same_path(dirname(self$data_file()), tempdir())
-      ) {
-        file.remove(self$data_file())
-      }
       self$args$data_file <- new_path
       message(
         "Saved data file and set internal path to new location:\n",

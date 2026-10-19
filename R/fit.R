@@ -1105,10 +1105,10 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' @aliases config_files metric_files
 #'
 #' @description Fitted model objects returned directly by a [`CmdStanModel`]
-#'   method have methods for saving (moving to a specified location) files
-#'   created by CmdStanR, including CmdStan output CSV files and input data
-#'   files. These methods move the files from their current location (possibly
-#'   the temporary directory) to a user-specified location. **The paths stored
+#'   method have methods for saving files created by CmdStanR, including
+#'   CmdStan output CSV files and input data files. These methods move the
+#'   CSV files from their current location (possibly the temporary directory)
+#'   to a user-specified location, and copy the data file. **The paths stored
 #'   in the fitted model object will also be updated to point to the new file
 #'   locations.**
 #'
@@ -1163,10 +1163,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' `$save_data_file()` uses the pattern `basename-timestamp-random.ext`, where
 #' `.ext` is the original data file extension. No `id` is included because even
-#' with multiple MCMC chains the data file is the same. The original is removed
-#' only when it is in R's temporary directory, where CmdStanR writes data
-#' passed as a list. A data file passed as a path from anywhere else is copied
-#' and stays where it is.
+#' with multiple MCMC chains the data file is the same. The original file is
+#' left in place.
 #'
 #' @return
 #' The `$save_*` methods print a message with the new file paths and (invisibly)

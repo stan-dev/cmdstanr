@@ -296,6 +296,8 @@ it on. (#605)
 session whose data file is gone, and stops before compiling when the data file
 no longer exists instead of failing with a JSON parsing error afterwards.
 (#1331)
+* `$save_data_file()` now leaves the original data file in place. Previously
+it removed the original, even a file the user had passed as a path. (#1331)
 
 ## Removed and deprecated
 

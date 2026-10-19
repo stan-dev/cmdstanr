@@ -93,10 +93,10 @@ paths without moving any files.
 }
 \description{
 Fitted model objects returned directly by a \code{\link{CmdStanModel}}
-method have methods for saving (moving to a specified location) files
-created by CmdStanR, including CmdStan output CSV files and input data
-files. These methods move the files from their current location (possibly
-the temporary directory) to a user-specified location. \strong{The paths stored
+method have methods for saving files created by CmdStanR, including
+CmdStan output CSV files and input data files. These methods move the
+CSV files from their current location (possibly the temporary directory)
+to a user-specified location, and copy the data file. \strong{The paths stored
 in the fitted model object will also be updated to point to the new file
 locations.}
 
@@ -142,10 +142,8 @@ compressed). The
 
 \verb{$save_data_file()} uses the pattern \code{basename-timestamp-random.ext}, where
 \code{.ext} is the original data file extension. No \code{id} is included because even
-with multiple MCMC chains the data file is the same. The original is removed
-only when it is in R's temporary directory, where CmdStanR writes data
-passed as a list. A data file passed as a path from anywhere else is copied
-and stays where it is.
+with multiple MCMC chains the data file is the same. The original file is
+left in place.
 }
 
 \examples{
