@@ -46,7 +46,7 @@ jobs:
       - name: Jarl format
         uses: etiennebacher/setup-jarl@v0.1.1
         with:
-          version: "0.6.0"
+          version: "0.7.0"
           args: "check --fix"
 
       - name: Format
