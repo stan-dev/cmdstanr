@@ -270,8 +270,10 @@ get_function_name <- function(fun_start, fun_end, model_lines) {
 # - Replace the auto return type with the plain type
 # - Add Rcpp::export attribute
 # - Remove the pstream__ argument and pass Rcpp::Rcout by default
-# - Replace the boost::ecuyer1988& base_rng__ argument with an integer seed argument
-#     that instantiates an RNG
+# - Replace the stan::rng_t& base_rng__ argument with a pointer to an RNG and
+#     an integer seed for it. These and the local that holds the pointer end
+#     in `__`, which no Stan identifier can, so they can't collide with the
+#     function's own arguments
 prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   fun_body <- paste(model_lines[fun_start:fun_end], collapse = " ")
   fun_body <- gsub(
@@ -284,17 +286,17 @@ prep_fun_cpp <- function(fun_start, fun_end, model_lines) {
   if (grepl("stan::rng_t", fun_body)) {
     fun_body <- gsub(
       "stan::rng_t&\\s*base_rng__",
-      "SEXP base_rng_ptr, SEXP seed",
+      "SEXP base_rng_ptr__, SEXP seed__",
       fun_body
     )
     rng_seed <- paste0(
-      "Rcpp::XPtr<stan::rng_t> base_rng(base_rng_ptr);",
-      "base_rng->seed(Rcpp::as<int>(seed));"
+      "Rcpp::XPtr<stan::rng_t> base_rng__(base_rng_ptr__);",
+      "base_rng__->seed(Rcpp::as<int>(seed__));"
     )
     fun_body <- gsub("return", paste(rng_seed, "return"), fun_body)
     fun_body <- gsub(
       "base_rng__,",
-      "*(base_rng.get()),",
+      "*(base_rng__.get()),",
       fun_body,
       fixed = TRUE
     )
@@ -385,10 +387,10 @@ compile_functions <- function(env, verbose = FALSE) {
   for (fun in rng_funs) {
     fundef <- get(fun, envir = env)
     funargs <- formals(fundef)
-    funargs$base_rng_ptr <- env$rng_ptr
+    funargs$base_rng_ptr__ <- env$rng_ptr
     # To allow for exported RNG functions to respect the R 'set.seed()' call,
     # we need to derive a seed deterministically from the current RNG state
-    funargs$seed <- quote(sample.int(.Machine$integer.max, 1))
+    funargs$seed__ <- quote(sample.int(.Machine$integer.max, 1))
     formals(fundef) <- funargs
     assign(fun, fundef, envir = env)
   }

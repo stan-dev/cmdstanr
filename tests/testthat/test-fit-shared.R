@@ -131,7 +131,7 @@ test_that("saving data file works", {
         timestamp = FALSE,
         random = FALSE
       ),
-      "Moved data file and set internal path"
+      "Saved data file and set internal path"
     )
     checkmate::expect_file_exists(path, extension = "json")
     expect_true(file.size(path) > 0)
@@ -140,7 +140,7 @@ test_that("saving data file works", {
     } else {
       expect_equal(basename(path), "logistic.json")
     }
-    expect_false(file.exists(old_path))
+    expect_true(file.exists(old_path))
     expect_equal(fit$data_file(), path)
   }
 })

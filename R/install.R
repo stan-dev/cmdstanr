@@ -51,9 +51,11 @@
 #'   even if an installation of the same version is found in `dir`? The default
 #'   is `FALSE`, in which case an informative error is thrown instead of
 #'   overwriting the user's installation.
-#' @param timeout (positive real) Timeout (in seconds) for the build stage of
-#'   the installation. The default is 1200 seconds for `install_cmdstan()` and
-#'   600 seconds for `rebuild_cmdstan()`.
+#' @param timeout (positive real) Time limit (in seconds) for each stage of
+#'   the installation. For `install_cmdstan()` the stages are the download of
+#'   the CmdStan archive, the build of CmdStan and the build of the example
+#'   model, and the default is 1200 seconds. For `rebuild_cmdstan()` the only
+#'   stage is the build and the default is 600 seconds.
 #' @param version (string) The CmdStan release version to install. The default
 #'   is `NULL`, which downloads the latest stable release from
 #'   <https://github.com/stan-dev/cmdstan/releases>.
@@ -130,8 +132,14 @@ install_cmdstan <- function(
 ) {
   checkmate::assert_flag(copy_make_local, null.ok = TRUE)
   warn_if_ignored_msys_toolchain_env()
-  # Use environment variable to record WSL usage throughout install,
-  # post-installation will simply check for 'wsl-' prefix in cmdstan path
+  # The WSL flag has to describe the installation we're about to build, so
+  # that the toolchain check, the unpacking and the build see the right
+  # os_is_wsl(). On exit, set it again from the selected installation the
+  # way set_cmdstan_path() does. That only changes it if we returned before
+  # set_cmdstan_path() selected the new installation.
+  withr::defer(
+    .cmdstanr$WSL <- isTRUE(grepl("//wsl$", .cmdstanr$PATH, fixed = TRUE))
+  )
   if (isTRUE(wsl)) {
     if (!os_is_windows()) {
       warning(
@@ -266,7 +274,8 @@ install_cmdstan <- function(
     tar_downloaded <- download_with_retries(
       download_url,
       dest_file,
-      quiet = quiet
+      quiet = quiet,
+      timeout = timeout
     )
     if (inherits(tar_downloaded, "try-error")) {
       error_msg <- paste(
@@ -416,9 +425,6 @@ install_cmdstan <- function(
       "the flags\nbefore the build, so that no rebuild is needed."
     )
   }
-  if (isTRUE(wsl)) {
-    Sys.unsetenv("CMDSTANR_USE_WSL")
-  }
 }
 
 
@@ -469,8 +475,11 @@ cmdstan_make_local <- function(
         }
       }
     }
-    if (append && file.exists(make_local_path)) {
-      existing <- suppressWarnings(readLines(make_local_path, warn = FALSE))
+    if (append) {
+      existing <- character(0)
+      if (file.exists(make_local_path)) {
+        existing <- suppressWarnings(readLines(make_local_path, warn = FALSE))
+      }
       applied <- make_flag_already_applies(built_flags, existing)
       built_flags <- built_flags[!applied]
     }
@@ -652,16 +661,36 @@ read_line <- function(prompt) {
 
 #' Would make already apply these flags, given the current `make/local`?
 #'
-#' Lines are compared as text, following the two rules of make that matter
-#' here. A plain assignment only counts while it is the last one for that
-#' variable, so writing `STAN_THREADS=true` again after a `STAN_THREADS=`
-#' further down is a real change, not a duplicate. `+=` accumulates, so a
-#' second identical `+=` line adds nothing, unless a plain assignment in
-#' between has reset the variable and dropped what the first one added.
+#' Lines are compared as text, using the two rules of make that matter
+#' here. A plain assignment (`=` or `:=`) replaces the variable's value, so
+#' only the last one for a variable matters. Writing `STAN_THREADS=true`
+#' again after a `STAN_THREADS=` further down is a real change, not a
+#' duplicate. A `+=` line adds to the value, so repeating it adds nothing,
+#' unless a plain assignment in between has reset the variable. An
+#' identical `+=` line is therefore a duplicate when it appears anywhere
+#' after the variable's last plain assignment.
 #'
-#' A line ending in a backslash and the lines it continues are one assignment
-#' to make, so they are written as they are rather than checked line by line.
-#' The file's own last line can be the one being continued.
+#' A `+=` line is also a duplicate when the variable's last line already
+#' contains every word of it. That is how
+#' `CXXFLAGS += -Wno-deprecated-declarations` is skipped after a longer
+#' `CXXFLAGS +=` line that includes that flag. The word check only looks at
+#' the last line, because a flag on an earlier line may have been
+#' overridden by a later one. The identical-line check has to look further
+#' back: on a UCRT install `install_cmdstan()` writes two `CXXFLAGS +=`
+#' lines, so in a copied `make/local` the first of them is never the last
+#' `CXXFLAGS` line, and a check of the last line alone would write it again
+#' on every reinstall.
+#'
+#' A line that assigns nothing, such as a comment, a blank line or an
+#' `include`, is never a duplicate. A line ending in a backslash and the
+#' lines that continue it form one assignment, so they are written as they
+#' are instead of being checked one by one. The existing file can itself
+#' end in a backslash, and then the first new line continues it. A
+#' conditional block, from `ifeq`, `ifneq`, `ifdef` or `ifndef` to `endif`,
+#' is also written as it is, because its lines only apply when the
+#' condition holds. A line inside a block can still change the variable, so
+#' it counts as the variable's last line or as a reset like any other line.
+#' It never counts as present itself, since it may not have applied.
 #'
 #' @noRd
 #' @param flags (character vector) Flags about to be appended.
@@ -670,11 +699,15 @@ read_line <- function(prompt) {
 make_flag_already_applies <- function(flags, existing) {
   flags <- trimws(flags)
   existing <- trimws(existing)
+  lines <- c(existing, flags)
+  conditional <- utils::tail(in_conditional(lines), length(flags))
   continued <- endsWith(flags, "\\") |
-    utils::tail(continues_previous(c(existing, flags)), length(flags))
+    utils::tail(continues_previous(lines), length(flags))
   applies <- logical(length(flags))
   for (i in seq_along(flags)) {
-    applies[i] <- !continued[i] && make_line_already_applies(flags[i], existing)
+    applies[i] <- !continued[i] &&
+      !conditional[i] &&
+      make_line_already_applies(flags[i], existing)
     if (!applies[i]) {
       existing <- c(existing, flags[i])
     }
@@ -687,37 +720,71 @@ make_flag_already_applies <- function(flags, existing) {
 make_line_already_applies <- function(line, existing) {
   variable <- make_assignment_part(line, "\\1")
   if (is.na(variable)) {
-    return(line %in% existing)
+    return(FALSE)
   }
   existing_variable <- make_assignment_part(existing, "\\1")
   assignments <- which(
     !is.na(existing_variable) & existing_variable == variable
   )
+  if (length(assignments) == 0) {
+    return(FALSE)
+  }
+  last <- max(assignments)
+  conditional <- in_conditional(existing)
+  # The variable's last assignment is in a block that may not have applied
+  if (conditional[last]) {
+    return(FALSE)
+  }
   if (make_assignment_part(line, "\\2") == "+=") {
     # A plain assignment drops what earlier += lines added, so only the
     # lines after the last one count.
     existing_operator <- make_assignment_part(existing, "\\2")
     resets <- assignments[existing_operator[assignments] %in% c("=", ":=")]
+    since_reset <- assignments[!conditional[assignments]]
     if (length(resets) > 0) {
-      assignments <- assignments[assignments > max(resets)]
+      since_reset <- since_reset[since_reset > max(resets)]
     }
-    return(line %in% existing[assignments])
+    if (line %in% existing[since_reset]) {
+      return(TRUE)
+    }
+    # The line also adds nothing when the variable's last line already has
+    # every one of its flags. Earlier lines don't count: a later line may
+    # have overridden the flag, and then it has to be written again.
+    return(all(make_words(line) %in% make_words(existing[last])))
   }
-  length(assignments) > 0 && identical(existing[max(assignments)], line)
+  identical(existing[last], line)
 }
 
-# Variable name ("\\1") or operator ("\\2") of a makefile assignment, NA for
-# lines that do not assign anything, such as comments, blanks, and the rest of
-# a continued line.
+# Variable name ("\\1"), operator ("\\2") or value ("\\3") of a makefile
+# assignment, NA for lines that do not assign anything, such as comments,
+# blanks, and the rest of a continued line.
 make_assignment_part <- function(lines, part) {
-  pattern <- "^([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*(\\+=|:=|\\?=|=).*$"
+  pattern <- "^([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*(\\+=|:=|\\?=|=)(.*)$"
   assigns <- grepl(pattern, lines) & !continues_previous(lines)
   ifelse(assigns, sub(pattern, part, lines), NA_character_)
+}
+
+# The words a makefile assignment line gives its variable. A line that a
+# backslash continues on the next line has an incomplete value, so no words.
+make_words <- function(line) {
+  if (endsWith(line, "\\")) {
+    return(character(0))
+  }
+  value <- sub("#.*$", "", make_assignment_part(line, "\\3"))
+  strsplit(trimws(value), "[[:space:]]+")[[1]]
 }
 
 # TRUE for a line that continues the one before it
 continues_previous <- function(lines) {
   c(FALSE, endsWith(lines, "\\"))[seq_along(lines)]
+}
+
+# TRUE for the lines of a conditional block, from its ifeq, ifneq, ifdef or
+# ifndef to its endif, nested blocks included
+in_conditional <- function(lines) {
+  opens <- grepl("^if(eq|neq|def|ndef)\\b", lines)
+  closes <- grepl("^endif\\b", lines)
+  cumsum(opens) - cumsum(closes) > 0 | closes
 }
 
 check_install_dir <- function(dir_cmdstan, overwrite = FALSE) {
@@ -819,10 +886,10 @@ download_with_retries <- function(
   destination_file,
   retries = 5,
   pause_sec = 5,
-  quiet = TRUE
+  quiet = TRUE,
+  timeout = getOption("timeout")
 ) {
-  # R's default of 60 seconds may be too short for the CmdStan tarball
-  withr::local_options(timeout = max(300, getOption("timeout")))
+  withr::local_options(timeout = timeout)
   headers <- github_auth_token()
   num_retries <- 0
 

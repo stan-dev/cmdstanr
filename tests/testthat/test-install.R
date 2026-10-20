@@ -35,6 +35,7 @@ test_that("install_cmdstan() successfully installs cmdstan and rebuild_cmdstan()
 test_that("install_cmdstan() errors if installation already exists", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "cmdstan-2.37.0"))
+  wsl_before <- os_is_wsl()
   expect_warning(
     install_cmdstan(
       dir = dir,
@@ -45,6 +46,7 @@ test_that("install_cmdstan() errors if installation already exists", {
     "An installation already exists",
     fixed = TRUE
   )
+  expect_identical(os_is_wsl(), wsl_before)
 })
 
 test_that("install_cmdstan() errors on timeout, quiet silences the download", {
@@ -64,12 +66,13 @@ test_that("install_cmdstan() errors on timeout, quiet silences the download", {
   )
 
   # expect_message() does not see download.file()'s progress lines, so
-  # capture stderr and grep it
+  # capture stderr and grep it. The timeout is long enough for the
+  # download and far too short for the build.
   expect_warning(
     quiet_log <- capture.output(
       install_cmdstan(
         dir = dir,
-        timeout = 1,
+        timeout = 30,
         quiet = TRUE,
         cores = 2,
         wsl = os_is_wsl()
@@ -92,7 +95,7 @@ test_that("install_cmdstan() errors on timeout, quiet silences the download", {
       invisible(capture.output(
         install_cmdstan(
           dir = dir,
-          timeout = 1,
+          timeout = 30,
           quiet = FALSE,
           overwrite = TRUE,
           cores = 2,
@@ -145,7 +148,7 @@ test_that("install_cmdstan() installs from release_url", {
     expect_message(
       install_cmdstan(
         dir = dir,
-        timeout = 1,
+        timeout = 30,
         quiet = TRUE,
         cores = 2,
         release_url = url,
@@ -883,6 +886,19 @@ test_that("cmdstan_make_local() does not append flags that are already present",
     cmdstan_make_local(dir = dir, cpp_options = list("  O = 3  ")),
     c(previous_install[1:2], "O = 3")
   )
+
+  # A flag inside a longer line of the same variable counts as present.
+  writeLines(
+    "CXXFLAGS += -O3 -march=native -mtune=native -Wno-deprecated-declarations",
+    make_local_path
+  )
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    "CXXFLAGS += -O3 -march=native -mtune=native -Wno-deprecated-declarations"
+  )
 })
 
 test_that("cmdstan_make_local() appends a flag that a later line has overridden", {
@@ -945,6 +961,56 @@ test_that("cmdstan_make_local() appends a += flag that a later assignment has wi
   )
 })
 
+test_that("cmdstan_make_local() appends a += flag that a later += line has overridden", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(
+    c("CXXFLAGS += -O3 -march=native", "CXXFLAGS += -O0 -g"),
+    file.path(dir, "make", "local")
+  )
+
+  # The compiler takes the last -O flag, so -O3 has to come after -O0 again
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("CXXFLAGS += -O3")),
+    c("CXXFLAGS += -O3 -march=native", "CXXFLAGS += -O0 -g", "CXXFLAGS += -O3")
+  )
+})
+
+test_that("cmdstan_make_local() skips an identical += line that is not the last", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS += -march=native"),
+    file.path(dir, "make", "local")
+  )
+
+  # install_cmdstan() appends the same two += lines on every install, after
+  # a copied make/local that already ends with them. The word check only
+  # sees the last line, so without the identical-line check the pair would
+  # pile up.
+  expect_equal(
+    cmdstan_make_local(
+      dir = dir,
+      cpp_options = list("CXXFLAGS += -Wno-deprecated-declarations")
+    ),
+    c("CXXFLAGS += -Wno-deprecated-declarations", "CXXFLAGS += -march=native")
+  )
+})
+
+test_that("cmdstan_make_local() does not count the words of a comment", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  writeLines(
+    "CXXFLAGS += -O2 # -O0 is too slow",
+    file.path(dir, "make", "local")
+  )
+
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("CXXFLAGS += -O0")),
+    c("CXXFLAGS += -O2 # -O0 is too slow", "CXXFLAGS += -O0")
+  )
+})
+
 test_that("cmdstan_make_local() checks flags in one call against each other", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
@@ -961,6 +1027,21 @@ test_that("cmdstan_make_local() checks flags in one call against each other", {
     ),
     c("STAN_THREADS=", "STAN_THREADS=true", "STAN_THREADS=")
   )
+
+  # The check also runs when there is no make/local yet, which is how
+  # install_cmdstan() copies the previous installation's flags into a fresh
+  # one, so a duplicate in the previous file is dropped on the way.
+  fresh <- withr::local_tempdir()
+  dir.create(file.path(fresh, "make"), recursive = TRUE, showWarnings = FALSE)
+  previous_install <- c(
+    "CXXFLAGS += -O3 -march=native -Wno-deprecated-declarations",
+    "PRECOMPILED_HEADERS=true",
+    "CXXFLAGS += -Wno-deprecated-declarations"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = fresh, cpp_options = as.list(previous_install)),
+    previous_install[1:2]
+  )
 })
 
 test_that("cmdstan_make_local() leaves line continuations alone", {
@@ -976,6 +1057,72 @@ test_that("cmdstan_make_local() leaves line continuations alone", {
       cpp_options = list("CXXFLAGS += \\", "  -O3")
     ),
     c("CXXFLAGS += \\", "-O2", "CXXFLAGS += \\", "-O3")
+  )
+
+  # The first line of a continued assignment holds only part of its value,
+  # so -O3 isn't taken as present
+  writeLines(c("CXXFLAGS += -O3 \\", "  -O0"), file.path(dir, "make", "local"))
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("CXXFLAGS += -O3")),
+    c("CXXFLAGS += -O3 \\", "-O0", "CXXFLAGS += -O3")
+  )
+})
+
+test_that("cmdstan_make_local() leaves conditional blocks alone", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+
+  # The lines of a block only apply sometimes, so a copied previous
+  # make/local with two blocks keeps both, second endif included
+  previous_install <- c(
+    "ifeq ($(DEBUG),1)",
+    "CXXFLAGS += -g",
+    "endif",
+    "ifdef PROFILE",
+    "CXXFLAGS += -pg",
+    "else",
+    "CXXFLAGS += -g",
+    "endif"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = as.list(previous_install)),
+    previous_install
+  )
+  # ... and a flag inside a block isn't taken as present, since the block
+  # may not have applied
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list("CXXFLAGS += -g")),
+    c(previous_install, "CXXFLAGS += -g")
+  )
+})
+
+test_that("cmdstan_make_local() appends a flag that a conditional block may have changed", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  previous <- c("STAN_THREADS=true", "ifdef D", "STAN_THREADS=", "endif")
+  writeLines(previous, file.path(dir, "make", "local"))
+
+  # The block may have turned threads off, so the first line doesn't make
+  # the request a duplicate
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = list(STAN_THREADS = TRUE)),
+    c(previous, "STAN_THREADS=true")
+  )
+
+  # Same for a copied make/local whose last line repeats one from above a
+  # block: the block may have reset CXXFLAGS, so the copy keeps that line
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "make"), recursive = TRUE, showWarnings = FALSE)
+  previous_install <- c(
+    "CXXFLAGS += -O3",
+    "ifdef D",
+    "CXXFLAGS = -g",
+    "endif",
+    "CXXFLAGS += -O3"
+  )
+  expect_equal(
+    cmdstan_make_local(dir = dir, cpp_options = as.list(previous_install)),
+    previous_install
   )
 })
 
@@ -1488,7 +1635,7 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
 })
 
 test_that("check_cmdstan_toolchain() stops with no Windows toolchain", {
-  skip_if(!os_is_windows())
+  skip_if(!os_is_windows() || os_is_wsl())
 
   local_mocked_bindings(
     os_is_wsl = function() FALSE,
