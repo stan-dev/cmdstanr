@@ -298,6 +298,9 @@ no longer exists instead of failing with a JSON parsing error afterwards.
 (#1331)
 * `$save_data_file()` now leaves the original data file in place. Previously
 it removed the original, even a file the user had passed as a path. (#1331)
+* On Windows, an `install_cmdstan()` call that doesn't finish, for example
+because the installation already exists or the build fails, no longer leaves
+CmdStanR unable to compile or run models with the selected installation.
 
 ## Removed and deprecated
 

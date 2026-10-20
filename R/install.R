@@ -132,8 +132,14 @@ install_cmdstan <- function(
 ) {
   checkmate::assert_flag(copy_make_local, null.ok = TRUE)
   warn_if_ignored_msys_toolchain_env()
-  # Use environment variable to record WSL usage throughout install,
-  # post-installation will simply check for 'wsl-' prefix in cmdstan path
+  # The WSL flag has to describe the installation we're about to build, so
+  # that the toolchain check, the unpacking and the build see the right
+  # os_is_wsl(). On exit, set it again from the selected installation the
+  # way set_cmdstan_path() does. That only changes it if we returned before
+  # set_cmdstan_path() selected the new installation.
+  withr::defer(
+    .cmdstanr$WSL <- isTRUE(grepl("//wsl$", .cmdstanr$PATH, fixed = TRUE))
+  )
   if (isTRUE(wsl)) {
     if (!os_is_windows()) {
       warning(
@@ -418,9 +424,6 @@ install_cmdstan <- function(
       "\n\nNext time, install_cmdstan(copy_make_local = TRUE) copies ",
       "the flags\nbefore the build, so that no rebuild is needed."
     )
-  }
-  if (isTRUE(wsl)) {
-    Sys.unsetenv("CMDSTANR_USE_WSL")
   }
 }
 

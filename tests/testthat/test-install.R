@@ -29,6 +29,7 @@ test_that("install_cmdstan() successfully installs cmdstan", {
 test_that("install_cmdstan() errors if installation already exists", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "cmdstan-2.37.0"))
+  wsl_before <- os_is_wsl()
   expect_warning(
     install_cmdstan(
       dir = dir,
@@ -39,6 +40,7 @@ test_that("install_cmdstan() errors if installation already exists", {
     "An installation already exists",
     fixed = TRUE
   )
+  expect_identical(os_is_wsl(), wsl_before)
 })
 
 test_that("install_cmdstan() errors on timeout, quiet silences the download", {
@@ -1635,7 +1637,7 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
 })
 
 test_that("check_cmdstan_toolchain() stops with no Windows toolchain", {
-  skip_if(!os_is_windows())
+  skip_if(!os_is_windows() || os_is_wsl())
 
   local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
   expect_snapshot(error = TRUE, check_cmdstan_toolchain())
