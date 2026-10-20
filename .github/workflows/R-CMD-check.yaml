@@ -81,7 +81,7 @@ jobs:
         with:
           cache: "always"
           pak-version: ${{ matrix.config.os == 'windows-11-arm' && 'devel' || 'stable' }}
-          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.r == '4.1' && 'qs2=?ignore' || '' }}
+          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.r == '4.1' && 'qs2=?ignore, RcppParallel=?ignore' || '' }}
 
       - name: Test Windows toolchain in directory with spaces
         if: ${{ runner.os == 'Windows' && matrix.config.r == '4.1' }}
