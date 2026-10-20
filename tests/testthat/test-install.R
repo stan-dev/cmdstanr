@@ -1637,7 +1637,7 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
 })
 
 test_that("check_cmdstan_toolchain() stops with no Windows toolchain", {
-  skip_if(!os_is_windows())
+  skip_if(!os_is_windows() || os_is_wsl())
 
   local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
   expect_snapshot(error = TRUE, check_cmdstan_toolchain())
