@@ -133,9 +133,14 @@ jobs:
           MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
         run: |
           $prefix = "$env:MSYS2_LOCATION/$($env:MSYSTEM.ToLowerInvariant())"
+          # pocl.dll loads its own DLLs (LLVM, libstdc++) through PATH. The
+          # MSYS2 compilers in the same directory go unused: R and cmdstanr
+          # put Rtools first.
           "$prefix/bin" >> $env:GITHUB_PATH
           # Avoid mixing MSYS2 and Rtools runtime libraries via -L.
-          "LDLIBS_OPENCL='$prefix/lib/libOpenCL.dll.a'" >> $env:GITHUB_ENV
+          # Forward slashes: cmdstanr passes LDLIBS to R CMD SHLIB unquoted,
+          # and sh drops backslashes.
+          "LDLIBS_OPENCL='$($prefix.Replace('\', '/'))/lib/libOpenCL.dll.a'" >> $env:GITHUB_ENV
           # Elevated runners ignore OCL_ICD_FILENAMES.
           $vendors = 'HKLM:\SOFTWARE\Khronos\OpenCL\Vendors'
           New-Item -Path $vendors -Force | Out-Null
