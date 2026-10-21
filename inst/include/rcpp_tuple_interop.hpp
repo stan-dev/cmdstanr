@@ -1,7 +1,22 @@
 #ifndef CMDSTANR_RCPP_TUPLE_INTEROP_HPP
 #define CMDSTANR_RCPP_TUPLE_INTEROP_HPP
 
-#include <stan/math/prim/functor/apply.hpp>
+#include <stan/math/prim/functor/for_each.hpp>
+// Rcpp turns a std::vector into a list by calling wrap() on each element
+// from inside RcppCommon.h, and that call only sees the wrap() overloads
+// declared above it. So the tuple overload is declared before
+// RcppCommon.h and defined further down, where Rcpp::List exists. The
+// declaration needs SEXP, so R's headers come first and Rcpp's check
+// against that is skipped. This header has to be the first one that
+// includes Rcpp.
+#define RCPP_NO_R_HEADERS_CHECK
+#include <Rcpp/r/headers.h>
+
+namespace Rcpp {
+  template <typename... T>
+  SEXP wrap(const std::tuple<T...>& x);
+}
+
 #include <Rcpp.h>
 
 namespace Rcpp {
@@ -36,9 +51,13 @@ namespace Rcpp {
   */
   template <typename... T>
   SEXP wrap(const std::tuple<T...>& x) {
-    return stan::math::apply([](const auto&... args) {
-      return Rcpp::List::create(Rcpp::wrap(args)...);
-    }, x);
+    // Filled one element at a time so each wrapped value is stored in the
+    // protected list before the next one allocates (#1001).
+    Rcpp::List out(sizeof...(T));
+    std::size_t i = 0;
+    stan::math::for_each(
+      [&](const auto& arg) { out[i++] = Rcpp::wrap(arg); }, x);
+    return out;
   }
 }
 

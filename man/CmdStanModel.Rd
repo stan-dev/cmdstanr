@@ -12,36 +12,33 @@ fitting the model using Stan's algorithms.
 \section{Methods}{
  \code{CmdStanModel} objects have the following associated
 methods, many of which have their own (linked) documentation pages:
-\subsection{Stan code}{\tabular{ll}{
+\subsection{The Stan program}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
    \code{\link[=model-method-model-info]{$stan_file()}} \tab Return the file path to the Stan program. \cr
    \code{\link[=model-method-model-info]{$has_stan_file()}} \tab Check whether the model was created with a Stan file. \cr
+   \code{\link[=model-method-model-info]{$model_name()}} \tab Return the model name. \cr
    \code{\link[=model-method-model-info]{$code()}} \tab Return Stan program as a character vector. \cr
    \code{\link[=model-method-model-info]{$print()}} \tab Print readable version of Stan program. \cr
+   \code{\link[=model-method-model-info]{$include_paths()}} \tab Return the Stan include paths. \cr
+   \code{\link[=model-method-variables]{$variables()}} \tab Return the input and output variables of the program, by block. \cr
    \code{\link[=model-method-check_syntax]{$check_syntax()}} \tab Check Stan syntax without having to compile. \cr
    \code{\link[=model-method-format]{$format()}} \tab Format and canonicalize the Stan model code. \cr
 }
 
 }
 
-\subsection{Model information}{\tabular{ll}{
+\subsection{The executable}{\tabular{ll}{
    \strong{Method} \tab \strong{Description} \cr
-   \code{\link[=model-method-model-info]{$model_name()}} \tab Return the model name. \cr
-   \code{\link[=model-method-model-info]{$include_paths()}} \tab Return the Stan include paths. \cr
-   \code{\link[=model-method-model-info]{$cmdstan_version()}} \tab Return the CmdStan version associated with the model. \cr
+   \code{\link[=model-method-model-info]{$exe_file()}} \tab Return the file path to the compiled executable. \cr
+   \code{\link[=model-method-build_info]{$build_info()}} \tab Report how the executable was built, from its build record. \cr
+   \code{\link[=model-method-is_current]{$is_current()}} \tab Check whether the model can run without a rebuild. \cr
+   \code{\link[=model-method-model-info]{$cmdstan_version()}} \tab Return the CmdStan version that built the executable. \cr
    \code{\link[=model-method-model-info]{$cpp_options()}} \tab Return the C++ options associated with the model. \cr
-}
-
-}
-
-\subsection{Compilation}{\tabular{ll}{
-   \strong{Method} \tab \strong{Description} \cr
-   \code{\link[=model-method-compile]{$compile()}} \tab Compile Stan program. \cr
-   \code{\link[=model-method-model-info]{$exe_file()}} \tab Return or set the file path to the compiled executable. \cr
+   \code{\link[=model-method-model-info]{$user_header()}} \tab Return the path to the user header, if the model has one. \cr
    \code{\link[=model-method-model-info]{$hpp_file()}} \tab Return the file path to the \code{.hpp} file containing the generated C++ code. \cr
    \code{\link[=model-method-model-info]{$save_hpp_file()}} \tab Save the \code{.hpp} file containing the generated C++ code. \cr
-   \code{\link[=model-method-expose_functions]{$expose_functions()}} \tab Expose Stan functions for use in R. \cr
    \code{\link[=model-method-cmdstan_defaults]{$cmdstan_defaults()}} \tab Get CmdStan default argument values for a method. \cr
+   \code{\link[=model-method-expose_functions]{$expose_functions()}} \tab Expose Stan functions for use in R. \cr
 }
 
 }
@@ -70,119 +67,44 @@ methods, many of which have their own (linked) documentation pages:
 \examples{
 \dontrun{
 library(cmdstanr)
-library(posterior)
-library(bayesplot)
-color_scheme_set("brightblue")
 
-# Set path to CmdStan
-# (Note: if you installed CmdStan via install_cmdstan() with default settings
-# then setting the path is unnecessary but the default below should still work.
-# Otherwise use the `path` argument to specify the location of your
-# CmdStan installation.)
-set_cmdstan_path(path = NULL)
+# If you installed CmdStan with install_cmdstan() the path is already set.
+# Otherwise point CmdStanR at your installation with set_cmdstan_path().
+cmdstan_path()
 
-# Create a CmdStanModel object from a Stan program,
-# here using the example model that comes with CmdStan
+# Create a CmdStanModel object from a Stan program. This compiles the
+# program, or reuses the executable if it's already up to date.
 file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.stan")
 mod <- cmdstan_model(file)
 mod$print()
-# Print with line numbers. This can be set globally using the
-# `cmdstanr_print_line_numbers` option.
-mod$print(line_numbers = TRUE)
 
-# Data as a named list (like RStan)
+# Options for the Stan compiler (stanc_options) and the C++ build
+# (cpp_options). dir puts this executable in its own directory instead of
+# next to the Stan file, so it doesn't replace the one mod uses. Replace
+# tempdir() with a directory you'd keep.
+mod_threads <- cmdstan_model(
+  file,
+  dir = tempdir(),
+  stanc_options = list("O1"),
+  cpp_options = list(stan_threads = TRUE)
+)
+
+# What an executable was built from
+mod_threads$build_info()
+
+# Data is a named list matching the data block
 stan_data <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
 
-# Run MCMC using the 'sample' method
-fit_mcmc <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  parallel_chains = 2
-)
+# Fit the model with MCMC
+fit <- mod$sample(data = stan_data, seed = 123)
+fit$summary()
+fit$diagnostic_summary()
 
-# Use 'posterior' package for summaries
-fit_mcmc$summary()
+# Posterior draws, here as a posterior::draws_df
+fit$draws(format = "df")
 
-# Check sampling diagnostics
-fit_mcmc$diagnostic_summary()
-
-# Get posterior draws
-draws <- fit_mcmc$draws()
-print(draws)
-
-# Convert to data frame using posterior::as_draws_df
-as_draws_df(draws)
-
-# Plot posterior using bayesplot (ggplot2)
-mcmc_hist(fit_mcmc$draws("theta"))
-
-# Run 'optimize' method to get a point estimate (default is Stan's LBFGS algorithm)
-# and also demonstrate specifying data as a path to a file instead of a list
-my_data_file <- file.path(cmdstan_path(), "examples/bernoulli/bernoulli.data.json")
-fit_optim <- mod$optimize(data = my_data_file, seed = 123)
-fit_optim$summary()
-
-# Run 'optimize' again with 'jacobian=TRUE' and then draw from Laplace approximation
-# to the posterior
-fit_optim <- mod$optimize(data = my_data_file, jacobian = TRUE)
-fit_laplace <- mod$laplace(data = my_data_file, mode = fit_optim, draws = 2000)
-fit_laplace$summary()
-
-# Run 'variational' method to use ADVI to approximate posterior
-fit_vb <- mod$variational(data = stan_data, seed = 123)
-fit_vb$summary()
-mcmc_hist(fit_vb$draws("theta"))
-
-# Run the Pathfinder variational inference method
-fit_pf <- mod$pathfinder(data = stan_data, seed = 123)
-fit_pf$summary()
-mcmc_hist(fit_pf$draws("theta"))
-
-# Run 'pathfinder' again with more paths, fewer draws per path,
-# better covariance approximation, and fewer LBFGSs iterations
-fit_pf <- mod$pathfinder(data = stan_data, num_paths=10, single_path_draws=40,
-                         history_size=50, max_lbfgs_iters=100)
-
-# Specifying initial values as a function
-fit_mcmc_w_init_fun <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = function() list(theta = runif(1))
-)
-fit_mcmc_w_init_fun_2 <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = function(chain_id) {
-    # silly but demonstrates optional use of chain_id
-    list(theta = 1 / (chain_id + 1))
-  }
-)
-fit_mcmc_w_init_fun_2$init()
-
-# Specifying initial values as a list of lists
-fit_mcmc_w_init_list <- mod$sample(
-  data = stan_data,
-  seed = 123,
-  chains = 2,
-  refresh = 0,
-  init = list(
-    list(theta = 0.75), # chain 1
-    list(theta = 0.25)  # chain 2
-  )
-)
-fit_optim_w_init_list <- mod$optimize(
-  data = stan_data,
-  seed = 123,
-  init = list(
-    list(theta = 0.75)
-  )
-)
-fit_optim_w_init_list$init()
+# Plot with bayesplot
+bayesplot::mcmc_hist(fit$draws("theta"))
 }
 
 }

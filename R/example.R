@@ -20,7 +20,7 @@
 #'   the individual methods for details.
 #' @param quiet (logical) If `TRUE` (the default) then fitting the model is
 #'   wrapped in [utils::capture.output()].
-#' @param force_recompile Passed to the [$compile()][model-method-compile] method.
+#' @param force_recompile Passed to [cmdstan_model()].
 #'
 #' @return
 #' `cmdstanr_example()` returns the fitted model object from the selected
@@ -55,12 +55,20 @@
 #' }
 #'
 cmdstanr_example <-
-  function(example = c("logistic", "schools", "schools_ncp"),
-           method = c("sample", "optimize", "laplace", "variational", "pathfinder", "diagnose"),
-           ...,
-           quiet = TRUE,
-           force_recompile = getOption("cmdstanr_force_recompile", default = FALSE)) {
-
+  function(
+    example = c("logistic", "schools", "schools_ncp"),
+    method = c(
+      "sample",
+      "optimize",
+      "laplace",
+      "variational",
+      "pathfinder",
+      "diagnose"
+    ),
+    ...,
+    quiet = TRUE,
+    force_recompile = NULL
+  ) {
     example <- match.arg(example)
     method <- match.arg(method)
     example_program <- paste0(example, ".stan")
@@ -87,6 +95,9 @@ cmdstanr_example <-
 print_example_program <-
   function(example = c("logistic", "schools", "schools_ncp")) {
     example <- match.arg(example)
-    code <- readLines(system.file(paste0(example, ".stan"), package = "cmdstanr"))
+    code <- readLines(system.file(
+      paste0(example, ".stan"),
+      package = "cmdstanr"
+    ))
     cat(code, sep = "\n")
   }

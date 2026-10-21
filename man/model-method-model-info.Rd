@@ -7,10 +7,6 @@
 \item{line_numbers}{(logical) Should line numbers be printed? The default is
 \code{getOption("cmdstanr_print_line_numbers", FALSE)}.}
 
-\item{path}{(string) The path to a model executable. If \code{NULL} (the default),
-\verb{$exe_file()} returns the current path. Otherwise, the stored path is
-updated before being returned.}
-
 \item{dir}{(string) The directory in which to save the \code{.hpp} file. The
 default is the directory containing the Stan program.}
 }
@@ -27,35 +23,43 @@ code, or \code{NULL} if the model was created without a Stan file.
 \item \verb{$exe_file()} returns a path as a string, or \code{character(0)} if no
 executable path is set.
 \item \verb{$include_paths()} returns a character vector of absolute paths or \code{NULL}.
-\item \verb{$cmdstan_version()} returns a CmdStan version as a string.
-\item \verb{$cpp_options()} returns a named list of C++ options.
-\item \verb{$hpp_file()} returns the path to the \code{.hpp} file as a string when C++ code
-was generated while compiling this model object. It errors if no \code{.hpp}
-path is available, such as when an up-to-date executable was reused.
-\item \verb{$save_hpp_file()} requires an available \code{.hpp} file. It moves the file to
-\code{dir}, updates the stored path, and returns the new path invisibly.
+\item \verb{$cmdstan_version()} returns the version of CmdStan that built the
+executable, as a string.
+\item \verb{$cpp_options()} returns a named list of C++ options, with names in their
+make spelling and values as the strings make received: \code{TRUE} comes back
+as \code{"true"} and \code{FALSE} as \code{""}. To ask whether the executable was built
+with a feature, use \verb{$build_info()}, which reports logicals.
+\item \verb{$user_header()} returns the absolute path to the user header as a string,
+or \code{NULL} if the model has no user header.
+\item \verb{$hpp_file()} returns the path to the \code{.hpp} file holding the C++ code
+generated for the Stan program when the model object was created. It
+errors if the model was created without a Stan file.
+\item \verb{$save_hpp_file()} moves the \code{.hpp} file to \code{dir}, updates the stored
+path, and returns the new path invisibly.
 }
 }
 \description{
 These methods access information stored in a \code{\link{CmdStanModel}}
 object, print its Stan program, and manage paths to its executable and
-generated C++ file.
+generated C++ file. For how the executable was built, see the
+\code{\link[=model-method-build_info]{$build_info()}} method, which has its own page.
 
 \if{html}{\out{<div class="sourceCode">}}\preformatted{stan_file()
 has_stan_file()
 code()
 print(line_numbers = getOption("cmdstanr_print_line_numbers", FALSE))
 model_name()
-exe_file(path = NULL)
+exe_file()
 include_paths()
 cmdstan_version()
 cpp_options()
+user_header()
 hpp_file()
 save_hpp_file(dir = NULL)
 }\if{html}{\out{</div>}}
 }
 \seealso{
-\code{\link[=model-method-compile]{$compile()}} and \code{\link[=cmdstan_model]{cmdstan_model()}}
+\code{\link[=cmdstan_model]{cmdstan_model()}}
 
 The CmdStanR website
 (\href{https://mc-stan.org/cmdstanr/}{mc-stan.org/cmdstanr}) for online
@@ -68,13 +72,14 @@ The Stan and CmdStan documentation:
 }
 
 Other CmdStanModel methods:
+\code{\link{model-method-build_info}},
 \code{\link{model-method-check_syntax}},
 \code{\link{model-method-cmdstan_defaults}},
-\code{\link{model-method-compile}},
 \code{\link{model-method-diagnose}},
 \code{\link{model-method-expose_functions}},
 \code{\link{model-method-format}},
 \code{\link{model-method-generate-quantities}},
+\code{\link{model-method-is_current}},
 \code{\link{model-method-laplace}},
 \code{\link{model-method-optimize}},
 \code{\link{model-method-pathfinder}},

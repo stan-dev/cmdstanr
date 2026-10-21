@@ -6,12 +6,26 @@
 \title{Compile additional methods for accessing the model log-probability function
 and parameter constraining and unconstraining.}
 \usage{
-init_model_methods(seed = 1, verbose = FALSE)
+init_model_methods(data = NULL, seed = 1, verbose = FALSE, quiet = FALSE)
 }
 \arguments{
+\item{data}{(multiple options) A named list or the path to a JSON data
+file. Pass the data the fit was run with when a fit reloaded in a new
+R session has lost its data file, which happens when the data was
+originally passed as a list instead of a file. Other data with the
+same structure is accepted, so pass it only when you mean to
+evaluate the draws under other data. \verb{$data_file()} then returns the
+new path. A list is written to the temporary directory again, so
+call \verb{$save_data_file()} before saving the fit if you'll reload it
+in another session.}
+
 \item{seed}{(integer) The random seed to use when initializing the model.}
 
 \item{verbose}{(logical) Whether to show verbose logging during compilation.}
+
+\item{quiet}{(logical) Should the message announcing the compilation be
+suppressed? The default is \code{FALSE}. Compiler output is controlled by
+\code{verbose}.}
 }
 \value{
 \code{NULL}, invisibly.
@@ -21,11 +35,19 @@ The \verb{$init_model_methods()} method compiles and initializes the
 \code{log_prob}, \code{grad_log_prob}, \code{hessian}, \code{constrain_variables},
 \code{unconstrain_variables} and \code{unconstrain_draws} functions. These are then
 available as methods of the fitted model object. This requires the
-additional \pkg{Rcpp} package.
+additional \pkg{Rcpp} package. The methods compile once per model
+object, so later fits of the same model reuse them. To avoid compiling
+them again in every new R session, set the \code{rcpp.cache.dir} option as
+described for \code{\link[=model-method-expose_functions]{$expose_functions()}}.
 
 If a model or fit object was saved with \code{\link[base:saveRDS]{base::saveRDS()}} and later
 reloaded, any previously compiled model-method bindings will be rebuilt in
-the current R session when this method is called.
+the current R session when this method is called. A reloaded fit also
+needs the data the model was fit with. Data originally passed as a file
+is found again as long as the file still exists. However, data passed as
+a list was written to the temporary directory, so either call
+\verb{$save_data_file()} \emph{before} saving the fit (to keep that file) or pass
+the original data again via the \code{data} argument.
 
 Note: there may be many compiler warnings emitted during compilation but
 these can be ignored so long as they are warnings and not errors.
@@ -38,6 +60,5 @@ fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TR
 }
 \seealso{
 \code{\link[=log_prob]{log_prob()}}, \code{\link[=grad_log_prob]{grad_log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
-\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}},
-\code{\link[=hessian]{hessian()}}
+\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=hessian]{hessian()}}
 }

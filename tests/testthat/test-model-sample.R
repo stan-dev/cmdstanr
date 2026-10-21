@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 stan_program <- testing_stan_file("bernoulli")
 mod <- testing_model("bernoulli")
@@ -86,12 +88,106 @@ test_that("sample() method works with data list", {
   expect_s3_class(fit, "CmdStanMCMC")
 })
 
+test_that("sample progress follows CmdStan's cumulative iteration count", {
+  skip_if_not_installed("progressr")
+
+  total <- NULL
+  amounts <- numeric()
+  handler <- progressr::make_progression_handler(
+    "cmdstanr-test",
+    reporter = list(
+      initiate = function(config, ...) {
+        total <<- config$max_steps
+      },
+      update = function(config, state, progression, ...) {
+        if (progression$amount > 0) {
+          amounts <<- c(amounts, progression$amount)
+        }
+      }
+    ),
+    intrusiveness = 0,
+    enable = TRUE
+  )
+
+  fit <- progressr::with_progress(
+    mod$sample(
+      data = data_list,
+      chains = 2,
+      parallel_chains = 2,
+      iter_warmup = 100,
+      iter_sampling = 70,
+      refresh = 50,
+      show_messages = FALSE,
+      show_progress_bar = TRUE
+    ),
+    handlers = handler,
+    enable = TRUE
+  )
+
+  expect_s3_class(fit, "CmdStanMCMC")
+  expect_equal(total, 340)
+  expect_equal(sum(amounts), 340)
+})
+
+test_that("the chain timing lines held by the progress bar print once each", {
+  skip_if_not_installed("progressr")
+
+  output <- capture.output(
+    fit <- progressr::with_progress(
+      mod$sample(
+        data = data_list,
+        chains = 2,
+        parallel_chains = 2,
+        iter_warmup = 20,
+        iter_sampling = 20,
+        refresh = 10,
+        show_progress_bar = TRUE
+      ),
+      handlers = progressr::handler_void(),
+      enable = TRUE
+    )
+  )
+
+  expect_s3_class(fit, "CmdStanMCMC")
+  finished <- grep("finished in", output, value = TRUE)
+  chains <- sort(sub(" finished in.*", "", finished))
+  expect_equal(chains, c("Chain 1", "Chain 2"))
+})
+
+test_that("show_iteration_messages = FALSE hides the iteration lines", {
+  output <- capture.output(
+    fit <- mod$sample(
+      data = data_list,
+      chains = 1,
+      iter_warmup = 10,
+      iter_sampling = 10,
+      refresh = 5,
+      show_iteration_messages = FALSE
+    )
+  )
+  expect_false(any(grepl("Iteration:", output, fixed = TRUE)))
+})
+
 test_that("sample() method works with data files", {
   expect_sample_output(fit_r <- mod$sample(data = data_file_r, chains = 1), 1)
   expect_s3_class(fit_r, "CmdStanMCMC")
 
-  expect_sample_output(fit_json <- mod$sample(data = data_file_json, chains = 1), 1)
+  expect_sample_output(
+    fit_json <- mod$sample(data = data_file_json, chains = 1),
+    1
+  )
   expect_s3_class(fit_json, "CmdStanMCMC")
+})
+
+test_that("sample() finds a data file on the WSL filesystem", {
+  skip_if_not(os_is_wsl())
+  # R on Windows spells temp paths with backslashes, as in #1113
+  data_dir <- file.path(wsl_dir_prefix(), wsl_tempdir())
+  withr::defer(unlink(data_dir, recursive = TRUE))
+  data_file <- paste0(data_dir, "\\standata.json")
+  write_stan_json(data_list, data_file)
+  expect_sample_output(fit <- mod$sample(data = data_file, chains = 1), 1)
+  expect_s3_class(fit, "CmdStanMCMC")
 })
 
 test_that("sample() method works with init file", {
@@ -102,22 +198,15 @@ test_that("sample() method works with init file", {
     fileext = ".json"
   )
   write_stan_json(init_list, file = init_file)
-  expect_sample_output(mod$sample(data = data_file_r, init = init_file, chains = 1), 1)
+  expect_sample_output(
+    mod$sample(data = data_file_r, init = init_file, chains = 1),
+    1
+  )
 })
 
 test_that("sample() method runs when all arguments specified", {
   expect_sample_output(fit <- do.call(mod$sample, ok_arg_values), 2)
   expect_s3_class(fit, "CmdStanMCMC")
-})
-
-test_that("sample() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(stan_program, stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_sample_output(
-    mod_tmp$sample(data = data_list)
-  )
 })
 
 test_that("sample() prints informational messages depending on show_exceptions", {
@@ -134,7 +223,6 @@ test_that("sample() prints informational messages depending on show_exceptions",
 })
 
 test_that("sample() method errors for any invalid arguments before calling cmdstan", {
-  utils::capture.output(mod$compile())
   for (nm in names(bad_arg_values)) {
     args <- ok_arg_values
     args[[nm]] <- bad_arg_values[[nm]]
@@ -193,17 +281,28 @@ test_that("mc.cores option detected", {
 })
 
 test_that("sample() method runs when fixed_param = TRUE", {
-  mod_fp$compile()
-
-  expect_sample_output(fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000), 4)
+  expect_sample_output(
+    fit_1000 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 1000),
+    4
+  )
   expect_s3_class(fit_1000, "CmdStanMCMC")
-  expect_equal(dim(fit_1000$draws()), c(1000,4,10))
+  expect_equal(dim(fit_1000$draws()), c(1000, 4, 10))
 
-  expect_sample_output(fit_500 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500), 4)
-  expect_equal(dim(fit_500$draws()), c(500,4,10))
+  expect_sample_output(
+    fit_500 <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500),
+    4
+  )
+  expect_equal(dim(fit_500$draws()), c(500, 4, 10))
 
-  expect_sample_output(fit_500_w <- mod_fp$sample(fixed_param = TRUE, iter_sampling = 500, iter_warmup = 5000), 4)
-  expect_equal(dim(fit_500_w$draws()), c(500,4,10))
+  expect_sample_output(
+    fit_500_w <- mod_fp$sample(
+      fixed_param = TRUE,
+      iter_sampling = 500,
+      iter_warmup = 5000
+    ),
+    4
+  )
+  expect_equal(dim(fit_500_w$draws()), c(500, 4, 10))
 
   expect_equal(fit_1000$metadata()$algorithm, "fixed_param")
   expect_equal(fit_500$metadata()$algorithm, "fixed_param")
@@ -211,33 +310,47 @@ test_that("sample() method runs when fixed_param = TRUE", {
 })
 
 test_that("sample() method runs when adapt_engaged = FALSE", {
-  expect_sample_output(fit <- mod$sample(data = data_list, chains = 1, adapt_engaged = FALSE), 1)
+  expect_sample_output(
+    fit <- mod$sample(data = data_list, chains = 1, adapt_engaged = FALSE),
+    1
+  )
   draws <- try(fit$draws(), silent = TRUE)
   expect_false(inherits(draws, "try-error"))
 })
 
 test_that("chain_ids work with sample()", {
-  mod$compile()
-  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10,12)))
+  expect_sample_output(
+    fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(10, 12))
+  )
   expect_s3_class(fit12, "CmdStanMCMC")
-  expect_equal(fit12$metadata()$id, c(10,12))
+  expect_equal(fit12$metadata()$id, c(10, 12))
 
-  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100,7)))
+  expect_sample_output(
+    fit12 <- mod$sample(data = data_list, chains = 2, chain_ids = c(100, 7))
+  )
   expect_s3_class(fit12, "CmdStanMCMC")
-  expect_equal(fit12$metadata()$id, c(100,7))
+  expect_equal(fit12$metadata()$id, c(100, 7))
 
-  expect_sample_output(fit12 <- mod$sample(data = data_list, chains = 1, chain_ids = c(6)))
+  expect_sample_output(
+    fit12 <- mod$sample(data = data_list, chains = 1, chain_ids = c(6))
+  )
   expect_s3_class(fit12, "CmdStanMCMC")
   expect_equal(fit12$metadata()$id, c(6))
 
-  expect_error(mod$sample(data = data_list, chains = 1, chain_ids = c(0)),
-               "Assertion on 'chain_ids' failed: Element 1 is not >= 1.")
+  expect_error(
+    mod$sample(data = data_list, chains = 1, chain_ids = c(0)),
+    "Assertion on 'chain_ids' failed: Element 1 is not >= 1."
+  )
 
-  expect_error(mod$sample(data = data_list, chains = 2, chain_ids = c(1,1)),
-               "Assertion on 'chain_ids' failed: Contains duplicated values, position 2.")
+  expect_error(
+    mod$sample(data = data_list, chains = 2, chain_ids = c(1, 1)),
+    "Assertion on 'chain_ids' failed: Contains duplicated values, position 2."
+  )
 
-  expect_error(mod$sample(data = data_list, chains = 1, chain_ids = c(1,2)),
-               "Assertion on 'chain_ids' failed: Must have length 1, but has length 2.")
+  expect_error(
+    mod$sample(data = data_list, chains = 1, chain_ids = c(1, 2)),
+    "Assertion on 'chain_ids' failed: Must have length 1, but has length 2."
+  )
 })
 
 test_that("print statements in transformed data work", {
@@ -254,7 +367,9 @@ test_that("print statements in transformed data work", {
   }'
   ))
 
-  out <- capture.output(fit <- mod$sample(iter_warmup = 1, iter_sampling = 5, chains = 1))
+  out <- capture.output(
+    fit <- mod$sample(iter_warmup = 1, iter_sampling = 5, chains = 1)
+  )
   expect_true(any(grepl("*N = 2*", out)))
 })
 
@@ -284,7 +399,12 @@ test_that("seed works for multi chain sampling", {
   f <- write_stan_file(m, basename = "rngs.stan")
   mod <- cmdstan_model(f)
   utils::capture.output(
-    fit_sample <- mod$sample(chains = 2, iter_sampling = 5, iter_warmup = 100, seed = 2)
+    fit_sample <- mod$sample(
+      chains = 2,
+      iter_sampling = 5,
+      iter_warmup = 100,
+      seed = 2
+    )
   )
   chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
   chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
@@ -294,8 +414,12 @@ test_that("seed works for multi chain sampling", {
   expect_false(all(chain_tdata_1 == chain_tdata_2))
 
   utils::capture.output(
-    fit_sample <- mod$sample(chains = 2, iter_sampling = 5, iter_warmup = 100,
-                             seed = c(1, 2))
+    fit_sample <- mod$sample(
+      chains = 2,
+      iter_sampling = 5,
+      iter_warmup = 100,
+      seed = c(1, 2)
+    )
   )
   chain_tdata_1 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 1)
   chain_tdata_2 <- posterior::subset_draws(fit_sample$draws("tdata"), chain = 2)
@@ -305,7 +429,7 @@ test_that("seed works for multi chain sampling", {
   expect_false(all(chain_tdata_1 == chain_tdata_2))
 })
 
-test_that("Correct behavior if fixed_param not set when the model has no parameters", {
+test_that("A model with no parameters samples without fixed_param", {
   code <- "
   model {}
   generated quantities  {
@@ -314,21 +438,13 @@ test_that("Correct behavior if fixed_param not set when the model has no paramet
   "
   stan_file <- write_stan_file(code)
   m <- cmdstan_model(stan_file)
-  fake_cmdstan_version("2.35.0", m)
-  expect_error(
-    m$sample(),
-    "Model contains no parameters. Please use 'fixed_param = TRUE'."
+  expect_no_message(
+    utils::capture.output(
+      fit <- m$sample(iter_warmup = 10, iter_sampling = 10)
+    ),
+    message = "E-BFMI"
   )
-
-  reset_cmdstan_version(m)
-  if (cmdstan_version_compare(cmdstan_version(), "2.36.0") >= 0) {
-    # as of 2.36.0 we don't need fixed_param if no parameters
-    expect_no_error(
-      utils::capture.output(
-        fit <- m$sample(iter_warmup = 10, iter_sampling = 10, diagnostics = NULL)
-      )
-    )
-  }
+  expect_equal(fit$diagnostic_summary(quiet = TRUE)$ebfmi, rep(NA_real_, 4))
 })
 
 
@@ -355,18 +471,39 @@ test_that("Errors are suppressed with show_exceptions", {
       suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1)),
       "Chain 1 Exception: vector[uni] assign: accessing element out of range",
       fixed = TRUE
-    ))
+    )
+  )
 
   expect_sample_output(
     expect_no_message(
-      suppressWarnings(errmod$sample(data = list(y_mean = 1), chains = 1, show_exceptions = FALSE))
-    ))
+      suppressWarnings(errmod$sample(
+        data = list(y_mean = 1),
+        chains = 1,
+        show_exceptions = FALSE
+      ))
+    )
+  )
+})
+
+test_that("compressed fits support latent dynamics files and CmdStan tools", {
+  fit <- mod$sample(
+    data = data_list,
+    chains = 2,
+    refresh = 0,
+    compress = "gzip",
+    save_latent_dynamics = TRUE
+  )
+  checkmate::expect_file_exists(
+    fit$latent_dynamics_files(),
+    extension = "csv.gz"
+  )
+  expect_output(fit$cmdstan_summary(), "Inference for Stan model")
+  expect_output(fit$cmdstan_diagnose(), "Processing complete")
 })
 
 test_that("All output can be suppressed by show_messages", {
-  stan_program <- testing_stan_file("bernoulli")
+  mod <- testing_model("bernoulli")
   data_list <- testing_data("bernoulli")
-  mod <- cmdstan_model(stan_program, force_recompile = TRUE)
   withr::local_options(list("cmdstanr_verbose" = FALSE))
   output <- capture.output(
     fit <- mod$sample(data = data_list, show_messages = FALSE)

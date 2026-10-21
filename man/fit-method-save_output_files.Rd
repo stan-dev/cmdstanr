@@ -25,13 +25,20 @@
 \alias{metric_files}
 \title{Save output and data files}
 \usage{
-save_output_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
+save_output_files(
+  dir = ".",
+  basename = NULL,
+  timestamp = TRUE,
+  random = TRUE,
+  compress = NULL
+)
 
 save_latent_dynamics_files(
   dir = ".",
   basename = NULL,
   timestamp = TRUE,
-  random = TRUE
+  random = TRUE,
+  compress = NULL
 )
 
 save_profile_files(dir = ".", basename = NULL, timestamp = TRUE, random = TRUE)
@@ -66,6 +73,11 @@ Defaults to \code{TRUE}. See \strong{Details}.}
 \item{random}{(logical) Should a six-character random hexadecimal suffix be
 added to the file name(s)? Defaults to \code{TRUE}. See \strong{Details}.}
 
+\item{compress}{(string) Compression for the saved CSV files: \code{"none"},
+\code{"gzip"}, or \code{"bzip2"}. If \code{NULL} (the default), the files keep their
+current compression. Only applies to \verb{$save_output_files()}
+and \verb{$save_latent_dynamics_files()}.}
+
 \item{include_failed}{(logical) Should CmdStan runs that failed also be
 included? The default is \code{FALSE}.}
 }
@@ -81,10 +93,10 @@ paths without moving any files.
 }
 \description{
 Fitted model objects returned directly by a \code{\link{CmdStanModel}}
-method have methods for saving (moving to a specified location) files
-created by CmdStanR, including CmdStan output CSV files and input data
-files. These methods move the files from their current location (possibly
-the temporary directory) to a user-specified location. \strong{The paths stored
+method have methods for saving files created by CmdStanR, including
+CmdStan output CSV files and input data files. These methods move the
+CSV files from their current location (possibly the temporary directory)
+to a user-specified location, and copy the data file. \strong{The paths stored
 in the fitted model object will also be updated to point to the new file
 locations.}
 
@@ -99,7 +111,8 @@ unavailable. See \strong{Reconstructed fitted model objects} in the
 \section{Details}{
 
 For \verb{$save_output_files()} the files moved to \code{dir} will have names of
-the form \code{basename-timestamp-id-random.csv}, where
+the form \code{basename-timestamp-id-random.csv} (\code{.csv.gz} or \code{.csv.bz2} if
+compressed), where
 \itemize{
 \item \code{basename} is the user's provided \code{basename} argument or, if \code{NULL}, the
 model name;
@@ -110,7 +123,8 @@ non-MCMC);
 }
 
 \verb{$save_latent_dynamics_files()} uses the pattern
-\code{basename-diagnostic-timestamp-id-random.csv}. The
+\code{basename-diagnostic-timestamp-id-random.csv} (\code{.csv.gz} or \code{.csv.bz2} if
+compressed). The
 \verb{$latent_dynamics_files()} and
 \verb{$save_latent_dynamics_files()} methods apply only to \code{\link{CmdStanMCMC}} and
 \code{\link{CmdStanVB}} objects created with \code{save_latent_dynamics = TRUE}.
@@ -128,7 +142,8 @@ non-MCMC);
 
 \verb{$save_data_file()} uses the pattern \code{basename-timestamp-random.ext}, where
 \code{.ext} is the original data file extension. No \code{id} is included because even
-with multiple MCMC chains the data file is the same.
+with multiple MCMC chains the data file is the same. The original file is
+left in place.
 }
 
 \examples{

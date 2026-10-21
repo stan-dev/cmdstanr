@@ -18,12 +18,6 @@ CmdStanFit <- R6::R6Class(
       private$return_codes_ <- self$runset$procs$return_codes()
 
       private$model_methods_env_ <- new.env()
-      if (!is.null(runset$model_methods_env())) {
-        for (n in ls(runset$model_methods_env(), all.names = TRUE)) {
-          assign(n, get(n, runset$model_methods_env()), private$model_methods_env_)
-        }
-      }
-      drop_stale_model_methods(private$model_methods_env_)
 
       self$functions <- new.env()
       if (!is.null(runset$standalone_env())) {
@@ -31,21 +25,17 @@ CmdStanFit <- R6::R6Class(
           assign(n, get(n, runset$standalone_env()), self$functions)
         }
       }
-
-      if (!is.null(private$model_methods_env_$model_ptr)) {
-        initialize_model_pointer(private$model_methods_env_, self$data_file(), 0)
-      }
       invisible(self)
     },
     num_procs = function() {
       self$runset$num_procs()
     },
-    print = function(variables = NULL, ..., digits = 2, max_rows = getOption("cmdstanr_max_rows", 10)) {
-      if (is.null(private$draws_) &&
-          !length(self$output_files(include_failed = FALSE))) {
-        stop("Fitting failed. Unable to print.", call. = FALSE)
-      }
-
+    print = function(
+      variables = NULL,
+      ...,
+      digits = 2,
+      max_rows = getOption("cmdstanr_max_rows", 10)
+    ) {
       # filter variables before passing to summary to avoid computing anything
       # that won't be printed because of max_rows
       all_variables <- self$metadata()$variables
@@ -55,8 +45,11 @@ CmdStanFit <- R6::R6Class(
       } else {
         matches <- matching_variables(variables, all_variables)
         if (length(matches$not_found) > 0) {
-          stop("Can't find the following variable(s): ",
-               paste(matches$not_found, collapse = ", "), call. = FALSE)
+          stop(
+            "Can't find the following variable(s): ",
+            paste(matches$not_found, collapse = ", "),
+            call. = FALSE
+          )
         }
         total_rows <- length(matches$matching)
         variables_to_print <- matches$matching[seq_len(max_rows)]
@@ -66,23 +59,37 @@ CmdStanFit <- R6::R6Class(
 
       out <- self$summary(variables_to_print, ...)
       out <- as.data.frame(out)
-      out[,  1] <- base::format(out[, 1], justify = "left")
-      out[, -1] <- base::format(round(out[, -1], digits = digits), nsmall = digits)
+      out[, 1] <- base::format(out[, 1], justify = "left")
+      out[, -1] <- base::format(
+        round(out[, -1], digits = digits),
+        nsmall = digits
+      )
       for (col in grep("ess_", colnames(out), value = TRUE)) {
         out[[col]] <- as.integer(out[[col]])
       }
 
-      opts <- options(max.print = prod(dim(out)))
-      on.exit(options(max.print = opts$max.print), add = TRUE)
+      withr::local_options(max.print = prod(dim(out)))
       base::print(out, row.names = FALSE)
       if (max_rows < total_rows) {
-        cat("\n # showing", max_rows, "of", total_rows,
-            "rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)\n")
+        cat(
+          "\n # showing",
+          max_rows,
+          "of",
+          total_rows,
+          paste0(
+            "rows (change via `max_rows` argument or ",
+            "`cmdstanr_max_rows` option)\n"
+          )
+        )
       }
       invisible(self)
     },
-    expose_functions = function(global = FALSE, verbose = FALSE) {
-      expose_stan_functions(self$functions, global, verbose)
+    expose_functions = function(
+      global = FALSE,
+      verbose = FALSE,
+      quiet = FALSE
+    ) {
+      expose_stan_functions(self$functions, global, verbose, quiet)
       invisible(NULL)
     }
   ),
@@ -92,7 +99,31 @@ CmdStanFit <- R6::R6Class(
     init_ = NULL,
     profiles_ = NULL,
     model_methods_env_ = NULL,
-    return_codes_ = NULL
+    return_codes_ = NULL,
+
+    # The CSV files to read, with a better error when the ones CmdStan wrote
+    # to the temp directory are gone
+    csv_files_ = function() {
+      files <- self$output_files(include_failed = FALSE)
+      output_dir <- self$runset$args$output_dir
+      if (
+        !all(file.exists(files)) &&
+          isTRUE(self$runset$args$using_tempdir) &&
+          all(repair_path(dirname(files)) == output_dir)
+      ) {
+        stop(
+          "The fit's CSV files are gone. They were in a temporary ",
+          "directory ('",
+          output_dir,
+          "'), which doesn't survive the ",
+          "session, so a fit restored later (e.g., from a cached Quarto ",
+          "chunk) can't read them. To avoid this, pass `output_dir` when ",
+          "fitting or save the fit with `$save_object()`.",
+          call. = FALSE
+        )
+      }
+      files
+    }
   )
 )
 
@@ -140,6 +171,12 @@ CmdStanFit$set("public", name = "materialize", value = materialize)
 #'   more memory efficient. Internally this will use `qs2::qs_save()` to save
 #'   the object and you can read it back into \R later with `qs2::qs_read()`.
 #'
+#'   The data file is not part of the saved object. When the data was passed
+#'   as a list, the file is in the session's temporary directory, so a fit
+#'   that will use the compiled model methods in a later session needs either
+#'   `$save_data_file()` first or the data passed to `$init_model_methods()`
+#'   after reloading.
+#'
 #' @param file (string) Path where the file should be saved.
 #' @param format (string) Serialization format for the object. The default is
 #'   `"rds"`. The `"qs2"` format uses `qs2::qs_save()` and requires the
@@ -179,7 +216,7 @@ save_object <- function(file, format = c("rds", "qs2"), ...) {
     saveRDS(self, file = file, ...)
   } else {
     if (!requireNamespace("qs2", quietly = TRUE)) {
-      stop("The 'qs2' package is required for format = \"qs2\".", call. = FALSE)
+      stop("The qs2 package is required for `format = \"qs2\"`.", call. = FALSE)
     }
     qs2::qs_save(self, file = file, ...)
   }
@@ -228,11 +265,12 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #'   example `options(cmdstanr_draws_format = "draws_df")` will change the
 #'   default to a data frame.
 #'
-#'   **Note about efficiency**: For models with a large number of parameters
-#'   (20k+) we recommend using the `"draws_list"` format, which is the most
-#'   efficient and RAM friendly when combining draws from multiple chains. If
-#'   speed or memory is not a constraint we recommend selecting the format that
-#'   most suits the coding style of the post processing phase.
+#'   **Note about efficiency**: for sampling and generated quantities,
+#'   `"draws_array"` is the format the draws are read into, so it is the
+#'   cheapest in time and memory. The other formats are converted from it and
+#'   need at least one more copy of the draws, `"draws_list"` and `"draws_df"`
+#'   the most. To save memory read only the variables you need with the
+#'   `variables` argument.
 #'
 #' @return
 #' Depends on the value of `format`. The defaults are:
@@ -293,7 +331,11 @@ CmdStanFit$set("public", name = "save_object", value = save_object)
 #' head(fit$draws("beta", format = "df"))
 #' }
 #'
-draws <- function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format")) {
+draws <- function(
+  variables = NULL,
+  inc_warmup = FALSE,
+  format = getOption("cmdstanr_draws_format")
+) {
   # CmdStanMCMC and CmdStanGQ have separate implementations,
   # this is used for CmdStanVB and CmdStanMLE
   if (is.null(format)) {
@@ -301,12 +343,11 @@ draws <- function(variables = NULL, inc_warmup = FALSE, format = getOption("cmds
   } else {
     format <- assert_valid_draws_format(format)
   }
-  if (!length(self$output_files(include_failed = FALSE))) {
-    stop("Fitting failed. Unable to retrieve the draws.", call. = FALSE)
-  }
   if (inc_warmup) {
-    warning("'inc_warmup' is ignored except when used with CmdStanMCMC objects.",
-            call. = FALSE)
+    warning(
+      "`inc_warmup` is ignored except when used with CmdStanMCMC objects.",
+      call. = FALSE
+    )
   }
   if (is.null(private$draws_)) {
     private$read_csv_(format = format)
@@ -349,10 +390,14 @@ CmdStanFit$set("public", name = "draws", value = draws)
 init <- function() {
   if (is.null(private$init_)) {
     init_paths <- self$metadata()$init
-    if (!is.character(init_paths) || any(!file.exists(init_paths))) {
+    if (!is.character(init_paths) || !all(file.exists(init_paths))) {
       stop("Can't find initial values files.", call. = FALSE)
     }
-    private$init_ <- lapply(init_paths, jsonlite::read_json, simplifyVector = TRUE)
+    private$init_ <- lapply(
+      init_paths,
+      jsonlite::read_json,
+      simplifyVector = TRUE
+    )
   }
   private$init_
 }
@@ -368,17 +413,37 @@ CmdStanFit$set("public", name = "init", value = init)
 #'   `log_prob`, `grad_log_prob`, `hessian`, `constrain_variables`,
 #'   `unconstrain_variables` and `unconstrain_draws` functions. These are then
 #'   available as methods of the fitted model object. This requires the
-#'   additional \pkg{Rcpp} package.
+#'   additional \pkg{Rcpp} package. The methods compile once per model
+#'   object, so later fits of the same model reuse them. To avoid compiling
+#'   them again in every new R session, set the `rcpp.cache.dir` option as
+#'   described for [`$expose_functions()`][model-method-expose_functions].
 #'
 #'   If a model or fit object was saved with [base::saveRDS()] and later
 #'   reloaded, any previously compiled model-method bindings will be rebuilt in
-#'   the current R session when this method is called.
+#'   the current R session when this method is called. A reloaded fit also
+#'   needs the data the model was fit with. Data originally passed as a file
+#'   is found again as long as the file still exists. However, data passed as
+#'   a list was written to the temporary directory, so either call
+#'   `$save_data_file()` *before* saving the fit (to keep that file) or pass
+#'   the original data again via the `data` argument.
 #'
 #'   Note: there may be many compiler warnings emitted during compilation but
 #'   these can be ignored so long as they are warnings and not errors.
 #'
+#' @param data (multiple options) A named list or the path to a JSON data
+#'   file. Pass the data the fit was run with when a fit reloaded in a new
+#'   R session has lost its data file, which happens when the data was
+#'   originally passed as a list instead of a file. Other data with the
+#'   same structure is accepted, so pass it only when you mean to
+#'   evaluate the draws under other data. `$data_file()` then returns the
+#'   new path. A list is written to the temporary directory again, so
+#'   call `$save_data_file()` before saving the fit if you'll reload it
+#'   in another session.
 #' @param seed (integer) The random seed to use when initializing the model.
 #' @param verbose (logical) Whether to show verbose logging during compilation.
+#' @param quiet (logical) Should the message announcing the compilation be
+#'   suppressed? The default is `FALSE`. Compiler output is controlled by
+#'   `verbose`.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -388,33 +453,72 @@ CmdStanFit$set("public", name = "init", value = init)
 #' # fit_mcmc$init_model_methods()
 #' }
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
-#'   [hessian()]
+#'   [unconstrain_variables()], [unconstrain_draws()], [hessian()]
 #'
-init_model_methods <- function(seed = 1, verbose = FALSE) {
-  if (model_methods_are_live(private$model_methods_env_)) {
+init_model_methods <- function(
+  data = NULL,
+  seed = 1,
+  verbose = FALSE,
+  quiet = FALSE
+) {
+  if (is.null(data) && model_methods_are_live(private$model_methods_env_)) {
     return(invisible(NULL))
   }
   if (os_is_wsl()) {
-    stop("Additional model methods are not currently available with ",
-          "WSL CmdStan and will not be compiled",
-          call. = FALSE)
+    stop(
+      "Additional model methods are not currently available with ",
+      "WSL CmdStan and will not be compiled",
+      call. = FALSE
+    )
   }
-  drop_stale_model_methods(private$model_methods_env_)
-  if (length(private$model_methods_env_$hpp_code_) == 0) {
-    stop("Model methods cannot be used with a pre-compiled Stan executable, ",
-          "the model must be compiled again", call. = FALSE)
+  # The methods compile once into the model's environment, which every fit
+  # of the model shares. Each fit copies the bindings and makes its own
+  # model pointer.
+  model_env <- self$runset$model_methods_env()
+  if (length(model_env$hpp_code_) == 0) {
+    stop(
+      "Model methods cannot be used with a model created from an ",
+      "executable alone. There is no Stan program to compile them from.",
+      call. = FALSE
+    )
   }
-  if (is.null(private$model_methods_env_$model_ptr)) {
+  data_file <- if (is.null(data)) {
+    self$data_file()
+  } else {
+    resolve_path(process_data(data, self$runset$args$model_variables))
+  }
+  if (!is.null(data_file) && !file.exists(data_file)) {
+    stop(
+      "Can't find data file '",
+      data_file,
+      "', so the model methods can't be initialized.",
+      if (is.null(data)) {
+        paste0(
+          " Pass the data the fit was run with to ",
+          "`$init_model_methods()` as `data`, or call `$save_data_file()` ",
+          "before saving a fit for a later session."
+        )
+      },
+      call. = FALSE
+    )
+  }
+  drop_stale_model_methods(model_env)
+  if (is.null(model_env$model_ptr)) {
     require_suggested_package("Rcpp")
-    expose_model_methods(private$model_methods_env_, verbose)
+    expose_model_methods(model_env, verbose, quiet)
   }
-  if (!model_methods_are_live(private$model_methods_env_)) {
-    initialize_model_pointer(private$model_methods_env_, self$data_file(), seed)
+  for (n in ls(model_env, all.names = TRUE)) {
+    assign(n, get(n, model_env), private$model_methods_env_)
   }
+  initialize_model_pointer(private$model_methods_env_, data_file, seed)
+  self$runset$args$data_file <- data_file
   invisible(NULL)
 }
-CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods)
+CmdStanFit$set(
+  "public",
+  name = "init_model_methods",
+  value = init_model_methods
+)
 
 #' Calculate the log-probability given a provided vector of unconstrained parameters.
 #'
@@ -436,17 +540,22 @@ CmdStanFit$set("public", name = "init_model_methods", value = init_model_methods
 #' }
 #'
 #' @seealso [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
-#'   [hessian()]
+#'   [unconstrain_variables()], [unconstrain_draws()], [hessian()]
 #'
 log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
-  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
-    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(unconstrained_variables), " were provided!", call. = FALSE)
+  env <- private$model_methods_env_
+  if (length(unconstrained_variables) != env$num_upars_) {
+    stop(
+      "Model has ",
+      env$num_upars_,
+      " unconstrained parameter(s), but ",
+      length(unconstrained_variables),
+      " were provided!",
+      call. = FALSE
+    )
   }
-  private$model_methods_env_$log_prob(private$model_methods_env_$model_ptr_,
-                                      unconstrained_variables, jacobian)
+  env$log_prob(env$model_ptr_, unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "log_prob", value = log_prob)
 
@@ -469,17 +578,22 @@ CmdStanFit$set("public", name = "log_prob", value = log_prob)
 #' }
 #'
 #' @seealso [log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()],
-#'   [hessian()]
+#'   [unconstrain_variables()], [unconstrain_draws()], [hessian()]
 #'
 grad_log_prob <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
-  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
-    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(unconstrained_variables), " were provided!", call. = FALSE)
+  env <- private$model_methods_env_
+  if (length(unconstrained_variables) != env$num_upars_) {
+    stop(
+      "Model has ",
+      env$num_upars_,
+      " unconstrained parameter(s), but ",
+      length(unconstrained_variables),
+      " were provided!",
+      call. = FALSE
+    )
   }
-  private$model_methods_env_$grad_log_prob(private$model_methods_env_$model_ptr_,
-                                            unconstrained_variables, jacobian)
+  env$grad_log_prob(env$model_ptr_, unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 
@@ -503,16 +617,22 @@ CmdStanFit$set("public", name = "grad_log_prob", value = grad_log_prob)
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [variable_skeleton()]
+#'   [unconstrain_variables()], [unconstrain_draws()]
 #'
 hessian <- function(unconstrained_variables, jacobian = TRUE) {
   self$init_model_methods()
-  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
-    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(unconstrained_variables), " were provided!", call. = FALSE)
+  env <- private$model_methods_env_
+  if (length(unconstrained_variables) != env$num_upars_) {
+    stop(
+      "Model has ",
+      env$num_upars_,
+      " unconstrained parameter(s), but ",
+      length(unconstrained_variables),
+      " were provided!",
+      call. = FALSE
+    )
   }
-  private$model_methods_env_$hessian(private$model_methods_env_$model_ptr_,
-                                      unconstrained_variables, jacobian)
+  env$hessian(env$model_ptr_, unconstrained_variables, jacobian)
 }
 CmdStanFit$set("public", name = "hessian", value = hessian)
 
@@ -524,7 +644,10 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #'   parameters to the unconstrained scale.
 #'
 #' @param variables (list) A list of parameter values to transform, in the same
-#'   format as provided to the `init` argument of the `$sample()` method.
+#'   format as provided to the `init` argument of the `$sample()` method. A
+#'   tuple is an unnamed list of its elements and a complex value an R
+#'   complex number, as `$constrain_variables()` returns them. A zero-size
+#'   variable has no unconstrained values and can be left out or included.
 #'
 #' @return A numeric vector of unconstrained parameter values.
 #'
@@ -535,11 +658,13 @@ CmdStanFit$set("public", name = "hessian", value = hessian)
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_draws()], [variable_skeleton()], [hessian()]
+#'   [unconstrain_draws()], [hessian()]
 #'
 unconstrain_variables <- function(variables) {
   self$init_model_methods()
-  model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
+  env <- private$model_methods_env_
+  stan_variables <- self$metadata()$stan_variables
+  model_par_names <- stan_variables[stan_variables != "lp__"]
   prov_par_names <- names(variables)
 
   # Ignore extraneous parameters
@@ -548,19 +673,28 @@ unconstrain_variables <- function(variables) {
 
   # If zero-length parameters are present, they will be listed in model_variables
   # but not in metadata()$variables
-  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
+  nonzero_length_params <- names(model_variables$parameters) %in%
+    model_par_names
   model_par_names <- names(model_variables$parameters[nonzero_length_params])
 
   model_pars_not_prov <- which(!(model_par_names %in% prov_par_names))
   if (length(model_pars_not_prov) > 0) {
-    stop("Model parameter(s): ", paste(model_par_names[model_pars_not_prov], collapse = ","),
-         " not provided!", call. = FALSE)
+    stop(
+      "Model parameter(s): ",
+      paste(model_par_names[model_pars_not_prov], collapse = ","),
+      " not provided!",
+      call. = FALSE
+    )
   }
 
-  variables_vector <- unlist(variables[model_par_names], recursive = TRUE)
-  private$model_methods_env_$unconstrain_variables(private$model_methods_env_$model_ptr_, variables_vector)
+  variables_vector <- flatten_variables(variables[model_par_names])
+  env$unconstrain_variables(env$model_ptr_, variables_vector)
 }
-CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_variables)
+CmdStanFit$set(
+  "public",
+  name = "unconstrain_variables",
+  value = unconstrain_variables
+)
 
 #' Transform all parameter draws to the unconstrained scale
 #'
@@ -569,7 +703,8 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #' @description The `$unconstrain_draws()` method transforms all parameter draws
 #'   to the unconstrained scale. If called with no arguments, then the draws
 #'   within the fit object are unconstrained. Alternatively, either an existing
-#'   draws object or a character vector of paths to CSV files can be passed.
+#'   draws object or a character vector of paths to CSV files can be passed. A
+#'   zero-size variable has no columns and is skipped.
 #'
 #' @param files (character vector) The paths to the CmdStan CSV files. These can
 #'   be files generated by running CmdStanR or running CmdStan directly.
@@ -598,32 +733,38 @@ CmdStanFit$set("public", name = "unconstrain_variables", value = unconstrain_var
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [variable_skeleton()], [hessian()]
+#'   [unconstrain_variables()], [hessian()]
 #'
-unconstrain_draws <- function(files = NULL, draws = NULL,
-                              format = getOption("cmdstanr_draws_format", "draws_array"),
-                              inc_warmup = FALSE) {
+unconstrain_draws <- function(
+  files = NULL,
+  draws = NULL,
+  format = getOption("cmdstanr_draws_format", "draws_array"),
+  inc_warmup = FALSE
+) {
   self$init_model_methods()
-  if (!(format %in% valid_draws_formats())) {
-    stop("Invalid draws format requested!", call. = FALSE)
-  }
+  env <- private$model_methods_env_
+  format <- assert_valid_draws_format(format)
   if (!is.null(files) || !is.null(draws)) {
     if (!is.null(files) && !is.null(draws)) {
-      stop("Either a list of CSV files or a draws object can be passed, not both",
-          call. = FALSE)
+      stop(
+        "Either a list of CSV files or a draws object can be passed, not both",
+        call. = FALSE
+      )
     }
     if (!is.null(files)) {
       read_csv <- read_cmdstan_csv(files = files)
       if (inc_warmup) {
-        draws <- posterior::bind_draws(read_csv$warmup_draws,
-                                        read_csv$post_warmup_draws,
-                                        along = "iteration")
+        draws <- posterior::bind_draws(
+          read_csv$warmup_draws,
+          read_csv$post_warmup_draws,
+          along = "iteration"
+        )
       } else {
         draws <- read_csv$post_warmup_draws
       }
     } else if (!is.null(draws)) {
       if (inc_warmup) {
-        message("'inc_warmup' cannot be used with a draws object. Ignoring.")
+        message("`inc_warmup` cannot be used with a draws object. Ignoring.")
       }
     }
   } else {
@@ -634,59 +775,25 @@ unconstrain_draws <- function(files = NULL, draws = NULL,
 
   chains <- posterior::nchains(draws)
 
-  model_par_names <- self$metadata()$stan_variables[self$metadata()$stan_variables != "lp__"]
-  model_variables <- self$runset$args$model_variables
-
-  # If zero-length parameters are present, they will be listed in model_variables
-  # but not in metadata()$variables
-  nonzero_length_params <- names(model_variables$parameters) %in% model_par_names
-
-  # Remove zero-length parameters from model_variables, otherwise process_init
-  # warns about missing inputs
-  pars <- names(model_variables$parameters[nonzero_length_params])
-
-  draws <- posterior::subset_draws(draws, variable = pars)
-  unconstrained <- private$model_methods_env_$unconstrain_draws(private$model_methods_env_$model_ptr_, draws)
-  uncon_names <- private$model_methods_env_$unconstrained_param_names(private$model_methods_env_$model_ptr_, FALSE, FALSE)
+  # the parameters' columns, in the order unconstrain_array() reads them
+  pars <- env$constrained_param_names(env$model_ptr_, FALSE, FALSE)
+  draws <- posterior::subset_draws(
+    draws,
+    variable = repair_variable_names(pars)
+  )
+  unconstrained <- env$unconstrain_draws(env$model_ptr_, draws)
+  uncon_names <- env$unconstrained_param_names(env$model_ptr_, FALSE, FALSE)
   names(unconstrained) <- repair_variable_names(uncon_names)
   unconstrained$.nchains <- chains
 
-  do.call(function(...) { create_draws_format(format, ...) }, unconstrained)
+  do.call(
+    function(...) {
+      create_draws_format(format, ...)
+    },
+    unconstrained
+  )
 }
 CmdStanFit$set("public", name = "unconstrain_draws", value = unconstrain_draws)
-
-#' Return the variable skeleton for `relist`
-#'
-#' @name fit-method-variable_skeleton
-#' @aliases variable_skeleton
-#' @description The `$variable_skeleton()` method returns the variable skeleton
-#'   needed by `utils::relist()` to re-structure a vector of constrained
-#'   parameter values to a named list.
-#' @param transformed_parameters (logical) Whether to include transformed
-#'   parameters in the skeleton (defaults to `TRUE`).
-#' @param generated_quantities (logical) Whether to include generated quantities
-#'   in the skeleton (defaults to `TRUE`).
-#'
-#' @return A named list suitable for use as the `skeleton` argument to
-#'   [utils::relist()].
-#'
-#' @examples
-#' \dontrun{
-#' fit_mcmc <- cmdstanr_example("logistic", method = "sample", force_recompile = TRUE)
-#' fit_mcmc$variable_skeleton()
-#' }
-#'
-#' @seealso [log_prob()], [grad_log_prob()], [constrain_variables()],
-#'   [unconstrain_variables()], [unconstrain_draws()], [hessian()]
-#'
-variable_skeleton <- function(transformed_parameters = TRUE, generated_quantities = TRUE) {
-  self$init_model_methods()
-  create_skeleton(private$model_methods_env_$param_metadata_,
-                  self$runset$args$model_variables,
-                  transformed_parameters,
-                  generated_quantities)
-}
-CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 
 #' Transform a set of unconstrained parameter values to the constrained scale
 #'
@@ -702,8 +809,13 @@ CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 #' @param generated_quantities (logical) Whether to return generated quantities
 #'   implied by newly-constrained parameters (defaults to TRUE).
 #'
-#' @return A named list of constrained parameter values and, if requested,
-#'   transformed parameters and generated quantities.
+#' @return A named list with one element per variable. A scalar is a number,
+#'   an indexed variable an array with its dimensions, a complex variable an
+#'   R complex value, a tuple an unnamed list of its elements, and an array
+#'   of tuples a list of those, with a `dim` when the array has more than one
+#'   dimension. A zero-size variable has no columns in CmdStan's output and
+#'   is omitted here, as it is from `$draws()`. A tuple element with no
+#'   columns comes back as `numeric(0)`, whatever shape it was declared with.
 #'
 #' @examples
 #' \dontrun{
@@ -712,24 +824,48 @@ CmdStanFit$set("public", name = "variable_skeleton", value = variable_skeleton)
 #' }
 #'
 #' @seealso [log_prob()], [grad_log_prob()], [unconstrain_variables()],
-#'   [unconstrain_draws()], [variable_skeleton()], [hessian()]
+#'   [unconstrain_draws()], [hessian()]
 #'
-constrain_variables <- function(unconstrained_variables, transformed_parameters = TRUE,
-                                generated_quantities = TRUE) {
+constrain_variables <- function(
+  unconstrained_variables,
+  transformed_parameters = TRUE,
+  generated_quantities = TRUE
+) {
   self$init_model_methods()
-  skeleton <- self$variable_skeleton(transformed_parameters, generated_quantities)
-
-  if (length(unconstrained_variables) != private$model_methods_env_$num_upars_) {
-    stop("Model has ", private$model_methods_env_$num_upars_, " unconstrained parameter(s), but ",
-          length(unconstrained_variables), " were provided!", call. = FALSE)
+  env <- private$model_methods_env_
+  if (length(unconstrained_variables) != env$num_upars_) {
+    stop(
+      "Model has ",
+      env$num_upars_,
+      " unconstrained parameter(s), but ",
+      length(unconstrained_variables),
+      " were provided!",
+      call. = FALSE
+    )
   }
-  cpars <- private$model_methods_env_$constrain_variables(
-    private$model_methods_env_$model_ptr_,
-    private$model_methods_env_$model_rng_,
-    unconstrained_variables, transformed_parameters, generated_quantities)
-  utils::relist(cpars, skeleton)
+  cpars <- env$constrain_variables(
+    env$model_ptr_,
+    env$model_rng_,
+    unconstrained_variables,
+    transformed_parameters,
+    generated_quantities
+  )
+  names <- env$constrained_param_names(
+    env$model_ptr_,
+    transformed_parameters,
+    generated_quantities
+  )
+  declarations <- unlist(
+    unname(self$runset$args$model_variables),
+    recursive = FALSE
+  )
+  unflatten_variables(cpars, names, declarations)
 }
-CmdStanFit$set("public", name = "constrain_variables", value = constrain_variables)
+CmdStanFit$set(
+  "public",
+  name = "constrain_variables",
+  value = constrain_variables
+)
 
 #' Extract log probability (target)
 #'
@@ -799,7 +935,8 @@ CmdStanFit$set("public", name = "constrain_variables", value = constrain_variabl
 #'
 lp <- function() {
   lp__ <- self$draws(variables = "lp__")
-  lp__ <- posterior::as_draws_matrix(lp__) # if mcmc this combines all chains, otherwise does nothing
+  # if mcmc this combines all chains, otherwise does nothing
+  lp__ <- posterior::as_draws_matrix(lp__)
   as.numeric(lp__)
 }
 CmdStanFit$set("public", name = "lp", value = lp)
@@ -974,10 +1111,10 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' @aliases config_files metric_files
 #'
 #' @description Fitted model objects returned directly by a [`CmdStanModel`]
-#'   method have methods for saving (moving to a specified location) files
-#'   created by CmdStanR, including CmdStan output CSV files and input data
-#'   files. These methods move the files from their current location (possibly
-#'   the temporary directory) to a user-specified location. **The paths stored
+#'   method have methods for saving files created by CmdStanR, including
+#'   CmdStan output CSV files and input data files. These methods move the
+#'   CSV files from their current location (possibly the temporary directory)
+#'   to a user-specified location, and copy the data file. **The paths stored
 #'   in the fitted model object will also be updated to point to the new file
 #'   locations.**
 #'
@@ -996,10 +1133,15 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'   Defaults to `TRUE`. See **Details**.
 #' @param random (logical) Should a six-character random hexadecimal suffix be
 #'   added to the file name(s)? Defaults to `TRUE`. See **Details**.
+#' @param compress (string) Compression for the saved CSV files: `"none"`,
+#'   `"gzip"`, or `"bzip2"`. If `NULL` (the default), the files keep their
+#'   current compression. Only applies to `$save_output_files()`
+#'   and `$save_latent_dynamics_files()`.
 #'
 #' @section Details:
 #' For `$save_output_files()` the files moved to `dir` will have names of
-#' the form `basename-timestamp-id-random.csv`, where
+#' the form `basename-timestamp-id-random.csv` (`.csv.gz` or `.csv.bz2` if
+#' compressed), where
 #' * `basename` is the user's provided `basename` argument or, if `NULL`, the
 #'   model name;
 #' * `timestamp` is of the form `format(Sys.time(), "%Y%m%d%H%M")`;
@@ -1008,7 +1150,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' * `random` contains six random hexadecimal characters.
 #'
 #' `$save_latent_dynamics_files()` uses the pattern
-#' `basename-diagnostic-timestamp-id-random.csv`. The
+#' `basename-diagnostic-timestamp-id-random.csv` (`.csv.gz` or `.csv.bz2` if
+#' compressed). The
 #' `$latent_dynamics_files()` and
 #' `$save_latent_dynamics_files()` methods apply only to [`CmdStanMCMC`] and
 #' [`CmdStanVB`] objects created with `save_latent_dynamics = TRUE`.
@@ -1026,7 +1169,8 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #'
 #' `$save_data_file()` uses the pattern `basename-timestamp-random.ext`, where
 #' `.ext` is the original data file extension. No `id` is included because even
-#' with multiple MCMC chains the data file is the same.
+#' with multiple MCMC chains the data file is the same. The original file is
+#' left in place.
 #'
 #' @return
 #' The `$save_*` methods print a message with the new file paths and (invisibly)
@@ -1051,59 +1195,86 @@ CmdStanFit$set("public", name = "cmdstan_diagnose", value = cmdstan_diagnose)
 #' fit$save_output_files(dir = my_dir, basename = "lettuce", timestamp = FALSE, random = FALSE)
 #' }
 #'
-save_output_files <- function(dir = ".",
-                              basename = NULL,
-                              timestamp = TRUE,
-                              random = TRUE) {
-  self$runset$save_output_files(dir, basename, timestamp, random)
+save_output_files <- function(
+  dir = ".",
+  basename = NULL,
+  timestamp = TRUE,
+  random = TRUE,
+  compress = NULL
+) {
+  self$runset$save_output_files(dir, basename, timestamp, random, compress)
 }
 CmdStanFit$set("public", name = "save_output_files", value = save_output_files)
 
 #' @rdname fit-method-save_output_files
-save_latent_dynamics_files <- function(dir = ".",
-                                       basename = NULL,
-                                       timestamp = TRUE,
-                                       random = TRUE) {
-  self$runset$save_latent_dynamics_files(dir, basename, timestamp, random)
+save_latent_dynamics_files <- function(
+  dir = ".",
+  basename = NULL,
+  timestamp = TRUE,
+  random = TRUE,
+  compress = NULL
+) {
+  self$runset$save_latent_dynamics_files(
+    dir,
+    basename,
+    timestamp,
+    random,
+    compress
+  )
 }
-CmdStanFit$set("public", name = "save_latent_dynamics_files", value = save_latent_dynamics_files)
+CmdStanFit$set(
+  "public",
+  name = "save_latent_dynamics_files",
+  value = save_latent_dynamics_files
+)
 
 #' @rdname fit-method-save_output_files
-save_profile_files <- function(dir = ".",
-                               basename = NULL,
-                               timestamp = TRUE,
-                               random = TRUE) {
+save_profile_files <- function(
+  dir = ".",
+  basename = NULL,
+  timestamp = TRUE,
+  random = TRUE
+) {
   self$runset$save_profile_files(dir, basename, timestamp, random)
 }
-CmdStanFit$set("public", name = "save_profile_files", value = save_profile_files)
+CmdStanFit$set(
+  "public",
+  name = "save_profile_files",
+  value = save_profile_files
+)
 
 #' @rdname fit-method-save_output_files
-save_data_file <- function(dir = ".",
-                           basename = NULL,
-                           timestamp = TRUE,
-                           random = TRUE) {
+save_data_file <- function(
+  dir = ".",
+  basename = NULL,
+  timestamp = TRUE,
+  random = TRUE
+) {
   self$runset$save_data_file(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_data_file", value = save_data_file)
 
 #' @rdname fit-method-save_output_files
-save_config_files <- function(dir = ".",
-                              basename = NULL,
-                              timestamp = TRUE,
-                              random = TRUE) {
+save_config_files <- function(
+  dir = ".",
+  basename = NULL,
+  timestamp = TRUE,
+  random = TRUE
+) {
   self$runset$save_config_files(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_config_files", value = save_config_files)
 
 #' @rdname fit-method-save_output_files
-save_metric_files <- function(dir = ".",
-                              basename = NULL,
-                              timestamp = TRUE,
-                              random = TRUE) {
+save_metric_files <- function(
+  dir = ".",
+  basename = NULL,
+  timestamp = TRUE,
+  random = TRUE
+) {
   self$runset$save_metric_files(dir, basename, timestamp, random)
 }
 CmdStanFit$set("public", name = "save_metric_files", value = save_metric_files)
-
 
 
 #' @rdname fit-method-save_output_files
@@ -1124,7 +1295,11 @@ CmdStanFit$set("public", name = "profile_files", value = profile_files)
 latent_dynamics_files <- function(include_failed = FALSE) {
   self$runset$latent_dynamics_files(include_failed)
 }
-CmdStanFit$set("public", name = "latent_dynamics_files", value = latent_dynamics_files)
+CmdStanFit$set(
+  "public",
+  name = "latent_dynamics_files",
+  value = latent_dynamics_files
+)
 
 #' @rdname fit-method-save_output_files
 data_file <- function() {
@@ -1255,9 +1430,6 @@ CmdStanFit$set("public", name = "output", value = output)
 #'
 metadata <- function() {
   if (is.null(private$metadata_)) {
-    if (!length(self$output_files(include_failed = FALSE))) {
-      stop("Fitting failed. Unable to retrieve the metadata.", call. = FALSE)
-    }
     private$read_csv_()
   }
   private$metadata_
@@ -1288,6 +1460,53 @@ return_codes <- function() {
   private$return_codes_
 }
 CmdStanFit$set("public", name = "return_codes", value = return_codes)
+
+#' Return the command that ran CmdStan
+#'
+#' @name fit-method-command
+#' @aliases command
+#' @description The `$command()` method returns the command line
+#'   CmdStanR ran for each CmdStan run. A few things to know before
+#'   running one again:
+#'
+#'   * The paths are the ones R used. Input files CmdStanR wrote for
+#'   the run (data passed as a list, inits, an inverse metric, the CSV
+#'   files `$laplace()` and `$generate_quantities()` read) are in a
+#'   temporary directory, even when `output_dir` is set, and don't
+#'   outlive the R session.
+#'   * The output paths are this fit's CSV files, so running the line
+#'   again overwrites them unless you change the paths after `output`.
+#'   * `threads_per_chain` (or `threads`) reaches CmdStan as the
+#'   `STAN_NUM_THREADS` environment variable, not an argument, so set
+#'   it first.
+#'   * `$sample_mpi()` runs the line through the MPI launcher, which the
+#'   line doesn't include.
+#'   * On Windows CmdStanR puts the TBB library on `PATH` for the run,
+#'   so the terminal needs it there too.
+#'   * On WSL the command runs inside the Linux distribution, where the
+#'   paths are already spelled for it.
+#' @return A character vector with one command per CmdStan run.
+#'
+#' @examples
+#' \dontrun{
+#' fit <- cmdstanr_example("logistic", method = "sample")
+#' fit$command()
+#'
+#' # one line per chain
+#' cat(fit$command(), sep = "\n")
+#' }
+#'
+command <- function() {
+  exe <- wsl_safe_path(self$runset$exe_file())
+  vapply(
+    self$runset$command_args(),
+    function(args) {
+      paste(shQuote(c(exe, args)), collapse = " ")
+    },
+    character(1)
+  )
+}
+CmdStanFit$set("public", name = "command", value = command)
 
 #' Return profiling data
 #'
@@ -1341,7 +1560,11 @@ profiles <- function() {
     private$profiles_ <- list()
     i <- 1
     for (f in self$profile_files()) {
-      private$profiles_[[i]] <- data.table::fread(f, integer64 = "character", data.table = FALSE)
+      private$profiles_[[i]] <- data.table::fread(
+        f,
+        integer64 = "character",
+        data.table = FALSE
+      )
       i <- i + 1
     }
   }
@@ -1366,7 +1589,11 @@ CmdStanFit$set("public", name = "profiles", value = profiles)
 code <- function() {
   stan_code <- self$runset$stan_code()
   if (is.null(stan_code)) {
-    warning("'$code()' will return NULL because the 'CmdStanModel' was not created with a Stan file.", call. = FALSE)
+    warning(
+      "`$code()` will return NULL because the `CmdStanModel` ",
+      "was not created with a Stan file.",
+      call. = FALSE
+    )
   }
   stan_code
 }
@@ -1442,6 +1669,7 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  [`$output()`][fit-method-output]  |  Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'  [`$time()`][fit-method-time]  |  Report total and chain-specific run times. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -1455,7 +1683,6 @@ CmdStanFit$set("public", name = "code", value = code)
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
-#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 CmdStanMCMC <- R6::R6Class(
   classname = "CmdStanMCMC",
@@ -1465,8 +1692,10 @@ CmdStanMCMC <- R6::R6Class(
     initialize = function(runset) {
       super$initialize(runset)
       if (!length(self$output_files())) {
-        warning("No chains finished successfully. Unable to retrieve the fit.",
-                call. = FALSE)
+        warning(
+          "No chains finished successfully. Unable to retrieve the fit.",
+          call. = FALSE
+        )
       } else {
         if (runset$args$method_args$fixed_param) {
           private$read_csv_(variables = "", sampler_diagnostics = "")
@@ -1490,10 +1719,17 @@ CmdStanMCMC <- R6::R6Class(
     },
 
     # override the CmdStanFit draws method
-    draws = function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
+    draws = function(
+      variables = NULL,
+      inc_warmup = FALSE,
+      format = getOption("cmdstanr_draws_format", "draws_array")
+    ) {
       if (inc_warmup && !private$metadata_$save_warmup) {
-        stop("Warmup draws were requested from a fit object without them! ",
-             "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
+        stop(
+          "Warmup draws were requested from a fit object without them! ",
+          "Please rerun the model with save_warmup = TRUE.",
+          call. = FALSE
+        )
       }
       format <- assert_valid_draws_format(format)
       to_read <- remaining_columns_to_read(
@@ -1502,24 +1738,50 @@ CmdStanMCMC <- R6::R6Class(
         all = private$metadata_$variables
       )
       private$draws_ <- maybe_convert_draws_format(private$draws_, format)
-      private$warmup_draws_ <- maybe_convert_draws_format(private$warmup_draws_, format)
-      private$sampler_diagnostics_ <- maybe_convert_draws_format(private$sampler_diagnostics_, format)
-      private$warmup_sampler_diagnostics_ <- maybe_convert_draws_format(private$warmup_sampler_diagnostics_, format)
+      private$warmup_draws_ <- maybe_convert_draws_format(
+        private$warmup_draws_,
+        format
+      )
+      private$sampler_diagnostics_ <- maybe_convert_draws_format(
+        private$sampler_diagnostics_,
+        format
+      )
+      private$warmup_sampler_diagnostics_ <- maybe_convert_draws_format(
+        private$warmup_sampler_diagnostics_,
+        format
+      )
       if (is.null(to_read) || any(nzchar(to_read))) {
-        private$read_csv_(variables = to_read, sampler_diagnostics = "", format = format)
+        private$read_csv_(
+          variables = to_read,
+          sampler_diagnostics = "",
+          format = format
+        )
       }
       if (is.null(variables)) {
         variables <- private$metadata_$variables
       } else {
-        matching_res <- matching_variables(variables, private$metadata_$variables)
+        matching_res <- matching_variables(
+          variables,
+          private$metadata_$variables
+        )
         if (length(matching_res$not_found)) {
-          stop("Can't find the following variable(s) in the output: ",
-              paste(matching_res$not_found, collapse = ", "), call. = FALSE)
+          stop(
+            "Can't find the following variable(s) in the output: ",
+            paste(matching_res$not_found, collapse = ", "),
+            call. = FALSE
+          )
         }
         variables <- matching_res$matching
       }
       if (inc_warmup) {
-        posterior::subset_draws(posterior::bind_draws(private$warmup_draws_, private$draws_, along = "iteration"), variable = variables)
+        posterior::subset_draws(
+          posterior::bind_draws(
+            private$warmup_draws_,
+            private$draws_,
+            along = "iteration"
+          ),
+          variable = variables
+        )
       } else {
         posterior::subset_draws(private$draws_, variable = variables)
       }
@@ -1531,12 +1793,20 @@ CmdStanMCMC <- R6::R6Class(
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     inv_metric_ = NULL,
-    read_csv_ = function(variables = NULL, sampler_diagnostics = NULL, format = getOption("cmdstanr_draws_format", "draws_array")) {
+    read_csv_ = function(
+      variables = NULL,
+      sampler_diagnostics = NULL,
+      format = getOption("cmdstanr_draws_format", "draws_array")
+    ) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("No chains finished successfully. Unable to retrieve the draws.", call. = FALSE)
+        stop(
+          "No chains finished successfully. There is no output to read.",
+          call. = FALSE
+        )
       }
+      files <- private$csv_files_()
       csv_contents <- read_cmdstan_csv(
-        files = self$output_files(include_failed = FALSE),
+        files = files,
         variables = variables,
         sampler_diagnostics = sampler_diagnostics,
         format = format
@@ -1548,37 +1818,56 @@ CmdStanMCMC <- R6::R6Class(
         if (is.null(private$draws_)) {
           private$draws_ <- csv_contents$post_warmup_draws
         } else {
-          missing_variables <- posterior::variables(csv_contents$post_warmup_draws)[!(posterior::variables(csv_contents$post_warmup_draws) %in% posterior::variables(private$draws_))]
+          missing_variables <- setdiff(
+            posterior::variables(csv_contents$post_warmup_draws),
+            posterior::variables(private$draws_)
+          )
           private$draws_ <- posterior::bind_draws(
             private$draws_,
-            posterior::subset_draws(csv_contents$post_warmup_draws, variable = missing_variables),
+            posterior::subset_draws(
+              csv_contents$post_warmup_draws,
+              variable = missing_variables
+            ),
             along = "variable"
           )
         }
       }
       if (!is.null(csv_contents$post_warmup_sampler_diagnostics)) {
-
         if (is.null(private$sampler_diagnostics_)) {
           private$sampler_diagnostics_ <- csv_contents$post_warmup_sampler_diagnostics
         } else {
-          missing_variables <- posterior::variables(csv_contents$post_warmup_sampler_diagnostics)[!(posterior::variables(csv_contents$post_warmup_sampler_diagnostics) %in% posterior::variables(private$sampler_diagnostics_))]
+          missing_variables <- setdiff(
+            posterior::variables(csv_contents$post_warmup_sampler_diagnostics),
+            posterior::variables(private$sampler_diagnostics_)
+          )
           private$sampler_diagnostics_ <- posterior::bind_draws(
             private$sampler_diagnostics_,
-            posterior::subset_draws(csv_contents$post_warmup_sampler_diagnostics, variable = missing_variables),
+            posterior::subset_draws(
+              csv_contents$post_warmup_sampler_diagnostics,
+              variable = missing_variables
+            ),
             along = "variable"
           )
         }
       }
-      if (!is.null(csv_contents$metadata$save_warmup)
-         && csv_contents$metadata$save_warmup) {
+      if (
+        !is.null(csv_contents$metadata$save_warmup) &&
+          csv_contents$metadata$save_warmup
+      ) {
         if (!is.null(csv_contents$warmup_draws)) {
           if (is.null(private$warmup_draws_)) {
             private$warmup_draws_ <- csv_contents$warmup_draws
           } else {
-            missing_variables <- posterior::variables(csv_contents$warmup_draws)[!(posterior::variables(csv_contents$warmup_draws) %in% posterior::variables(private$warmup_draws_))]
+            missing_variables <- setdiff(
+              posterior::variables(csv_contents$warmup_draws),
+              posterior::variables(private$warmup_draws_)
+            )
             private$warmup_draws_ <- posterior::bind_draws(
               private$warmup_draws_,
-              posterior::subset_draws(csv_contents$warmup_draws, variable = missing_variables),
+              posterior::subset_draws(
+                csv_contents$warmup_draws,
+                variable = missing_variables
+              ),
               along = "variable"
             )
           }
@@ -1587,10 +1876,16 @@ CmdStanMCMC <- R6::R6Class(
           if (is.null(private$warmup_sampler_diagnostics_)) {
             private$warmup_sampler_diagnostics_ <- csv_contents$warmup_sampler_diagnostics
           } else {
-            missing_variables <- posterior::variables(csv_contents$warmup_sampler_diagnostics)[!(posterior::variables(csv_contents$warmup_sampler_diagnostics) %in% posterior::variables(private$warmup_sampler_diagnostics_))]
+            missing_variables <- setdiff(
+              posterior::variables(csv_contents$warmup_sampler_diagnostics),
+              posterior::variables(private$warmup_sampler_diagnostics_)
+            )
             private$warmup_sampler_diagnostics_ <- posterior::bind_draws(
               private$warmup_sampler_diagnostics_,
-              posterior::subset_draws(csv_contents$warmup_sampler_diagnostics, variable = missing_variables),
+              posterior::subset_draws(
+                csv_contents$warmup_sampler_diagnostics,
+                variable = missing_variables
+              ),
               along = "variable"
             )
           }
@@ -1667,17 +1962,27 @@ CmdStanMCMC <- R6::R6Class(
 #' print(loo_result)
 #' }
 #'
-loo <- function(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...) {
+loo <- function(
+  variables = "log_lik",
+  r_eff = FALSE,
+  moment_match = FALSE,
+  ...
+) {
   require_suggested_package("loo")
   if (length(variables) != 1) {
-    stop("Only a single variable name is allowed for the 'variables' argument.", call. = FALSE)
+    stop(
+      "Only a single variable name is allowed for the `variables` argument.",
+      call. = FALSE
+    )
   }
   LLarray <- self$draws(variables, format = "draws_array")
   if (is.logical(r_eff)) {
     if (isTRUE(r_eff)) {
       r_eff_cores <- list(...)[["cores"]] %||% getOption("mc.cores", 1)
-      r_eff <- loo::relative_eff(exp(sweep(LLarray, 3, apply(LLarray, 3, max), FUN = "-")),
-                                 cores = r_eff_cores)
+      r_eff <- loo::relative_eff(
+        exp(sweep(LLarray, 3, apply(LLarray, 3, max), FUN = "-")),
+        cores = r_eff_cores
+      )
     } else {
       r_eff <- NULL
     }
@@ -1685,30 +1990,37 @@ loo <- function(variables = "log_lik", r_eff = FALSE, moment_match = FALSE, ...)
 
   if (isTRUE(moment_match)) {
     # Moment-matching requires log-prob, constrain, and unconstrain methods
-    if (is.null(private$model_methods_env_$model_ptr)) {
-      self$init_model_methods()
-    }
+    self$init_model_methods()
 
     suppressWarnings(loo_result <- loo::loo.array(LLarray, r_eff = r_eff, ...))
 
     log_lik_i <- function(x, i, parameter_name = "log_lik", ...) {
-      ll_array <- x$draws(variables = parameter_name, format = "draws_array")[,,i]
+      ll_draws <- x$draws(variables = parameter_name, format = "draws_array")
+      ll_array <- ll_draws[,, i]
       # draws_array types don't drop the last dimension when it's 1, so we do this manually
       attr(ll_array, "dim") <- attributes(ll_array)$dim[1:2]
       ll_array
     }
 
     log_lik_i_upars <- function(x, upars, i, parameter_name = "log_lik", ...) {
-      apply(upars, 1, function(up_i) { x$constrain_variables(up_i)[[parameter_name]][i] })
+      apply(upars, 1, function(up_i) {
+        x$constrain_variables(up_i)[[parameter_name]][i]
+      })
     }
 
     loo::loo_moment_match.default(
       x = self,
       loo = loo_result,
-      post_draws = function(x, ...) { x$draws(format = "draws_matrix") },
+      post_draws = function(x, ...) {
+        x$draws(format = "draws_matrix")
+      },
       log_lik_i = log_lik_i,
-      unconstrain_pars = function(x, pars, ...) { x$unconstrain_draws(format = "draws_matrix") },
-      log_prob_upars = function(x, upars, ...) { apply(upars, 1, x$log_prob) },
+      unconstrain_pars = function(x, pars, ...) {
+        x$unconstrain_draws(format = "draws_matrix")
+      },
+      log_prob_upars = function(x, upars, ...) {
+        apply(upars, 1, x$log_prob)
+      },
       log_lik_i_upars = log_lik_i_upars,
       ...
     )
@@ -1753,28 +2065,43 @@ CmdStanMCMC$set("public", name = "loo", value = loo)
 #' fit$sampler_diagnostics(format = "df")
 #' }
 #'
-sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
+sampler_diagnostics <- function(
+  inc_warmup = FALSE,
+  format = getOption("cmdstanr_draws_format", "draws_array")
+) {
   if (isTRUE(private$metadata_$algorithm == "fixed_param")) {
-    stop("There are no sampler diagnostics when fixed_param = TRUE.", call. = FALSE)
-  }
-  if (is.null(private$sampler_diagnostics_) &&
-      !length(self$output_files(include_failed = FALSE))) {
-    stop("No chains finished successfully. Unable to retrieve the sampler diagnostics.", call. = FALSE)
+    stop(
+      "There are no sampler diagnostics when fixed_param = TRUE.",
+      call. = FALSE
+    )
   }
   to_read <- remaining_columns_to_read(
     requested = NULL,
     currently_read = posterior::variables(private$sampler_diagnostics_),
     all = private$metadata_$sampler_diagnostics
   )
-  private$warmup_sampler_diagnostics_ <- maybe_convert_draws_format(private$warmup_sampler_diagnostics_, format)
-  private$sampler_diagnostics_ <- maybe_convert_draws_format(private$sampler_diagnostics_, format)
+  private$warmup_sampler_diagnostics_ <- maybe_convert_draws_format(
+    private$warmup_sampler_diagnostics_,
+    format
+  )
+  private$sampler_diagnostics_ <- maybe_convert_draws_format(
+    private$sampler_diagnostics_,
+    format
+  )
   if (is.null(to_read) || any(nzchar(to_read))) {
-    private$read_csv_(variables = "", sampler_diagnostics = NULL, format = format)
+    private$read_csv_(
+      variables = "",
+      sampler_diagnostics = NULL,
+      format = format
+    )
   }
   if (inc_warmup) {
     if (!private$metadata_$save_warmup) {
-      stop("Warmup sampler diagnostics were requested from a fit object without them! ",
-           "Please rerun the model with save_warmup = TRUE.", call. = FALSE)
+      stop(
+        "Warmup sampler diagnostics were requested from a fit object ",
+        "without them! Please rerun the model with save_warmup = TRUE.",
+        call. = FALSE
+      )
     }
     posterior::bind_draws(
       private$warmup_sampler_diagnostics_,
@@ -1785,7 +2112,11 @@ sampler_diagnostics <- function(inc_warmup = FALSE, format = getOption("cmdstanr
     private$sampler_diagnostics_
   }
 }
-CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnostics)
+CmdStanMCMC$set(
+  "public",
+  name = "sampler_diagnostics",
+  value = sampler_diagnostics
+)
 
 #' Sampler diagnostic summaries and warnings
 #'
@@ -1812,7 +2143,8 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #'   possible elements and their values are:
 #'   * `"num_divergent"`: A vector of the number of divergences per chain.
 #'   * `"num_max_treedepth"`: A vector of the number of times `max_treedepth` was hit per chain.
-#'   * `"ebfmi"`: A vector of E-BFMI values per chain.
+#'   * `"ebfmi"`: A vector of E-BFMI values per chain, `NA` for a chain whose
+#'   energy never changes (a model with no parameters).
 #'
 #' @seealso [`CmdStanMCMC`] and the
 #'   [`$sampler_diagnostics()`][fit-method-sampler_diagnostics] method
@@ -1824,7 +2156,10 @@ CmdStanMCMC$set("public", name = "sampler_diagnostics", value = sampler_diagnost
 #' fit$diagnostic_summary(quiet = TRUE)
 #' }
 #'
-diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfmi"), quiet = FALSE) {
+diagnostic_summary <- function(
+  diagnostics = c("divergences", "treedepth", "ebfmi"),
+  quiet = FALSE
+) {
   out <- list()
   if (is.null(diagnostics) || identical(diagnostics, "")) {
     return(out)
@@ -1834,34 +2169,41 @@ diagnostic_summary <- function(diagnostics = c("divergences", "treedepth", "ebfm
     choices = available_hmc_diagnostics(),
     several.ok = TRUE
   )
-  post_warmup_sampler_diagnostics <- self$sampler_diagnostics(inc_warmup = FALSE)
+  post_warmup <- self$sampler_diagnostics(inc_warmup = FALSE)
   if ("divergences" %in% diagnostics) {
     if (quiet) {
-      divergences <- suppressMessages(check_divergences(post_warmup_sampler_diagnostics))
+      divergences <- suppressMessages(check_divergences(post_warmup))
     } else {
-      divergences <- check_divergences(post_warmup_sampler_diagnostics)
+      divergences <- check_divergences(post_warmup)
     }
     out[["num_divergent"]] <- divergences
   }
   if ("treedepth" %in% diagnostics) {
     if (quiet) {
-      max_treedepth_hit <- suppressMessages(check_max_treedepth(post_warmup_sampler_diagnostics, self$metadata()))
+      max_treedepth_hit <- suppressMessages(check_max_treedepth(
+        post_warmup,
+        self$metadata()
+      ))
     } else {
-      max_treedepth_hit <- check_max_treedepth(post_warmup_sampler_diagnostics, self$metadata())
+      max_treedepth_hit <- check_max_treedepth(post_warmup, self$metadata())
     }
     out[["num_max_treedepth"]] <- max_treedepth_hit
   }
   if ("ebfmi" %in% diagnostics) {
     if (quiet) {
-      ebfmi <- suppressMessages(check_ebfmi(post_warmup_sampler_diagnostics))
+      ebfmi <- suppressMessages(check_ebfmi(post_warmup))
     } else {
-      ebfmi <- check_ebfmi(post_warmup_sampler_diagnostics)
+      ebfmi <- check_ebfmi(post_warmup)
     }
     out[["ebfmi"]] <- ebfmi %||% NA
   }
   out
 }
-CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summary)
+CmdStanMCMC$set(
+  "public",
+  name = "diagnostic_summary",
+  value = diagnostic_summary
+)
 
 
 #' Extract inverse metric (inverse mass matrix) after MCMC
@@ -1923,9 +2265,6 @@ CmdStanMCMC$set("public", name = "diagnostic_summary", value = diagnostic_summar
 #' }
 #'
 inv_metric <- function(matrix = TRUE) {
-  if (!length(self$output_files(include_failed = FALSE))) {
-    stop("No chains finished successfully. Unable to retrieve the inverse metrics.", call. = FALSE)
-  }
   if (is.null(private$inv_metric_)) {
     private$read_csv_(variables = "", sampler_diagnostics = "")
   }
@@ -2030,6 +2369,7 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$time()`][fit-method-time]      |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2043,7 +2383,6 @@ CmdStanMCMC$set("public", name = "num_chains", value = num_chains)
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
-#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 CmdStanMLE <- R6::R6Class(
   classname = "CmdStanMLE",
@@ -2051,11 +2390,14 @@ CmdStanMLE <- R6::R6Class(
   public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
+    read_csv_ = function(
+      format = getOption("cmdstanr_draws_format", "draws_matrix")
+    ) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Optimization failed. Unable to retrieve the draws.", call. = FALSE)
+        stop("Optimization failed. There is no output to read.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$point_estimates
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2165,6 +2507,7 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$time()`][fit-method-time]  |  Report the run time of the Laplace sampling step. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2178,18 +2521,23 @@ CmdStanMLE$set("public", name = "mle", value = mle)
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
-#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 CmdStanLaplace <- R6::R6Class(
   classname = "CmdStanLaplace",
   inherit = CmdStanFit,
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
+    read_csv_ = function(
+      format = getOption("cmdstanr_draws_format", "draws_matrix")
+    ) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Laplace inference failed. Unable to retrieve the draws.", call. = FALSE)
+        stop(
+          "Laplace inference failed. There is no output to read.",
+          call. = FALSE
+        )
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2281,6 +2629,7 @@ CmdStanLaplace$set("public", name = "mode", value = mode)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2294,7 +2643,6 @@ CmdStanLaplace$set("public", name = "mode", value = mode)
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
-#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 CmdStanVB <- R6::R6Class(
   classname = "CmdStanVB",
@@ -2302,11 +2650,17 @@ CmdStanVB <- R6::R6Class(
   public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
+    read_csv_ = function(
+      format = getOption("cmdstanr_draws_format", "draws_matrix")
+    ) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Variational inference failed. Unable to retrieve the draws.", call. = FALSE)
+        stop(
+          "Variational inference failed. There is no output to read.",
+          call. = FALSE
+        )
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2376,6 +2730,7 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$time()`][fit-method-time]  |  Report the total run time. |
 #'  [`$output()`][fit-method-output]  |  Pretty print the output that was printed to the console. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2389,7 +2744,6 @@ CmdStanVB$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
-#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 CmdStanPathfinder <- R6::R6Class(
   classname = "CmdStanPathfinder",
@@ -2397,11 +2751,14 @@ CmdStanPathfinder <- R6::R6Class(
   public = list(),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function(format = getOption("cmdstanr_draws_format", "draws_matrix")) {
+    read_csv_ = function(
+      format = getOption("cmdstanr_draws_format", "draws_matrix")
+    ) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Pathfinder failed. Unable to retrieve the draws.", call. = FALSE)
+        stop("Pathfinder failed. There is no output to read.", call. = FALSE)
       }
-      csv_contents <- read_cmdstan_csv(self$output_files(), format = format)
+      files <- private$csv_files_()
+      csv_contents <- read_cmdstan_csv(files, format = format)
       private$draws_ <- csv_contents$draws
       private$metadata_ <- csv_contents$metadata
       invisible(self)
@@ -2410,7 +2767,6 @@ CmdStanPathfinder <- R6::R6Class(
 )
 
 CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
-
 
 
 # CmdStanGQ ---------------------------------------------------------------
@@ -2465,6 +2821,7 @@ CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$time()`][fit-method-time] | Report total and process-specific run times. |
 #'  [`$output()`][fit-method-output] | Return the stdout and stderr of all chains or pretty print the output for a single chain. |
 #'  [`$return_codes()`][fit-method-return_codes]  |  Return the return codes from the CmdStan runs. |
+#'  [`$command()`][fit-method-command]  |  Return the commands that ran CmdStan. |
 #'
 #'  ## Expose Stan functions and additional methods to R
 #'
@@ -2478,7 +2835,6 @@ CmdStanPathfinder$set("public", name = "lp_approx", value = lp_approx)
 #'  [`$constrain_variables()`][fit-method-constrain_variables] | Transform a set of unconstrained parameter values to the constrained scale. |
 #'  [`$unconstrain_variables()`][fit-method-unconstrain_variables] | Transform a set of parameter values to the unconstrained scale. |
 #'  [`$unconstrain_draws()`][fit-method-unconstrain_draws] | Transform all parameter draws to the unconstrained scale. |
-#'  [`$variable_skeleton()`][fit-method-variable_skeleton] | Helper function to re-structure a vector of constrained parameter values. |
 #'
 #' @inherit model-method-generate-quantities examples
 #'
@@ -2490,13 +2846,16 @@ CmdStanGQ <- R6::R6Class(
       super$num_procs()
     },
     # override CmdStanFit draws method
-    draws = function(variables = NULL, inc_warmup = FALSE, format = getOption("cmdstanr_draws_format", "draws_array")) {
-      if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
-      }
+    draws = function(
+      variables = NULL,
+      inc_warmup = FALSE,
+      format = getOption("cmdstanr_draws_format", "draws_array")
+    ) {
       if (inc_warmup) {
-        warning("'inc_warmup' is ignored except when used with CmdStanMCMC objects.",
-                call. = FALSE)
+        warning(
+          "`inc_warmup` is ignored except when used with CmdStanMCMC objects.",
+          call. = FALSE
+        )
       }
       format <- assert_valid_draws_format(format)
       to_read <- remaining_columns_to_read(
@@ -2511,10 +2870,16 @@ CmdStanGQ <- R6::R6Class(
       if (is.null(variables)) {
         variables <- private$metadata_$variables
       } else {
-        matching_res <- matching_variables(variables, private$metadata_$variables)
+        matching_res <- matching_variables(
+          variables,
+          private$metadata_$variables
+        )
         if (length(matching_res$not_found)) {
-          stop("Can't find the following variable(s) in the output: ",
-              paste(matching_res$not_found, collapse = ", "), call. = FALSE)
+          stop(
+            "Can't find the following variable(s) in the output: ",
+            paste(matching_res$not_found, collapse = ", "),
+            call. = FALSE
+          )
         }
         variables <- matching_res$matching
       }
@@ -2531,23 +2896,37 @@ CmdStanGQ <- R6::R6Class(
   ),
   private = list(
     # inherits draws_ and metadata_ slots from CmdStanFit
-    read_csv_ = function(variables = NULL, format = getOption("cmdstanr_draws_format", "draws_array")) {
+    read_csv_ = function(
+      variables = NULL,
+      format = getOption("cmdstanr_draws_format", "draws_array")
+    ) {
       if (!length(self$output_files(include_failed = FALSE))) {
-        stop("Generating quantities for all MCMC chains failed. Unable to retrieve the generated quantities.", call. = FALSE)
+        stop(
+          "Generating quantities for all MCMC chains failed. ",
+          "There is no output to read.",
+          call. = FALSE
+        )
       }
+      files <- private$csv_files_()
       csv_contents <- read_cmdstan_csv(
-        files = self$output_files(include_failed = FALSE),
+        files = files,
         variables = variables,
         sampler_diagnostics = "",
         format = format
       )
       private$metadata_ <- csv_contents$metadata
       if (!is.null(csv_contents$generated_quantities)) {
-        missing_variables <- posterior::variables(csv_contents$generated_quantities)[!(posterior::variables(csv_contents$generated_quantities) %in% posterior::variables(private$draws_))]
+        missing_variables <- setdiff(
+          posterior::variables(csv_contents$generated_quantities),
+          posterior::variables(private$draws_)
+        )
         private$draws_ <-
           posterior::bind_draws(
             private$draws_,
-            posterior::subset_draws(csv_contents$generated_quantities, variable = missing_variables),
+            posterior::subset_draws(
+              csv_contents$generated_quantities,
+              variable = missing_variables
+            ),
             along = "variable"
           )
       }
@@ -2659,11 +3038,14 @@ lp_diagnose <- function() {
 CmdStanDiagnose$set("public", name = "gradients", value = gradients)
 CmdStanDiagnose$set("public", name = "lp", value = lp_diagnose)
 CmdStanDiagnose$set("public", name = "init", value = init)
-CmdStanDiagnose$set("public", name = "save_output_files", value = save_output_files)
+CmdStanDiagnose$set(
+  "public",
+  name = "save_output_files",
+  value = save_output_files
+)
 CmdStanDiagnose$set("public", name = "output_files", value = output_files)
 CmdStanDiagnose$set("public", name = "save_data_file", value = save_data_file)
 CmdStanDiagnose$set("public", name = "data_file", value = data_file)
-
 
 
 # as_draws ----------------------------------------------------------------

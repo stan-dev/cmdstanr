@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 fit_laplace <- testing_fit("logistic", method = "laplace", seed = 100)
 PARAM_NAMES <- c("alpha", "beta[1]", "beta[2]", "beta[3]")
@@ -29,7 +31,10 @@ test_that("draws() method returns posterior sample (reading csv works)", {
   draws <- fit_laplace$draws()
   expect_type(draws, "double")
   expect_s3_class(draws, "draws_matrix")
-  expect_equal(posterior::variables(draws), c("lp__", "lp_approx__", PARAM_NAMES))
+  expect_equal(
+    posterior::variables(draws),
+    c("lp__", "lp_approx__", PARAM_NAMES)
+  )
 })
 
 test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
@@ -37,7 +42,7 @@ test_that("lp(), lp_approx() methods return vectors (reading csv works)", {
   lg <- fit_laplace$lp_approx()
   expect_type(lp, "double")
   expect_type(lg, "double")
-  expect_equal(length(lp), nrow(fit_laplace$draws()))
+  expect_length(lp, nrow(fit_laplace$draws()))
   expect_equal(length(lg), length(lp))
 })
 

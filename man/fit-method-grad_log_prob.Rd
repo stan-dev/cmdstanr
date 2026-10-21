@@ -31,6 +31,5 @@ fit_mcmc$grad_log_prob(unconstrained_variables = c(0.5, 1.2, 1.1, 2.2))
 }
 \seealso{
 \code{\link[=log_prob]{log_prob()}}, \code{\link[=constrain_variables]{constrain_variables()}},
-\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=variable_skeleton]{variable_skeleton()}},
-\code{\link[=hessian]{hessian()}}
+\code{\link[=unconstrain_variables]{unconstrain_variables()}}, \code{\link[=unconstrain_draws]{unconstrain_draws()}}, \code{\link[=hessian]{hessian()}}
 }

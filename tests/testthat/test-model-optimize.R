@@ -1,3 +1,5 @@
+skip_on_cran()
+
 set_cmdstan_path()
 mod <- testing_model("bernoulli")
 data_list <- testing_data("bernoulli")
@@ -53,11 +55,11 @@ test_that("optimize() method runs when arguments are specified in scientific not
   expect_s3_class(fit1, "CmdStanMLE")
 })
 
-test_that("optimize() warns if threads specified but not enabled", {
-  expect_warning(
-    expect_optim_output(fit <- mod$optimize(data = data_list, threads = 2,
-                                            seed = 123)),
-    "'threads' will have no effect"
+test_that("optimize() errors if threads specified but not enabled", {
+  expect_error(
+    mod$optimize(data = data_list, threads = 2, seed = 123),
+    "does not report threading as enabled",
+    fixed = TRUE
   )
 })
 
@@ -74,7 +76,7 @@ test_that("optimize() errors with bad combination of arguments", {
   # for all similar args because of how it's implemented)
   expect_error(
     mod$optimize(data = data_list, algorithm = "newton", tol_grad = 0.1),
-    "'tol_grad' can't be used when algorithm is 'newton'"
+    "`tol_grad` can't be used when algorithm is `\"newton\"`"
   )
   expect_error(
     mod$optimize(data = data_list, algorithm = "bfgs", tol_obj = -10),
@@ -82,17 +84,17 @@ test_that("optimize() errors with bad combination of arguments", {
   )
   expect_error(
     mod$optimize(data = data_list, init_alpha = 0.1),
-    "Please specify 'algorithm' in order to use 'init_alpha'"
+    "Please specify `algorithm` in order to use `init_alpha`"
   )
 
   # history size only allowed with lbfgs and must be positive integer
   expect_error(
     mod$optimize(data = data_list, history_size = 1),
-    "'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'"
+    "`history_size` is only allowed if `algorithm` is specified as `\"lbfgs\"`"
   )
   expect_error(
     mod$optimize(data = data_list, algorithm = "bfgs", history_size = 1),
-    "'history_size' is only allowed if 'algorithm' is specified as 'lbfgs'"
+    "`history_size` is only allowed if `algorithm` is specified as `\"lbfgs\"`"
   )
   expect_error(
     mod$optimize(data = data_list, algorithm = "lbfgs", history_size = 1.5),
@@ -128,16 +130,6 @@ test_that("optimize() works with (L-)BFGS tolerances specified", {
   expect_equal(metadata$tol_rel_grad, 1000000)
   expect_equal(metadata$tol_param, 5e-07)
   expect_equal(metadata$history_size, 6)
-})
-
-test_that("optimize() method runs when the stan file is removed", {
-  stan_file_tmp <- tempfile(pattern = "tmp", fileext = ".stan")
-  file.copy(testing_stan_file("bernoulli"), stan_file_tmp)
-  mod_tmp <- cmdstan_model(stan_file_tmp)
-  file.remove(stan_file_tmp)
-  expect_optim_output(
-    mod_tmp$optimize(data = data_list)
-  )
 })
 
 test_that("optimize() recognizes new jacobian argument", {

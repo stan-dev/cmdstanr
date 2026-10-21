@@ -18,5 +18,5 @@
       variable estimate
       lp__
       
-      # showing 1 of 5 rows (change via 'max_rows' argument or 'cmdstanr_max_rows' option)
+      # showing 1 of 5 rows (change via `max_rows` argument or `cmdstanr_max_rows` option)
 

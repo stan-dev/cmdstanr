@@ -11,6 +11,7 @@ name: Unit tests - WSL Backend
   pull_request:
     branches:
       - master
+      - v1.0
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -20,6 +21,7 @@ jobs:
   WSL-R-CMD-check:
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
     runs-on: windows-latest
+    timeout-minutes: 240
 
     name: windows-latest-WSL2
 

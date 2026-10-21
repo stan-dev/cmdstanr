@@ -7,7 +7,7 @@
 
 ### Overview
 
-CmdStanR is a lightweight interface to [Stan](https://mc-stan.org) for R users
+CmdStanR is an interface to [Stan](https://mc-stan.org) for R users
 (see [CmdStanPy](https://github.com/stan-dev/cmdstanpy) for Python).
 
 If you are new to CmdStanR we recommend starting with these vignettes:
@@ -21,19 +21,19 @@ If you are new to CmdStanR we recommend starting with these vignettes:
 * A clean interface to Stan services so that CmdStanR can keep up with Stan
 releases.
 
-* R code that doesn't interface directly with C++, only calls compiled executables.
+* The R code calls CmdStan executables rather than linking to Stan's C++,
+and uses Rcpp only for the optional `$expose_functions()` and model methods.
 
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
 
 * Flexible [BSD-3 license](https://opensource.org/license/bsd-3-clause).
 
-
 ### Installation
 
 #### Installing the R package
 
-You can install the latest release of the **cmdstanr** R package with
+You can install the latest release of the **CmdStanR** R package with
 
 ```r
 # we recommend running this in a fresh R session or restarting your current session
@@ -60,7 +60,6 @@ R package, it is also necessary to install CmdStan using CmdStanR's
 `install_cmdstan()` function. A suitable C++ toolchain is also required.
 Instructions are provided in the [_Getting started with
 CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette.
-
 
 ### Contributing
 
