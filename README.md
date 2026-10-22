@@ -16,13 +16,16 @@ If you are new to CmdStanR we recommend starting with these vignettes:
 
 * [_How does CmdStanR work?_](https://mc-stan.org/cmdstanr/articles/cmdstanr-internals.html)
 
+On the CmdStanR [website](https://mc-stan.org/cmdstanr/articles/index.html) there are 
+additional vignettes covering other topics. 
+
 ### Goals
 
 * A clean interface to Stan services so that CmdStanR can keep up with Stan
 releases.
 
-* The R code calls CmdStan executables rather than linking to Stan's C++,
-and uses Rcpp only for the optional `$expose_functions()` and model methods.
+* R code that calls CmdStan executables rather than linking to Stan's C++.  
+Rcpp is only used for optional features like exposing Stan functions to R. 
 
 * Modularity: CmdStanR runs Stan's algorithms and lets downstream modules do the
 analysis.
@@ -33,40 +36,40 @@ analysis.
 
 #### Installing the R package
 
-You can install the latest release of the **CmdStanR** R package with
+You can install the latest release of the R package with
 
 ```r
 # we recommend running this in a fresh R session or restarting your current session
 install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
-This does not install the vignettes, which take a long time to build, but they are always available
-online at https://mc-stan.org/cmdstanr/articles/.
+This does not install the vignettes, but they are always available online at 
+https://mc-stan.org/cmdstanr/articles/.
 
 The development version is currently the release candidate for CmdStanR 1.0,
-which we'd like people to test. Install it from GitHub with
+which we'd like people to test. You can install it from GitHub with
 
 ```r
 # install.packages("remotes")
 remotes::install_github("stan-dev/cmdstanr@v1.0")
 ```
 
-The release notes and documentation for the candidate are at
+The release notes and documentation for the release candidate are at
 https://mc-stan.org/cmdstanr/rc.
 
 #### Installing CmdStan
 
 If you don't already have CmdStan installed then, in addition to installing the
-R package, it is also necessary to install CmdStan using CmdStanR's
-`install_cmdstan()` function. A suitable C++ toolchain is also required.
+R package, it is also necessary to install CmdStan. CmdStanR's `install_cmdstan()` 
+function can do this for you. A suitable C++ toolchain is also required.
 Instructions are provided in the [_Getting started with
 CmdStanR_](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) vignette.
 
 ### Contributing
 
-There is a lot of work still to be done, and we welcome contributions from
-anyone! If you are interested in contributing, please [comment on an open issue or
-open a new one](https://github.com/stan-dev/cmdstanr/issues) on GitHub. For more details, 
-please check [CONTRIBUTING.md](.github/CONTRIBUTING.md).
+We welcome contributions from anyone! If you are interested in contributing, 
+please comment on an open [issue](https://github.com/stan-dev/cmdstanr/issues),
+open a new one, or post on the Stan [forum](https://discourse.mc-stan.org). 
+For more details,  please check [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
 ### License
 
