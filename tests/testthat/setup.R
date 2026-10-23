@@ -1,7 +1,13 @@
-# CI runners have four cores, so run two chains at a time
+# With NOT_CRAN=true, the first worker to get the lock prepares the CmdStan
+# installation once, so parallel workers do not build in it at the same time:
+# it adds -fPIC to make/local and rebuilds CmdStan if Linux needs it, then
+# builds the precompiled headers and main objects, with and without threads.
+# Tests that change the installation use a per-worker copy (see
+# local_private_cmdstan()). Each worker runs two chains at a time, so four
+# workers sample eight chains at once.
 options(mc.cores = 2)
 
-stan_dir <- file.path(tempdir(), "stan")
+stan_dir <- stan_fixture()
 dir.create(stan_dir, recursive = TRUE, showWarnings = FALSE)
 file.copy(
   list.files(test_path("resources", "stan"), full.names = TRUE),
@@ -29,27 +35,42 @@ cleanup_stan_artifacts()
 withr::defer(cleanup_stan_artifacts(), testthat::teardown_env())
 
 if (identical(Sys.getenv("NOT_CRAN"), "true")) {
-  warmup <- file.path(dirname(tempdir()), "cmdstanr-warmup")
-  dir.create(warmup, showWarnings = FALSE)
-  lock <- filelock::lock(file.path(warmup, "lock"))
-  withr::with_options(
-    list(mc.cores = parallel::detectCores()),
-    check_sundials_fpic(get_cmdstan_flags("CPPFLAGS_SUNDIALS"), FALSE)
-  )
-  for (make_args in list(character(), "STAN_THREADS=true")) {
-    header <- trimws(
-      sub(
-        ".*=",
-        "",
-        run_make(
-          c("-s", make_args, "print-PRECOMPILED_MODEL_HEADER"),
-          quiet = TRUE
-        )$stdout
+  local({
+    message("Preparing CmdStan in ", cmdstan_path(), " for the tests")
+    lock_dir <- tools::R_user_dir("cmdstanr", "cache")
+    dir.create(lock_dir, recursive = TRUE, showWarnings = FALSE)
+    lock <- filelock::lock(file.path(lock_dir, "test-warm-up.lock"))
+    withr::defer(filelock::unlock(lock))
+
+    make_variable <- function(make_args, name) {
+      trimws(
+        sub(
+          ".*=",
+          "",
+          run_make(
+            c("-s", make_args, paste0("print-", name)),
+            quiet = TRUE
+          )$stdout
+        )
       )
-    )
-    if (nzchar(header) && !file.exists(file.path(cmdstan_path(), header))) {
-      run_make(c(header, make_args), quiet = TRUE)
     }
-  }
-  filelock::unlock(lock)
+    withr::with_options(
+      list(mc.cores = parallel::detectCores()),
+      check_sundials_fpic(get_cmdstan_flags("CPPFLAGS_SUNDIALS"), FALSE)
+    )
+    for (make_args in list(character(), "STAN_THREADS=true")) {
+      header <- make_variable(make_args, "PRECOMPILED_MODEL_HEADER")
+      main_o <- make_variable(make_args, "CMDSTAN_MAIN_O")
+      targets <- c(
+        header,
+        sub("\\.hpp\\.gch$", ".d", header),
+        main_o,
+        sub("\\.o$", ".d", main_o)
+      )
+      targets <- targets[nzchar(targets)]
+      if (length(targets) > 0) {
+        run_make(c(targets, make_args), quiet = TRUE)
+      }
+    }
+  })
 }

@@ -75,8 +75,6 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/testthat/parallel: true
-Config/testthat/start-first: install, model-compile, model-rebuild,
-    fit-shared, fit-mcmc, model-sample, model-variables, model-methods,
-    fit-init, csv, failed-chains, model-init, model-expose-functions,
-    threads, model-diagnose, tuple-complex
+Config/testthat/start-first: install, model-compile, fit-mcmc,
+    model-methods, model-rebuild, fit-shared
 Config/roxygen2/version: 8.1.1

@@ -1,9 +1,11 @@
 skip_on_cran()
 
 set_cmdstan_path()
+stan_program <- testing_stan_file("chain_fails")
+stan_program_init_warnings <- testing_stan_file("init_warnings")
 
-mod <- testing_model("chain_fails")
-mod_init_warnings <- testing_model("init_warnings")
+mod <- cmdstan_model(stan_file = stan_program)
+mod_init_warnings <- cmdstan_model(stan_file = stan_program_init_warnings)
 
 make_all_fail <- function(x) {
   utils::capture.output(

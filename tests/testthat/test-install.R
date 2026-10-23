@@ -7,7 +7,7 @@ if (!nzchar(cmdstan_test_tarball_url)) {
 
 test_that("install_cmdstan() successfully installs cmdstan and rebuild_cmdstan() rebuilds it", {
   build_cores <- min(parallel::detectCores(), 4)
-  dir <- withr::local_tempdir()
+  dir <- local_build_tempdir()
   withr::defer(set_cmdstan_path())
   expect_message(
     expect_output(
@@ -1637,10 +1637,7 @@ test_that("toolchain_PATH_env_var() rejects unsafe toolchain paths", {
 test_that("check_cmdstan_toolchain() stops with no Windows toolchain", {
   skip_if(!os_is_windows() || os_is_wsl())
 
-  local_mocked_bindings(
-    os_is_wsl = function() FALSE,
-    toolchain_PATH_env_var = function() NULL
-  )
+  local_mocked_bindings(toolchain_PATH_env_var = function() NULL)
   expect_snapshot(error = TRUE, check_cmdstan_toolchain())
 })
 

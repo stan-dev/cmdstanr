@@ -165,9 +165,6 @@ local_make_local_backup <- function(envir = parent.frame()) {
   invisible(NULL)
 }
 
-# Write cpp_options to the make/local of the current CmdStan installation and
-# restore its original contents (or absence) when `envir` exits. Called at the
-# top level of a test file, the restore runs after all tests in that file.
 local_cmdstan_make_local <- function(
   cpp_options,
   envir = parent.frame(),
@@ -180,45 +177,62 @@ local_cmdstan_make_local <- function(
 
 private_cmdstan <- new.env(parent = emptyenv())
 
+copy_cmdstan <- function(from, to) {
+  if (os_is_wsl()) {
+    wsl_compatible_run(
+      command = "cp",
+      args = c("-a", wsl_safe_path(from), wsl_safe_path(to))
+    )
+    return(invisible(TRUE))
+  }
+  if (os_is_windows()) {
+    status <- system2(
+      "robocopy",
+      c(
+        shQuote(from),
+        shQuote(to),
+        "/E",
+        "/MT:16",
+        "/NFL",
+        "/NDL",
+        "/NJH",
+        "/NJS",
+        "/NP"
+      ),
+      stdout = FALSE
+    )
+    failed <- status >= 8
+  } else {
+    status <- system2("cp", c("-a", shQuote(from), shQuote(to)))
+    failed <- status != 0
+  }
+  if (failed) {
+    stop("Could not copy '", from, "' to '", to, "'.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+local_build_tempdir <- function(envir = parent.frame()) {
+  if (!os_is_wsl()) {
+    return(withr::local_tempdir(.local_envir = envir))
+  }
+  wsl_dir <- wsl_tempdir()
+  withr::defer(
+    wsl_compatible_run(command = "rm", args = c("-rf", wsl_dir)),
+    envir = envir
+  )
+  wsl_safe_path(wsl_dir, revert = TRUE)
+}
+
 local_private_cmdstan <- function(envir = parent.frame()) {
   shared <- cmdstan_path()
-  .cmdstanr$WSL <- grepl("//wsl$", shared, fixed = TRUE)
   if (is.null(private_cmdstan$path)) {
-    root <- tempfile("cmdstan-")
-    if (os_is_wsl()) {
-      root <- file.path(dirname(dirname(shared)), basename(root))
-      withr::defer(
-        unlink(root, recursive = TRUE, force = TRUE),
-        testthat::teardown_env()
-      )
-    }
-    private_cmdstan$path <- file.path(root, basename(shared))
-    dir.create(root)
-    to <- private_cmdstan$path
-    if (os_is_wsl()) {
-      wsl_compatible_run(
-        command = "cp",
-        args = c("-a", wsl_safe_path(shared), wsl_safe_path(to))
-      )
-    } else if (os_is_windows()) {
-      system2(
-        "robocopy",
-        c(
-          shQuote(shared),
-          shQuote(to),
-          "/E",
-          "/MT:16",
-          "/NFL",
-          "/NDL",
-          "/NJH",
-          "/NJS",
-          "/NP"
-        ),
-        stdout = FALSE
-      )
-    } else {
-      system2("cp", c("-a", shQuote(shared), shQuote(to)))
-    }
+    to <- file.path(
+      local_build_tempdir(testthat::teardown_env()),
+      basename(shared)
+    )
+    copy_cmdstan(shared, to)
+    private_cmdstan$path <- to
   }
   suppressMessages(set_cmdstan_path(private_cmdstan$path))
   withr::defer(suppressMessages(set_cmdstan_path(shared)), envir = envir)

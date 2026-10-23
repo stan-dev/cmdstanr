@@ -55,7 +55,11 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain()
-          cmdstanr::install_cmdstan(cores = 2)
+          cpp_options <- list()
+          if (Sys.info()[["sysname"]] == "Linux") {
+            cpp_options <- list("CPPFLAGS_SUNDIALS += -fPIC")
+          }
+          cmdstanr::install_cmdstan(cores = 2, cpp_options = cpp_options)
         shell: Rscript {0}
 
       - name: Test coverage (Linux)

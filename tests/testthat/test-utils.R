@@ -175,6 +175,7 @@ test_that("check_ebfmi and computing ebfmi works", {
 # cmdstan utilities -------------------------------------------------------
 
 test_that("cmdstan_summary works if bin/stansummary deleted file", {
+  local_private_cmdstan()
   delete_and_run <- function() {
     file.remove(file.path(cmdstan_path(), "bin", cmdstan_ext("stansummary")))
     fit_mcmc$cmdstan_summary()
@@ -183,6 +184,7 @@ test_that("cmdstan_summary works if bin/stansummary deleted file", {
 })
 
 test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
+  local_private_cmdstan()
   delete_and_run <- function() {
     file.remove(file.path(cmdstan_path(), "bin", cmdstan_ext("diagnose")))
     fit_mcmc$cmdstan_diagnose()
