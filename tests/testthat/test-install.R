@@ -6,8 +6,8 @@ if (!nzchar(cmdstan_test_tarball_url)) {
 }
 
 test_that("install_cmdstan() successfully installs cmdstan and rebuild_cmdstan() rebuilds it", {
-  build_cores <- min(parallel::detectCores(), if (os_is_wsl()) 2 else 4)
-  dir <- local_build_tempdir()
+  build_cores <- min(parallel::detectCores(), 4)
+  dir <- withr::local_tempdir()
   withr::defer(set_cmdstan_path())
   expect_message(
     expect_output(
