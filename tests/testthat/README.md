@@ -32,8 +32,13 @@ in `helper-mock-cli.R` stands in for `make` and for the executable's `info`
 call, so a test can go through the build code without a compiler.
 `mock_cmdstan_model()` wraps it and removes the stand-in executable and its
 record when the calling frame ends, so a later real compile of the same
-program does not find them. `setup.R` removes everything but the `.stan`
-files under `resources/stan/` before and after a run.
+program does not find them.
+
+The suite runs in parallel when `TESTTHAT_CPUS` is set, so files must not
+depend on each other or on the order they run in. Each worker has its own copy
+of `resources/stan/` in `tempdir()/stan`. A test that changes the CmdStan
+installation (`make/local`, `bin/`, a rebuild) calls `local_private_cmdstan()`,
+or `local_cmdstan_make_local()`, which calls it, to work on a per-worker copy.
 
 `test-install.R` installs CmdStan from source, so it can be convenient to run 
 single tests from it with the `desc` argument of `test_file()` rather than the 
