@@ -68,8 +68,9 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
         sub("\\.o$", ".d", main_o)
       )
       targets <- targets[nzchar(targets)]
-      if (length(targets) > 0) {
-        run_make(c(targets, make_args), quiet = TRUE)
+      missing <- targets[!file.exists(file.path(cmdstan_path(), targets))]
+      if (length(missing) > 0) {
+        run_make(c(missing, make_args), quiet = TRUE)
       }
     }
   })
