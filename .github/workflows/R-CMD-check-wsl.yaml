@@ -29,7 +29,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
-      TESTTHAT_CPUS: 3
+      TESTTHAT_PARALLEL: false
       CMDSTANR_OPENCL_TESTS: true
 
     steps:
