@@ -124,7 +124,7 @@ test_that("pathfinder() method works with data files", {
 
 test_that("pathfinder() method works with init file", {
   init_list <- list(theta = 0.5)
-  # jarl-ignore internal_function: deliberate use of internals
+  # jarl-ignore undesirable_operator: deliberate use of internals
   init_file <- tempfile(
     tmpdir = cmdstanr:::cmdstan_tempdir(),
     pattern = "testing-inits-",
