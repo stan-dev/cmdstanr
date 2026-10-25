@@ -1,10 +1,5 @@
-# With NOT_CRAN=true, the first worker to get the lock prepares the CmdStan
-# installation once, so parallel workers do not build in it at the same time:
-# it adds -fPIC to make/local and rebuilds CmdStan if Linux needs it, then
-# builds the precompiled headers and main objects, with and without threads.
-# Tests that change the installation use a per-worker copy (see
-# local_private_cmdstan()). Each worker runs two chains at a time, so four
-# workers sample eight chains at once.
+# Parallel workers building the shared precompiled headers and main objects at
+# the same time corrupt them, so the first worker to get the lock builds them.
 options(mc.cores = 2)
 
 stan_dir <- stan_fixture()
@@ -42,6 +37,12 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
     lock <- filelock::lock(file.path(lock_dir, "test-warm-up.lock"))
     withr::defer(filelock::unlock(lock))
 
+    # Workers killed during teardown leave their CmdStan copies behind
+    stale <- Sys.glob(
+      file.path(dirname(tempdir()), "Rtmp*", "cmdstan-private-*")
+    )
+    unlink(stale[file.mtime(stale) < Sys.time() - 86400], recursive = TRUE)
+
     make_variable <- function(make_args, name) {
       trimws(
         sub(
@@ -68,6 +69,7 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
         sub("\\.o$", ".d", main_o)
       )
       targets <- targets[nzchar(targets)]
+      # make fails on Windows when a target is already built
       missing <- targets[!file.exists(file.path(cmdstan_path(), targets))]
       if (length(missing) > 0) {
         run_make(c(missing, make_args), quiet = TRUE)

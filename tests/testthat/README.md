@@ -34,7 +34,7 @@ call, so a test can go through the build code without a compiler.
 record when the calling frame ends, so a later real compile of the same
 program does not find them.
 
-The suite runs in parallel when `TESTTHAT_CPUS` is set, so files must not
+The full suite runs in parallel unless `TESTTHAT_PARALLEL=false`, so files must not
 depend on each other or on the order they run in. Each worker has its own copy
 of `resources/stan/` in `tempdir()/stan`. A test that changes the CmdStan
 installation (`make/local`, `bin/`, a rebuild) calls `local_private_cmdstan()`,

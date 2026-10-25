@@ -214,7 +214,7 @@ copy_cmdstan <- function(from, to) {
 
 local_build_tempdir <- function(envir = parent.frame()) {
   if (!os_is_wsl()) {
-    return(withr::local_tempdir(.local_envir = envir))
+    return(withr::local_tempdir("cmdstan-private-", .local_envir = envir))
   }
   wsl_dir <- wsl_tempdir()
   withr::defer(
