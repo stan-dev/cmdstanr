@@ -1,5 +1,4 @@
-# Parallel workers building the shared precompiled headers and main objects at
-# the same time corrupt them, so the first worker to get the lock builds them.
+# Each worker runs two chains at a time; CI runs up to four workers.
 options(mc.cores = 2)
 
 stan_dir <- stan_fixture()
@@ -29,6 +28,10 @@ cleanup_stan_artifacts <- function() {
 cleanup_stan_artifacts()
 withr::defer(cleanup_stan_artifacts(), testthat::teardown_env())
 
+# Build what every worker would otherwise build at once in the shared
+# installation: the -fPIC SUNDIALS flag, and the precompiled headers and main
+# objects for plain and threaded models. Concurrent builds corrupt these files,
+# so the first worker to take the lock builds them and the rest wait.
 if (identical(Sys.getenv("NOT_CRAN"), "true")) {
   local({
     message("Preparing CmdStan in ", cmdstan_path(), " for the tests")

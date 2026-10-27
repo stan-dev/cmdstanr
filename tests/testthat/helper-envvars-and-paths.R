@@ -165,6 +165,10 @@ local_make_local_backup <- function(envir = parent.frame()) {
   invisible(NULL)
 }
 
+# Switch to this worker's private CmdStan copy and write cpp_options to its
+# make/local. When `envir` exits, restore the original make/local (or its
+# absence) and switch back to the shared installation. Called at the top level
+# of a test file, the whole file runs on the private copy.
 local_cmdstan_make_local <- function(
   cpp_options,
   envir = parent.frame(),
@@ -224,6 +228,8 @@ local_build_tempdir <- function(envir = parent.frame()) {
   wsl_safe_path(wsl_dir, revert = TRUE)
 }
 
+# Point cmdstan_path() at this worker's private copy of the installation, made
+# on first use, until `envir` exits. The copy is deleted at worker teardown.
 local_private_cmdstan <- function(envir = parent.frame()) {
   shared <- cmdstan_path()
   if (is.null(private_cmdstan$path)) {
