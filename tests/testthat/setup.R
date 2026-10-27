@@ -43,25 +43,18 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
     )
     unlink(stale[file.mtime(stale) < Sys.time() - 86400], recursive = TRUE)
 
-    make_variable <- function(make_args, name) {
-      trimws(
-        sub(
-          ".*=",
-          "",
-          run_make(
-            c("-s", make_args, paste0("print-", name)),
-            quiet = TRUE
-          )$stdout
-        )
-      )
-    }
     withr::with_options(
       list(mc.cores = parallel::detectCores()),
       check_sundials_fpic(get_cmdstan_flags("CPPFLAGS_SUNDIALS"), FALSE)
     )
     for (make_args in list(character(), "STAN_THREADS=true")) {
-      header <- make_variable(make_args, "PRECOMPILED_MODEL_HEADER")
-      main_o <- make_variable(make_args, "CMDSTAN_MAIN_O")
+      flags <- c("PRECOMPILED_MODEL_HEADER", "CMDSTAN_MAIN_O")
+      output <- run_make(
+        c("-s", make_args, paste0("print-", flags)),
+        quiet = TRUE
+      )$stdout
+      header <- parse_make_print_flag(flags[1], output)
+      main_o <- parse_make_print_flag(flags[2], output)
       targets <- c(
         header,
         sub("\\.hpp\\.gch$", ".d", header),
@@ -72,7 +65,7 @@ if (identical(Sys.getenv("NOT_CRAN"), "true")) {
       # make fails on Windows when a target is already built
       missing <- targets[!file.exists(file.path(cmdstan_path(), targets))]
       if (length(missing) > 0) {
-        run_make(c(missing, make_args), quiet = TRUE)
+        run_make(c("-j2", missing, make_args), quiet = TRUE)
       }
     }
   })
