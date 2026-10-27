@@ -22,6 +22,7 @@ jobs:
   test-coverage:
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
     runs-on: ${{ matrix.config.os }}
+    timeout-minutes: 150
 
     name: ${{ matrix.config.os }}
 
@@ -34,6 +35,7 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NOT_CRAN: true
+      TESTTHAT_CPUS: 4
 
     steps:
       - name: cmdstan env vars
@@ -54,7 +56,11 @@ jobs:
       - name: Install cmdstan
         run: |
           cmdstanr::check_cmdstan_toolchain()
-          cmdstanr::install_cmdstan(cores = 2)
+          cpp_options <- list()
+          if (Sys.info()[["sysname"]] == "Linux") {
+            cpp_options <- list("CPPFLAGS_SUNDIALS += -fPIC")
+          }
+          cmdstanr::install_cmdstan(cores = 2, cpp_options = cpp_options)
         shell: Rscript {0}
 
       - name: Test coverage (Linux)

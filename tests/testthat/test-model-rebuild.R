@@ -4,7 +4,7 @@ set_cmdstan_path()
 
 # A fresh copy of a resources/stan/ program (with its include file, for
 # bernoulli_include) in its own directory, so a build never touches the
-# shared copy under resources/stan/.
+# per-worker copy under tempdir()/stan.
 local_program <- function(name = "bernoulli", .local_envir = parent.frame()) {
   dir <- withr::local_tempdir(.local_envir = .local_envir)
   file.copy(testing_stan_file(name), dir)
