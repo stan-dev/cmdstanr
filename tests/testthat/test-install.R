@@ -7,7 +7,7 @@ if (!nzchar(cmdstan_test_tarball_url)) {
 
 test_that("install_cmdstan() successfully installs cmdstan and rebuild_cmdstan() rebuilds it", {
   build_cores <- min(parallel::detectCores(), 4)
-  dir <- withr::local_tempdir()
+  dir <- local_build_tempdir()
   withr::defer(set_cmdstan_path())
   expect_message(
     expect_output(
@@ -139,7 +139,7 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 
 test_that("install_cmdstan() installs from release_url", {
   skip_if(!is.null(cmdstan_test_tarball_url))
-  dir <- withr::local_tempdir()
+  dir <- local_build_tempdir()
   url <- paste0(
     "https://github.com/stan-dev/cmdstan/releases/download/",
     "v2.37.0/cmdstan-2.37.0.tar.gz"
@@ -388,7 +388,7 @@ test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
 })
 
 test_that("install_cmdstan() installs from release_file", {
-  dir <- withr::local_tempdir()
+  dir <- local_build_tempdir()
   destfile <- file.path(withr::local_tempdir(), "cmdstan-2.37.0.tar.gz")
   download_with_retries(
     paste0(
