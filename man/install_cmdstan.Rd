@@ -54,8 +54,8 @@ If \code{TRUE} only errors will be printed.}
 
 \item{overwrite}{(logical) Should CmdStan still be downloaded and installed
 even if an installation of the same version is found in \code{dir}? The default
-is \code{FALSE}, in which case an informative error is thrown instead of
-overwriting the user's installation.}
+is \code{FALSE}, in which case the existing installation is left as it is,
+with a warning.}
 
 \item{timeout}{(positive real) Time limit (in seconds) for each stage of
 the installation. For \code{install_cmdstan()} the stages are the download of
@@ -91,7 +91,9 @@ that the required toolchain is installed and properly configured? The
 default is \code{TRUE}.}
 
 \item{wsl}{(logical) Should CmdStan be installed and run through the Windows
-Subsystem for Linux (WSL). The default is \code{FALSE}.}
+Subsystem for Linux (WSL). The default is \code{FALSE}. With \code{wsl = TRUE},
+models run inside the Linux distribution, where Smart App Control does
+not block them.}
 
 \item{copy_make_local}{(logical) Should the \code{make/local} file of the CmdStan
 installation currently in use be copied to the new installation? The copy
