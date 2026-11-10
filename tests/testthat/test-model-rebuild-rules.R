@@ -325,6 +325,33 @@ test_that("a CmdStan rebuilt in place at a newer version is a rebuild reason", {
   expect_equal(cmdstan_version(), "2.39.0")
 })
 
+test_that("an installation without stanc is an error that names it", {
+  skip_if(
+    os_is_wsl(),
+    "a Windows directory cannot stand in for a WSL installation"
+  )
+  old_path <- cmdstan_path()
+  withr::defer(set_cmdstan_path(old_path))
+
+  install_dir <- withr::local_tempdir()
+  dir.create(file.path(install_dir, "bin"))
+  writeLines("CMDSTAN_VERSION := 2.40.0", file.path(install_dir, "makefile"))
+  stan_file <- local_bernoulli()
+  set_cmdstan_path(install_dir)
+
+  expect_error(
+    cmdstan_model(stan_file),
+    paste0(
+      "The CmdStan installation at '",
+      cmdstan_path(),
+      "' has no `",
+      cmdstan_ext("bin/stanc"),
+      "`. Run `rebuild_cmdstan()` to restore it."
+    ),
+    fixed = TRUE
+  )
+})
+
 test_that("dir puts the executable there and a second call reuses it", {
   stan_file <- local_bernoulli()
   exe_dir <- withr::local_tempdir()
@@ -495,6 +522,34 @@ test_that("an executable that starts but cannot answer help-all is an error", {
       "error while loading shared libraries: libtbb.so: not found\n",
       "Run cmdstan_model\\(\\) with force_recompile = TRUE to rebuild it.$"
     )
+  )
+})
+
+test_that("a launch blocked by Windows Application Control says so", {
+  local_mocked_bindings(wsl_compatible_run = function(...) {
+    stop(
+      "create process 'C:/models/bern.exe' (system error 4551, An ",
+      "Application Control policy has blocked this file.) ",
+      "@win/processx.c:1270 (processx_exec)"
+    )
+  })
+  expect_error(
+    parse_cmdstan_args(
+      "C:/models/bern.exe",
+      "sample",
+      "C:/models/bern.stan",
+      tbb_dir = NULL
+    ),
+    paste0(
+      "The executable at 'C:/models/bern.exe' could not be run: ",
+      "An Application Control policy has blocked this file.\n",
+      "Windows Application Control may be blocking programs it does not ",
+      "recognize, including models built by CmdStanR. Models cannot run ",
+      "while Smart App Control is on, unless CmdStan runs through WSL (see ",
+      "the `wsl` argument of `install_cmdstan()`). If the policy is set by ",
+      "your organization, ask your administrator."
+    ),
+    fixed = TRUE
   )
 })
 

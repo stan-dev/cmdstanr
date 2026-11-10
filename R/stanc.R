@@ -2,13 +2,28 @@
 # it, and reading what it printed. The build and the model methods both come
 # through here.
 
-# Returns the stanc exe path depending on the OS
+#' The stanc command, relative to the CmdStan directory
+#'
+#' Stops with a clear error if the installation has no stanc. That happens
+#' when `rebuild_cmdstan()` deletes it and the build that follows fails.
+#' Without the check, processx would only say the command was not found.
+#'
+#' @return `"bin/stanc"`, with `.exe` on Windows outside WSL.
+#' @noRd
 stanc_cmd <- function() {
-  if (os_is_windows() && !os_is_wsl()) {
-    "bin/stanc.exe"
-  } else {
-    "bin/stanc"
+  cmd <- cmdstan_ext("bin/stanc")
+  path <- checked_cmdstan_path()
+  if (!file.exists(file.path(path, cmd))) {
+    stop(
+      "The CmdStan installation at '",
+      path,
+      "' has no `",
+      cmd,
+      "`. Run `rebuild_cmdstan()` to restore it.",
+      call. = FALSE
+    )
   }
+  cmd
 }
 
 #' Check the user's `stanc_options` for what stanc or CmdStanR would reject
