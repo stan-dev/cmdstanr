@@ -16,6 +16,24 @@ test_that("Setting path works and confirms with message", {
   expect_equal(.cmdstanr$PATH, PATH)
 })
 
+test_that("WSL file checks handle quoted paths, missing paths, and permissions", {
+  skip_if_not(os_is_wsl())
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "file with 'quotes'.txt")
+  writeLines("test", path)
+
+  expect_true(check_dir_exists(dir, access = "rwx"))
+  expect_true(check_file_exists(path, access = "r"))
+  expect_match(check_dir_exists(file.path(dir, "missing")), "does not exist")
+  expect_match(check_file_exists(paste0(path, "-missing")), "does not exist")
+
+  dir <- local_build_tempdir()
+  path <- file.path(dir, "unreadable.txt")
+  writeLines("test", path)
+  wsl_compatible_run(command = "chmod", args = c("000", wsl_safe_path(path)))
+  expect_match(check_file_exists(path, access = "r"), "access permission r")
+})
+
 test_that("Setting bad path leads to warning (can't find directory)", {
   unset_cmdstan_path()
   expect_null(.cmdstanr$PATH)

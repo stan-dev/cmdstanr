@@ -5,14 +5,15 @@ if (!nzchar(cmdstan_test_tarball_url)) {
   cmdstan_test_tarball_url <- NULL
 }
 
-test_that("install_cmdstan() successfully installs cmdstan", {
-  dir <- withr::local_tempdir()
+test_that("install_cmdstan() successfully installs cmdstan and rebuild_cmdstan() rebuilds it", {
+  build_cores <- min(parallel::detectCores(), 4)
+  dir <- local_build_tempdir()
   withr::defer(set_cmdstan_path())
   expect_message(
     expect_output(
       install_cmdstan(
         dir = dir,
-        cores = 2,
+        cores = build_cores,
         quiet = FALSE,
         overwrite = TRUE,
         release_url = cmdstan_test_tarball_url,
@@ -22,6 +23,11 @@ test_that("install_cmdstan() successfully installs cmdstan", {
       fixed = TRUE
     ),
     "CmdStan path set",
+    fixed = TRUE
+  )
+  expect_output(
+    rebuild_cmdstan(dir = cmdstan_path(), cores = build_cores),
+    paste0("CmdStan v", cmdstan_version(), " built"),
     fixed = TRUE
   )
 })
@@ -133,7 +139,7 @@ test_that("install_cmdstan() errors if invalid version or URL", {
 
 test_that("install_cmdstan() installs from release_url", {
   skip_if(!is.null(cmdstan_test_tarball_url))
-  dir <- withr::local_tempdir()
+  dir <- local_build_tempdir()
   url <- paste0(
     "https://github.com/stan-dev/cmdstan/releases/download/",
     "v2.37.0/cmdstan-2.37.0.tar.gz"
@@ -209,15 +215,6 @@ test_that("check_cmdstan_toolchain() reports what is missing on Unix", {
   file.symlink(make, file.path(only_make, "make"))
   withr::local_envvar(c(PATH = only_make))
   expect_error(check_cmdstan_toolchain(), err_msg_cpp, fixed = TRUE)
-})
-
-test_that("clean and rebuild works", {
-  set_cmdstan_path()
-  expect_output(
-    rebuild_cmdstan(cores = 2),
-    paste0("CmdStan v", cmdstan_version(), " built"),
-    fixed = TRUE
-  )
 })
 
 test_that("github_download_url constructs correct url", {
@@ -391,7 +388,7 @@ test_that("download_with_retries() drops GITHUB_PAT after auth failure", {
 })
 
 test_that("install_cmdstan() installs from release_file", {
-  dir <- withr::local_tempdir()
+  dir <- local_build_tempdir()
   destfile <- file.path(withr::local_tempdir(), "cmdstan-2.37.0.tar.gz")
   download_with_retries(
     paste0(
@@ -777,6 +774,7 @@ test_that("install_cmdstan() rejects a non-logical copy_make_local", {
 })
 
 test_that("cmdstan_make_local() works", {
+  local_private_cmdstan()
   # Backup only, cmdstan_make_local() is the thing being tested.
   local_make_local_backup()
 
