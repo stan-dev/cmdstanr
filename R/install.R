@@ -49,8 +49,8 @@
 #'   If `TRUE` only errors will be printed.
 #' @param overwrite (logical) Should CmdStan still be downloaded and installed
 #'   even if an installation of the same version is found in `dir`? The default
-#'   is `FALSE`, in which case an informative error is thrown instead of
-#'   overwriting the user's installation.
+#'   is `FALSE`, in which case the existing installation is left as it is,
+#'   with a warning.
 #' @param timeout (positive real) Time limit (in seconds) for each stage of
 #'   the installation. For `install_cmdstan()` the stages are the download of
 #'   the CmdStan archive, the build of CmdStan and the build of the example
@@ -79,7 +79,9 @@
 #'   that the required toolchain is installed and properly configured? The
 #'   default is `TRUE`.
 #' @param wsl (logical) Should CmdStan be installed and run through the Windows
-#'  Subsystem for Linux (WSL). The default is `FALSE`.
+#'  Subsystem for Linux (WSL). The default is `FALSE`. With `wsl = TRUE`,
+#'  models run inside the Linux distribution, where Smart App Control does
+#'  not block them.
 #' @param copy_make_local (logical) Should the `make/local` file of the CmdStan
 #'   installation currently in use be copied to the new installation? The copy
 #'   happens before CmdStan is built, so the flags are already in effect for

@@ -557,7 +557,11 @@ check_target_exe <- function(exe) {
 #' reason (for example "Permission denied") or the executable's own output, and
 #' says how to rebuild it, or that there is no Stan file to rebuild it from.
 #' When the TBB the build linked against is no longer there it says so, since
-#' that's one likely cause and reinstalling it is the other way out.
+#' that's one likely cause and reinstalling it is the other way out. When
+#' Windows Application Control refused the launch (system error 4551, which
+#' Smart App Control and an organization's policy both raise, since a freshly
+#' built model is unsigned and unknown to them), it says that instead, because
+#' a rebuild would be blocked the same way.
 #'
 #' @param exe_file Path to the executable.
 #' @param stan_file The model's Stan file, empty for a model created from an
@@ -568,10 +572,11 @@ check_target_exe <- function(exe) {
 stop_cannot_run <- function(exe_file, stan_file, reason, tbb_dir = NULL) {
   system_error <- regmatches(
     reason,
-    regexec("\\(system error [0-9]+, ([^)]*)\\)", reason)
+    regexec("\\(system error ([0-9]+), ([^)]*)\\)", reason)
   )[[1]]
-  if (length(system_error) == 2) {
-    reason <- system_error[[2]]
+  blocked <- length(system_error) == 3 && system_error[[2]] == "4551"
+  if (length(system_error) == 3) {
+    reason <- system_error[[3]]
   }
   tbb_gone <- !is.null(tbb_dir) && !dir.exists(tbb_dir)
   if (tbb_gone) {
@@ -582,7 +587,15 @@ stop_cannot_run <- function(exe_file, stan_file, reason, tbb_dir = NULL) {
       "' no longer exists."
     )
   }
-  remedy <- if (length(stan_file) > 0 && tbb_gone) {
+  remedy <- if (blocked) {
+    paste0(
+      "Windows Application Control may be blocking programs it does not ",
+      "recognize, including models built by CmdStanR. Models cannot run ",
+      "while Smart App Control is on, unless CmdStan runs through WSL (see ",
+      "the `wsl` argument of `install_cmdstan()`). If the policy is set by ",
+      "your organization, ask your administrator."
+    )
+  } else if (length(stan_file) > 0 && tbb_gone) {
     paste(
       "Reinstall it there or run cmdstan_model() with force_recompile = TRUE",
       "to rebuild it."
