@@ -6,15 +6,14 @@ name: verify-lockfile
 on:
   pull_request:
   push:
-    branches:
-      - main
+    branches: [main, master]
 
 permissions:
   contents: read
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
