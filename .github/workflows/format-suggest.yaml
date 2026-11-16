@@ -23,7 +23,7 @@ name: format-suggest.yaml
 jobs:
   format-suggest:
     name: format-suggest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     permissions:
       contents: read
@@ -58,3 +58,18 @@ jobs:
           level: error
           fail_level: error
           tool_name: air+jarl
+
+  # Fails when .github/workflows/actions.lock is out of sync with the
+  # workflows or a locked pin no longer verifies upstream.
+  # Taken from https://hugovk.dev/blog/2026/lock-github-actions
+  lockfile:
+    runs-on: ubuntu-slim
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - run: gh extension install github/gh-actions-lock --pin v0.4.1
+      - run: gh actions-lock --verify
