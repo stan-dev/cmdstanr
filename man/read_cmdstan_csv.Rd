@@ -16,7 +16,8 @@ as_cmdstan_fit(
   files,
   variables = NULL,
   check_diagnostics = TRUE,
-  format = getOption("cmdstanr_draws_format")
+  format = getOption("cmdstanr_draws_format"),
+  warmup_file = NULL
 )
 }
 \arguments{
@@ -55,6 +56,9 @@ and memory for models with many parameters.}
 diagnostic checks be performed after reading in the files? The default is
 \code{TRUE} but set to \code{FALSE} to avoid checking for problems with divergences
 and treedepth.}
+
+\item{warmup_file}{(string) For a Parquet file in \code{files}, the optional
+Parquet file of the warmup draws. See \code{\link[=read_cmdstan_parquet]{read_cmdstan_parquet()}}.}
 }
 \value{
 \code{as_cmdstan_fit()} returns a fitted model object (\link{CmdStanMCMC}, \link{CmdStanVB},
@@ -163,6 +167,12 @@ files do not record whether the chains ran in parallel.
 All other fitted-model methods are unavailable because they require
 information not contained in the CSV files. Calling an unavailable method
 produces an informative error.
+
+\code{as_cmdstan_fit()} also accepts one Parquet file from
+\code{\link[=cmdstan_csv_to_parquet]{cmdstan_csv_to_parquet()}} (MCMC output only), with an optional
+\code{warmup_file}. The object then reads the draws with
+\code{\link[=read_cmdstan_parquet]{read_cmdstan_parquet()}}, and it has the same methods as an object made
+from the CSV files. \verb{$output_files()} gives the Parquet file.
 }
 
 \examples{

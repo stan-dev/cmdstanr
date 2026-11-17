@@ -125,6 +125,12 @@
 #' information not contained in the CSV files. Calling an unavailable method
 #' produces an informative error.
 #'
+#' `as_cmdstan_fit()` also accepts one Parquet file from
+#' [cmdstan_csv_to_parquet()] (MCMC output only), with an optional
+#' `warmup_file`. The object then reads the draws with
+#' [read_cmdstan_parquet()], and it has the same methods as an object made
+#' from the CSV files. `$output_files()` gives the Parquet file.
+#'
 #' @seealso [draws_to_csv()] for creating compatible CSV files and
 #'   [`$output_files()`][fit-method-output_files] for locating files created by
 #'   CmdStanR
@@ -448,19 +454,40 @@ read_cmdstan_csv <- function(
 #'   diagnostic checks be performed after reading in the files? The default is
 #'   `TRUE` but set to `FALSE` to avoid checking for problems with divergences
 #'   and treedepth.
+#' @param warmup_file (string) For a Parquet file in `files`, the optional
+#'   Parquet file of the warmup draws. See [read_cmdstan_parquet()].
 #'
 as_cmdstan_fit <- function(
   files,
   variables = NULL,
   check_diagnostics = TRUE,
-  format = getOption("cmdstanr_draws_format")
+  format = getOption("cmdstanr_draws_format"),
+  warmup_file = NULL
 ) {
-  csv_contents <- read_cmdstan_csv(
-    files,
-    variables = if (is.null(variables)) "" else variables,
-    sampler_diagnostics = if (check_diagnostics) NULL else "",
-    format = format
-  )
+  is_parquet <- length(files) == 1 &&
+    grepl("\\.parquet$", files, ignore.case = TRUE)
+  if (is_parquet) {
+    csv_contents <- read_cmdstan_parquet(
+      files,
+      variables = if (is.null(variables)) "" else variables,
+      sampler_diagnostics = if (check_diagnostics) NULL else "",
+      format = format,
+      warmup_file = warmup_file
+    )
+  } else {
+    if (!is.null(warmup_file)) {
+      stop(
+        "'warmup_file' can only be used with a Parquet file.",
+        call. = FALSE
+      )
+    }
+    csv_contents <- read_cmdstan_csv(
+      files,
+      variables = if (is.null(variables)) "" else variables,
+      sampler_diagnostics = if (check_diagnostics) NULL else "",
+      format = format
+    )
+  }
   method <- csv_contents$metadata$method
   if (!is.null(variables)) {
     if (method == "sample") {
@@ -475,7 +502,16 @@ as_cmdstan_fit <- function(
   }
   switch(
     method,
-    "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
+    "sample" = if (is_parquet) {
+      CmdStanMCMC_Parquet$new(
+        csv_contents,
+        files,
+        warmup_file,
+        check_diagnostics
+      )
+    } else {
+      CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics)
+    },
     "optimize" = CmdStanMLE_CSV$new(csv_contents, files),
     "variational" = CmdStanVB_CSV$new(csv_contents, files),
     "pathfinder" = CmdStanPathfinder_CSV$new(csv_contents, files),

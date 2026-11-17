@@ -67,8 +67,14 @@ file in \code{files}. \code{.iteration} starts from 1 in each chain. \code{.draw
 numbers the draws of all chains consecutively.
 }
 
-Thus \code{posterior::as_draws_df(nanoparquet::read_parquet(file))} gives the
-draws, and the \code{col_select} argument of \code{\link[nanoparquet:read_parquet]{nanoparquet::read_parquet()}}
+\code{\link[=read_cmdstan_parquet]{read_cmdstan_parquet()}} reads the file into the same structure as
+\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}, with the draws (\code{lp__} and the model variables) and
+the sampler diagnostics separate. \code{\link[=as_cmdstan_fit]{as_cmdstan_fit()}} makes a fitted model
+object from the file.
+
+\code{posterior::as_draws_df(nanoparquet::read_parquet(file))} gives all
+columns in one data frame, and the \code{col_select} argument of
+\code{\link[nanoparquet:read_parquet]{nanoparquet::read_parquet()}}
 reads only some of the variables. Include \code{.chain}, \code{.iteration} and
 \code{.draw} in \code{col_select} to keep the chain structure. Other Parquet
 readers (for example \pkg{arrow}, \pkg{duckdb} and \pkg{polars}) can also
@@ -86,7 +92,8 @@ the CmdStan version and the sampler arguments, and \code{variables},
 \code{inv_metric} (an array, or an array of rows for a dense metric) and the
 \code{time} in seconds. For the \code{fixed_param} sampler, \code{variables} and
 \code{sampler_diagnostics} do not list the columns \code{lp__} and
-\code{accept_stat__}. Use the Parquet schema to get all column names.
+\code{accept_stat__}. Use the Parquet schema to get all column names. The CSV
+values \code{true} and \code{false} are JSON booleans.
 }
 
 Read the metadata with \code{\link[nanoparquet:read_parquet_metadata]{nanoparquet::read_parquet_metadata()}} and
@@ -122,5 +129,6 @@ metadata$chains$step_size_adaptation
 
 }
 \seealso{
-\code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}}, \code{\link[=fit-method-output_files]{$output_files()}}
+\code{\link[=read_cmdstan_parquet]{read_cmdstan_parquet()}}, \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}},
+\code{\link[=fit-method-output_files]{$output_files()}}
 }
