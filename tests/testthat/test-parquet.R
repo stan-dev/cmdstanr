@@ -37,6 +37,15 @@ expect_same_draws <- function(object, expected) {
   )
 }
 
+# compare with read_cmdstan_csv(); the order of the metadata fields differs
+expect_same_contents <- function(object, expected) {
+  sort_metadata <- function(x) {
+    x$metadata <- x$metadata[sort(names(x$metadata))]
+    x
+  }
+  expect_equal(sort_metadata(object), sort_metadata(expected))
+}
+
 # copy CSV files to a temporary directory and change their lines with fun
 edit_csv_files <- function(
   files,
@@ -123,6 +132,9 @@ test_that("cmdstan_csv_to_parquet() stores the CmdStan metadata", {
   expect_identical(meta$method, "sample")
   expect_identical(meta$num_chains, 2L)
   expect_identical(meta$thin, 3L)
+  # the CSV values true and false are JSON booleans
+  expect_true(meta$save_warmup)
+  expect_true(meta$adapt_engaged)
   expect_identical(meta$chains$id, 1:2)
   expect_equal(
     meta$chains$step_size_adaptation,
@@ -159,6 +171,10 @@ test_that("cmdstan_csv_to_parquet() stores a dense metric", {
   meta <- read_parquet_stan_metadata(out)$metadata
   expect_identical(dim(meta$chains$inv_metric[[1]]), c(4L, 4L))
   expect_equal(meta$chains$inv_metric[[1]], unname(fit$inv_metric()[[1]]))
+  expect_same_contents(
+    read_cmdstan_parquet(out),
+    read_cmdstan_csv(fit$output_files())
+  )
 })
 
 test_that("cmdstan_csv_to_parquet() keeps one-element vectors as JSON arrays", {
@@ -266,6 +282,10 @@ test_that("cmdstan_csv_to_parquet() names tuple and complex variables", {
   meta <- read_parquet_stan_metadata(out)$metadata
   expect_identical(meta$variables, fit$metadata()$variables)
   expect_equal(meta$stan_variable_sizes, fit$metadata()$stan_variable_sizes)
+  expect_same_contents(
+    read_cmdstan_parquet(out),
+    read_cmdstan_csv(fit$output_files())
+  )
 })
 
 test_that("cmdstan_csv_to_parquet() writes columns when there are no draws", {
@@ -340,6 +360,10 @@ test_that("cmdstan_csv_to_parquet() writes no warmup draws for fixed_param", {
   ))
   expect_same_draws(read_parquet_draws(out), fit$draws())
   expect_identical(nrow(nanoparquet::read_parquet(out_warmup)), 0L)
+  x <- read_cmdstan_parquet(out, warmup_file = out_warmup)
+  expect_equal(x$post_warmup_draws, fit$draws())
+  expect_null(x$warmup_draws)
+  expect_null(x$post_warmup_sampler_diagnostics)
 })
 
 test_that("cmdstan_csv_to_parquet() warns about a chain with missing draws", {
@@ -467,5 +491,93 @@ test_that("cmdstan_csv_to_parquet() checks its arguments", {
       withr::local_tempfile()
     ),
     "Only CSV files from the MCMC sampler"
+  )
+})
+
+test_that("read_cmdstan_parquet() gives the result of read_cmdstan_csv()", {
+  files <- fit_parquet$output_files()
+  out <- withr::local_tempfile(fileext = ".parquet")
+  out_warmup <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(files, out, warmup_file = out_warmup)
+  expect_same_contents(
+    read_cmdstan_parquet(out, warmup_file = out_warmup),
+    read_cmdstan_csv(files)
+  )
+  selections <- list(
+    list(variables = "beta", sampler_diagnostics = ""),
+    list(variables = "", sampler_diagnostics = "divergent__"),
+    list(variables = c("alpha", "beta[2]"), format = "draws_df")
+  )
+  for (args in selections) {
+    expect_same_contents(
+      do.call(
+        read_cmdstan_parquet,
+        c(list(out, warmup_file = out_warmup), args)
+      ),
+      do.call(read_cmdstan_csv, c(list(files), args))
+    )
+  }
+  expect_error(
+    read_cmdstan_parquet(out, variables = "gamma"),
+    "Can't find the following variable(s) in the output: gamma",
+    fixed = TRUE
+  )
+  expect_error(
+    read_cmdstan_parquet(out, sampler_diagnostics = "gamma__"),
+    "Can't find the following sampler diagnostic(s)",
+    fixed = TRUE
+  )
+  # without the warmup file
+  x <- read_cmdstan_parquet(out)
+  expect_null(x$warmup_draws)
+  expect_null(x$warmup_sampler_diagnostics)
+  expect_identical(x$metadata$save_warmup, 0L)
+  expect_equal(x$post_warmup_draws, read_cmdstan_csv(files)$post_warmup_draws)
+})
+
+test_that("read_cmdstan_parquet() rejects other Parquet files", {
+  out <- withr::local_tempfile(fileext = ".parquet")
+  nanoparquet::write_parquet(data.frame(a = 1), out)
+  expect_error(read_cmdstan_parquet(out), "no CmdStan metadata")
+})
+
+test_that("as_cmdstan_fit() makes a fit from a Parquet file", {
+  files <- fit_parquet$output_files()
+  out <- withr::local_tempfile(fileext = ".parquet")
+  out_warmup <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(files, out, warmup_file = out_warmup)
+  fit_pq <- as_cmdstan_fit(out, warmup_file = out_warmup)
+  fit_csv <- as_cmdstan_fit(files)
+  expect_s3_class(fit_pq, "CmdStanMCMC")
+  expect_identical(fit_pq$output_files(), out)
+  expect_identical(fit_pq$num_chains(), 2L)
+  expect_equal(fit_pq$draws(), fit_parquet$draws())
+  expect_equal(
+    fit_pq$draws(inc_warmup = TRUE),
+    fit_parquet$draws(inc_warmup = TRUE)
+  )
+  expect_equal(
+    fit_pq$sampler_diagnostics(inc_warmup = TRUE),
+    fit_parquet$sampler_diagnostics(inc_warmup = TRUE)
+  )
+  expect_equal(fit_pq$inv_metric(), fit_parquet$inv_metric())
+  expect_equal(fit_pq$time(), fit_csv$time())
+  expect_equal(
+    fit_pq$metadata()[sort(names(fit_pq$metadata()))],
+    fit_csv$metadata()[sort(names(fit_csv$metadata()))]
+  )
+  expect_equal(
+    suppressWarnings(fit_pq$summary()),
+    suppressWarnings(fit_parquet$summary())
+  )
+  expect_error(fit_pq$code(), "not available")
+  # variables selects the draws that the object reads first
+  fit_alpha <- as_cmdstan_fit(out, variables = "alpha")
+  expect_equal(fit_alpha$draws(), fit_parquet$draws("alpha"))
+  # without the warmup file, the object has no warmup draws
+  expect_error(as_cmdstan_fit(out)$draws(inc_warmup = TRUE), "without them")
+  expect_error(
+    as_cmdstan_fit(files, warmup_file = out_warmup),
+    "can only be used with a Parquet file"
   )
 })
