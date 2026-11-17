@@ -597,16 +597,37 @@ test_that("as_cmdstan_fit() makes a fit from a Parquet file", {
   )
 })
 
-test_that("read_cmdstan_parquet() keeps the metadata values exact", {
-  # 18 significant digits and a nan in the inverse metric
+test_that("the Parquet metadata JSON keeps doubles exact", {
+  # CmdStan writes the step size and the metric with 6 digits, so test the
+  # JSON with other values
+  csv_metadata <- lapply(fit_parquet$output_files(), read_csv_metadata)
+  csv_metadata[[1]]$inv_metric <- c(1 / 3, pi, NaN, Inf)
+  csv_metadata[[2]]$step_size_adaptation <- 1 / 7
+  csv_metadata[[2]]$inv_metric <- c(-Inf, NA, exp(1), 1e-300)
+  back <- parquet_csv_metadata(parquet_stan_metadata(csv_metadata))
+  for (i in 1:2) {
+    # the reader drops num_chains; merge_csv_metadata() sets it
+    expected_names <- setdiff(names(csv_metadata[[i]]), "num_chains")
+    expect_setequal(names(back[[i]]), expected_names)
+    # profile_file differs between the chains
+    for (name in expected_names) {
+      expect_identical(
+        back[[i]][[name]],
+        csv_metadata[[i]][[name]],
+        info = name
+      )
+    }
+  }
+})
+
+test_that("read_cmdstan_parquet() reads a nan in the metric", {
   fit <- testing_fit(
     "logistic",
     method = "sample",
     seed = 123,
     chains = 2,
     iter_warmup = 100,
-    iter_sampling = 10,
-    sig_figs = 18
+    iter_sampling = 10
   )
   files <- edit_csv_files(fit$output_files(), function(lines, i) {
     if (i == 2) {
