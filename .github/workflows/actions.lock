@@ -33,7 +33,7 @@ workflows:
         - 'jamesives/github-pages-deploy-action@v4.9.0'
         - 'marocchino/sticky-pull-request-comment@v3.0.5'
         - 'r-lib/actions@v2.14.0'
-    '.github/workflows/verify-lockfile.yml':
+    '.github/workflows/verify-lockfile.yaml':
         - 'actions/checkout@v7.0.1'
 dependencies:
     'actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae':
