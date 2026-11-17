@@ -80,9 +80,10 @@ reads only some of the variables. Include \code{.chain}, \code{.iteration} and
 readers (for example \pkg{arrow}, \pkg{duckdb} and \pkg{polars}) can also
 read the file.
 
-The key-value metadata of the Parquet file has two entries:
+The key-value metadata of the Parquet file has three entries:
 \itemize{
 \item \code{stan.format_version}: the version of this file layout, now \code{"1"}.
+\item \code{stan.draws}: \code{"sampling"} in \code{file} and \code{"warmup"} in \code{warmup_file}.
 \item \code{stan.metadata}: the CmdStan metadata as a JSON object. It has the
 values that \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}} reads from the CSV comments, for example
 the CmdStan version and the sampler arguments, and \code{variables},
@@ -93,7 +94,9 @@ the CmdStan version and the sampler arguments, and \code{variables},
 \code{time} in seconds. For the \code{fixed_param} sampler, \code{variables} and
 \code{sampler_diagnostics} do not list the columns \code{lp__} and
 \code{accept_stat__}. Use the Parquet schema to get all column names. The CSV
-values \code{true} and \code{false} are JSON booleans.
+values \code{true} and \code{false} are JSON booleans, and the values \code{NaN},
+\code{Inf}, \code{-Inf} and \code{NA} are the JSON strings \code{"NaN"}, \code{"Inf"}, \code{"-Inf"}
+and \code{"NA"}.
 }
 
 Read the metadata with \code{\link[nanoparquet:read_parquet_metadata]{nanoparquet::read_parquet_metadata()}} and

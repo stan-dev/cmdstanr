@@ -58,8 +58,9 @@
 #' readers (for example \pkg{arrow}, \pkg{duckdb} and \pkg{polars}) can also
 #' read the file.
 #'
-#' The key-value metadata of the Parquet file has two entries:
+#' The key-value metadata of the Parquet file has three entries:
 #' * `stan.format_version`: the version of this file layout, now `"1"`.
+#' * `stan.draws`: `"sampling"` in `file` and `"warmup"` in `warmup_file`.
 #' * `stan.metadata`: the CmdStan metadata as a JSON object. It has the
 #'   values that [read_cmdstan_csv()] reads from the CSV comments, for example
 #'   the CmdStan version and the sampler arguments, and `variables`,
@@ -70,7 +71,9 @@
 #'   `time` in seconds. For the `fixed_param` sampler, `variables` and
 #'   `sampler_diagnostics` do not list the columns `lp__` and
 #'   `accept_stat__`. Use the Parquet schema to get all column names. The CSV
-#'   values `true` and `false` are JSON booleans.
+#'   values `true` and `false` are JSON booleans, and the values `NaN`,
+#'   `Inf`, `-Inf` and `NA` are the JSON strings `"NaN"`, `"Inf"`, `"-Inf"`
+#'   and `"NA"`.
 #'
 #' Read the metadata with [nanoparquet::read_parquet_metadata()] and
 #' [jsonlite::fromJSON()].
@@ -186,11 +189,12 @@ cmdstan_csv_to_parquet <- function(
         options = pq_options
       )
     } else {
+      draws_kind <- if (identical(path, tmp_warmup)) "warmup" else "sampling"
       nanoparquet::write_parquet(
         x,
         path,
         compression = compression,
-        metadata = key_value,
+        metadata = c(key_value, stan.draws = draws_kind),
         options = pq_options
       )
     }
@@ -420,12 +424,14 @@ parquet_stan_metadata <- function(csv_metadata) {
     }
     chain
   })
+  # 17 significant digits keep the doubles exact; NaN, Inf, -Inf and NA are
+  # JSON strings
   as.character(jsonlite::toJSON(
     out,
     auto_unbox = TRUE,
-    digits = NA,
+    digits = I(17),
     null = "null",
-    na = "null"
+    na = "string"
   ))
 }
 
@@ -452,14 +458,15 @@ parquet_per_chain_fields <- c(
 #' @inheritParams read_cmdstan_csv
 #' @param file (string) Path of a Parquet file from [cmdstan_csv_to_parquet()].
 #' @param warmup_file (string) Optional path of the Parquet file of the warmup
-#'   draws (the `warmup_file` of [cmdstan_csv_to_parquet()]). The default is
-#'   `NULL`, which reads no warmup draws and sets `metadata$save_warmup` to
-#'   `0`.
+#'   draws (the `warmup_file` of [cmdstan_csv_to_parquet()]), from the same
+#'   run as `file`. The default is `NULL`, which reads no warmup draws.
 #'
 #' @return A named list with the same elements as [read_cmdstan_csv()] gives
 #'   for the MCMC sampler: `metadata`, `time`, `inv_metric`, `step_size`,
 #'   `warmup_draws`, `post_warmup_draws`, `warmup_sampler_diagnostics` and
-#'   `post_warmup_sampler_diagnostics`.
+#'   `post_warmup_sampler_diagnostics`. The values are the same; the fields of
+#'   `metadata` can be in a different order. Without `warmup_file`, the
+#'   warmup elements are `NULL` also if `metadata$save_warmup` is 1.
 #'
 #' @details
 #' This function requires the \pkg{nanoparquet} package. It reads only the
@@ -497,14 +504,32 @@ read_cmdstan_parquet <- function(
   checkmate::assert_string(file)
   checkmate::assert_file_exists(file, access = "r")
   checkmate::assert_string(warmup_file, null.ok = TRUE)
+  format <- assert_valid_draws_format(format)
+  key_value <- parquet_key_value(file, "sampling")
   if (!is.null(warmup_file)) {
     checkmate::assert_file_exists(warmup_file, access = "r")
+    warmup_key_value <- parquet_key_value(warmup_file, "warmup")
+    if (!identical(warmup_key_value$metadata, key_value$metadata)) {
+      stop(
+        "'",
+        warmup_file,
+        "' and '",
+        file,
+        "' are not from the same run.",
+        call. = FALSE
+      )
+    }
   }
-  format <- assert_valid_draws_format(format)
-  merged <- merge_csv_metadata(read_parquet_csv_metadata(file))
+  csv_metadata <- parquet_csv_metadata(key_value$metadata)
+  merged <- merge_csv_metadata(csv_metadata)
   metadata <- merged$metadata
-  if (is.null(warmup_file)) {
-    metadata$save_warmup <- 0L
+  if (metadata$method != "sample") {
+    stop(
+      "Only output of the MCMC sampler is supported, not method '",
+      metadata$method,
+      "'.",
+      call. = FALSE
+    )
   }
   selected <- select_csv_columns(metadata, variables, sampler_diagnostics)
   variables <- repair_variable_names(selected$variables)
@@ -546,19 +571,19 @@ read_cmdstan_parquet <- function(
   )
 }
 
-#' Rebuild the per-chain CSV metadata from the JSON of a Parquet file.
+#' Read and check the key-value metadata of a Parquet file.
 #'
 #' @noRd
 #' @param file A Parquet file from `cmdstan_csv_to_parquet()`.
-#' @return A list with one element for each chain, in the form of
-#'   `read_csv_metadata()` output, with the CSV variable names.
+#' @param draws `"sampling"` or `"warmup"`, the expected `stan.draws` value.
+#' @return A list with the JSON text `metadata`.
 #'
-read_parquet_csv_metadata <- function(file) {
+parquet_key_value <- function(file, draws) {
   kv <- nanoparquet::read_parquet_metadata(
     file
   )$file_meta_data$key_value_metadata[[1]]
-  version <- kv$value[kv$key == "stan.format_version"]
-  if (!identical(version, "1")) {
+  value <- function(key) kv$value[kv$key == key]
+  if (!identical(value("stan.format_version"), "1")) {
     stop(
       "'",
       file,
@@ -567,21 +592,39 @@ read_parquet_csv_metadata <- function(file) {
       call. = FALSE
     )
   }
-  json <- jsonlite::fromJSON(
-    kv$value[kv$key == "stan.metadata"],
-    simplifyVector = FALSE
-  )
+  if (!identical(value("stan.draws"), draws)) {
+    stop(
+      "'",
+      file,
+      "' does not have the ",
+      draws,
+      " draws.",
+      call. = FALSE
+    )
+  }
+  list(metadata = value("stan.metadata"))
+}
+
+#' Rebuild the per-chain CSV metadata from the JSON of a Parquet file.
+#'
+#' @noRd
+#' @param json The `stan.metadata` JSON text of a Parquet file.
+#' @return A list with one element for each chain, in the form of
+#'   `read_csv_metadata()` output, with the CSV variable names.
+#'
+parquet_csv_metadata <- function(json) {
+  json <- jsonlite::fromJSON(json, simplifyVector = FALSE)
   # merge_csv_metadata() sets num_chains, and add_variable_metadata() sets
   # the variable sizes
   shared <- json[setdiff(
     names(json),
     c("chains", "num_chains", "stan_variable_sizes")
   )]
-  shared <- drop_null(lapply(shared, json_to_r))
+  shared <- parquet_drop_null(lapply(shared, parquet_json_to_r))
   # the JSON has the repaired names; read_csv_metadata() gives the CSV names
   shared$variables <- unrepair_variable_names(shared$variables)
   lapply(json$chains, function(chain) {
-    chain <- drop_null(lapply(chain, json_to_r))
+    chain <- parquet_drop_null(lapply(chain, parquet_json_to_r))
     if (!is.null(chain$time)) {
       chain$time <- as.data.frame(chain$time)
     }
@@ -589,20 +632,41 @@ read_parquet_csv_metadata <- function(file) {
   })
 }
 
-drop_null <- function(x) {
+parquet_drop_null <- function(x) {
   x[!vapply(x, is.null, logical(1))]
 }
+
+# the JSON strings of the doubles NA, NaN, Inf and -Inf
+parquet_json_special <- c("NA", "NaN", "Inf", "-Inf")
 
 #' Convert a value of `jsonlite::fromJSON(simplifyVector = FALSE)` to the
 #' types of `read_csv_metadata()`.
 #'
 #' @noRd
 #' @param x A parsed JSON value.
-#' @return Numbers as doubles, booleans as integers 0 and 1, arrays as
-#'   vectors, arrays of arrays as matrices (rows), objects as named lists.
+#' @return Numbers (also the strings `"NA"`, `"NaN"`, `"Inf"` and `"-Inf"`)
+#'   as doubles, booleans as integers 0 and 1, arrays as vectors, arrays of
+#'   arrays as matrices (rows), objects as named lists.
 #'
-json_to_r <- function(x) {
-  if (is.null(x) || is.character(x)) {
+parquet_json_to_r <- function(x) {
+  is_number <- function(e) {
+    is.numeric(e) || (is.character(e) && e %in% parquet_json_special)
+  }
+  to_numbers <- function(values) {
+    vapply(
+      values,
+      function(e) suppressWarnings(as.numeric(e)),
+      double(1),
+      USE.NAMES = FALSE
+    )
+  }
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (is.character(x)) {
+    if (x %in% parquet_json_special) {
+      return(to_numbers(list(x)))
+    }
     return(x)
   }
   if (is.logical(x)) {
@@ -612,22 +676,19 @@ json_to_r <- function(x) {
     return(as.numeric(x))
   }
   if (!is.null(names(x))) {
-    return(lapply(x, json_to_r))
+    return(lapply(x, parquet_json_to_r))
   }
   if (length(x) == 0) {
     return(NULL)
   }
   if (all(vapply(x, is.list, logical(1)))) {
-    return(do.call(rbind, lapply(x, function(row) as.numeric(unlist(row)))))
+    return(do.call(rbind, lapply(x, to_numbers)))
+  }
+  if (all(vapply(x, is_number, logical(1)))) {
+    return(to_numbers(x))
   }
   values <- unlist(x)
-  if (is.logical(values)) {
-    as.integer(values)
-  } else if (is.numeric(values)) {
-    as.numeric(values)
-  } else {
-    values
-  }
+  if (is.logical(values)) as.integer(values) else values
 }
 
 #' Read columns of a Parquet file into arrays of iterations, chains and
@@ -651,19 +712,19 @@ read_parquet_chains <- function(
   if (length(columns) == 0) {
     return(list())
   }
-  pq <- as.data.frame(nanoparquet::read_parquet(
+  pq <- as.list(nanoparquet::read_parquet(
     path,
     col_select = c(columns, ".chain", ".iteration")
   ))
-  if (nrow(pq) == 0) {
+  if (length(pq$.chain) == 0) {
     return(list())
   }
   row_order <- order(pq$.chain, pq$.iteration)
-  if (is.unsorted(row_order)) {
-    pq <- pq[row_order, , drop = FALSE]
+  if (!is.unsorted(row_order)) {
+    row_order <- NULL
   }
   n_rows <- tabulate(pq$.chain, nbins = num_chains)
-  if (sum(n_rows) != nrow(pq) || any(n_rows != n_rows[1])) {
+  if (sum(n_rows) != length(pq$.chain) || any(n_rows != n_rows[1])) {
     stop(
       "The chains in '",
       path,
@@ -671,6 +732,9 @@ read_parquet_chains <- function(
       call. = FALSE
     )
   }
+  pq$.chain <- NULL
+  pq$.iteration <- NULL
+  # copy one column at a time into the array and free it
   to_array <- function(names) {
     if (length(names) == 0) {
       return(NULL)
@@ -681,7 +745,9 @@ read_parquet_chains <- function(
       dimnames = list(NULL, NULL, names)
     )
     for (j in seq_along(names)) {
-      out[,, j] <- pq[[names[j]]]
+      column <- pq[[names[j]]]
+      out[,, j] <- if (is.null(row_order)) column else column[row_order]
+      pq[[names[j]]] <<- NULL
     }
     out
   }
@@ -713,10 +779,42 @@ CmdStanMCMC_Parquet <- R6::R6Class(
     },
     num_chains = function() {
       private$metadata_$num_chains
+    },
+    draws = function(
+      variables = NULL,
+      inc_warmup = FALSE,
+      format = getOption("cmdstanr_draws_format", "draws_array")
+    ) {
+      private$check_warmup_file_(inc_warmup)
+      super$draws(
+        variables = variables,
+        inc_warmup = inc_warmup,
+        format = format
+      )
+    },
+    sampler_diagnostics = function(
+      inc_warmup = FALSE,
+      format = getOption("cmdstanr_draws_format", "draws_array")
+    ) {
+      private$check_warmup_file_(inc_warmup)
+      super$sampler_diagnostics(inc_warmup = inc_warmup, format = format)
     }
   ),
   private = list(
     warmup_file_ = NULL,
+    check_warmup_file_ = function(inc_warmup) {
+      if (
+        inc_warmup &&
+          is.null(private$warmup_file_) &&
+          isTRUE(private$metadata_$save_warmup == 1)
+      ) {
+        stop(
+          "The warmup draws are in a separate Parquet file. ",
+          "Give it as 'warmup_file' to as_cmdstan_fit().",
+          call. = FALSE
+        )
+      }
+    },
     read_output_ = function(variables, sampler_diagnostics, format) {
       read_cmdstan_parquet(
         private$output_files_,

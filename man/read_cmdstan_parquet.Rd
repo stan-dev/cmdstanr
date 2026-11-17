@@ -37,15 +37,16 @@ The default depends on the method used to fit the model. See
 and memory for models with many parameters.}
 
 \item{warmup_file}{(string) Optional path of the Parquet file of the warmup
-draws (the \code{warmup_file} of \code{\link[=cmdstan_csv_to_parquet]{cmdstan_csv_to_parquet()}}). The default is
-\code{NULL}, which reads no warmup draws and sets \code{metadata$save_warmup} to
-\code{0}.}
+draws (the \code{warmup_file} of \code{\link[=cmdstan_csv_to_parquet]{cmdstan_csv_to_parquet()}}), from the same
+run as \code{file}. The default is \code{NULL}, which reads no warmup draws.}
 }
 \value{
 A named list with the same elements as \code{\link[=read_cmdstan_csv]{read_cmdstan_csv()}} gives
 for the MCMC sampler: \code{metadata}, \code{time}, \code{inv_metric}, \code{step_size},
 \code{warmup_draws}, \code{post_warmup_draws}, \code{warmup_sampler_diagnostics} and
-\code{post_warmup_sampler_diagnostics}.
+\code{post_warmup_sampler_diagnostics}. The values are the same; the fields of
+\code{metadata} can be in a different order. Without \code{warmup_file}, the
+warmup elements are \code{NULL} also if \code{metadata$save_warmup} is 1.
 }
 \description{
 Read the draws and the metadata from a Parquet file that

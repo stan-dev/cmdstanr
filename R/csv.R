@@ -129,7 +129,9 @@
 #' [cmdstan_csv_to_parquet()] (MCMC output only), with an optional
 #' `warmup_file`. The object then reads the draws with
 #' [read_cmdstan_parquet()], and it has the same methods as an object made
-#' from the CSV files. `$output_files()` gives the Parquet file.
+#' from the CSV files. `$output_files()` gives the Parquet file, and
+#' `$num_chains()` and `$time()` come from the metadata in the file. Without
+#' `warmup_file`, `$draws(inc_warmup = TRUE)` gives an error.
 #'
 #' @seealso [draws_to_csv()] for creating compatible CSV files and
 #'   [`$output_files()`][fit-method-output_files] for locating files created by
@@ -464,8 +466,11 @@ as_cmdstan_fit <- function(
   format = getOption("cmdstanr_draws_format"),
   warmup_file = NULL
 ) {
-  is_parquet <- length(files) == 1 &&
-    grepl("\\.parquet$", files, ignore.case = TRUE)
+  parquet_files <- grepl("\\.parquet$", files, ignore.case = TRUE)
+  if (any(parquet_files) && length(files) > 1) {
+    stop("Give one Parquet file, not ", length(files), " files.", call. = FALSE)
+  }
+  is_parquet <- any(parquet_files)
   if (is_parquet) {
     csv_contents <- read_cmdstan_parquet(
       files,

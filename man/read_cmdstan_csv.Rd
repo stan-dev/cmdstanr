@@ -172,7 +172,9 @@ produces an informative error.
 \code{\link[=cmdstan_csv_to_parquet]{cmdstan_csv_to_parquet()}} (MCMC output only), with an optional
 \code{warmup_file}. The object then reads the draws with
 \code{\link[=read_cmdstan_parquet]{read_cmdstan_parquet()}}, and it has the same methods as an object made
-from the CSV files. \verb{$output_files()} gives the Parquet file.
+from the CSV files. \verb{$output_files()} gives the Parquet file, and
+\verb{$num_chains()} and \verb{$time()} come from the metadata in the file. Without
+\code{warmup_file}, \verb{$draws(inc_warmup = TRUE)} gives an error.
 }
 
 \examples{
