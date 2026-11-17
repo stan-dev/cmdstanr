@@ -2149,10 +2149,10 @@ test_that("read_cmdstan_csv() reads no warmup draws for fixed_param", {
   }
   expect_true(any(grepl("save_warmup = true", readLines(csv_files[1]))))
   csv <- read_cmdstan_csv(csv_files)
-  expect_equal(csv$metadata$save_warmup, 1)
+  expect_equal(csv$metadata$save_warmup, 0)
   expect_null(csv$warmup_draws)
   expect_equal(csv$post_warmup_draws, fit$draws())
   fit2 <- as_cmdstan_fit(csv_files)
   expect_equal(fit2$draws(), fit$draws())
-  expect_equal(fit2$draws(inc_warmup = TRUE), fit$draws())
+  expect_error(fit2$draws(inc_warmup = TRUE), "without them")
 })
