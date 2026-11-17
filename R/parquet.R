@@ -97,12 +97,14 @@
 #' metadata$chains$step_size_adaptation
 #' }
 #'
-cmdstan_csv_to_parquet <- function(files,
-                                   file,
-                                   warmup_file = NULL,
-                                   chunk_rows = NULL,
-                                   compression = c("zstd", "snappy", "gzip", "uncompressed"),
-                                   overwrite = FALSE) {
+cmdstan_csv_to_parquet <- function(
+  files,
+  file,
+  warmup_file = NULL,
+  chunk_rows = NULL,
+  compression = c("zstd", "snappy", "gzip", "uncompressed"),
+  overwrite = FALSE
+) {
   require_suggested_package("nanoparquet")
   checkmate::assert_character(files, min.len = 1, any.missing = FALSE)
   checkmate::assert_string(file)
@@ -112,7 +114,10 @@ cmdstan_csv_to_parquet <- function(files,
   compression <- match.arg(compression)
   out_files <- c(file, warmup_file)
   # normalizePath() changes only paths that exist, so normalize the directories
-  out_paths <- file.path(normalizePath(dirname(out_files), mustWork = FALSE), basename(out_files))
+  out_paths <- file.path(
+    normalizePath(dirname(out_files), mustWork = FALSE),
+    basename(out_files)
+  )
   if (anyDuplicated(out_paths)) {
     stop("'file' and 'warmup_file' must be different paths.", call. = FALSE)
   }
@@ -135,19 +140,23 @@ cmdstan_csv_to_parquet <- function(files,
   if (metadata$method != "sample") {
     stop(
       "Only CSV files from the MCMC sampler are supported, not method '",
-      metadata$method, "'.",
+      metadata$method,
+      "'.",
       call. = FALSE
     )
   }
   # the fixed_param sampler writes no warmup draws
   n_warmup <- 0
-  if (isTRUE(metadata$save_warmup == 1) &&
-      !isTRUE(metadata$algorithm == "fixed_param")) {
+  if (
+    isTRUE(metadata$save_warmup == 1) &&
+      !isTRUE(metadata$algorithm == "fixed_param")
+  ) {
     n_warmup <- ceiling(metadata$iter_warmup / metadata$thin)
   }
   n_post_warmup <- ceiling(metadata$iter_sampling / metadata$thin)
   if (is.null(chunk_rows)) {
-    n_columns <- length(metadata$variables) + length(metadata$sampler_diagnostics)
+    n_columns <- length(metadata$variables) +
+      length(metadata$sampler_diagnostics)
     chunk_rows <- ceiling(1e7 / max(1, n_columns))
   }
   # readLines() allocates a vector of length chunk_rows, so limit chunk_rows
@@ -162,13 +171,18 @@ cmdstan_csv_to_parquet <- function(files,
   write_chunk <- function(x, path) {
     if (file.exists(path)) {
       nanoparquet::append_parquet(
-        x, path,
-        compression = compression, options = pq_options
+        x,
+        path,
+        compression = compression,
+        options = pq_options
       )
     } else {
       nanoparquet::write_parquet(
-        x, path,
-        compression = compression, metadata = key_value, options = pq_options
+        x,
+        path,
+        compression = compression,
+        metadata = key_value,
+        options = pq_options
       )
     }
   }
@@ -183,7 +197,11 @@ cmdstan_csv_to_parquet <- function(files,
   tmp_file <- tempfile(".tmp_", tmpdir = dirname(file), fileext = ".parquet")
   tmp_warmup <- NULL
   if (!is.null(warmup_file)) {
-    tmp_warmup <- tempfile(".tmp_", tmpdir = dirname(warmup_file), fileext = ".parquet")
+    tmp_warmup <- tempfile(
+      ".tmp_",
+      tmpdir = dirname(warmup_file),
+      fileext = ".parquet"
+    )
   }
   on.exit(unlink(c(tmp_file, tmp_warmup)), add = TRUE)
 
@@ -198,8 +216,12 @@ cmdstan_csv_to_parquet <- function(files,
         state$csv_names <- header
         state$out_names <- repair_variable_names(header)
       } else if (!identical(header, state$csv_names)) {
-        stop("The CSV header of '", files[i], "' differs from the first file.",
-             call. = FALSE)
+        stop(
+          "The CSV header of '",
+          files[i],
+          "' differs from the first file.",
+          call. = FALSE
+        )
       }
       chunk <- parse_csv_lines(lines, state$out_names, files[i], state$row)
       rows <- state$row + seq_len(nrow(chunk))
@@ -215,7 +237,10 @@ cmdstan_csv_to_parquet <- function(files,
         p <- chunk[!is_warmup, , drop = FALSE]
         draws <- state$num_draws + seq_len(nrow(p))
         state$num_draws <- state$num_draws + nrow(p)
-        write_chunk(add_index_columns(p, i, rows[!is_warmup] - n_warmup, draws), tmp_file)
+        write_chunk(
+          add_index_columns(p, i, rows[!is_warmup] - n_warmup, draws),
+          tmp_file
+        )
       }
     }
     header <- for_each_csv_chunk(files[i], chunk_rows, write_lines)
@@ -225,21 +250,36 @@ cmdstan_csv_to_parquet <- function(files,
         state$csv_names <- header
         state$out_names <- repair_variable_names(header)
       } else {
-        stop("The CSV header of '", files[i], "' differs from the first file.",
-             call. = FALSE)
+        stop(
+          "The CSV header of '",
+          files[i],
+          "' differs from the first file.",
+          call. = FALSE
+        )
       }
     }
     if (state$row != n_warmup + n_post_warmup) {
       warning(
-        "Chain ", i, " ('", files[i], "') has ", state$row, " draws, but the ",
-        "sampler arguments give ", n_warmup + n_post_warmup, ".",
+        "Chain ",
+        i,
+        " ('",
+        files[i],
+        "') has ",
+        state$row,
+        " draws, but the ",
+        "sampler arguments give ",
+        n_warmup + n_post_warmup,
+        ".",
         call. = FALSE
       )
     }
   }
   # an output file without draws still gets the columns and the metadata
   empty <- as.data.frame(
-    stats::setNames(rep(list(double()), length(state$out_names)), state$out_names),
+    stats::setNames(
+      rep(list(double()), length(state$out_names)),
+      state$out_names
+    ),
     check.names = FALSE
   )
   empty <- add_index_columns(empty, integer(), integer(), integer())
@@ -312,11 +352,19 @@ parse_csv_lines <- function(lines, col_names, path, rows_before) {
     )),
     error = function(e) e
   )
-  if (inherits(chunk, "error") || nrow(chunk) != length(lines) ||
-      !all(vapply(chunk, is.double, logical(1)))) {
+  if (
+    inherits(chunk, "error") ||
+      nrow(chunk) != length(lines) ||
+      !all(vapply(chunk, is.double, logical(1)))
+  ) {
     stop(
-      "Malformed data line in '", path, "' between data rows ",
-      rows_before + 1, " and ", rows_before + length(lines), ".",
+      "Malformed data line in '",
+      path,
+      "' between data rows ",
+      rows_before + 1,
+      " and ",
+      rows_before + length(lines),
+      ".",
       if (inherits(chunk, "error")) paste0(" ", conditionMessage(chunk)),
       call. = FALSE
     )
@@ -333,8 +381,14 @@ parse_csv_lines <- function(lines, col_names, path, rows_before) {
 #'
 parquet_stan_metadata <- function(csv_metadata) {
   per_chain <- c(
-    "id", "seed", "init", "step_size", "step_size_adaptation",
-    "fitted_params", "inv_metric", "time"
+    "id",
+    "seed",
+    "init",
+    "step_size",
+    "step_size_adaptation",
+    "fitted_params",
+    "inv_metric",
+    "time"
   )
   metadata <- csv_metadata[[1]]
   out <- metadata[setdiff(names(metadata), per_chain)]
@@ -360,6 +414,9 @@ parquet_stan_metadata <- function(csv_metadata) {
   })
   as.character(jsonlite::toJSON(
     out,
-    auto_unbox = TRUE, digits = NA, null = "null", na = "null"
+    auto_unbox = TRUE,
+    digits = NA,
+    null = "null",
+    na = "null"
   ))
 }
