@@ -58,7 +58,7 @@
 #' readers (for example \pkg{arrow}, \pkg{duckdb} and \pkg{polars}) can also
 #' read the file.
 #'
-#' The key-value metadata of the Parquet file has three entries:
+#' The key-value metadata of the Parquet file has three Stan entries:
 #' * `stan.format_version`: the version of this file layout, now `"1"`.
 #' * `stan.draws`: `"sampling"` in `file` and `"warmup"` in `warmup_file`.
 #' * `stan.metadata`: the CmdStan metadata as a JSON object. It has the
@@ -67,9 +67,10 @@
 #'   `sampler_diagnostics`, `stan_variable_sizes` and `num_chains`. Element
 #'   `chains` is an array with one object for each chain: the chain `id`, the
 #'   `seed`, the adapted step size `step_size_adaptation`, the inverse metric
-#'   `inv_metric` (an array, or an array of rows for a dense metric) and the
-#'   `time` in seconds. For the `fixed_param` sampler, `variables` and
-#'   `sampler_diagnostics` do not list the columns `lp__` and
+#'   `inv_metric` (an array, or an array of rows for a dense metric), the
+#'   `time` in seconds, and each other value that differs between the chains
+#'   (for example `profile_file`). For the `fixed_param` sampler,
+#'   `variables` and `sampler_diagnostics` do not list the columns `lp__` and
 #'   `accept_stat__`. Use the Parquet schema to get all column names. The CSV
 #'   values `true` and `false` are JSON booleans, and the values `NaN`,
 #'   `Inf`, `-Inf` and `NA` are the JSON strings `"NaN"`, `"Inf"`, `"-Inf"`
@@ -393,17 +394,34 @@ parse_csv_lines <- function(lines, col_names, path, rows_before) {
 #' @return A JSON string.
 #'
 parquet_stan_metadata <- function(csv_metadata) {
-  per_chain <- parquet_per_chain_fields
   metadata <- csv_metadata[[1]]
-  out <- metadata[setdiff(names(metadata), per_chain)]
-  # read_csv_metadata() turns the CSV values true and false into integers;
-  # write them as JSON booleans
-  is_flag <- vapply(
-    out,
-    function(x) is.integer(x) && length(x) == 1,
+  # also store per chain every field that differs between the chains, for
+  # example profile_file
+  all_names <- unique(unlist(lapply(csv_metadata, names)))
+  differs <- vapply(
+    all_names,
+    function(name) {
+      !all(vapply(
+        csv_metadata,
+        function(x) identical(x[[name]], metadata[[name]]),
+        logical(1)
+      ))
+    },
     logical(1)
   )
-  out[is_flag] <- lapply(out[is_flag], as.logical)
+  per_chain <- union(parquet_per_chain_fields, all_names[differs])
+  # read_csv_metadata() turns the CSV values true and false into integers;
+  # write them as JSON booleans
+  flags_to_logical <- function(x) {
+    is_flag <- vapply(
+      x,
+      function(value) is.integer(value) && length(value) == 1,
+      logical(1)
+    )
+    x[is_flag] <- lapply(x[is_flag], as.logical)
+    x
+  }
+  out <- flags_to_logical(metadata[setdiff(names(metadata), per_chain)])
   # I() keeps vectors of length 1 as JSON arrays
   variables <- repair_variable_names(metadata$variables)
   out$variables <- I(variables)
@@ -415,7 +433,7 @@ parquet_stan_metadata <- function(csv_metadata) {
   }
   out$num_chains <- length(csv_metadata)
   out$chains <- lapply(csv_metadata, function(x) {
-    chain <- x[intersect(per_chain, names(x))]
+    chain <- flags_to_logical(x[intersect(per_chain, names(x))])
     if (!is.null(chain$inv_metric) && is.null(dim(chain$inv_metric))) {
       chain$inv_metric <- I(chain$inv_metric)
     }
@@ -484,7 +502,11 @@ parquet_per_chain_fields <- c(
 #' pq_warmup <- file.path(tempdir(), "logistic_warmup.parquet")
 #' cmdstan_csv_to_parquet(fit$output_files(), pq_file, warmup_file = pq_warmup)
 #'
-#' x <- read_cmdstan_parquet(pq_file, variables = "beta", warmup_file = pq_warmup)
+#' x <- read_cmdstan_parquet(
+#'   pq_file,
+#'   variables = "beta",
+#'   warmup_file = pq_warmup
+#' )
 #' str(x$post_warmup_draws)
 #' str(x$post_warmup_sampler_diagnostics)
 #'
@@ -592,6 +614,15 @@ parquet_key_value <- function(file, draws) {
       call. = FALSE
     )
   }
+  if (length(value("stan.draws")) == 0) {
+    stop(
+      "'",
+      file,
+      "' has no 'stan.draws' key. ",
+      "Write it again with cmdstan_csv_to_parquet().",
+      call. = FALSE
+    )
+  }
   if (!identical(value("stan.draws"), draws)) {
     stop(
       "'",
@@ -620,9 +651,13 @@ parquet_csv_metadata <- function(json) {
     names(json),
     c("chains", "num_chains", "stan_variable_sizes")
   )]
-  shared <- parquet_drop_null(lapply(shared, parquet_json_to_r))
-  # the JSON has the repaired names; read_csv_metadata() gives the CSV names
-  shared$variables <- unrepair_variable_names(shared$variables)
+  shared <- lapply(shared, parquet_json_to_r)
+  # names are always strings, also a name such as "NA"; the JSON has the
+  # repaired names, and read_csv_metadata() gives the CSV names
+  names_of <- function(x) if (length(x) > 0) as.character(unlist(x))
+  shared$variables <- unrepair_variable_names(names_of(json$variables))
+  shared$sampler_diagnostics <- names_of(json$sampler_diagnostics)
+  shared <- parquet_drop_null(shared)
   lapply(json$chains, function(chain) {
     chain <- parquet_drop_null(lapply(chain, parquet_json_to_r))
     if (!is.null(chain$time)) {

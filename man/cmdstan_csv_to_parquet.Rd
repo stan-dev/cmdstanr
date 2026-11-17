@@ -80,7 +80,7 @@ reads only some of the variables. Include \code{.chain}, \code{.iteration} and
 readers (for example \pkg{arrow}, \pkg{duckdb} and \pkg{polars}) can also
 read the file.
 
-The key-value metadata of the Parquet file has three entries:
+The key-value metadata of the Parquet file has three Stan entries:
 \itemize{
 \item \code{stan.format_version}: the version of this file layout, now \code{"1"}.
 \item \code{stan.draws}: \code{"sampling"} in \code{file} and \code{"warmup"} in \code{warmup_file}.
@@ -90,9 +90,10 @@ the CmdStan version and the sampler arguments, and \code{variables},
 \code{sampler_diagnostics}, \code{stan_variable_sizes} and \code{num_chains}. Element
 \code{chains} is an array with one object for each chain: the chain \code{id}, the
 \code{seed}, the adapted step size \code{step_size_adaptation}, the inverse metric
-\code{inv_metric} (an array, or an array of rows for a dense metric) and the
-\code{time} in seconds. For the \code{fixed_param} sampler, \code{variables} and
-\code{sampler_diagnostics} do not list the columns \code{lp__} and
+\code{inv_metric} (an array, or an array of rows for a dense metric), the
+\code{time} in seconds, and each other value that differs between the chains
+(for example \code{profile_file}). For the \code{fixed_param} sampler,
+\code{variables} and \code{sampler_diagnostics} do not list the columns \code{lp__} and
 \code{accept_stat__}. Use the Parquet schema to get all column names. The CSV
 values \code{true} and \code{false} are JSON booleans, and the values \code{NaN},
 \code{Inf}, \code{-Inf} and \code{NA} are the JSON strings \code{"NaN"}, \code{"Inf"}, \code{"-Inf"}

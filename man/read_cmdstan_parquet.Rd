@@ -67,7 +67,11 @@ pq_file <- file.path(tempdir(), "logistic.parquet")
 pq_warmup <- file.path(tempdir(), "logistic_warmup.parquet")
 cmdstan_csv_to_parquet(fit$output_files(), pq_file, warmup_file = pq_warmup)
 
-x <- read_cmdstan_parquet(pq_file, variables = "beta", warmup_file = pq_warmup)
+x <- read_cmdstan_parquet(
+  pq_file,
+  variables = "beta",
+  warmup_file = pq_warmup
+)
 str(x$post_warmup_draws)
 str(x$post_warmup_sampler_diagnostics)
 
