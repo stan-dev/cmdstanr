@@ -230,7 +230,48 @@ test_that("cmdstan_csv_to_parquet() stops at a malformed line and keeps old outp
   expect_identical(list.files(dirname(out), pattern = "^\\.tmp_"), character())
 })
 
+test_that("cmdstan_csv_to_parquet() stops at a non-numeric value", {
+  files <- edit_csv_files(fit_parquet$output_files(), function(lines, i) {
+    if (i == 1) {
+      idx <- data_line_index(lines)[3]
+      lines[idx] <- sub("^[^,]*", "abc", lines[idx])
+    }
+    lines
+  })
+  out <- withr::local_tempfile(fileext = ".parquet")
+  expect_error(cmdstan_csv_to_parquet(files, out), "Malformed data line .* rows 1 and")
+  expect_false(file.exists(out))
+})
+
+test_that("cmdstan_csv_to_parquet() stops when the CSV headers differ", {
+  swap_columns <- function(lines) {
+    idx <- which(nzchar(lines) & !startsWith(lines, "#"))[1]
+    lines[idx] <- sub("stepsize__,treedepth__", "treedepth__,stepsize__", lines[idx], fixed = TRUE)
+    lines
+  }
+  files <- edit_csv_files(fit_parquet$output_files(), function(lines, i) {
+    if (i == 2) swap_columns(lines) else lines
+  })
+  out <- withr::local_tempfile(fileext = ".parquet")
+  expect_error(cmdstan_csv_to_parquet(files, out), "differs from the first file")
+  # a second file with a header but no draws
+  files <- edit_csv_files(fit_parquet$output_files(), function(lines, i) {
+    if (i == 2) swap_columns(lines[-data_line_index(lines)]) else lines
+  })
+  expect_error(cmdstan_csv_to_parquet(files, out), "differs from the first file")
+  expect_false(file.exists(out))
+})
+
 test_that("cmdstan_csv_to_parquet() checks its arguments", {
+  dir <- withr::local_tempdir()
+  expect_error(
+    cmdstan_csv_to_parquet(
+      fit_parquet$output_files(), file.path(dir, "x.parquet"),
+      warmup_file = file.path(dir, ".", "x.parquet")
+    ),
+    "must be different"
+  )
+  expect_identical(list.files(dir, all.files = TRUE, no.. = TRUE), character())
   out <- withr::local_tempfile(fileext = ".parquet")
   cmdstan_csv_to_parquet(fit_parquet$output_files(), out)
   expect_error(

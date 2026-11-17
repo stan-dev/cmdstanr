@@ -84,7 +84,9 @@ the CmdStan version and the sampler arguments, and \code{variables},
 \code{chains} is an array with one object for each chain: the chain \code{id}, the
 \code{seed}, the adapted step size \code{step_size_adaptation}, the inverse metric
 \code{inv_metric} (an array, or an array of rows for a dense metric) and the
-\code{time} in seconds.
+\code{time} in seconds. For the \code{fixed_param} sampler, \code{variables} and
+\code{sampler_diagnostics} do not list the columns \code{lp__} and
+\code{accept_stat__}. Use the Parquet schema to get all column names.
 }
 
 Read the metadata with \code{\link[nanoparquet:read_parquet_metadata]{nanoparquet::read_parquet_metadata()}} and

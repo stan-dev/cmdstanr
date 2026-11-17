@@ -61,7 +61,9 @@
 #'   `chains` is an array with one object for each chain: the chain `id`, the
 #'   `seed`, the adapted step size `step_size_adaptation`, the inverse metric
 #'   `inv_metric` (an array, or an array of rows for a dense metric) and the
-#'   `time` in seconds.
+#'   `time` in seconds. For the `fixed_param` sampler, `variables` and
+#'   `sampler_diagnostics` do not list the columns `lp__` and
+#'   `accept_stat__`. Use the Parquet schema to get all column names.
 #'
 #' Read the metadata with [nanoparquet::read_parquet_metadata()] and
 #' [jsonlite::fromJSON()].
@@ -109,7 +111,9 @@ cmdstan_csv_to_parquet <- function(files,
   checkmate::assert_flag(overwrite)
   compression <- match.arg(compression)
   out_files <- c(file, warmup_file)
-  if (anyDuplicated(normalizePath(out_files, mustWork = FALSE))) {
+  # normalizePath() changes only paths that exist, so normalize the directories
+  out_paths <- file.path(normalizePath(dirname(out_files), mustWork = FALSE), basename(out_files))
+  if (anyDuplicated(out_paths)) {
     stop("'file' and 'warmup_file' must be different paths.", call. = FALSE)
   }
   if (!overwrite && any(file.exists(out_files))) {
@@ -144,8 +148,11 @@ cmdstan_csv_to_parquet <- function(files,
   n_post_warmup <- ceiling(metadata$iter_sampling / metadata$thin)
   if (is.null(chunk_rows)) {
     n_columns <- length(metadata$variables) + length(metadata$sampler_diagnostics)
-    chunk_rows <- max(1, ceiling(1e7 / n_columns))
+    chunk_rows <- ceiling(1e7 / max(1, n_columns))
   }
+  # readLines() allocates a vector of length chunk_rows, so limit chunk_rows
+  # to about the number of lines in a file (draws, header and comments)
+  chunk_rows <- max(1, min(chunk_rows, n_warmup + n_post_warmup + 10000))
 
   key_value <- c(
     stan.format_version = "1",
@@ -303,13 +310,14 @@ parse_csv_lines <- function(lines, col_names, path, rows_before) {
       data.table = FALSE,
       showProgress = FALSE
     )),
-    error = function(e) NULL
+    error = function(e) e
   )
-  if (is.null(chunk) || nrow(chunk) != length(lines) ||
+  if (inherits(chunk, "error") || nrow(chunk) != length(lines) ||
       !all(vapply(chunk, is.double, logical(1)))) {
     stop(
       "Malformed data line in '", path, "' between data rows ",
       rows_before + 1, " and ", rows_before + length(lines), ".",
+      if (inherits(chunk, "error")) paste0(" ", conditionMessage(chunk)),
       call. = FALSE
     )
   }
@@ -335,6 +343,10 @@ parquet_stan_metadata <- function(csv_metadata) {
   out$variables <- I(variables)
   out$sampler_diagnostics <- I(as.character(metadata$sampler_diagnostics))
   out$stan_variable_sizes <- lapply(variable_dims(variables), I)
+  if (length(out$stan_variable_sizes) == 0) {
+    # a named empty list gives a JSON object, not an array
+    out$stan_variable_sizes <- stats::setNames(list(), character())
+  }
   out$num_chains <- length(csv_metadata)
   out$chains <- lapply(csv_metadata, function(x) {
     chain <- x[intersect(per_chain, names(x))]
