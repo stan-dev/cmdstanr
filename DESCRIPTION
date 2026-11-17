@@ -64,6 +64,7 @@ Suggests:
     ggplot2,
     knitr (>= 1.37),
     loo (>= 2.0.0),
+    nanoparquet (>= 0.5.0),
     progressr,
     qs2,
     Rcpp,
