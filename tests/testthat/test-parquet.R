@@ -205,6 +205,69 @@ test_that("cmdstan_csv_to_parquet() reads compressed CSV files", {
   )
 })
 
+test_that("cmdstan_csv_to_parquet() reads bzip2 CSV files from $sample()", {
+  fit <- testing_fit(
+    "logistic",
+    method = "sample",
+    seed = 123,
+    chains = 2,
+    iter_warmup = 100,
+    iter_sampling = 100,
+    thin = 3,
+    save_warmup = TRUE,
+    compress = "bzip2"
+  )
+  expect_match(fit$output_files(), "\\.csv\\.bz2$")
+  out_csv <- withr::local_tempfile(fileext = ".parquet")
+  out_bz2 <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(fit_parquet$output_files(), out_csv)
+  cmdstan_csv_to_parquet(fit$output_files(), out_bz2)
+  expect_identical(
+    nanoparquet::read_parquet(out_bz2),
+    nanoparquet::read_parquet(out_csv)
+  )
+})
+
+test_that("cmdstan_csv_to_parquet() names tuple and complex variables", {
+  stan_file <- write_stan_file(
+    "
+    parameters {
+      complex z;
+      vector[2] v;
+    }
+    model {
+      get_real(z) ~ normal(0, 1);
+      get_imag(z) ~ normal(0, 1);
+      v ~ normal(0, 1);
+    }
+    generated quantities {
+      tuple(real, array[2] real) t = (get_real(z), {v[1], v[2]});
+      array[2] tuple(int, complex) at = {(1, z), (2, 2 * z)};
+      complex_vector[2] zv = [z, 2 * z]';
+    }
+    ",
+    dir = withr::local_tempdir()
+  )
+  utils::capture.output(
+    fit <- cmdstan_model(stan_file)$sample(
+      chains = 2,
+      iter_warmup = 100,
+      iter_sampling = 20,
+      refresh = 0,
+      seed = 1
+    )
+  )
+  out <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(fit$output_files(), out)
+  draws <- read_parquet_draws(out)
+  expect_true(all(c("z[real]", "z[imag]") %in% posterior::variables(draws)))
+  expect_true(any(grepl(":", posterior::variables(draws), fixed = TRUE)))
+  expect_same_draws(draws, fit$draws())
+  meta <- read_parquet_stan_metadata(out)$metadata
+  expect_identical(meta$variables, fit$metadata()$variables)
+  expect_equal(meta$stan_variable_sizes, fit$metadata()$stan_variable_sizes)
+})
+
 test_that("cmdstan_csv_to_parquet() writes columns when there are no draws", {
   fit <- testing_fit(
     "logistic",
@@ -263,7 +326,7 @@ test_that("cmdstan_csv_to_parquet() writes no warmup draws for fixed_param", {
     iter_sampling = 20,
     fixed_param = TRUE
   )
-  # CmdStan itself accepts save_warmup with fixed_param, but writes no warmup draws
+  # CmdStan accepts save_warmup with fixed_param but writes no warmup draws
   files <- edit_csv_files(fit$output_files(), function(lines, i) {
     sub("save_warmup = (false|0)", "save_warmup = true", lines)
   })
@@ -295,7 +358,7 @@ test_that("cmdstan_csv_to_parquet() warns about a chain with missing draws", {
   expect_identical(nrow(nanoparquet::read_parquet(out)), 34L + 29L)
 })
 
-test_that("cmdstan_csv_to_parquet() stops at a malformed line and keeps old output", {
+test_that("cmdstan_csv_to_parquet() stops at a malformed line", {
   files <- edit_csv_files(fit_parquet$output_files(), function(lines, i) {
     if (i == 2) {
       idx <- utils::tail(data_line_index(lines), 1)

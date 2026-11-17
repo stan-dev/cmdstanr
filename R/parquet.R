@@ -92,7 +92,8 @@
 #' ))
 #'
 #' # metadata
-#' kv <- nanoparquet::read_parquet_metadata(pq_file)$file_meta_data$key_value_metadata[[1]]
+#' pq_metadata <- nanoparquet::read_parquet_metadata(pq_file)
+#' kv <- pq_metadata$file_meta_data$key_value_metadata[[1]]
 #' metadata <- jsonlite::fromJSON(kv$value[kv$key == "stan.metadata"])
 #' metadata$chains$step_size_adaptation
 #' }
