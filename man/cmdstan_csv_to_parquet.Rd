@@ -26,9 +26,9 @@ the columns but no rows. The default is \code{NULL}, which drops the warmup
 draws.}
 
 \item{chunk_rows}{(positive integer) The number of CSV lines to read at a
-time. Each chunk gives at most one Parquet row group in each output file.
-The default is \code{NULL}, which selects about 10 million values for each
-chunk.}
+time. Each chunk is written as new Parquet row groups; nanoparquet splits
+a chunk with more rows than its \code{num_rows_per_row_group} option. The
+default is \code{NULL}, which selects about 10 million values for each chunk.}
 
 \item{compression}{(string) The compression of the Parquet files. One of
 \code{"zstd"} (the default), \code{"snappy"}, \code{"gzip"} or \code{"uncompressed"}.}

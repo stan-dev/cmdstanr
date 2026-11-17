@@ -15,9 +15,9 @@
 #'   the columns but no rows. The default is `NULL`, which drops the warmup
 #'   draws.
 #' @param chunk_rows (positive integer) The number of CSV lines to read at a
-#'   time. Each chunk gives at most one Parquet row group in each output file.
-#'   The default is `NULL`, which selects about 10 million values for each
-#'   chunk.
+#'   time. Each chunk is written as new Parquet row groups; nanoparquet splits
+#'   a chunk with more rows than its `num_rows_per_row_group` option. The
+#'   default is `NULL`, which selects about 10 million values for each chunk.
 #' @param compression (string) The compression of the Parquet files. One of
 #'   `"zstd"` (the default), `"snappy"`, `"gzip"` or `"uncompressed"`.
 #' @param overwrite (logical) Replace existing output files? The default is
