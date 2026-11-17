@@ -179,17 +179,8 @@ read_cmdstan_csv <- function(
 ) {
   temp_dir <- withr::local_tempdir()
   withr::local_path(toolchain_PATH_env_var())
-  # If the CSV files are stored in the WSL filesystem then it is significantly
-  # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
-  files <- stage_wsl_csv_files(files, temp_dir)
   format <- assert_valid_draws_format(format)
-  assert_file_exists(
-    files,
-    access = "r",
-    extension = c("csv", "csv.gz", "csv.bz2")
-  )
-  files <- wsl_safe_path(files, revert = TRUE)
-  files <- decompress_csv_files(files, temp_dir)
+  files <- prepare_csv_files(files, temp_dir)
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
@@ -790,6 +781,29 @@ parse_generated_quantities_time <- function(line) {
     return(NULL)
   }
   time
+}
+
+#' Check CmdStan CSV files and make readable copies where needed.
+#'
+#' Copies CSV files from the WSL filesystem to `dir`, converts WSL paths to
+#' Windows paths, and decompresses `.csv.gz` and `.csv.bz2` files to `dir`.
+#'
+#' @noRd
+#' @param files Paths to CmdStan CSV files.
+#' @param dir A temporary directory that the caller deletes.
+#' @return Paths to uncompressed CSV files.
+#'
+prepare_csv_files <- function(files, dir) {
+  # If the CSV files are stored in the WSL filesystem then it is significantly
+  # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
+  files <- stage_wsl_csv_files(files, dir)
+  assert_file_exists(
+    files,
+    access = "r",
+    extension = c("csv", "csv.gz", "csv.bz2")
+  )
+  files <- wsl_safe_path(files, revert = TRUE)
+  decompress_csv_files(files, dir)
 }
 
 #' Decompress a compressed CmdStan CSV file
