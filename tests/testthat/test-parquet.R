@@ -531,7 +531,7 @@ test_that("read_cmdstan_parquet() gives the result of read_cmdstan_csv()", {
   x <- read_cmdstan_parquet(out)
   expect_null(x$warmup_draws)
   expect_null(x$warmup_sampler_diagnostics)
-  expect_identical(x$metadata$save_warmup, 0L)
+  expect_identical(x$metadata$save_warmup, 1L)
   expect_equal(x$post_warmup_draws, read_cmdstan_csv(files)$post_warmup_draws)
 })
 
@@ -575,9 +575,164 @@ test_that("as_cmdstan_fit() makes a fit from a Parquet file", {
   fit_alpha <- as_cmdstan_fit(out, variables = "alpha")
   expect_equal(fit_alpha$draws(), fit_parquet$draws("alpha"))
   # without the warmup file, the object has no warmup draws
-  expect_error(as_cmdstan_fit(out)$draws(inc_warmup = TRUE), "without them")
+  fit_no_warmup <- as_cmdstan_fit(out)
+  expect_error(
+    fit_no_warmup$draws(inc_warmup = TRUE),
+    "separate Parquet file"
+  )
+  expect_error(
+    fit_no_warmup$sampler_diagnostics(inc_warmup = TRUE),
+    "separate Parquet file"
+  )
+  expect_equal(fit_no_warmup$draws(), fit_parquet$draws())
+  # a lazy read after saveRDS() and readRDS()
+  rds <- withr::local_tempfile(fileext = ".rds")
+  saveRDS(as_cmdstan_fit(out), rds)
+  fit_loaded <- readRDS(rds)
+  expect_equal(fit_loaded$draws("beta"), fit_parquet$draws("beta"))
+  expect_error(as_cmdstan_fit(c(out, out)), "one Parquet file")
   expect_error(
     as_cmdstan_fit(files, warmup_file = out_warmup),
     "can only be used with a Parquet file"
+  )
+})
+
+test_that("read_cmdstan_parquet() keeps the metadata values exact", {
+  # 18 significant digits and a nan in the inverse metric
+  fit <- testing_fit(
+    "logistic",
+    method = "sample",
+    seed = 123,
+    chains = 2,
+    iter_warmup = 100,
+    iter_sampling = 10,
+    sig_figs = 18
+  )
+  files <- edit_csv_files(fit$output_files(), function(lines, i) {
+    if (i == 2) {
+      idx <- grep("Diagonal elements of inverse mass matrix", lines) + 1
+      lines[idx] <- sub("# [^,]*", "# nan", lines[idx])
+    }
+    lines
+  })
+  out <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(files, out)
+  x <- read_cmdstan_parquet(out)
+  csv <- read_cmdstan_csv(files)
+  expect_true(is.nan(csv$inv_metric[[2]][1]))
+  expect_identical(x$inv_metric, csv$inv_metric)
+  expect_identical(x$step_size, csv$step_size)
+  expect_same_contents(x, csv)
+})
+
+test_that("read_cmdstan_parquet() reads one-parameter metrics", {
+  for (metric in c("diag_e", "dense_e")) {
+    fit <- testing_fit(
+      "bernoulli",
+      method = "sample",
+      seed = 123,
+      chains = 1,
+      iter_warmup = 200,
+      iter_sampling = 10,
+      metric = metric
+    )
+    out <- withr::local_tempfile(fileext = ".parquet")
+    cmdstan_csv_to_parquet(fit$output_files(), out)
+    expect_same_contents(
+      read_cmdstan_parquet(out),
+      read_cmdstan_csv(fit$output_files())
+    )
+  }
+})
+
+test_that("read_cmdstan_parquet() reads fixed_param output and an init file", {
+  fit_fixed <- testing_fit(
+    "bernoulli",
+    method = "sample",
+    seed = 123,
+    chains = 2,
+    iter_sampling = 20,
+    fixed_param = TRUE
+  )
+  out <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(fit_fixed$output_files(), out)
+  expect_same_contents(
+    read_cmdstan_parquet(out),
+    read_cmdstan_csv(fit_fixed$output_files())
+  )
+  expect_equal(as_cmdstan_fit(out)$draws(), fit_fixed$draws())
+  # the CSV metadata has the path of the init file
+  fit_init <- testing_fit(
+    "logistic",
+    method = "sample",
+    seed = 123,
+    chains = 1,
+    iter_warmup = 50,
+    iter_sampling = 10,
+    init = list(list(alpha = 0, beta = c(0, 0, 0)))
+  )
+  out_init <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(fit_init$output_files(), out_init)
+  x <- read_cmdstan_parquet(out_init)
+  expect_type(x$metadata$init, "character")
+  expect_same_contents(x, read_cmdstan_csv(fit_init$output_files()))
+})
+
+test_that("read_cmdstan_parquet() checks the files", {
+  files <- fit_parquet$output_files()
+  out <- withr::local_tempfile(fileext = ".parquet")
+  out_warmup <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(files, out, warmup_file = out_warmup)
+  expect_error(
+    read_cmdstan_parquet(out_warmup, warmup_file = out),
+    "does not have the sampling draws"
+  )
+  expect_error(
+    read_cmdstan_parquet(out, warmup_file = out),
+    "does not have the warmup draws"
+  )
+  # a warmup file from another run
+  fit_other <- testing_fit(
+    "logistic",
+    method = "sample",
+    seed = 456,
+    chains = 2,
+    iter_warmup = 100,
+    iter_sampling = 100,
+    thin = 3,
+    save_warmup = TRUE
+  )
+  other <- withr::local_tempfile(fileext = ".parquet")
+  other_warmup <- withr::local_tempfile(fileext = ".parquet")
+  cmdstan_csv_to_parquet(
+    fit_other$output_files(),
+    other,
+    warmup_file = other_warmup
+  )
+  expect_error(
+    read_cmdstan_parquet(out, warmup_file = other_warmup),
+    "not from the same run"
+  )
+  # metadata of another method
+  kv <- nanoparquet::read_parquet_metadata(
+    out
+  )$file_meta_data$key_value_metadata[[1]]
+  metadata <- stats::setNames(kv$value, kv$key)
+  metadata <- metadata[names(metadata) != "ARROW:schema"]
+  metadata["stan.metadata"] <- sub(
+    '"method":"sample"',
+    '"method":"optimize"',
+    metadata["stan.metadata"],
+    fixed = TRUE
+  )
+  out_optimize <- withr::local_tempfile(fileext = ".parquet")
+  nanoparquet::write_parquet(
+    data.frame(lp__ = 1, .chain = 1L, .iteration = 1L),
+    out_optimize,
+    metadata = metadata
+  )
+  expect_error(
+    read_cmdstan_parquet(out_optimize),
+    "Only output of the MCMC sampler"
   )
 })
