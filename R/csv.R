@@ -321,6 +321,10 @@ read_cmdstan_csv <- function(
     sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
   }
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
+  if (isTRUE(metadata$algorithm == "fixed_param")) {
+    # the fixed_param sampler writes no warmup draws, even with save_warmup
+    num_warmup_draws <- 0
+  }
   selected <- c(sampler_diagnostics, variables)
   repaired_variables <- repair_variable_names(variables)
   supports_multi_chain <-
