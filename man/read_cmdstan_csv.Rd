@@ -94,7 +94,7 @@ or their diagonals, depending on the type of metric used.
 \item \code{warmup_draws}:  If \code{save_warmup} was \code{TRUE} when fitting the model then a
 \code{\link[posterior:draws_array]{draws_array}} (or different format if \code{format} is
 specified) of warmup draws. The \code{fixed_param} sampler writes no warmup
-draws, so for it \code{warmup_draws} is \code{NULL} and \code{metadata$save_warmup} is \code{0}.
+draws, so \code{warmup_draws} is \code{NULL} and \code{metadata$save_warmup} is \code{0}.
 \item \code{post_warmup_draws}: A \code{\link[posterior:draws_array]{draws_array}} (or
 different format if \code{format} is specified) of post-warmup draws.
 \item \code{warmup_sampler_diagnostics}:  If \code{save_warmup} was \code{TRUE} when fitting the

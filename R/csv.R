@@ -67,7 +67,7 @@
 #' * `warmup_draws`:  If `save_warmup` was `TRUE` when fitting the model then a
 #' [`draws_array`][posterior::draws_array] (or different format if `format` is
 #' specified) of warmup draws. The `fixed_param` sampler writes no warmup
-#' draws, so for it `warmup_draws` is `NULL` and `metadata$save_warmup` is `0`.
+#' draws, so `warmup_draws` is `NULL` and `metadata$save_warmup` is `0`.
 #' * `post_warmup_draws`: A [`draws_array`][posterior::draws_array] (or
 #' different format if `format` is specified) of post-warmup draws.
 #' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` when fitting the
@@ -322,11 +322,6 @@ read_cmdstan_csv <- function(
     sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
   }
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
-  if (isTRUE(metadata$algorithm == "fixed_param")) {
-    # the fixed_param sampler writes no warmup draws, even with save_warmup
-    num_warmup_draws <- 0
-    metadata$save_warmup <- 0
-  }
   selected <- c(sampler_diagnostics, variables)
   repaired_variables <- repair_variable_names(variables)
   supports_multi_chain <-
@@ -1166,6 +1161,10 @@ read_csv_metadata <- function(csv_file) {
     }
     item
   })
+  # the fixed_param sampler writes no warmup draws, even with save_warmup
+  if (isTRUE(csv_file_info$algorithm == "fixed_param")) {
+    csv_file_info$save_warmup <- 0L
+  }
   csv_file_info
 }
 

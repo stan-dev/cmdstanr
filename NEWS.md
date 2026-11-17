@@ -248,6 +248,10 @@ CSV file from the optimization it runs first. That file is now named
 * `$laplace()` now passes `show_messages` and `show_exceptions` to the
 optimization it runs when `mode` isn't supplied.
 * `read_cmdstan_csv()` now expands `~` in file paths. (#1098)
+* `read_cmdstan_csv()` and `as_cmdstan_fit()` now return all draws as
+post-warmup draws for a CSV file that CmdStan wrote with
+`algorithm=fixed_param` and `save_warmup=1`. Previously the first `iter_warmup`
+draws were returned as warmup draws. (#1343)
 * Loading CmdStanR no longer causes `parallel::mclapply()` to leave zombie
 processes behind. (#1105)
 * Data with a `NULL` element now gives an error naming the variable. (#1129)
