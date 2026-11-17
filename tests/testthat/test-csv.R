@@ -2134,3 +2134,32 @@ test_that("read_cmdstan_csv() errors for a truncated compressed CSV file", {
   expect_error(read_cmdstan_csv(truncated[1]), "truncated or corrupt")
   expect_error(read_cmdstan_csv(truncated[2]), "truncated or corrupt")
 })
+
+test_that("read_cmdstan_csv() reads no warmup draws for fixed_param", {
+  fit <- testing_fit(
+    "bernoulli",
+    method = "sample",
+    seed = 123,
+    chains = 2,
+    iter_warmup = 30,
+    iter_sampling = 20,
+    fixed_param = TRUE
+  )
+  # CmdStan accepts save_warmup with fixed_param, but writes no warmup draws
+  csv_files <- file.path(withr::local_tempdir(), basename(fit$output_files()))
+  for (i in seq_along(csv_files)) {
+    lines <- readLines(fit$output_files()[i])
+    writeLines(
+      sub("save_warmup = (false|0)", "save_warmup = true", lines),
+      csv_files[i]
+    )
+  }
+  expect_true(any(grepl("save_warmup = true", readLines(csv_files[1]))))
+  csv <- read_cmdstan_csv(csv_files)
+  expect_equal(csv$metadata$save_warmup, 0)
+  expect_null(csv$warmup_draws)
+  expect_equal(csv$post_warmup_draws, fit$draws())
+  fit2 <- as_cmdstan_fit(csv_files)
+  expect_equal(fit2$draws(), fit$draws())
+  expect_error(fit2$draws(inc_warmup = TRUE), "without them")
+})

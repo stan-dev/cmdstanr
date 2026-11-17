@@ -66,7 +66,8 @@
 #' * `step_size`: A list (one element per chain) of the step sizes used.
 #' * `warmup_draws`:  If `save_warmup` was `TRUE` when fitting the model then a
 #' [`draws_array`][posterior::draws_array] (or different format if `format` is
-#' specified) of warmup draws.
+#' specified) of warmup draws. The `fixed_param` sampler writes no warmup
+#' draws, so `warmup_draws` is `NULL` and `metadata$save_warmup` is `0`.
 #' * `post_warmup_draws`: A [`draws_array`][posterior::draws_array] (or
 #' different format if `format` is specified) of post-warmup draws.
 #' * `warmup_sampler_diagnostics`:  If `save_warmup` was `TRUE` when fitting the
@@ -1160,6 +1161,10 @@ read_csv_metadata <- function(csv_file) {
     }
     item
   })
+  # the fixed_param sampler writes no warmup draws, even with save_warmup
+  if (isTRUE(csv_file_info$algorithm == "fixed_param")) {
+    csv_file_info$save_warmup <- 0L
+  }
   csv_file_info
 }
 
