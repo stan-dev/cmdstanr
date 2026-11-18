@@ -175,6 +175,7 @@ test_that("check_ebfmi and computing ebfmi works", {
 # cmdstan utilities -------------------------------------------------------
 
 test_that("cmdstan_summary works if bin/stansummary deleted file", {
+  local_private_cmdstan()
   delete_and_run <- function() {
     file.remove(file.path(cmdstan_path(), "bin", cmdstan_ext("stansummary")))
     fit_mcmc$cmdstan_summary()
@@ -183,6 +184,7 @@ test_that("cmdstan_summary works if bin/stansummary deleted file", {
 })
 
 test_that("cmdstan_diagnose works if bin/diagnose deleted file", {
+  local_private_cmdstan()
   delete_and_run <- function() {
     file.remove(file.path(cmdstan_path(), "bin", cmdstan_ext("diagnose")))
     fit_mcmc$cmdstan_diagnose()
@@ -639,6 +641,7 @@ test_that("make_shell_quote() survives Make expansion and shell splitting (#1230
 })
 
 test_that("local_make_local_backup() heals residue and nests", {
+  local_private_cmdstan()
   make_local_path <- file.path(cmdstan_path(), "make", "local")
   original <- if (file.exists(make_local_path)) {
     readBin(make_local_path, "raw", file.size(make_local_path))

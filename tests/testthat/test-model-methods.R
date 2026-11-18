@@ -199,9 +199,15 @@ test_that("model methods don't export Stan Math's autodiff stack", {
     getLoadedDLLs()
   )
   expect_gt(length(dlls), 0)
-  for (dll in dlls) {
-    expect_false(is.loaded(instance, PACKAGE = dll[["name"]]))
-  }
+  expect_false(
+    any(
+      vapply(
+        dlls,
+        function(dll) is.loaded(instance, PACKAGE = dll[["name"]]),
+        logical(1)
+      )
+    )
+  )
 })
 
 test_that("Model methods environments are independent", {
