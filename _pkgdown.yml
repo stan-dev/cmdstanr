@@ -68,6 +68,8 @@ reference:
       - write_stan_file
       - print_stan_file
       - draws_to_csv
+      - cmdstan_csv_to_parquet
+      - read_cmdstan_parquet
       - as_mcmc.list
       - as_draws.CmdStanMCMC
       - cmdstan_coercion
