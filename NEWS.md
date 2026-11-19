@@ -155,7 +155,7 @@ value. `init = fit` now includes tuple parameters. `write_stan_json()` gains a
 option also turns it on when another package such as brms calls CmdStanR for
 you. The feature is still experimental and may change in the future. (#1138)
 * Reading MCMC and generated quantities draws from CmdStan CSV files now uses
-less memory. (#1041, #1307)
+less memory. CmdStanR now requires posterior 1.8.0 or later. (#1041, #1307)
 * `as_cmdstan_fit()` now reads draws from the CSV files when they're first
 requested (like fits from `$sample()` do), so looking at a few variables of a
 large fit takes much less memory. (#1294)
