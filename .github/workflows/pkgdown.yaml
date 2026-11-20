@@ -42,15 +42,15 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
-      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-pandoc@v2.14.0
 
-      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r@v2.14.0
         with:
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+      - uses: r-lib/actions/setup-r-dependencies@v2.14.0
         with:
           extra-packages: any::pkgdown, local::., stan-dev/pkgdown-config
 
@@ -96,7 +96,7 @@ jobs:
             github.event_name != 'pull_request' ||
             github.event.pull_request.head.repo.full_name == github.repository
           )
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@v4.9.0
         with:
           branch: gh-pages
           folder: docs
@@ -108,7 +108,7 @@ jobs:
         if: >
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name == github.repository
-        uses: marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@v3.0.5
         with:
           message: |
             Preview: ${{ env.PREVIEW_URL }}
@@ -116,7 +116,7 @@ jobs:
 
       - name: Deploy site
         if: env.PREVIEW == ''
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@v4.9.0
         with:
           branch: gh-pages
           folder: docs
@@ -137,7 +137,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: gh-pages
 
@@ -159,7 +159,7 @@ jobs:
           git push origin HEAD:gh-pages
           
       - name: Hide preview comment
-        uses: marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@v3.0.5
         with:
           hide: true
           hide_classify: OUTDATED

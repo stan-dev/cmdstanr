@@ -23,7 +23,7 @@ name: format-suggest.yaml
 jobs:
   format-suggest:
     name: format-suggest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     permissions:
       contents: read
@@ -32,14 +32,14 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           allow-unsafe-pr-checkout: true
           persist-credentials: false
 
       - name: Install
-        uses: posit-dev/setup-air@v1
+        uses: posit-dev/setup-air@v1.0.3
         with:
           version: "0.12.0"
 
@@ -53,8 +53,9 @@ jobs:
         run: air format .
 
       - name: Suggest
-        uses: reviewdog/action-suggester@v1
+        uses: reviewdog/action-suggester@v1.27.1
         with:
           level: error
           fail_level: error
           tool_name: air+jarl
+
