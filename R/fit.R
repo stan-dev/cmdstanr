@@ -1793,6 +1793,15 @@ CmdStanMCMC <- R6::R6Class(
     warmup_sampler_diagnostics_ = NULL,
     warmup_draws_ = NULL,
     inv_metric_ = NULL,
+    # reads the output files; a fit from a Parquet file overrides this
+    read_output_ = function(variables, sampler_diagnostics, format) {
+      read_cmdstan_csv(
+        files = private$csv_files_(),
+        variables = variables,
+        sampler_diagnostics = sampler_diagnostics,
+        format = format
+      )
+    },
     read_csv_ = function(
       variables = NULL,
       sampler_diagnostics = NULL,
@@ -1804,9 +1813,7 @@ CmdStanMCMC <- R6::R6Class(
           call. = FALSE
         )
       }
-      files <- private$csv_files_()
-      csv_contents <- read_cmdstan_csv(
-        files = files,
+      csv_contents <- private$read_output_(
         variables = variables,
         sampler_diagnostics = sampler_diagnostics,
         format = format

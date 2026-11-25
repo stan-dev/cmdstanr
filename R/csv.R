@@ -126,6 +126,14 @@
 #' information not contained in the CSV files. Calling an unavailable method
 #' produces an informative error.
 #'
+#' `as_cmdstan_fit()` also accepts one Parquet file from
+#' [cmdstan_csv_to_parquet()] (MCMC output only), with an optional
+#' `warmup_file`. The object then reads the draws with
+#' [read_cmdstan_parquet()], and it has the same methods as an object made
+#' from the CSV files. `$output_files()` gives the Parquet file, and
+#' `$num_chains()` and `$time()` come from the metadata in the file. Without
+#' `warmup_file`, `$draws(inc_warmup = TRUE)` gives an error.
+#'
 #' @seealso [draws_to_csv()] for creating compatible CSV files and
 #'   [`$output_files()`][fit-method-output_files] for locating files created by
 #'   CmdStanR
@@ -180,83 +188,22 @@ read_cmdstan_csv <- function(
 ) {
   temp_dir <- withr::local_tempdir()
   withr::local_path(toolchain_PATH_env_var())
-  # If the CSV files are stored in the WSL filesystem then it is significantly
-  # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
-  files <- stage_wsl_csv_files(files, temp_dir)
   format <- assert_valid_draws_format(format)
-  assert_file_exists(
-    files,
-    access = "r",
-    extension = c("csv", "csv.gz", "csv.bz2")
-  )
-  files <- wsl_safe_path(files, revert = TRUE)
-  files <- decompress_csv_files(files, temp_dir)
+  files <- prepare_csv_files(files, temp_dir)
   metadata <- NULL
   warmup_draws <- list()
   draws <- list()
   warmup_sampler_diagnostics <- list()
   post_warmup_sampler_diagnostics <- list()
-  inv_metric <- list()
-  step_size <- list()
-  csv_metadata <- list()
-  time <- data.frame()
-  file_idx <- 0
-  for (output_file in files) {
-    file_idx <- length(csv_metadata) + 1
-    csv_metadata[[file_idx]] <- read_csv_metadata(output_file)
-  }
-  if (file_idx > 1) {
+  csv_metadata <- lapply(files, read_csv_metadata)
+  if (length(csv_metadata) > 1) {
     check_csv_metadata_matches(csv_metadata)
   }
-  id <- csv_metadata[[1]]$id
-  if (!is.null(csv_metadata[[1]]$inv_metric)) {
-    inv_metric[[as.character(id)]] <- csv_metadata[[1]]$inv_metric
-  }
-  if (!is.null(csv_metadata[[1]]$step_size_adaptation)) {
-    step_size[[as.character(id)]] <- csv_metadata[[1]]$step_size_adaptation
-  }
-  if (!is.null(csv_metadata[[1]]$time)) {
-    time <- rbind(time, csv_metadata[[1]]$time)
-  }
-  if (length(csv_metadata) > 1) {
-    for (file_id in 2:length(csv_metadata)) {
-      file_metadata <- csv_metadata[[file_id]]
-      id <- file_metadata$id
-      csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id)
-      csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
-      csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init)
-      csv_metadata[[1]]$step_size <- c(
-        csv_metadata[[1]]$step_size,
-        file_metadata$step_size
-      )
-      csv_metadata[[1]]$step_size_adaptation <- c(
-        csv_metadata[[1]]$step_size_adaptation,
-        file_metadata$step_size_adaptation
-      )
-      csv_metadata[[1]]$fitted_params <- c(
-        csv_metadata[[1]]$fitted_params,
-        file_metadata$fitted_params
-      )
-      if (!is.null(file_metadata$inv_metric)) {
-        inv_metric[[as.character(id)]] <- file_metadata$inv_metric
-      }
-      if (!is.null(file_metadata$step_size_adaptation)) {
-        step_size[[as.character(id)]] <- file_metadata$step_size_adaptation
-      }
-      if (!is.null(file_metadata$time)) {
-        time <- rbind(time, file_metadata$time)
-      }
-    }
-  }
-  metadata <- csv_metadata[[1]]
-  if (metadata$method == "sample") {
-    metadata$num_chains <- length(csv_metadata)
-  }
-  uniq_seed <- unique(metadata$seed)
-  if (length(uniq_seed) == 1) {
-    metadata$seed <- uniq_seed
-  }
-  metadata$time <- time
+  merged <- merge_csv_metadata(csv_metadata)
+  metadata <- merged$metadata
+  inv_metric <- merged$inv_metric
+  step_size <- merged$step_size
+  time <- merged$time
   if (metadata$method == "diagnose") {
     gradients <- metadata$gradients
     metadata$gradients <- NULL
@@ -275,52 +222,13 @@ read_cmdstan_csv <- function(
       setdiff(metadata$variables, pathfinder_variables)
     )
   }
-  if (is.null(variables)) {
-    # variables = NULL returns all
-    variables <- metadata$variables
-  } else if (!any(nzchar(variables))) {
-    # if variables = "" returns none
-    variables <- NULL
-  } else {
-    # filter using variables
-    res <- matching_variables(
-      variables,
-      repair_variable_names(metadata$variables)
-    )
-    if (length(res$not_found)) {
-      stop(
-        "Can't find the following variable(s) in the output: ",
-        paste(res$not_found, collapse = ", "),
-        call. = FALSE
-      )
-    }
-    variables <- unrepair_variable_names(res$matching)
-  }
-  if (is.null(sampler_diagnostics)) {
-    sampler_diagnostics <- metadata$sampler_diagnostics
-  } else if (!any(nzchar(sampler_diagnostics))) {
-    # if sampler_diagnostics = "" returns none
-    sampler_diagnostics <- NULL
-  } else {
-    selected_sampler_diag <- rep(FALSE, length(metadata$sampler_diagnostics))
-    not_found <- NULL
-    for (p in sampler_diagnostics) {
-      matches <- metadata$sampler_diagnostics == p |
-        startsWith(metadata$sampler_diagnostics, paste0(p, "."))
-      if (!any(matches)) {
-        not_found <- c(not_found, p)
-      }
-      selected_sampler_diag <- selected_sampler_diag | matches
-    }
-    if (length(not_found)) {
-      stop(
-        "Can't find the following sampler diagnostic(s) in the output: ",
-        paste(not_found, collapse = ", "),
-        call. = FALSE
-      )
-    }
-    sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
-  }
+  selected_columns <- select_csv_columns(
+    metadata,
+    variables,
+    sampler_diagnostics
+  )
+  variables <- selected_columns$variables
+  sampler_diagnostics <- selected_columns$sampler_diagnostics
   num_warmup_draws <- ceiling(metadata$iter_warmup / metadata$thin)
   selected <- c(sampler_diagnostics, variables)
   repaired_variables <- repair_variable_names(variables)
@@ -402,10 +310,7 @@ read_cmdstan_csv <- function(
     repaired_variables <- gsub("log_p__", "lp__", repaired_variables)
     repaired_variables <- gsub("log_q__", "lp_approx__", repaired_variables)
   }
-  model_param_dims <- variable_dims(metadata$variables)
-  metadata$stan_variable_sizes <- model_param_dims
-  metadata$stan_variables <- names(model_param_dims)
-  metadata$model_params <- metadata$variables # for backwards compatibility
+  metadata <- add_variable_metadata(metadata)
   if (metadata$method == "sample") {
     if (is.null(format)) {
       format <- "draws_array"
@@ -552,19 +457,43 @@ read_cmdstan_csv <- function(
 #'   diagnostic checks be performed after reading in the files? The default is
 #'   `TRUE` but set to `FALSE` to avoid checking for problems with divergences
 #'   and treedepth.
+#' @param warmup_file (string) For a Parquet file in `files`, the optional
+#'   Parquet file of the warmup draws. See [read_cmdstan_parquet()].
 #'
 as_cmdstan_fit <- function(
   files,
   variables = NULL,
   check_diagnostics = TRUE,
-  format = getOption("cmdstanr_draws_format")
+  format = getOption("cmdstanr_draws_format"),
+  warmup_file = NULL
 ) {
-  csv_contents <- read_cmdstan_csv(
-    files,
-    variables = if (is.null(variables)) "" else variables,
-    sampler_diagnostics = if (check_diagnostics) NULL else "",
-    format = format
-  )
+  parquet_files <- grepl("\\.parquet$", files, ignore.case = TRUE)
+  if (any(parquet_files) && length(files) > 1) {
+    stop("Give one Parquet file, not ", length(files), " files.", call. = FALSE)
+  }
+  is_parquet <- any(parquet_files)
+  if (is_parquet) {
+    csv_contents <- read_cmdstan_parquet(
+      files,
+      variables = if (is.null(variables)) "" else variables,
+      sampler_diagnostics = if (check_diagnostics) NULL else "",
+      format = format,
+      warmup_file = warmup_file
+    )
+  } else {
+    if (!is.null(warmup_file)) {
+      stop(
+        "'warmup_file' can only be used with a Parquet file.",
+        call. = FALSE
+      )
+    }
+    csv_contents <- read_cmdstan_csv(
+      files,
+      variables = if (is.null(variables)) "" else variables,
+      sampler_diagnostics = if (check_diagnostics) NULL else "",
+      format = format
+    )
+  }
   method <- csv_contents$metadata$method
   if (!is.null(variables)) {
     if (method == "sample") {
@@ -579,7 +508,16 @@ as_cmdstan_fit <- function(
   }
   switch(
     method,
-    "sample" = CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics),
+    "sample" = if (is_parquet) {
+      CmdStanMCMC_Parquet$new(
+        csv_contents,
+        files,
+        warmup_file,
+        check_diagnostics
+      )
+    } else {
+      CmdStanMCMC_CSV$new(csv_contents, files, check_diagnostics)
+    },
     "optimize" = CmdStanMLE_CSV$new(csv_contents, files),
     "variational" = CmdStanVB_CSV$new(csv_contents, files),
     "pathfinder" = CmdStanPathfinder_CSV$new(csv_contents, files),
@@ -791,6 +729,172 @@ parse_generated_quantities_time <- function(line) {
     return(NULL)
   }
   time
+}
+
+#' Merge the metadata of the CSV files of one run.
+#'
+#' @noRd
+#' @param csv_metadata A list with the `read_csv_metadata()` output of each
+#'   file.
+#' @return A list with `metadata` (the first file's metadata with the
+#'   per-chain values of all files), `inv_metric` and `step_size` (lists
+#'   named by chain id) and `time` (a data frame with one row per chain).
+#'
+merge_csv_metadata <- function(csv_metadata) {
+  inv_metric <- list()
+  step_size <- list()
+  time <- data.frame()
+  id <- csv_metadata[[1]]$id
+  if (!is.null(csv_metadata[[1]]$inv_metric)) {
+    inv_metric[[as.character(id)]] <- csv_metadata[[1]]$inv_metric
+  }
+  if (!is.null(csv_metadata[[1]]$step_size_adaptation)) {
+    step_size[[as.character(id)]] <- csv_metadata[[1]]$step_size_adaptation
+  }
+  if (!is.null(csv_metadata[[1]]$time)) {
+    time <- rbind(time, csv_metadata[[1]]$time)
+  }
+  if (length(csv_metadata) > 1) {
+    for (file_id in 2:length(csv_metadata)) {
+      file_metadata <- csv_metadata[[file_id]]
+      id <- file_metadata$id
+      csv_metadata[[1]]$id <- c(csv_metadata[[1]]$id, id)
+      csv_metadata[[1]]$seed <- c(csv_metadata[[1]]$seed, file_metadata$seed)
+      csv_metadata[[1]]$init <- c(csv_metadata[[1]]$init, file_metadata$init)
+      csv_metadata[[1]]$step_size <- c(
+        csv_metadata[[1]]$step_size,
+        file_metadata$step_size
+      )
+      csv_metadata[[1]]$step_size_adaptation <- c(
+        csv_metadata[[1]]$step_size_adaptation,
+        file_metadata$step_size_adaptation
+      )
+      csv_metadata[[1]]$fitted_params <- c(
+        csv_metadata[[1]]$fitted_params,
+        file_metadata$fitted_params
+      )
+      if (!is.null(file_metadata$inv_metric)) {
+        inv_metric[[as.character(id)]] <- file_metadata$inv_metric
+      }
+      if (!is.null(file_metadata$step_size_adaptation)) {
+        step_size[[as.character(id)]] <- file_metadata$step_size_adaptation
+      }
+      if (!is.null(file_metadata$time)) {
+        time <- rbind(time, file_metadata$time)
+      }
+    }
+  }
+  metadata <- csv_metadata[[1]]
+  if (metadata$method == "sample") {
+    metadata$num_chains <- length(csv_metadata)
+  }
+  uniq_seed <- unique(metadata$seed)
+  if (length(uniq_seed) == 1) {
+    metadata$seed <- uniq_seed
+  }
+  metadata$time <- time
+  list(
+    metadata = metadata,
+    inv_metric = inv_metric,
+    step_size = step_size,
+    time = time
+  )
+}
+
+#' Select the CSV columns of the requested variables and sampler diagnostics.
+#'
+#' @noRd
+#' @param metadata Merged metadata, with the CSV variable names.
+#' @param variables,sampler_diagnostics As in `read_cmdstan_csv()`.
+#' @return A list with the CSV names of the selected `variables` and
+#'   `sampler_diagnostics` (`NULL` for none).
+#'
+select_csv_columns <- function(metadata, variables, sampler_diagnostics) {
+  if (is.null(variables)) {
+    # variables = NULL returns all
+    variables <- metadata$variables
+  } else if (!any(nzchar(variables))) {
+    # if variables = "" returns none
+    variables <- NULL
+  } else {
+    # filter using variables
+    res <- matching_variables(
+      variables,
+      repair_variable_names(metadata$variables)
+    )
+    if (length(res$not_found)) {
+      stop(
+        "Can't find the following variable(s) in the output: ",
+        paste(res$not_found, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    variables <- unrepair_variable_names(res$matching)
+  }
+  if (is.null(sampler_diagnostics)) {
+    sampler_diagnostics <- metadata$sampler_diagnostics
+  } else if (!any(nzchar(sampler_diagnostics))) {
+    # if sampler_diagnostics = "" returns none
+    sampler_diagnostics <- NULL
+  } else {
+    selected_sampler_diag <- rep(FALSE, length(metadata$sampler_diagnostics))
+    not_found <- NULL
+    for (p in sampler_diagnostics) {
+      matches <- metadata$sampler_diagnostics == p |
+        startsWith(metadata$sampler_diagnostics, paste0(p, "."))
+      if (!any(matches)) {
+        not_found <- c(not_found, p)
+      }
+      selected_sampler_diag <- selected_sampler_diag | matches
+    }
+    if (length(not_found)) {
+      stop(
+        "Can't find the following sampler diagnostic(s) in the output: ",
+        paste(not_found, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    sampler_diagnostics <- metadata$sampler_diagnostics[selected_sampler_diag]
+  }
+  list(variables = variables, sampler_diagnostics = sampler_diagnostics)
+}
+
+#' Add the variable dimensions to the metadata.
+#'
+#' @noRd
+#' @param metadata Metadata with the repaired variable names.
+#' @return The metadata with `stan_variable_sizes`, `stan_variables` and
+#'   `model_params`.
+#'
+add_variable_metadata <- function(metadata) {
+  model_param_dims <- variable_dims(metadata$variables)
+  metadata$stan_variable_sizes <- model_param_dims
+  metadata$stan_variables <- names(model_param_dims)
+  metadata$model_params <- metadata$variables # for backwards compatibility
+  metadata
+}
+
+#' Check CmdStan CSV files and make readable copies where needed.
+#'
+#' Copies CSV files from the WSL filesystem to `dir`, converts WSL paths to
+#' Windows paths, and decompresses `.csv.gz` and `.csv.bz2` files to `dir`.
+#'
+#' @noRd
+#' @param files Paths to CmdStan CSV files.
+#' @param dir A temporary directory that the caller deletes.
+#' @return Paths to uncompressed CSV files.
+#'
+prepare_csv_files <- function(files, dir) {
+  # If the CSV files are stored in the WSL filesystem then it is significantly
+  # faster (~4x) to first copy them (via WSL) to a Windows tempdir before reading
+  files <- stage_wsl_csv_files(files, dir)
+  assert_file_exists(
+    files,
+    access = "r",
+    extension = c("csv", "csv.gz", "csv.bz2")
+  )
+  files <- wsl_safe_path(files, revert = TRUE)
+  decompress_csv_files(files, dir)
 }
 
 #' Decompress a compressed CmdStan CSV file
