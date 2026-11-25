@@ -31,7 +31,7 @@ test_that("check_divergences() works", {
 
   # force different number of divergences per chain just to test
   csv_output$post_warmup_sampler_diagnostics[1, 1:2, "divergent__"] <- c(0, 1)
-  output <- "27 of 200 \\(14.0%\\) transitions ended with a divergence."
+  output <- "27 of 200 \\(13.5%\\) transitions ended with a divergence."
   expect_message(
     divs <- check_divergences(csv_output$post_warmup_sampler_diagnostics),
     output
@@ -94,7 +94,7 @@ test_that("check_max_treedepth() works", {
 
   # force different number of max treedepths per chain just to test
   csv_output$post_warmup_sampler_diagnostics[1, 1:2, "treedepth__"] <- c(1, 15)
-  output <- "31 of 200 \\(16.0%\\) transitions hit the maximum treedepth limit of 5."
+  output <- "31 of 200 \\(15.5%\\) transitions hit the maximum treedepth limit of 5."
   expect_message(
     max_tds <- check_max_treedepth(
       csv_output$post_warmup_sampler_diagnostics,
