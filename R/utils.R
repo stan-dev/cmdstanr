@@ -766,7 +766,14 @@ check_file_exists <- function(files, access = "", ...) {
 .wsl_check_exists <- function(path, is_dir = TRUE, access = "") {
   path_check <- processx::run(
     command = "wsl",
-    args = c("ls", "-la", wsl_safe_path(path)),
+    args = c(
+      "--exec",
+      "sh",
+      "-c",
+      'ls -la "$1" && id -un',
+      "cmdstanr",
+      wsl_safe_path(path)
+    ),
     error_on_status = FALSE
   )
 
@@ -782,14 +789,8 @@ check_file_exists <- function(files, access = "", ...) {
 
   path_metadata <- strsplit(path_check$stdout, split = "\n", fixed = TRUE)[[1]]
 
-  wsl_user <- processx::run(
-    command = "wsl",
-    args = c("echo", "$USER"),
-    error_on_status = FALSE
-  )$stdout
-  wsl_user <- gsub("\n", "", wsl_user, fixed = TRUE)
-
-  path_metadata <- grep(wsl_user, path_metadata, value = TRUE)
+  wsl_user <- utils::tail(path_metadata, 1)
+  path_metadata <- grep(wsl_user, utils::head(path_metadata, -1), value = TRUE)
 
   if (!is.null(access)) {
     path_permissions <- strsplit(path_metadata, " ", fixed = TRUE)[[1]][1]
