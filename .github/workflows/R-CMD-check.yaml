@@ -74,14 +74,12 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      # The stable pak predates pkgcache's support for the clang-aarch64
-      # package type, so on Windows ARM it builds every dependency from
-      # source. Drop back to stable once a pak release includes it.
+      # On R 4.1, install S7 0.2.2. S7 1.0.0 needs R 4.2, and ggplot2 (which
+      # the vignettes use) imports S7.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           cache: "always"
-          pak-version: ${{ matrix.config.os == 'windows-11-arm' && 'devel' || 'stable' }}
-          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.r == '4.1' && 'qs2=?ignore, RcppParallel=?ignore' || '' }}
+          extra-packages: any::rcmdcheck, local::., ${{ matrix.config.r == '4.1' && 'qs2=?ignore, RcppParallel=?ignore, S7@0.2.2' || '' }}
 
       - name: Test Windows toolchain in directory with spaces
         if: ${{ runner.os == 'Windows' && matrix.config.r == '4.1' }}
