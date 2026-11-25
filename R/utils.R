@@ -351,7 +351,7 @@ check_divergences <- function(post_warmup_sampler_diagnostics) {
         " of ",
         num_draws,
         " (",
-        (base::format(round(percentage_divergences, 0), nsmall = 1)),
+        (base::format(round(percentage_divergences, 1), nsmall = 1)),
         "%)",
         " transitions ended with a divergence.\n",
         "See https://mc-stan.org/misc/warnings for details.\n"
@@ -381,7 +381,7 @@ check_max_treedepth <- function(post_warmup_sampler_diagnostics, metadata) {
         " of ",
         num_draws,
         " (",
-        (base::format(round(percentage_max_treedepths, 0), nsmall = 1)),
+        (base::format(round(percentage_max_treedepths, 1), nsmall = 1)),
         "%)",
         " transitions hit the maximum treedepth limit of ",
         metadata$max_treedepth,

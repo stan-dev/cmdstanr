@@ -225,6 +225,8 @@ standalone generated quantities CSV files. (#1168)
 
 ## Bug fixes
 
+* The divergence and maximum treedepth messages now show the percentage of
+transitions to one decimal place. Previously it always ended in `.0`. (#1345)
 * `$expose_functions()` can now expose a function that returns an array of
 tuples. (#1329)
 * If a fit's CSV files were in a temporary directory that no longer exists (for
